@@ -1,0 +1,112 @@
+# Working together with Claude and Codex
+
+Git shares the project and written decisions. It does not share private chat
+history, configure another developer's tools, or refresh an already-running AI
+session. After pulling instruction changes, start a new session or explicitly ask
+the assistant to reread them.
+
+## Setup
+
+1. Clone this existing project. Do not create another Unity project around it.
+2. Install the exact Unity version in `ProjectSettings/ProjectVersion.txt` through
+   Unity Hub. Install build modules needed for the team's chosen build target and
+   scripting backend; do not assume every developer needs IL2CPP exclusively.
+3. Install Git LFS, run `git lfs install`, then `git lfs pull`. Keep Unity's asset
+   serialization on Force Text and version-control mode on Visible Meta Files.
+   Check settings rather than assuming setup is complete.
+4. Open the project root in your preferred assistant. Codex reads `AGENTS.md`;
+   Claude Code uses `CLAUDE.md`, which imports the same instructions. Other tools
+   should be told explicitly to read `AGENTS.md` and its referenced documents.
+5. A Unity MCP bridge is optional. If you have one, configure it using that
+   bridge's actual documentation and verify it can read this project's console.
+   Do not assume a particular menu, integration, or connection is available.
+   Without it, use editor logs and manual checks. Report unavailable tests clearly.
+
+The selected stack is FishNet / Steam P2P, not Unity Netcode for GameObjects.
+Inspect the manifest and imported assets before concluding it is installed.
+Troubleshoot installation errors using their logs; one exception name does not
+prove that reinstalling Unity is the right fix.
+
+## Which file does what?
+
+| File | Purpose |
+|---|---|
+| `AGENTS.md` | Shared instructions for coding assistants |
+| `CLAUDE.md` | Imports those instructions for Claude Code |
+| `docs/DESIGN.md` | Current game rules, scope and undecided ideas |
+| `docs/NETWORK_CONTRACT.md` | Multiplayer authority and synchronization rules |
+| `docs/CONVENTIONS.md` | Code organization, area ownership and review rules |
+| `docs/reference/Sunk-Cost-Build.pdf` | Unchanged historical production plan |
+| `.claude/agents/*.md` | Specialized review and debugging prompts |
+
+Use any task board the team chooses for assignments and playtest notes. Approved
+design and architecture changes belong in the repository, with a reason; proposals
+must stay labelled as proposals. There is no approved new launch deadline, price,
+team arrival date or binding cut list in this workflow. Consult the current design.
+
+## Daily loop
+
+1. Pick a bounded task and check the working tree. Coordinate shared files with
+   teammates. Area ownership stays in `docs/CONVENTIONS.md`, not a duplicate table.
+2. Work on a task branch, for example `codex/elevator-boarding` or a team-chosen
+   branch name. Direct work on the current branch is possible when explicitly
+   requested; do not discard or overwrite another person's changes.
+3. Read the design and relevant contract before implementation. For new scope,
+   use `scope-cop` as advice when useful; required infrastructure, accessibility,
+   saving and testing do not need to be visible in a streamer clip to matter.
+4. Make the smallest coherent change. Keep design amendments and their code in
+   agreement, without quietly recording a new idea as settled.
+5. Verify proportionally: Markdown links and diffs for docs; compilation and
+   relevant tests for code; host/client scenarios for multiplayer behavior.
+6. Use `netcode-reviewer` for networking, ownership, RPC, SyncVar/SyncList or noise
+   changes. Supply the diff, relevant code and test evidence. A clean AI report
+   does not replace the teammate review required for networking changes.
+7. Commit with a reason and open a PR in the normal team workflow. Gameplay tweaks
+   may be self-merged; contract, RPC and SyncVar changes require a second person
+   under `docs/CONVENTIONS.md`. Never fabricate sign-off. A requested direct push
+   should state any review or validation that remains outstanding.
+
+## Using the four reviewers
+
+In Claude Code, request the named custom agent; project agent definitions live in
+`.claude/agents/`. Newly added definitions may need a new session or reloading via
+`/agents`. In Codex or another assistant, ask it to read the matching Markdown
+file and apply its checklist. These are prompts, not Unity scripts or automated
+tests, and their tool permissions apply only in the tool that understands them.
+
+- **netcode-reviewer:** finds concrete networking defects against the contract.
+- **desync-hunter:** traces where host and client state diverge, then proposes
+  one testable fix at a time.
+- **plan-auditor:** checks evidence, contradictions, assumptions and arithmetic.
+- **scope-cop:** recommends implement, defer or cut, with cost assumptions.
+
+For a desync, record each machine's observed state, object identity, controller,
+tick/time, request and ownership transitions. Test one hypothesis at a time. After
+two failed fixes, revise the hypothesis and collect distinguishing evidence before
+another change. Never call missing client logs a successful test.
+
+## Multiplayer and Unity checks
+
+At minimum, use a host and a separate non-host client. An editor plus one build is
+useful during development; validate Steam transport with builds on two machines.
+For networking changes, exercise the applicable scenarios: simultaneous grabs,
+drop/throw and re-grab, owner disconnect, loaded elevator departure, oxygen item
+use, corpse recovery, and dead/surfaced voice isolation. Test latency and packet
+loss where tooling permits; record actual conditions rather than invented results.
+Test four players before accepting four-player behavior as verified.
+
+One person edits a given scene or prefab at a time. Unity YAML can sometimes be
+merged using UnityYAMLMerge, but a clean text merge does not prove the asset works.
+Have the owners inspect it in Unity; if it cannot be verified, reapply one change.
+Never regenerate `.meta` files merely to clear a conflict.
+
+Playtest the ugly core loop regularly: descend, haul salvage, bank it through the
+shared elevator, rescue or abandon bodies, surface and meet the quota. Record what
+players actually do before expanding content. This is a practice, not an invented
+calendar commitment or a change to the launch scope in `docs/DESIGN.md`.
+
+## Tool documentation
+
+- [Codex repository instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+- [Claude Code memory and imports](https://code.claude.com/docs/en/memory)
+- [Claude Code custom subagents](https://code.claude.com/docs/en/sub-agents)

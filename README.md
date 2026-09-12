@@ -37,6 +37,11 @@ before anything else. It is not a Unity project on its own — unpack it into on
 
 Twenty minutes now saves the rewrite in month five.
 
+For working with Claude, Codex or another assistant, start with the shared
+[AGENTS.md](AGENTS.md) and [team workflow](docs/WORKFLOW.md). Claude's entry point
+imports those same rules; the four review prompts in `.claude/agents/` can also
+be read as checklists by other assistants.
+
 ---
 
 ## Week one, in parallel
