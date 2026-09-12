@@ -124,5 +124,7 @@ and you want a hundred varied ones. Generate those.
 
 ## Full design
 
-The living plan — every locked decision, what's still open, the roadmap — is the
-Sunk Cost Build Plan document. Keep decisions there, not in chat scrollback.
+The living gameplay design is [docs/DESIGN.md](docs/DESIGN.md). Keep current
+decisions and open questions there. The [original production plan](docs/reference/Sunk-Cost-Build.pdf)
+is the unchanged Draft 3 snapshot from 12 September 2026, retained for its roadmap
+and production context. Where rules differ, DESIGN.md takes precedence.

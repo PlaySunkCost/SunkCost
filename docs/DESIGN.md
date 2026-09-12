@@ -4,6 +4,12 @@ The living record of what this game is. **This file is the source of truth.** If
 decision here and something someone remembers from a chat disagree, this file wins.
 Change it in a PR, with a reason.
 
+Updated 13 September 2026 with the team's latest design decisions.
+The [original production plan](reference/Sunk-Cost-Build.pdf) is an unchanged
+Draft 3 snapshot dated 12 September 2026. It provides production context;
+where gameplay rules differ, this file takes precedence. The PDF's open questions
+and implementation suggestions are not additional approved requirements.
+
 > A 1–4 player co-op salvage horror game. Around the year 2300, on an ocean world, a
 > pirate crew lowers you to the seafloor to work off a debt you will never clear. You
 > walk in the dark, drag treasure to a glass elevator, and every time it rises it
@@ -25,7 +31,8 @@ on. A storage room holding everything you've hauled up, as physical objects. A r
 of what you have against what you owe. **No shop.**
 
 **The dive.** Vote a site, ride down as a crew in the glass elevator. One tank of air
-each, no refills. Walk, find salvage, carry it back, send it up.
+each, with capacity determined by tank size. During a dive, air can only be added
+by using an air-restoring item; there are no refill stations or passive refills. Walk, find salvage, carry it back, send it up.
 
 **Leaving.** Anyone can ride up at any time. Once you're up, you can't go back down —
 and the noise of your escape tells the ocean where everyone else still is.
@@ -40,16 +47,17 @@ lever, and keep diving. That is the banking mechanic: whatever goes up is safe
 forever, and you don't have to leave to secure it.
 
 **There is only one of it.** That is the entire constraint. When it goes up, it is
-gone until it comes back — roughly 30 seconds each way. Anyone who needs it during
+gone until it comes back — 15 seconds up and 15 seconds back down.
+It returns without an added surface delay, so a diver waiting below waits 30 seconds total. Anyone who needs it during
 that window simply waits.
 
 > **Sending it up is dangerous twice.** The winch screams and tells the ocean where
-> you are, *and* your only exit is gone for a minute. The original concept called
+> you are, *and* your only exit is gone for 30 seconds. The original concept called
 > depositing "safety and danger at the same time" — with one shared elevator that is
 > now true in two separate ways at once.
 
 > **Why it works.** Your exit is not a thing you have, it is a thing that can be
-> somewhere else. Sending treasure up means nobody can leave for a minute. One person
+> somewhere else. Sending treasure up means nobody can leave for 30 seconds. One person
 > bailing early means everyone else is stranded — and they watch it happen through the
 > glass. A diver at 6% air, standing in the dark, watching the lights rise away
 > without them, is the game working exactly as designed.
@@ -78,7 +86,7 @@ that window simply waits.
 | Camera | First person with a visible body. |
 | Movement | Walking only, no swimming. In-world reason still open. |
 | Suits | Identical for everyone, cosmetic skins purchasable. Each player has a distinct lamp colour — that's how you identify a shape in the dark. |
-| Air | One tank per diver, no refills anywhere. 12–15 minutes base. Larger tanks purchasable but physically heavier; portable spare bottles are carried items you activate. |
+| Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. |
 | Air drain | Faster when sprinting, carrying weight, or damaged. Greed literally costs you air. |
 | Damage | Attacks can open a leak. Patch it with an item or a teammate. No regeneration — healing is items only. |
 | Lethality | Depends on the monster, your current health, and your oxygen level. Low air makes you fragile, so a bad dive accelerates. |
@@ -94,8 +102,7 @@ that window simply waits.
 This is the rule set that makes people play carefully, and the reason dragging a
 corpse is a decision rather than a gesture.
 
-**Dying costs you everything you bought.** All purchased upgrades — tanks, lights,
-tools, radio — are gone. Not damaged, not dropped: gone. You come back for the next
+**Dying costs you everything you bought.** All purchased upgrades are gone if your body is not recovered. Not damaged, not dropped: gone. You come back for the next
 dive with nothing but the base kit.
 
 **Unless your body comes up.** If the crew gets your corpse to the surface, you keep
@@ -121,11 +128,16 @@ someone is a commitment you feel.
 - **A disconnected player's body behaves exactly like a dead one** — stays where it
   fell, carries their gear, recoverable.
 
-### Open — decide before building
+### Recovery incentive and upgrade scope
 
-- **Partial loss?** Losing 100% of purchases may be too harsh late in a run when gear
-  is expensive. Consider keeping one item, or losing a percentage. Playtest before
-  deciding — the harsh version is the better starting point.
+**Keep full equipment loss when a body is not recovered.** This is an intentional
+reason to carry a friend's body to the elevator. Recovering the body preserves
+their purchased equipment; the free base kit always lets them dive again.
+
+Expect a small upgrade list. A larger oxygen tank is confirmed; other upgrades
+are still undecided. Lights, tools and a surface radio are possible equipment
+ideas, not a committed upgrade catalogue. Tune prices and recovery effort around
+this small scope during playtests.
 
 **Settled:** a body can be loaded into the elevator and sent up alone, like any other
 cargo. Recovering a friend's gear costs you the carry and the elevator's absence, not
@@ -169,8 +181,8 @@ your own exit.
 | Lobbies | Friends and invite codes at launch. |
 | Dead players | Watch any diver, click to switch. Talk only to other dead players. |
 | Surfaced players | **One shared TV on the boat** — everyone up top watches the same diver and has to agree who. Talk only to each other. |
-| Talking to divers | Requires a purchasable surface radio. |
-| Disconnects | Body stays, gear recoverable. Rejoin at HQ between cycles, not mid-dive. |
+| Talking to divers | Proposed: a purchasable surface radio. Its inclusion in the small equipment list remains undecided. |
+| Disconnects | Body stays, gear recoverable. Current baseline: rejoin at HQ between cycles; never mid-dive. Under consideration: allow joining/rejoining on the boat between dives within the three-dive cycle. This is not yet approved and does not change HQ-only saving. |
 
 ---
 
@@ -197,8 +209,10 @@ your own exit.
 |---|---|
 | Why you can't swim | Best option: thrusters exist, but they're loud, burn air and draw creatures. Build walking-only for now. |
 | Which 5–6 monsters | Build the Bell Eater first — it's drawn to the elevator, so it tests the core loop directly. |
-| Elevator round trip | 30 seconds provisionally. The most important tuning number in the game — it decides how badly a stranded diver suffers. |
-| Partial equipment loss on death | See section 4. |
+| Elevator timing | Settled: 15 seconds down, 15 seconds up. Sending it up leaves a diver below waiting 30 seconds for its return. |
+| Air-restoring items | Amount restored, availability and activation time are undecided. One equipped tank; no other in-dive air restoration. |
+| Between-dive joining/rejoining | Consider boat entry between dives. Decide new-player versus returning-player eligibility, gear restoration and quota scaling before implementation. HQ-only entry remains the baseline. |
+| Upgrade catalogue | Keep it small. Larger oxygen tanks confirmed; other upgrades undecided. Full loss without body recovery remains the rule. |
 | Personal debt per player | A visible per-player debt alongside the crew quota would make the title mechanically true. |
 | Title | "Sunk Cost" vs "Black Tide". Search Steam and a trademark register first. |
 | Loot breakage | Deferred. |
