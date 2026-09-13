@@ -78,10 +78,72 @@ Fixed by:
   (`Basketball.cs`'s `RefreshRole`); cosmetic, unrelated to this fix, not fixed
   here to keep this change scoped.
 
+## First two-computer Steam session and the bugs it found (13 September 2026)
+
+Two players on separate Windows computers with separate Steam accounts connected
+over Steam P2P (App ID 480, host SteamID64 join) on the build from commit
+`1803cea`. Movement, both players visible, and the **host** picking up, dropping
+and throwing the ball all worked. Two defects were reported by the players:
+
+1. **The non-host player could not drop or throw after picking the ball up.**
+   Root cause (confirmed in FishNet source): `TargetConfirmHeld` was a
+   `TargetRpc`, which FishNet writes to the outgoing buffer immediately, while the
+   `holderClientId`/`state` SyncVars are flushed at tick end. The remote client
+   therefore ran the RPC while `holderClientId` was still `-1`, `ResolveHolder`
+   found nobody, `SetHeldBall` never ran, and the client's input code saw
+   `heldBall == null`. The host never hit this because its SyncVar values are set
+   in-process. Fixed by deriving the local held flag from the SyncVars' `OnChange`
+   (`SyncLocalHeldState`) and making the throw impulse tolerate either arrival
+   order (`TargetApplyRelease` stores a pending release that is applied once the
+   `Released` state has also replicated).
+2. **Leave did not do anything useful.** It only stopped the connection and left a
+   dead screen. Per the user's follow-up decision it now returns to the host/join
+   menu: host leave closes the room and returns every client to their menu;
+   client leave returns only that client and the host keeps playing. A re-hosted
+   room resets the ball to its spawn. The transport is locked after the first
+   session of a run (FishNet binds its managers to the transport once).
+
+### Re-verification with a genuine remote client (Unity MCP)
+
+The earlier local checks drove grabs from the host side, which is exactly why
+they missed defect 1. This pass used the **standalone build as the host, launched
+headless (`-batchmode -nographics -hq-auto-host-local`) so its own player cannot
+receive stray keyboard/mouse input**, and the editor as a pure joining client
+(`server=False`, client id 1). A first attempt with a windowed host was discarded
+because the host window had focus and its player grabbed/dropped the ball on its
+own three times, contaminating the run.
+
+- Client grab via the real `ServerRequestGrab` ServerRpc: server accepted; the
+  client's private `heldBall` field became **set** (previously null); the ball
+  lifted to the client's hold point.
+- Client throw via the real `ServerRequestRelease` ServerRpc: ball travelled
+  about 7 m, settled, handed off (`Free`, `holderClientId=-1`), `heldBall`
+  cleared. Host log shows exactly one grab, one release and one rest, in order,
+  with no exceptions.
+- Client Leave: editor returned to the lobby (preview camera/listener re-enabled,
+  cursor released); host received an **immediate** clean disconnect and kept
+  running with `players=1`. Rejoining the same host afterwards worked (new client
+  id, ball received at its current position).
+- Host loss: when the host process was killed, the client returned to the lobby
+  once the transport timeout fired.
+- Host Leave (editor hosting, headless standalone client): server stopped, the
+  standalone client received a peer-disconnect immediately and its process stayed
+  alive in its lobby; hosting again from the same editor process worked, with the
+  ball reset to spawn and no stale held state even though the room had been
+  closed while the ball was held.
+- Console: zero errors throughout; the "2 audio listeners" flood is fixed by
+  disabling the preview camera's `AudioListener` together with the camera.
+
+These hooks (`ClientRequestGrab`, `ClientRequestRelease`, `ClientHeldBallField`,
+`SessionUiState`, …) live in `HQPrototypeTestHooks.cs` and reach the private RPC
+methods by reflection so the game code needs no test-only entry points.
+
 ### Still not covered by this session
 
-- Real Steam transport (two Windows computers, two Steam accounts) remains
-  untested, as noted above.
+- The two fixes above were verified over the local transport with a real remote
+  client; they have **not yet** been re-tested over Steam on two computers. The
+  next two-computer Steam session should specifically re-check the non-host
+  player's drop/throw and both Leave paths.
 - The disconnect path was exercised by directly granting ownership through the
   new `HQPrototypeTestHooks` helper rather than a real second player physically
   grabbing the ball with mouse/keyboard input — appropriate because MCP can only

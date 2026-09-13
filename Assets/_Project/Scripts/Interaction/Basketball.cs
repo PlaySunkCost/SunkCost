@@ -23,6 +23,12 @@ namespace SunkCost.Interaction
         private HQPlayerController holder;
         private float restTime;
         private float releaseTime;
+        // Release impulse from the server, applied once the Released state has also
+        // replicated. TargetRpcs reach a remote client before the same tick's
+        // SyncVar flush, so neither may assume the other has arrived.
+        private bool hasPendingRelease;
+        private Vector3 pendingReleaseDirection;
+        private bool pendingReleaseThrow;
 
         public bool IsHeld => state.Value == Held;
         public int HolderClientId => holderClientId.Value;
@@ -41,10 +47,21 @@ namespace SunkCost.Interaction
             ResolveHolder();
         }
 
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            // Late joiners and reconnecting clients get their initial SyncVar values
+            // without OnChange callbacks, so derive the local held state here too.
+            SyncLocalHeldState();
+        }
+
         public override void OnStartServer()
         {
             base.OnStartServer();
             ServerManager.OnRemoteConnectionState += ServerOnRemoteConnectionState;
+            // A scene object keeps its last transform across sessions; a newly opened
+            // room should not inherit where the previous room's last throw ended.
+            ServerReset();
         }
 
         public override void OnStopServer()
@@ -85,7 +102,7 @@ namespace SunkCost.Interaction
         {
             if (!IsSpawned)
                 return;
-            if (state.Value == Held && IsOwner)
+            if (state.Value == Held && IsOwner && !hasPendingRelease)
             {
                 ResolveHolder();
                 if (holder != null && holder.HoldPoint != null)
@@ -120,7 +137,6 @@ namespace SunkCost.Interaction
             holderClientId.Value = connection.ClientId;
             state.Value = Held;
             GiveOwnership(connection);
-            TargetConfirmHeld(connection, true);
             RefreshRole();
             return true;
         }
@@ -131,7 +147,6 @@ namespace SunkCost.Interaction
             if (state.Value != Held || connection == null || connection.ClientId != holderClientId.Value)
                 return;
             state.Value = Released;
-            TargetConfirmHeld(connection, false);
             Vector3 safeDirection = direction.sqrMagnitude > 0.01f ? direction.normalized : Vector3.zero;
             TargetApplyRelease(connection, safeDirection, throwBall);
         }
@@ -148,20 +163,42 @@ namespace SunkCost.Interaction
         }
 
         [TargetRpc]
-        private void TargetConfirmHeld(NetworkConnection connection, bool value)
-        {
-            ResolveHolder();
-            if (holder != null)
-                holder.SetHeldBall(value ? this : null);
-        }
-
-        [TargetRpc]
         private void TargetApplyRelease(NetworkConnection connection, Vector3 direction, bool throwBall)
         {
+            hasPendingRelease = true;
+            pendingReleaseDirection = direction;
+            pendingReleaseThrow = throwBall;
+            TryApplyPendingRelease();
+        }
+
+        // Runs from both the TargetRpc and the state OnChange; whichever arrives
+        // second applies the impulse, exactly once.
+        private void TryApplyPendingRelease()
+        {
+            if (!hasPendingRelease || state.Value != Released || !IsOwner)
+                return;
+            hasPendingRelease = false;
             RefreshRole();
             body.useGravity = true;
-            if (throwBall)
-                body.linearVelocity = direction * throwSpeed;
+            if (pendingReleaseThrow)
+                body.linearVelocity = pendingReleaseDirection * throwSpeed;
+        }
+
+        // The local player's held flag comes from the replicated SyncVars, not from
+        // an RPC, so it cannot observe a half-applied grab or release.
+        private void SyncLocalHeldState()
+        {
+            if (!IsClientStarted || ClientManager?.Connection == null)
+                return;
+            bool localHolds = state.Value == Held && holderClientId.Value == ClientManager.Connection.ClientId;
+            foreach (HQPlayerController candidate in FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None))
+            {
+                if (candidate.IsOwner)
+                {
+                    candidate.SetHeldBall(localHolds ? this : null);
+                    break;
+                }
+            }
         }
 
         [Server]
@@ -180,13 +217,18 @@ namespace SunkCost.Interaction
         {
             restTime = 0f;
             releaseTime = 0f;
+            if (next != Released)
+                hasPendingRelease = false;
             ResolveHolder();
             RefreshRole();
+            SyncLocalHeldState();
+            TryApplyPendingRelease();
         }
 
         private void OnHolderChanged(int previous, int next, bool asServer)
         {
             ResolveHolder();
+            SyncLocalHeldState();
         }
 
         private void ResolveHolder()

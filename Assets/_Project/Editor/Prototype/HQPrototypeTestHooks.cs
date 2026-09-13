@@ -1,7 +1,9 @@
 using System.Linq;
+using System.Reflection;
 using FishNet.Connection;
 using FishNet.Managing;
 using SunkCost.Interaction;
+using SunkCost.Net;
 using SunkCost.Player;
 using UnityEngine;
 
@@ -63,6 +65,73 @@ namespace SunkCost.Editor.Prototype
             host.transform.position = ball.transform.position + new Vector3(0.5f, 0f, 0f);
             bool grabbed = ball.ServerTryGrab(host.Owner, host);
             return $"grabbed={grabbed}; isHeld={ball.IsHeld}; holderClientId={ball.HolderClientId}";
+        }
+
+        // --- Remote-client checks. Run these with the EDITOR JOINED AS A CLIENT to a
+        // separately running host build, so they exercise the real client request path
+        // (ServerRpc over the transport), not in-process host shortcuts.
+
+        public static string ClientMoveLocalPlayerToBall()
+        {
+            Basketball ball = Object.FindFirstObjectByType<Basketball>();
+            HQPlayerController local = LocalPlayer();
+            if (ball == null || local == null) return "Missing ball or local player.";
+            CharacterController cc = local.GetComponent<CharacterController>();
+            Vector3 target = ball.transform.position + new Vector3(0.6f, 0.9f, 0f);
+            // CharacterController overrides direct transform writes unless disabled.
+            cc.enabled = false;
+            local.transform.position = target;
+            cc.enabled = true;
+            return $"moved local player to {target}";
+        }
+
+        public static string ClientRequestGrab()
+        {
+            Basketball ball = Object.FindFirstObjectByType<Basketball>();
+            HQPlayerController local = LocalPlayer();
+            if (ball == null || local == null) return "Missing ball or local player.";
+            MethodInfo rpc = typeof(HQPlayerController).GetMethod("ServerRequestGrab", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (rpc == null) return "ServerRequestGrab not found.";
+            rpc.Invoke(local, new object[] { ball.NetworkObject, null });
+            return "grab requested";
+        }
+
+        public static string ClientRequestRelease(bool throwBall)
+        {
+            Basketball ball = Object.FindFirstObjectByType<Basketball>();
+            HQPlayerController local = LocalPlayer();
+            if (ball == null || local == null) return "Missing ball or local player.";
+            MethodInfo rpc = typeof(HQPlayerController).GetMethod("ServerRequestRelease", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (rpc == null) return "ServerRequestRelease not found.";
+            rpc.Invoke(local, new object[] { ball.NetworkObject, local.transform.forward, throwBall, null });
+            return throwBall ? "throw requested" : "drop requested";
+        }
+
+        // What the local player's input code will actually act on.
+        public static string ClientHeldBallField()
+        {
+            HQPlayerController local = LocalPlayer();
+            if (local == null) return "No local player.";
+            FieldInfo field = typeof(HQPlayerController).GetField("heldBall", BindingFlags.Instance | BindingFlags.NonPublic);
+            object value = field?.GetValue(local);
+            return $"heldBall={(value == null ? "null" : "set")}; localClientId={local.Owner.ClientId}";
+        }
+
+        public static string SessionUiState()
+        {
+            PrototypeSessionUI ui = Object.FindFirstObjectByType<PrototypeSessionUI>();
+            if (ui == null) return "No PrototypeSessionUI.";
+            System.Type t = typeof(PrototypeSessionUI);
+            const BindingFlags f = BindingFlags.Instance | BindingFlags.NonPublic;
+            Camera preview = (Camera)t.GetField("previewCamera", f).GetValue(ui);
+            return $"sessionActive={t.GetField("sessionActive", f).GetValue(ui)}; isHost={t.GetField("isHost", f).GetValue(ui)}; " +
+                   $"transportLocked={t.GetField("transportLocked", f).GetValue(ui)}; previewCamera={(preview == null ? "none" : preview.enabled.ToString())}; " +
+                   $"status='{t.GetField("status", f).GetValue(ui)}'; {ui.RuntimeDiagnostics}";
+        }
+
+        private static HQPlayerController LocalPlayer()
+        {
+            return Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
         }
 
         public static string BallState()

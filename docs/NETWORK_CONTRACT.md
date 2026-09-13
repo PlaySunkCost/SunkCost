@@ -144,6 +144,18 @@ If a method name does not say who calls it and who runs it, rename it.
 - The HQ basketball harness has no death, inventory or persistent run. In this
   harness only, disconnect despawns that player's temporary avatar and immediately
   returns any held or released basketball to server simulation.
+- Harness leave semantics: a leaving client stops its own connection (a clean
+  disconnect, so the host does not wait for a timeout); a leaving host stops the
+  server, which disconnects every client. There is no host migration. The
+  transport is bound once per process because FishNet's Server/ClientManagers
+  subscribe to `TransportManager.Transport` at initialization; switching
+  Local/Steam requires a restart.
+- Ordering rule learned from the harness: a `TargetRpc` is written to the
+  outgoing buffer immediately, while SyncVars flush at tick end, so a remote
+  client can run the RPC before the same tick's SyncVar values arrive (the host
+  never sees this because its values are set in-process). Client-side state that
+  depends on both must be derived from the SyncVars' `OnChange` (or tolerate
+  either order), never from the RPC alone.
 
 ## 7. Tick rate
 

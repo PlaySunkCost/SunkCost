@@ -236,6 +236,13 @@ It has no scoring, inventory, economy, saving, combat or finished art. Local/LAN
 mode supports development on one computer; Steam mode connects by the host's
 SteamID64. A lobby and invite browser remain follow-up work.
 
+Leaving (decided 13 September 2026): **Leave** returns the player to the host/join
+menu rather than quitting. If the host leaves, the room closes and every client is
+returned to their own menu; if a client leaves, only that client goes back and the
+host keeps playing. A closed room starts fresh when hosted again (the basketball
+returns to its spawn). The transport chosen for the first session of a run stays
+fixed until the game is restarted.
+
 ### The only test that matters
 
 At the end of the prototype, four people play the ugly version. If you hear these

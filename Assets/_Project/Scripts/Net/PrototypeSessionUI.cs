@@ -22,6 +22,13 @@ namespace SunkCost.Net
         private bool useSteam;
         private bool steamInitialized;
         private bool sessionStarting;
+        // True from Host/Join until Leave or a disconnect returns this peer to the lobby.
+        private bool sessionActive;
+        private bool isHost;
+        // FishNet binds its Server/ClientManagers to TransportManager.Transport once, when
+        // the network root first initializes, so the transport cannot change afterwards.
+        private bool transportLocked;
+        private bool clientStateSubscribed;
         private Transport steamTransport;
         private int lastReportedPlayerCount = -1;
         private string status = "Choose Local or Steam, then Host or Join.";
@@ -75,6 +82,8 @@ namespace SunkCost.Net
 
         private void OnDestroy()
         {
+            if (clientStateSubscribed && networkManager != null && networkManager.ClientManager != null)
+                networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
             if (steamInitialized) SteamAPI.Shutdown();
         }
 
@@ -83,18 +92,25 @@ namespace SunkCost.Net
             GUILayout.BeginArea(new Rect(18, 18, 410, 300), GUI.skin.box);
             GUILayout.Label("SUNK COST — HQ BASKETBALL");
             GUILayout.Label(status);
-            if (networkRoot != null && networkRoot.activeSelf && networkManager != null)
+            if (sessionActive && networkManager != null)
             {
                 GUILayout.Label($"Server: {networkManager.ServerManager.Started}   Client: {networkManager.ClientManager.Started}");
                 if (steamInitialized) GUILayout.Label("Your Steam ID: " + SteamUser.GetSteamID().m_SteamID);
-                if (GUILayout.Button("Leave")) StopSession();
+                if (GUILayout.Button(isHost ? "Leave (closes the room)" : "Leave")) LeaveSession();
             }
             else
             {
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Toggle(!useSteam, "Local / LAN", GUI.skin.button)) useSteam = false;
-                if (GUILayout.Toggle(useSteam, "Steam P2P", GUI.skin.button)) useSteam = true;
-                GUILayout.EndHorizontal();
+                if (transportLocked)
+                {
+                    GUILayout.Label((useSteam ? "Steam P2P" : "Local / LAN") + " (locked for this run; restart to change)");
+                }
+                else
+                {
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Toggle(!useSteam, "Local / LAN", GUI.skin.button)) useSteam = false;
+                    if (GUILayout.Toggle(useSteam, "Steam P2P", GUI.skin.button)) useSteam = true;
+                    GUILayout.EndHorizontal();
+                }
                 GUILayout.Label(useSteam ? "Host SteamID64 (Join only)" : "Host IP (127.0.0.1 on same PC)");
                 address = GUILayout.TextField(address);
                 GUILayout.BeginHorizontal();
@@ -146,10 +162,18 @@ namespace SunkCost.Net
             }
             Transport selected = useSteam ? steamTransport : localTransport;
             if (selected == null) { status = "Selected transport is missing."; return; }
-            transportManager.Transport = selected;
+            if (!transportLocked)
+            {
+                transportManager.Transport = selected;
+                transportLocked = true;
+            }
             networkRoot.SetActive(true);
-            if (previewCamera != null) previewCamera.enabled = false;
             if (!networkManager.Initialized) { status = "Network manager did not initialize."; return; }
+            if (!clientStateSubscribed)
+            {
+                networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+                clientStateSubscribed = true;
+            }
             if (host)
             {
                 if (!networkManager.ServerManager.StartConnection()) { status = "Server failed to start."; return; }
@@ -160,9 +184,12 @@ namespace SunkCost.Net
             else
             {
                 if (string.IsNullOrWhiteSpace(address)) { status = "Enter the host address."; return; }
-                bool started = networkManager.ClientManager.StartConnection(address.Trim());
-                status = started ? "Connecting to " + address.Trim() : "Client failed to start.";
+                if (!networkManager.ClientManager.StartConnection(address.Trim())) { status = "Client failed to start."; return; }
+                status = "Connecting to " + address.Trim();
             }
+            isHost = host;
+            sessionActive = true;
+            SetPreviewCameraActive(false);
         }
 
         private IEnumerator StartHostClientWhenServerIsReady()
@@ -200,11 +227,48 @@ namespace SunkCost.Net
             return steamInitialized;
         }
 
-        private void StopSession()
+        // Host: closing the room stops the server, which disconnects every client so
+        // they also return to their lobby. Client: only this peer leaves; the host and
+        // anyone else stay in the room. Stopping cleanly sends a disconnect instead of
+        // making the other side wait for a timeout.
+        public void LeaveSession()
         {
             if (networkManager != null && networkManager.ClientManager.Started) networkManager.ClientManager.StopConnection();
-            if (networkManager != null && networkManager.ServerManager.Started) networkManager.ServerManager.StopConnection(true);
-            status = "Session stopped. Restart the scene to choose another transport.";
+            if (isHost && networkManager != null && networkManager.ServerManager.Started) networkManager.ServerManager.StopConnection(true);
+            ReturnToLobby(isHost ? "Room closed. Host or join again." : "Left the room. Host or join again.");
+        }
+
+        private void OnClientConnectionState(ClientConnectionStateArgs args)
+        {
+            if (args.ConnectionState != LocalConnectionState.Stopped || !sessionActive)
+                return;
+            // Our own Leave already handled this; anything else is the host closing the
+            // room, a kick, or a lost connection.
+            if (isHost)
+                return;
+            ReturnToLobby("Disconnected from the host. Host or join again.");
+        }
+
+        // The preview camera carries the lobby's AudioListener; leaving it on beside the
+        // spawned player's listener floods the console with "2 audio listeners".
+        private void SetPreviewCameraActive(bool active)
+        {
+            if (previewCamera == null) return;
+            previewCamera.enabled = active;
+            AudioListener listener = previewCamera.GetComponent<AudioListener>();
+            if (listener != null) listener.enabled = active;
+        }
+
+        private void ReturnToLobby(string message)
+        {
+            sessionActive = false;
+            isHost = false;
+            sessionStarting = false;
+            lastReportedPlayerCount = -1;
+            SetPreviewCameraActive(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            status = message;
         }
 
         private static bool HasArgument(string[] arguments, string expected)
