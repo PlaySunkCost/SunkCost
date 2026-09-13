@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Steamworks;
 using UnityEngine;
 
@@ -64,9 +65,49 @@ namespace SunkCost.Net
             return string.IsNullOrEmpty(name) ? "Steam user" : name;
         }
 
+        public struct Friend
+        {
+            public ulong SteamId;
+            public string Name;
+            public bool Online;
+        }
+
+        // The local user's regular Steam friends, online ones first, for the in-game
+        // invite list. This works without the overlay (the editor never has it).
+        public List<Friend> Friends()
+        {
+            var result = new List<Friend>();
+            if (!Initialized) return result;
+            int count = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagImmediate);
+            for (int i = 0; i < count; i++)
+            {
+                CSteamID id = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
+                result.Add(new Friend
+                {
+                    SteamId = id.m_SteamID,
+                    Name = PersonaName(id.m_SteamID),
+                    Online = SteamFriends.GetFriendPersonaState(id) != EPersonaState.k_EPersonaStateOffline
+                });
+            }
+            result.Sort((a, b) => a.Online == b.Online ? string.CompareOrdinal(a.Name, b.Name) : (a.Online ? -1 : 1));
+            return result;
+        }
+
         private void Update()
         {
-            if (Initialized) SteamAPI.RunCallbacks();
+            if (!Initialized) return;
+            try
+            {
+                SteamAPI.RunCallbacks();
+            }
+            catch (InvalidOperationException exception)
+            {
+                // Steamworks' static dispatcher was reset under us (an editor script
+                // reload during a live session). Stop pumping and say so once.
+                Initialized = false;
+                LastError = "Steam state was lost (script reload during a session?); restart the game to use Steam again.";
+                Debug.LogWarning("[Steam] " + LastError + " " + exception.Message);
+            }
         }
 
         private void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)

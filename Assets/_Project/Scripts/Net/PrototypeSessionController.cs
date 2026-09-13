@@ -193,6 +193,24 @@ namespace SunkCost.Net
             return true;
         }
 
+        // Direct invite through Steam's friends system; no overlay needed. The friend
+        // gets a Steam notification and, with the build running, our invite listener
+        // receives the lobby id when they accept.
+        public bool InviteFriend(ulong friendSteamId, out string error)
+        {
+            if (!InRoom || boundMode != SessionMode.Steam || lobbyId == 0) { error = "Invite needs a ready Steam room."; return false; }
+            if (!SteamMatchmaking.InviteUserToLobby(new CSteamID(lobbyId), new CSteamID(friendSteamId)))
+            {
+                error = "Steam did not accept the invite.";
+                return false;
+            }
+            error = string.Empty;
+            message = "Invite sent to " + steam.PersonaName(friendSteamId) + ".";
+            return true;
+        }
+
+        public List<SteamBootstrap.Friend> Friends() => steam != null ? steam.Friends() : new List<SteamBootstrap.Friend>();
+
         private void OnInviteRequested(ulong invitedLobbyId)
         {
             if (state != SessionState.Menu)

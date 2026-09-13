@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using FishNet.Managing;
 using FishNet.Managing.Transporting;
 using FishNet.Transporting;
@@ -190,10 +191,9 @@ namespace SunkCost.Net
                 GUILayout.EndHorizontal();
                 if (controller.InRoom)
                 {
-                    GUI.enabled = controller.SteamOverlayAvailable;
-                    if (GUILayout.Button(controller.SteamOverlayAvailable ? "Invite friends (Steam overlay)" : "Invite unavailable — share the lobby ID"))
+                    if (controller.SteamOverlayAvailable && GUILayout.Button("Invite via Steam overlay"))
                         controller.InviteFriends(out _);
-                    GUI.enabled = true;
+                    DrawFriendInvites();
                 }
                 GUILayout.Label($"Lobby members {s.LobbyMembers}/{s.TotalPlayers}   Players in HQ {s.PlayersInHq}/{s.TotalPlayers}");
             }
@@ -224,6 +224,39 @@ namespace SunkCost.Net
                 controller.Leave("Cancelled.");
             }
             GUILayout.EndHorizontal();
+        }
+
+        // Online Steam friends with an Invite button each; the friends list is
+        // re-read at most every couple of seconds, not per repaint.
+        private List<SteamBootstrap.Friend> friendsCache = new();
+        private float nextFriendsRefresh;
+        private Vector2 friendsScroll;
+        private bool showOfflineFriends;
+
+        private void DrawFriendInvites()
+        {
+            if (Time.unscaledTime >= nextFriendsRefresh)
+            {
+                friendsCache = controller.Friends();
+                nextFriendsRefresh = Time.unscaledTime + 2f;
+            }
+            int online = 0;
+            foreach (SteamBootstrap.Friend f in friendsCache) if (f.Online) online++;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Invite a friend ({online} online)");
+            showOfflineFriends = GUILayout.Toggle(showOfflineFriends, "show offline", GUILayout.Width(100));
+            GUILayout.EndHorizontal();
+            friendsScroll = GUILayout.BeginScrollView(friendsScroll, GUILayout.Height(96));
+            foreach (SteamBootstrap.Friend friend in friendsCache)
+            {
+                if (!friend.Online && !showOfflineFriends) continue;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(friend.Name + (friend.Online ? "" : "  (offline)"));
+                if (GUILayout.Button("Invite", GUILayout.Width(60))) controller.InviteFriend(friend.SteamId, out _);
+                GUILayout.EndHorizontal();
+            }
+            if (friendsCache.Count == 0) GUILayout.Label("(no Steam friends found)");
+            GUILayout.EndScrollView();
         }
 
         private static bool HasArgument(string[] arguments, string expected)
