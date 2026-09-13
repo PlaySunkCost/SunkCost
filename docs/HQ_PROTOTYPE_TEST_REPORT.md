@@ -246,3 +246,13 @@ lobby (S5), non-member direct connect (S6), guest/host leave and loss over Steam
 cases (S9), invite while in a room (S11), simultaneous final-seat joins (S12),
 and the human input-gate check (L5). Teammate review of the admission handshake:
 pending.
+
+### Two-account Steam session (14 September 2026, reported by Dan)
+
+Dan hosted and a friend joined over Steam using the shared build from
+`db33884` (`Builds/HQPrototype`, `localOnly=false`). Dan reported it worked: the
+friend entered the room. Not recorded: which join path was used (in-game invite,
+overlay invite, or lobby ID), per-machine F3/F4 snapshots, latency, or whether
+guest throw and Leave were exercised on Steam. Treat this as a pass for "a second
+account can enter a friends-only room through the lobby" (S1 or S2, path
+unspecified), not for S3–S9, S11 or S12, which stay pending.
