@@ -44,11 +44,30 @@ be read as checklists by other assistants.
 
 ---
 
+## Start the HQ basketball prototype
+
+1. Open this repository with Unity `6000.6.0f1`.
+2. Open `Assets/_Project/Scenes/Prototype/HQPrototype.unity` and press Play.
+3. Choose **Local / LAN** and **Host**. A second build can choose **Join** with
+   `127.0.0.1` on the same computer, or the host's LAN IP on another computer.
+4. Move with WASD, sprint with Shift, look with the mouse, press E to pick up or
+   drop the basketball, and left-click while holding it to throw. Escape releases
+   the cursor.
+
+Create a runnable Windows build with **Sunk Cost > Prototype > Build Windows
+Development**. Unity writes it to `Builds/HQPrototype/SunkCostHQ.exe` and creates
+the ignored development `steam_appid.txt` beside it. For Steam, both players run
+the same build with Steam open, select **Steam P2P**, and the joining player enters
+the host's displayed SteamID64. Lobby browsing and friend invites are not in this
+first slice.
+
+---
+
 ## Week one, in parallel
 
 ### Dev A — networking, alone, nothing else
-Install **FishNet** (free, Asset Store) and a Steam transport (**FishySteamworks**,
-which pulls in Steamworks.NET). Goal for the week, and the only goal:
+The prototype now pins **FishNet** and **Steamworks.NET**, and carries the unchanged
+FishySteamworks source under `Assets/ThirdParty/`. The networking goal remains:
 
 > Two separate builds, on two machines, connected over Steam, walking around a grey box.
 
