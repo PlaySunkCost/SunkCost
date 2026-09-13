@@ -27,16 +27,26 @@ namespace SunkCost.Noise
 
         float nextAllowedTime;
 
+        // NoiseEvent.SourceId is a FishNet ObjectId - stable across machines - not a local
+        // Unity handle. A bare NoiseEmitter sits on plain objects (a crate, a torch) with no
+        // NetworkObject, so it reports 0: "the world". This previously passed
+        // gameObject.GetInstanceID(), which is per-machine and would have compared wrong the
+        // moment a SourceId crossed the wire. Unity 6.6 turning that into a compile error is
+        // the only reason we caught it.
+        // TODO: when FishNet is wired in, take an optional NetworkObject and report its
+        // ObjectId here. Do NOT use GetEntityId() - EntityId is a 64-bit local handle with
+        // no lossless int conversion (see Unity's InstanceID-to-EntityId migration guide).
+
         /// <summary>Make the noise now.</summary>
         public void Fire()
         {
-            NoiseSystem.Emit(transform.position, radius, kind, gameObject.GetInstanceID());
+            NoiseSystem.Emit(transform.position, radius, kind);
         }
 
         /// <summary>Make the noise at a custom volume — a heavy drop is louder than a nudge.</summary>
         public void Fire(float radiusOverride)
         {
-            NoiseSystem.Emit(transform.position, radiusOverride, kind, gameObject.GetInstanceID());
+            NoiseSystem.Emit(transform.position, radiusOverride, kind);
         }
 
         void OnCollisionEnter(Collision collision)
@@ -51,7 +61,7 @@ namespace SunkCost.Noise
 
             // Louder the harder it lands, capped at 2x so nothing gets silly.
             float scale = Mathf.Min(speed / impactVelocityThreshold, 2f);
-            NoiseSystem.Emit(transform.position, radius * scale, kind, gameObject.GetInstanceID());
+            NoiseSystem.Emit(transform.position, radius * scale, kind);
         }
 
         void OnDrawGizmosSelected()
