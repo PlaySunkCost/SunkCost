@@ -734,7 +734,10 @@ namespace SunkCost.Net
             {
                 case EChatRoomEnterResponse.k_EChatRoomEnterResponseFull: return "Room full.";
                 case EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist: return "Room no longer exists.";
-                case EChatRoomEnterResponse.k_EChatRoomEnterResponseNotAllowed:
+                // Friends-only lobby: Steam refuses anyone not on the host's friends
+                // list, even with the right code. Say so, or the playtest evening turns
+                // into "the code doesn't work".
+                case EChatRoomEnterResponse.k_EChatRoomEnterResponseNotAllowed: return "Not allowed: you need to be a Steam friend of the host, or ask them for an invite.";
                 case EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned: return "This room is not available to this account.";
                 case EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited:
                 case EChatRoomEnterResponse.k_EChatRoomEnterResponseCommunityBan:

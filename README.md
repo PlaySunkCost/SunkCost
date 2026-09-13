@@ -69,7 +69,9 @@ manifest beside the executable:
 **Steam P2P** first (that is what registers the invite listener). The host clicks
 **Host**: a friends-only Steam lobby is created and its **lobby ID** is shown with
 Copy and Invite buttons. Guests either accept the Steam overlay invite or paste
-the lobby ID and click **Join**. Joining checks the lobby's game marker, protocol
+the lobby ID and click **Join**. The lobby is friends-only, so joining by ID only
+works for people on the host's Steam friends list (invites are friends anyway).
+Joining checks the lobby's game marker, protocol
 and build revision, then the server checks Steam lobby membership before a player
 spawns; a fifth player, a different build, or a closed room gets a message. The
 first session locks the transport (Local or Steam) until the game restarts.

@@ -160,6 +160,7 @@ namespace SunkCost.Net
             if (steamMode)
             {
                 GUILayout.Label("Steam lobby ID (Join only). Invites arrive automatically while this screen is open.");
+                GUILayout.Label("Rooms are friends-only: joining by ID needs you on the host's Steam friends list.");
                 lobbyIdField = GUILayout.TextField(lobbyIdField);
             }
             else
