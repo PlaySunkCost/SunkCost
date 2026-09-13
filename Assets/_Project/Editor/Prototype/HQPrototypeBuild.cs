@@ -12,6 +12,7 @@ namespace SunkCost.Editor.Prototype
     {
         public const string OutputPath = "Builds/HQPrototype/SunkCostHQ.exe";
         public const string LocalOutputPath = "Builds/HQPrototypeLocal/SunkCostHQ.exe";
+        public const string LinuxOutputPath = "Builds/HQPrototypeLinux/SunkCostHQ";
 
         // The shareable Steam build: requires a clean checkout so every tester's
         // build carries the same Git revision (docs/STEAM_LOBBY_IMPLEMENTATION_PLAN.md
@@ -21,7 +22,7 @@ namespace SunkCost.Editor.Prototype
         {
             if (PrototypeBuildIdentityEditor.IsWorkingTreeDirty(out string details))
                 throw new InvalidOperationException("Commit/stash project changes before building a shared Steam test:\n" + details);
-            Build(OutputPath, PrototypeBuildIdentityEditor.Create(localOnly: false));
+            Build(OutputPath, BuildTarget.StandaloneWindows64, PrototypeBuildIdentityEditor.Create(localOnly: false));
         }
 
         // Local two-process testing of uncommitted work. The manifest is marked
@@ -30,10 +31,21 @@ namespace SunkCost.Editor.Prototype
         public static void BuildWindowsLocalDevelopment()
         {
             bool dirty = PrototypeBuildIdentityEditor.IsWorkingTreeDirty(out _);
-            Build(LocalOutputPath, PrototypeBuildIdentityEditor.Create(localOnly: dirty));
+            Build(LocalOutputPath, BuildTarget.StandaloneWindows64, PrototypeBuildIdentityEditor.Create(localOnly: dirty));
         }
 
-        private static void Build(string outputPath, PrototypeBuildIdentity identity)
+        // Linux counterpart of the shareable Windows build, used by CI (see
+        // .github/workflows/build.yml) and for Linux testers. Same clean-checkout
+        // requirement so every platform's shared build carries the same revision.
+        [MenuItem("Sunk Cost/Prototype/Build Linux Development")]
+        public static void BuildLinuxDevelopment()
+        {
+            if (PrototypeBuildIdentityEditor.IsWorkingTreeDirty(out string details))
+                throw new InvalidOperationException("Commit/stash project changes before building a shared Steam test:\n" + details);
+            Build(LinuxOutputPath, BuildTarget.StandaloneLinux64, PrototypeBuildIdentityEditor.Create(localOnly: false));
+        }
+
+        private static void Build(string outputPath, BuildTarget target, PrototypeBuildIdentity identity)
         {
             EditorSceneManager.OpenScene(HQPrototypeBuilder.ScenePath);
             HQPrototypeValidator.ValidateOrThrow();
@@ -50,7 +62,7 @@ namespace SunkCost.Editor.Prototype
             {
                 scenes = new[] { HQPrototypeBuilder.ScenePath },
                 locationPathName = outputPath,
-                target = BuildTarget.StandaloneWindows64,
+                target = target,
                 options = BuildOptions.Development
             };
             BuildReport report = BuildPipeline.BuildPlayer(options);
@@ -59,7 +71,7 @@ namespace SunkCost.Editor.Prototype
 
             File.WriteAllText(Path.Combine(outputDirectory, "steam_appid.txt"), "480" + Environment.NewLine);
             File.WriteAllText(manifestPath, identity.ToJson());
-            Debug.Log($"HQ Windows build succeeded: {outputPath} ({report.summary.totalSize} bytes); revision {identity.revision}; localOnly={identity.localOnly}");
+            Debug.Log($"HQ {target} build succeeded: {outputPath} ({report.summary.totalSize} bytes); revision {identity.revision}; localOnly={identity.localOnly}");
         }
     }
 }

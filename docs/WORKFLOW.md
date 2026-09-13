@@ -105,6 +105,31 @@ shared elevator, rescue or abandon bodies, surface and meet the quota. Record wh
 players actually do before expanding content. This is a practice, not an invented
 calendar commitment or a change to the launch scope in `docs/DESIGN.md`.
 
+## Continuous integration
+
+`.github/workflows/build.yml` builds the HQ prototype for Windows and Linux on
+every push/PR to `main`, calling the same
+`Sunk Cost/Prototype/Build Windows Development` /
+`Sunk Cost/Prototype/Build Linux Development` entry points a developer would use
+locally (`Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs`), so CI produces
+the same identity-stamped build a manual build does. It runs on GitHub-hosted
+`ubuntu-latest` runners via `game-ci/unity-builder`, which cross-builds both
+platforms from Linux-based Unity Editor images.
+
+This needs a one-time Unity license secret, since headless Unity requires
+activation:
+
+1. Run the **Unity Activation File** workflow (`workflow_dispatch`) once.
+2. Download the `.alf` artifact it produces and activate it at
+   [license.unity3d.com](https://license.unity3d.com) with a Unity account that
+   holds a seat for this project (Personal is fine for a project this size).
+3. Upload the resulting `.ulf` file's contents as the repository secret
+   `UNITY_LICENSE` (Settings → Secrets and variables → Actions).
+
+A Unity seat and its activation are the account holder's decision, not
+something an assistant should provision. Re-run step 1 if the license ever
+needs re-activating (e.g. after Unity revokes it for concurrent use).
+
 ## Tool documentation
 
 - [Codex repository instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md)

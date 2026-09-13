@@ -1,0 +1,26 @@
+name: Unity Activation File
+
+# One-time helper: generates the .alf file needed to activate a Unity license
+# for headless CI use. Run manually, download the artifact, activate it at
+# license.unity3d.com, then upload the resulting .ulf back as the UNITY_LICENSE
+# repository secret. See docs/WORKFLOW.md#continuous-integration.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  activation-file:
+    name: Request manual activation file
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request activation file
+        id: request
+        uses: game-ci/unity-request-activation-file@v2
+        with:
+          unityVersion: 6000.6.0f1
+
+      - name: Upload activation file
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity_v6000.6.0f1.alf
+          path: ${{ steps.request.outputs.filePath }}
+          retention-days: 1
