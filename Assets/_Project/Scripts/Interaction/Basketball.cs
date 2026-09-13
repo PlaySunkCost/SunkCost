@@ -2,13 +2,14 @@ using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using FishNet.Transporting;
+using SunkCost.Net;
 using SunkCost.Player;
 using UnityEngine;
 
 namespace SunkCost.Interaction
 {
     [RequireComponent(typeof(Rigidbody), typeof(SphereCollider))]
-    public sealed class Basketball : NetworkBehaviour
+    public sealed class Basketball : NetworkBehaviour, INetworkDebugInfo
     {
         private const int Free = 0;
         private const int Held = 1;
@@ -32,6 +33,10 @@ namespace SunkCost.Interaction
 
         public bool IsHeld => state.Value == Held;
         public int HolderClientId => holderClientId.Value;
+        // Read-only status for the F3 network debug overlay.
+        public string DebugStatus =>
+            state.Value == Held ? $"Held by {holderClientId.Value}" :
+            state.Value == Released ? $"Released by {holderClientId.Value}" : "Free";
 
         private void Awake()
         {

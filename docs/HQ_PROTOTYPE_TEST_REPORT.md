@@ -150,3 +150,29 @@ methods by reflection so the game code needs no test-only entry points.
   drive the connected editor, not a second standalone process's input. The grab
   API itself (`ServerTryGrab`/request plumbing) is unchanged by this fix and was
   already covered by the original automated checks above.
+
+## Network debug overlay (13 September 2026, branch `dan/debug-overlay`)
+
+Implemented per `docs/DEBUG_OVERLAY_IMPLEMENTATION_PLAN.md`: `NetworkDebugSnapshot`,
+`NetworkDebugOverlay` (F3 toggle, F4 dump), `INetworkDebugInfo` (implemented by
+`Basketball`), and verification hooks in `HQPrototypeTestHooks`. No scene, prefab,
+RPC or SyncVar changes; the overlay creates itself through
+`RuntimeInitializeOnLoadMethod` when `Debug.isDebugBuild` is true.
+
+Verification through Unity MCP, spec section 7. Actual snapshot text:
+
+| Step | Result |
+|---|---|
+| 1 Compile | Clean; zero console errors after import (pre-existing `CS0618` warnings only) |
+| 2 Bootstrap | Play Mode with no session: `Network Debug Overlay` object exists; snapshot reads `[NetDebug] OFFLINE` |
+| 3 Host alone | `HOST  client=0  transport=Tugboat  rtt=33ms  tick=30Hz/161  clients=1` / `PrototypePlayer me SIM-HERE` / `Basketball server SIM-HERE Free`. Host RTT is one loopback tick, not 0; spec corrected. |
+| 4 Remote client | Headless standalone host + editor client: `CLIENT  client=1  transport=Tugboat  rtt=25ms  tick=30Hz/601` / `PrototypePlayer client 0 REPLICATED` / `PrototypePlayer me SIM-HERE` / `Basketball server REPLICATED Free` |
+| 5 Ownership transfer | After `ClientRequestGrab`: `Basketball me SIM-HERE Held by 1` (row moves to the top as an owned object; `heldBall=set` agrees). After `ClientRequestRelease(true)`: ball travelled to (-5.72, 0.12, 4.32) and the overlay read `Basketball server REPLICATED Free`, `holderClientId=-1`. The transient `Released by 1` phase (about two seconds) fell between commands and was not captured. |
+| 6 Drawing | `SetOverlayVisible(true)`: no exceptions from `OnGUI`. A Scene View capture does not include IMGUI, as expected; the on-screen panel still needs a human F3 check on the next two-computer session. |
+| 7 Dump | `DumpSnapshot()` wrote the `[NetDebug]` block to the console (and therefore `Player.log`) with the same content as the hook. |
+| 8 Standalone | Windows development build succeeded; the headless host built from this branch logged zero exceptions across a full join / grab / throw / leave cycle. |
+
+One incidental finding, not fixed here: a grab request issued in the same command as
+a player teleport was refused because the server had not yet received the new
+position, and the client received no feedback. That is the existing "denied
+requests get a response" gap (contract section 4), already noted as open work.
