@@ -48,18 +48,33 @@ be read as checklists by other assistants.
 
 1. Open this repository with Unity `6000.6.0f1`.
 2. Open `Assets/_Project/Scenes/Prototype/HQPrototype.unity` and press Play.
-3. Choose **Local / LAN** and **Host**. A second build can choose **Join** with
-   `127.0.0.1` on the same computer, or the host's LAN IP on another computer.
+3. Choose **Local / LAN** and **Host**. Up to three other players can choose
+   **Join** with `127.0.0.1` on the same computer, or the host's LAN IP on another
+   computer. Four players total, including the host.
 4. Move with WASD, sprint with Shift, look with the mouse, press E to pick up or
-   drop the basketball, and left-click while holding it to throw. Escape releases
-   the cursor.
+   drop the basketball, and left-click while holding it to throw. Escape opens the
+   session menu (Resume recaptures the cursor); F3 shows the network debug overlay.
 
-Create a runnable Windows build with **Sunk Cost > Prototype > Build Windows
-Development**. Unity writes it to `Builds/HQPrototype/SunkCostHQ.exe` and creates
-the ignored development `steam_appid.txt` beside it. For Steam, both players run
-the same build with Steam open, select **Steam P2P**, and the joining player enters
-the host's displayed SteamID64. Lobby browsing and friend invites are not in this
-first slice.
+**Builds.** Two menu items write to ignored folders and put a `sunkcost-build.json`
+manifest beside the executable:
+
+- **Sunk Cost > Prototype > Build Windows Development** — the shareable Steam
+  build. It refuses to run on a dirty checkout, so every tester's copy carries
+  the same Git revision. Output: `Builds/HQPrototype/`.
+- **Sunk Cost > Prototype > Build Windows Local Development** — for two-process
+  testing of uncommitted work. Output: `Builds/HQPrototypeLocal/`; Steam mode
+  refuses this build.
+
+**Steam.** Every player runs the *same* shared build with Steam open and selects
+**Steam P2P** first (that is what registers the invite listener). The host clicks
+**Host**: a friends-only Steam lobby is created and its **lobby ID** is shown with
+Copy and Invite buttons. Guests either accept the Steam overlay invite or paste
+the lobby ID and click **Join**. Joining checks the lobby's game marker, protocol
+and build revision, then the server checks Steam lobby membership before a player
+spawns; a fifth player, a different build, or a closed room gets a message. The
+first session locks the transport (Local or Steam) until the game restarts.
+Under the shared test App ID `480`, start the build before accepting an invite;
+Steam cannot launch it for you.
 
 ---
 

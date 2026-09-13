@@ -15,9 +15,11 @@ tested. Section 3 defines the dependency check; section 16 defines the real
 two-computer acceptance test. Neither can be replaced by a written plan.
 
 Unity MCP setup, the grey-box HQ scene, local/Steam transport selection, player
-movement and the basketball ownership loop are implemented. Steam currently joins
-by host SteamID64; the lobby/invite/authentication hardening described later in
-this plan remains follow-up work until its separate acceptance checks pass.
+movement and the basketball ownership loop are implemented. The Steam lobby,
+invites, four-player capacity and the pre-spawn admission handshake from section 9
+were implemented on `dan/steam-lobby` per `STEAM_LOBBY_IMPLEMENTATION_PLAN.md`;
+that document and `HQ_PROTOTYPE_TEST_REPORT.md` record which acceptance checks
+have actually run.
 
 **Quick navigation:** [scope](#1-exact-outcome-and-scope),
 [Unity MCP workflow](#unity-mcp-connection-and-working-method),

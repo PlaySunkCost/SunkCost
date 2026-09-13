@@ -232,9 +232,12 @@ your own exit.
 The first implemented slice is a two-player grey-box HQ where players can walk,
 look, pick up one basketball, drop it and throw it. It exists to verify the basic
 FishNet ownership loop and Steam P2P transport before underwater gameplay begins.
-It has no scoring, inventory, economy, saving, combat or finished art. Local/LAN
-mode supports development on one computer; Steam mode connects by the host's
-SteamID64. A lobby and invite browser remain follow-up work.
+It has no scoring, inventory, economy, saving, combat or finished art. It holds
+**four players** (host plus three). Local/LAN mode supports development on one
+computer. Steam mode creates a friends-only Steam lobby when hosting; guests join
+through a Steam overlay invite or by pasting the lobby ID, and the server admits a
+player only after checking the game marker, protocol, build revision and Steam
+lobby membership. No public lobby browser or matchmaking.
 
 Leaving (decided 13 September 2026): **Leave** returns the player to the host/join
 menu rather than quitting. If the host leaves, the room closes and every client is

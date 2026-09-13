@@ -176,3 +176,42 @@ One incidental finding, not fixed here: a grab request issued in the same comman
 a player teleport was refused because the server had not yet received the new
 position, and the client received no feedback. That is the existing "denied
 requests get a response" gap (contract section 4), already noted as open work.
+
+## Steam lobby, admission and four players (13 September 2026, branch `dan/steam-lobby`)
+
+Implemented per `docs/STEAM_LOBBY_IMPLEMENTATION_PLAN.md`: `PrototypeSessionController`
+(state machine and host/guest/leave flows), `SteamBootstrap` (single Steam lifetime
+owner), `SteamLobbyService`, `LobbyMetadata`, `PrototypeBuildIdentity` +
+`sunkcost-build.json` manifest, `PrototypeAuthenticator` (challenge/response with
+seat ledger and transport-proven Steam membership), `SessionInputGate`, and the
+editor helpers `HQPrototypeLobbySetup`, `HQPrototypeLobbyChecks`,
+`HQPrototypeLobbyTestHooks`, `PrototypeBuildIdentityEditor`. Transport caps raised
+2 -> 3 (Steam remote) and 2 -> 4 (Tugboat) through the targeted setup helper; the
+player prefab (Scavenger) was not touched.
+
+Baseline before this work: one pre-existing console error at 22:07, `Steamworks is
+not initialized` thrown from `FishySteamworks.OnDestroy` (Steam shut down before the
+transport). Addressed by the controller's ordered final shutdown (network stop,
+transport `Shutdown()`, then `SteamAPI.Shutdown()`); see S10 below.
+
+Verification through Unity MCP. All Local rows used the local-development build
+(`Builds/HQPrototypeLocal`, manifest `local-dev:3dab326…`, `localOnly=true`) as the
+standalone peer and the editor as the other peer, with Play Mode identity matching.
+
+| ID | Result |
+|---|---|
+| P1 | `HQPrototypeLobbyChecks.RunOrThrow()` passed: whitespace/zero/overflow/negative/user-SteamID lobby ids, every missing key, oversized build, control characters, lobby id as host, capacity above max, malformed ready flag, foreign 480 marker, wrong build/protocol, not-ready, null identity. |
+| P2 | Seat ledger (same run): four reserved, fifth refused, duplicate identity and duplicate connection refused, release frees exactly one seat, double release harmless. |
+| P3 | Editor guest with a replaced build revision joined a headless host: host rejected (`Remote connection started` then `stopped`, host players stayed 1), guest ended in `Menu` with `msg='Wrong build'`, no player spawned. |
+| L1 | Editor host + three headless standalone clients: host snapshot `hq=4/4 admitted=4`; F3 overlay listed four player rows (one `me SIM-HERE`, three `REPLICATED`) and one ball with one writer. Fifth client: peer-disconnected at the transport before Started, no spawn, host unchanged at 4/4, zero console errors. |
+| L2 | Editor as guest of a headless host: session id learned from the challenge; grab through the real ServerRpc (`heldBall=set`, ball lifted); throw landed at (-5.72, 0.12, 4.34) and handed back (`Free`); guest Leave returned to `Menu`; rejoin into the same session succeeded with the ball still at (-5.72, 0.12, 4.34). |
+| L3 | Host Leave with three guests connected: all three logged a clean `Local client is stopped`, no exceptions, processes stayed alive in their menus; host reached `Menu` with counters cleared; re-host produced a new session id (`61e8…` vs `d970…`), `admitted=1`, ball back at spawn. |
+| L4 | With the transport bound to Local: `SelectMode(Steam)` refused and `JoinSteamLobby(...)` refused, both with "Transport is locked to Local for this run; restart the game to change." No rebinding attempted. |
+| Host loss | Headless host killed while the editor guest was in the room: after the transport timeout the guest was in `Menu` with "Disconnected from the host." No errors. |
+| Build gating | `BuildWindowsDevelopment()` on the dirty tree threw "Commit/stash project changes before building a shared Steam test"; `BuildWindowsLocalDevelopment()` succeeded and wrote the `localOnly` manifest. |
+| L5 | Not exercised: MCP cannot press keys or move the mouse. The gate logic is exercised indirectly (rooms enter with the cursor captured and leave with it released); a human must check Escape/Resume/overlay/focus. |
+| P4–P6, S1–S12 | Pending: they need Steam accounts, a second machine, or a real overlay. See the section below for what was run on Steam from this machine. |
+
+Message wording: a guest dropped before the transport reports Started now shows
+"Could not connect: room may be full or unavailable." (Tugboat does not expose a
+distinct full-room reason).
