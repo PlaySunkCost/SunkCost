@@ -113,7 +113,11 @@ namespace SunkCost.Editor.Prototype
 
         private static string RunGit(string arguments)
         {
-            var start = new ProcessStartInfo("git", arguments)
+            // CI build containers (e.g. game-ci/unity-builder) run as a different
+            // user than the one that checked out the repo, so Git's ownership
+            // check refuses every command with "detected dubious ownership"
+            // unless this exact checkout is scoped as safe for this invocation.
+            var start = new ProcessStartInfo("git", $"-c safe.directory=\"{ProjectRoot}\" {arguments}")
             {
                 WorkingDirectory = ProjectRoot,
                 RedirectStandardOutput = true,
