@@ -120,13 +120,9 @@ namespace SunkCost.Editor.Prototype
         public static string SessionUiState()
         {
             PrototypeSessionUI ui = Object.FindFirstObjectByType<PrototypeSessionUI>();
-            if (ui == null) return "No PrototypeSessionUI.";
-            System.Type t = typeof(PrototypeSessionUI);
-            const BindingFlags f = BindingFlags.Instance | BindingFlags.NonPublic;
-            Camera preview = (Camera)t.GetField("previewCamera", f).GetValue(ui);
-            return $"sessionActive={t.GetField("sessionActive", f).GetValue(ui)}; isHost={t.GetField("isHost", f).GetValue(ui)}; " +
-                   $"transportLocked={t.GetField("transportLocked", f).GetValue(ui)}; previewCamera={(preview == null ? "none" : preview.enabled.ToString())}; " +
-                   $"status='{t.GetField("status", f).GetValue(ui)}'; {ui.RuntimeDiagnostics}";
+            if (ui == null || ui.Controller == null) return "No PrototypeSessionUI/controller.";
+            Camera preview = (Camera)typeof(PrototypeSessionUI).GetField("previewCamera", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ui);
+            return ui.Controller.Snapshot().ToText() + "; previewCamera=" + (preview == null ? "none" : preview.enabled.ToString()) + "; " + ui.RuntimeDiagnostics;
         }
 
         // --- Network debug overlay (docs/DEBUG_OVERLAY_IMPLEMENTATION_PLAN.md §4.5) ---

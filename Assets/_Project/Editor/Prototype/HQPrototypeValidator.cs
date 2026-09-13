@@ -37,8 +37,49 @@ namespace SunkCost.Editor.Prototype
                 errors.Add("Configured Steam transport prefab is missing.");
             if (EditorBuildSettings.scenes.Length != 1 || !EditorBuildSettings.scenes[0].enabled || EditorBuildSettings.scenes[0].path != HQPrototypeBuilder.ScenePath)
                 errors.Add("Build settings must contain only the enabled HQ prototype scene.");
+            CheckLobbyPrerequisites(scene, errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log("HQ validation passed: saved scene, room, one network root, player prefab and one basketball are ready.");
+            Debug.Log("HQ validation passed: saved scene, room, one network root, player prefab, one basketball, four spawns and four-player transport caps are ready.");
+        }
+
+        // docs/STEAM_LOBBY_IMPLEMENTATION_PLAN.md section 11, step 5: the four-player
+        // room needs four assigned spawn points and the corrected transport caps.
+        private static void CheckLobbyPrerequisites(Scene scene, List<string> errors)
+        {
+            var settings = new SunkCost.Net.LobbySessionSettings();
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                foreach (PlayerSpawner spawner in root.GetComponentsInChildren<PlayerSpawner>(true))
+                {
+                    int assigned = 0;
+                    if (spawner.Spawns != null)
+                        foreach (Transform spawn in spawner.Spawns) if (spawn != null) assigned++;
+                    if (assigned < settings.LocalSocketCap)
+                        errors.Add($"PlayerSpawner has {assigned} assigned spawn points; {settings.LocalSocketCap} are required.");
+                }
+                foreach (Transport transport in root.GetComponentsInChildren<Transport>(true))
+                {
+                    if (transport.GetType().FullName != "FishNet.Transporting.Tugboat.Tugboat") continue;
+                    int cap = ReadMaximumClients(transport);
+                    if (cap != settings.LocalSocketCap)
+                        errors.Add($"Scene Tugboat _maximumClients is {cap}; expected {settings.LocalSocketCap} (run Sunk Cost/Prototype/Apply lobby caps).");
+                }
+            }
+            GameObject steamPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.SteamTransportPrefabPath);
+            Transport steam = steamPrefab != null ? steamPrefab.GetComponent<Transport>() : null;
+            if (steam != null)
+            {
+                int cap = ReadMaximumClients(steam);
+                if (cap != settings.SteamRemoteClientCap)
+                    errors.Add($"Steam transport prefab _maximumClients is {cap}; expected {settings.SteamRemoteClientCap} (run Sunk Cost/Prototype/Apply lobby caps).");
+            }
+        }
+
+        private static int ReadMaximumClients(Transport transport)
+        {
+            using var serialized = new SerializedObject(transport);
+            SerializedProperty cap = serialized.FindProperty("_maximumClients");
+            return cap != null ? cap.intValue : -1;
         }
 
         private static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component

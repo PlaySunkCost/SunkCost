@@ -46,6 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FishySteamworks.FishySteamworks
   _serverBindAddress: 
   _port: 7770
-  _maximumClients: 2
+  _maximumClients: 3
   _peerToPeer: 1
   _clientAddress: 

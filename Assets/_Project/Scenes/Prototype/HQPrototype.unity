@@ -486,6 +486,7 @@ GameObject:
   m_Component:
   - component: {fileID: 359916178}
   - component: {fileID: 359916177}
+  - component: {fileID: 359916179}
   m_Layer: 0
   m_Name: HQ Light
   m_TagString: Untagged
@@ -573,6 +574,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &359916179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 359916176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &369212285
 GameObject:
   m_ObjectHideFlags: 0
@@ -703,7 +733,7 @@ MonoBehaviour:
   _enableIpv6: 1
   _ipv6BindAddress: 
   _port: 7770
-  _maximumClients: 2
+  _maximumClients: 4
   _clientAddress: localhost
 --- !u!4 &408627618
 Transform:
@@ -991,6 +1021,15 @@ MonoBehaviour:
   steamTransportPrefab: {fileID: 3266892149961827092, guid: cd85912d754c5ba42944b1b90e0139d9, type: 3}
   previewCamera: {fileID: 487895636}
   address: 127.0.0.1
+  settings:
+    totalPlayers: 4
+    steamOperationTimeout: 20
+    serverStartTimeout: 5
+    connectTimeout: 20
+    authTimeout: 10
+    membershipGrace: 2
+    playerSpawnTimeout: 10
+    cleanupTimeout: 5
 --- !u!4 &961697282
 Transform:
   m_ObjectHideFlags: 0

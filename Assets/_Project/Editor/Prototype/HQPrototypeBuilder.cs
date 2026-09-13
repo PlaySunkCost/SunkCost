@@ -25,7 +25,7 @@ namespace SunkCost.Editor.Prototype
         public const string ScenePath = "Assets/_Project/Scenes/Prototype/HQPrototype.unity";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/PrototypePlayer.prefab";
         private const string BallPrefabPath = "Assets/_Project/Prefabs/Interaction/Basketball.prefab";
-        private const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
+        public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         private const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
         [MenuItem("Sunk Cost/Prototype/Create or Update HQ")]
@@ -160,7 +160,7 @@ namespace SunkCost.Editor.Prototype
                 if (fishyType == null || !typeof(Transport).IsAssignableFrom(fishyType))
                     throw new InvalidOperationException("FishySteamworks transport type was not imported.");
                 Transport fishy = (Transport)root.AddComponent(fishyType);
-                SetPrivate(fishy, "_maximumClients", 2);
+                SetPrivate(fishy, "_maximumClients", new SunkCost.Net.LobbySessionSettings().SteamRemoteClientCap); // 3 remote + host = 4
                 SetPrivate(fishy, "_peerToPeer", true);
                 return PrefabUtility.SaveAsPrefabAsset(root, SteamTransportPrefabPath);
             }
@@ -245,7 +245,7 @@ namespace SunkCost.Editor.Prototype
             spawner.SetPlayerPrefab(playerPrefab.GetComponent<NetworkObject>());
             spawner.Spawns = spawns;
 
-            SetPrivate(tugboat, "_maximumClients", 2);
+            SetPrivate(tugboat, "_maximumClients", new SunkCost.Net.LobbySessionSettings().LocalSocketCap); // Tugboat counts the host loopback socket
 
             GameObject uiObject = new("Prototype Session UI");
             PrototypeSessionUI ui = uiObject.AddComponent<PrototypeSessionUI>();
