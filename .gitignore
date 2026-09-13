@@ -49,3 +49,4 @@ crashlytics-build.properties
 # Local secrets — never commit Steam keys or build credentials
 steam_appid.txt
 *.env
+*.slnx
