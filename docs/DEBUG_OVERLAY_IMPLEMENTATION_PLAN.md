@@ -79,7 +79,7 @@ returns `null` when no `NetworkManager` exists in the loaded scenes; handle that
 | Manager | `InstanceFinder.NetworkManager` | May be null |
 | Server / client started | `NetworkManager.IsServerStarted`, `.IsClientStarted` | Host = both true |
 | Local client id | `NetworkManager.ClientManager.Connection.ClientId` | `-1` until connected |
-| RTT (ms) | `NetworkManager.TimeManager.RoundTripTime` | `long`; `0` on host |
+| RTT (ms) | `NetworkManager.TimeManager.RoundTripTime` | `long`; on a host it reads about one tick (33 ms at 30 Hz), not 0, because the host client measures the loopback connection |
 | Tick rate / tick | `NetworkManager.TimeManager.TickRate` (`ushort`), `.Tick` (`uint`) | |
 | Transport name | `NetworkManager.TransportManager.Transport.GetType().Name` | `Tugboat` or `FishySteamworks`; `Transport` may be null before first session |
 | Connected clients (server) | `NetworkManager.ServerManager.Clients.Count` | Includes the host's own client |
@@ -204,7 +204,7 @@ Plain text, fixed columns, one row per line, so it pastes cleanly into chat and
   3   Basketball        me        SIM-HERE    Held by 1
 ```
 
-The same on the host would read `HOST  client=0  transport=Tugboat  rtt=0ms ...
+The same on the host would read `HOST  client=0  transport=Tugboat  rtt=33ms ...
 clients=2` and the ball row `server  SIM-HERE  Free` when nobody holds it.
 
 Owner text: `server` when `OwnerId == -1`, `me` when `IsOwner`, else `client N`.
@@ -402,7 +402,7 @@ editor when the editor is the client. `Builds/` and `*.log` are git-ignored.
    exists in the scene but nothing is started) and the overlay object exists.
 3. **Host alone.** `StartLocalHost()`, wait for `SessionUiState()` to show
    `server=True, client=True, players=1`. Snapshot must read `HOST`, `client=0`,
-   `transport=Tugboat`, `rtt=0ms`, `clients=1`; player row `me SIM-HERE`; ball row
+   `transport=Tugboat`, `rtt` of about one tick (33 ms observed, not 0), `clients=1`; player row `me SIM-HERE`; ball row
    `server SIM-HERE` (detail `Free` if 4.4 was done).
 4. **Remote client.** Exit Play Mode. Start the headless standalone host. Enter
    Play Mode, `JoinLocal("127.0.0.1")`, wait for `players=2`. Snapshot must read

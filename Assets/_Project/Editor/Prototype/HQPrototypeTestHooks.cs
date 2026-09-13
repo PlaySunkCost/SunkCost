@@ -129,6 +129,32 @@ namespace SunkCost.Editor.Prototype
                    $"status='{t.GetField("status", f).GetValue(ui)}'; {ui.RuntimeDiagnostics}";
         }
 
+        // --- Network debug overlay (docs/DEBUG_OVERLAY_IMPLEMENTATION_PLAN.md §4.5) ---
+
+        public static string DebugSnapshotText()
+        {
+            NetworkDebugOverlay overlay = Object.FindFirstObjectByType<NetworkDebugOverlay>();
+            if (overlay == null) return "No NetworkDebugOverlay in the scene (bootstrap did not run?).";
+            overlay.Refresh();
+            return overlay.Current.ToText();
+        }
+
+        public static string SetOverlayVisible(bool visible)
+        {
+            NetworkDebugOverlay overlay = Object.FindFirstObjectByType<NetworkDebugOverlay>();
+            if (overlay == null) return "No NetworkDebugOverlay.";
+            overlay.Visible = visible;
+            return $"Visible={overlay.Visible}";
+        }
+
+        public static string DumpOverlaySnapshot()
+        {
+            NetworkDebugOverlay overlay = Object.FindFirstObjectByType<NetworkDebugOverlay>();
+            if (overlay == null) return "No NetworkDebugOverlay.";
+            overlay.DumpSnapshot();
+            return "dumped to console and clipboard";
+        }
+
         private static HQPlayerController LocalPlayer()
         {
             return Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
