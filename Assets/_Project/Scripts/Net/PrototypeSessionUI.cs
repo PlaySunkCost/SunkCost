@@ -3,13 +3,15 @@ using System.Collections;
 using FishNet.Managing;
 using FishNet.Managing.Transporting;
 using FishNet.Transporting;
-using Steamworks;
 using SunkCost.Interaction;
 using SunkCost.Player;
 using UnityEngine;
 
 namespace SunkCost.Net
 {
+    // Immediate-mode session panel. Renders PrototypeSessionController's snapshot
+    // and forwards clicks to it; owns no session state of its own. Serialized
+    // references are wired by HQPrototypeBuilder and must keep their names.
     public sealed class PrototypeSessionUI : MonoBehaviour
     {
         [SerializeField] private GameObject networkRoot;
@@ -19,20 +21,17 @@ namespace SunkCost.Net
         [SerializeField] private GameObject steamTransportPrefab;
         [SerializeField] private Camera previewCamera;
         [SerializeField] private string address = "127.0.0.1";
-        private bool useSteam;
-        private bool steamInitialized;
-        private bool sessionStarting;
-        // True from Host/Join until Leave or a disconnect returns this peer to the lobby.
-        private bool sessionActive;
-        private bool isHost;
-        // FishNet binds its Server/ClientManagers to TransportManager.Transport once, when
-        // the network root first initializes, so the transport cannot change afterwards.
-        private bool transportLocked;
-        private bool clientStateSubscribed;
-        private Transport steamTransport;
-        private int lastReportedPlayerCount = -1;
-        private string status = "Choose Local or Steam, then Host or Join.";
+        [SerializeField] private LobbySessionSettings settings = new();
 
+        private PrototypeSessionController controller;
+        private string lobbyIdField = string.Empty;
+        private int lastReportedPlayerCount = -1;
+        private Vector2 rosterScroll;
+
+        public PrototypeSessionController Controller => controller;
+        public bool InRoom => controller != null && controller.InRoom;
+
+        // Host-ready meaning retained for existing tools: both managers started here.
         public bool SessionReady => networkRoot != null && networkRoot.activeInHierarchy &&
                                     networkManager?.ServerManager != null && networkManager.ClientManager != null &&
                                     networkManager.ServerManager.Started && networkManager.ClientManager.Started;
@@ -49,6 +48,12 @@ namespace SunkCost.Net
             }
         }
 
+        private void Awake()
+        {
+            controller = GetComponent<PrototypeSessionController>() ?? gameObject.AddComponent<PrototypeSessionController>();
+            controller.Configure(networkRoot, networkManager, transportManager, localTransport, steamTransportPrefab, previewCamera, settings);
+        }
+
         private IEnumerator Start()
         {
             // A one-frame delay lets FishNet and the scene finish Awake before an
@@ -61,13 +66,14 @@ namespace SunkCost.Net
                 JoinLocal(hostAddress);
             else if (HasArgument(arguments, "-hq-auto-host-steam"))
                 StartSteamHost();
-            else if (TryGetArgumentValue(arguments, "-hq-auto-join-steam", out string steamId))
-                JoinSteam(steamId);
+            else if (TryGetArgumentValue(arguments, "-hq-auto-join-steam-lobby", out string lobbyId))
+                JoinSteamLobby(lobbyId);
+            else if (HasArgument(arguments, "-hq-auto-join-steam"))
+                Debug.LogWarning("-hq-auto-join-steam <hostSteamId> is no longer supported; use -hq-auto-join-steam-lobby <lobbyId>.");
         }
 
         private void Update()
         {
-            if (steamInitialized) SteamAPI.RunCallbacks();
             if (Debug.isDebugBuild && networkRoot != null && networkRoot.activeInHierarchy &&
                 networkManager?.ClientManager != null && networkManager.ClientManager.Started)
             {
@@ -80,195 +86,143 @@ namespace SunkCost.Net
             }
         }
 
-        private void OnDestroy()
-        {
-            if (clientStateSubscribed && networkManager != null && networkManager.ClientManager != null)
-                networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
-            if (steamInitialized) SteamAPI.Shutdown();
-        }
-
-        private void OnGUI()
-        {
-            GUILayout.BeginArea(new Rect(18, 18, 410, 300), GUI.skin.box);
-            GUILayout.Label("SUNK COST — HQ BASKETBALL");
-            GUILayout.Label(status);
-            if (sessionActive && networkManager != null)
-            {
-                GUILayout.Label($"Server: {networkManager.ServerManager.Started}   Client: {networkManager.ClientManager.Started}");
-                if (steamInitialized) GUILayout.Label("Your Steam ID: " + SteamUser.GetSteamID().m_SteamID);
-                if (GUILayout.Button(isHost ? "Leave (closes the room)" : "Leave")) LeaveSession();
-            }
-            else
-            {
-                if (transportLocked)
-                {
-                    GUILayout.Label((useSteam ? "Steam P2P" : "Local / LAN") + " (locked for this run; restart to change)");
-                }
-                else
-                {
-                    GUILayout.BeginHorizontal();
-                    if (GUILayout.Toggle(!useSteam, "Local / LAN", GUI.skin.button)) useSteam = false;
-                    if (GUILayout.Toggle(useSteam, "Steam P2P", GUI.skin.button)) useSteam = true;
-                    GUILayout.EndHorizontal();
-                }
-                GUILayout.Label(useSteam ? "Host SteamID64 (Join only)" : "Host IP (127.0.0.1 on same PC)");
-                address = GUILayout.TextField(address);
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Host")) StartSession(true);
-                if (GUILayout.Button("Join")) StartSession(false);
-                GUILayout.EndHorizontal();
-                GUILayout.Label("Controls: WASD, Shift, mouse, E pick/drop, left click throw, Esc release cursor");
-            }
-            GUILayout.EndArea();
-        }
+        // ---- public entry points (used by automation and the test hooks) -----------
 
         public void StartLocalHost()
         {
-            useSteam = false;
-            address = "127.0.0.1";
-            StartSession(true);
+            if (!controller.SelectMode(SessionMode.Local, out string error)) { Debug.LogWarning(error); return; }
+            controller.StartHost();
         }
 
         public void JoinLocal(string hostAddress)
         {
-            useSteam = false;
             address = string.IsNullOrWhiteSpace(hostAddress) ? "127.0.0.1" : hostAddress;
-            StartSession(false);
+            controller.JoinLocal(address);
         }
 
         public void StartSteamHost()
         {
-            useSteam = true;
-            StartSession(true);
+            if (!controller.SelectMode(SessionMode.Steam, out string error)) { Debug.LogWarning(error); return; }
+            controller.StartHost();
         }
 
-        public void JoinSteam(string hostSteamId)
+        public bool JoinSteamLobby(string lobbyId)
         {
-            useSteam = true;
-            address = hostSteamId;
-            StartSession(false);
+            lobbyIdField = lobbyId ?? string.Empty;
+            return controller.JoinSteamLobby(lobbyIdField);
         }
 
-        private void StartSession(bool host)
+        public void LeaveSession() => controller.Leave();
+        public bool CopyLobbyId() => controller.CopyLobbyId(out _);
+        public bool InviteFriends() => controller.InviteFriends(out _);
+
+        // ---- drawing --------------------------------------------------------------
+
+        private void OnGUI()
         {
-            if (sessionStarting) return;
-            if (networkRoot == null || networkManager == null) { status = "Scene setup is incomplete."; return; }
-            if (useSteam && !InitializeSteam()) return;
-            if (useSteam && steamTransport == null)
+            if (controller == null) return;
+            if (controller.InRoom && !SessionInputGate.MenuOpen)
             {
-                if (steamTransportPrefab == null) { status = "Steam transport prefab is missing."; return; }
-                GameObject instance = Instantiate(steamTransportPrefab, networkRoot.transform);
-                steamTransport = instance.GetComponent<Transport>();
+                GUILayout.BeginArea(new Rect(18, 18, 300, 26), GUI.skin.box);
+                GUILayout.Label("Esc: menu   F3: network debug");
+                GUILayout.EndArea();
+                return;
             }
-            Transport selected = useSteam ? steamTransport : localTransport;
-            if (selected == null) { status = "Selected transport is missing."; return; }
-            if (!transportLocked)
+
+            GUILayout.BeginArea(new Rect(18, 18, 430, Screen.height - 36), GUI.skin.box);
+            GUILayout.Label("SUNK COST — HQ BASKETBALL");
+            GUILayout.Label(controller.Message);
+
+            if (controller.InRoom || controller.Busy)
+                DrawSession();
+            else
+                DrawMenu();
+            GUILayout.EndArea();
+        }
+
+        private void DrawMenu()
+        {
+            SessionMode? bound = controller.BoundMode;
+            if (bound.HasValue)
             {
-                transportManager.Transport = selected;
-                transportLocked = true;
-            }
-            networkRoot.SetActive(true);
-            if (!networkManager.Initialized) { status = "Network manager did not initialize."; return; }
-            if (!clientStateSubscribed)
-            {
-                networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
-                clientStateSubscribed = true;
-            }
-            if (host)
-            {
-                if (!networkManager.ServerManager.StartConnection()) { status = "Server failed to start."; return; }
-                sessionStarting = true;
-                status = "Starting host...";
-                StartCoroutine(StartHostClientWhenServerIsReady());
+                GUILayout.Label((bound.Value == SessionMode.Steam ? "Steam P2P" : "Local / LAN") + " (locked for this run; restart to change)");
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(address)) { status = "Enter the host address."; return; }
-                if (!networkManager.ClientManager.StartConnection(address.Trim())) { status = "Client failed to start."; return; }
-                status = "Connecting to " + address.Trim();
+                GUILayout.BeginHorizontal();
+                bool local = controller.SelectedMode == SessionMode.Local;
+                if (GUILayout.Toggle(local, "Local / LAN", GUI.skin.button) && !local) controller.SelectMode(SessionMode.Local, out _);
+                if (GUILayout.Toggle(!local, "Steam P2P", GUI.skin.button) && local) controller.SelectMode(SessionMode.Steam, out _);
+                GUILayout.EndHorizontal();
             }
-            isHost = host;
-            sessionActive = true;
-            SetPreviewCameraActive(false);
-        }
 
-        private IEnumerator StartHostClientWhenServerIsReady()
-        {
-            float deadline = Time.realtimeSinceStartup + 5f;
-            while (!networkManager.ServerManager.Started && Time.realtimeSinceStartup < deadline)
-                yield return null;
-
-            sessionStarting = false;
-            if (!networkManager.ServerManager.Started)
+            bool steamMode = controller.SelectedMode == SessionMode.Steam;
+            if (steamMode)
             {
-                status = "Server did not become ready.";
-                yield break;
+                GUILayout.Label("Steam lobby ID (Join only). Invites arrive automatically while this screen is open.");
+                lobbyIdField = GUILayout.TextField(lobbyIdField);
             }
-
-            bool clientStarted = networkManager.ClientManager.StartConnection(useSteam ? SteamUser.GetSteamID().m_SteamID.ToString() : "127.0.0.1");
-            status = clientStarted
-                ? useSteam ? "Hosting over Steam. Give your Steam ID to your friend." : "Hosting locally/LAN on UDP port 7770."
-                : "Host client failed to start.";
-        }
-
-        private bool InitializeSteam()
-        {
-            if (steamInitialized) return true;
-            try
+            else
             {
-                steamInitialized = SteamAPI.Init();
-                if (!steamInitialized) status = "Steam initialization failed. Ensure Steam is running and steam_appid.txt exists.";
+                GUILayout.Label("Host IP (127.0.0.1 on same PC)");
+                address = GUILayout.TextField(address);
             }
-            catch (Exception exception)
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Host")) { if (steamMode) StartSteamHost(); else StartLocalHost(); }
+            if (GUILayout.Button("Join")) { if (steamMode) JoinSteamLobby(lobbyIdField); else JoinLocal(address); }
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Controls: WASD, Shift, mouse, E pick/drop, left click throw, Esc menu, F3 net debug");
+        }
+
+        private void DrawSession()
+        {
+            SessionSnapshot s = controller.Snapshot();
+            GUILayout.Label($"{s.Role} · {(s.BoundMode.HasValue ? s.BoundMode.Value.ToString() : s.SelectedMode.ToString())} · {s.State}");
+            GUILayout.Label($"Server: {s.ServerStarted}   Client: {s.ClientStarted}");
+
+            if (s.BoundMode == SessionMode.Steam && s.LobbyId != 0)
             {
-                status = "Steam initialization failed: " + exception.Message;
-                steamInitialized = false;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Lobby ID: " + controller.LobbyIdText);
+                if (GUILayout.Button("Copy", GUILayout.Width(60))) controller.CopyLobbyId(out _);
+                GUILayout.EndHorizontal();
+                if (controller.InRoom)
+                {
+                    GUI.enabled = controller.SteamOverlayAvailable;
+                    if (GUILayout.Button(controller.SteamOverlayAvailable ? "Invite friends (Steam overlay)" : "Invite unavailable — share the lobby ID"))
+                        controller.InviteFriends(out _);
+                    GUI.enabled = true;
+                }
+                GUILayout.Label($"Lobby members {s.LobbyMembers}/{s.TotalPlayers}   Players in HQ {s.PlayersInHq}/{s.TotalPlayers}");
             }
-            return steamInitialized;
-        }
+            else
+            {
+                GUILayout.Label($"Players in HQ {s.PlayersInHq}/{s.TotalPlayers}");
+            }
 
-        // Host: closing the room stops the server, which disconnects every client so
-        // they also return to their lobby. Client: only this peer leaves; the host and
-        // anyone else stay in the room. Stopping cleanly sends a disconnect instead of
-        // making the other side wait for a timeout.
-        public void LeaveSession()
-        {
-            if (networkManager != null && networkManager.ClientManager.Started) networkManager.ClientManager.StopConnection();
-            if (isHost && networkManager != null && networkManager.ServerManager.Started) networkManager.ServerManager.StopConnection(true);
-            ReturnToLobby(isHost ? "Room closed. Host or join again." : "Left the room. Host or join again.");
-        }
+            if (controller.InRoom) controller.RefreshMembers();
+            rosterScroll = GUILayout.BeginScrollView(rosterScroll, GUILayout.Height(110));
+            foreach (PrototypeSessionController.MemberInfo member in controller.Members)
+            {
+                string line = member.Name;
+                if (member.IsHost) line += "  (host)";
+                if (member.IsSelf) line += "  (you)";
+                GUILayout.Label(line);
+            }
+            GUILayout.EndScrollView();
 
-        private void OnClientConnectionState(ClientConnectionStateArgs args)
-        {
-            if (args.ConnectionState != LocalConnectionState.Stopped || !sessionActive)
-                return;
-            // Our own Leave already handled this; anything else is the host closing the
-            // room, a kick, or a lost connection.
-            if (isHost)
-                return;
-            ReturnToLobby("Disconnected from the host. Host or join again.");
-        }
-
-        // The preview camera carries the lobby's AudioListener; leaving it on beside the
-        // spawned player's listener floods the console with "2 audio listeners".
-        private void SetPreviewCameraActive(bool active)
-        {
-            if (previewCamera == null) return;
-            previewCamera.enabled = active;
-            AudioListener listener = previewCamera.GetComponent<AudioListener>();
-            if (listener != null) listener.enabled = active;
-        }
-
-        private void ReturnToLobby(string message)
-        {
-            sessionActive = false;
-            isHost = false;
-            sessionStarting = false;
-            lastReportedPlayerCount = -1;
-            SetPreviewCameraActive(true);
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            status = message;
+            GUILayout.BeginHorizontal();
+            if (controller.InRoom)
+            {
+                if (GUILayout.Button("Resume")) SessionInputGate.Resume();
+                if (GUILayout.Button(s.Role == SessionRole.Host ? "Leave (closes the room)" : "Leave")) controller.Leave();
+            }
+            else if (GUILayout.Button("Cancel"))
+            {
+                controller.Leave("Cancelled.");
+            }
+            GUILayout.EndHorizontal();
         }
 
         private static bool HasArgument(string[] arguments, string expected)

@@ -1,6 +1,7 @@
 using FishNet.Connection;
 using FishNet.Object;
 using SunkCost.Interaction;
+using SunkCost.Net;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -36,18 +37,8 @@ namespace SunkCost.Player
             SetLocalPresentation(IsOwner);
             if (bodyRenderer != null)
                 bodyRenderer.material.color = Owner.ClientId % 2 == 0 ? new Color(0.15f, 0.5f, 1f) : new Color(1f, 0.55f, 0.12f);
-            if (IsOwner)
-                CaptureCursor();
-        }
-
-        public override void OnStopClient()
-        {
-            if (IsOwner)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            base.OnStopClient();
+            // Cursor capture is owned by SessionInputGate (entering the room captures,
+            // Escape/overlay/focus loss releases, Resume recaptures).
         }
 
         private void Update()
@@ -56,18 +47,18 @@ namespace SunkCost.Player
                 return;
 
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            if (Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
-                CaptureCursor();
+                SessionInputGate.OpenMenu();
 
-            if (Cursor.lockState != CursorLockMode.Locked)
+            // Menu open, Steam overlay up, or window unfocused: no look, move or
+            // grab/throw. Gravity and replication keep running on their own.
+            if (!SessionInputGate.CanPlay || Cursor.lockState != CursorLockMode.Locked)
                 return;
 
             Look();
             Move();
+
+            if (SessionInputGate.ClickSuppressedThisFrame)
+                return;
 
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {
@@ -143,12 +134,6 @@ namespace SunkCost.Player
                 AudioListener listener = playerCamera.GetComponent<AudioListener>();
                 if (listener != null) listener.enabled = active;
             }
-        }
-
-        private static void CaptureCursor()
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
     }
 }
