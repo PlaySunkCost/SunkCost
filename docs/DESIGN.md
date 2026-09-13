@@ -227,6 +227,15 @@ your own exit.
 - **Release:** Early Access, $10–15.
 - **Team:** 3 developers, ~20 hours each per week. See `CONVENTIONS.md` for ownership.
 
+### First playable HQ harness
+
+The first implemented slice is a two-player grey-box HQ where players can walk,
+look, pick up one basketball, drop it and throw it. It exists to verify the basic
+FishNet ownership loop and Steam P2P transport before underwater gameplay begins.
+It has no scoring, inventory, economy, saving, combat or finished art. Local/LAN
+mode supports development on one computer; Steam mode connects by the host's
+SteamID64. A lobby and invite browser remain follow-up work.
+
 ### The only test that matters
 
 At the end of the prototype, four people play the ugly version. If you hear these

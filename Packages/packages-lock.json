@@ -1,5 +1,28 @@
 {
   "dependencies": {
+    "com.firstgeargames.fishnet": {
+      "version": "https://github.com/FirstGearGames/FishNet.git?path=Assets/FishNet#4.7.3",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.ugui": "1.0.0",
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.particlesystem": "1.0.0",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.physics2d": "1.0.0",
+        "com.unity.modules.ui": "1.0.0"
+      },
+      "hash": "73f30cf2425dc808a4f463f0a233d386010810b3"
+    },
+    "com.rlabrecque.steamworks.net": {
+      "version": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2025.164.1",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c21a8f0e31c56ae8707130967faf491f7dd7c0d8"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,

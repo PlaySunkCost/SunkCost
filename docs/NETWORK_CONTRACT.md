@@ -59,9 +59,12 @@ peers render its replicated state. **Do not attempt deterministic physics.**
 6. After handoff, the server resumes simulation and clears client ownership.
    On disconnect, the server takes over immediately, even if it is still moving.
 
-Rest thresholds, a maximum settling timeout, and moving-elevator handoff behavior
-must be specified before building this flow. The current rule refuses grabs while
-a client still owns a settling object; changing that needs an explicit amendment.
+The HQ basketball prototype uses linear speed below **0.15 m/s**, angular speed
+below **0.5 rad/s**, and **0.5 seconds** continuously below both thresholds as its
+rest condition. It forces handoff after **4 seconds** so ownership cannot remain
+stuck indefinitely. The current rule refuses grabs while a client still owns a
+settling object; changing that needs an explicit amendment. Moving-elevator
+handoff behavior remains undefined.
 Two-person carrying has no defined protocol yet: do not assume a shared writer.
 
 ## 3. Who decides what
@@ -138,6 +141,9 @@ If a method name does not say who calls it and who runs it, rename it.
   with the connection; the server handles their ownership and inventory state.
 - The **host owns the save.** If the host quits, the run ends. Host migration is
   explicitly out of scope for v1 — revisit only if it turns out to be cheap.
+- The HQ basketball harness has no death, inventory or persistent run. In this
+  harness only, disconnect despawns that player's temporary avatar and immediately
+  returns any held or released basketball to server simulation.
 
 ## 7. Tick rate
 
@@ -210,7 +216,7 @@ this document "signed off" unless that review actually occurred.
 - Interest management (do distant players need updates?) — defer until a real map exists.
 - Anti-cheat systems — out of scope for v1. Friends-only lobbies do not remove
   the need to validate requests for stale state, bugs and unexpected inputs.
-- Physics rest thresholds, timeout and elevator handoff; see section 2.
+- Moving-elevator physics handoff; see section 2.
 - Two-person carrying protocol, if included; a single simulation writer still holds.
 - Movement correction and transform interpolation settings for the selected
   FishNet version; start with the existing 30 Hz server baseline.
