@@ -215,3 +215,34 @@ standalone peer and the editor as the other peer, with Play Mode identity matchi
 Message wording: a guest dropped before the transport reports Started now shows
 "Could not connect: room may be full or unavailable." (Tugboat does not expose a
 distinct full-room reason).
+
+### Steam, from this machine only (one account)
+
+Run from the editor on a clean checkout (`6f3283a`, `localOnly=false`) with the
+real Steam client and App ID 480. Evidence is the controller snapshot and the F3
+overlay; no second account or machine was involved, so nothing below is a pass
+for S1–S9, S11 or S12.
+
+- Selecting Steam initialized the API and registered the invite listener
+  (`steam=True`, "Steam ready — accept an invite or enter a lobby ID.").
+- Steam host: lobby `109775241328479431` created, metadata written, server up on
+  FishySteamworks, the host's own client admitted through the challenge using
+  the transport-stored peer Steam id (`admitted=1`, host connection id 32767 =
+  Fishy's host id, not 0), lobby set friends-only/ready, `InRoom`; roster showed
+  the persona name with "(host) (you)"; F3 showed `HOST transport=FishySteamworks`.
+- Host Leave: lobby left, server and client stopped, back to `Menu`, counters
+  cleared. Re-host: new session id and a new lobby (`109775241328479798`).
+- **S10:** exiting Play Mode from inside the second Steam room produced no
+  `Steamworks is not initialized` exception. The editor log's only occurrence
+  (line 2557) belongs to the 22:07 baseline session that predates this code.
+- Dirty-tree refusal: with uncommitted changes the Play Mode identity was
+  `local-dev:<sha>` and Steam host/join would have been refused; the shared build
+  refused with "Commit/stash project changes before building a shared Steam test".
+
+Still pending (need people and machines): overlay invite (S1), lobby-ID join by a
+second account (S2), four machines (S3), fifth account (S4), old/new/foreign-480
+lobby (S5), non-member direct connect (S6), guest/host leave and loss over Steam
+(S7), Steam owner change after host departure (S8), Steam/overlay unavailable
+cases (S9), invite while in a room (S11), simultaneous final-seat joins (S12),
+and the human input-gate check (L5). Teammate review of the admission handshake:
+pending.

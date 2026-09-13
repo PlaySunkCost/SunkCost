@@ -1,6 +1,6 @@
 # Steam lobby implementation plan: host, invites, four players
 
-**Status: planned, not implemented.** Prepared 13 September 2026 from
+**Status: implemented on `dan/steam-lobby`; Local matrix and single-account Steam host path verified, multi-account Steam rows pending (see HQ_PROTOTYPE_TEST_REPORT.md).** Prepared 13 September 2026 from
 `dan/steam-lobby` at `3dab326`, whose base is `main` at `1a9bbb8`.
 This is an implementation handoff for [the mission brief](STEAM_LOBBY_MISSION.md).
 Writing this document does not start implementation, certify multiplayer behavior,
