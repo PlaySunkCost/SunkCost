@@ -117,16 +117,22 @@ the same identity-stamped build a manual build does. It runs on GitHub-hosted
 platforms from Linux-based Unity Editor images.
 
 This needs a one-time Unity license secret, since headless Unity requires
-activation:
+activation. GameCI's `unity-request-activation-file` action is retired; get the
+license locally instead (https://game.ci/docs/github/activation):
 
-1. Run the **Unity Activation File** workflow (`workflow_dispatch`) once.
-2. Download the `.alf` artifact it produces and activate it at
-   [license.unity3d.com](https://license.unity3d.com) with a Unity account that
-   holds a seat for this project (Personal is fine for a project this size).
-3. Upload the resulting `.ulf` file's contents as the repository secret
-   `UNITY_LICENSE` (Settings → Secrets and variables → Actions).
+1. On a machine with Unity Hub, sign in with the Unity account that will hold
+   this project's seat, then go to **Preferences → Licenses → Get a free
+   personal license** (Personal is fine for a project this size; already done
+   if that account activated Unity Hub normally).
+2. Find the resulting `Unity_lic.ulf` file: `C:\ProgramData\Unity\Unity_lic.ulf`
+   (Windows), `/Library/Application Support/Unity/Unity_lic.ulf` (Mac), or
+   `~/.local/share/unity3d/Unity/Unity_lic.ulf` (Linux).
+3. Add three repository secrets (Settings → Secrets and variables → Actions):
+   `UNITY_LICENSE` (the full contents of that `.ulf` file), `UNITY_EMAIL`, and
+   `UNITY_PASSWORD` (the same Unity account's login — GameCI's activation step
+   needs these alongside the license file; it does not store them).
 
-A Unity seat and its activation are the account holder's decision, not
+A Unity seat and its credentials are the account holder's decision, not
 something an assistant should provision. Re-run step 1 if the license ever
 needs re-activating (e.g. after Unity revokes it for concurrent use).
 

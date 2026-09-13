@@ -4,8 +4,7 @@ name: Build
 # entry points (Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs), which
 # stamp the Steam build-identity manifest the same way a developer's manual
 # build does. Requires a one-time Unity license secret — see
-# docs/WORKFLOW.md#continuous-integration and
-# .github/workflows/unity-request-activation-file.yml.
+# docs/WORKFLOW.md#continuous-integration.
 on:
   push:
     branches: [main]
