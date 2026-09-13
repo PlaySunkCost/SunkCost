@@ -1,12 +1,13 @@
 # Sunk Cost: network debug overlay implementation handoff
 
-**Status: specification, not yet implemented.** Prepared 13 September 2026 against
-`main` at `7fd160f` in `github.com/PlaySunkCost/SunkCost`. Owner: Dan (Notion task
+**Status: implemented and verified on 13 September 2026.** The implementation is
+on branch `dan/debug-overlay`. It was originally prepared against `main` at
+`7fd160f` in `github.com/PlaySunkCost/SunkCost`. Owner: Dan (Notion task
 "Debug overlay — ownership, client ids, RTT, authoritative vs local", branch
 `dan/debug-overlay`, epic E1, phase 02 Prototype).
 
-This document is complete enough for an assistant to implement without further
-questions. Every FishNet API named below was checked against the installed package
+This document records the implemented design and its verification guidance. Every
+FishNet API named below was checked against the installed package
 source (`Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4`, tag 4.7.3).
 Do not substitute API names from tutorials or other FishNet versions.
 
