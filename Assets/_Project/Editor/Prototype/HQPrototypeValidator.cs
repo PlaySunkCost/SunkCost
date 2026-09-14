@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using FishNet.Component.Spawning;
 using FishNet.Managing;
 using FishNet.Object;
 using FishNet.Transporting;
 using SunkCost.Interaction;
 using SunkCost.Net;
 using SunkCost.Player;
+using SunkCost.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,6 +16,10 @@ namespace SunkCost.Editor.Prototype
 {
     public static class HQPrototypeValidator
     {
+        // The HQ world scene (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 3.1):
+        // room, spawn points, light, loot fixture spawner, stub dock. Nothing that
+        // belongs to the Session scene may be here, and no carryable may be a scene
+        // object (FishNet will not move those between scenes).
         [MenuItem("Sunk Cost/Prototype/Validate HQ")]
         public static void ValidateOrThrow()
         {
@@ -23,25 +27,25 @@ namespace SunkCost.Editor.Prototype
             Scene scene = SceneManager.GetActiveScene();
             if (scene.path != HQPrototypeBuilder.ScenePath) errors.Add("Open scene is not " + HQPrototypeBuilder.ScenePath);
             if (!System.IO.File.Exists(HQPrototypeBuilder.ScenePath)) errors.Add("HQ scene is not saved on disk.");
-            CheckCount<NetworkManager>(scene, 1, errors);
-            CheckCount<PlayerSpawner>(scene, 1, errors);
-            CheckCount<PrototypeSessionUI>(scene, 1, errors);
-            CheckCount<CarryableItem>(scene, HQPrototypeLootSetup.SceneItemCount, errors);
+            CheckCount<NetworkManager>(scene, 0, errors);
+            CheckCount<PrototypeSessionUI>(scene, 0, errors);
+            CheckCount<CarryableItem>(scene, 0, errors);
+            CheckCount<LootFixtureSpawner>(scene, 1, errors);
+            CheckCount<AudioListener>(scene, 0, errors);
             CheckLootFixture(scene, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
-            if (!HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root is missing.");
+            if (HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root belongs in Session.unity, not the HQ world scene.");
+            if (CrewSpawner.SpawnPointsIn(scene).Count != new LobbySessionSettings().LocalSocketCap)
+                errors.Add($"HQ needs {new LobbySessionSettings().LocalSocketCap} spawn points under 'Spawn Points'.");
+            WorldSceneChecks.CheckShip(scene, errors, "HQ");
             CheckPlayerPrefab(errors);
             if (AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath)?.GetComponent<NetworkObject>() == null)
                 errors.Add("Basketball prefab/NetworkObject is missing.");
             if (AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath)?.GetComponent<CarryableItem>() == null)
                 errors.Add("Basketball prefab/CarryableItem is missing.");
-            if (AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Net/SteamTransport.prefab")?.GetComponent<Transport>() == null)
-                errors.Add("Configured Steam transport prefab is missing.");
-            if (EditorBuildSettings.scenes.Length != 1 || !EditorBuildSettings.scenes[0].enabled || EditorBuildSettings.scenes[0].path != HQPrototypeBuilder.ScenePath)
-                errors.Add("Build settings must contain only the enabled HQ prototype scene.");
-            CheckLobbyPrerequisites(scene, errors);
+            WorldSceneChecks.CheckBuildList(errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log($"HQ validation passed: saved scene, room, one network root, player prefab with inventory, {HQPrototypeLootSetup.SceneItemCount} carryable items, four spawns and four-player transport caps are ready.");
+            Debug.Log($"HQ validation passed: world scene with room, four spawns, light, a loot fixture spawner for {HQPrototypeLootSetup.SceneItemCount} items and the docked ship.");
         }
 
         // docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md section 9: every item prefab has a
@@ -56,14 +60,19 @@ namespace SunkCost.Editor.Prototype
 
             var sceneNames = new HashSet<string>();
             foreach (GameObject root in scene.GetRootGameObjects())
-                foreach (CarryableItem item in root.GetComponentsInChildren<CarryableItem>(true))
-                    sceneNames.Add(item.name);
+                foreach (LootFixtureSpawner spawner in root.GetComponentsInChildren<LootFixtureSpawner>(true))
+                    foreach (LootFixtureSpawner.Entry entry in spawner.Entries)
+                    {
+                        sceneNames.Add(entry.Name);
+                        if (entry.Prefab == null) errors.Add("Loot fixture entry " + entry.Name + " has no prefab.");
+                        else if (entry.Prefab.GetComponent<CarryableItem>() == null) errors.Add("Loot fixture entry " + entry.Name + " is not a carryable prefab.");
+                    }
             var collection = AssetDatabase.LoadAssetAtPath<FishNet.Managing.Object.DefaultPrefabObjects>(HQPrototypeLootSetup.PrefabObjectsPath);
 
             var checkedPrefabs = new HashSet<string>();
             foreach (HQPrototypeLootSetup.FixtureEntry entry in HQPrototypeLootSetup.Manifest)
             {
-                if (!sceneNames.Contains(entry.SceneName)) errors.Add("Scene is missing " + entry.SceneName + " (run Apply loot setup).");
+                if (!sceneNames.Contains(entry.SceneName)) errors.Add("Loot fixture is missing " + entry.SceneName + " (run Apply loot setup).");
                 if (!checkedPrefabs.Add(entry.PrefabPath)) continue;
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
                 if (prefab == null) { errors.Add("Prefab missing: " + entry.PrefabPath); continue; }
@@ -100,7 +109,7 @@ namespace SunkCost.Editor.Prototype
 
         // docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md section 10: the hold point pitches
         // with the camera and the player carries the inventory and HUD components.
-        private static void CheckPlayerPrefab(List<string> errors)
+        internal static void CheckPlayerPrefab(List<string> errors)
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
             HQPlayerController controller = prefab != null ? prefab.GetComponent<HQPlayerController>() : null;
@@ -115,20 +124,12 @@ namespace SunkCost.Editor.Prototype
         }
 
         // docs/STEAM_LOBBY_IMPLEMENTATION_PLAN.md section 11, step 5: the four-player
-        // room needs four assigned spawn points and the corrected transport caps.
-        private static void CheckLobbyPrerequisites(Scene scene, List<string> errors)
+        // room needs the corrected transport caps (now in the Session scene).
+        internal static void CheckTransportCaps(Scene scene, List<string> errors)
         {
             var settings = new SunkCost.Net.LobbySessionSettings();
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                foreach (PlayerSpawner spawner in root.GetComponentsInChildren<PlayerSpawner>(true))
-                {
-                    int assigned = 0;
-                    if (spawner.Spawns != null)
-                        foreach (Transform spawn in spawner.Spawns) if (spawn != null) assigned++;
-                    if (assigned < settings.LocalSocketCap)
-                        errors.Add($"PlayerSpawner has {assigned} assigned spawn points; {settings.LocalSocketCap} are required.");
-                }
                 foreach (Transport transport in root.GetComponentsInChildren<Transport>(true))
                 {
                     if (transport.GetType().FullName != "FishNet.Transporting.Tugboat.Tugboat") continue;
@@ -154,14 +155,14 @@ namespace SunkCost.Editor.Prototype
             return cap != null ? cap.intValue : -1;
         }
 
-        private static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component
+        internal static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component
         {
             int count = 0;
             foreach (GameObject root in scene.GetRootGameObjects()) count += root.GetComponentsInChildren<T>(true).Length;
             if (count != expected) errors.Add($"Expected {expected} {typeof(T).Name}; found {count}.");
         }
 
-        private static bool HasRoot(Scene scene, string name)
+        internal static bool HasRoot(Scene scene, string name)
         {
             foreach (GameObject root in scene.GetRootGameObjects())
                 if (root.name == name) return true;

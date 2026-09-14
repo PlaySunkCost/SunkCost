@@ -55,8 +55,8 @@ namespace SunkCost.Editor.Prototype
         private static string ApplySceneTugboatCap()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (scene.path != HQPrototypeBuilder.ScenePath)
-                throw new InvalidOperationException("Open " + HQPrototypeBuilder.ScenePath + " before applying lobby caps (active: " + scene.path + ").");
+            if (scene.path != SunkCost.World.WorldScenes.SessionPath)
+                throw new InvalidOperationException("Open " + SunkCost.World.WorldScenes.SessionPath + " before applying lobby caps (active: " + scene.path + ").");
             Transport tugboat = null;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
@@ -66,7 +66,7 @@ namespace SunkCost.Editor.Prototype
                 }
                 if (tugboat != null) break;
             }
-            if (tugboat == null) throw new InvalidOperationException("No Tugboat transport in the HQ scene.");
+            if (tugboat == null) throw new InvalidOperationException("No Tugboat transport in the Session scene.");
 
             int target = Defaults.LocalSocketCap;
             using var serialized = new SerializedObject(tugboat);

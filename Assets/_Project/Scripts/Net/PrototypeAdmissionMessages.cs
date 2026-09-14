@@ -18,7 +18,8 @@ namespace SunkCost.Net
         RoomFull,
         HostNotReady,
         Timeout,
-        Internal
+        Internal,
+        DiveInProgress
     }
 
     public static class AdmissionRejectionText
@@ -39,6 +40,7 @@ namespace SunkCost.Net
                 case AdmissionRejection.RoomFull: return "Room full";
                 case AdmissionRejection.HostNotReady: return "Host is not ready";
                 case AdmissionRejection.Timeout: return "Authentication timed out";
+                case AdmissionRejection.DiveInProgress: return "Dive in progress — join between days";
                 default: return "Could not join";
             }
         }

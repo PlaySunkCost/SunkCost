@@ -270,6 +270,23 @@ namespace SunkCost.Interaction
             slots.Value = InventorySlots.None;
         }
 
+        // Every spawned NetworkObject this player carries (hands and slots), for a
+        // scene move: FishNet moves only spawned root objects, and a carrier's
+        // items must travel with it (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md 5.6).
+        [Server]
+        public void ServerCollectCarried(System.Collections.Generic.List<NetworkObject> into)
+        {
+            CarryableItem held = ServerFindHeld();
+            if (held != null && held.IsSpawned) into.Add(held.NetworkObject);
+            InventorySlots current = slots.Value;
+            for (int i = 0; i < InventorySlots.Count; i++)
+            {
+                CarryableItem item = Resolve(current.Get(i));
+                if (item != null && item != held && item.IsSpawned && item.HolderClientId == Owner.ClientId)
+                    into.Add(item.NetworkObject);
+            }
+        }
+
         private void ServerOnRemoteConnectionState(NetworkConnection connection, RemoteConnectionStateArgs args)
         {
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;

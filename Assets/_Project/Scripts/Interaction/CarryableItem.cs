@@ -313,6 +313,14 @@ namespace SunkCost.Interaction
         [Server]
         public void ServerReset() => ServerDropAt(resetPosition);
 
+        // Runtime-spawned fixture items (LootFixtureSpawner) are told where they
+        // rest before the server spawns them; OnStartServer then resets them there.
+        public void SetResetPositionBeforeSpawn(Vector3 position)
+        {
+            if (IsSpawned) { Debug.LogWarning(name + ": reset position set after spawn is ignored."); return; }
+            resetPosition = position;
+        }
+
         [ServerRpc]
         private void ServerRequestRest(uint version, NetworkConnection sender = null)
         {

@@ -6,6 +6,7 @@ using SunkCost.Interaction;
 using SunkCost.Net;
 using SunkCost.Player;
 using UnityEngine;
+using UnityEditor;
 
 namespace SunkCost.Editor.Prototype
 {
@@ -274,6 +275,66 @@ namespace SunkCost.Editor.Prototype
             if (overlay == null) return "No NetworkDebugOverlay.";
             overlay.DumpSnapshot();
             return "dumped to console and clipboard";
+        }
+
+        // ---- world loop (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 9.2) -------
+
+        // Hand-testing without the MCP bridge: host in Play Mode, everyone on the
+        // deck, then one of these. The monitor card replaces them.
+        [MenuItem("Sunk Cost/Prototype/Debug/Sail to Sea (host, Play Mode)")]
+        public static void MenuSailToSea() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("Sea") : "enter Play Mode and host first."));
+
+        [MenuItem("Sunk Cost/Prototype/Debug/Sail to HQ (host, Play Mode)")]
+        public static void MenuSailToHQ() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("HQ") : "enter Play Mode and host first."));
+
+        // The monitor's request until the monitor card: host only.
+        public static string ServerSail(string world)
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            if (flow == null) return "No WorldSceneFlow.";
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            return flow.ServerSail(target, out string why) ? "sailing to " + target : "refused: " + why;
+        }
+
+        // The load data the flow builds, for the dynamic-command tooling that cannot
+        // reference FishNet types itself.
+        public static string LoadDataText(string world)
+        {
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            FishNet.Managing.Scened.SceneLoadData load = SunkCost.World.WorldSceneFlow.LoadDataFor(target, null);
+            FishNet.Managing.Scened.PreferredScene preferred = load.PreferredActiveScene;
+            return $"scenes={string.Join(",", load.SceneLookupDatas.Select(l => l.Name))} replace={load.ReplaceScenes} autoUnload={load.Options.AutomaticallyUnload} " +
+                   $"client={(preferred.Client == null ? "null" : preferred.Client.Name)} server={(preferred.Server == null ? "null" : "'" + preferred.Server.Name + "' handle=" + preferred.Server.RawHandle)} moved={load.MovedNetworkObjects.Length}";
+        }
+
+        // Diagnostic: a server-only load of a world, no connections, no moved objects.
+        public static string ServerPreload(string world)
+        {
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            SunkCost.World.WorldSceneFlow.Instance?.EnsureHolderKeepAlive();
+            FishNet.InstanceFinder.SceneManager.LoadConnectionScenes(SunkCost.World.WorldSceneFlow.LoadDataFor(target, null));
+            return "preload queued for " + target;
+        }
+
+        public static string FlowStatus()
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            string loaded = string.Join("+", Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
+                .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
+            return $"flow={(flow == null ? "none" : $"world={flow.CurrentWorld} transitioning={flow.Transitioning} pending={flow.PendingArrivals}")}; " +
+                   $"day={(day == null ? "none" : day.DebugStatus)}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; " +
+                   $"fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}";
+        }
+
+        // Every player and carryable with the Unity scene it sits in on this peer.
+        public static string ScenesText()
+        {
+            var lines = Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId)
+                .Select(p => $"player {p.OwnerId} local={p.IsOwner} scene={p.gameObject.scene.name} pos={p.transform.position}")
+                .Concat(Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name)
+                    .Select(i => $"item {i.name} scene={i.gameObject.scene.name} state={i.State} holder={i.HolderClientId} pos={i.transform.position}"));
+            return string.Join("\n", lines);
         }
 
         private static HQPlayerController LocalPlayer()

@@ -1,16 +1,11 @@
 using System;
-using System.IO;
-using FishNet.Component.Spawning;
+using System.Collections.Generic;
 using FishNet.Component.Transforming;
-using FishNet.Managing;
-using FishNet.Managing.Object;
-using FishNet.Managing.Transporting;
 using FishNet.Object;
 using FishNet.Transporting;
-using FishNet.Transporting.Tugboat;
 using SunkCost.Interaction;
-using SunkCost.Net;
 using SunkCost.Player;
+using SunkCost.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -30,49 +25,82 @@ namespace SunkCost.Editor.Prototype
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         public const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
+        public const float PlankLength = 6f;
+        public const float PlankWidth = 1.6f;
+        public const float DoorwayWidth = 2.4f;
+
+        // The HQ world scene: the room, its spawn points, the light, the loot fixture
+        // spawner and the stub dock (plank + docked ship). No network root, no UI, no
+        // camera: those live in Session.unity (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md
+        // section 3.1). Prefabs are (re)written here because the loot setup and the
+        // Session builder both need them.
         [MenuItem("Sunk Cost/Prototype/Create or Update HQ")]
         public static void CreateOrUpdate()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 throw new InvalidOperationException("Exit Play Mode before building the HQ scene.");
+            EnsurePrefabs(out _, out GameObject ballPrefab, out _);
+            GameObject shipPrefab = ShipStubBuilder.EnsurePrefab();
+            Material floorMaterial = GetOrCreateMaterial(MaterialPath + "/HQFloor.mat", new Color(0.19f, 0.22f, 0.25f));
+            Material wallMaterial = GetOrCreateMaterial(MaterialPath + "/HQWall.mat", new Color(0.34f, 0.38f, 0.42f));
+            Material plankMaterial = GetOrCreateMaterial(MaterialPath + "/HQPlank.mat", new Color(0.42f, 0.33f, 0.22f));
+            AssetDatabase.SaveAssets();
 
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            scene.name = "HQPrototype";
+            // NewScene unloads assets nothing references; take the references again.
+            ballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BallPrefabPath);
+            shipPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ShipStubBuilder.PrefabPath);
+            floorMaterial = GetOrCreateMaterial(MaterialPath + "/HQFloor.mat", new Color(0.19f, 0.22f, 0.25f));
+            wallMaterial = GetOrCreateMaterial(MaterialPath + "/HQWall.mat", new Color(0.34f, 0.38f, 0.42f));
+            plankMaterial = GetOrCreateMaterial(MaterialPath + "/HQPlank.mat", new Color(0.42f, 0.33f, 0.22f));
+            CreateRoom(floorMaterial, wallMaterial);
+            CreateSpawnPoints();
+            CreateLight();
+            CreateLootFixture(ballPrefab);
+            CreateDock(shipPrefab, plankMaterial);
+            if (!EditorSceneManager.SaveScene(scene, ScenePath))
+                throw new InvalidOperationException("Unity could not save " + ScenePath);
+            SessionSceneBuilder.WriteBuildList();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            HQPrototypeValidator.ValidateOrThrow();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
+            Debug.Log("HQ world scene created and validated at " + ScenePath);
+        }
+
+        // Player, basketball and Steam transport prefabs, written from code only
+        // when missing: the setups (inventory, loot, lobby) patch the existing ones
+        // and a scene rebuild must not undo their tested settings. "Rebuild
+        // prototype prefabs" forces a rewrite.
+        internal static void EnsurePrefabs(out GameObject playerPrefab, out GameObject ballPrefab, out GameObject steamTransportPrefab, bool force = false)
+        {
             EnsureFolder("Assets/_Project/Scenes/Prototype");
             EnsureFolder("Assets/_Project/Prefabs/Player");
             EnsureFolder("Assets/_Project/Prefabs/Interaction");
             EnsureFolder("Assets/_Project/Prefabs/Net");
             EnsureFolder(MaterialPath);
-
-            Material floorMaterial = GetOrCreateMaterial(MaterialPath + "/HQFloor.mat", new Color(0.19f, 0.22f, 0.25f));
-            Material wallMaterial = GetOrCreateMaterial(MaterialPath + "/HQWall.mat", new Color(0.34f, 0.38f, 0.42f));
             Material ballMaterial = GetOrCreateMaterial(MaterialPath + "/BallOrange.mat", new Color(0.95f, 0.28f, 0.035f));
             Material playerMaterial = GetOrCreateMaterial(MaterialPath + "/PlayerBase.mat", Color.white);
-
-            GameObject playerPrefab = CreatePlayerPrefab(playerMaterial);
-            GameObject ballPrefab = CreateBallPrefab(ballMaterial);
-            GameObject steamTransportPrefab = CreateSteamTransportPrefab();
+            playerPrefab = force ? null : AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            if (playerPrefab == null) playerPrefab = CreatePlayerPrefab(playerMaterial);
+            ballPrefab = force ? null : AssetDatabase.LoadAssetAtPath<GameObject>(BallPrefabPath);
+            if (ballPrefab == null) ballPrefab = CreateBallPrefab(ballMaterial);
+            steamTransportPrefab = force ? null : AssetDatabase.LoadAssetAtPath<GameObject>(SteamTransportPrefabPath);
+            if (steamTransportPrefab == null) steamTransportPrefab = CreateSteamTransportPrefab();
             AssetDatabase.SaveAssets();
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            scene.name = "HQPrototype";
-
-            CreateRoom(floorMaterial, wallMaterial);
-            Transform[] spawnPoints = CreateSpawnPoints();
-            Camera preview = CreatePreviewCamera();
-            CreateLight();
-            CreateBallInstance(ballPrefab);
-            CreateNetworkAndUI(playerPrefab, spawnPoints, preview, steamTransportPrefab);
-
-            if (!EditorSceneManager.SaveScene(scene, ScenePath))
-                throw new InvalidOperationException("Unity could not save " + ScenePath);
-
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            HQPrototypeValidator.ValidateOrThrow();
-            Selection.activeObject = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
-            Debug.Log("HQ prototype created and validated at " + ScenePath);
         }
 
-        private static GameObject CreatePlayerPrefab(Material material)
+        [MenuItem("Sunk Cost/Prototype/Rebuild prototype prefabs")]
+        public static void RebuildPrefabs()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play Mode before rebuilding prefabs.");
+            EnsurePrefabs(out _, out _, out _, force: true);
+            Debug.Log("Player, basketball and Steam transport prefabs rewritten; re-run the inventory, loot and lobby setups.");
+        }
+
+        internal static GameObject CreatePlayerPrefab(Material material)
         {
             GameObject root = new("PrototypePlayer");
             try
@@ -137,7 +165,7 @@ namespace SunkCost.Editor.Prototype
             finally { Object.DestroyImmediate(root); }
         }
 
-        private static GameObject CreateBallPrefab(Material material)
+        internal static GameObject CreateBallPrefab(Material material)
         {
             GameObject root = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             root.name = "Basketball";
@@ -166,7 +194,7 @@ namespace SunkCost.Editor.Prototype
             finally { Object.DestroyImmediate(root); }
         }
 
-        private static GameObject CreateSteamTransportPrefab()
+        internal static GameObject CreateSteamTransportPrefab()
         {
             GameObject root = new("Steam Transport");
             try
@@ -186,14 +214,18 @@ namespace SunkCost.Editor.Prototype
         {
             GameObject room = new("HQ Room");
             CreateBlock("Floor", new Vector3(0f, -0.25f, 0f), new Vector3(12f, 0.5f, 12f), floor, room.transform);
-            CreateBlock("North Wall", new Vector3(0f, 1.75f, 6f), new Vector3(12f, 3.5f, 0.3f), wall, room.transform);
+            // The north wall has a doorway onto the plank to the docked ship.
+            float side = (12f - DoorwayWidth) / 2f;
+            CreateBlock("North Wall West", new Vector3(-(DoorwayWidth / 2f + side / 2f), 1.75f, 6f), new Vector3(side, 3.5f, 0.3f), wall, room.transform);
+            CreateBlock("North Wall East", new Vector3(DoorwayWidth / 2f + side / 2f, 1.75f, 6f), new Vector3(side, 3.5f, 0.3f), wall, room.transform);
+            CreateBlock("North Wall Lintel", new Vector3(0f, 3.0f, 6f), new Vector3(DoorwayWidth, 1.0f, 0.3f), wall, room.transform);
             CreateBlock("South Wall", new Vector3(0f, 1.75f, -6f), new Vector3(12f, 3.5f, 0.3f), wall, room.transform);
             CreateBlock("East Wall", new Vector3(6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
             CreateBlock("West Wall", new Vector3(-6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
             CreateBlock("Ceiling", new Vector3(0f, 3.65f, 0f), new Vector3(12f, 0.3f, 12f), wall, room.transform);
         }
 
-        private static void CreateBlock(string name, Vector3 position, Vector3 scale, Material material, Transform parent)
+        internal static void CreateBlock(string name, Vector3 position, Vector3 scale, Material material, Transform parent)
         {
             GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.name = name;
@@ -203,7 +235,7 @@ namespace SunkCost.Editor.Prototype
             block.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static Transform[] CreateSpawnPoints()
+        internal static Transform[] CreateSpawnPoints()
         {
             GameObject root = new("Spawn Points");
             Vector3[] positions = { new(-3f, 0f, -3f), new(3f, 0f, -3f), new(-3f, 0f, 3f), new(3f, 0f, 3f) };
@@ -219,16 +251,6 @@ namespace SunkCost.Editor.Prototype
             return result;
         }
 
-        private static Camera CreatePreviewCamera()
-        {
-            GameObject go = new("Preview Camera", typeof(Camera), typeof(AudioListener));
-            go.transform.SetPositionAndRotation(new Vector3(0f, 7f, -10f), Quaternion.Euler(25f, 0f, 0f));
-            Camera camera = go.GetComponent<Camera>();
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.035f, 0.045f, 0.06f);
-            return camera;
-        }
-
         private static void CreateLight()
         {
             GameObject go = new("HQ Light", typeof(Light));
@@ -240,55 +262,40 @@ namespace SunkCost.Editor.Prototype
             light.shadows = LightShadows.Soft;
         }
 
-        private static void CreateBallInstance(GameObject prefab)
+        // The seven balls are spawned at runtime by LootFixtureSpawner (FishNet will
+        // not move scene objects between scenes). The builder seeds the basketballs;
+        // Apply loot setup reconciles the entries with the full manifest once the
+        // heavy prefabs exist.
+        private static void CreateLootFixture(GameObject ballPrefab)
         {
-            GameObject ball = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            ball.transform.SetPositionAndRotation(new Vector3(0f, 1f, 0f), Quaternion.identity);
-        }
-
-        private static void CreateNetworkAndUI(GameObject playerPrefab, Transform[] spawns, Camera preview, GameObject steamTransportPrefab)
-        {
-            GameObject networkRoot = new("Prototype Network Root");
-            networkRoot.SetActive(false);
-            NetworkManager manager = networkRoot.AddComponent<NetworkManager>();
-            TransportManager transportManager = networkRoot.AddComponent<TransportManager>();
-            GameObject localTransportObject = new("Local Transport");
-            localTransportObject.transform.SetParent(networkRoot.transform, false);
-            Tugboat tugboat = localTransportObject.AddComponent<Tugboat>();
-            transportManager.Transport = tugboat;
-            PlayerSpawner spawner = networkRoot.AddComponent<PlayerSpawner>();
-            spawner.SetPlayerPrefab(playerPrefab.GetComponent<NetworkObject>());
-            spawner.Spawns = spawns;
-
-            SetPrivate(tugboat, "_maximumClients", new SunkCost.Net.LobbySessionSettings().LocalSocketCap); // Tugboat counts the host loopback socket
-
-            GameObject uiObject = new("Prototype Session UI");
-            PrototypeSessionUI ui = uiObject.AddComponent<PrototypeSessionUI>();
-            SerializedObject serialized = new(ui);
-            serialized.FindProperty("networkRoot").objectReferenceValue = networkRoot;
-            serialized.FindProperty("networkManager").objectReferenceValue = manager;
-            serialized.FindProperty("transportManager").objectReferenceValue = transportManager;
-            serialized.FindProperty("localTransport").objectReferenceValue = tugboat;
-            serialized.FindProperty("steamTransportPrefab").objectReferenceValue = steamTransportPrefab;
-            serialized.FindProperty("previewCamera").objectReferenceValue = preview;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            const string defaultsPath = "Assets/_Project/Settings/Prototype/PrototypePrefabObjects.asset";
-            EnsureFolder("Assets/_Project/Settings/Prototype");
-            DefaultPrefabObjects defaults = AssetDatabase.LoadAssetAtPath<DefaultPrefabObjects>(defaultsPath);
-            if (defaults == null)
+            GameObject fixture = new("Loot Fixture");
+            LootFixtureSpawner spawner = fixture.AddComponent<LootFixtureSpawner>();
+            var entries = new List<LootFixtureSpawner.Entry>();
+            foreach (HQPrototypeLootSetup.FixtureEntry entry in HQPrototypeLootSetup.Manifest)
             {
-                defaults = ScriptableObject.CreateInstance<DefaultPrefabObjects>();
-                AssetDatabase.CreateAsset(defaults, defaultsPath);
+                GameObject prefab = entry.IsBasketball ? ballPrefab : AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
+                if (prefab == null) continue;
+                entries.Add(new LootFixtureSpawner.Entry { Name = entry.SceneName, Prefab = prefab, Position = entry.ResetPosition });
             }
-            defaults.Clear();
-            defaults.AddObject(playerPrefab.GetComponent<NetworkObject>(), checkForDuplicates: true, initializeAdded: true);
-            defaults.AddObject(AssetDatabase.LoadAssetAtPath<GameObject>(BallPrefabPath).GetComponent<NetworkObject>(), checkForDuplicates: true, initializeAdded: true);
-            EditorUtility.SetDirty(defaults);
-            manager.SpawnablePrefabs = defaults;
+            spawner.SetEntries(entries.ToArray());
         }
 
-        private static Type FindType(string fullName)
+        // Stub dock until Idan's pier card: a plank through the north doorway onto
+        // the docked ship, whose BoardingPoint meets the plank's far end.
+        private static void CreateDock(GameObject shipPrefab, Material plankMaterial)
+        {
+            GameObject dock = new("Dock");
+            float plankStart = 6f;
+            CreateBlock("Plank", new Vector3(0f, -0.05f, plankStart + PlankLength / 2f), new Vector3(PlankWidth, 0.1f, PlankLength), plankMaterial, dock.transform);
+            GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
+            ship.transform.SetParent(dock.transform, true);
+            ShipParts parts = ship.GetComponent<ShipParts>();
+            Transform boarding = parts != null ? parts.BoardingPoint : null;
+            Vector3 boardingLocal = boarding != null ? boarding.localPosition : Vector3.zero;
+            ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, plankStart + PlankLength) - boardingLocal, Quaternion.identity);
+        }
+
+        internal static Type FindType(string fullName)
         {
             foreach (Type type in TypeCache.GetTypesDerivedFrom<Transport>())
             {
@@ -297,14 +304,14 @@ namespace SunkCost.Editor.Prototype
             return null;
         }
 
-        private static void SetPrivate(Object target, string name, int value)
+        internal static void SetPrivate(Object target, string name, int value)
         {
             SerializedObject serialized = new(target);
             serialized.FindProperty(name).intValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void SetPrivate(Object target, string name, bool value)
+        internal static void SetPrivate(Object target, string name, bool value)
         {
             SerializedObject serialized = new(target);
             serialized.FindProperty(name).boolValue = value;
@@ -325,7 +332,7 @@ namespace SunkCost.Editor.Prototype
             return material;
         }
 
-        private static void EnsureFolder(string path)
+        internal static void EnsureFolder(string path)
         {
             string current = "Assets";
             foreach (string part in path.Substring("Assets/".Length).Split('/'))

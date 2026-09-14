@@ -1,5 +1,86 @@
 # HQ prototype verification report
 
+## Scene flow branch — 15 September 2026
+
+Tested uncommitted `dan/scene-flow` based on `90b3ab5` (the world-loop plan
+merge), Unity 6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one
+or two headless standalone guests (Local development build
+`local-dev:90b3ab5`, driven through `InventoryVerificationPeer`'s command
+directory), all on one machine, so RTT ≈ 0. The rows are the Local matrix of
+`docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md` section 9.2 that the scene-flow card
+owns; *Sunk Cost > Prototype > Run world loop matrix* runs them from a hosting
+editor and writes `Temp/world-loop-matrix.log` (`MATRIX_PASS`, 00:50 on
+15 September). These results do not certify Steam.
+
+Scenes: `Session` (menu, network root, `WorldSceneFlow`, `CrewSpawner`,
+`ScreenFade`), `HQPrototype` (rebuilt: the room, a dock and the docked ship
+stub), `ShipAtSea` (the same ship prefab 500 m out on a water plane). The loot
+fixture is spawned at runtime by `LootFixtureSpawner` from
+`HQPrototypeLootSetup`'s entries; nothing carryable is a scene object any more.
+
+- Pure: *Check world loop (pure)* passes (load data additive / never
+  auto-unloaded / client active scene = world, unload data, ship part names on
+  both instances, `ElevatorMath` water curve, settings asset); *Validate
+  Session*, *Validate HQ*, *Validate ShipAtSea* pass; the builders are
+  idempotent (a second run reports no changes).
+- S1 (join at HQ): guest client 1 spawned at an HQ spawn point; both peers see
+  both players in `HQPrototype`; the guest has `Session+HQPrototype` loaded and
+  nothing else, phase `AtHQ`; one NetworkManager; seven fixture items in HQ on
+  the host and seven on the guest.
+- S2 (sail refused): with both players ashore `ServerSail(Sea)` → `refused: Not
+  aboard: Player 1, Player 0`; host on the deck, guest ashore → `refused: Not
+  aboard: Player 1`; phase stayed `AtHQ`, `ShipAtSea` never loaded.
+- S3 (sail out): host holding `Basketball`, `Basketball (2)` dropped on the
+  docked deck at ship-local (2, 0.5, −3), host at ship-local (−2, 0, 2), guest
+  at (2.5, 0, 4). `ServerSail(Sea)` → phase `Sailing` → `AtSea`; the host faded
+  exactly once; `HQPrototype` unloaded on the host; host player in `ShipAtSea`
+  at the same ship-local spot (< 0.15 m); the held ball still `Held` in
+  `ShipAtSea`; the deck ball on the sea deck within 0.6 m of its ship-local
+  spot (it settles on the new deck). Guest snapshot: `loaded=Session+ShipAtSea;
+  active=ShipAtSea; phase=AtSea; world=Sea`, both players `scene=ShipAtSea`,
+  `id=1 state=Held holder=0` and `id=2 state=Free` both in `ShipAtSea`, nothing
+  left in HQ; the guest's own position (2.50, 0.00, 504.00) = ship-local
+  (2.5, 0, 4), the spot it had at the dock.
+- S4 (join at sea): a second guest (client 2) spawned on a sea-deck
+  `SpawnPoint_n` at (−3.00, 0.00, 501.00), loaded `Session+ShipAtSea` only, saw
+  three players and both balls; it left cleanly (`leave` command) and the host
+  went back to two players.
+- S5 (join mid-day): `CrewDayState.ServerBeginDay()` → `DiveInProgress` (the
+  phase half of the day API; the deck-cabin card calls it when the car
+  departs). `ServerSail(HQ)` → `refused: Dive in progress.`. A third process
+  joined: admission refused, its snapshot `server=False; client=False;
+  clientId=-1; loaded=Session; message=Dive in progress — join between days`,
+  no player line, never in `ShipAtSea`. Host unaffected: two players, still at
+  sea, phase `DiveInProgress`; the first guest saw `phase=DiveInProgress` and
+  two players. `ServerEndDay()` → `AtSea`.
+- S13 (sail home, scene part): `ServerSail(HQ)` → `AtHQ`; `ShipAtSea` unloaded
+  on the host; host at the same deck spot on the docked ship; the held ball
+  `Held` in `HQPrototype`; the deck ball in `HQPrototype`; the HQ fixture
+  respawned fresh (7 + the 2 balls that travelled = 9 items on both peers);
+  guest `loaded=HQPrototype+Session; phase=AtHQ`, both players in HQ.
+- S15 (host leaves, re-hosts): after Leave, no world scene loaded, active scene
+  `Session`, `CrewDayState.Instance` null; re-host came up (the Tugboat port
+  needs about 2 s to free; the row waits 2 s and retries up to four times);
+  fixture fresh (7), one day state, `AtHQ`, host spawned in HQ.
+- Findings fixed on the way (all in `WorldSceneFlow`, contract section 10):
+  FishNet's `SceneLookupData` `!=` throws on null entries (`is null`); Unity 6's
+  `Scene.GetRootGameObjects(List)` does not clear the list, so a load that moved
+  nothing re-moved the previous sail's players into the joiner's scene — one
+  keep-alive root in FishNet's holder scene fixes it; a pure client
+  instantiated the fresh HQ fixture into the sea scene it was about to unload
+  (spawned objects land in the active scene) — they are moved to `Session` on
+  unload-start; adding the host to the destination before the guests made the
+  guest's player blink out of the host's view for two ticks — every traveller
+  is added to the destination before the one load, and arrival is the client's
+  `WorldArrivedBroadcast` from its own load-end rather than presence.
+- Editor log after the run: no exceptions from project code; URP logs
+  "Reduced additional punctual light shadows resolution" (six shadow-casting
+  lights across the base and the ship in one atlas — cosmetic, not fixed).
+
+Not run: every Steam row (two machines) — the walkthrough card; the four-player
+Local sail (the matrix drives two guests, not three); feel (a person has not
+yet sailed with the fade in front of them).
+
 ## Loot and weight branch — 14 September 2026
 
 Tested uncommitted `dan/loot-weight` based on `a8ffacd` (plan commit `00f3bce`),

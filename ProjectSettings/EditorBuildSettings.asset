@@ -6,8 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Project/Scenes/Prototype/Session.unity
+    guid: d5d10d0698992f143a6c723a97b7a084
+  - enabled: 1
     path: Assets/_Project/Scenes/Prototype/HQPrototype.unity
     guid: 9c448ad941f3ef844b273204f149ab20
+  - enabled: 1
+    path: Assets/_Project/Scenes/Prototype/ShipAtSea.unity
+    guid: 0ab8e7c10637c0d4ba4de040684047d5
+  - enabled: 1
+    path: Assets/_Project/Scenes/Prototype/DiveSite01.unity
+    guid: 9ad7ef13d1754ac42a8e7b18f0fc7d99
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
