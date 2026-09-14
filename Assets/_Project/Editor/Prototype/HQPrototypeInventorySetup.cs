@@ -15,17 +15,7 @@ namespace SunkCost.Editor.Prototype
     // changed. Never regenerates the room, player or ball.
     public static class HQPrototypeInventorySetup
     {
-        // One original ball plus four more so "slots full" and "overflow" can be
-        // exercised with the only carryable prefab that exists.
-        public const int SceneItemCount = 5;
-
-        private static readonly Vector3[] ExtraBallPositions =
-        {
-            new(1.5f, 1f, 1.5f),
-            new(-1.5f, 1f, 1.5f),
-            new(1.5f, 1f, -1.5f),
-            new(-1.5f, 1f, -1.5f)
-        };
+        public static int SceneItemCount => HQPrototypeLootSetup.SceneItemCount;
 
         [MenuItem("Sunk Cost/Prototype/Apply inventory setup")]
         public static void ApplyFromMenu()
@@ -103,50 +93,9 @@ namespace SunkCost.Editor.Prototype
             return "Ball prefab: " + string.Join(", ", changes);
         }
 
-        private static string ApplySceneItems()
-        {
-            Scene scene = SceneManager.GetActiveScene();
-            if (scene.path != HQPrototypeBuilder.ScenePath)
-                throw new InvalidOperationException("Open " + HQPrototypeBuilder.ScenePath + " before applying the inventory setup (active: " + scene.path + ").");
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
-            if (prefab == null) throw new InvalidOperationException("Basketball prefab missing.");
-
-            var items = new List<CarryableItem>();
-            foreach (GameObject root in scene.GetRootGameObjects())
-                items.AddRange(root.GetComponentsInChildren<CarryableItem>(true));
-            int existing = items.Count;
-
-            int added = 0;
-            for (int i = existing; i < SceneItemCount; i++)
-            {
-                Vector3 position = ExtraBallPositions[(i - 1) % ExtraBallPositions.Length];
-                var ball = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-                ball.name = "Basketball (" + (i + 1) + ")";
-                ball.transform.SetPositionAndRotation(position, Quaternion.identity);
-                using var serialized = new SerializedObject(ball.GetComponent<CarryableItem>());
-                serialized.FindProperty("resetPosition").vector3Value = position;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.RecordPrefabInstancePropertyModifications(ball.transform);
-                items.Add(ball.GetComponent<CarryableItem>());
-                added++;
-            }
-            // Repair existing instances too. Scene prefab names need an explicit
-            // override; setting GameObject.name alone did not survive the save.
-            int renamed = 0;
-            for (int i = 0; i < items.Count; i++)
-            {
-                string expected = i == 0 ? "Basketball" : "Basketball (" + (i + 1) + ")";
-                if (items[i].name == expected) continue;
-                using var serialized = new SerializedObject(items[i].gameObject);
-                serialized.FindProperty("m_Name").stringValue = expected;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.RecordPrefabInstancePropertyModifications(items[i].gameObject);
-                renamed++;
-            }
-            if (added == 0 && renamed == 0) return "Scene already has uniquely named carryable items";
-            EditorSceneManager.MarkSceneDirty(scene);
-            if (!EditorSceneManager.SaveScene(scene)) throw new InvalidOperationException("Unity could not save " + scene.path);
-            return "Scene: added " + added + ", renamed " + renamed + " basketball instances";
-        }
+        // The scene fixture (which balls exist, their names and reset positions) is
+        // owned by HQPrototypeLootSetup since the loot/weight work; this setup only
+        // keeps the player components and the ball prefab fields in shape.
+        private static string ApplySceneItems() => HQPrototypeLootSetup.ApplySceneFixture();
     }
 }

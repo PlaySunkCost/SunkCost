@@ -55,6 +55,7 @@ namespace SunkCost.Editor.Prototype
             File.AppendAllText(Log, "PASS " + label + "\n" + H.InventoryText() + "\n" + H.AllItems() + "\n");
         }
         private static void Peer() => File.WriteAllText("Temp/inventory-peer-host/command.json", "{\"id\":" + (++peerId) + ",\"action\":\"snapshot\"}");
+        private static void PeerSpawnLight(int count) => File.WriteAllText("Temp/inventory-peer-host/command.json", "{\"id\":" + (++peerId) + ",\"action\":\"spawn_light\",\"slot\":" + count + "}");
         private static void CheckPeer(string state)
         {
             string snapshot = File.ReadAllText("Temp/inventory-peer-host/reply.txt");
@@ -84,6 +85,10 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestEquip(1); yield return null;
             Check(Inv().HeldItem == H.Item("Basketball (2)") && H.Item().State == ItemState.Stowed, "H3 swap equipped slots");
             H.ClientRequestEquip(1); yield return null;
+            // The saved fixture has three basketballs (docs/LOOT_WEIGHT plan section 7);
+            // the four-slot rows need two more, spawned by the host for this session.
+            PeerSpawnLight(2); yield return null; yield return null; yield return null;
+            H.NameTestClones();
             for (int i = 3; i <= 4; i++)
             {
                 string name = "Basketball (" + i + ")";

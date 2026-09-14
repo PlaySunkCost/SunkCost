@@ -1,7 +1,10 @@
 # Loot and weight — implementation handoff
 
-**Status: being built on `dan/loot-weight` (Dan's session, 14 September 2026)**, with two
-simplifications marked "Builder simplification" in sections 5 and 6.
+**Status: implemented on `dan/loot-weight` (14 September 2026); Local rows in
+`docs/HQ_PROTOTYPE_TEST_REPORT.md` ("Loot and weight branch"); Steam rows,
+teammate review and the feel gate remain.** Two simplifications are marked
+"Builder simplification" in sections 5 and 6; one setup finding (FishNet scene
+id throttling) is recorded in the report.
 Reviewed 14 September 2026 on `dan/loot-weight` at `f296d2c`, based on merged
 inventory at `a8ffacd`. Before building, inspect newer main and local changes.
 Companion: [mission](LOOT_WEIGHT_MISSION.md).

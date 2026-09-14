@@ -2,11 +2,11 @@ namespace SunkCost.Interaction
 {
     public enum GrabOutcome : byte
     {
-        RefuseHandsFull, // an overflow item is in the hands, or nothing fits and the hands are busy
+        RefuseHandsFull, // an overflow item is already in the hands
         HoldWithSlot,    // into the first free slot and into the hands
         StowIntoSlot,    // into the first free slot; a slot item stays in the hands
         HoldOverflow,   // no slot for it; hands only
-        StowAndHoldOverflow // full slots: put the equipped slot item away, hold the new item
+        StowAndHoldOverflow // no slot for the target: put the equipped slot item away, hold the new item
     }
 
     public enum EquipOutcome : byte
@@ -36,9 +36,10 @@ namespace SunkCost.Interaction
             if (holdingOverflow) return GrabOutcome.RefuseHandsFull;
             if (fitsInSlot && firstFreeSlot >= 0)
                 return handsEmpty ? GrabOutcome.HoldWithSlot : GrabOutcome.StowIntoSlot;
-            if (firstFreeSlot < 0 && !handsEmpty)
-                return GrabOutcome.StowAndHoldOverflow;
-            return handsEmpty ? GrabOutcome.HoldOverflow : GrabOutcome.RefuseHandsFull;
+            // No slot for the target (slots full, or a two-handed item): it goes to
+            // the hands. An equipped slot item already owns its slot, so it is put
+            // away first rather than blocking the pickup (LOOT_WEIGHT plan section 3).
+            return handsEmpty ? GrabOutcome.HoldOverflow : GrabOutcome.StowAndHoldOverflow;
         }
 
         public static EquipOutcome DecideEquip(int slotObjectId, int heldObjectId, bool holdingOverflow)

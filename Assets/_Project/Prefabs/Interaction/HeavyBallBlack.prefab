@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 7900363467006852362}
   - component: {fileID: 1218129839819731725}
   m_Layer: 0
-  m_Name: Basketball
+  m_Name: HeavyBallBlack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +33,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.24, y: 0.24, z: 0.24}
+  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -92,7 +92,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3f6ba24d1b4a347479e4017f06790388, type: 2}
+  - {fileID: 2100000, guid: 187a80007ae6f2049801b5bcc68c3ac9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -124,7 +124,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6262863972986464730}
   serializedVersion: 5
-  m_Mass: 0.62
+  m_Mass: 20
   m_LinearDamping: 0.05
   m_AngularDamping: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -175,7 +175,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 11659528692444493112
+  <AssetPathHash>k__BackingField: 11620527075978939280
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
@@ -261,13 +261,13 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 3455403117760786101}
   _networkObjectCache: {fileID: 0}
-  displayName: Basketball
-  fitsInSlot: 1
-  icon: {fileID: 2800000, guid: b32a18ae7e297534f96baa4a456fe464, type: 3}
+  displayName: Black ball
+  fitsInSlot: 0
+  icon: {fileID: 0}
   useAction: 1
-  grip: 0
+  grip: 1
   holdDistanceOffset: 0
   weightSettings: {fileID: 11400000, guid: d72a81ba5b8429f459440ec55d185040, type: 2}
   throwSpeed: 8
   releaseHandoffTimeout: 4
-  resetPosition: {x: 0, y: 1, z: 0}
+  resetPosition: {x: 0, y: 1, z: -3.5}

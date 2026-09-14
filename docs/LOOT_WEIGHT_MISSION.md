@@ -1,6 +1,6 @@
 # Mission: loot and weight
 
-**Planning complete; being built on `dan/loot-weight`.** Reviewed
+**Built on `dan/loot-weight`; Local verification done, Steam rows and teammate review open.** Reviewed
 14 September 2026 on `dan/loot-weight` at `f296d2c` (base main `a8ffacd`).
 Send [LOOT_WEIGHT_IMPLEMENTATION_PLAN.md](LOOT_WEIGHT_IMPLEMENTATION_PLAN.md)
 with this repository to the builder. It contains the complete rules, calculations,

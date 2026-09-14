@@ -1,0 +1,359 @@
+using System;
+using System.Collections.Generic;
+using FishNet.Managing.Object;
+using FishNet.Object;
+using SunkCost.Interaction;
+using SunkCost.Player;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace SunkCost.Editor.Prototype
+{
+    // The one owner of the HQ loot fixture (docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md
+    // section 7): the shared weight settings, the three heavy ball prefabs, the
+    // two-handed hold point on the player, and the six scene instances. Idempotent;
+    // every write goes through SerializedObject or PrefabUtility. Never regenerates
+    // the room, the player or the basketball.
+    public static class HQPrototypeLootSetup
+    {
+        public const string WeightSettingsPath = "Assets/_Project/Settings/Prototype/WeightSettings.asset";
+        public const string PrefabObjectsPath = "Assets/_Project/Settings/Prototype/PrototypePrefabObjects.asset";
+        // Centred and low in front of the camera, for two-handed items.
+        public static readonly Vector3 TwoHandHoldPointLocalPosition = new(0f, -0.35f, 0.80f);
+
+        public sealed class FixtureEntry
+        {
+            public string SceneName;
+            public string PrefabPath;
+            public string DisplayName;
+            public Vector3 ResetPosition;
+            public float Diameter;
+            public float MassKg;
+            public Color Colour;
+            public CarryGrip Grip;
+            public bool IsBasketball => PrefabPath == HQPrototypeBuilder.BallPrefabPath;
+        }
+
+        // The manifest: what the HQ room contains after Apply(). The validator and
+        // the hooks read this; nothing else decides names or positions.
+        public static readonly FixtureEntry[] Manifest =
+        {
+            Ball("Basketball", new Vector3(0f, 1f, 0f)),
+            Ball("Basketball (2)", new Vector3(1.5f, 1f, 1.5f)),
+            Ball("Basketball (3)", new Vector3(-1.5f, 1f, 1.5f)),
+            Heavy("HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), new Vector3(3f, 1f, 0f)),
+            Heavy("HeavyBallPurple", "Purple ball", 0.55f, 12f, new Color(0.55f, 0.22f, 0.80f), new Vector3(-3f, 1f, 0f)),
+            Heavy("HeavyBallBlack", "Black ball", 0.70f, 20f, new Color(0.13f, 0.13f, 0.15f), new Vector3(0f, 1f, -3.5f))
+        };
+
+        public static int SceneItemCount => Manifest.Length;
+
+        // Basketball instances that the earlier five-ball fixture added and this one removes.
+        private static readonly string[] RetiredSceneNames = { "Basketball (4)", "Basketball (5)" };
+
+        private static FixtureEntry Ball(string sceneName, Vector3 reset) => new()
+        {
+            SceneName = sceneName, PrefabPath = HQPrototypeBuilder.BallPrefabPath, DisplayName = "Basketball",
+            ResetPosition = reset, Diameter = 0.24f, MassKg = 0.62f, Colour = new Color(0.95f, 0.28f, 0.035f), Grip = CarryGrip.OneHand
+        };
+
+        private static FixtureEntry Heavy(string name, string displayName, float diameter, float mass, Color colour, Vector3 reset) => new()
+        {
+            SceneName = name, PrefabPath = "Assets/_Project/Prefabs/Interaction/" + name + ".prefab", DisplayName = displayName,
+            ResetPosition = reset, Diameter = diameter, MassKg = mass, Colour = colour, Grip = CarryGrip.TwoHands
+        };
+
+        [MenuItem("Sunk Cost/Prototype/Apply loot setup")]
+        public static void ApplyFromMenu()
+        {
+            Debug.Log(Apply());
+        }
+
+        public static string Apply()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play Mode before applying the loot setup.");
+            var report = new List<string>
+            {
+                ApplyWeightSettingsAsset(out WeightSettings settings),
+                ApplyHeavyPrefabs(settings),
+                ApplyItemSettingsReferences(settings),
+                ApplyPlayerPrefab(settings),
+                ApplyPrefabRegistration(),
+                ApplySceneFixture()
+            };
+            AssetDatabase.SaveAssets();
+            return string.Join("; ", report);
+        }
+
+        private static string ApplyWeightSettingsAsset(out WeightSettings settings)
+        {
+            settings = AssetDatabase.LoadAssetAtPath<WeightSettings>(WeightSettingsPath);
+            if (settings != null) return "Weight settings present";
+            settings = ScriptableObject.CreateInstance<WeightSettings>();
+            AssetDatabase.CreateAsset(settings, WeightSettingsPath);
+            return "Weight settings created with defaults";
+        }
+
+        // Duplicate the working basketball prefab (network components and their
+        // tested settings included), then change only what makes it a heavy ball.
+        private static string ApplyHeavyPrefabs(WeightSettings settings)
+        {
+            var report = new List<string>();
+            GameObject basketball = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
+            if (basketball == null) throw new InvalidOperationException("Basketball prefab missing at " + HQPrototypeBuilder.BallPrefabPath);
+            foreach (FixtureEntry entry in Manifest)
+            {
+                if (entry.IsBasketball) continue;
+                bool created = false;
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath) == null)
+                {
+                    if (!AssetDatabase.CopyAsset(HQPrototypeBuilder.BallPrefabPath, entry.PrefabPath))
+                        throw new InvalidOperationException("Could not copy the basketball prefab to " + entry.PrefabPath);
+                    created = true;
+                }
+                Material material = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/" + entry.SceneName + ".mat", entry.Colour);
+                var changes = new List<string>();
+                GameObject root = PrefabUtility.LoadPrefabContents(entry.PrefabPath);
+                try
+                {
+                    if (root.name != entry.SceneName) { root.name = entry.SceneName; changes.Add("name"); }
+                    // The mesh is a unit sphere; the SphereCollider radius 0.5 scales with it.
+                    Vector3 scale = Vector3.one * entry.Diameter;
+                    if (root.transform.localScale != scale) { root.transform.localScale = scale; changes.Add("scale"); }
+                    Renderer renderer = root.GetComponent<Renderer>();
+                    if (renderer != null && renderer.sharedMaterial != material) { renderer.sharedMaterial = material; changes.Add("material"); }
+                    Rigidbody body = root.GetComponent<Rigidbody>();
+                    if (!Mathf.Approximately(body.mass, entry.MassKg)) { body.mass = entry.MassKg; changes.Add("mass"); }
+                    CarryableItem item = root.GetComponent<CarryableItem>();
+                    using (var serialized = new SerializedObject(item))
+                    {
+                        SetString(serialized, "displayName", entry.DisplayName, changes);
+                        SetBool(serialized, "fitsInSlot", false, changes);
+                        SetEnum(serialized, "grip", (int)entry.Grip, changes);
+                        SetEnum(serialized, "useAction", (int)ItemUseAction.Throw, changes);
+                        SetObject(serialized, "icon", null, changes);
+                        SetObject(serialized, "weightSettings", settings, changes);
+                        SetVector(serialized, "resetPosition", entry.ResetPosition, changes);
+                        serialized.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                    if (created || changes.Count > 0)
+                        PrefabUtility.SaveAsPrefabAsset(root, entry.PrefabPath);
+                }
+                finally { PrefabUtility.UnloadPrefabContents(root); }
+                report.Add(entry.SceneName + (created ? " created" : changes.Count == 0 ? " unchanged" : " updated: " + string.Join(",", changes)));
+            }
+            return string.Join("; ", report);
+        }
+
+        private static string ApplyItemSettingsReferences(WeightSettings settings)
+        {
+            GameObject basketball = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
+            CarryableItem item = basketball.GetComponent<CarryableItem>();
+            using var serialized = new SerializedObject(item);
+            var changes = new List<string>();
+            SetObject(serialized, "weightSettings", settings, changes);
+            SetEnum(serialized, "grip", (int)CarryGrip.OneHand, changes);
+            if (changes.Count == 0) return "Basketball prefab already references the weight settings";
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return "Basketball prefab: " + string.Join(",", changes);
+        }
+
+        private static string ApplyPlayerPrefab(WeightSettings settings)
+        {
+            var changes = new List<string>();
+            GameObject root = PrefabUtility.LoadPrefabContents(HQPrototypeBuilder.PlayerPrefabPath);
+            try
+            {
+                HQPlayerController controller = root.GetComponent<HQPlayerController>();
+                PlayerInventory inventory = root.GetComponent<PlayerInventory>();
+                if (controller == null || inventory == null)
+                    throw new InvalidOperationException("Player prefab needs HQPlayerController and PlayerInventory (run Apply inventory setup first).");
+                using var serializedController = new SerializedObject(controller);
+                var camera = serializedController.FindProperty("playerCamera").objectReferenceValue as Camera;
+                if (camera == null) throw new InvalidOperationException("Player prefab has no camera reference.");
+                SerializedProperty pointProperty = serializedController.FindProperty("twoHandHoldPoint");
+                var point = pointProperty.objectReferenceValue as Transform;
+                if (point == null)
+                {
+                    Transform existing = camera.transform.Find("TwoHandHoldPoint");
+                    point = existing != null ? existing : new GameObject("TwoHandHoldPoint").transform;
+                    point.SetParent(camera.transform, false);
+                    pointProperty.objectReferenceValue = point;
+                    changes.Add("TwoHandHoldPoint assigned");
+                }
+                if (point.parent != camera.transform) { point.SetParent(camera.transform, false); changes.Add("TwoHandHoldPoint re-parented"); }
+                if (point.localPosition != TwoHandHoldPointLocalPosition || point.localRotation != Quaternion.identity)
+                {
+                    point.localPosition = TwoHandHoldPointLocalPosition;
+                    point.localRotation = Quaternion.identity;
+                    changes.Add("TwoHandHoldPoint moved to " + TwoHandHoldPointLocalPosition);
+                }
+                serializedController.ApplyModifiedPropertiesWithoutUndo();
+
+                using var serializedInventory = new SerializedObject(inventory);
+                SetObject(serializedInventory, "weightSettings", settings, changes);
+                serializedInventory.ApplyModifiedPropertiesWithoutUndo();
+
+                if (changes.Count > 0) PrefabUtility.SaveAsPrefabAsset(root, HQPrototypeBuilder.PlayerPrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            return changes.Count == 0 ? "Player prefab already set up" : "Player prefab: " + string.Join(", ", changes);
+        }
+
+        // The NetworkManager spawns from PrototypePrefabObjects, not from FishNet's
+        // auto-generated default collection, so the heavy prefabs must be listed there.
+        private static string ApplyPrefabRegistration()
+        {
+            var collection = AssetDatabase.LoadAssetAtPath<DefaultPrefabObjects>(PrefabObjectsPath);
+            if (collection == null) throw new InvalidOperationException("Prefab collection missing at " + PrefabObjectsPath);
+            int added = 0;
+            foreach (FixtureEntry entry in Manifest)
+            {
+                if (entry.IsBasketball) continue;
+                NetworkObject nob = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath).GetComponent<NetworkObject>();
+                if (IsRegistered(collection, nob)) continue;
+                collection.AddObject(nob, checkForDuplicates: true, initializeAdded: true);
+                added++;
+            }
+            if (added == 0) return "Prefab collection already lists the heavy balls";
+            EditorUtility.SetDirty(collection);
+            return "Prefab collection: " + added + " heavy balls added";
+        }
+
+        public static bool IsRegistered(DefaultPrefabObjects collection, NetworkObject nob)
+        {
+            for (int i = 0; i < collection.GetObjectCount(); i++)
+                if (collection.GetObject(true, i) == nob) return true;
+            return false;
+        }
+
+        // Scene: exactly the manifest, by name. Retired basketballs go, heavies are
+        // added once, names and reset positions are explicit prefab overrides.
+        public static string ApplySceneFixture()
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (scene.path != HQPrototypeBuilder.ScenePath)
+                throw new InvalidOperationException("Open " + HQPrototypeBuilder.ScenePath + " before applying the loot setup (active: " + scene.path + ").");
+
+            var byName = new Dictionary<string, CarryableItem>();
+            var all = new List<CarryableItem>();
+            foreach (GameObject root in scene.GetRootGameObjects())
+                all.AddRange(root.GetComponentsInChildren<CarryableItem>(true));
+            foreach (CarryableItem item in all) byName[item.name] = item;
+
+            var changes = new List<string>();
+            GameObject basketballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
+            foreach (string retired in RetiredSceneNames)
+            {
+                if (!byName.TryGetValue(retired, out CarryableItem item)) continue;
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(item.gameObject);
+                if (source == null || source != basketballPrefab)
+                {
+                    Debug.LogWarning("Loot setup: " + retired + " is not a basketball prefab instance; left in place.");
+                    continue;
+                }
+                UnityEngine.Object.DestroyImmediate(item.gameObject);
+                byName.Remove(retired);
+                changes.Add("removed " + retired);
+            }
+
+            foreach (FixtureEntry entry in Manifest)
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
+                if (prefab == null) throw new InvalidOperationException("Prefab missing: " + entry.PrefabPath);
+                if (!byName.TryGetValue(entry.SceneName, out CarryableItem item))
+                {
+                    var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+                    instance.transform.SetPositionAndRotation(entry.ResetPosition, Quaternion.identity);
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(instance.transform);
+                    item = instance.GetComponent<CarryableItem>();
+                    byName[entry.SceneName] = item;
+                    changes.Add("added " + entry.SceneName);
+                }
+                using (var go = new SerializedObject(item.gameObject))
+                {
+                    if (go.FindProperty("m_Name").stringValue != entry.SceneName)
+                    {
+                        go.FindProperty("m_Name").stringValue = entry.SceneName;
+                        go.ApplyModifiedPropertiesWithoutUndo();
+                        PrefabUtility.RecordPrefabInstancePropertyModifications(item.gameObject);
+                        changes.Add("renamed " + entry.SceneName);
+                    }
+                }
+                using (var serialized = new SerializedObject(item))
+                {
+                    if (serialized.FindProperty("resetPosition").vector3Value != entry.ResetPosition)
+                    {
+                        serialized.FindProperty("resetPosition").vector3Value = entry.ResetPosition;
+                        serialized.ApplyModifiedPropertiesWithoutUndo();
+                        PrefabUtility.RecordPrefabInstancePropertyModifications(item);
+                        changes.Add("reset position " + entry.SceneName);
+                    }
+                }
+            }
+
+            int sceneIdsAssigned = RebuildMissingSceneIds(scene);
+            if (sceneIdsAssigned > 0) changes.Add(sceneIdsAssigned + " scene ids assigned");
+
+            if (changes.Count == 0) return "Scene fixture already matches the manifest";
+            EditorSceneManager.MarkSceneDirty(scene);
+            if (!EditorSceneManager.SaveScene(scene)) throw new InvalidOperationException("Unity could not save " + scene.path);
+            return "Scene: " + string.Join(", ", changes);
+        }
+
+        // FishNet gives a scene NetworkObject its SceneId from OnValidate, but that
+        // path is throttled to one rebuild per 250 ms, so instantiating several
+        // prefabs in one frame leaves all but the first unset and they are destroyed
+        // at runtime ("expected to be initialized but was not"). Run the scene-wide
+        // rebuild FishNet's own Reserialize utility uses; force:false keeps ids that
+        // are already set and unique.
+        private static int RebuildMissingSceneIds(Scene scene)
+        {
+            var method = typeof(NetworkObject).GetMethod("CreateSceneId",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static,
+                null, new[] { typeof(Scene), typeof(bool), typeof(int).MakeByRefType() }, null);
+            if (method == null) throw new InvalidOperationException("FishNet NetworkObject.CreateSceneId(Scene, bool, out int) not found; check the FishNet version.");
+            object[] args = { scene, false, 0 };
+            method.Invoke(null, args);
+            return (int)args[2];
+        }
+
+        private static void SetString(SerializedObject o, string name, string value, List<string> changes)
+        {
+            SerializedProperty p = o.FindProperty(name);
+            if (p.stringValue == value) return;
+            p.stringValue = value; changes.Add(name);
+        }
+
+        private static void SetBool(SerializedObject o, string name, bool value, List<string> changes)
+        {
+            SerializedProperty p = o.FindProperty(name);
+            if (p.boolValue == value) return;
+            p.boolValue = value; changes.Add(name);
+        }
+
+        private static void SetEnum(SerializedObject o, string name, int value, List<string> changes)
+        {
+            SerializedProperty p = o.FindProperty(name);
+            if (p.enumValueIndex == value) return;
+            p.enumValueIndex = value; changes.Add(name);
+        }
+
+        private static void SetObject(SerializedObject o, string name, UnityEngine.Object value, List<string> changes)
+        {
+            SerializedProperty p = o.FindProperty(name);
+            if (p.objectReferenceValue == value) return;
+            p.objectReferenceValue = value; changes.Add(name);
+        }
+
+        private static void SetVector(SerializedObject o, string name, Vector3 value, List<string> changes)
+        {
+            SerializedProperty p = o.FindProperty(name);
+            if (p.vector3Value == value) return;
+            p.vector3Value = value; changes.Add(name);
+        }
+    }
+}

@@ -12,6 +12,8 @@ namespace SunkCost.Player
         private const float SlotSize = 64f;
         private const float SlotGap = 8f;
         private const float SlotBottomMargin = 24f;
+        private const float MeterGap = 6f;
+        private const float MeterHeight = 8f;
 
         private HQPlayerController controller;
         private PlayerInventory inventory;
@@ -30,8 +32,9 @@ namespace SunkCost.Player
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
+                string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
                 return inventory.HoldingOverflow ? "Hands full" : target.State == ItemState.Released
-                    ? $"Hold E to catch {target.DisplayName}" : $"Press E to grab {target.DisplayName}";
+                    ? $"Hold E to catch {name}" : $"Press E to grab {name}";
             }
         }
 
@@ -52,6 +55,29 @@ namespace SunkCost.Player
             GUI.color = previous;
             DrawPrompt();
             DrawSlots();
+            DrawWeightMeter();
+        }
+
+        // A plain grey bar under the slots. Fill comes from the server's carried mass
+        // through the shared curve, which never reaches 1; the pixel clamp keeps a
+        // visible gap at the end even when rounding would close it.
+        private void DrawWeightMeter()
+        {
+            float totalWidth = InventorySlots.Count * SlotSize + (InventorySlots.Count - 1) * SlotGap;
+            float left = (Screen.width - totalWidth) * 0.5f;
+            float top = Screen.height - SlotBottomMargin - SlotSize + SlotSize + MeterGap;
+            float fill = inventory.MeterFill;
+            float fillWidth = fill <= 0f ? 0f : Mathf.Clamp(Mathf.Round(fill * totalWidth), 1f, totalWidth - 1f);
+
+            Color previous = GUI.color;
+            GUI.color = new Color(0.16f, 0.16f, 0.16f, 0.85f);
+            GUI.DrawTexture(new Rect(left, top, totalWidth, MeterHeight), whiteTexture);
+            if (fillWidth > 0f)
+            {
+                GUI.color = new Color(0.62f, 0.62f, 0.62f, 0.95f);
+                GUI.DrawTexture(new Rect(left, top, fillWidth, MeterHeight), whiteTexture);
+            }
+            GUI.color = previous;
         }
 
         private void DrawPrompt()

@@ -1,5 +1,65 @@
 # HQ prototype verification report
 
+## Loot and weight branch — 14 September 2026
+
+Tested uncommitted `dan/loot-weight` based on `a8ffacd` (plan commit `00f3bce`),
+Unity 6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one
+headless standalone guest (Local development build `local-dev:00f3bce`, driven
+through `InventoryVerificationPeer`). These results do not certify Steam.
+
+Fixture after `Sunk Cost > Prototype > Apply loot setup`: three basketballs
+(0.62 kg, one hand, slot) and three two-handed heavy balls (blue 6 kg / 0.40 m,
+purple 12 kg / 0.55 m, black 20 kg / 0.70 m). `WeightSettings.asset`: meter
+scale 12 kg, speed floor 0.35, throw reference 1 kg, throw floor 0.15.
+
+- Pure: `HQPrototypeWeightChecks` (curves, sanitisation, throw factors,
+  two-handed grab rows, asset validity) and `HQPrototypeInventoryChecks` pass;
+  `HQPrototypeValidator` passes with six items. `Apply loot setup` twice: the
+  second run reports no changes.
+- Setup finding: FishNet assigns a scene `SceneId` from `OnValidate`, throttled
+  to one rebuild per 250 ms, so instantiating three prefabs in one frame left
+  two with no id and they were destroyed at runtime ("expected to be initialized
+  but was not"). The setup now runs FishNet's scene-wide id rebuild (the same
+  call as *Reserialize NetworkObjects*) before saving; two ids were assigned once.
+- W1/W2 (host): basketball → 0.62 kg, fill 0.0504, speed 0.9673, `HoldPoint`.
+  Blue ball grabbed with the basketball equipped and free slots → basketball
+  auto-stowed in slot 0 (`slots=[0,-1,-1,-1]`), blue held as overflow at
+  `TwoHandHoldPoint` (offset 0.000), 6.62 kg, fill 0.424, speed 0.7244; F3 rows
+  read `Held by 0 6kg 2h` / `Stowed by 0 0.62kg 1h` and the player row
+  `6.62kg x0.72`.
+- W4 (host): `RequestEquip(0)` while holding the blue ball → refused, prompt
+  "Hands full", slots unchanged. Prompt text on a heavy target:
+  "Press E to grab Blue ball (two hands)".
+- W11 (host): Q with the blue ball facing open floor → it rests at
+  (3.00, 0.20, −0.60): 0.6 m in front of the player at floor level (radius
+  0.20), Free, server-simulated; mass back to 0.62.
+- W3 (host): basketballs (2) and (3) grabbed → `slots=[0,1,2,-1]`, (2) in hand,
+  1.86 kg, speed 0.9067. Black ball grabbed → (2) auto-stowed, black overflow,
+  21.86 kg, fill 0.8382, speed 0.4551 (section 4 table values exact).
+- W6 (host): throw black → `lastLaunchSpeed=1.789` (factor 0.2236), it rolled to
+  the south wall (z −5.5) and handed back to the server; mass 1.86. Equip slot 0
+  and throw the basketball → `lastLaunchSpeed=8.000`; slot 0 cleared; 1.24 kg.
+- W16: Game view capture `Logs/loot-weight-hud.png` with the black ball held:
+  ball centred low covering the bottom of the view, slots 2 and 3 with icons,
+  "In hand: Black ball (no slot)", grey meter ≈ 83 % with a visible end gap.
+- W15: host Leave with the black ball held and two stowed → re-host: slots
+  empty, 0 kg, six items Free at their reset positions.
+- W2/W5 guest: headless client 1 grabbed Basketball (2) then the blue ball. Its
+  own snapshot: `slots=[1,-1,-1,-1]; held=HeavyBallBlue; massKg=6.62;
+  speedFactor=0.7244; meterFill=0.424`; blue `writer=True` on the guest. Host
+  view: blue `Held by 1`, REPLICATED, position (3.00, 0.80, −0.85) = centred low
+  in front of the guest; host player row `6.62kg x0.72` for client 1.
+- W14 abrupt loss: the guest was killed (13:05:24) while holding the blue ball
+  and stowing Basketball (2). Tugboat reported the loss at about 13:06:50; the
+  host then showed both items Free, colliding, server-simulated on the floor
+  around the guest's last position (blue at (3.23, 0.20, −1.76), the basketball
+  at (2.93, 0.12, −0.68)) and the guest's player gone.
+
+Not run: W7 timed walk with real input (the multiplier is one line in
+`HQPlayerController.Move`; `SpeedFactor` values verified), W9 (needs three
+machines), W12 late join with heavy items stowed, Steam rows. Feel gate: a
+person has not yet carried each load; tuning is provisional.
+
 ## Hold/inventory branch — 14 September 2026
 
 Tested uncommitted `dan/hold-feel` based on `a4ddc45`, Unity 6000.6.0f1,

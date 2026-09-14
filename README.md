@@ -54,10 +54,16 @@ be read as checklists by other assistants.
 4. Move with WASD, sprint with Shift, look with the mouse. **E** grabs; hold E to
    catch an approaching ball with forgiving aim within 2 m. **Q** drops at your
    feet, **left click** uses/throws, and **1–4** equip or put away inventory slots.
-   A held slot item stays assigned to its slot; new grabs fill free slots. With
-   four full slots, grabbing one extra item automatically puts away the equipped
-   slot item and holds the new item until dropped or thrown. Escape opens the
-   session menu (Resume recaptures the cursor); F3 shows the network debug overlay.
+   A held slot item stays assigned to its slot; new grabs fill free slots. When
+   the target has no slot (four full slots, or a two-handed heavy ball), grabbing
+   it automatically puts away the equipped slot item and holds the new item until
+   dropped or thrown. Everything you carry weighs something: the grey bar under
+   the slots fills (never completely) and you walk and sprint slower on a smooth
+   curve; heavy balls need both hands, sit in the middle of the view and only lob
+   a short way. Escape opens the session menu (Resume recaptures the cursor); F3
+   shows the network debug overlay with kg and grip per item.
+   *Sunk Cost > Prototype > Apply loot setup* rebuilds the six-item fixture and
+   the shared `WeightSettings` asset; tune weight there, not in code.
 
 **Builds.** Two menu items write to ignored folders and put a `sunkcost-build.json`
 manifest beside the executable:
