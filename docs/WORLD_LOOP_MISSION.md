@@ -1,12 +1,11 @@
 # Mission brief: the world loop — HQ, the ship, the dive, and the days between
 
-**Status: brief for planning, not a plan.** Written 14 September 2026 against
-`main` at `fa8b60d` and revised the same day against `ab91de5` (after Idan's
-local elevator car, PR #15) with Dan's decisions on the three scenes, the
-transitions between them and the flooding cabin. Whoever plans this should
-produce an implementation document in the style of
-`docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md` (verified FishNet API names, file list,
-verification rows with expected output) before code is written.
+**Status: planned.** Written 14 September 2026 against `main` at `fa8b60d`,
+revised the same day against `ab91de5` (after Idan's local elevator car, PR
+#15) with Dan's decisions on the three scenes, the transitions between them and
+the flooding cabin, and planned in
+[WORLD_LOOP_IMPLEMENTATION_PLAN.md](WORLD_LOOP_IMPLEMENTATION_PLAN.md), which
+answers section 8 below and is the document the code cards build from.
 
 Owner: Dan (networking, scene flow, day state, elevator rules) with Idan (ship
 prefab, scene layouts, the elevator object, the water). Epic: E7 The first dive
@@ -62,11 +61,13 @@ rule server-decided.
    nothing unless **every living player is inside**; the cabin panel lists who
    is missing.
 7. Button → doors seal (Idan's 1.5 s) → the screen fades to "Putting on suit…"
-   (~3 s) → **the riders move to the dive scene during that fade** → fade in
-   inside the shaft with the cabin already descending. Suit on = air starts.
-   The fade is the only loading moment in the loop.
-8. When the suit fade ends the cabin floods: water rises over everyone's head in
-   ~4 s and the rest of the 15 s descent is spent submerged. The bottom door
+   (~3 s) → **the riders move to the dive scene during that fade** → each fades
+   in inside the cabin at the top of the shaft as their own load finishes, and
+   sees whoever is already there. The cabin departs when the last rider has
+   appeared (10 s timeout); air starts at departure (Dan, 14 September 2026, in
+   the plan). The fade is the only loading moment in the loop.
+8. About 3 s after departure the cabin floods: water rises over everyone's head
+   in ~4 s and the rest of the 15 s descent is spent submerged. The bottom door
    opens only when the ride is done *and* the cabin is full (with these numbers
    the ride is always the later one).
 9. Players walk freely inside the cabin during the ride, as in Idan's harness

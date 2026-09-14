@@ -50,11 +50,12 @@ an air-restoring item; there are no refill stations or passive refills.
 
 **The way down.** Everyone walks into the deck cabin and someone presses the
 button. The doors seal, the screen fades to "Putting on suit…" (about 3 s) — that
-fade is the scene change — and you fade back in inside the shaft, already
-descending. The suit is on and the air is counting. Then the cabin floods: within
-about four seconds the water is over your head, and the rest of the 15 s ride is
-spent submerged, watching the shaft go by. The bottom door opens only when the
-cabin is full. You can walk around inside the cabin the whole way.
+fade is the scene change — and you fade back in inside the cabin at the top of
+the shaft, suit on, seeing whoever has already appeared. When the last of you is
+there the cabin descends and the air starts counting. Then the cabin floods:
+within about four seconds the water is over your head, and the rest of the 15 s
+ride is spent submerged, watching the shaft go by. The bottom door opens only
+when the cabin is full. You can walk around inside the cabin the whole way.
 
 **The way up.** The cabin at the bottom is always flooded. Walk in, press the
 button, the doors seal, 15 s up. Over the last few seconds the water drains out;
