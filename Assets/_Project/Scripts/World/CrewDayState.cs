@@ -2,9 +2,18 @@ using System;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using SunkCost.Net;
+using UnityEngine;
 
 namespace SunkCost.World
 {
+    // A refusal the server wrote for the monitor or cabin panel to show. The
+    // serial makes the same text twice arrive twice.
+    public struct Refusal
+    {
+        public int Serial;
+        public string Text;
+    }
+
     // The one server-owned object that knows where the crew is. It is a global
     // NetworkObject (prefab flag "Is Global"), so it lives in DontDestroyOnLoad,
     // has no observer conditions and survives every world scene change
@@ -17,6 +26,8 @@ namespace SunkCost.World
         private readonly SyncVar<WorldId> world = new(WorldId.HQ);
         // The world a sail is heading for; equals World when not sailing.
         private readonly SyncVar<WorldId> destination = new(WorldId.HQ);
+        private readonly SyncVar<Refusal> lastRefusal = new(new Refusal { Serial = 0, Text = string.Empty });
+        private float lastRefusalAt = float.NegativeInfinity;
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -25,6 +36,10 @@ namespace SunkCost.World
         public WorldId World => world.Value;
         public WorldId Destination => destination.Value;
         public bool Sailing => phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome;
+        public Refusal LastRefusal => lastRefusal.Value;
+        // Local time the last refusal arrived on this peer; panels show it for
+        // WorldLoopSettings.refusalDisplaySeconds from then.
+        public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
         public string DebugStatus => $"phase={phase.Value} world={world.Value} to={destination.Value}";
 
@@ -33,6 +48,13 @@ namespace SunkCost.World
         private void Awake()
         {
             phase.OnChange += OnPhaseChanged;
+            lastRefusal.OnChange += OnRefusalChanged;
+        }
+
+        private void OnRefusalChanged(Refusal previous, Refusal next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (next.Serial != 0) lastRefusalAt = Time.unscaledTime;
         }
 
         public override void OnStartNetwork()
@@ -105,6 +127,13 @@ namespace SunkCost.World
         public void ServerEndDay()
         {
             if (phase.Value == DayPhase.DiveInProgress) phase.Value = DayPhase.AtSea;
+        }
+
+        // A refused monitor or cabin request, for every peer's panel (plan 4.1).
+        [Server]
+        public void ServerReportRefusal(string why)
+        {
+            lastRefusal.Value = new Refusal { Serial = lastRefusal.Value.Serial + 1, Text = why ?? string.Empty };
         }
 
         // Joins are refused while a dive is in progress (design section 1).

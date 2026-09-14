@@ -96,6 +96,14 @@ namespace SunkCost.Net
                     if (SunkCost.World.WorldSceneFlow.Instance == null) return "No WorldSceneFlow";
                     if (!Enum.TryParse(command.item, true, out SunkCost.World.WorldId target)) return "Unknown world " + command.item;
                     return SunkCost.World.WorldSceneFlow.Instance.ServerSail(target, out string why) ? "sailing to " + target : "refused: " + why;
+                // The monitor's request as a client makes it: E on a button. The world
+                // name rides in the item field.
+                case "monitor":
+                    if (!Enum.TryParse(command.item, true, out SunkCost.World.WorldId pressed)) return "Unknown world " + command.item;
+                    var controls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (controls == null) return "No ShipControls";
+                    controls.RequestSail(pressed);
+                    break;
                 case "snapshot": break;
                 default: return "Unknown action";
             }
@@ -136,7 +144,8 @@ namespace SunkCost.Net
             string loaded = string.Join("+", Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}\n";
+            var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
                 text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}\n";
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))

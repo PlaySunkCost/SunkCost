@@ -14,6 +14,7 @@ namespace SunkCost.World
         public const string MonitorName = "Monitor";
         public const string MonitorButtonSite01Name = "MonitorButton_Site01";
         public const string MonitorButtonHQName = "MonitorButton_HQ";
+        public const string MonitorStatusName = "MonitorStatus"; // TextMesh the ShipMonitor writes
         public const string DeckCabinName = "DeckCabin";
         public const string DeckCabinVolumeName = "DeckCabinVolume";
         public const string DeckCabinDoorLName = "DeckCabinDoorL";
@@ -27,7 +28,7 @@ namespace SunkCost.World
 
         public static readonly string[] RequiredChildren =
         {
-            AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, DeckCabinName,
+            AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorStatusName, DeckCabinName,
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
             StorageAreaName, BoardingPointName,
             SpawnPointPrefix + "1", SpawnPointPrefix + "2", SpawnPointPrefix + "3", SpawnPointPrefix + "4"

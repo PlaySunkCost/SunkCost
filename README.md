@@ -78,9 +78,11 @@ the ship — inside the rails, on the deck — sails together; a sail is refused
 naming who is still ashore, otherwise. What you hold or stowed and anything
 lying on the deck sails with you and is at the same spot on the new deck; the
 base resets when the crew comes back. The monitor that chooses the destination
-is a later card: until then the host sails from the editor menu, *Sunk Cost >
-Prototype > Debug > Sail to Sea / Sail to HQ* (Play Mode, hosting; the result
-is logged to the console), or a headless peer's `sail` command. Joining is
+is the screen at the bow: look at the **Site 01** or **HQ** button and press
+**E**. The screen says where you are ("Docked at HQ…", "At Site 01…"), and a
+refusal ("Not aboard: Player 2") stays on it for three seconds on every
+player's ship. The editor menu *Sunk Cost > Prototype > Debug > Sail to Sea /
+Sail to HQ* (Play Mode, hosting) does the same without walking. Joining is
 possible at the base and on the ship between days; a join while a dive is in
 progress is refused ("Dive in progress — join between days"). F3 shows every
 player's and item's scene. Menu: *Sunk Cost > Prototype > Create or Update

@@ -116,6 +116,7 @@ namespace SunkCost.Editor.Prototype
             if (controller == null) { errors.Add("Player prefab/controller is missing."); return; }
             if (prefab.GetComponent<PlayerInventory>() == null) errors.Add("Player prefab has no PlayerInventory (run Sunk Cost/Prototype/Apply inventory setup).");
             if (prefab.GetComponent<PlayerHudUI>() == null) errors.Add("Player prefab has no PlayerHudUI (run Sunk Cost/Prototype/Apply inventory setup).");
+            if (prefab.GetComponent<SunkCost.World.ShipControls>() == null) errors.Add("Player prefab has no ShipControls (run Sunk Cost/Prototype/Apply inventory setup).");
             using var serialized = new SerializedObject(controller);
             var camera = serialized.FindProperty("playerCamera").objectReferenceValue as Camera;
             var hold = serialized.FindProperty("holdPoint").objectReferenceValue as Transform;

@@ -118,6 +118,7 @@ namespace SunkCost.Editor.Prototype
                 HQPlayerController controller = root.AddComponent<HQPlayerController>();
                 root.AddComponent<PlayerInventory>();
                 root.AddComponent<PlayerHudUI>();
+                root.AddComponent<SunkCost.World.ShipControls>();
 
                 GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 body.name = "Body";

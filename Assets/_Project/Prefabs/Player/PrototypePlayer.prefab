@@ -263,6 +263,7 @@ GameObject:
   - component: {fileID: 7683569163781734314}
   - component: {fileID: 2601291312213266648}
   - component: {fileID: 1877639824901941508}
+  - component: {fileID: 7659595800782209619}
   m_Layer: 0
   m_Name: PrototypePlayer
   m_TagString: Untagged
@@ -469,6 +470,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bcc7e8e27256c545ba85d1d975473b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Player.PlayerHudUI
+--- !u!114 &7659595800782209619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e894afca9061f74bb8c9284c3cec6d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.World.ShipControls
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 364150461512337757}
+  _networkObjectCache: {fileID: 0}
 --- !u!1 &6888153828142431008
 GameObject:
   m_ObjectHideFlags: 0

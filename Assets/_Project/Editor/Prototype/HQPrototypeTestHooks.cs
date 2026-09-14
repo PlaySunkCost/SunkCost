@@ -287,7 +287,24 @@ namespace SunkCost.Editor.Prototype
         [MenuItem("Sunk Cost/Prototype/Debug/Sail to HQ (host, Play Mode)")]
         public static void MenuSailToHQ() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("HQ") : "enter Play Mode and host first."));
 
-        // The monitor's request until the monitor card: host only.
+        // The monitor as the local player presses it (owner request through ShipControls).
+        public static string ClientRequestSail(string world)
+        {
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.World.ShipControls controls = player != null ? player.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (controls == null) return "No local ShipControls";
+            controls.RequestSail(target);
+            return "requested " + target;
+        }
+
+        public static string MonitorText()
+        {
+            SunkCost.World.ShipMonitor monitor = Object.FindAnyObjectByType<SunkCost.World.ShipMonitor>();
+            return monitor == null ? "(no monitor)" : monitor.Text;
+        }
+
+        // The server-side sail, for the matrix's setup steps.
         public static string ServerSail(string world)
         {
             SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;

@@ -31,6 +31,7 @@ namespace SunkCost.Player
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
+                if (target == null && controller.CurrentButton != null) return $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
                 if (!inventory.CanStoreOrHold(target)) return "Hands full";
@@ -51,7 +52,7 @@ namespace SunkCost.Player
                 return;
             EnsureStyles();
             Color previous = GUI.color;
-            GUI.color = controller.CurrentTarget != null ? new Color(1f, 0.85f, 0.2f) : Color.white;
+            GUI.color = controller.CurrentTarget != null || controller.CurrentButton != null ? new Color(1f, 0.85f, 0.2f) : Color.white;
             GUI.DrawTexture(new Rect(Screen.width * 0.5f - 2f, Screen.height * 0.5f - 2f, 4f, 4f), whiteTexture);
             GUI.color = previous;
             DrawPrompt();
