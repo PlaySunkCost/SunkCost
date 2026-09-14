@@ -1,5 +1,37 @@
 # HQ prototype verification report
 
+## Monitor branch — 15 September 2026
+
+Tested uncommitted `dan/monitor` based on `dfc6f57` (the scene-flow merge),
+same rig as the scene-flow section below (editor host + headless guests,
+Local/Tugboat, one machine, build `local-dev:dfc6f57`). The monitor card
+replaces the debug sail: E on `MonitorButton_Site01` / `MonitorButton_HQ` →
+`ShipControls.RequestSail` (ServerRpc) → `WorldSceneFlow.ServerSail`; refusals
+are a server-written `Refusal` on `CrewDayState` that every `ShipMonitor`
+shows on its `MonitorStatus` line for `refusalDisplaySeconds` (3 s). No days
+yet: the "site between days", "after day 3 only HQ" rules wait for the
+day-state card; "dive in progress" already locks it through `ServerCanSail`.
+
+- Pure: validators pass with the new `MonitorStatus` part; the ship prefab
+  carries `ShipMonitor` + two `MonitorButton`s, the player prefab
+  `ShipControls`; *Check world loop (pure)* passes.
+- S2 (through the buttons): idle text `Docked at HQ — E on Site 01 to sail` on
+  the host; the guest pressed Site 01 from ashore → both monitors read
+  `Not aboard: Player 1` (the presser's own absence, checked before the crew
+  rule); host on the deck pressed Site 01 with the guest ashore → both monitors
+  `Not aboard: Player 1`; phase stayed `AtHQ`, `ShipAtSea` not loaded; the
+  text cleared back to the idle line after 3 s.
+- S3 (through the button): host on the deck pressed Site 01 → phase `Sailing`
+  → `AtSea`; everything the scene-flow S3 row checks still holds (same spots,
+  held and deck balls travelled, guest sees it all, one fade).
+- S13 (through the button): monitor at sea reads `At Site 01 — E on HQ to
+  sail home`; the **guest** pressed HQ → `SailingHome` → `AtHQ`; the
+  scene-flow S13 checks hold.
+- S1, S4, S5, S15 unchanged and passing; `MATRIX_PASS`.
+
+Not run: Steam; a person pressing the button with the real prompt ("Press E
+to sail to Site 01") — the crosshair turns yellow on a button like on a ball.
+
 ## Scene flow branch — 15 September 2026
 
 Tested uncommitted `dan/scene-flow` based on `90b3ab5` (the world-loop plan

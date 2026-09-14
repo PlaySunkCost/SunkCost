@@ -46,6 +46,7 @@ namespace SunkCost.Player
         public PlayerInventory Inventory => inventory;
         // The carryable under the crosshair within reach this frame, owner only.
         public CarryableItem CurrentTarget { get; private set; }
+        public SunkCost.World.MonitorButton CurrentButton { get; private set; }
 
         private void Awake()
         {
@@ -77,6 +78,7 @@ namespace SunkCost.Player
             if (!SessionInputGate.CanPlay || Cursor.lockState != CursorLockMode.Locked)
             {
                 CurrentTarget = null;
+                CurrentButton = null;
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 return;
@@ -101,6 +103,12 @@ namespace SunkCost.Player
             {
                 grabConsumed = true;
                 inventory.RequestGrab(CurrentTarget);
+            }
+            else if (keyboard.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentButton != null)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship != null) ship.RequestSail(CurrentButton.Destination);
             }
             else if (keyboard.qKey.wasPressedThisFrame)
                 inventory.RequestDrop();
@@ -163,6 +171,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
+            CurrentButton = CurrentTarget == null ? InteractionTargeting.FindButton(eye.position, eye.forward, transform, interactReach) : null;
         }
 
         private void SetLocalPresentation(bool active)

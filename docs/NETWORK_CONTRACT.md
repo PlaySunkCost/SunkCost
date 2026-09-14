@@ -104,7 +104,8 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 | Elevator state | **Server only** | Clients send a request, server decides |
 | Site seed and dive lifecycle | **Server only** | Replicate current state to supported entrants |
 | Scene membership | **Server only** | Which world scene each connection is in and which world scenes are loaded; a client loads and unloads exactly what the server tells it; observers follow scene membership (section 10) |
-| Day state | **Server only** | Phase (at HQ, sailing, at sea, dive in progress), current world and destination, on the global `CrewDayState` object; the day counter and the below/surfaced/dead lists join it with the day-state card |
+| Day state | **Server only** | Phase (at HQ, sailing, at sea, dive in progress), current world and destination, and the last refusal (`Refusal { Serial, Text }`, shown by every monitor for `refusalDisplaySeconds`), on the global `CrewDayState` object; the day counter and the below/surfaced/dead lists join it with the day-state card |
+| Sailing request | **Server only** | E on a monitor button is a `ServerRpc` on the pressing player's `ShipControls`; the server checks the presser is aboard, then `WorldSceneFlow.ServerSail` (everyone aboard, phase); nothing on the ship is networked and a client never starts a sail itself |
 
 Rule of thumb: **if getting it wrong would let someone cheat or desync the run,
 the server decides.**

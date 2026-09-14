@@ -68,6 +68,12 @@ namespace SunkCost.Editor.Prototype
                     root.AddComponent<PlayerHudUI>();
                     changes.Add("PlayerHudUI added");
                 }
+                // The monitor's request path (E on a ship button) rides on the player.
+                if (root.GetComponent<SunkCost.World.ShipControls>() == null)
+                {
+                    root.AddComponent<SunkCost.World.ShipControls>();
+                    changes.Add("ShipControls added");
+                }
                 if (changes.Count > 0)
                     PrefabUtility.SaveAsPrefabAsset(root, HQPrototypeBuilder.PlayerPrefabPath);
             }

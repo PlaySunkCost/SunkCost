@@ -69,9 +69,15 @@ namespace SunkCost.Editor.Prototype
                 Trigger(ShipParts.AboardVolumeName, root.transform, new Vector3(0f, 2f, 0f), new Vector3(DeckWidth + 2f, 4f, DeckLength + 2f));
 
                 GameObject monitor = Block(ShipParts.MonitorName, root.transform, new Vector3(0f, 1.6f, DeckLength / 2f - 1.5f), new Vector3(1.6f, 1f, 0.1f), screen);
-                Block(ShipParts.MonitorButtonSite01Name, root.transform, new Vector3(-0.4f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button);
-                Block(ShipParts.MonitorButtonHQName, root.transform, new Vector3(0.4f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button);
+                monitor.AddComponent<ShipMonitor>();
+                Block(ShipParts.MonitorButtonSite01Name, root.transform, new Vector3(-0.4f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button)
+                    .AddComponent<MonitorButton>().Configure(WorldId.Sea, "Site 01");
+                Block(ShipParts.MonitorButtonHQName, root.transform, new Vector3(0.4f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button)
+                    .AddComponent<MonitorButton>().Configure(WorldId.HQ, "HQ");
                 Label("MonitorLabel", monitor.transform, new Vector3(0f, 0.72f, 0f), "SITE 01        HQ", 0.05f, facingBow: false);
+                // The status line sits in front of the screen face (a sibling, so the
+                // monitor's scale does not stretch the glyphs).
+                Label(ShipParts.MonitorStatusName, root.transform, new Vector3(0f, 1.85f, DeckLength / 2f - 1.57f), string.Empty, 0.035f, facingBow: false);
 
                 GameObject cabin = new(ShipParts.DeckCabinName);
                 cabin.transform.SetParent(root.transform, false);

@@ -35,6 +35,22 @@ namespace SunkCost.Interaction
             return best;
         }
 
+        // A ship button straight under the crosshair, within reach and not behind
+        // anything. Buttons are exact targets: no forgiving aim.
+        public static SunkCost.World.MonitorButton FindButton(Vector3 eye, Vector3 forward, Transform player, float reach)
+        {
+            int count = Physics.RaycastNonAlloc(eye, forward, Obstructions, reach, ~0, QueryTriggerInteraction.Ignore);
+            if (count == Obstructions.Length) return null;
+            RaycastHit nearest = default;
+            bool any = false;
+            for (int i = 0; i < count; i++)
+            {
+                if (Obstructions[i].collider.transform.IsChildOf(player)) continue;
+                if (!any || Obstructions[i].distance < nearest.distance) { nearest = Obstructions[i]; any = true; }
+            }
+            return any ? nearest.collider.GetComponentInParent<SunkCost.World.MonitorButton>() : null;
+        }
+
         public static bool HasLineOfSight(Vector3 eye, Vector3 point, Transform player, CarryableItem item)
         {
             Vector3 delta = point - eye;

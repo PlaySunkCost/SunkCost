@@ -256,16 +256,25 @@ namespace SunkCost.Editor.Prototype
             Check(ItemsInScene(WorldScenes.HQName) == HQPrototypeLootSetup.SceneItemCount, "S1 host: fixture spawned in HQ (" + HQPrototypeLootSetup.SceneItemCount + ")");
             Check(reply.Split('\n').Count(l => l.StartsWith("item=")) == HQPrototypeLootSetup.SceneItemCount, "S1 guest: sees the fixture");
 
-            // S2: refused while someone is off the ship, naming them.
+            // S2: refused while someone is off the ship, naming them, on every monitor.
             ShipParts hqShip = ShipParts.InWorld(WorldId.HQ);
             Check(hqShip != null, "S2 HQ has a docked ship");
-            string refusal = H.ServerSail("Sea");
-            Check(refusal.StartsWith("refused: Not aboard") && refusal.Contains("Player " + guestClient) && refusal.Contains("Player " + HostPlayer().OwnerId), "S2 refused, names both: " + refusal);
+            Check(H.MonitorText().StartsWith("Docked at HQ"), "S2 monitor idle text: " + H.MonitorText());
+            // The guest presses from ashore: only its own absence is reported.
+            Command(GuestDir, "{\"id\":{id},\"action\":\"monitor\",\"item\":\"Sea\"}");
+            yield return AwaitReply(GuestDir);
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Not aboard: Player " + guestClient), 5f, "host monitor shows the guest's refusal");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: Player " + guestClient), 5f, "S2 guest's monitor shows the same refusal");
             Vector3 deckSpot = hqShip.FromShipLocal(new Vector3(-2f, 0f, 2f));
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
-            refusal = H.ServerSail("Sea");
-            Check(refusal.StartsWith("refused: Not aboard") && refusal.Contains("Player " + guestClient) && !refusal.Contains("Player " + HostPlayer().OwnerId), "S2 refused, names only the guest: " + refusal);
+            // The host presses from the deck while the guest is ashore.
+            H.ClientRequestSail("Sea");
+            yield return WaitUntil(() => H.MonitorText() == "Not aboard: Player " + guestClient, 5f, "host monitor names only the guest");
+            File.AppendAllText(Log, "PASS S2 refused, names only the guest: " + H.MonitorText() + "\n");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: Player " + guestClient), 5f, "S2 guest's monitor names only itself");
             Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName), "S2 nothing moved");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ"), 6f, "refusal cleared after refusalDisplaySeconds");
+            string refusal;
 
             // S3: a ball on the deck, a ball in the host's hand, everyone aboard, sail.
             CarryableItem deckBall = H.Item("Basketball (2)");
@@ -285,8 +294,10 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>().First(p => !p.IsOwner);
             Vector3 guestLocalBefore = hqShip.ToShipLocal(guestPlayer.transform.position);
             int fadesBefore = ScreenFade.Instance.FadeOutCount;
-            string sail = H.ServerSail("Sea");
-            Check(sail == "sailing to Sea", "S3 sail accepted: " + sail);
+            string sail = H.ClientRequestSail("Sea"); // the host presses the Site 01 button
+            Check(sail == "requested Sea", "S3 monitor press: " + sail);
+            yield return WaitUntil(() => Phase() == "Sailing" || Phase() == "AtSea", 5f, "sail accepted from the monitor"); // the matrix ticks every 0.5 s; a Local sail can finish within one
+            File.AppendAllText(Log, "PASS S3 sail accepted from the monitor, monitor reads: " + H.MonitorText() + "\n");
             yield return WaitUntil(() => Phase() == "AtSea" && !WorldSceneFlow.Instance.Transitioning, 20f, "sail completes");
             Check(ScreenFade.Instance.FadeOutCount == fadesBefore + 1, "S3 host faded once for the sail");
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.HQName), 10f, "HQ unloaded on host");
@@ -348,9 +359,13 @@ namespace SunkCost.Editor.Prototype
             CrewDayState.Instance.ServerEndDay();
             yield return WaitUntil(() => Phase() == "AtSea", 5f, "day ended");
 
-            // S13 (scene part): sail home, everything comes back, HQ is fresh.
-            sail = H.ServerSail("HQ");
-            Check(sail == "sailing to HQ", "S13 sail home accepted: " + sail);
+            // S13 (scene part): the guest presses HQ; everything comes back, HQ is fresh.
+            yield return WaitUntil(() => H.MonitorText().StartsWith("At Site 01"), 5f, "monitor back to the at-sea line after the day ended");
+            File.AppendAllText(Log, "PASS S13 monitor at sea: " + H.MonitorText() + "\n");
+            Command(GuestDir, "{\"id\":{id},\"action\":\"monitor\",\"item\":\"HQ\"}");
+            yield return AwaitReply(GuestDir);
+            yield return WaitUntil(() => Phase() == "SailingHome" || Phase() == "AtHQ", 5f, "sail home accepted from the guest's press");
+            File.AppendAllText(Log, "PASS S13 sail home accepted from the guest's monitor press\n");
             yield return WaitUntil(() => Phase() == "AtHQ" && !WorldSceneFlow.Instance.Transitioning, 20f, "sail home completes");
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.SeaName), 10f, "sea unloaded on host");
             hqShip = ShipParts.InWorld(WorldId.HQ);
