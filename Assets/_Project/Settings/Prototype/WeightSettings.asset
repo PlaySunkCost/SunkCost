@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Interaction.WeightSettings
   capacityKg: 25
   minSpeedFactor: 0.35
-  overloadSpeedFactor: 0.01
+  overloadSpeedFactor: 0.1
   throwReferenceMassKg: 1
   minThrowFactor: 0.15

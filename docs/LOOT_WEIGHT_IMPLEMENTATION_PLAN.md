@@ -124,14 +124,14 @@ No Resources lookup, per-player settings creation or mutable global singleton.
 |---|---:|---|
 | capacityKg | 25 kg | finite, >0 |
 | minSpeedFactor | 0.35 | finite, >0 and <=1 |
-| overloadSpeedFactor | 0.01 | finite, >0 and <=1 |
+| overloadSpeedFactor | 0.1 | finite, >0 and <=1 |
 | throwReferenceMassKg | 1 kg | finite, >0 |
 | minThrowFactor | 0.15 | finite, >0 and <=1 |
 
 `WeightMath` is pure, with scalar inputs:
 
 **Amended 14 September 2026 (Dan, after the first build):** the meter is a hard
-capacity, not an asymptote. Full = red bar = a 1 % crawl (`overloadSpeedFactor`,
+capacity, not an asymptote. Full = red bar = a 10 % crawl (`overloadSpeedFactor`,
 second amendment: not a full stop).
 
 ```text
@@ -166,7 +166,7 @@ during a session.
 | Purple | 12 | 48 | 0.688 | 2.75 / 4.13 |
 | Black | 20 | 80 | 0.48 | 1.92 / 2.88 |
 | Two blues + purple | 24 | 96 | 0.376 | 1.50 / 2.26 |
-| Two blues + black | 32 | 100 (red) | 0.01 | 0.04 / 0.06 (crawl) |
+| Two blues + black | 32 | 100 (red) | 0.1 | 0.4 / 0.6 (crawl) |
 
 Calculated defaults, not proof of fun. Only diagnostics show numbers.
 

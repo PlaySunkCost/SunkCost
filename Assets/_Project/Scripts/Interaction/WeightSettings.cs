@@ -17,7 +17,7 @@ namespace SunkCost.Interaction
         [Tooltip("Speed multiplier just under a full meter; speed falls in a straight line from 1 to this.")]
         [SerializeField, Range(0.01f, 1f)] private float minSpeedFactor = 0.35f;
         [Tooltip("Speed multiplier at or beyond a full meter: a crawl, never a full stop.")]
-        [SerializeField, Range(0.001f, 1f)] private float overloadSpeedFactor = 0.01f;
+        [SerializeField, Range(0.001f, 1f)] private float overloadSpeedFactor = 0.1f;
         [Tooltip("Items at or below this mass throw at full speed.")]
         [SerializeField, Min(0.01f)] private float throwReferenceMassKg = 1f;
         [Tooltip("Floor for the throw multiplier of a very heavy item.")]
@@ -31,7 +31,7 @@ namespace SunkCost.Interaction
 
         public const float DefaultCapacityKg = 25f;
         public const float DefaultMinSpeedFactor = 0.35f;
-        public const float DefaultOverloadSpeedFactor = 0.01f;
+        public const float DefaultOverloadSpeedFactor = 0.1f;
         public const float DefaultThrowReferenceMassKg = 1f;
         public const float DefaultMinThrowFactor = 0.15f;
 

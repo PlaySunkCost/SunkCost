@@ -17,7 +17,7 @@ and mass cards; their live status has not been checked or changed here.
    but an equipped slot item counts **once**. Source: Rigidbody mass.
 2. **Amended 14 September 2026 (Dan):** the bar is a hard capacity (25 kg).
    Walk/sprint slow in a straight line from 100 % at empty to 35 % just under
-   full; at a full bar you **crawl at 1 %** (not a full stop — second amendment)
+   full; at a full bar you **crawl at 10 %** (not a full stop — second amendment)
    until you drop something. Everything else — look, grab, drop, throw, equip,
    menu — keeps working. No pickup is ever refused for weight.
 3. Plain grey unnumbered bar below the slots; it turns **red** when full and a

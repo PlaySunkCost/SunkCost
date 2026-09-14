@@ -33,7 +33,7 @@ namespace SunkCost.Editor.Prototype
             Asset();
         }
 
-        // Capacity 25 kg, floor 0.35: fill = mass / 25, speed = 1 - 0.65 * fill, a 0.01 crawl when full.
+        // Capacity 25 kg, floor 0.35: fill = mass / 25, speed = 1 - 0.65 * fill, a 0.1 crawl when full.
         private static void Curves()
         {
             Expect(WeightMath.Fill(0f, Capacity) == 0f, "empty meter is 0");
