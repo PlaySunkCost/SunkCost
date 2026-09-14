@@ -1,8 +1,9 @@
 # Sunk Cost: holding and inventory implementation plan
 
-**Status: implemented on `dan/hold-feel`; Local inventory, moving-catch,
-disconnect and re-host checks passed. Steam and teammate review remain — see
-`HQ_PROTOTYPE_TEST_REPORT.md`. Section 17 is the historical incoming handoff.** Written 14 September 2026 against `main` at
+**Status: merged to `main` on 14 September 2026 (PR #11, `780de9e`). Local
+inventory, moving-catch, disconnect and re-host checks passed; the Steam
+two-machine rows and the teammate review remain — see section 17 and
+`HQ_PROTOTYPE_TEST_REPORT.md`.** Written 14 September 2026 against `main` at
 `a4ddc45` in `github.com/PlaySunkCost/SunkCost`. Owner: Dan. Notion card
 "Holding and inventory — rigid hold, E grab, Q drop, 4 slots + hand" (epic E3
 Carry and haul, phase 02 Prototype, branch `dan/hold-feel`, touches the contract:
@@ -44,11 +45,6 @@ request. A server-written motion version guards release impulses and rest RPCs
 against messages from an earlier throw/catch. Silent storage may also catch a
 Released item into a free slot. The contract change is in this branch for human
 review, not claimed approved by a teammate.
-
-The old section 17 is the incoming handoff, not fresh evidence. It incorrectly
-suggested inspecting a late joiner's rendering only from the host, and using a
-camera capture to prove IMGUI. Verification here must read the separate process
-and inspect a Game view capture. Never blindly revert unrelated Unity settings.
 
 ---
 
@@ -511,102 +507,33 @@ in the same PR.
   overflow items (blocked by decision), throw charge, hands-only enforcement
   beyond the flag, changes to the elevator, noise, oxygen or dive site.
 
-## 17. Progress record (14 September 2026, evening) — pick up from here
+## 17. Progress record
 
-Everything below is on branch `dan/hold-feel`, **uncommitted** at the time of
-writing (`git status` shows the full list).
+**Merged to `main` on 14 September 2026 as PR #11 (`780de9e`, commit `b3dd1cf`).**
+Everything in sections 1–15 landed, plus two things the plan did not have:
+moving catches (a Released item can be caught before rest; the contract's grab
+flow and a motion version guard were amended for it) and an automatic fifth
+pickup (four slots full and one of them equipped → the equipped item is stowed
+into its own slot and the fifth is held as overflow, one server request).
+`HQInventoryRuntimeChecks`, `HQCatchRuntimeChecks` and the Local-only
+`InventoryVerificationPeer` (`-hq-inventory-test-dir`) are the repeatable
+runtime checks.
 
-### Done and checked
+Verified on Local/Tugboat (editor + standalone peers, see
+`docs/HQ_PROTOTYPE_TEST_REPORT.md`, "Hold/inventory branch"): rows H1–H9 of
+section 14, the HUD capture, moving catches both directions, and the fifth
+pickup rule.
 
-- **Code, compiles clean in 6000.6.0f1** (only pre-existing `FindObjectsByType`
-  deprecation warnings):
-  `Interaction/CarryableItem.cs` (renamed from `Basketball.cs`, `.meta` GUID
-  kept), `ItemState.cs`, `InventorySlots.cs`, `InventoryRules.cs`,
-  `PlayerInventory.cs`, `Player/HQPlayerController.cs` (input only, reach 2 m,
-  `RefreshTarget()` for hooks), `Player/PlayerHudUI.cs`,
-  `Net/INetworkDebugInfo.cs` (+`WriterOverride`), `Net/NetworkDebugSnapshot.cs`
-  (rule 0), `Net/PrototypeSessionUI.cs` (diagnostics count items).
-- **Editor:** `HQPrototypeBuilder` (hold point under camera, inventory + HUD on
-  the fresh player, item fields on the fresh ball), `HQPrototypeValidator`
-  (5 items, prefab layout check), `HQPrototypeTestHooks` (rewritten for
-  inventory: `ClientRequestGrab/GrabRaw/Equip/Drop/Use`, `InventoryText`,
-  `PromptText`, `ItemStateText`, `HoldOffset`, `AllItems`, `ClientLookAtItem`),
-  `HQPrototypeInventorySetup` (`Apply()`), `HQPrototypeInventoryChecks`
-  (`RunOrThrow()`), `ItemIconGenerator` (`GenerateAll()`).
-- **Assets applied through `Apply()`:** `PrototypePlayer.prefab` (HoldPoint
-  re-parented under PlayerCamera at (0.30, −0.22, 0.60), `PlayerInventory` and
-  `PlayerHudUI` added; Dor's model untouched), `Basketball.prefab`
-  (`displayName`, `useAction = Throw`, `icon`), `HQPrototype.unity` (four more
-  ball instances at (±1.5, 1, ±1.5) with matching `resetPosition`),
-  `Art/Prototype/ItemIcons/Basketball.png` (rendered by the generator, looks
-  right).
-- **Checks passed:** `HQPrototypeInventoryChecks.RunOrThrow()`,
-  `HQPrototypeLobbyChecks.RunOrThrow()`, `HQPrototypeValidator.ValidateOrThrow()`.
-- **Runtime, editor as Local host:** five items spawn Free with SIM-HERE on the
-  server; `PromptText()` is empty at 3.35 m and *"Press E to grab Basketball"*
-  at 1.91 m with the crosshair on it (H2 prompt half); a grab through the
-  inventory RPC succeeded and a real left click threw the ball (H6 throw half),
-  after which rest handoff returned it to Free (server SIM-HERE). The F3
-  overlay shows *Released by 0* / *Free* with the right writer.
+### Still open
 
-### Known problems to fix first
-
-1. **The four extra scene balls are all named `Basketball`.** `ApplySceneItems`
-   sets `ball.name = "Basketball (N)"` but the scene saved the prefab's name;
-   the hooks find items by name, so they all resolve to the original. Fix in
-   `HQPrototypeInventorySetup.ApplySceneItems` (set the name through a
-   `SerializedObject` on the GameObject's `m_Name`, or rename after
-   `EditorSceneManager.MarkSceneDirty`), then re-run *Sunk Cost / Prototype /
-   Apply inventory setup* (it is idempotent: with 5 items present it will not
-   add more, so delete the four extras first or make the rename pass run on
-   existing instances too). Renaming at runtime in Play Mode is a workaround for
-   one session only.
-2. **`HQPrototypeTestHooks.ClientMoveLocalPlayerToItem` lifts the player 0.9 m**
-   (a leftover from when the ball rested at y = 1). Balls now rest at y ≈ 0.12;
-   use `ClientMoveLocalPlayerTo(new Vector3(ballX + 1.1, 0, ballZ))` or fix the
-   helper to use y = 0.
-3. **RPCs from the host are applied on the next tick, not synchronously**, so a
-   hook that requests and then immediately prints state sees the old state. Run
-   the request in one MCP command and read state in the next.
-4. The editor Game view had focus with the cursor locked during the runtime
-   checks, so real mouse/keyboard input reached the player (a click threw the
-   held ball). Either keep hands off during hook runs or click the Scene view
-   first.
-
-### Left to do (in order)
-
-1. Exit Play Mode, fix problems 1–2 above, refresh, re-run
-   `HQPrototypeInventoryChecks` and the validator.
-2. Runtime matrix (section 14) on Local, hooks + `Unity_Camera_Capture`:
-   H1 hold offset ≈ 0 while the player is moved/rotated between commands,
-   `ItemStateText` shows kinematic + collider off + SIM-HERE on the holder;
-   H2 `ClientRequestGrabRaw` from 4 m → *Too far* in `InventoryText().refusal`;
-   H3 E → `slots=[id,-1,-1,-1] heldSlot=0`; `ClientRequestEquip(0)` → Stowed,
-   hidden (`visible=False`), overlay *Stowed by 0* SIM-HERE on the server;
-   `ClientRequestEquip(0)` again → Held; H4 hold ball A, grab ball B → B stowed
-   in slot 2, hands still A; H5 four stowed + fifth grabbed → overflow, E and
-   equip refused with *Hands full*, `ClientRequestDrop()` frees the keys; H6
-   `ClientRequestDrop()` clears the slot and the ball falls at the feet,
-   `ClientRequestUse()` throws and clears the slot; H7 start a headless client
-   (`Builds/HQPrototypeLocal/SunkCostHQ.exe -batchmode -nographics
-   -hq-auto-join-local 127.0.0.1`, needs *Build Windows Local Development*
-   first) while items are stowed, then inspect its state through the host's
-   overlay (the client has no hooks; rely on `AllItems()` on the host and the
-   client's `Player.log`); H8 kill the headless client while it holds/stows
-   (grant with `ServerGrabForNonHostClient`) → items Free on the floor near its
-   last position; H9 host Leave → re-host → items at reset positions, slots
-   empty.
-3. Screenshot of the HUD (`Unity_Camera_Capture` or a Game view capture) with a
-   held slot highlighted and the overflow label.
-4. Documents (section 15): `NETWORK_CONTRACT.md` §2 (Stowed state in the flow),
-   §3 table row (inventory, server only), §6 harness bullet;
-   `DESIGN.md` harness paragraph; `README.md` controls; `HQ_PROTOTYPE_TEST_REPORT.md`
-   with the matrix output; `DEBUG_OVERLAY_IMPLEMENTATION_PLAN.md` §4.1 note on
-   `WriterOverride`; this file's status line.
-5. Revert Unity's incidental churn if any (`git checkout -- Assets/Settings
-   ProjectSettings`), commit, push `dan/hold-feel`, open the PR to `main` with
-   the review note (Idan or Dor reads `PlayerInventory.cs` and `CarryableItem.cs`),
-   tell Dor about the HUD/loot files (CONVENTIONS ownership).
-6. Steam two-machine rows (H1, H3, H5, H6, H8) with a shared build from the
-   merged revision; record in the test report; Notion card → Done, Phase-03
-   inventory card → closed.
+1. **Steam, two machines:** rows H1, H3, H5, H6, H8 with a shared build from
+   `main` at `780de9e` or later (*Sunk Cost / Prototype / Build Windows
+   Development*), recorded in the test report with revision, roles, accounts
+   and RTT.
+2. **Teammate review** (CONVENTIONS "The AI rule"): Idan or Dor reads
+   `PlayerInventory.cs`, `CarryableItem.cs` and the `NETWORK_CONTRACT.md`
+   changes; Dor looks at `PlayerHudUI.cs` and the icon generator (UI/loot are
+   Dev C's column). The PR merged before that read; the review is tracked as a
+   Notion card.
+3. Notion: the card stays *In progress* until 1 and 2 are done; the Phase-03
+   "Four inventory slots plus one hand" card is folded into it.
