@@ -103,6 +103,8 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 | Noise events | **Server only** | See `NoiseSystem` — clients may play the sound, never emit the event |
 | Elevator state | **Server only** | Clients send a request, server decides |
 | Site seed and dive lifecycle | **Server only** | Replicate current state to supported entrants |
+| Scene membership | **Server only** | Which world scene each connection is in and which world scenes are loaded; a client loads and unloads exactly what the server tells it; observers follow scene membership (section 10) |
+| Day state | **Server only** | Phase (at HQ, sailing, at sea, dive in progress), current world and destination, on the global `CrewDayState` object; the day counter and the below/surfaced/dead lists join it with the day-state card |
 
 Rule of thumb: **if getting it wrong would let someone cheat or desync the run,
 the server decides.**
@@ -154,9 +156,16 @@ If a method name does not say who calls it and who runs it, rename it.
 
 - A disconnected player's body **stays where it fell** and keeps its inventory.
   It can be dragged to the elevator like a corpse.
-- Players rejoin **at HQ between cycles**, never mid-dive.
-- Between-dive joining/rejoining on the boat is under consideration in the design,
-  not implemented policy. It does not change the HQ-only save point.
+- Players join or rejoin **at HQ**, and **on the ship at sea between days**
+  (design section 1). A joiner is loaded into the crew's current world first and
+  spawned at that world's spawn points once the server has confirmed it is in
+  the scene. While a dive is in progress the admission handshake refuses with
+  `DiveInProgress` ("Dive in progress — join between days"). This does not
+  change the HQ-only save point.
+- A disconnect while below counts as dead for the day: the harness drop rule
+  below applies to the items, the player leaves the seafloor list, and the day
+  can end without them (decided 14 September 2026; the day-state card enforces
+  it).
 - Recovering a disconnected or dead player's body preserves purchased gear under
   the design's recovery rule. Unrecovered purchases are lost; the free base kit
   remains available. Banked loot is unaffected. Held objects must not disappear
@@ -243,7 +252,70 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
   button only starts a day and requires every living player inside; mid-day and
   at HQ it does nothing.
 
-## 10. Verification and changes
+## 10. Scene flow
+
+Decided 14 September 2026 with the world-loop plan; the scene-flow card makes
+the sailing part true, the elevator and deck-cabin cards the rest.
+
+- One persistent `Session` scene holds the network root; FishNet never loads or
+  unloads it. The three world scenes (`HQPrototype`, `ShipAtSea`, `DiveSite01`)
+  are loaded **per connection**, additively (`ReplaceOption.None`), never
+  auto-unloaded, and unloaded explicitly: `KeepUnused` when other connections
+  stay in the scene, `UnloadUnused` when the last ones leave (HQ on sailing out,
+  the sea on sailing home, the site at day end). The ship at sea sits 500 m from
+  the site so both can be loaded on the host during a day.
+- Observers follow scene membership through an `ObserverManager` whose default
+  condition is FishNet's `SceneCondition`. A player observes only the objects in
+  the scene it is in, its own objects always, and global objects everywhere.
+- Only spawned root objects travel between scenes (`MovedNetworkObjects`). Scene
+  objects never do, so every carryable that may leave a scene is a
+  runtime-spawned prefab instance; a player's Held and Stowed items are listed
+  next to it in every move, and loose items inside the ship's `AboardVolume` sail
+  with the ship at the same ship-relative spot.
+- A scene broadcast that depends on a SyncVar the clients react to (a phase
+  change, a cabin state) is sent at least `syncFlushTicks` (2) ticks after the
+  SyncVar is set — the ordering rule of section 6.
+- Positions after a move are computed by the client that simulates the player
+  (section 3), on its own load-end event, from the source and destination
+  transforms that are both still loaded at that moment; no RPC carries them.
+  The `NetworkTransform` snap (`Teleport()`) keeps observers from interpolating
+  across the world.
+- Sailing order on the server (`WorldSceneFlow.SailRoutine`): set the phase,
+  wait `syncFlushTicks`, collect the travellers (each connection's player, its
+  Held and Stowed items, loose items in `AboardVolume`), load the destination
+  server-side if it is not loaded yet, add **every** travelling connection to the
+  destination scene before the load (`AddConnectionToScene`, so observers are
+  rebuilt once with everyone already there and nobody blinks out of a
+  teammate's view), then send one `LoadConnectionScenes` with the moved objects
+  to all of them. Each client places its own player on its load-end and answers
+  with a `WorldArrivedBroadcast`; the server waits for every traveller's
+  broadcast (`arrivalTimeoutSeconds`, then it proceeds and logs who was late),
+  and only then unloads the scene they left. A connection that disconnects
+  mid-sail leaves the gate. FishNet raises load-end twice on a host (server
+  pass, client pass); placement runs on the client pass only.
+- When neither the server nor the client is running any more, every world scene
+  is unloaded locally; the menu is the Session scene.
+- Workarounds for FishNet 4.7.3 on Unity 6, kept in `WorldSceneFlow` and to be
+  re-checked on a FishNet upgrade:
+  - `SceneLookupData`'s `!=` dereferences its operands, so comparing an entry
+    of `SceneLookupDatas` with `null` must use `is null`.
+  - Unity 6's `Scene.GetRootGameObjects(List)` does not clear the list for an
+    empty scene, so FishNet's refill of its `MovedObjectsHolder` scene re-moves
+    the previous load's objects on any later load that moves nothing (a
+    server-only pre-load, a joiner's load) — every player of the last sail would
+    be yanked into that scene. `EnsureHolderKeepAlive()` keeps one dummy root
+    (`FishNetHolderKeepAlive`) in the holder before every load and puts it back
+    after each load-end; every code path that calls `LoadConnectionScenes` must
+    call it first.
+  - A pure client instantiates spawned prefabs into its active scene, so an
+    object the server spawns into the destination while a sail is under way (the
+    fresh HQ loot fixture on the way home) can land in the scene the client is
+    about to unload and die with it. On unload-start a pure client moves spawned
+    non-scene root network objects out of the unloading scene into `Session`;
+    FishNet does this for the host only. Their lifetime stays the server's
+    despawn.
+
+## 11. Verification and changes
 
 For networking changes, record a host and separate non-host reproduction, actual
 results, and any missing runtime validation. Validate Steam transport using builds

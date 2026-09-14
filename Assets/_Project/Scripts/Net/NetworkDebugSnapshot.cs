@@ -23,6 +23,7 @@ namespace SunkCost.Net
             public bool IsOwner;  // this machine owns it
             public bool IsWriter; // this machine simulates it; everyone else renders replicated state
             public string Detail; // INetworkDebugInfo.DebugStatus or ""
+            public string Scene;  // Unity scene the object sits in on this peer
 
             public string OwnerText => IsOwner ? "me" : OwnerId < 0 ? "server" : "client " + OwnerId;
             public string SimText => IsWriter ? "SIM-HERE" : "REPLICATED";
@@ -103,7 +104,8 @@ namespace SunkCost.Net
                 Name = nob.gameObject.name.Replace("(Clone)", string.Empty),
                 OwnerId = nob.OwnerId,
                 IsOwner = nob.IsOwner,
-                Detail = string.Empty
+                Detail = string.Empty,
+                Scene = nob.gameObject.scene.name ?? string.Empty
             };
 
             INetworkDebugInfo info = nob.GetComponent<INetworkDebugInfo>();
@@ -154,13 +156,14 @@ namespace SunkCost.Net
                     sb.Append("  clients=").Append(ConnectedClients);
             }
             sb.AppendLine();
-            sb.AppendLine(" id   name              owner     sim         detail");
+            sb.AppendLine(" id   name              owner     sim         scene        detail");
             foreach (ObjectRow row in Objects)
             {
                 sb.Append(row.ObjectId.ToString().PadLeft(3)).Append("   ")
                   .Append(Truncate(row.Name, 17).PadRight(17)).Append(' ')
                   .Append(row.OwnerText.PadRight(9)).Append(' ')
                   .Append(row.SimText.PadRight(11)).Append(' ')
+                  .Append(Truncate(row.Scene, 12).PadRight(12)).Append(' ')
                   .Append(row.Detail)
                   .AppendLine();
             }

@@ -261,6 +261,10 @@ namespace SunkCost.Net
                 return;
             }
             if (!acceptingGuests) { Finish(connection, false, AdmissionRejection.HostNotReady, entry.Nonce); return; }
+            // Joining is between days only (design section 1); the day state is the
+            // server's, so this is the one gameplay rule the handshake consults.
+            if (SunkCost.World.CrewDayState.Instance != null && SunkCost.World.CrewDayState.Instance.RefusesJoins)
+            { Finish(connection, false, AdmissionRejection.DiveInProgress, entry.Nonce); return; }
             if (ledger.HoldsIdentity(identity)) { Finish(connection, false, AdmissionRejection.DuplicateIdentity, entry.Nonce); return; }
             if (!ledger.TryReserve(connection.ClientId, identity)) { Finish(connection, false, AdmissionRejection.RoomFull, entry.Nonce); return; }
             Finish(connection, true, AdmissionRejection.None, entry.Nonce);

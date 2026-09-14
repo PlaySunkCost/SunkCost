@@ -46,7 +46,9 @@ namespace SunkCost.Net
         {
             if (string.IsNullOrEmpty(directory)) return;
             var nm = InstanceFinder.NetworkManager;
-            if (nm == null || !(nm.TransportManager.Transport is Tugboat) || !nm.ClientManager.Started) return;
+            // Answers as soon as the Local transport is bound, connected or not: a
+            // joiner refused at admission reports the refusal through its snapshot.
+            if (nm == null || !(nm.TransportManager.Transport is Tugboat)) return;
             try
             {
                 Directory.CreateDirectory(directory);
@@ -76,10 +78,7 @@ namespace SunkCost.Net
             switch (command.action)
             {
                 case "move":
-                    var cc = player.GetComponent<CharacterController>();
-                    cc.enabled = false;
-                    player.transform.position = command.position;
-                    cc.enabled = true;
+                    player.TeleportLocal(command.position, player.Yaw);
                     break;
                 case "look":
                     player.transform.rotation = Quaternion.LookRotation(new Vector3(command.aim.x, 0, command.aim.z));
@@ -91,6 +90,12 @@ namespace SunkCost.Net
                 case "throw": player.Inventory.RequestUse(command.aim); break;
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
                 case "spawn_light": return SpawnLightItems(Mathf.Clamp(command.slot, 1, 4));
+                // Server only (the monitor's request until the monitor card): the
+                // world name rides in the item field.
+                case "sail":
+                    if (SunkCost.World.WorldSceneFlow.Instance == null) return "No WorldSceneFlow";
+                    if (!Enum.TryParse(command.item, true, out SunkCost.World.WorldId target)) return "Unknown world " + command.item;
+                    return SunkCost.World.WorldSceneFlow.Instance.ServerSail(target, out string why) ? "sailing to " + target : "refused: " + why;
                 case "snapshot": break;
                 default: return "Unknown action";
             }
@@ -127,13 +132,17 @@ namespace SunkCost.Net
         {
             var nm = InstanceFinder.NetworkManager;
             if (nm == null) return "No network manager";
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}\n";
+            var day = SunkCost.World.CrewDayState.Instance;
+            string loaded = string.Join("+", Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
+                .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
+            var session = FindAnyObjectByType<PrototypeSessionController>();
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
-                text += $"player={player.OwnerId}; local={player.IsOwner}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}\n";
+                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}\n";
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {
                 var body = item.GetComponent<Rigidbody>();
-                text += $"item={item.name}; id={item.ObjectId}; state={item.State}; holder={item.HolderClientId}; owner={item.OwnerId}; version={item.MotionVersion}; writer={item.WriterOverride}; kinematic={body.isKinematic}; collider={item.PrimaryCollider.enabled}; visible={item.GetComponentInChildren<Renderer>(true).enabled}; massKg={item.MassKg:0.##}; grip={item.Grip}; launch={item.LastLaunchSpeed:0.###}; position={item.transform.position}; velocity={body.linearVelocity}\n";
+                text += $"item={item.name}; id={item.ObjectId}; scene={item.gameObject.scene.name}; state={item.State}; holder={item.HolderClientId}; owner={item.OwnerId}; version={item.MotionVersion}; writer={item.WriterOverride}; kinematic={body.isKinematic}; collider={item.PrimaryCollider.enabled}; visible={item.GetComponentInChildren<Renderer>(true).enabled}; massKg={item.MassKg:0.##}; grip={item.Grip}; launch={item.LastLaunchSpeed:0.###}; position={item.transform.position}; velocity={body.linearVelocity}\n";
             }
             return text;
         }

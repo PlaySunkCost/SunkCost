@@ -138,6 +138,24 @@ namespace SunkCost.Player
         // crosshair target without going through the input gate.
         public void RefreshTarget() => UpdateTarget();
 
+        // Owner-side move across any distance (a scene change, a cabin arrival).
+        // The client simulates its own movement (contract section 3), so it is the
+        // one that places itself; the NetworkTransform snap keeps observers from
+        // interpolating across the world. CharacterController overrides transform
+        // writes unless it is disabled around them.
+        public void TeleportLocal(Vector3 position, float yawDegrees)
+        {
+            if (!IsOwner) return;
+            controller.enabled = false;
+            transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yawDegrees, 0f));
+            controller.enabled = true;
+            verticalSpeed = 0f;
+            FishNet.Component.Transforming.NetworkTransform networkTransform = GetComponent<FishNet.Component.Transforming.NetworkTransform>();
+            if (networkTransform != null) networkTransform.Teleport();
+        }
+
+        public float Yaw => transform.eulerAngles.y;
+
         // Held and stowed items have their colliders off, so only loose items can be
         // selected. Targeting checks eyes-to-surface distance and line of sight.
         private void UpdateTarget()

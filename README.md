@@ -47,7 +47,10 @@ be read as checklists by other assistants.
 ## Start the HQ basketball prototype
 
 1. Open this repository with Unity `6000.6.0f1`.
-2. Open `Assets/_Project/Scenes/Prototype/HQPrototype.unity` and press Play.
+2. Open `Assets/_Project/Scenes/Prototype/Session.unity` and press Play. That
+   scene is the menu and the network root; hosting loads the base
+   (`HQPrototype.unity`) next to it. Pressing Play inside a world scene starts
+   nothing — there is no menu there.
 3. Choose **Local / LAN** and **Host**. Up to three other players can choose
    **Join** with `127.0.0.1` on the same computer, or the host's LAN IP on another
    computer. Four players total, including the host.
@@ -66,6 +69,26 @@ be read as checklists by other assistants.
    shows the network debug overlay with kg and grip per item.
    *Sunk Cost > Prototype > Apply loot setup* rebuilds the six-item fixture and
    the shared `WeightSettings` asset; tune weight there, not in code.
+
+**Scenes and sailing.** The world is three scenes loaded next to `Session`
+per player: `HQPrototype` (the base, its dock and the docked ship), `ShipAtSea`
+(the same ship on open water — a grey stub until the real ship lands) and
+`DiveSite01` (the elevator and the seafloor; not entered yet). Everyone aboard
+the ship — inside the rails, on the deck — sails together; a sail is refused,
+naming who is still ashore, otherwise. What you hold or stowed and anything
+lying on the deck sails with you and is at the same spot on the new deck; the
+base resets when the crew comes back. The monitor that chooses the destination
+is a later card: until then the host sails from the editor with
+`HQPrototypeTestHooks.ServerSail("Sea")` / `ServerSail("HQ")` (the Unity MCP
+bridge or any editor script), or a headless peer's `sail` command. Joining is
+possible at the base and on the ship between days; a join while a dive is in
+progress is refused ("Dive in progress — join between days"). F3 shows every
+player's and item's scene. Menu: *Sunk Cost > Prototype > Create or Update
+Session / HQ / ship stub* rebuild the generated scenes and the ship prefab,
+*Validate Session / HQ / ShipAtSea* check them, *Check world loop (pure)* runs
+the editor checks, and *Run world loop matrix (Local host, Play Mode)* runs the
+Local host + headless guest rows from a hosting editor (needs the Local build
+below); its log is `Temp/world-loop-matrix.log`.
 
 **Builds.** Two menu items write to ignored folders and put a `sunkcost-build.json`
 manifest beside the executable:

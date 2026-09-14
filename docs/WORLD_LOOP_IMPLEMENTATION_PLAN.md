@@ -420,13 +420,12 @@ Relative to `Assets/_Project/` unless stated.
 |---|---|---|
 | Scenes/Prototype/Session.unity (new), Editor/Prototype/SessionSceneBuilder.cs (new) | Network root, UI, preview backdrop, fade, flow; ObserverManager + SceneCondition; CrewSpawner | Scene flow |
 | Editor/Prototype/HQPrototypeBuilder.cs, HQPrototypeValidator.cs, HQPrototypeLobbySetup.cs, HQPrototypeInventorySetup.cs, HQPrototypeLootSetup.cs, HQPrototypeBuild.cs | HQ becomes a world scene: room, spawn points, light, `LootFixtureSpawner`; validators check "no network root here"; build list = Session, HQ, ShipAtSea, DiveSite01; setup menus open Session/HQ as needed | Scene flow |
-| Scripts/Net/CrewSpawner.cs (new), WorldSceneFlow.cs (new), ScreenFade.cs (new), WorldLoopSettings.cs (new), Settings/Prototype/WorldLoopSettings.asset | Section 3.3, 4.2, 4.3, 7 | Scene flow |
+| Scripts/World/CrewSpawner.cs (new), WorldSceneFlow.cs (new), ScreenFade.cs (new), WorldLoopSettings.cs (new), WorldId.cs, WorldScenes.cs, ShipParts.cs, Settings/Prototype/WorldLoopSettings.asset | Section 3.3, 4.2, 4.3, 7 (built: the server-start pre-warm, the day-state spawn and the leave cleanup live in `WorldSceneFlow`, not the session controller) | Scene flow |
 | Scripts/Net/PrototypeAuthenticator.cs, PrototypeAdmissionMessages.cs | `"dive in progress"` refusal reason | Scene flow |
-| Scripts/Net/PrototypeSessionController.cs | Server-start pre-warm and day-state spawn; leave cleanup hook | Scene flow |
 | Scripts/Interaction/LootFixtureSpawner.cs (new), CarryableItem.cs, PlayerInventory.cs | Runtime fixture; `Riding` state; helpers listing a player's carried NetworkObjects | Scene flow / cargo |
 | Prefabs/Player/PrototypePlayer.prefab, Prefabs/Interaction/*.prefab | `_synchronizeParent` on | Elevator |
 | Prefabs/World/Ship.prefab (stub then Idan's), Scenes/Prototype/ShipAtSea.unity, Editor/Prototype/ShipStubBuilder.cs (temporary) | Section 4.4 | Scene flow (stub) / Idan |
-| Scripts/World/CrewDayState.cs (new), DayPhase.cs, CrewMember.cs, Refusal.cs, Prefabs/World/CrewDayState.prefab (global) | Section 4.1 | Day state |
+| Scripts/World/CrewDayState.cs (new), DayPhase.cs, CrewMember.cs, Refusal.cs, Prefabs/World/CrewDayState.prefab (global) | Section 4.1 (the phase, world and destination and the phase half of `ServerBeginDay`/`ServerEndDay` came with scene flow) | Day state |
 | Scripts/World/ShipMonitor.cs (new) | Section 4.5, sailing fade | Monitor |
 | Scripts/World/DeckCabin.cs (new), CabinPhase.cs | Section 4.6, 5.3, 5.4 steps 6–8 | Deck cabin |
 | Scripts/Diving/NetworkElevator.cs (new), ElevatorMath.cs (new), ElevatorPhase.cs (new); ElevatorController.cs (driven mode, with Idan) | Section 6 | Elevator |

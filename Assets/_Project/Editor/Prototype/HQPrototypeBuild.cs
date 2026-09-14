@@ -45,10 +45,22 @@ namespace SunkCost.Editor.Prototype
             Build(LinuxOutputPath, BuildTarget.StandaloneLinux64, PrototypeBuildIdentityEditor.Create(localOnly: false));
         }
 
+        // Session first; then every world scene on disk (WorldSceneChecks.BuildListPaths).
+        private static string[] BuildScenes()
+        {
+            var scenes = new System.Collections.Generic.List<string>();
+            foreach (string path in WorldSceneChecks.BuildListPaths)
+                if (File.Exists(path)) scenes.Add(path);
+            return scenes.ToArray();
+        }
+
         private static void Build(string outputPath, BuildTarget target, PrototypeBuildIdentity identity)
         {
+            EditorSceneManager.OpenScene(SunkCost.World.WorldScenes.SessionPath);
+            SessionSceneValidator.ValidateOrThrow();
             EditorSceneManager.OpenScene(HQPrototypeBuilder.ScenePath);
             HQPrototypeValidator.ValidateOrThrow();
+            EditorSceneManager.OpenScene(SunkCost.World.WorldScenes.SessionPath);
             string outputDirectory = Path.GetDirectoryName(outputPath);
             if (string.IsNullOrEmpty(outputDirectory) || !Path.GetFullPath(outputDirectory).StartsWith(Path.GetFullPath("Builds"), StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("The prototype build output directory must be inside Builds/.");
@@ -60,7 +72,7 @@ namespace SunkCost.Editor.Prototype
 
             BuildPlayerOptions options = new()
             {
-                scenes = new[] { HQPrototypeBuilder.ScenePath },
+                scenes = BuildScenes(),
                 locationPathName = outputPath,
                 target = target,
                 options = BuildOptions.Development

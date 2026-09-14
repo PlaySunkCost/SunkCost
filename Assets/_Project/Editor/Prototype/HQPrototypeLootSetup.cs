@@ -55,7 +55,6 @@ namespace SunkCost.Editor.Prototype
         public static int SceneItemCount => Manifest.Length;
 
         // Basketball instances that the earlier five-ball fixture added and this one removes.
-        private static readonly string[] RetiredSceneNames = { "Basketball (4)", "Basketball (5)" };
 
         private static FixtureEntry Ball(string sceneName, Vector3 reset) => new()
         {
@@ -236,69 +235,52 @@ namespace SunkCost.Editor.Prototype
             return false;
         }
 
-        // Scene: exactly the manifest, by name. Retired basketballs go, heavies are
-        // added once, names and reset positions are explicit prefab overrides.
+        // Scene: the LootFixtureSpawner's entries are exactly the manifest, by name.
+        // Items are spawned at runtime (FishNet will not move scene objects between
+        // scenes), so any carryable saved in the scene is removed here.
         public static string ApplySceneFixture()
         {
             Scene scene = SceneManager.GetActiveScene();
             if (scene.path != HQPrototypeBuilder.ScenePath)
                 throw new InvalidOperationException("Open " + HQPrototypeBuilder.ScenePath + " before applying the loot setup (active: " + scene.path + ").");
 
-            var byName = new Dictionary<string, CarryableItem>();
-            var all = new List<CarryableItem>();
-            foreach (GameObject root in scene.GetRootGameObjects())
-                all.AddRange(root.GetComponentsInChildren<CarryableItem>(true));
-            foreach (CarryableItem item in all) byName[item.name] = item;
-
             var changes = new List<string>();
-            GameObject basketballPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
-            foreach (string retired in RetiredSceneNames)
+            foreach (GameObject root in scene.GetRootGameObjects())
             {
-                if (!byName.TryGetValue(retired, out CarryableItem item)) continue;
-                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(item.gameObject);
-                if (source == null || source != basketballPrefab)
+                foreach (CarryableItem item in root.GetComponentsInChildren<CarryableItem>(true))
                 {
-                    Debug.LogWarning("Loot setup: " + retired + " is not a basketball prefab instance; left in place.");
-                    continue;
+                    changes.Add("removed scene object " + item.name);
+                    UnityEngine.Object.DestroyImmediate(item.gameObject);
                 }
-                UnityEngine.Object.DestroyImmediate(item.gameObject);
-                byName.Remove(retired);
-                changes.Add("removed " + retired);
             }
 
+            LootFixtureSpawner spawner = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                spawner = root.GetComponentInChildren<LootFixtureSpawner>(true);
+                if (spawner != null) break;
+            }
+            if (spawner == null)
+            {
+                spawner = new GameObject("Loot Fixture").AddComponent<LootFixtureSpawner>();
+                changes.Add("added Loot Fixture");
+            }
+
+            var entries = new List<LootFixtureSpawner.Entry>();
             foreach (FixtureEntry entry in Manifest)
             {
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
                 if (prefab == null) throw new InvalidOperationException("Prefab missing: " + entry.PrefabPath);
-                if (!byName.TryGetValue(entry.SceneName, out CarryableItem item))
-                {
-                    var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-                    instance.transform.SetPositionAndRotation(entry.ResetPosition, Quaternion.identity);
-                    PrefabUtility.RecordPrefabInstancePropertyModifications(instance.transform);
-                    item = instance.GetComponent<CarryableItem>();
-                    byName[entry.SceneName] = item;
-                    changes.Add("added " + entry.SceneName);
-                }
-                using (var go = new SerializedObject(item.gameObject))
-                {
-                    if (go.FindProperty("m_Name").stringValue != entry.SceneName)
-                    {
-                        go.FindProperty("m_Name").stringValue = entry.SceneName;
-                        go.ApplyModifiedPropertiesWithoutUndo();
-                        PrefabUtility.RecordPrefabInstancePropertyModifications(item.gameObject);
-                        changes.Add("renamed " + entry.SceneName);
-                    }
-                }
-                using (var serialized = new SerializedObject(item))
-                {
-                    if (serialized.FindProperty("resetPosition").vector3Value != entry.ResetPosition)
-                    {
-                        serialized.FindProperty("resetPosition").vector3Value = entry.ResetPosition;
-                        serialized.ApplyModifiedPropertiesWithoutUndo();
-                        PrefabUtility.RecordPrefabInstancePropertyModifications(item);
-                        changes.Add("reset position " + entry.SceneName);
-                    }
-                }
+                entries.Add(new LootFixtureSpawner.Entry { Name = entry.SceneName, Prefab = prefab, Position = entry.ResetPosition });
+            }
+            bool same = spawner.Entries.Count == entries.Count;
+            for (int i = 0; same && i < entries.Count; i++)
+                same = spawner.Entries[i].Name == entries[i].Name && spawner.Entries[i].Prefab == entries[i].Prefab && spawner.Entries[i].Position == entries[i].Position;
+            if (!same)
+            {
+                spawner.SetEntries(entries.ToArray());
+                EditorUtility.SetDirty(spawner);
+                changes.Add("fixture entries = manifest (" + entries.Count + ")");
             }
 
             int sceneIdsAssigned = RebuildMissingSceneIds(scene);
