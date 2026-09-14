@@ -9,6 +9,8 @@ using Object = UnityEngine.Object;
 
 namespace SunkCost.Sites
 {
+    // DiveSite01.unity is generated-only: CreateOrUpdate discards and regenerates the
+    // scene from scratch, so any hand-placed object in it is destroyed on next rebuild.
     public static class DiveSiteBuilder
     {
         public const string ScenePath = "Assets/_Project/Scenes/Prototype/DiveSite01.unity";
@@ -22,23 +24,17 @@ namespace SunkCost.Sites
         private const float PlatformThickness = 0.5f;
         private const float ShaftHalfWidth = 3f;
         private const float GuideCableRadius = 0.06f;
-        public const float SeafloorSize = 150f;
         private const float SeafloorThickness = 0.5f;
         private const float SeafloorWallHeight = 6f;
         private const float WreckLength = 16f;
         private const float WreckWidth = 6f;
         private const float WreckHeight = 5f;
         private const float WreckWallThickness = 0.4f;
-        public static readonly Vector3 WreckOffset = new(35f, 0f, 0f);
 
         private const float CarDiameter = 3f;
         private const float CarHeight = 3f;
         private const float CarFloorThickness = 0.1f;
         private const float CarFrameRadius = 0.06f;
-
-        public const float HeadlampIntensity = 15f;
-        public const float HeadlampRange = 25f;
-        public const float HeadlampSpotAngle = 35f;
 
         [MenuItem("Sunk Cost/Prototype/Create or Update Dive Site 01")]
         public static void CreateOrUpdate()
@@ -53,6 +49,18 @@ namespace SunkCost.Sites
             float shaftDepth = settings.ShaftDepthMeters;
             if (shaftDepth <= 0f)
                 throw new InvalidOperationException("DiveSiteSettings.ShaftDepthMeters must be positive.");
+            if (settings.SeafloorSizeMeters <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.SeafloorSizeMeters must be positive.");
+            if (settings.HeadlampIntensity <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.HeadlampIntensity must be positive.");
+            if (settings.HeadlampRange <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.HeadlampRange must be positive.");
+            if (settings.HeadlampSpotAngle <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.HeadlampSpotAngle must be positive.");
+            if (settings.FogDensity <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.FogDensity must be positive.");
+            if (settings.SurfaceLightIntensity <= 0f)
+                throw new InvalidOperationException("DiveSiteSettings.SurfaceLightIntensity must be positive.");
 
             Material floorMaterial = LoadMaterial("HQFloor.mat");
             Material wallMaterial = LoadMaterial("HQWall.mat");
@@ -65,10 +73,10 @@ namespace SunkCost.Sites
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "DiveSite01";
 
-            ConfigureAmbience();
-            Transform anchorTop = CreateSurfacePlatform(floorMaterial, accentMaterial, playerMaterial, wallMaterial, glassMaterial);
-            CreateSurfaceLight(deepLayer);
-            Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer);
+            ConfigureAmbience(settings);
+            Transform anchorTop = CreateSurfacePlatform(floorMaterial, accentMaterial, playerMaterial, wallMaterial, glassMaterial, settings);
+            CreateSurfaceLight(deepLayer, settings);
+            Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
             CreateGuideShaft(anchorTop, anchorBottom, accentMaterial);
             CreateUnderwaterVolume();
 
@@ -82,26 +90,26 @@ namespace SunkCost.Sites
             Debug.Log("Dive Site 01 created and validated at " + ScenePath);
         }
 
-        private static void ConfigureAmbience()
+        private static void ConfigureAmbience(DiveSiteSettings settings)
         {
             // Near-black cold blue-green ambient. The surface stays sunlit on its own layer
             // (see CreateSurfaceLight); ambient alone should barely read at the seafloor.
             // ExponentialSquared fog tuned for ~15-20m visibility down there.
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.015f, 0.03f, 0.028f);
+            RenderSettings.ambientLight = settings.AmbientColor;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.02f, 0.05f, 0.045f);
-            RenderSettings.fogDensity = 0.09f;
+            RenderSettings.fogColor = settings.FogColor;
+            RenderSettings.fogDensity = settings.FogDensity;
         }
 
-        private static Transform CreateSurfacePlatform(Material floor, Material accent, Material playerMaterial, Material frame, Material glass)
+        private static Transform CreateSurfacePlatform(Material floor, Material accent, Material playerMaterial, Material frame, Material glass, DiveSiteSettings settings)
         {
             GameObject root = new("Surface Platform");
             CreatePlatformRing(root.transform, floor);
             CreateLever(root.transform, accent);
             Transform[] spawnPoints = CreateSpawnPoints(root.transform);
-            CreateDevPlayer(spawnPoints[0], playerMaterial);
+            CreateDevPlayer(spawnPoints[0], playerMaterial, settings);
 
             GameObject anchor = new("ElevatorAnchor_Top");
             anchor.transform.SetParent(root.transform, false);
@@ -160,7 +168,7 @@ namespace SunkCost.Sites
         // Non-networked walk-around harness — see DiveSiteDevPlayer. Delete this method's
         // output (the "DevHarnessPlayer_DeleteWhenNetworkedPlayerLands" GameObject) once a
         // real networked player is spawned into dive sites instead.
-        private static void CreateDevPlayer(Transform spawnPoint, Material bodyMaterial)
+        private static void CreateDevPlayer(Transform spawnPoint, Material bodyMaterial, DiveSiteSettings settings)
         {
             GameObject root = new("DevHarnessPlayer_DeleteWhenNetworkedPlayerLands");
             root.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
@@ -191,7 +199,7 @@ namespace SunkCost.Sites
             // Underwater Volume's Exposure/Tonemapping/ColorAdjustments never apply.
             UniversalAdditionalCameraData cameraData = cameraObject.AddComponent<UniversalAdditionalCameraData>();
             cameraData.renderPostProcessing = true;
-            CreateHeadlamp(cameraObject.transform);
+            CreateHeadlamp(cameraObject.transform, settings);
 
             DiveSiteDevPlayer devPlayer = root.AddComponent<DiveSiteDevPlayer>();
             SerializedObject serialized = new(devPlayer);
@@ -201,7 +209,7 @@ namespace SunkCost.Sites
 
         // Exists so the darkness can be judged during greybox testing. No battery, no
         // per-player colour, no toggle — just a headlamp that follows where you look.
-        private static void CreateHeadlamp(Transform cameraTransform)
+        private static void CreateHeadlamp(Transform cameraTransform, DiveSiteSettings settings)
         {
             GameObject go = new("Headlamp", typeof(Light));
             go.transform.SetParent(cameraTransform, false);
@@ -209,9 +217,9 @@ namespace SunkCost.Sites
             go.transform.localRotation = Quaternion.identity;
             Light light = go.GetComponent<Light>();
             light.type = LightType.Spot;
-            light.intensity = HeadlampIntensity; // tuned empirically against real game-camera renders (see below)
-            light.range = HeadlampRange;
-            light.spotAngle = HeadlampSpotAngle;
+            light.intensity = settings.HeadlampIntensity; // tuned empirically against real game-camera renders (see below)
+            light.range = settings.HeadlampRange;
+            light.spotAngle = settings.HeadlampSpotAngle;
             light.color = new Color(1f, 0.93f, 0.82f);
             light.shadows = LightShadows.None;
         }
@@ -272,16 +280,17 @@ namespace SunkCost.Sites
             cable.GetComponent<Renderer>().sharedMaterial = cableMaterial;
         }
 
-        private static Transform CreateSeafloor(Material floor, Material wall, float depth, int deepLayer)
+        private static Transform CreateSeafloor(Material floor, Material wall, float depth, int deepLayer, DiveSiteSettings settings)
         {
             GameObject root = new("Seafloor");
             float y = -depth;
-            float half = SeafloorSize / 2f;
+            float seafloorSize = settings.SeafloorSizeMeters;
+            float half = seafloorSize / 2f;
 
-            CreateBlock("Seafloor Ground", new Vector3(0f, y - SeafloorThickness / 2f, 0f), new Vector3(SeafloorSize, SeafloorThickness, SeafloorSize), floor, root.transform);
-            CreatePerimeterWalls(root.transform, wall, y, half);
-            CreateWreck(root.transform, wall, y);
-            CreateSeafloorLights(root.transform, y);
+            CreateBlock("Seafloor Ground", new Vector3(0f, y - SeafloorThickness / 2f, 0f), new Vector3(seafloorSize, SeafloorThickness, seafloorSize), floor, root.transform);
+            CreatePerimeterWalls(root.transform, wall, y, half, seafloorSize);
+            CreateWreck(root.transform, wall, y, settings);
+            CreateSeafloorLights(root.transform, y, settings);
 
             GameObject anchor = new("ElevatorAnchor_Bottom");
             anchor.transform.SetParent(root.transform, false);
@@ -296,22 +305,22 @@ namespace SunkCost.Sites
         // Placeholders for a natural boundary (vegetation, wreckage, a drop-off) — not the
         // shipping design. DESIGN.md §6: the built area should simply stop containing
         // anything, not hit a wall. Named _Temp so nobody mistakes these for final art.
-        private static void CreatePerimeterWalls(Transform parent, Material wall, float floorY, float half)
+        private static void CreatePerimeterWalls(Transform parent, Material wall, float floorY, float half, float seafloorSize)
         {
             float centerY = floorY + SeafloorWallHeight / 2f;
             float thickness = 0.5f;
 
-            CreateBlock("Boundary_Temp_North", new Vector3(0f, centerY, half), new Vector3(SeafloorSize + thickness, SeafloorWallHeight, thickness), wall, parent);
-            CreateBlock("Boundary_Temp_South", new Vector3(0f, centerY, -half), new Vector3(SeafloorSize + thickness, SeafloorWallHeight, thickness), wall, parent);
-            CreateBlock("Boundary_Temp_East", new Vector3(half, centerY, 0f), new Vector3(thickness, SeafloorWallHeight, SeafloorSize + thickness), wall, parent);
-            CreateBlock("Boundary_Temp_West", new Vector3(-half, centerY, 0f), new Vector3(thickness, SeafloorWallHeight, SeafloorSize + thickness), wall, parent);
+            CreateBlock("Boundary_Temp_North", new Vector3(0f, centerY, half), new Vector3(seafloorSize + thickness, SeafloorWallHeight, thickness), wall, parent);
+            CreateBlock("Boundary_Temp_South", new Vector3(0f, centerY, -half), new Vector3(seafloorSize + thickness, SeafloorWallHeight, thickness), wall, parent);
+            CreateBlock("Boundary_Temp_East", new Vector3(half, centerY, 0f), new Vector3(thickness, SeafloorWallHeight, seafloorSize + thickness), wall, parent);
+            CreateBlock("Boundary_Temp_West", new Vector3(-half, centerY, 0f), new Vector3(thickness, SeafloorWallHeight, seafloorSize + thickness), wall, parent);
         }
 
-        private static void CreateWreck(Transform parent, Material wall, float floorY)
+        private static void CreateWreck(Transform parent, Material wall, float floorY, DiveSiteSettings settings)
         {
             GameObject root = new("Wreck");
             root.transform.SetParent(parent, false);
-            root.transform.position = new Vector3(0f, floorY, 0f) + WreckOffset;
+            root.transform.position = new Vector3(0f, floorY, 0f) + settings.WreckOffset;
             Vector3 center = root.transform.position;
 
             CreateBlock("Wreck Wall North", center + new Vector3(0f, WreckHeight / 2f, WreckWidth / 2f), new Vector3(WreckLength, WreckHeight, WreckWallThickness), wall, root.transform);
@@ -320,7 +329,7 @@ namespace SunkCost.Sites
             // Both ends of the hull are left open: that is the way in and the way out.
         }
 
-        private static void CreateSurfaceLight(int deepLayer)
+        private static void CreateSurfaceLight(int deepLayer, DiveSiteSettings settings)
         {
             GameObject go = new("Surface Light", typeof(Light));
             // Steep angle so light spills straight down the open shaft column and is
@@ -334,15 +343,15 @@ namespace SunkCost.Sites
             // scale suggesting lux, these are plain relative intensities. Verified against
             // actual game-camera renders (Scene View alone is not a reliable judge of
             // exposure): 20000 here blew every sunlit surface to solid white.
-            light.intensity = 2f;
+            light.intensity = settings.SurfaceLightIntensity;
             light.color = new Color(0.95f, 0.97f, 1f);
             light.shadows = LightShadows.Soft;
             light.cullingMask &= ~(1 << deepLayer);
         }
 
-        private static void CreateSeafloorLights(Transform parent, float floorY)
+        private static void CreateSeafloorLights(Transform parent, float floorY, DiveSiteSettings settings)
         {
-            CreateDimLight(parent, new Vector3(WreckOffset.x, floorY + 3f, WreckOffset.z), 1.8f, 14f);
+            CreateDimLight(parent, new Vector3(settings.WreckOffset.x, floorY + 3f, settings.WreckOffset.z), 1.8f, 14f);
             CreateDimLight(parent, new Vector3(-15f, floorY + 3f, 15f), 1f, 10f);
             CreateDimLight(parent, new Vector3(-15f, floorY + 3f, -15f), 1f, 10f);
         }
