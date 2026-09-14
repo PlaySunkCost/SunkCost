@@ -13,8 +13,8 @@ namespace SunkCost.Sites
     public static class DiveSiteValidator
     {
         private const float DepthTolerance = 0.01f;
-        private const float SizeTolerance = 1f;
-        private const float WreckDistanceTolerance = 5f;
+        private const float SizeTolerance = 0.01f;
+        private const float WreckDistanceTolerance = 0.01f;
         private const float LightParamTolerance = 0.01f;
         private const float MaxDeepAmbientChannel = 0.05f;
 
@@ -25,6 +25,9 @@ namespace SunkCost.Sites
             Scene scene = SceneManager.GetActiveScene();
             if (scene.path != DiveSiteBuilder.ScenePath) errors.Add("Open scene is not " + DiveSiteBuilder.ScenePath);
             if (!File.Exists(DiveSiteBuilder.ScenePath)) errors.Add("Dive site scene is not saved on disk.");
+
+            DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(DiveSiteBuilder.SettingsPath);
+            if (settings == null) errors.Add("DiveSiteSettings asset is missing at " + DiveSiteBuilder.SettingsPath);
 
             if (!HasRoot(scene, "Surface Platform")) errors.Add("Surface Platform is missing.");
             if (!HasRoot(scene, "Shaft")) errors.Add("Shaft is missing.");
@@ -55,14 +58,16 @@ namespace SunkCost.Sites
             Transform seafloorGround = FindByName(scene, "Seafloor Ground");
             if (seafloorGround == null)
                 errors.Add("Seafloor Ground is missing.");
-            else if (Mathf.Abs(seafloorGround.lossyScale.x - DiveSiteBuilder.SeafloorSize) > SizeTolerance
-                     || Mathf.Abs(seafloorGround.lossyScale.z - DiveSiteBuilder.SeafloorSize) > SizeTolerance)
-                errors.Add($"Seafloor should be {DiveSiteBuilder.SeafloorSize}x{DiveSiteBuilder.SeafloorSize}m; found {seafloorGround.lossyScale.x}x{seafloorGround.lossyScale.z}.");
+            else if (settings != null
+                     && (Mathf.Abs(seafloorGround.lossyScale.x - settings.SeafloorSizeMeters) > SizeTolerance
+                         || Mathf.Abs(seafloorGround.lossyScale.z - settings.SeafloorSizeMeters) > SizeTolerance))
+                errors.Add($"Seafloor should be {settings.SeafloorSizeMeters}x{settings.SeafloorSizeMeters}m; found {seafloorGround.lossyScale.x}x{seafloorGround.lossyScale.z}.");
 
             Transform wreck = FindByName(scene, "Wreck");
             if (wreck == null) errors.Add("Wreck is missing.");
-            else if (bottom != null && Mathf.Abs(Vector3.Distance(wreck.position, bottom.position) - DiveSiteBuilder.WreckOffset.magnitude) > WreckDistanceTolerance)
-                errors.Add($"Wreck should sit roughly {DiveSiteBuilder.WreckOffset.magnitude}m from the elevator anchor; found {Vector3.Distance(wreck.position, bottom.position)}m.");
+            else if (bottom != null && settings != null
+                     && Mathf.Abs(Vector3.Distance(wreck.position, bottom.position) - settings.WreckOffset.magnitude) > WreckDistanceTolerance)
+                errors.Add($"Wreck should sit roughly {settings.WreckOffset.magnitude}m from the elevator anchor; found {Vector3.Distance(wreck.position, bottom.position)}m.");
 
             CheckCount<DiveSiteDevPlayer>(scene, 1, errors);
             if (AnyComponentInScene<NetworkManager>(scene) || AnyComponentInScene<NetworkObject>(scene))
@@ -109,23 +114,18 @@ namespace SunkCost.Sites
                 Light light = headlamp.GetComponent<Light>();
                 if (light == null || light.type != LightType.Spot)
                     errors.Add("Headlamp must be a spot light.");
-                else
+                else if (settings != null)
                 {
-                    if (Mathf.Abs(light.intensity - DiveSiteBuilder.HeadlampIntensity) > LightParamTolerance)
-                        errors.Add("Headlamp intensity does not match the expected " + DiveSiteBuilder.HeadlampIntensity + " lumens.");
-                    if (Mathf.Abs(light.range - DiveSiteBuilder.HeadlampRange) > LightParamTolerance)
-                        errors.Add("Headlamp range does not match the expected " + DiveSiteBuilder.HeadlampRange + "m.");
-                    if (Mathf.Abs(light.spotAngle - DiveSiteBuilder.HeadlampSpotAngle) > LightParamTolerance)
-                        errors.Add("Headlamp spot angle does not match the expected " + DiveSiteBuilder.HeadlampSpotAngle + " degrees.");
+                    if (Mathf.Abs(light.intensity - settings.HeadlampIntensity) > LightParamTolerance)
+                        errors.Add("Headlamp intensity does not match the expected " + settings.HeadlampIntensity + " lumens.");
+                    if (Mathf.Abs(light.range - settings.HeadlampRange) > LightParamTolerance)
+                        errors.Add("Headlamp range does not match the expected " + settings.HeadlampRange + "m.");
+                    if (Mathf.Abs(light.spotAngle - settings.HeadlampSpotAngle) > LightParamTolerance)
+                        errors.Add("Headlamp spot angle does not match the expected " + settings.HeadlampSpotAngle + " degrees.");
                 }
             }
 
-            DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(DiveSiteBuilder.SettingsPath);
-            if (settings == null)
-            {
-                errors.Add("DiveSiteSettings asset is missing at " + DiveSiteBuilder.SettingsPath);
-            }
-            else
+            if (settings != null)
             {
                 float depth = settings.ShaftDepthMeters;
                 if (depth <= 0f) errors.Add("DiveSiteSettings.ShaftDepthMeters must be positive.");
