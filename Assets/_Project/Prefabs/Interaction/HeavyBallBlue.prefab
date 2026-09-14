@@ -262,10 +262,10 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3455403117760786101}
   _networkObjectCache: {fileID: 0}
   displayName: Blue ball
-  fitsInSlot: 0
-  icon: {fileID: 0}
+  fitsInSlot: 1
+  icon: {fileID: 2800000, guid: 25fdc53c15ab66a478fa16150d4560f1, type: 3}
   useAction: 1
-  grip: 1
+  grip: 0
   holdDistanceOffset: 0
   weightSettings: {fileID: 11400000, guid: d72a81ba5b8429f459440ec55d185040, type: 2}
   throwSpeed: 8

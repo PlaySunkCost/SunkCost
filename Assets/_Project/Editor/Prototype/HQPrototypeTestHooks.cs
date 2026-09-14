@@ -225,7 +225,7 @@ namespace SunkCost.Editor.Prototype
         {
             PlayerInventory inventory = LocalInventory();
             if (inventory == null) return "No local inventory.";
-            return $"carriedMassKg={inventory.CarriedMassKg:0.###}; meterFill={inventory.MeterFill:0.####}; speedFactor={inventory.SpeedFactor:0.####}; settings={inventory.Weight.name}";
+            return $"carriedMassKg={inventory.CarriedMassKg:0.###}; meterFill={inventory.MeterFill:0.####}; speedFactor={inventory.SpeedFactor:0.####}; overloaded={inventory.Overloaded}; capacityKg={inventory.Weight.CapacityKg}; settings={inventory.Weight.name}";
         }
 
         // Launch speed the writer applied on its last throw of this item.

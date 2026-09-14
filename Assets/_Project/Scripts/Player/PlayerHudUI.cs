@@ -58,26 +58,33 @@ namespace SunkCost.Player
             DrawWeightMeter();
         }
 
-        // A plain grey bar under the slots. Fill comes from the server's carried mass
-        // through the shared curve, which never reaches 1; the pixel clamp keeps a
-        // visible gap at the end even when rounding would close it.
+        // A plain grey bar under the slots: mass / capacity from the server's carried
+        // mass. Full is a real state: the bar turns red and the player cannot move.
         private void DrawWeightMeter()
         {
             float totalWidth = InventorySlots.Count * SlotSize + (InventorySlots.Count - 1) * SlotGap;
             float left = (Screen.width - totalWidth) * 0.5f;
             float top = Screen.height - SlotBottomMargin - SlotSize + SlotSize + MeterGap;
-            float fill = inventory.MeterFill;
-            float fillWidth = fill <= 0f ? 0f : Mathf.Clamp(Mathf.Round(fill * totalWidth), 1f, totalWidth - 1f);
+            bool overloaded = inventory.Overloaded;
+            float fill = overloaded ? 1f : inventory.MeterFill;
+            float fillWidth = fill <= 0f ? 0f : Mathf.Clamp(Mathf.Round(fill * totalWidth), 1f, totalWidth);
 
             Color previous = GUI.color;
             GUI.color = new Color(0.16f, 0.16f, 0.16f, 0.85f);
             GUI.DrawTexture(new Rect(left, top, totalWidth, MeterHeight), whiteTexture);
             if (fillWidth > 0f)
             {
-                GUI.color = new Color(0.62f, 0.62f, 0.62f, 0.95f);
+                GUI.color = overloaded ? new Color(0.85f, 0.15f, 0.12f, 0.98f) : new Color(0.62f, 0.62f, 0.62f, 0.95f);
                 GUI.DrawTexture(new Rect(left, top, fillWidth, MeterHeight), whiteTexture);
             }
             GUI.color = previous;
+            if (overloaded)
+            {
+                // Above the slot row (and its "In hand" line): the bottom margin is too
+                // small for a line under the bar.
+                float slotsTop = Screen.height - SlotBottomMargin - SlotSize;
+                GUI.Label(new Rect(left - 40f, slotsTop - 48f, totalWidth + 80f, 22f), "Too heavy to move — drop something", promptStyle);
+            }
         }
 
         private void DrawPrompt()

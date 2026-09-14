@@ -60,9 +60,11 @@ namespace SunkCost.Editor.Prototype
                     sceneNames.Add(item.name);
             var collection = AssetDatabase.LoadAssetAtPath<FishNet.Managing.Object.DefaultPrefabObjects>(HQPrototypeLootSetup.PrefabObjectsPath);
 
+            var checkedPrefabs = new HashSet<string>();
             foreach (HQPrototypeLootSetup.FixtureEntry entry in HQPrototypeLootSetup.Manifest)
             {
                 if (!sceneNames.Contains(entry.SceneName)) errors.Add("Scene is missing " + entry.SceneName + " (run Apply loot setup).");
+                if (!checkedPrefabs.Add(entry.PrefabPath)) continue;
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
                 if (prefab == null) { errors.Add("Prefab missing: " + entry.PrefabPath); continue; }
                 CarryableItem item = prefab.GetComponent<CarryableItem>();

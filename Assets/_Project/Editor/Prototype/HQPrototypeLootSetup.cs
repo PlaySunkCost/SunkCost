@@ -26,6 +26,7 @@ namespace SunkCost.Editor.Prototype
         public sealed class FixtureEntry
         {
             public string SceneName;
+            public string PrefabName;
             public string PrefabPath;
             public string DisplayName;
             public Vector3 ResetPosition;
@@ -43,9 +44,12 @@ namespace SunkCost.Editor.Prototype
             Ball("Basketball", new Vector3(0f, 1f, 0f)),
             Ball("Basketball (2)", new Vector3(1.5f, 1f, 1.5f)),
             Ball("Basketball (3)", new Vector3(-1.5f, 1f, 1.5f)),
-            Heavy("HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), new Vector3(3f, 1f, 0f)),
-            Heavy("HeavyBallPurple", "Purple ball", 0.55f, 12f, new Color(0.55f, 0.22f, 0.80f), new Vector3(-3f, 1f, 0f)),
-            Heavy("HeavyBallBlack", "Black ball", 0.70f, 20f, new Color(0.13f, 0.13f, 0.15f), new Vector3(0f, 1f, -3.5f))
+            // Blue is heavy but one-handed and slot-able (Dan, 14/09): two of them so
+            // the slots can be loaded past the 25 kg capacity for the overload test.
+            Heavy("HeavyBallBlue", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(3f, 1f, 0f)),
+            Heavy("HeavyBallBlue (2)", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(3f, 1f, 2.5f)),
+            Heavy("HeavyBallPurple", "HeavyBallPurple", "Purple ball", 0.55f, 12f, new Color(0.55f, 0.22f, 0.80f), CarryGrip.TwoHands, new Vector3(-3f, 1f, 0f)),
+            Heavy("HeavyBallBlack", "HeavyBallBlack", "Black ball", 0.70f, 20f, new Color(0.13f, 0.13f, 0.15f), CarryGrip.TwoHands, new Vector3(0f, 1f, -3.5f))
         };
 
         public static int SceneItemCount => Manifest.Length;
@@ -55,14 +59,14 @@ namespace SunkCost.Editor.Prototype
 
         private static FixtureEntry Ball(string sceneName, Vector3 reset) => new()
         {
-            SceneName = sceneName, PrefabPath = HQPrototypeBuilder.BallPrefabPath, DisplayName = "Basketball",
+            SceneName = sceneName, PrefabName = "Basketball", PrefabPath = HQPrototypeBuilder.BallPrefabPath, DisplayName = "Basketball",
             ResetPosition = reset, Diameter = 0.24f, MassKg = 0.62f, Colour = new Color(0.95f, 0.28f, 0.035f), Grip = CarryGrip.OneHand
         };
 
-        private static FixtureEntry Heavy(string name, string displayName, float diameter, float mass, Color colour, Vector3 reset) => new()
+        private static FixtureEntry Heavy(string sceneName, string prefabName, string displayName, float diameter, float mass, Color colour, CarryGrip grip, Vector3 reset) => new()
         {
-            SceneName = name, PrefabPath = "Assets/_Project/Prefabs/Interaction/" + name + ".prefab", DisplayName = displayName,
-            ResetPosition = reset, Diameter = diameter, MassKg = mass, Colour = colour, Grip = CarryGrip.TwoHands
+            SceneName = sceneName, PrefabName = prefabName, PrefabPath = "Assets/_Project/Prefabs/Interaction/" + prefabName + ".prefab", DisplayName = displayName,
+            ResetPosition = reset, Diameter = diameter, MassKg = mass, Colour = colour, Grip = grip
         };
 
         [MenuItem("Sunk Cost/Prototype/Apply loot setup")]
@@ -82,7 +86,8 @@ namespace SunkCost.Editor.Prototype
                 ApplyItemSettingsReferences(settings),
                 ApplyPlayerPrefab(settings),
                 ApplyPrefabRegistration(),
-                ApplySceneFixture()
+                ApplySceneFixture(),
+                ItemIconGenerator.GenerateAll()
             };
             AssetDatabase.SaveAssets();
             return string.Join("; ", report);
@@ -104,9 +109,10 @@ namespace SunkCost.Editor.Prototype
             var report = new List<string>();
             GameObject basketball = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath);
             if (basketball == null) throw new InvalidOperationException("Basketball prefab missing at " + HQPrototypeBuilder.BallPrefabPath);
+            var done = new HashSet<string>();
             foreach (FixtureEntry entry in Manifest)
             {
-                if (entry.IsBasketball) continue;
+                if (entry.IsBasketball || !done.Add(entry.PrefabPath)) continue;
                 bool created = false;
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath) == null)
                 {
@@ -114,12 +120,12 @@ namespace SunkCost.Editor.Prototype
                         throw new InvalidOperationException("Could not copy the basketball prefab to " + entry.PrefabPath);
                     created = true;
                 }
-                Material material = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/" + entry.SceneName + ".mat", entry.Colour);
+                Material material = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/" + entry.PrefabName + ".mat", entry.Colour);
                 var changes = new List<string>();
                 GameObject root = PrefabUtility.LoadPrefabContents(entry.PrefabPath);
                 try
                 {
-                    if (root.name != entry.SceneName) { root.name = entry.SceneName; changes.Add("name"); }
+                    if (root.name != entry.PrefabName) { root.name = entry.PrefabName; changes.Add("name"); }
                     // The mesh is a unit sphere; the SphereCollider radius 0.5 scales with it.
                     Vector3 scale = Vector3.one * entry.Diameter;
                     if (root.transform.localScale != scale) { root.transform.localScale = scale; changes.Add("scale"); }
@@ -131,19 +137,18 @@ namespace SunkCost.Editor.Prototype
                     using (var serialized = new SerializedObject(item))
                     {
                         SetString(serialized, "displayName", entry.DisplayName, changes);
-                        SetBool(serialized, "fitsInSlot", false, changes);
+                        // The slot flag and the grip go together: two-handed never fits.
+                        SetBool(serialized, "fitsInSlot", entry.Grip == CarryGrip.OneHand, changes);
                         SetEnum(serialized, "grip", (int)entry.Grip, changes);
                         SetEnum(serialized, "useAction", (int)ItemUseAction.Throw, changes);
-                        SetObject(serialized, "icon", null, changes);
                         SetObject(serialized, "weightSettings", settings, changes);
-                        SetVector(serialized, "resetPosition", entry.ResetPosition, changes);
                         serialized.ApplyModifiedPropertiesWithoutUndo();
                     }
                     if (created || changes.Count > 0)
                         PrefabUtility.SaveAsPrefabAsset(root, entry.PrefabPath);
                 }
                 finally { PrefabUtility.UnloadPrefabContents(root); }
-                report.Add(entry.SceneName + (created ? " created" : changes.Count == 0 ? " unchanged" : " updated: " + string.Join(",", changes)));
+                report.Add(entry.PrefabName + (created ? " created" : changes.Count == 0 ? " unchanged" : " updated: " + string.Join(",", changes)));
             }
             return string.Join("; ", report);
         }
@@ -210,9 +215,10 @@ namespace SunkCost.Editor.Prototype
             var collection = AssetDatabase.LoadAssetAtPath<DefaultPrefabObjects>(PrefabObjectsPath);
             if (collection == null) throw new InvalidOperationException("Prefab collection missing at " + PrefabObjectsPath);
             int added = 0;
+            var seen = new HashSet<string>();
             foreach (FixtureEntry entry in Manifest)
             {
-                if (entry.IsBasketball) continue;
+                if (entry.IsBasketball || !seen.Add(entry.PrefabPath)) continue;
                 NetworkObject nob = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath).GetComponent<NetworkObject>();
                 if (IsRegistered(collection, nob)) continue;
                 collection.AddObject(nob, checkForDuplicates: true, initializeAdded: true);

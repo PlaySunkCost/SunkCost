@@ -55,6 +55,18 @@ scale 12 kg, speed floor 0.35, throw reference 1 kg, throw floor 0.15.
   around the guest's last position (blue at (3.23, 0.20, −1.76), the basketball
   at (2.93, 0.12, −0.68)) and the guest's player gone.
 
+- Amendment (Dan, same day): hard capacity replaces the asymptote. Capacity
+  25 kg, linear slowdown to 0.35, full = red bar + no movement; blue ball is now
+  one-handed and slot-able, two in the room (7 items). Re-verified on the host:
+  blue (2) + blue → 12 kg in slots, fill 0.48, speed 0.688; + purple in hands →
+  24 kg, fill 0.96, speed 0.376, `CanMove=True`; drop purple, take black →
+  32 kg, fill 1, speed 0, `CanMove=False`, F3 row `32kg x0.00 OVERLOADED`,
+  Game view capture `Logs/loot-weight-overloaded.png` (red bar, "Too heavy to
+  move" line, two blue icons in slots 1–2); Q while overloaded → 12 kg,
+  `CanMove=True`. Pure checks updated to the linear table. Validator passes
+  with seven items. The setup's scene-id rebuild assigned the id of the new
+  blue instance (one more case of the OnValidate throttle).
+
 Not run: W7 timed walk with real input (the multiplier is one line in
 `HQPlayerController.Move`; `SpeedFactor` values verified), W9 (needs three
 machines), W12 late join with heavy items stowed, Steam rows. Feel gate: a

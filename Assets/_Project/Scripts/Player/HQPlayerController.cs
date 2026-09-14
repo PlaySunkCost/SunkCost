@@ -37,8 +37,11 @@ namespace SunkCost.Player
         // hand so nothing breaks; the validator reports it.
         public Transform HoldPointFor(CarryGrip grip) =>
             grip == CarryGrip.TwoHands && twoHandHoldPoint != null ? twoHandHoldPoint : holdPoint;
-        // Walk/sprint multiplier from the server-owned carried mass.
+        // Walk/sprint multiplier from the server-owned carried mass; 0 when the
+        // weight meter is full. Anything that moves the body (WASD, a future dash)
+        // checks CanMove; looking, grabbing, dropping and throwing never do.
         public float SpeedFactor => inventory != null ? inventory.SpeedFactor : 1f;
+        public bool CanMove => inventory == null || !inventory.Overloaded;
         public float InteractReach => interactReach;
         public Vector3 EyePosition => playerCamera != null ? playerCamera.transform.position : transform.position + Vector3.up * 1.6f;
         public PlayerInventory Inventory => inventory;
@@ -125,7 +128,7 @@ namespace SunkCost.Player
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;
             if (Keyboard.current.dKey.isPressed) input.x += 1f;
             if (Keyboard.current.aKey.isPressed) input.x -= 1f;
-            input = Vector2.ClampMagnitude(input, 1f);
+            input = CanMove ? Vector2.ClampMagnitude(input, 1f) : Vector2.zero;
             float speed = (Keyboard.current.leftShiftKey.isPressed ? sprintSpeed : walkSpeed) * SpeedFactor;
             Vector3 planar = (transform.forward * input.y + transform.right * input.x) * speed;
             verticalSpeed = controller.isGrounded ? -2f : verticalSpeed + Physics.gravity.y * Time.deltaTime;

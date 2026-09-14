@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SunkCost.Interaction
 {
@@ -10,21 +11,22 @@ namespace SunkCost.Interaction
     [CreateAssetMenu(menuName = "Sunk Cost/Prototype/Weight Settings", fileName = "WeightSettings")]
     public sealed class WeightSettings : ScriptableObject
     {
-        [Tooltip("Asymptote scale of the meter: fill = 1 - exp(-mass / scale).")]
-        [SerializeField, Min(0.01f)] private float meterScaleKg = 12f;
-        [Tooltip("Speed multiplier the curve approaches when the meter is nearly full.")]
+        [Tooltip("Mass that fills the meter. At or above it the bar turns red and the player cannot move.")]
+        [FormerlySerializedAs("meterScaleKg")]
+        [SerializeField, Min(0.01f)] private float capacityKg = 25f;
+        [Tooltip("Speed multiplier just under a full meter; speed falls in a straight line from 1 to this.")]
         [SerializeField, Range(0.01f, 1f)] private float minSpeedFactor = 0.35f;
         [Tooltip("Items at or below this mass throw at full speed.")]
         [SerializeField, Min(0.01f)] private float throwReferenceMassKg = 1f;
         [Tooltip("Floor for the throw multiplier of a very heavy item.")]
         [SerializeField, Range(0.01f, 1f)] private float minThrowFactor = 0.15f;
 
-        public float MeterScaleKg => meterScaleKg;
+        public float CapacityKg => capacityKg;
         public float MinSpeedFactor => minSpeedFactor;
         public float ThrowReferenceMassKg => throwReferenceMassKg;
         public float MinThrowFactor => minThrowFactor;
 
-        public const float DefaultMeterScaleKg = 12f;
+        public const float DefaultCapacityKg = 25f;
         public const float DefaultMinSpeedFactor = 0.35f;
         public const float DefaultThrowReferenceMassKg = 1f;
         public const float DefaultMinThrowFactor = 0.15f;
@@ -48,12 +50,13 @@ namespace SunkCost.Interaction
 
         public static WeightSettings Resolve(WeightSettings assigned) => assigned != null ? assigned : Default;
 
-        public float Fill(float totalMassKg) => WeightMath.Fill(totalMassKg, meterScaleKg);
-        public float SpeedFactor(float totalMassKg) => WeightMath.SpeedFactor(totalMassKg, meterScaleKg, minSpeedFactor);
+        public float Fill(float totalMassKg) => WeightMath.Fill(totalMassKg, capacityKg);
+        public bool IsOverloaded(float totalMassKg) => WeightMath.IsOverloaded(totalMassKg, capacityKg);
+        public float SpeedFactor(float totalMassKg) => WeightMath.SpeedFactor(totalMassKg, capacityKg, minSpeedFactor);
         public float ThrowFactor(float itemMassKg) => WeightMath.ThrowFactor(itemMassKg, throwReferenceMassKg, minThrowFactor);
 
         public bool IsValid =>
-            float.IsFinite(meterScaleKg) && meterScaleKg > 0f &&
+            float.IsFinite(capacityKg) && capacityKg > 0f &&
             float.IsFinite(minSpeedFactor) && minSpeedFactor > 0f && minSpeedFactor <= 1f &&
             float.IsFinite(throwReferenceMassKg) && throwReferenceMassKg > 0f &&
             float.IsFinite(minThrowFactor) && minThrowFactor > 0f && minThrowFactor <= 1f;

@@ -38,10 +38,12 @@ namespace SunkCost.Interaction
         public bool HoldingOverflow => heldItem != null && HeldSlot < 0;
         public string Refusal => Time.unscaledTime < refusalUntil ? refusal : string.Empty;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"slots={slots.Value} {carriedMassKg.Value:0.##}kg x{SpeedFactor:0.00}";
+        public string DebugStatus => $"slots={slots.Value} {carriedMassKg.Value:0.##}kg x{SpeedFactor:0.00}{(Overloaded ? " OVERLOADED" : "")}";
         public WeightSettings Weight => WeightSettings.Resolve(weightSettings);
         public float CarriedMassKg => carriedMassKg.Value;
         public float MeterFill => Weight.Fill(carriedMassKg.Value);
+        // Full meter: the bar is red and WASD does nothing until something is dropped.
+        public bool Overloaded => Weight.IsOverloaded(carriedMassKg.Value);
         public float SpeedFactor => Weight.SpeedFactor(carriedMassKg.Value);
 
         private void Awake()

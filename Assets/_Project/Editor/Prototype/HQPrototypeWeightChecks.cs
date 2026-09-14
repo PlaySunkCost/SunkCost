@@ -11,7 +11,7 @@ namespace SunkCost.Editor.Prototype
     // Throws on the first failure with the case name.
     public static class HQPrototypeWeightChecks
     {
-        private const float Scale = WeightSettings.DefaultMeterScaleKg;
+        private const float Capacity = WeightSettings.DefaultCapacityKg;
         private const float MinSpeed = WeightSettings.DefaultMinSpeedFactor;
         private const float Reference = WeightSettings.DefaultThrowReferenceMassKg;
         private const float MinThrow = WeightSettings.DefaultMinThrowFactor;
@@ -32,45 +32,51 @@ namespace SunkCost.Editor.Prototype
             Asset();
         }
 
+        // Capacity 25 kg, floor 0.35: fill = mass / 25, speed = 1 - 0.65 * fill, 0 when full.
         private static void Curves()
         {
-            Expect(WeightMath.Fill(0f, Scale) == 0f, "empty meter is 0");
-            Expect(WeightMath.SpeedFactor(0f, Scale, MinSpeed) == 1f, "empty speed factor is 1");
-            Near(WeightMath.Fill(0.62f, Scale), 0.0504f, "basketball fill");
-            Near(WeightMath.SpeedFactor(0.62f, Scale, MinSpeed), 0.9673f, "basketball speed");
-            Near(WeightMath.Fill(6f, Scale), 0.3935f, "blue fill");
-            Near(WeightMath.SpeedFactor(6f, Scale, MinSpeed), 0.7442f, "blue speed");
-            Near(WeightMath.Fill(12f, Scale), 0.6321f, "purple fill");
-            Near(WeightMath.SpeedFactor(12f, Scale, MinSpeed), 0.5891f, "purple speed");
-            Near(WeightMath.Fill(20f, Scale), 0.8111f, "black fill");
-            Near(WeightMath.SpeedFactor(20f, Scale, MinSpeed), 0.4728f, "black speed");
-            Near(WeightMath.Fill(21.86f, Scale), 0.8382f, "three basketballs + black fill");
-            Near(WeightMath.SpeedFactor(21.86f, Scale, MinSpeed), 0.4551f, "three basketballs + black speed");
+            Expect(WeightMath.Fill(0f, Capacity) == 0f, "empty meter is 0");
+            Expect(WeightMath.SpeedFactor(0f, Capacity, MinSpeed) == 1f, "empty speed factor is 1");
+            Expect(!WeightMath.IsOverloaded(0f, Capacity), "empty is not overloaded");
+            Near(WeightMath.Fill(0.62f, Capacity), 0.0248f, "basketball fill");
+            Near(WeightMath.SpeedFactor(0.62f, Capacity, MinSpeed), 0.9839f, "basketball speed");
+            Near(WeightMath.Fill(6f, Capacity), 0.24f, "blue fill");
+            Near(WeightMath.SpeedFactor(6f, Capacity, MinSpeed), 0.844f, "blue speed");
+            Near(WeightMath.Fill(6.62f, Capacity), 0.2648f, "basketball + blue fill");
+            Near(WeightMath.SpeedFactor(6.62f, Capacity, MinSpeed), 0.8279f, "basketball + blue speed");
+            Near(WeightMath.Fill(12f, Capacity), 0.48f, "purple fill");
+            Near(WeightMath.SpeedFactor(12f, Capacity, MinSpeed), 0.688f, "purple speed");
+            Near(WeightMath.Fill(20f, Capacity), 0.8f, "black fill");
+            Near(WeightMath.SpeedFactor(20f, Capacity, MinSpeed), 0.48f, "black speed");
+            Near(WeightMath.Fill(21.86f, Capacity), 0.8744f, "three basketballs + black fill");
+            Near(WeightMath.SpeedFactor(21.86f, Capacity, MinSpeed), 0.4316f, "three basketballs + black speed");
+            Near(WeightMath.SpeedFactor(24.99f, Capacity, MinSpeed), 0.3503f, "just under full is the floor");
+            Expect(WeightMath.IsOverloaded(25f, Capacity), "exactly capacity is overloaded");
+            Expect(WeightMath.SpeedFactor(25f, Capacity, MinSpeed) == 0f, "full meter stops movement");
+            Expect(WeightMath.Fill(25f, Capacity) == 1f && WeightMath.Fill(400f, Capacity) == 1f, "fill caps at 1 beyond capacity");
+            Expect(WeightMath.SpeedFactor(400f, Capacity, MinSpeed) == 0f, "way over capacity is still 0");
 
             float previousFill = -1f, previousSpeed = 2f;
-            for (float mass = 0f; mass <= 200f; mass += 0.5f)
+            for (float mass = 0f; mass <= 60f; mass += 0.25f)
             {
-                float fill = WeightMath.Fill(mass, Scale);
-                float speed = WeightMath.SpeedFactor(mass, Scale, MinSpeed);
+                float fill = WeightMath.Fill(mass, Capacity);
+                float speed = WeightMath.SpeedFactor(mass, Capacity, MinSpeed);
                 Expect(fill >= previousFill, "meter never decreases at " + mass);
                 Expect(speed <= previousSpeed, "speed never increases at " + mass);
-                Expect(fill < 1f, "meter never full at " + mass);
-                Expect(speed >= MinSpeed && speed <= 1f, "speed within bounds at " + mass);
+                Expect(fill >= 0f && fill <= 1f, "fill within bounds at " + mass);
+                Expect(speed == 0f || (speed >= MinSpeed && speed <= 1f), "speed is 0 or within bounds at " + mass);
                 previousFill = fill; previousSpeed = speed;
             }
-            Expect(WeightMath.Fill(1000f, Scale) < 1f, "meter never full at 1000 kg");
-            Expect(WeightMath.Fill(float.MaxValue, Scale) < 1f, "meter never full at float.MaxValue");
-            Expect(WeightMath.SpeedFactor(float.MaxValue, Scale, MinSpeed) >= MinSpeed, "speed floor at float.MaxValue");
         }
 
         private static void Sanitisation()
         {
-            Expect(WeightMath.Fill(-5f, Scale) == 0f, "negative mass counts as zero");
-            Expect(WeightMath.Fill(float.NaN, Scale) == 0f, "NaN mass counts as zero");
-            Expect(WeightMath.Fill(float.PositiveInfinity, Scale) < 1f && float.IsFinite(WeightMath.Fill(float.PositiveInfinity, Scale)), "infinite mass stays finite and below 1");
-            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, 0f, MinSpeed)), "zero scale falls back");
+            Expect(WeightMath.Fill(-5f, Capacity) == 0f, "negative mass counts as zero");
+            Expect(WeightMath.Fill(float.NaN, Capacity) == 0f, "NaN mass counts as zero");
+            Expect(WeightMath.Fill(float.PositiveInfinity, Capacity) == 0f && !WeightMath.IsOverloaded(float.PositiveInfinity, Capacity), "nonfinite mass sanitises to zero (invalid content never freezes a player)");
+            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, 0f, MinSpeed)), "zero capacity falls back");
             Expect(float.IsFinite(WeightMath.SpeedFactor(5f, float.NaN, float.NaN)), "NaN settings fall back");
-            Expect(WeightMath.SpeedFactor(5f, Scale, 0f) > 0f, "zero min speed becomes a small positive floor");
+            Expect(WeightMath.SpeedFactor(5f, Capacity, 0f) > 0f, "zero min speed becomes a small positive floor");
         }
 
         private static void ThrowFactors()

@@ -15,10 +15,13 @@ and mass cards; their live status has not been checked or changed here.
 
 1. Every carried item weighs something. Count all Held/Stowed items in full,
    but an equipped slot item counts **once**. Source: Rigidbody mass.
-2. Walk/sprint slow smoothly from 100% toward 35%, never zero. No weight cap,
-   red zone or sprint cutoff. Existing hand/slot limits still apply; look unchanged.
-3. Plain grey unnumbered bar below slots, approaching full without displaying a
-   completely full bar.
+2. **Amended 14 September 2026 (Dan):** the bar is a hard capacity (25 kg).
+   Walk/sprint slow in a straight line from 100 % at empty to 35 % just under
+   full; at a full bar you **cannot move at all** (WASD, sprint and any future
+   dash) until you drop something. Everything else — look, grab, drop, throw,
+   equip, menu — keeps working. No pickup is ever refused for weight.
+3. Plain grey unnumbered bar below the slots; it turns **red** when full and a
+   line above the slots says "Too heavy to move — drop something".
 4. One-handed slot items keep the right pose. Heavy two-handed items are
    hands-only, held low/centrally and obscure some lower view. This prototype
    implements grip/pose, not new animated hands.
@@ -41,9 +44,10 @@ resolves these choices instead of leaving them for the builder:
 - Grabbing hands-only cargo with a slot item equipped auto-stows that item in
   its existing slot **even if slots are free**. Current code must change for this.
   No automatic dropping.
-- Start meter scale at 12 kg, retaining 0.35 speed floor. Three basketballs plus
-  black weigh 21.86 kg: about 84% bar and 46% speed. Initial tuning, not proven
-  balance. A player cannot carry three hands-only heavies.
+- Capacity 25 kg, speed floor 0.35 just under full (superseded the 12 kg
+  asymptote). Blue is one-handed and slot-able (6 kg, two in the room) so the
+  slots alone can reach 12 kg and a black ball in the hands overloads you:
+  2 blue + purple = 24 kg (walk 1.5 m/s), 2 blue + black = 32 kg (stuck).
 - Unique Held/Stowed objects determine server mass, recalculated after complete
   transitions, including holder change, despawn, reset and disconnect.
 - Radius-aware drop/recovery prevents large spheres embedding in the floor or

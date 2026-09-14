@@ -58,9 +58,10 @@ be read as checklists by other assistants.
    the target has no slot (four full slots, or a two-handed heavy ball), grabbing
    it automatically puts away the equipped slot item and holds the new item until
    dropped or thrown. Everything you carry weighs something: the grey bar under
-   the slots fills (never completely) and you walk and sprint slower on a smooth
-   curve; heavy balls need both hands, sit in the middle of the view and only lob
-   a short way. Escape opens the session menu (Resume recaptures the cursor); F3
+   the slots fills and you walk and sprint slower; when it is full (25 kg) it
+   turns red and you cannot move until you drop something. Purple and black
+   balls need both hands, sit in the middle of the view and only lob a short way;
+   blue balls are heavy but fit a slot. Escape opens the session menu (Resume recaptures the cursor); F3
    shows the network debug overlay with kg and grip per item.
    *Sunk Cost > Prototype > Apply loot setup* rebuilds the six-item fixture and
    the shared `WeightSettings` asset; tune weight there, not in code.

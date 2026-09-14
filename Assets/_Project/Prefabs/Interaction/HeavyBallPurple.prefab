@@ -263,7 +263,7 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 0}
   displayName: Purple ball
   fitsInSlot: 0
-  icon: {fileID: 0}
+  icon: {fileID: 2800000, guid: f67a09394f1ebaa49b16a4999c59f785, type: 3}
   useAction: 1
   grip: 1
   holdDistanceOffset: 0

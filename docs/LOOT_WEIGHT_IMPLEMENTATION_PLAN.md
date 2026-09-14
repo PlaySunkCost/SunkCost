@@ -121,21 +121,29 @@ No Resources lookup, per-player settings creation or mutable global singleton.
 
 | Field | Initial value | Valid domain |
 |---|---:|---|
-| meterScaleKg | 12 kg | finite, >0 |
+| capacityKg | 25 kg | finite, >0 |
 | minSpeedFactor | 0.35 | finite, >0 and <=1 |
 | throwReferenceMassKg | 1 kg | finite, >0 |
 | minThrowFactor | 0.15 | finite, >0 and <=1 |
 
 `WeightMath` is pure, with scalar inputs:
 
+**Amended 14 September 2026 (Dan, after the first build):** the meter is a hard
+capacity, not an asymptote. Full = red bar = no movement.
+
 ```text
-remaining = exp(-totalMass / meterScaleKg)
-MeterFill = min(1 - remaining, 0.999999)
-SpeedFactor = minSpeedFactor + (1 - minSpeedFactor) * remaining
+MeterFill   = min(1, totalMass / capacityKg)
+Overloaded  = totalMass >= capacityKg
+SpeedFactor = Overloaded ? 0 : 1 - (1 - minSpeedFactor) * MeterFill
 ThrowFactor(itemMass) = clamp(sqrt(reference / max(itemMass, reference)),
                               minThrowFactor, 1)
 launchSpeed = existing throwSpeed * ThrowFactor(itemMass)
 ```
+
+While overloaded `HQPlayerController.CanMove` is false: WASD input is zeroed
+(gravity still applies), and any future body movement (dash, jump) must check
+the same flag. Looking, grabbing, dropping, throwing, equipping and the menu
+are unaffected.
 
 Use double intermediate aggregation/exponential/division and finite float
 outputs. One centralized immutable default set handles missing/invalid settings
@@ -148,17 +156,17 @@ during a session.
 | Load | kg | Fill % | Speed factor | Walk / sprint m/s |
 |---|---:|---:|---:|---:|
 | Empty | 0 | 0 | 1 | 4 / 6 |
-| Basketball | 0.62 | 5.04 | 0.9673 | 3.87 / 5.80 |
-| Three basketballs | 1.86 | 14.36 | 0.9067 | 3.63 / 5.44 |
-| Blue | 6 | 39.35 | 0.7442 | 2.98 / 4.47 |
-| Basketball + blue | 6.62 | 42.40 | 0.7244 | 2.90 / 4.35 |
-| Purple | 12 | 63.21 | 0.5891 | 2.36 / 3.53 |
-| Black | 20 | 81.11 | 0.4728 | 1.89 / 2.84 |
-| Three basketballs + black | 21.86 | 83.82 | 0.4551 | 1.82 / 2.73 |
+| Basketball | 0.62 | 2.5 | 0.9839 | 3.94 / 5.90 |
+| Three basketballs | 1.86 | 7.4 | 0.9516 | 3.81 / 5.71 |
+| Blue | 6 | 24 | 0.844 | 3.38 / 5.06 |
+| Basketball + blue | 6.62 | 26.5 | 0.8279 | 3.31 / 4.97 |
+| Two blues (slots) | 12 | 48 | 0.688 | 2.75 / 4.13 |
+| Purple | 12 | 48 | 0.688 | 2.75 / 4.13 |
+| Black | 20 | 80 | 0.48 | 1.92 / 2.88 |
+| Two blues + purple | 24 | 96 | 0.376 | 1.50 / 2.26 |
+| Two blues + black | 32 | 100 (red) | 0 | stuck |
 
-Calculated defaults, not proof of fun. The largest load stays mobile but is
-noticeably costly. 35% is a limit, not a promise that the black ball reaches it.
-No player can carry all three heavies. Only diagnostics may show numbers.
+Calculated defaults, not proof of fun. Only diagnostics show numbers.
 
 ## 5. Server mass and lifecycle
 
@@ -280,9 +288,9 @@ unless a safety correction requires a documented adjustment. Do not tune gravity
 
 Owner-only, same menu/input visibility gate. Track y=slotTop+SlotSize+6,
 height=8, width=slot-row width. Existing bottom margin 24 leaves 10 px underneath.
-Dark-grey track, lighter-grey fill; no text, gradients, red state or flashing.
-For positive mass draw at least one pixel and at most trackWidth-1; empty=zero.
-This makes the never-full requirement survive numeric/pixel rounding.
+Dark-grey track, lighter-grey fill; no gradients or flashing. At capacity the
+fill is full and **red**, and one line above the slot row reads "Too heavy to
+move — drop something" (amended 14 September 2026).
 
 No animation/smoothing initially. Append `(two hands)` to both ground-grab and
 moving-catch prompts. Preserve refusal priority, overflow label and slot visuals.
@@ -302,7 +310,8 @@ Keep shared physics material initially; launch factor is the throw adjustment.
 | Basketball / Basketball | 0.24 | 0.62 | Existing orange | OneHand / yes | (0,1,0) |
 | Basketball (2) / Basketball | 0.24 | 0.62 | Existing orange | OneHand / yes | (1.5,1,1.5) |
 | Basketball (3) / Basketball | 0.24 | 0.62 | Existing orange | OneHand / yes | (-1.5,1,1.5) |
-| HeavyBallBlue | 0.40 | 6 | Blue | TwoHands / no | (3,1,0) |
+| HeavyBallBlue | 0.40 | 6 | Blue | OneHand / yes (amended: slot-able, so slots can be loaded) | (3,1,0) |
+| HeavyBallBlue (2) / HeavyBallBlue | 0.40 | 6 | Blue | OneHand / yes | (3,1,2.5) |
 | HeavyBallPurple | 0.55 | 12 | Purple | TwoHands / no | (-3,1,0) |
 | HeavyBallBlack | 0.70 | 20 | Readable charcoal | TwoHands / no | (0,1,-3.5) |
 

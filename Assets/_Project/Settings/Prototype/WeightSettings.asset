@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37a50a319cb580244b085d2ad243c54b, type: 3}
   m_Name: WeightSettings
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Interaction.WeightSettings
-  meterScaleKg: 12
+  capacityKg: 25
   minSpeedFactor: 0.35
   throwReferenceMassKg: 1
   minThrowFactor: 0.15

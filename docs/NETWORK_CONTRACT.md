@@ -95,7 +95,7 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 | Free object transform | Server | Standard replication |
 | Inventory contents and slot assignment | **Server only** | Four slots plus hands; clients request grabs, equips, drops and use |
 | Stowed item | Server | Hidden, kinematic; carrier identity retained; equipping grants ownership |
-| Carried mass | **Server only** | Sum of the Rigidbody mass of the items a player holds or stows, from the items' server state; clients derive the meter and speed factor from the shared `WeightSettings` asset |
+| Carried mass | **Server only** | Sum of the Rigidbody mass of the items a player holds or stows, from the items' server state; clients derive the meter, the speed factor and the "cannot move" state from the shared `WeightSettings` asset |
 | Oxygen, health, damage | **Server only** | Clients display, never compute |
 | Loot value, quota, funds | **Server only** | Never trust a client number |
 | Monster AI and targeting | **Server only** | Clients receive positions and animation state |
