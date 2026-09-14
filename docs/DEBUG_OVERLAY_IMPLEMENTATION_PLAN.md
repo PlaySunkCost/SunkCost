@@ -169,14 +169,13 @@ namespace SunkCost.Net
    whose `NetworkObject` is null or not `IsSpawned`.
 4. For each `NetworkObject`, compute `IsWriter` with these rules, in order. Stop at
    the first rule that applies:
-   - **Override:** if any component implements `INetworkDebugInfo` **and** also
-     exposes the writer decision, prefer it. (Keep the interface to one string
-     property for v1; the override is the `Rigidbody` rule below, which already
-     reflects the object's own decision. Do not add a second interface member.)
+   - **Override (14 September inventory update):** prefer the nullable
+     `INetworkDebugInfo.WriterOverride` when set. `CarryableItem` declares its
+     writer explicitly: a Held item is kinematic but its holder writes its pose.
+     `PlayerInventory` supplies slot detail and returns null for the writer override.
    - **Rigidbody:** if the object has a `Rigidbody`, `IsWriter = !body.isKinematic`.
-     This mirrors how `Basketball.RefreshRole` implements the contract: the writer
-     is the only peer with a non-kinematic body. It therefore cannot disagree with
-     the ball's real behaviour.
+     This fallback applies only when no explicit writer is supplied; it must not
+     override a kinematic Held/Stowed carryable's state-aware decision.
    - **Owned by a client (the players):** `IsWriter = nob.IsOwner`. The player
      prefab's `NetworkTransform` is client-authoritative, so the owner moves it.
    - **No client owner:** `IsWriter = nm.IsServerStarted`. Unowned objects are
@@ -187,10 +186,8 @@ namespace SunkCost.Net
 6. Sort rows: objects that are owned by anyone first (players), then by
    `ObjectId` ascending, so the layout is stable between refreshes.
 
-Known limitation to state in a code comment: a future object that is kinematic *by
-design* (moving platform, elevator car) will show `REPLICATED` on the server under
-the `Rigidbody` rule. When that object exists, extend `INetworkDebugInfo` with an
-explicit writer flag; do not special-case it in the overlay.
+Future kinematic writers (moving platforms, elevators) should implement the same
+nullable writer override; do not special-case their types in the overlay.
 
 #### 4.2.2 `ToText()` format
 
@@ -451,9 +448,9 @@ same object ids with opposite `SIM-HERE`/`REPLICATED` columns for the two player
 
 ## 10. Risks and non-goals, stated once
 
-- The `Rigidbody` writer rule is correct for every current object; it is wrong for
-  a future deliberately-kinematic server object. Handle that then, via the
-  interface, not now.
+- The `Rigidbody` fallback cannot identify a kinematic held item's writer.
+  CarryableItem supplies `WriterOverride` through the interface; future custom
+  simulation modes should supply their actual writer in the same way.
 - `Debug.isDebugBuild` gating means the overlay is absent from a release build by
   construction; nobody has to remember to strip it.
 - Nothing here changes replication, ownership, or timing. If verification shows a

@@ -51,8 +51,12 @@ be read as checklists by other assistants.
 3. Choose **Local / LAN** and **Host**. Up to three other players can choose
    **Join** with `127.0.0.1` on the same computer, or the host's LAN IP on another
    computer. Four players total, including the host.
-4. Move with WASD, sprint with Shift, look with the mouse, press E to pick up or
-   drop the basketball, and left-click while holding it to throw. Escape opens the
+4. Move with WASD, sprint with Shift, look with the mouse. **E** grabs; hold E to
+   catch an approaching ball with forgiving aim within 2 m. **Q** drops at your
+   feet, **left click** uses/throws, and **1–4** equip or put away inventory slots.
+   A held slot item stays assigned to its slot; new grabs fill free slots. With
+   four full slots, grabbing one extra item automatically puts away the equipped
+   slot item and holds the new item until dropped or thrown. Escape opens the
    session menu (Resume recaptures the cursor); F3 shows the network debug overlay.
 
 **Builds.** Two menu items write to ignored folders and put a `sunkcost-build.json`

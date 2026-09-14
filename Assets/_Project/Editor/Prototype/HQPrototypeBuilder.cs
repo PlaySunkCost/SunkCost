@@ -23,8 +23,10 @@ namespace SunkCost.Editor.Prototype
     public static class HQPrototypeBuilder
     {
         public const string ScenePath = "Assets/_Project/Scenes/Prototype/HQPrototype.unity";
-        private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/PrototypePlayer.prefab";
-        private const string BallPrefabPath = "Assets/_Project/Prefabs/Interaction/Basketball.prefab";
+        public const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/PrototypePlayer.prefab";
+        public const string BallPrefabPath = "Assets/_Project/Prefabs/Interaction/Basketball.prefab";
+        // Lower-right of the camera, 60 cm out: the right hand (plan section 10).
+        public static readonly Vector3 HoldPointLocalPosition = new(0.30f, -0.22f, 0.60f);
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         private const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
@@ -86,6 +88,8 @@ namespace SunkCost.Editor.Prototype
                 character.slopeLimit = 45f;
                 character.skinWidth = 0.03f;
                 HQPlayerController controller = root.AddComponent<HQPlayerController>();
+                root.AddComponent<PlayerInventory>();
+                root.AddComponent<PlayerHudUI>();
 
                 GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 body.name = "Body";
@@ -113,9 +117,11 @@ namespace SunkCost.Editor.Prototype
                 camera.enabled = false;
                 cameraObject.GetComponent<AudioListener>().enabled = false;
 
+                // Under the camera so it pitches with the view; a held item is
+                // snapped here every frame by CarryableItem.
                 GameObject hold = new("HoldPoint");
-                hold.transform.SetParent(pivot.transform, false);
-                hold.transform.localPosition = new Vector3(0.35f, -0.25f, 1.1f);
+                hold.transform.SetParent(cameraObject.transform, false);
+                hold.transform.localPosition = HoldPointLocalPosition;
 
                 SerializedObject serialized = new(controller);
                 serialized.FindProperty("playerCamera").objectReferenceValue = camera;
@@ -145,7 +151,12 @@ namespace SunkCost.Editor.Prototype
                 root.AddComponent<NetworkObject>();
                 NetworkTransform networkTransform = root.AddComponent<NetworkTransform>();
                 networkTransform.SetSynchronizeScale(false);
-                root.AddComponent<Basketball>();
+                CarryableItem item = root.AddComponent<CarryableItem>();
+                SerializedObject serialized = new(item);
+                serialized.FindProperty("displayName").stringValue = "Basketball";
+                serialized.FindProperty("fitsInSlot").boolValue = true;
+                serialized.FindProperty("useAction").enumValueIndex = (int)ItemUseAction.Throw;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
                 return PrefabUtility.SaveAsPrefabAsset(root, BallPrefabPath);
             }
             finally { Object.DestroyImmediate(root); }

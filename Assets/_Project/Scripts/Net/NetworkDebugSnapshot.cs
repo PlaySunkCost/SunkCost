@@ -106,30 +106,36 @@ namespace SunkCost.Net
                 Detail = string.Empty
             };
 
+            INetworkDebugInfo info = nob.GetComponent<INetworkDebugInfo>();
+            bool? writerOverride = null;
+            if (info != null)
+            {
+                try
+                {
+                    row.Detail = info.DebugStatus ?? string.Empty;
+                    writerOverride = info.WriterOverride;
+                }
+                catch (Exception) { row.Detail = "<error>"; }
+            }
+
             // Who simulates this object here? Rules in priority order.
+            // 0. The object says so (INetworkDebugInfo.WriterOverride): objects that
+            //    are kinematic BY DESIGN, such as a CarryableItem held in a hand.
             // 1. Rigidbody: the writer is the only peer whose body is not kinematic.
-            //    Basketball.RefreshRole implements the contract exactly this way, so
-            //    this column cannot disagree with the ball's real behaviour.
-            //    Limitation: an object that is kinematic BY DESIGN (a moving platform
-            //    or elevator car) would read REPLICATED on the server. Extend
-            //    INetworkDebugInfo with an explicit writer flag when such an object
-            //    exists; do not special-case it here.
+            //    CarryableItem.ApplyRole implements the contract exactly this way for
+            //    Free and Released, so this column cannot disagree with the item's
+            //    real behaviour there.
             // 2. Client-owned (the players, client-authoritative NetworkTransform):
             //    the owner moves it.
             // 3. Unowned: the server simulates it.
-            if (nob.TryGetComponent(out Rigidbody body))
+            if (writerOverride.HasValue)
+                row.IsWriter = writerOverride.Value;
+            else if (nob.TryGetComponent(out Rigidbody body))
                 row.IsWriter = !body.isKinematic;
             else if (nob.OwnerId >= 0)
                 row.IsWriter = nob.IsOwner;
             else
                 row.IsWriter = serverStarted;
-
-            INetworkDebugInfo info = nob.GetComponent<INetworkDebugInfo>();
-            if (info != null)
-            {
-                try { row.Detail = info.DebugStatus ?? string.Empty; }
-                catch (Exception) { row.Detail = "<error>"; }
-            }
             return row;
         }
 

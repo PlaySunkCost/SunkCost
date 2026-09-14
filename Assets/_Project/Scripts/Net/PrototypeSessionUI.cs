@@ -42,10 +42,12 @@ namespace SunkCost.Net
             get
             {
                 int playerCount = FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).Length;
-                Basketball ball = FindFirstObjectByType<Basketball>();
+                int itemsSpawned = 0;
+                foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
+                    if (item.IsSpawned) itemsSpawned++;
                 return $"server={networkManager?.ServerManager != null && networkManager.ServerManager.Started}, " +
                        $"client={networkManager?.ClientManager != null && networkManager.ClientManager.Started}, " +
-                       $"players={playerCount}, ballSpawned={ball != null && ball.IsSpawned}";
+                       $"players={playerCount}, itemsSpawned={itemsSpawned}";
             }
         }
 
@@ -174,7 +176,7 @@ namespace SunkCost.Net
             if (GUILayout.Button("Host")) { if (steamMode) StartSteamHost(); else StartLocalHost(); }
             if (GUILayout.Button("Join")) { if (steamMode) JoinSteamLobby(lobbyIdField); else JoinLocal(address); }
             GUILayout.EndHorizontal();
-            GUILayout.Label("Controls: WASD, Shift, mouse, E pick/drop, left click throw, Esc menu, F3 net debug");
+            GUILayout.Label("WASD move · E grab/hold to catch · Q drop · click use/throw · 1–4 slots · Esc menu · F3 debug");
         }
 
         private void DrawSession()

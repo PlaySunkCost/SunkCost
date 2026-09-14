@@ -1,4 +1,3 @@
-using FishNet.Connection;
 using FishNet.Object;
 using SunkCost.Interaction;
 using SunkCost.Net;
@@ -7,6 +6,8 @@ using UnityEngine.InputSystem;
 
 namespace SunkCost.Player
 {
+    // Look, move and input only. Every item request goes through PlayerInventory,
+    // which owns the RPCs and the server decisions.
     [RequireComponent(typeof(CharacterController))]
     public sealed class HQPlayerController : NetworkBehaviour
     {
@@ -16,18 +17,29 @@ namespace SunkCost.Player
         [SerializeField] private float walkSpeed = 4f;
         [SerializeField] private float sprintSpeed = 6f;
         [SerializeField] private float lookSensitivity = 0.1f;
-        [SerializeField] private float grabDistance = 2.5f;
+        // Eyes to the item's surface; aim allowance does not extend this reach.
+        [SerializeField] private float interactReach = 2f;
+        [SerializeField, Min(0f)] private float grabAimRadius = 0.35f;
+        [SerializeField, Min(0f)] private float grabBufferSeconds = 0.3f;
 
         private CharacterController controller;
+        private PlayerInventory inventory;
         private float pitch;
         private float verticalSpeed;
-        private Basketball heldBall;
+        private bool grabConsumed;
+        private float grabBufferedUntil = -1f;
 
         public Transform HoldPoint => holdPoint;
+        public float InteractReach => interactReach;
+        public Vector3 EyePosition => playerCamera != null ? playerCamera.transform.position : transform.position + Vector3.up * 1.6f;
+        public PlayerInventory Inventory => inventory;
+        // The carryable under the crosshair within reach this frame, owner only.
+        public CarryableItem CurrentTarget { get; private set; }
 
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
+            inventory = GetComponent<PlayerInventory>();
             SetLocalPresentation(false);
         }
 
@@ -50,27 +62,43 @@ namespace SunkCost.Player
                 SessionInputGate.OpenMenu();
 
             // Menu open, Steam overlay up, or window unfocused: no look, move or
-            // grab/throw. Gravity and replication keep running on their own.
+            // item input. Gravity and replication keep running on their own.
             if (!SessionInputGate.CanPlay || Cursor.lockState != CursorLockMode.Locked)
+            {
+                CurrentTarget = null;
+                grabBufferedUntil = -1f;
+                grabConsumed = true;
                 return;
+            }
 
             Look();
             Move();
+            UpdateTarget();
 
-            if (SessionInputGate.ClickSuppressedThisFrame)
+            if (SessionInputGate.ClickSuppressedThisFrame || inventory == null)
                 return;
 
-            if (Keyboard.current.eKey.wasPressedThisFrame)
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard.eKey.wasPressedThisFrame)
             {
-                if (heldBall != null)
-                    ServerRequestRelease(heldBall.NetworkObject, Vector3.zero, false);
-                else
-                    TryRequestGrab();
+                grabConsumed = false;
+                grabBufferedUntil = Time.unscaledTime + grabBufferSeconds;
             }
-            else if (heldBall != null && Mouse.current.leftButton.wasPressedThisFrame)
+            // Hold E while a ball approaches, or press slightly early. Consume one
+            // request per gesture so holding E cannot vacuum every nearby item.
+            if (!grabConsumed && (keyboard.eKey.isPressed || Time.unscaledTime <= grabBufferedUntil) && CurrentTarget != null)
             {
-                ServerRequestRelease(heldBall.NetworkObject, playerCamera.transform.forward, true);
+                grabConsumed = true;
+                inventory.RequestGrab(CurrentTarget);
             }
+            else if (keyboard.qKey.wasPressedThisFrame)
+                inventory.RequestDrop();
+            else if (Mouse.current.leftButton.wasPressedThisFrame)
+                inventory.RequestUse(playerCamera.transform.forward);
+            else if (keyboard.digit1Key.wasPressedThisFrame) inventory.RequestEquip(0);
+            else if (keyboard.digit2Key.wasPressedThisFrame) inventory.RequestEquip(1);
+            else if (keyboard.digit3Key.wasPressedThisFrame) inventory.RequestEquip(2);
+            else if (keyboard.digit4Key.wasPressedThisFrame) inventory.RequestEquip(3);
         }
 
         private void Look()
@@ -95,35 +123,17 @@ namespace SunkCost.Player
             controller.Move((planar + Vector3.up * verticalSpeed) * Time.deltaTime);
         }
 
-        private void TryRequestGrab()
-        {
-            if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out RaycastHit hit, grabDistance, ~0, QueryTriggerInteraction.Ignore))
-                return;
-            Basketball ball = hit.collider.GetComponentInParent<Basketball>();
-            if (ball != null)
-                ServerRequestGrab(ball.NetworkObject);
-        }
+        // For editor verification hooks, which cannot lock the cursor: sample the
+        // crosshair target without going through the input gate.
+        public void RefreshTarget() => UpdateTarget();
 
-        [ServerRpc]
-        private void ServerRequestGrab(NetworkObject target, NetworkConnection sender = null)
+        // Held and stowed items have their colliders off, so only loose items can be
+        // selected. Targeting checks eyes-to-surface distance and line of sight.
+        private void UpdateTarget()
         {
-            Basketball ball = target == null ? null : target.GetComponent<Basketball>();
-            if (ball == null || sender != Owner || Vector3.Distance(transform.position, ball.transform.position) > grabDistance + 0.75f)
-                return;
-            ball.ServerTryGrab(sender, this);
-        }
-
-        [ServerRpc]
-        private void ServerRequestRelease(NetworkObject target, Vector3 direction, bool throwBall, NetworkConnection sender = null)
-        {
-            Basketball ball = target == null ? null : target.GetComponent<Basketball>();
-            if (ball != null && sender == Owner)
-                ball.ServerRelease(sender, direction, throwBall);
-        }
-
-        internal void SetHeldBall(Basketball ball)
-        {
-            heldBall = ball;
+            CurrentTarget = null;
+            Transform eye = playerCamera.transform;
+            CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
         }
 
         private void SetLocalPresentation(bool active)

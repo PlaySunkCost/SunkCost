@@ -30,7 +30,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4115485159118632464}
-  - {fileID: 5743297015911497610}
   m_Father: {fileID: 5826713965391408584}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &767442235485618089
@@ -58,11 +57,11 @@ Transform:
   m_GameObject: {fileID: 767442235485618089}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.35, y: -0.25, z: 1.1}
+  m_LocalPosition: {x: 0.3, y: -0.22, z: 0.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6196993300733097364}
+  m_Father: {fileID: 4115485159118632464}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1389784477729225402
 GameObject:
@@ -185,7 +184,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5743297015911497610}
   m_Father: {fileID: 6196993300733097364}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &1450484080442625533
@@ -260,6 +260,8 @@ GameObject:
   - component: {fileID: 7133211106036152335}
   - component: {fileID: 5405971472340652149}
   - component: {fileID: 7683569163781734314}
+  - component: {fileID: 2601291312213266648}
+  - component: {fileID: 1877639824901941508}
   m_Layer: 0
   m_Name: PrototypePlayer
   m_TagString: Untagged
@@ -434,7 +436,34 @@ MonoBehaviour:
   walkSpeed: 4
   sprintSpeed: 6
   lookSensitivity: 0.1
-  grabDistance: 2.5
+  interactReach: 2
+--- !u!114 &2601291312213266648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a38008cdab9145740b4f5bcf6ec0c115, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Interaction.PlayerInventory
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 364150461512337757}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &1877639824901941508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bcc7e8e27256c545ba85d1d975473b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Player.PlayerHudUI
 --- !u!1 &7617749130382016386
 GameObject:
   m_ObjectHideFlags: 0

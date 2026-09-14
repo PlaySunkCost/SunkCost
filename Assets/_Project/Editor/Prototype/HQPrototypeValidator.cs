@@ -26,20 +26,37 @@ namespace SunkCost.Editor.Prototype
             CheckCount<NetworkManager>(scene, 1, errors);
             CheckCount<PlayerSpawner>(scene, 1, errors);
             CheckCount<PrototypeSessionUI>(scene, 1, errors);
-            CheckCount<Basketball>(scene, 1, errors);
+            CheckCount<CarryableItem>(scene, HQPrototypeInventorySetup.SceneItemCount, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
             if (!HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root is missing.");
-            if (AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Player/PrototypePlayer.prefab")?.GetComponent<HQPlayerController>() == null)
-                errors.Add("Player prefab/controller is missing.");
-            if (AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Interaction/Basketball.prefab")?.GetComponent<NetworkObject>() == null)
+            CheckPlayerPrefab(errors);
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath)?.GetComponent<NetworkObject>() == null)
                 errors.Add("Basketball prefab/NetworkObject is missing.");
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath)?.GetComponent<CarryableItem>() == null)
+                errors.Add("Basketball prefab/CarryableItem is missing.");
             if (AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Net/SteamTransport.prefab")?.GetComponent<Transport>() == null)
                 errors.Add("Configured Steam transport prefab is missing.");
             if (EditorBuildSettings.scenes.Length != 1 || !EditorBuildSettings.scenes[0].enabled || EditorBuildSettings.scenes[0].path != HQPrototypeBuilder.ScenePath)
                 errors.Add("Build settings must contain only the enabled HQ prototype scene.");
             CheckLobbyPrerequisites(scene, errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log("HQ validation passed: saved scene, room, one network root, player prefab, one basketball, four spawns and four-player transport caps are ready.");
+            Debug.Log($"HQ validation passed: saved scene, room, one network root, player prefab with inventory, {HQPrototypeInventorySetup.SceneItemCount} carryable items, four spawns and four-player transport caps are ready.");
+        }
+
+        // docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md section 10: the hold point pitches
+        // with the camera and the player carries the inventory and HUD components.
+        private static void CheckPlayerPrefab(List<string> errors)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
+            HQPlayerController controller = prefab != null ? prefab.GetComponent<HQPlayerController>() : null;
+            if (controller == null) { errors.Add("Player prefab/controller is missing."); return; }
+            if (prefab.GetComponent<PlayerInventory>() == null) errors.Add("Player prefab has no PlayerInventory (run Sunk Cost/Prototype/Apply inventory setup).");
+            if (prefab.GetComponent<PlayerHudUI>() == null) errors.Add("Player prefab has no PlayerHudUI (run Sunk Cost/Prototype/Apply inventory setup).");
+            using var serialized = new SerializedObject(controller);
+            var camera = serialized.FindProperty("playerCamera").objectReferenceValue as Camera;
+            var hold = serialized.FindProperty("holdPoint").objectReferenceValue as Transform;
+            if (camera == null || hold == null) errors.Add("Player prefab is missing its camera or hold point reference.");
+            else if (hold.parent != camera.transform) errors.Add("Player prefab HoldPoint is not a child of PlayerCamera (run Sunk Cost/Prototype/Apply inventory setup).");
         }
 
         // docs/STEAM_LOBBY_IMPLEMENTATION_PLAN.md section 11, step 5: the four-player
