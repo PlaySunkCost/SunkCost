@@ -26,7 +26,8 @@ namespace SunkCost.Editor.Prototype
             CheckCount<NetworkManager>(scene, 1, errors);
             CheckCount<PlayerSpawner>(scene, 1, errors);
             CheckCount<PrototypeSessionUI>(scene, 1, errors);
-            CheckCount<CarryableItem>(scene, HQPrototypeInventorySetup.SceneItemCount, errors);
+            CheckCount<CarryableItem>(scene, HQPrototypeLootSetup.SceneItemCount, errors);
+            CheckLootFixture(scene, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
             if (!HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root is missing.");
             CheckPlayerPrefab(errors);
@@ -40,7 +41,61 @@ namespace SunkCost.Editor.Prototype
                 errors.Add("Build settings must contain only the enabled HQ prototype scene.");
             CheckLobbyPrerequisites(scene, errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log($"HQ validation passed: saved scene, room, one network root, player prefab with inventory, {HQPrototypeInventorySetup.SceneItemCount} carryable items, four spawns and four-player transport caps are ready.");
+            Debug.Log($"HQ validation passed: saved scene, room, one network root, player prefab with inventory, {HQPrototypeLootSetup.SceneItemCount} carryable items, four spawns and four-player transport caps are ready.");
+        }
+
+        // docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md section 9: every item prefab has a
+        // valid mass, a sphere collider and the shared weight settings; two-handed
+        // prefabs never claim a slot; the scene matches the manifest by name; heavy
+        // prefabs are registered for spawning; the player has the two-hand point.
+        private static void CheckLootFixture(Scene scene, List<string> errors)
+        {
+            var settings = AssetDatabase.LoadAssetAtPath<WeightSettings>(HQPrototypeLootSetup.WeightSettingsPath);
+            if (settings == null) errors.Add("WeightSettings asset missing (run Sunk Cost/Prototype/Apply loot setup).");
+            else if (!settings.IsValid) errors.Add("WeightSettings asset has an invalid value.");
+
+            var sceneNames = new HashSet<string>();
+            foreach (GameObject root in scene.GetRootGameObjects())
+                foreach (CarryableItem item in root.GetComponentsInChildren<CarryableItem>(true))
+                    sceneNames.Add(item.name);
+            var collection = AssetDatabase.LoadAssetAtPath<FishNet.Managing.Object.DefaultPrefabObjects>(HQPrototypeLootSetup.PrefabObjectsPath);
+
+            var checkedPrefabs = new HashSet<string>();
+            foreach (HQPrototypeLootSetup.FixtureEntry entry in HQPrototypeLootSetup.Manifest)
+            {
+                if (!sceneNames.Contains(entry.SceneName)) errors.Add("Scene is missing " + entry.SceneName + " (run Apply loot setup).");
+                if (!checkedPrefabs.Add(entry.PrefabPath)) continue;
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(entry.PrefabPath);
+                if (prefab == null) { errors.Add("Prefab missing: " + entry.PrefabPath); continue; }
+                CarryableItem item = prefab.GetComponent<CarryableItem>();
+                Rigidbody body = prefab.GetComponent<Rigidbody>();
+                if (item == null || body == null) { errors.Add(entry.PrefabPath + " needs CarryableItem and Rigidbody."); continue; }
+                if (!float.IsFinite(body.mass) || body.mass <= 0f) errors.Add(entry.PrefabPath + " has an invalid Rigidbody mass.");
+                if (prefab.GetComponent<SphereCollider>() == null) errors.Add(entry.PrefabPath + " needs a SphereCollider (drop placement is sphere-only).");
+                using var serialized = new SerializedObject(item);
+                bool twoHands = serialized.FindProperty("grip").enumValueIndex == (int)CarryGrip.TwoHands;
+                if (twoHands && serialized.FindProperty("fitsInSlot").boolValue) errors.Add(entry.PrefabPath + " is two-handed but claims to fit a slot.");
+                if (serialized.FindProperty("weightSettings").objectReferenceValue != settings) errors.Add(entry.PrefabPath + " does not reference the shared WeightSettings.");
+                if (!entry.IsBasketball && collection != null && !HQPrototypeLootSetup.IsRegistered(collection, prefab.GetComponent<NetworkObject>()))
+                    errors.Add(entry.PrefabPath + " is not in PrototypePrefabObjects (run Apply loot setup).");
+            }
+
+            GameObject player = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
+            HQPlayerController controller = player != null ? player.GetComponent<HQPlayerController>() : null;
+            PlayerInventory inventory = player != null ? player.GetComponent<PlayerInventory>() : null;
+            if (controller != null)
+            {
+                using var serialized = new SerializedObject(controller);
+                var camera = serialized.FindProperty("playerCamera").objectReferenceValue as Camera;
+                var point = serialized.FindProperty("twoHandHoldPoint").objectReferenceValue as Transform;
+                if (point == null) errors.Add("Player prefab has no TwoHandHoldPoint (run Apply loot setup).");
+                else if (camera != null && point.parent != camera.transform) errors.Add("Player prefab TwoHandHoldPoint is not a child of PlayerCamera.");
+            }
+            if (inventory != null)
+            {
+                using var serialized = new SerializedObject(inventory);
+                if (serialized.FindProperty("weightSettings").objectReferenceValue != settings) errors.Add("Player prefab PlayerInventory does not reference the shared WeightSettings.");
+            }
         }
 
         // docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md section 10: the hold point pitches

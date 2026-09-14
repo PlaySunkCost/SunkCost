@@ -90,7 +90,7 @@ that window simply waits.
 | Air drain | Faster when sprinting, carrying weight, or damaged. Greed literally costs you air. |
 | Damage | Attacks can open a leak. Patch it with an item or a teammate. No regeneration — healing is items only. |
 | Lethality | Depends on the monster, your current health, and your oxygen level. Low air makes you fragile, so a bad dive accelerates. |
-| Carrying | 4 inventory slots plus one hand. Large objects are hands-only. Weight slows you and burns air. |
+| Carrying | 4 inventory slots plus one hand. Large objects are two-handed: held low in front with both hands, never stowed, big enough to block part of the view. Every item weighs something; carried weight (hands and slots) fills a grey meter and slows you in a straight line down to 35 %; a full meter turns red and you crawl at 10 % until you drop something — everything else still works. Holding a two-handed object you can still store small items into free slots. Nothing is ever refused for weight. Weight also burns air (not yet implemented). |
 | Sharing | Everything can be dropped, thrown and picked up. No trade menu. |
 | Friendly fire | None. |
 | Safe rooms | None on the seafloor. Everything you need, you carry. |
@@ -235,7 +235,17 @@ FishNet ownership loop and Steam P2P transport before underwater gameplay begins
 It has four inventory slots plus hands, but no scoring, economy, saving, combat or
 finished art. E grabs, Q drops at the feet, left click uses/throws, and 1–4 equip
 or put away slot items. Held items stay rigidly at the camera's hold point;
-stowed items are hidden. The five basketballs are a test fixture. It holds
+stowed items are hidden. Every item weighs its Rigidbody mass; the carried total
+is server state and drives a grey meter under the slots and a linear slowdown
+(empty 100 %, 35 % just under full); a full meter (25 kg) turns red and leaves a
+10 % crawl until something is dropped. Holding a two-handed ball, E on a
+slot-able item stores it straight into a free slot. Two-handed items are held centred and low,
+never stowed, and throw shorter the heavier they are. The fixture is three
+basketballs (0.62 kg, one hand), two blue balls (6 kg, one hand, slot-able) and
+two two-handed heavy balls (purple 12 kg, black 20 kg); the tuning numbers
+(decided 14 September 2026) live in
+`Assets/_Project/Settings/Prototype/WeightSettings.asset` and are provisional
+until a playtest says otherwise. It holds
 **four players** (host plus three). Local/LAN mode supports development on one
 computer. Steam mode creates a friends-only Steam lobby when hosting; guests join
 through a Steam overlay invite or by pasting the lobby ID, and the server admits a

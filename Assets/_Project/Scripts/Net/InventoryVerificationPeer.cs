@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using FishNet;
+using FishNet.Object;
 using FishNet.Transporting.Tugboat;
 using SunkCost.Interaction;
 using SunkCost.Player;
@@ -89,10 +90,37 @@ namespace SunkCost.Net
                 case "drop": player.Inventory.RequestDrop(); break;
                 case "throw": player.Inventory.RequestUse(command.aim); break;
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
+                case "spawn_light": return SpawnLightItems(Mathf.Clamp(command.slot, 1, 4));
                 case "snapshot": break;
                 default: return "Unknown action";
             }
             return "requested " + command.action;
+        }
+
+        // Server only: extra basketballs for the four-slot regression rows, which
+        // the saved fixture (three slot items) cannot fill on its own. Spawned from
+        // the registered prefab and named for the hooks; clients see them as
+        // "Basketball(Clone)" until HQPrototypeTestHooks.NameTestClones runs.
+        public static string SpawnLightItems(int count)
+        {
+            var nm = InstanceFinder.NetworkManager;
+            if (nm == null || !nm.IsServerStarted) return "Not the server";
+            NetworkObject prefab = null;
+            for (int i = 0; i < nm.SpawnablePrefabs.GetObjectCount(); i++)
+            {
+                NetworkObject candidate = nm.SpawnablePrefabs.GetObject(true, i);
+                if (candidate != null && candidate.name == "Basketball") { prefab = candidate; break; }
+            }
+            if (prefab == null) return "Basketball prefab is not registered";
+            int existing = FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).Length;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 position = new(2.5f + i * 0.6f, 1f, -2.5f);
+                NetworkObject instance = Instantiate(prefab, position, Quaternion.identity);
+                instance.name = "Basketball (" + (existing + i + 1) + ")";
+                nm.ServerManager.Spawn(instance);
+            }
+            return "spawned " + count + " basketballs";
         }
 
         public static string Snapshot()
@@ -101,11 +129,11 @@ namespace SunkCost.Net
             if (nm == null) return "No network manager";
             string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
-                text += $"player={player.OwnerId}; local={player.IsOwner}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}\n";
+                text += $"player={player.OwnerId}; local={player.IsOwner}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}\n";
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {
                 var body = item.GetComponent<Rigidbody>();
-                text += $"item={item.name}; id={item.ObjectId}; state={item.State}; holder={item.HolderClientId}; owner={item.OwnerId}; version={item.MotionVersion}; writer={item.WriterOverride}; kinematic={body.isKinematic}; collider={item.PrimaryCollider.enabled}; visible={item.GetComponentInChildren<Renderer>(true).enabled}; position={item.transform.position}; velocity={body.linearVelocity}\n";
+                text += $"item={item.name}; id={item.ObjectId}; state={item.State}; holder={item.HolderClientId}; owner={item.OwnerId}; version={item.MotionVersion}; writer={item.WriterOverride}; kinematic={body.isKinematic}; collider={item.PrimaryCollider.enabled}; visible={item.GetComponentInChildren<Renderer>(true).enabled}; massKg={item.MassKg:0.##}; grip={item.Grip}; launch={item.LastLaunchSpeed:0.###}; position={item.transform.position}; velocity={body.linearVelocity}\n";
             }
             return text;
         }

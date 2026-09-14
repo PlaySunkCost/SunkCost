@@ -186,18 +186,55 @@ namespace SunkCost.Editor.Prototype
             Rigidbody body = item.GetComponent<Rigidbody>();
             Collider collider = item.PrimaryCollider;
             Renderer renderer = item.GetComponentInChildren<Renderer>(true);
-            return $"{item.name}: spawned={item.IsSpawned}; state={item.State}; holder={item.HolderClientId}; ownerId={item.OwnerId}; isOwner={item.IsOwner}; " +
+            return $"{item.name}: spawned={item.IsSpawned}; state={item.State}; holder={item.HolderClientId}; ownerId={item.OwnerId}; isOwner={item.IsOwner}; massKg={item.MassKg:0.##}; grip={item.Grip}; " +
                    $"kinematic={body.isKinematic}; collider={(collider != null && collider.enabled)}; visible={(renderer != null && renderer.enabled)}; " +
                    $"writerHere={item.WriterOverride}; position={item.transform.position}";
         }
 
         // Distance between the held item and the local hold point, for the rigid-hold check.
+        // Distance between the held item and the hold pose for its grip (right hand
+        // or two-handed centre), plus which point that is.
         public static string HoldOffset()
         {
             PlayerInventory inventory = LocalInventory();
             HQPlayerController local = LocalPlayer();
             if (inventory == null || local == null || inventory.HeldItem == null) return "Nothing held.";
-            return $"offset={Vector3.Distance(inventory.HeldItem.transform.position, local.HoldPoint.position):0.000}";
+            CarryableItem item = inventory.HeldItem;
+            if (!item.TryGetHoldPose(local, out Vector3 pose, out _)) return "No hold pose.";
+            Transform point = local.HoldPointFor(item.Grip);
+            return $"offset={Vector3.Distance(item.transform.position, pose):0.000}; grip={item.Grip}; point={(point == null ? "none" : point.name)}";
+        }
+
+        // Server only: spawn extra basketballs for four-slot rows (see
+        // InventoryVerificationPeer.SpawnLightItems).
+        public static string ServerSpawnLightItems(int count) => InventoryVerificationPeer.SpawnLightItems(count);
+
+        // Runtime-spawned basketballs arrive on clients as "Basketball(Clone)"; give
+        // them the manifest-style names the hooks use, in object id order.
+        public static string NameTestClones()
+        {
+            var clones = Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None)
+                .Where(i => i.name.StartsWith("Basketball(Clone)")).OrderBy(i => i.ObjectId).ToList();
+            int existing = Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).Count(i => i.name.StartsWith("Basketball (") || i.name == "Basketball");
+            for (int i = 0; i < clones.Count; i++) clones[i].name = "Basketball (" + (existing + i + 1) + ")";
+            return "named " + clones.Count + " clones";
+        }
+
+        // Server-owned carried mass and the factors every peer derives from it.
+        public static string CarriedMassText()
+        {
+            PlayerInventory inventory = LocalInventory();
+            if (inventory == null) return "No local inventory.";
+            return $"carriedMassKg={inventory.CarriedMassKg:0.###}; meterFill={inventory.MeterFill:0.####}; speedFactor={inventory.SpeedFactor:0.####}; overloaded={inventory.Overloaded}; capacityKg={inventory.Weight.CapacityKg}; settings={inventory.Weight.name}";
+        }
+
+        // Launch speed the writer applied on its last throw of this item.
+        public static string LaunchSpeedText(string itemName)
+        {
+            CarryableItem item = Item(itemName);
+            if (item == null) return "No item named " + itemName;
+            Rigidbody body = item.GetComponent<Rigidbody>();
+            return $"{item.name}: massKg={item.MassKg:0.##}; throwFactor={item.Weight.ThrowFactor(item.MassKg):0.####}; lastLaunchSpeed={item.LastLaunchSpeed:0.###}; velocity={body.linearVelocity.magnitude:0.###}";
         }
 
         public static string AllItems()

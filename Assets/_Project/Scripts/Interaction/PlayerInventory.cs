@@ -21,6 +21,11 @@ namespace SunkCost.Interaction
         private const float RefusalSeconds = 1.5f;
 
         private readonly SyncVar<InventorySlots> slots = new(InventorySlots.None);
+        // Sum of the mass of every item this player holds or stows, in kg. Server
+        // written from the items themselves (docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md
+        // section 5); clients derive the meter and speed factor from it.
+        private readonly SyncVar<float> carriedMassKg = new();
+        [SerializeField] private WeightSettings weightSettings;
 
         private HQPlayerController player;
         private CarryableItem heldItem; // owner-side view
@@ -33,7 +38,13 @@ namespace SunkCost.Interaction
         public bool HoldingOverflow => heldItem != null && HeldSlot < 0;
         public string Refusal => Time.unscaledTime < refusalUntil ? refusal : string.Empty;
         public bool? WriterOverride => null;
-        public string DebugStatus => "slots=" + slots.Value;
+        public string DebugStatus => $"slots={slots.Value} {carriedMassKg.Value:0.##}kg x{SpeedFactor:0.00}{(Overloaded ? " OVERLOADED" : "")}";
+        public WeightSettings Weight => WeightSettings.Resolve(weightSettings);
+        public float CarriedMassKg => carriedMassKg.Value;
+        public float MeterFill => Weight.Fill(carriedMassKg.Value);
+        // Full meter: the bar is red and the player crawls until something is dropped.
+        public bool Overloaded => Weight.IsOverloaded(carriedMassKg.Value);
+        public float SpeedFactor => Weight.SpeedFactor(carriedMassKg.Value);
 
         private void Awake()
         {
@@ -52,7 +63,31 @@ namespace SunkCost.Interaction
         {
             base.OnStartServer();
             slots.Value = InventorySlots.None;
+            carriedMassKg.Value = 0f;
             ServerManager.OnRemoteConnectionState += ServerOnRemoteConnectionState;
+        }
+
+        // Carried mass from the items' authoritative state: every spawned item this
+        // connection holds or stows, counted once. Called at the end of each server
+        // request and from the items when their state changes on the server.
+        [Server]
+        public void ServerRecomputeCarriedMass()
+        {
+            if (!IsSpawned || !Owner.IsValid) return;
+            int clientId = Owner.ClientId;
+            float total = 0f;
+            foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
+            {
+                if (!item.IsSpawned || item.HolderClientId != clientId) continue;
+                if (item.State == ItemState.Held || item.State == ItemState.Stowed) total += item.MassKg;
+            }
+            if (!Mathf.Approximately(carriedMassKg.Value, total)) carriedMassKg.Value = total;
+        }
+
+        public static void ServerRecomputeAll()
+        {
+            foreach (PlayerInventory inventory in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None))
+                if (inventory.IsServerStarted) inventory.ServerRecomputeCarriedMass();
         }
 
         public override void OnStopServer()
@@ -80,8 +115,15 @@ namespace SunkCost.Interaction
         public void RequestGrab(CarryableItem item)
         {
             if (!IsOwner || item == null || !item.CanGrabFromWorld) return;
-            if (HoldingOverflow) { ShowRefusal(RefuseReason.HandsFull); return; }
+            if (!CanStoreOrHold(item)) { ShowRefusal(RefuseReason.HandsFull); return; }
             ServerRequestGrab(item.NetworkObject);
+        }
+
+        // Owner-side mirror of the grab table's refusal row: with an overflow item in
+        // the hands only a slot-able target with a free slot can be taken.
+        public bool CanStoreOrHold(CarryableItem item)
+        {
+            return item != null && (!HoldingOverflow || (item.FitsInSlot && slots.Value.FirstFree() >= 0));
         }
 
         public void RequestEquip(int slot)
@@ -143,6 +185,7 @@ namespace SunkCost.Interaction
                     TargetRefuse(sender, (byte)RefuseReason.HandsFull);
                     break;
             }
+            ServerRecomputeCarriedMass();
         }
 
         [ServerRpc]
@@ -189,6 +232,7 @@ namespace SunkCost.Interaction
             if (held == null) return;
             if (held.ServerRelease(sender, Vector3.zero, false))
                 ServerClearSlotOf(held);
+            ServerRecomputeCarriedMass();
         }
 
         [ServerRpc]
@@ -199,6 +243,7 @@ namespace SunkCost.Interaction
             if (held == null || held.UseAction != ItemUseAction.Throw) return;
             if (held.ServerRelease(sender, aimDirection, true))
                 ServerClearSlotOf(held);
+            ServerRecomputeCarriedMass();
         }
 
         [TargetRpc]
@@ -214,13 +259,13 @@ namespace SunkCost.Interaction
             Vector3 origin = transform.position;
             int dropped = 0;
             CarryableItem held = ServerFindHeld();
-            if (held != null) held.ServerDropAt(Scatter(origin, dropped++));
+            if (held != null) held.ServerDropAt(Scatter(origin, dropped++, held.Radius));
             InventorySlots current = slots.Value;
             for (int i = 0; i < InventorySlots.Count; i++)
             {
                 CarryableItem item = Resolve(current.Get(i));
                 if (item != null && item != held && item.HolderClientId == Owner.ClientId)
-                    item.ServerDropAt(Scatter(origin, dropped++));
+                    item.ServerDropAt(Scatter(origin, dropped++, item.Radius));
             }
             slots.Value = InventorySlots.None;
         }
@@ -275,10 +320,12 @@ namespace SunkCost.Interaction
             refusalUntil = Time.unscaledTime + RefusalSeconds;
         }
 
-        private static Vector3 Scatter(Vector3 origin, int index)
+        // Ring around the last position, wide and high enough for the item's radius.
+        private static Vector3 Scatter(Vector3 origin, int index, float radius)
         {
             float angle = index * 1.7f;
-            return origin + new Vector3(Mathf.Cos(angle) * 0.4f, 0.3f, Mathf.Sin(angle) * 0.4f);
+            float ring = 0.4f + radius;
+            return origin + new Vector3(Mathf.Cos(angle) * ring, radius + 0.05f, Mathf.Sin(angle) * ring);
         }
     }
 }

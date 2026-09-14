@@ -15,10 +15,20 @@ namespace SunkCost.Interaction
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
     public sealed class CarryableItem : NetworkBehaviour, INetworkDebugInfo
     {
+        // Used only when a prefab's Rigidbody mass is invalid; the validator
+        // rejects such content before it ships.
+        private const float FallbackMassKg = 0.62f;
+
         [SerializeField] private string displayName = "Item";
         [SerializeField] private bool fitsInSlot = true;
         [SerializeField] private Texture2D icon;
         [SerializeField] private ItemUseAction useAction = ItemUseAction.None;
+        // OneHand: right-hand pose, may use a slot. TwoHands: centred low pose,
+        // never a slot (docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md sections 3, 6).
+        [SerializeField] private CarryGrip grip = CarryGrip.OneHand;
+        [Tooltip("Extra distance along the hold pose's forward, for an item that needs to sit further out.")]
+        [SerializeField] private float holdDistanceOffset = 0f;
+        [SerializeField] private WeightSettings weightSettings;
         [SerializeField] private float throwSpeed = 8f;
         [SerializeField] private float releaseHandoffTimeout = 4f;
         [SerializeField] private Vector3 resetPosition = new(0f, 1f, 0f);
@@ -45,7 +55,24 @@ namespace SunkCost.Interaction
         private bool restRequested;
 
         public string DisplayName => string.IsNullOrEmpty(displayName) ? name : displayName;
-        public bool FitsInSlot => fitsInSlot;
+        // A two-handed item never fits a slot, whatever the serialized flag says.
+        public bool FitsInSlot => grip != CarryGrip.TwoHands && fitsInSlot;
+        public CarryGrip Grip => grip;
+        public float HoldDistanceOffset => holdDistanceOffset;
+        public WeightSettings Weight => WeightSettings.Resolve(weightSettings);
+        // Weight is the Rigidbody mass, in kg: one number for physics and the meter.
+        public float MassKg => body != null && float.IsFinite(body.mass) && body.mass > 0f ? body.mass : FallbackMassKg;
+        // World radius of the sphere, valid while the collider is disabled.
+        public float Radius
+        {
+            get
+            {
+                var sphere = PrimaryCollider as SphereCollider;
+                if (sphere == null) return 0.12f;
+                Vector3 scale = transform.lossyScale;
+                return sphere.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+            }
+        }
         public Texture2D Icon => icon;
         public ItemUseAction UseAction => useAction;
         public ItemState State => state.Value;
@@ -58,9 +85,10 @@ namespace SunkCost.Interaction
 
         // Read-only status for the F3 network debug overlay.
         public string DebugStatus =>
-            state.Value == ItemState.Held ? $"Held by {holderClientId.Value}" :
-            state.Value == ItemState.Released ? $"Released by {holderClientId.Value}" :
-            state.Value == ItemState.Stowed ? $"Stowed by {holderClientId.Value}" : "Free";
+            (state.Value == ItemState.Held ? $"Held by {holderClientId.Value}" :
+             state.Value == ItemState.Released ? $"Released by {holderClientId.Value}" :
+             state.Value == ItemState.Stowed ? $"Stowed by {holderClientId.Value}" : "Free") +
+            $" {MassKg:0.##}kg {(grip == CarryGrip.TwoHands ? "2h" : "1h")}";
 
         // A held item is kinematic on its holder, so the overlay's Rigidbody rule
         // would call the holder REPLICATED. This is the contract's writer, stated.
@@ -109,6 +137,8 @@ namespace SunkCost.Interaction
         {
             ServerManager.OnRemoteConnectionState -= ServerOnRemoteConnectionState;
             base.OnStopServer();
+            // A despawned item no longer weighs on its carrier.
+            if (ServerManager != null && ServerManager.Started) PlayerInventory.ServerRecomputeAll();
         }
 
         // The contract requires disconnect to return a held/released item to server
@@ -122,7 +152,8 @@ namespace SunkCost.Interaction
             ResolveHolder();
             Vector3 origin = holder != null ? holder.transform.position : transform.position;
             float angle = ObjectId * 1.7f;
-            ServerDropAt(origin + new Vector3(Mathf.Cos(angle) * 0.4f, 0.3f, Mathf.Sin(angle) * 0.4f));
+            float ring = 0.4f + Radius;
+            ServerDropAt(origin + new Vector3(Mathf.Cos(angle) * ring, Radius + 0.05f, Mathf.Sin(angle) * ring));
         }
 
         public override void OnOwnershipClient(NetworkConnection previousOwner)
@@ -154,8 +185,20 @@ namespace SunkCost.Interaction
             if (!IsSpawned || state.Value != ItemState.Held || !LocalWriter || hasPendingRelease)
                 return;
             if (holder == null) ResolveHolder();
-            if (holder == null || holder.HoldPoint == null) return;
-            transform.SetPositionAndRotation(holder.HoldPoint.position, holder.HoldPoint.rotation);
+            if (holder == null || !TryGetHoldPose(holder, out Vector3 position, out Quaternion rotation)) return;
+            transform.SetPositionAndRotation(position, rotation);
+        }
+
+        // The pose for this item's grip on a given player: the right hand or the
+        // two-handed centre point, plus the item's own forward offset. One
+        // calculation for the writer's snap, the server's equip teleport and hooks.
+        public bool TryGetHoldPose(HQPlayerController player, out Vector3 position, out Quaternion rotation)
+        {
+            Transform point = player != null ? player.HoldPointFor(grip) : null;
+            if (point == null) { position = Vector3.zero; rotation = Quaternion.identity; return false; }
+            position = point.position + point.forward * holdDistanceOffset;
+            rotation = point.rotation;
+            return true;
         }
 
         private void FixedUpdate()
@@ -188,11 +231,11 @@ namespace SunkCost.Interaction
             bool fromInventory = state.Value == ItemState.Stowed && holderClientId.Value == connection.ClientId;
             if (!fromWorld && !fromInventory)
                 return false;
-            if (fromInventory && player != null && player.HoldPoint != null)
+            if (fromInventory && TryGetHoldPose(player, out Vector3 pose, out Quaternion poseRotation))
             {
                 // Still server-controlled here, so the teleport flag is honoured and
                 // spectators do not interpolate it from wherever it was parked.
-                transform.SetPositionAndRotation(player.HoldPoint.position, player.HoldPoint.rotation);
+                transform.SetPositionAndRotation(pose, poseRotation);
                 networkTransform?.Teleport();
             }
             holder = player;
@@ -303,16 +346,43 @@ namespace SunkCost.Interaction
             body.useGravity = true;
             body.angularVelocity = Vector3.zero;
             if (pendingReleaseThrow)
-                body.linearVelocity = pendingReleaseDirection * throwSpeed;
+            {
+                // Launch speed scales with this item's own mass; a heavy ball lobs.
+                LastLaunchSpeed = throwSpeed * Weight.ThrowFactor(MassKg);
+                body.linearVelocity = pendingReleaseDirection * LastLaunchSpeed;
+            }
             else
             {
-                // Q is a drop at the feet, not a throw from camera height.
+                // Q is a drop at the feet, not a throw from camera height. The point
+                // clears the player capsule and the floor for this item's radius; if
+                // it is inside geometry (facing a wall), the held pose is used instead.
                 if (holder == null) ResolveHolder();
                 if (holder != null)
-                    transform.position = holder.transform.position + holder.transform.forward * 0.5f + Vector3.up * 0.3f;
+                    transform.position = DropPosition(holder);
                 body.linearVelocity = Vector3.zero;
                 networkTransform?.Teleport();
             }
+        }
+
+        // Launch speed of the most recent throw applied on this peer (diagnostics).
+        public float LastLaunchSpeed { get; private set; }
+
+        private Vector3 DropPosition(HQPlayerController player)
+        {
+            float radius = Radius;
+            float playerRadius = 0.3f;
+            var capsule = player.GetComponent<CharacterController>();
+            if (capsule != null) playerRadius = capsule.radius;
+            Vector3 feet = player.transform.position;
+            Vector3 candidate = feet + player.transform.forward * (playerRadius + radius + 0.1f) + Vector3.up * (radius + 0.05f);
+            // Anything solid other than the player and this item means the point is
+            // inside a wall or another object; fall back to where the hands are.
+            foreach (Collider hit in Physics.OverlapSphere(candidate, radius, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.transform.IsChildOf(player.transform) || hit.transform.IsChildOf(transform)) continue;
+                return TryGetHoldPose(player, out Vector3 pose, out _) ? pose : transform.position;
+            }
+            return candidate;
         }
 
         // The local player's held item comes from the replicated SyncVars, not from
@@ -337,6 +407,9 @@ namespace SunkCost.Interaction
             restTime = 0f;
             releaseTime = 0f;
             restRequested = false;
+            // Carried mass is a server sum over items; rest handoff, disconnect
+            // drops and resets change it without an inventory request.
+            if (asServer) PlayerInventory.ServerRecomputeAll();
             if (next != ItemState.Released && pendingReleaseVersion <= motionVersion.Value)
                 hasPendingRelease = false;
             ResolveHolder();

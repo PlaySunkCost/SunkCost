@@ -57,8 +57,9 @@ namespace SunkCost.Editor.Prototype
             Expect(InventoryRules.DecideGrab(true, -1, false, false) == GrabOutcome.StowAndHoldOverflow, "slots full + holding slot item -> stow equipped item and hold fifth");
             Expect(InventoryRules.DecideGrab(false, -1, false, false) == GrabOutcome.StowAndHoldOverflow, "slots full + holding slot item + hands-only target -> stow and hold target");
             Expect(InventoryRules.DecideGrab(true, -1, false, true) == GrabOutcome.RefuseHandsFull, "four slots plus overflow blocks a sixth item");
-            Expect(InventoryRules.DecideGrab(false, 0, false, false) == GrabOutcome.RefuseHandsFull, "hands-only + holding -> refuse");
-            Expect(InventoryRules.DecideGrab(true, 0, false, true) == GrabOutcome.RefuseHandsFull, "holding overflow blocks E even with a free slot");
+            Expect(InventoryRules.DecideGrab(true, 0, false, true) == GrabOutcome.StowIntoSlot, "holding overflow + slot-able target + free slot -> straight into the slot");
+            Expect(InventoryRules.DecideGrab(false, 0, false, false) == GrabOutcome.StowAndHoldOverflow, "hands-only + holding slot item + free slots -> stow equipped item and hold target");
+            Expect(InventoryRules.DecideGrab(false, 0, false, true) == GrabOutcome.RefuseHandsFull, "holding overflow blocks a hands-only target");
         }
 
         private static void EquipTable()

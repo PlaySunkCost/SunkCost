@@ -28,7 +28,7 @@ namespace SunkCost.Editor.Prototype
         // Lower-right of the camera, 60 cm out: the right hand (plan section 10).
         public static readonly Vector3 HoldPointLocalPosition = new(0.30f, -0.22f, 0.60f);
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
-        private const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
+        public const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
         [MenuItem("Sunk Cost/Prototype/Create or Update HQ")]
         public static void CreateOrUpdate()
@@ -122,10 +122,14 @@ namespace SunkCost.Editor.Prototype
                 GameObject hold = new("HoldPoint");
                 hold.transform.SetParent(cameraObject.transform, false);
                 hold.transform.localPosition = HoldPointLocalPosition;
+                GameObject twoHand = new("TwoHandHoldPoint");
+                twoHand.transform.SetParent(cameraObject.transform, false);
+                twoHand.transform.localPosition = HQPrototypeLootSetup.TwoHandHoldPointLocalPosition;
 
                 SerializedObject serialized = new(controller);
                 serialized.FindProperty("playerCamera").objectReferenceValue = camera;
                 serialized.FindProperty("holdPoint").objectReferenceValue = hold.transform;
+                serialized.FindProperty("twoHandHoldPoint").objectReferenceValue = twoHand.transform;
                 serialized.FindProperty("bodyRenderer").objectReferenceValue = body.GetComponent<Renderer>();
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 return PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
@@ -307,7 +311,7 @@ namespace SunkCost.Editor.Prototype
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static Material GetOrCreateMaterial(string path, Color color)
+        internal static Material GetOrCreateMaterial(string path, Color color)
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)

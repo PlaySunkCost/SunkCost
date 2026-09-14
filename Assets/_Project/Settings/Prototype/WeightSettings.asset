@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37a50a319cb580244b085d2ad243c54b, type: 3}
+  m_Name: WeightSettings
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Interaction.WeightSettings
+  capacityKg: 25
+  minSpeedFactor: 0.35
+  overloadSpeedFactor: 0.1
+  throwReferenceMassKg: 1
+  minThrowFactor: 0.15

@@ -42,12 +42,17 @@ the server is not itself a client owner. Ownership changes are server decisions.
   and a slot is free). Competing catches are serialized by the server.
 - **Stowed** items are still spawned, server-owned, hidden, non-colliding and
   kinematic. Only their carrier may equip them. Inventory slots are server-written.
-  With four occupied slots and one of those items equipped, a valid fifth grab
-  stows the equipped item in its existing slot and holds the target as overflow.
-  The server performs both transitions in the same request; all four slot ids
-  remain unchanged. Already holding overflow still blocks another grab.
-  Held items are kinematic too: their holder writes the transform at the camera's
-  hold point. Kinematic does not by itself mean this peer is not the writer.
+  When the target has no slot (four occupied slots, or a **two-handed** item,
+  which never fits a slot) and a slot item is equipped, a valid grab stows the
+  equipped item in its existing slot and holds the target as overflow. The server
+  performs both transitions in the same request; all four slot ids remain
+  unchanged. With an overflow item in the hands, a slot-able target with a free
+  slot is stowed directly (no hand change); anything else is refused.
+  Held items are kinematic too: their holder writes the transform at the hold
+  point for the item's grip (right hand, or the centred two-handed point).
+  Kinematic does not by itself mean this peer is not the writer. The releasing
+  writer also places a dropped item (radius-aware, clear of its own capsule and
+  the floor); the server places disconnect recoveries.
 
 Why: competing physics writers cause conflicting transforms. This project's
 ownership model gives one peer responsibility for each replicated body; other
@@ -85,12 +90,13 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 
 | State | Decided by | Notes |
 |---|---|---|
-| Player movement | Client, corrected by server | Clients move themselves; server validates position deltas loosely |
+| Player movement | Client, corrected by server | Clients move themselves (weight factor included); server validates position deltas loosely |
 | Grabbed object transform | Owning client | Broadcast, not simulated elsewhere |
 | Released object before rest/handoff | Releasing client | Server validates release and decides handoff |
 | Free object transform | Server | Standard replication |
 | Inventory contents and slot assignment | **Server only** | Four slots plus hands; clients request grabs, equips, drops and use |
 | Stowed item | Server | Hidden, kinematic; carrier identity retained; equipping grants ownership |
+| Carried mass | **Server only** | Sum of the Rigidbody mass of the items a player holds or stows, from the items' server state; clients derive the meter, the speed factor and the "cannot move" state from the shared `WeightSettings` asset |
 | Oxygen, health, damage | **Server only** | Clients display, never compute |
 | Loot value, quota, funds | **Server only** | Never trust a client number |
 | Monster AI and targeting | **Server only** | Clients receive positions and animation state |
