@@ -4,7 +4,8 @@ The living record of what this game is. **This file is the source of truth.** If
 decision here and something someone remembers from a chat disagree, this file wins.
 Change it in a PR, with a reason.
 
-Updated 13 September 2026 with the team's latest design decisions.
+Updated 14 September 2026 with the world loop decisions (section 1: three
+scenes, days, the ship and the elevator).
 The [original production plan](reference/Sunk-Cost-Build.pdf) is an unchanged
 Draft 3 snapshot dated 12 September 2026. It provides production context;
 where gameplay rules differ, this file takes precedence. The PDF's open questions
@@ -19,23 +20,47 @@ and implementation suggestions are not additional approved requirements.
 
 ## 1. The loop
 
-Two surface locations, one cycle of three dives between them.
+Three places, one cycle of three days between visits to HQ. Decided 14 September
+2026 (Dan); the earlier "two surface locations" wording is superseded.
 
-**HQ — the pirates' base.** Between cycles only. Pay the quota, buy equipment, and
-**save**. This is the only save point, so a cycle is a commitment you can't put down
-halfway. Miss the quota here and everyone walks the plank — the run is over.
+**HQ — the pirates' base, with the ship docked beside it.** One scene: the base and
+the ship at the pier, joined by a bridge you walk across, no loading. Between
+cycles only. Pay the quota, buy equipment, and **save**. This is the only save
+point, so a cycle is a commitment you can't put down halfway. Miss the quota here
+and everyone walks the plank — the run is over.
 
-**The boat — the salvage vessel.** Where you live during a cycle, between dives. One
-big screen listing every site, which doubles as the TV surfaced players watch divers
-on. A storage room holding everything you've hauled up, as physical objects. A readout
-of what you have against what you owe. **No shop.**
+**The ship — the salvage vessel, at sea.** The same ship that was docked at HQ,
+now alone on the ocean; sailing swaps the scene around it. Where you live during
+a cycle, between days. One big screen on board listing every site — any player
+picks the destination on it; it doubles as the TV surfaced players watch divers
+on. A storage room holding everything you've hauled up, as physical objects. A
+readout of what you have against what you owe. **No shop.** The glass elevator
+stands on the deck: it is the only way down and the only way up.
 
-**The dive.** Vote a site, ride down as a crew in the glass elevator. One tank of air
-each, with capacity determined by tank size. During a dive, air can only be added
-by using an air-restoring item; there are no refill stations or passive refills. Walk, find salvage, carry it back, send it up.
+**The dive — the elevator and the site.** One scene per site, reached only through
+the elevator on the deck. One tank of air each, with capacity determined by tank
+size; you put the suit on inside the cabin before it descends, and that is when
+the air starts. During a dive, air can only be added by using an air-restoring
+item; there are no refill stations or passive refills. Walk, find salvage, carry
+it back, send it up.
 
-**Leaving.** Anyone can ride up at any time. Once you're up, you can't go back down —
-and the noise of your escape tells the ocean where everyone else still is.
+**A day is one dive.** The day starts when **every living player is in the
+cabin** and it departs — the elevator will not leave the deck with anyone
+missing. Anyone can ride up whenever they want; **once you are up you cannot go
+down again until the next day.** The day ends when everyone is up or dead. Three
+days make a cycle. Between days the ship stays at sea: the crew can go straight
+back down to the same site, or change site on the screen first. After the third
+day — or an early "go home" on the screen — the ship sails back to HQ and the
+quota is judged.
+
+**What travels.** Whatever you carry (hands and slots) comes with you through the
+elevator and across the sea. Whatever you put down stays where you put it: on the
+seafloor it is lost when the day ends; on the ship it stays on the ship. Cargo
+sent up unattended arrives in the cabin on deck and is carried into the storage
+room by hand.
+
+**Leaving.** Riding up is safe for you and loud for everyone else — the noise of
+your escape tells the ocean where everyone still below is.
 
 ### The elevator
 
@@ -179,10 +204,10 @@ your own exit.
 | Crew size | Up to 4. Solo uses the same rules and is simply harder. |
 | Quota scaling | Partial — more players raises the target, but less than it raises earning power. |
 | Lobbies | Friends and invite codes at launch. |
-| Dead players | Watch any diver, click to switch. Talk only to other dead players. |
+| Dead players | Watch any diver, click to switch, and hear what that diver hears (camera switching first; hearing arrives with proximity voice). Talk only to other dead players. Body and loot drop where you died; a body brought up in the elevator keeps its upgrades (section 4). |
 | Surfaced players | **One shared TV on the boat** — everyone up top watches the same diver and has to agree who. Talk only to each other. |
 | Talking to divers | Proposed: a purchasable surface radio. Its inclusion in the small equipment list remains undecided. |
-| Disconnects | Body stays, gear recoverable. Current baseline: rejoin at HQ between cycles; never mid-dive. Under consideration: allow joining/rejoining on the boat between dives within the three-dive cycle. This is not yet approved and does not change HQ-only saving. |
+| Disconnects and joining | Body stays, gear recoverable. Players join or rejoin at HQ, and **on the ship at sea between days** (decided 14 September 2026; they spawn on deck). Never mid-dive. This does not change HQ-only saving. |
 
 ---
 
@@ -211,7 +236,7 @@ your own exit.
 | Which 5–6 monsters | Build the Bell Eater first — it's drawn to the elevator, so it tests the core loop directly. |
 | Elevator timing | Settled: 15 seconds down, 15 seconds up. Sending it up leaves a diver below waiting 30 seconds for its return. |
 | Air-restoring items | Amount restored, availability and activation time are undecided. One equipped tank; no other in-dive air restoration. |
-| Between-dive joining/rejoining | Consider boat entry between dives. Decide new-player versus returning-player eligibility, gear restoration and quota scaling before implementation. HQ-only entry remains the baseline. |
+| Between-day joining | Decided: joining on the ship at sea between days is allowed. Still open: new-player versus returning-player eligibility, gear restoration and quota scaling for a joiner. |
 | Upgrade catalogue | Keep it small. Larger oxygen tanks confirmed; other upgrades undecided. Full loss without body recovery remains the rule. |
 | Personal debt per player | A visible per-player debt alongside the crew quota would make the title mechanically true. |
 | Title | "Sunk Cost" vs "Black Tide". Search Steam and a trademark register first. |
