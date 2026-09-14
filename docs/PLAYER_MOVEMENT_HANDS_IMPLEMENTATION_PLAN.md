@@ -16,6 +16,8 @@ Confirmed directly with the user:
 - **Hold Ctrl** to crouch. Crouch reduces actual collision height and speed.
 - Carried weight reduces jump height. **No jump with a two-handed item held.**
 - Remove the rectangle in front of the avatar.
+- Keep and improve the center aiming dot so players can see where grabs and
+  throws are aimed (user addition, 15 September 2026).
 - Simple gloved hands and connected forearms, visible to the owner and friends.
   Small/one-handed items use one hand, heavy/two-handed items use two.
 - Hands visibly grip the item, inspired by the supplied image, but **no floating
@@ -272,6 +274,37 @@ elbow bend, no large obstruction to the center view, no duplicate arms/items,
 stable crouch/jump/turn/swap/throw/catch. Glove color is tunable; no requirement
 to copy the screenshot's yellow. Asset appearance needs human feedback.
 
+### Center aiming dot
+
+PlayerHudUI already draws a 4-pixel white square at screen center and colors it
+yellow when CurrentTarget or CurrentButton exists. Improve this existing element;
+do not add a second crosshair or a world-space marker in front of the avatar.
+ForwardMarker removal must not remove this HUD dot.
+
+- Small white center dot, approximately 4 px across at 1080p, with a 1 px dark
+  outline for contrast against the ocean, bright walls and held objects. Diameter,
+  outline and colors are serialized HUD settings; use consistent HUD scaling and
+  keep it centered when resolution/aspect ratio changes. No bloom or animation.
+- Soft gold when the current target is locally usable: a Free/Released item
+  within existing targeting/LOS rules and CanStoreOrHold, or an available monitor
+  button under the current phase rules. Full hands or unavailable controls do
+  not get a success-looking highlight. The server still decides acceptance.
+- Reuse CurrentTarget/CurrentButton and existing prompt eligibility; no new
+  physics query, increased reach or alternate targeting system. Keep the prompt
+  text as feedback; color alone must not communicate a refusal.
+- Visible for the local player while normal gameplay input is active, including
+  holding, crouching and jumping. Hide for menus, Steam overlay/focus loss,
+  loading fades and travel/cinematic input locks; preserve the original menu state
+  when restoring it. No reticle drawn for remote avatars.
+- Hands should leave the center view readable. The dot indicates camera aim,
+  not a guarantee that a thrown ball reaches that point: gravity, release offset
+  and collisions still apply. Do not add trajectory prediction or aim assistance.
+
+Verify empty hands and every grip on bright/dark backgrounds at 1280x720 and
+1920x1080, plus window resize. Confirm target highlight, unusable-target neutral
+state, prompt consistency and all hide/restore cases. This is planned HUD polish;
+the existing dot's presence does not count as completion of these checks.
+
 ## 7. Integration boundaries
 
 - Preserve current weight/overload, fifth pickup, hands-only silent storage,
@@ -302,6 +335,7 @@ Paths under `Assets/_Project/` unless stated otherwise.
 | Scripts/Player/PlayerStance.cs | Requested/accepted stance, clearance, persistent server posture |
 | Scripts/Player/HQPlayerController.cs | Jump/gravity/input split, stance speed/eye, transition reset |
 | Scripts/Player/PlayerHands.cs | Held-item binding, arm/finger presentation and lifecycle |
+| Scripts/Player/PlayerHudUI.cs | Improve existing center dot, shared prompt/highlight eligibility and visibility gates |
 | Scripts/Player/ArmPoseSolver.cs | Small two-segment solver; no item/physics writes |
 | Scripts/Interaction/ItemHandPose.cs | Prefab-local grip targets and finger-pose settings |
 | Scripts/Interaction/CarryableItem.cs / PlayerInventory.cs | Read-only held-state notifications/eye integration if needed; preserve ownership |
@@ -348,6 +382,7 @@ Preserve other uncommitted documents and the unrelated SteamManager meta file.
 | Remote stance / late join | Correct capsule/body/eye and hands from current persistent state |
 | Stance latency/refusal | No standing through ceiling; stale ack ignored, bounded retries, no frame RPC spam |
 | All item grips, both views | Correct hand count/contact, connected arms, marker absent, no stretched elbows |
+| Center aiming dot | One centered outlined dot; correct usable-target highlight, contrast, resolution scaling and hide/restore behavior |
 | Equip/stow/throw/moving catch | Correct target switching, no hand chasing released item, sole item writer retained |
 | Crouch with heavy near floor/wall | Item/arms/camera do not clip catastrophically; drop/throw collision behavior remains safe |
 | Repeated ship world transfers / disconnect / re-host | Slots/weight/stance recover, no stale pose or buffered jump; existing travel regressions pass |
