@@ -15,6 +15,10 @@ namespace SunkCost.Sites
         [SerializeField] private Color fogColor = new(0.02f, 0.05f, 0.045f);
         [SerializeField] private Color ambientColor = new(0.015f, 0.03f, 0.028f);
         [SerializeField] private float surfaceLightIntensity = 2f;
+        [SerializeField] private float carDiameterMeters = 5f;
+        [SerializeField] private float carInteriorHeightMeters = 3.5f;
+        [SerializeField] private float elevatorTravelSecondsOneWay = 15f;
+        [SerializeField] private float doorSealSeconds = 1.5f;
 
         public float ShaftDepthMeters => shaftDepthMeters;
         public float SeafloorSizeMeters => seafloorSizeMeters;
@@ -26,5 +30,9 @@ namespace SunkCost.Sites
         public Color FogColor => fogColor;
         public Color AmbientColor => ambientColor;
         public float SurfaceLightIntensity => surfaceLightIntensity;
+        public float CarDiameterMeters => carDiameterMeters;
+        public float CarInteriorHeightMeters => carInteriorHeightMeters;
+        public float ElevatorTravelSecondsOneWay => elevatorTravelSecondsOneWay;
+        public float DoorSealSeconds => doorSealSeconds;
     }
 }
