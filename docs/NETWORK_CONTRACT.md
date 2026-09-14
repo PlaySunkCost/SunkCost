@@ -35,8 +35,19 @@ the server is not itself a client owner. Ownership changes are server decisions.
 - Until that handoff, the releasing client remains the simulation writer, including
   during a throw. The server tracks that it is released rather than still held.
   The free-object row below applies after handoff, not to this settling interval.
-- Two clients can never own the same object. A grab request on an owned object is
-  **refused by the server**, not queued.
+- Two clients can never own the same object. A grab request on a **Held** object
+  is refused, not queued. In the HQ harness, a **Released** object may be caught:
+  the server validates reach, line of sight and inventory eligibility, then
+  transfers it to the accepted catcher (or stows it directly if their hand is busy
+  and a slot is free). Competing catches are serialized by the server.
+- **Stowed** items are still spawned, server-owned, hidden, non-colliding and
+  kinematic. Only their carrier may equip them. Inventory slots are server-written.
+  With four occupied slots and one of those items equipped, a valid fifth grab
+  stows the equipped item in its existing slot and holds the target as overflow.
+  The server performs both transitions in the same request; all four slot ids
+  remain unchanged. Already holding overflow still blocks another grab.
+  Held items are kinematic too: their holder writes the transform at the camera's
+  hold point. Kinematic does not by itself mean this peer is not the writer.
 
 Why: competing physics writers cause conflicting transforms. This project's
 ownership model gives one peer responsibility for each replicated body; other
@@ -62,8 +73,11 @@ peers render its replicated state. **Do not attempt deterministic physics.**
 The HQ basketball prototype uses linear speed below **0.15 m/s**, angular speed
 below **0.5 rad/s**, and **0.5 seconds** continuously below both thresholds as its
 rest condition. It forces handoff after **4 seconds** so ownership cannot remain
-stuck indefinitely. The current rule refuses grabs while a client still owns a
-settling object; changing that needs an explicit amendment. Moving-elevator
+stuck indefinitely. On 14 September 2026 the user authorized catching moving
+balls: a Released item is catchable before rest. Each carry/release transition
+advances a server-written motion version. Release impulses and rest requests must
+match that version, ownership and holder identity, so a late message from the
+previous throw cannot undo a catch. Held/Stowed items cannot be stolen. Moving-elevator
 handoff behavior remains undefined.
 Two-person carrying has no defined protocol yet: do not assume a shared writer.
 
@@ -75,6 +89,8 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 | Grabbed object transform | Owning client | Broadcast, not simulated elsewhere |
 | Released object before rest/handoff | Releasing client | Server validates release and decides handoff |
 | Free object transform | Server | Standard replication |
+| Inventory contents and slot assignment | **Server only** | Four slots plus hands; clients request grabs, equips, drops and use |
+| Stowed item | Server | Hidden, kinematic; carrier identity retained; equipping grants ownership |
 | Oxygen, health, damage | **Server only** | Clients display, never compute |
 | Loot value, quota, funds | **Server only** | Never trust a client number |
 | Monster AI and targeting | **Server only** | Clients receive positions and animation state |
@@ -141,9 +157,10 @@ If a method name does not say who calls it and who runs it, rename it.
   with the connection; the server handles their ownership and inventory state.
 - The **host owns the save.** If the host quits, the run ends. Host migration is
   explicitly out of scope for v1 — revisit only if it turns out to be cheap.
-- The HQ basketball harness has no death, inventory or persistent run. In this
-  harness only, disconnect despawns that player's temporary avatar and immediately
-  returns any held or released basketball to server simulation.
+- The HQ harness has four inventory slots plus hands, but no death or persistent
+  run. In this harness only, disconnect despawns the temporary avatar and drops
+  held, stowed and still-released items near that player's last position under
+  server simulation. This does not replace the real game's corpse/inventory rule.
 - Harness leave semantics: a leaving client stops its own connection (a clean
   disconnect, so the host does not wait for a timeout); a leaving host stops the
   server, which disconnects every client. There is no host migration. The

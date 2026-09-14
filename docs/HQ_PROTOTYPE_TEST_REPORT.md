@@ -1,5 +1,55 @@
 # HQ prototype verification report
 
+## Hold/inventory branch — 14 September 2026
+
+Tested uncommitted `dan/hold-feel` based on `a4ddc45`, Unity 6000.6.0f1,
+FishNet 4.7.3 over Local/Tugboat. These results do not certify Steam transport.
+
+- Compilation, pure inventory checks and scene/prefab validator passed. Windows
+  Local development build succeeded. The subsequent automatic fifth-pickup rule
+  compiled and passed pure checks in the MCP-connected editor.
+- H1–H6: separate standalone host and editor guest passed rigid hold while moving
+  and pitching, range refusal, stow/equip/swap, silent storage, four slots plus
+  overflow, blocked equip during overflow, Q/throw slot clearing and rest handoff.
+- H7: a third, late-joining standalone client observed the existing guest's slot
+  ids and hidden, non-colliding Stowed items. This was read on the joining peer.
+- H8 clean leave: host observed held and stowed items become Free, visible,
+  server-simulated near the departing client's last position.
+- Moving catches: real E input on the editor guest caught the host's flying ball
+  after 1.27 m of travel. A return throw was caught by the host while Released.
+  Both peers agreed on the new holder; only that holder wrote the held transform.
+- HUD: fresh Game-view capture inspected: four slots, icon, equipped highlight,
+  held ball and center dot are visible (`Logs/inventory-hud-final.png`).
+- Automatic fifth pickup: MCP editor host with a separate standalone guest
+  (client 1). Before: slots `[0,1,2,3]`, item 0 Held. After grabbing item 4:
+  the same slots, item 0 Stowed/hidden, item 4 Held by client 1 as overflow.
+  The host independently observed those states and the guest as sole held writer.
+  Equip stayed blocked while overflow was held; dropping it preserved all four
+  slots and allowed item 0 to be equipped again. The client build predates this
+  server decision change; the updated decision ran on the editor host.
+
+Reproducible checks: `HQPrototypeInventoryChecks`, `HQInventoryRuntimeChecks`
+and `HQCatchRuntimeChecks`. The development-only `InventoryVerificationPeer`
+accepts whitelisted commands through an explicitly selected local directory
+(`-hq-inventory-test-dir`); normal launches do not enable it. This is a Local
+test aid, not a Steam bypass. Session logs/screenshots under Temp/Logs are local
+artifacts and are not guaranteed to survive Unity cleanup.
+
+- H8 abrupt loss: killed the standalone guest while it held item 0 and stowed
+  items 1–3. After the transport detected loss, its player despawned and all four
+  items became Free, visible, colliding and server-simulated within the scatter
+  radius of its last position `(-0.9, 0, -1.5)`. The host remained in the room.
+
+- H9: host Leave returned to Menu with zero spawned players/items. Re-host in the
+  same Play session created empty inventory and all five Free balls at their
+  original floor positions, with server ownership and simulation.
+
+Outstanding: two-machine
+Steam rows H1/H3/H5/H6/H8 with matching builds and recorded RTT, and teammate
+review of `PlayerInventory.cs`, `CarryableItem.cs` and the contract. Dor should
+review `PlayerHudUI.cs` and item icon integration. No human approval or Notion
+completion is claimed.
+
 ## Revision under test
 
 - Branch: `codex/hq-basketball-prototype`

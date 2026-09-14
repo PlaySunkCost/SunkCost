@@ -229,15 +229,31 @@ your own exit.
 
 ### First playable HQ harness
 
-The first implemented slice is a two-player grey-box HQ where players can walk,
-look, pick up one basketball, drop it and throw it. It exists to verify the basic
+The first implemented slice is a grey-box HQ where players can walk,
+look, carry basketballs, drop them and throw them. It exists to verify the basic
 FishNet ownership loop and Steam P2P transport before underwater gameplay begins.
-It has no scoring, inventory, economy, saving, combat or finished art. It holds
+It has four inventory slots plus hands, but no scoring, economy, saving, combat or
+finished art. E grabs, Q drops at the feet, left click uses/throws, and 1–4 equip
+or put away slot items. Held items stay rigidly at the camera's hold point;
+stowed items are hidden. The five basketballs are a test fixture. It holds
 **four players** (host plus three). Local/LAN mode supports development on one
 computer. Steam mode creates a friends-only Steam lobby when hosting; guests join
 through a Steam overlay invite or by pasting the lobby ID, and the server admits a
 player only after checking the game marker, protocol, build revision and Steam
 lobby membership. No public lobby browser or matchmaking.
+
+Catching (user decision, 14 September 2026): a ball may be caught while flying,
+before its release/rest handoff. The prototype keeps 2 m eyes-to-surface reach
+with a tunable 0.35 m aim allowance around the crosshair and 0.3 s early-press
+buffer. Hold E to catch an approaching ball; one gesture grabs at most one item.
+The server checks reach and line of sight, so assistance does not grab through
+walls or steal something held/stowed by another player. Grabbing with a slot item
+already in hand stores the new item silently if a slot is free. With four occupied
+slots, the next item is overflow: if a slot item is equipped, automatically stow
+it in its existing slot and hold the new item (user decision, 14 September 2026).
+The four slot assignments remain unchanged. E and number keys are blocked
+until it is dropped or used/thrown. Disconnect drops the harness inventory near
+the departing player's last position.
 
 Leaving (decided 13 September 2026): **Leave** returns the player to the host/join
 menu rather than quitting. If the host leaves, the room closes and every client is
