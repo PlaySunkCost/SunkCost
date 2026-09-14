@@ -67,6 +67,14 @@ scale 12 kg, speed floor 0.35, throw reference 1 kg, throw floor 0.15.
   with seven items. The setup's scene-id rebuild assigned the id of the new
   blue instance (one more case of the OnValidate throttle).
 
+- Second amendment (Dan): overloaded is a 1 % crawl, not a stop
+  (`overloadSpeedFactor` 0.01 → 0.04 m/s walk), and with a two-handed item in the
+  hands E on a slot-able item stores it straight into a free slot. Verified on
+  the host: holding black, E on Basketball → prompt "Press E to store
+  Basketball", `slots=[0,-1,-1,-1]`, black still in hand, 20.62 kg; E on purple →
+  "Hands full", nothing changes; E on blue → stored in slot 2, 26.62 kg,
+  `speedFactor=0.01`, F3 `26.62kg x0.01 OVERLOADED`. Pure checks updated.
+
 Not run: W7 timed walk with real input (the multiplier is one line in
 `HQPlayerController.Move`; `SpeedFactor` values verified), W9 (needs three
 machines), W12 late join with heavy items stowed, Steam rows. Feel gate: a

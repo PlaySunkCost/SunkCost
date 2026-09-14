@@ -70,7 +70,7 @@ has a slot; requiring a number-key press adds friction without a carrying
 decision. This makes the brief's basketball-then-heavy example work.
 
 Validate sender, spawn/lifetime, Free/Released eligibility, reach and LOS before
-changing either item. Holding overflow takes precedence.
+changing either item.
 
 | Current hand | Target / slots | Result |
 |---|---|---|
@@ -80,7 +80,8 @@ changing either item. Holding overflow takes precedence.
 | Equipped slot item | Slot item / full slots | Stow equipped item in its slot; hold target as overflow |
 | Empty | Hands-only / any slots | Hold target as overflow; slots unchanged |
 | Equipped slot item | Hands-only / any slots | Stow equipped item in its slot; hold target as overflow |
-| Any overflow held | Any target | Refuse with existing Hands full feedback; change nothing |
+| Overflow held | Slot item / free slot | Silently stow target (second amendment: "Press E to store"); hands unchanged |
+| Overflow held | Hands-only, or full slots | Refuse with existing Hands full feedback; change nothing |
 
 Reuse `StowAndHoldOverflow` for the new row and the existing request RPC.
 If grabbing the target fails after stowing, re-equip the old item, preserve
@@ -123,27 +124,28 @@ No Resources lookup, per-player settings creation or mutable global singleton.
 |---|---:|---|
 | capacityKg | 25 kg | finite, >0 |
 | minSpeedFactor | 0.35 | finite, >0 and <=1 |
+| overloadSpeedFactor | 0.01 | finite, >0 and <=1 |
 | throwReferenceMassKg | 1 kg | finite, >0 |
 | minThrowFactor | 0.15 | finite, >0 and <=1 |
 
 `WeightMath` is pure, with scalar inputs:
 
 **Amended 14 September 2026 (Dan, after the first build):** the meter is a hard
-capacity, not an asymptote. Full = red bar = no movement.
+capacity, not an asymptote. Full = red bar = a 1 % crawl (`overloadSpeedFactor`,
+second amendment: not a full stop).
 
 ```text
 MeterFill   = min(1, totalMass / capacityKg)
 Overloaded  = totalMass >= capacityKg
-SpeedFactor = Overloaded ? 0 : 1 - (1 - minSpeedFactor) * MeterFill
+SpeedFactor = Overloaded ? overloadSpeedFactor : 1 - (1 - minSpeedFactor) * MeterFill
 ThrowFactor(itemMass) = clamp(sqrt(reference / max(itemMass, reference)),
                               minThrowFactor, 1)
 launchSpeed = existing throwSpeed * ThrowFactor(itemMass)
 ```
 
-While overloaded `HQPlayerController.CanMove` is false: WASD input is zeroed
-(gravity still applies), and any future body movement (dash, jump) must check
-the same flag. Looking, grabbing, dropping, throwing, equipping and the menu
-are unaffected.
+`HQPlayerController.Overloaded` exposes the state for a future dash; movement
+itself just multiplies by `SpeedFactor`. Looking, grabbing, dropping, throwing,
+equipping and the menu are unaffected.
 
 Use double intermediate aggregation/exponential/division and finite float
 outputs. One centralized immutable default set handles missing/invalid settings
@@ -164,7 +166,7 @@ during a session.
 | Purple | 12 | 48 | 0.688 | 2.75 / 4.13 |
 | Black | 20 | 80 | 0.48 | 1.92 / 2.88 |
 | Two blues + purple | 24 | 96 | 0.376 | 1.50 / 2.26 |
-| Two blues + black | 32 | 100 (red) | 0 | stuck |
+| Two blues + black | 32 | 100 (red) | 0.01 | 0.04 / 0.06 (crawl) |
 
 Calculated defaults, not proof of fun. Only diagnostics show numbers.
 

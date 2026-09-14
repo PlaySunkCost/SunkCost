@@ -2,7 +2,7 @@ namespace SunkCost.Interaction
 {
     public enum GrabOutcome : byte
     {
-        RefuseHandsFull, // an overflow item is already in the hands
+        RefuseHandsFull, // an overflow item is in the hands and the target cannot be stored
         HoldWithSlot,    // into the first free slot and into the hands
         StowIntoSlot,    // into the first free slot; a slot item stays in the hands
         HoldOverflow,   // no slot for it; hands only
@@ -33,7 +33,10 @@ namespace SunkCost.Interaction
     {
         public static GrabOutcome DecideGrab(bool fitsInSlot, int firstFreeSlot, bool handsEmpty, bool holdingOverflow)
         {
-            if (holdingOverflow) return GrabOutcome.RefuseHandsFull;
+            // Hands busy with an overflow item (a heavy two-handed ball): a slot-able
+            // target still goes straight into a free slot; anything else is refused.
+            if (holdingOverflow)
+                return fitsInSlot && firstFreeSlot >= 0 ? GrabOutcome.StowIntoSlot : GrabOutcome.RefuseHandsFull;
             if (fitsInSlot && firstFreeSlot >= 0)
                 return handsEmpty ? GrabOutcome.HoldWithSlot : GrabOutcome.StowIntoSlot;
             // No slot for the target (slots full, or a two-handed item): it goes to

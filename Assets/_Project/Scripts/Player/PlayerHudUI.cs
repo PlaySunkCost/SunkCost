@@ -33,8 +33,9 @@ namespace SunkCost.Player
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
-                return inventory.HoldingOverflow ? "Hands full" : target.State == ItemState.Released
-                    ? $"Hold E to catch {name}" : $"Press E to grab {name}";
+                if (!inventory.CanStoreOrHold(target)) return "Hands full";
+                if (inventory.HoldingOverflow) return $"Press E to store {name}";
+                return target.State == ItemState.Released ? $"Hold E to catch {name}" : $"Press E to grab {name}";
             }
         }
 
@@ -59,7 +60,7 @@ namespace SunkCost.Player
         }
 
         // A plain grey bar under the slots: mass / capacity from the server's carried
-        // mass. Full is a real state: the bar turns red and the player cannot move.
+        // mass. Full is a real state: the bar turns red and the player crawls.
         private void DrawWeightMeter()
         {
             float totalWidth = InventorySlots.Count * SlotSize + (InventorySlots.Count - 1) * SlotGap;
@@ -83,7 +84,7 @@ namespace SunkCost.Player
                 // Above the slot row (and its "In hand" line): the bottom margin is too
                 // small for a line under the bar.
                 float slotsTop = Screen.height - SlotBottomMargin - SlotSize;
-                GUI.Label(new Rect(left - 40f, slotsTop - 48f, totalWidth + 80f, 22f), "Too heavy to move — drop something", promptStyle);
+                GUI.Label(new Rect(left - 40f, slotsTop - 48f, totalWidth + 80f, 22f), "Too heavy — drop something", promptStyle);
             }
         }
 

@@ -46,7 +46,8 @@ the server is not itself a client owner. Ownership changes are server decisions.
   which never fits a slot) and a slot item is equipped, a valid grab stows the
   equipped item in its existing slot and holds the target as overflow. The server
   performs both transitions in the same request; all four slot ids remain
-  unchanged. Already holding overflow still blocks another grab.
+  unchanged. With an overflow item in the hands, a slot-able target with a free
+  slot is stowed directly (no hand change); anything else is refused.
   Held items are kinematic too: their holder writes the transform at the hold
   point for the item's grip (right hand, or the centred two-handed point).
   Kinematic does not by itself mean this peer is not the writer. The releasing

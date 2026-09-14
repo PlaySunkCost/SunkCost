@@ -42,7 +42,7 @@ namespace SunkCost.Interaction
         public WeightSettings Weight => WeightSettings.Resolve(weightSettings);
         public float CarriedMassKg => carriedMassKg.Value;
         public float MeterFill => Weight.Fill(carriedMassKg.Value);
-        // Full meter: the bar is red and WASD does nothing until something is dropped.
+        // Full meter: the bar is red and the player crawls until something is dropped.
         public bool Overloaded => Weight.IsOverloaded(carriedMassKg.Value);
         public float SpeedFactor => Weight.SpeedFactor(carriedMassKg.Value);
 
@@ -115,8 +115,15 @@ namespace SunkCost.Interaction
         public void RequestGrab(CarryableItem item)
         {
             if (!IsOwner || item == null || !item.CanGrabFromWorld) return;
-            if (HoldingOverflow) { ShowRefusal(RefuseReason.HandsFull); return; }
+            if (!CanStoreOrHold(item)) { ShowRefusal(RefuseReason.HandsFull); return; }
             ServerRequestGrab(item.NetworkObject);
+        }
+
+        // Owner-side mirror of the grab table's refusal row: with an overflow item in
+        // the hands only a slot-able target with a free slot can be taken.
+        public bool CanStoreOrHold(CarryableItem item)
+        {
+            return item != null && (!HoldingOverflow || (item.FitsInSlot && slots.Value.FirstFree() >= 0));
         }
 
         public void RequestEquip(int slot)

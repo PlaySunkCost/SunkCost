@@ -24,10 +24,10 @@ namespace SunkCost.Interaction
         }
 
         // Walk/sprint multiplier: 1 when empty, minSpeedFactor just under full,
-        // 0 when full.
-        public static float SpeedFactor(float totalMassKg, float capacityKg, float minSpeedFactor)
+        // overloadSpeedFactor (a crawl) at or beyond full.
+        public static float SpeedFactor(float totalMassKg, float capacityKg, float minSpeedFactor, float overloadSpeedFactor)
         {
-            if (IsOverloaded(totalMassKg, capacityKg)) return 0f;
+            if (IsOverloaded(totalMassKg, capacityKg)) return (float)Clamp01Positive(overloadSpeedFactor);
             double min = Clamp01Positive(minSpeedFactor);
             double fill = Fill(totalMassKg, capacityKg);
             double factor = 1.0 - (1.0 - min) * fill;

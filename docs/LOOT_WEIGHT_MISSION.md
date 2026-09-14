@@ -17,11 +17,14 @@ and mass cards; their live status has not been checked or changed here.
    but an equipped slot item counts **once**. Source: Rigidbody mass.
 2. **Amended 14 September 2026 (Dan):** the bar is a hard capacity (25 kg).
    Walk/sprint slow in a straight line from 100 % at empty to 35 % just under
-   full; at a full bar you **cannot move at all** (WASD, sprint and any future
-   dash) until you drop something. Everything else — look, grab, drop, throw,
-   equip, menu — keeps working. No pickup is ever refused for weight.
+   full; at a full bar you **crawl at 1 %** (not a full stop — second amendment)
+   until you drop something. Everything else — look, grab, drop, throw, equip,
+   menu — keeps working. No pickup is ever refused for weight.
 3. Plain grey unnumbered bar below the slots; it turns **red** when full and a
-   line above the slots says "Too heavy to move — drop something".
+   line above the slots says "Too heavy — drop something".
+4. **Holding a two-handed item, E on a slot-able item stores it straight into a
+   free slot** (prompt: "Press E to store X"); hands unchanged. Only a target
+   that cannot be stored (another two-handed item, or no free slot) is refused.
 4. One-handed slot items keep the right pose. Heavy two-handed items are
    hands-only, held low/centrally and obscure some lower view. This prototype
    implements grip/pose, not new animated hands.

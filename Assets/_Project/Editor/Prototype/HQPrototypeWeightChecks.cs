@@ -13,6 +13,7 @@ namespace SunkCost.Editor.Prototype
     {
         private const float Capacity = WeightSettings.DefaultCapacityKg;
         private const float MinSpeed = WeightSettings.DefaultMinSpeedFactor;
+        private const float Crawl = WeightSettings.DefaultOverloadSpeedFactor;
         private const float Reference = WeightSettings.DefaultThrowReferenceMassKg;
         private const float MinThrow = WeightSettings.DefaultMinThrowFactor;
 
@@ -32,39 +33,39 @@ namespace SunkCost.Editor.Prototype
             Asset();
         }
 
-        // Capacity 25 kg, floor 0.35: fill = mass / 25, speed = 1 - 0.65 * fill, 0 when full.
+        // Capacity 25 kg, floor 0.35: fill = mass / 25, speed = 1 - 0.65 * fill, a 0.01 crawl when full.
         private static void Curves()
         {
             Expect(WeightMath.Fill(0f, Capacity) == 0f, "empty meter is 0");
-            Expect(WeightMath.SpeedFactor(0f, Capacity, MinSpeed) == 1f, "empty speed factor is 1");
+            Expect(WeightMath.SpeedFactor(0f, Capacity, MinSpeed, Crawl) == 1f, "empty speed factor is 1");
             Expect(!WeightMath.IsOverloaded(0f, Capacity), "empty is not overloaded");
             Near(WeightMath.Fill(0.62f, Capacity), 0.0248f, "basketball fill");
-            Near(WeightMath.SpeedFactor(0.62f, Capacity, MinSpeed), 0.9839f, "basketball speed");
+            Near(WeightMath.SpeedFactor(0.62f, Capacity, MinSpeed, Crawl), 0.9839f, "basketball speed");
             Near(WeightMath.Fill(6f, Capacity), 0.24f, "blue fill");
-            Near(WeightMath.SpeedFactor(6f, Capacity, MinSpeed), 0.844f, "blue speed");
+            Near(WeightMath.SpeedFactor(6f, Capacity, MinSpeed, Crawl), 0.844f, "blue speed");
             Near(WeightMath.Fill(6.62f, Capacity), 0.2648f, "basketball + blue fill");
-            Near(WeightMath.SpeedFactor(6.62f, Capacity, MinSpeed), 0.8279f, "basketball + blue speed");
+            Near(WeightMath.SpeedFactor(6.62f, Capacity, MinSpeed, Crawl), 0.8279f, "basketball + blue speed");
             Near(WeightMath.Fill(12f, Capacity), 0.48f, "purple fill");
-            Near(WeightMath.SpeedFactor(12f, Capacity, MinSpeed), 0.688f, "purple speed");
+            Near(WeightMath.SpeedFactor(12f, Capacity, MinSpeed, Crawl), 0.688f, "purple speed");
             Near(WeightMath.Fill(20f, Capacity), 0.8f, "black fill");
-            Near(WeightMath.SpeedFactor(20f, Capacity, MinSpeed), 0.48f, "black speed");
+            Near(WeightMath.SpeedFactor(20f, Capacity, MinSpeed, Crawl), 0.48f, "black speed");
             Near(WeightMath.Fill(21.86f, Capacity), 0.8744f, "three basketballs + black fill");
-            Near(WeightMath.SpeedFactor(21.86f, Capacity, MinSpeed), 0.4316f, "three basketballs + black speed");
-            Near(WeightMath.SpeedFactor(24.99f, Capacity, MinSpeed), 0.3503f, "just under full is the floor");
+            Near(WeightMath.SpeedFactor(21.86f, Capacity, MinSpeed, Crawl), 0.4316f, "three basketballs + black speed");
+            Near(WeightMath.SpeedFactor(24.99f, Capacity, MinSpeed, Crawl), 0.3503f, "just under full is the floor");
             Expect(WeightMath.IsOverloaded(25f, Capacity), "exactly capacity is overloaded");
-            Expect(WeightMath.SpeedFactor(25f, Capacity, MinSpeed) == 0f, "full meter stops movement");
+            Expect(WeightMath.SpeedFactor(25f, Capacity, MinSpeed, Crawl) == Crawl, "full meter is a crawl, not a stop");
             Expect(WeightMath.Fill(25f, Capacity) == 1f && WeightMath.Fill(400f, Capacity) == 1f, "fill caps at 1 beyond capacity");
-            Expect(WeightMath.SpeedFactor(400f, Capacity, MinSpeed) == 0f, "way over capacity is still 0");
+            Expect(WeightMath.SpeedFactor(400f, Capacity, MinSpeed, Crawl) == Crawl, "way over capacity is still the crawl");
 
             float previousFill = -1f, previousSpeed = 2f;
             for (float mass = 0f; mass <= 60f; mass += 0.25f)
             {
                 float fill = WeightMath.Fill(mass, Capacity);
-                float speed = WeightMath.SpeedFactor(mass, Capacity, MinSpeed);
+                float speed = WeightMath.SpeedFactor(mass, Capacity, MinSpeed, Crawl);
                 Expect(fill >= previousFill, "meter never decreases at " + mass);
                 Expect(speed <= previousSpeed, "speed never increases at " + mass);
                 Expect(fill >= 0f && fill <= 1f, "fill within bounds at " + mass);
-                Expect(speed == 0f || (speed >= MinSpeed && speed <= 1f), "speed is 0 or within bounds at " + mass);
+                Expect(speed == Crawl || (speed >= MinSpeed && speed <= 1f), "speed is the crawl or within bounds at " + mass);
                 previousFill = fill; previousSpeed = speed;
             }
         }
@@ -74,9 +75,9 @@ namespace SunkCost.Editor.Prototype
             Expect(WeightMath.Fill(-5f, Capacity) == 0f, "negative mass counts as zero");
             Expect(WeightMath.Fill(float.NaN, Capacity) == 0f, "NaN mass counts as zero");
             Expect(WeightMath.Fill(float.PositiveInfinity, Capacity) == 0f && !WeightMath.IsOverloaded(float.PositiveInfinity, Capacity), "nonfinite mass sanitises to zero (invalid content never freezes a player)");
-            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, 0f, MinSpeed)), "zero capacity falls back");
-            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, float.NaN, float.NaN)), "NaN settings fall back");
-            Expect(WeightMath.SpeedFactor(5f, Capacity, 0f) > 0f, "zero min speed becomes a small positive floor");
+            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, 0f, MinSpeed, Crawl)), "zero capacity falls back");
+            Expect(float.IsFinite(WeightMath.SpeedFactor(5f, float.NaN, float.NaN, float.NaN)), "NaN settings fall back");
+            Expect(WeightMath.SpeedFactor(5f, Capacity, 0f, Crawl) > 0f, "zero min speed becomes a small positive floor");
         }
 
         private static void ThrowFactors()
@@ -97,7 +98,8 @@ namespace SunkCost.Editor.Prototype
             Expect(InventoryRules.DecideGrab(false, 0, false, false) == GrabOutcome.StowAndHoldOverflow, "hands-only + equipped slot item + free slots -> auto-stow then hold");
             Expect(InventoryRules.DecideGrab(false, -1, false, false) == GrabOutcome.StowAndHoldOverflow, "hands-only + equipped slot item + full slots -> auto-stow then hold");
             Expect(InventoryRules.DecideGrab(false, 0, false, true) == GrabOutcome.RefuseHandsFull, "hands-only while holding overflow -> refuse");
-            Expect(InventoryRules.DecideGrab(true, 0, false, true) == GrabOutcome.RefuseHandsFull, "slot item while holding overflow -> refuse");
+            Expect(InventoryRules.DecideGrab(true, 0, false, true) == GrabOutcome.StowIntoSlot, "slot item while holding overflow -> straight into the slot");
+            Expect(InventoryRules.DecideGrab(true, -1, false, true) == GrabOutcome.RefuseHandsFull, "slot item while holding overflow with full slots -> refuse");
         }
 
         private static void Asset()
