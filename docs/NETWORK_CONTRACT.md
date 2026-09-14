@@ -232,6 +232,16 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
   talk only to dead players, surfaced players to surfaced players, and divers use
   proximity voice. A spectating camera must not open access to divers' voice.
   A surface radio remains a proposed upgrade, not an approved exception yet.
+- Decided 14 September 2026, not yet implemented (design section 1): the only
+  moving cabin is in the dive scene; the cabin on the ship's deck is a static
+  object with doors. Riders change scene at the button on the way down (behind
+  sealed doors, under the suit fade) and just before the top on the way up (once
+  the cabin is dry). The cabin's water level is derived from elevator state and
+  elapsed time, like motion progress — it is not separate sync state. Riders walk
+  freely inside the moving cabin, so the moving-platform handoff listed under
+  Open must be defined by the world-loop plan before that code lands. The deck
+  button only starts a day and requires every living player inside; mid-day and
+  at HQ it does nothing.
 
 ## 10. Verification and changes
 
@@ -251,7 +261,8 @@ this document "signed off" unless that review actually occurred.
 - Interest management (do distant players need updates?) — defer until a real map exists.
 - Anti-cheat systems — out of scope for v1. Friends-only lobbies do not remove
   the need to validate requests for stale state, bugs and unexpected inputs.
-- Moving-elevator physics handoff; see section 2.
+- Moving-elevator physics handoff; see section 2. Riders walk inside the moving
+  cabin (decided 14 September 2026), so the world-loop plan has to define it.
 - Two-person carrying protocol, if included; a single simulation writer still holds.
 - Movement correction and transform interpolation settings for the selected
   FishNet version; start with the existing 30 Hz server baseline.

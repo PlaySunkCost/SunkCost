@@ -5,7 +5,7 @@ decision here and something someone remembers from a chat disagree, this file wi
 Change it in a PR, with a reason.
 
 Updated 14 September 2026 with the world loop decisions (section 1: three
-scenes, days, the ship and the elevator).
+scenes and how you move between them, the monitor, the flooding cabin, days).
 The [original production plan](reference/Sunk-Cost-Build.pdf) is an unchanged
 Draft 3 snapshot dated 12 September 2026. It provides production context;
 where gameplay rules differ, this file takes precedence. The PDF's open questions
@@ -20,44 +20,66 @@ and implementation suggestions are not additional approved requirements.
 
 ## 1. The loop
 
-Three places, one cycle of three days between visits to HQ. Decided 14 September
-2026 (Dan); the earlier "two surface locations" wording is superseded.
+Three scenes, one cycle of three days between visits to HQ. Decided 14 September
+2026 (Dan), including the transitions and the flooding cabin; the earlier "two
+surface locations" wording is superseded.
 
-**HQ — the pirates' base, with the ship docked beside it.** One scene: the base and
-the ship at the pier, joined by a bridge you walk across, no loading. Between
-cycles only. Pay the quota, buy equipment, and **save**. This is the only save
-point, so a cycle is a commitment you can't put down halfway. Miss the quota here
-and everyone walks the plank — the run is over.
+**Scene 1 — HQ, the pirates' base, with the ship docked beside it.** The base and
+the ship at the pier in one scene, joined by a bridge you walk across, no loading.
+Between cycles only. Pay the quota, buy equipment, and **save**. This is the only
+save point, so a cycle is a commitment you can't put down halfway. Miss the quota
+here and everyone walks the plank — the run is over. The cabin on the docked ship
+is dead: there is no diving from HQ.
 
-**The ship — the salvage vessel, at sea.** The same ship that was docked at HQ,
-now alone on the ocean; sailing swaps the scene around it. Where you live during
-a cycle, between days. One big screen on board listing every site — any player
-picks the destination on it; it doubles as the TV surfaced players watch divers
-on. A storage room holding everything you've hauled up, as physical objects. A
-readout of what you have against what you owe. **No shop.** The glass elevator
-stands on the deck: it is the only way down and the only way up.
+**Scene 2 — the ship at sea.** The same ship that was docked at HQ, now alone on
+the ocean. Where you live during a cycle, between days. One big **monitor** on
+board is the ship's only control: it lists every site and HQ, and choosing a
+destination on it sails the ship — if everyone is aboard; otherwise it names who
+is missing. No wheel, no lever. From HQ, choosing a site sails to sea; at sea,
+choosing another site keeps the ship at sea with a new destination; choosing HQ
+sails home. The monitor doubles as the TV surfaced players watch divers on. A
+storage room holds everything you've hauled up, as physical objects. A readout of
+what you have against what you owe. **No shop.** The glass elevator cabin stands
+on the deck: it is the only way down and the only way up.
 
-**The dive — the elevator and the site.** One scene per site, reached only through
-the elevator on the deck. One tank of air each, with capacity determined by tank
-size; you put the suit on inside the cabin before it descends, and that is when
-the air starts. During a dive, air can only be added by using an air-restoring
-item; there are no refill stations or passive refills. Walk, find salvage, carry
-it back, send it up.
+**Scene 3 — the elevator and the site.** One scene per site, holding the shaft,
+the moving cabin and the seafloor; reached only from the deck cabin and left only
+into it. Walk, find salvage, carry it back, send it up. One tank of air each, with
+capacity determined by tank size. During a dive, air can only be added by using
+an air-restoring item; there are no refill stations or passive refills.
 
-**A day is one dive.** The day starts when **every living player is in the
-cabin** and it departs — the elevator will not leave the deck with anyone
-missing. Anyone can ride up whenever they want; **once you are up you cannot go
-down again until the next day.** The day ends when everyone is up or dead. Three
-days make a cycle. Between days the ship stays at sea: the crew can go straight
-back down to the same site, or change site on the screen first. After the third
-day — or an early "go home" on the screen — the ship sails back to HQ and the
-quota is judged.
+**The way down.** Everyone walks into the deck cabin and someone presses the
+button. The doors seal, the screen fades to "Putting on suit…" (about 3 s) — that
+fade is the scene change — and you fade back in inside the shaft, already
+descending. The suit is on and the air is counting. Then the cabin floods: within
+about four seconds the water is over your head, and the rest of the 15 s ride is
+spent submerged, watching the shaft go by. The bottom door opens only when the
+cabin is full. You can walk around inside the cabin the whole way.
+
+**The way up.** The cabin at the bottom is always flooded. Walk in, press the
+button, the doors seal, 15 s up. Over the last few seconds the water drains out;
+once the cabin is dry, just before the top, you are moved to the deck cabin and
+its doors open. The deck cabin never moves and is never wet: every metre of travel
+and every drop of water lives in the dive scene. There is no way from HQ to the
+seafloor or back; the ship is always in between.
+
+**A day is one dive.** The day starts when **every living player is in the deck
+cabin** and it departs — the button does nothing with anyone missing, and the
+cabin panel names who. Anyone can ride up whenever they want; **once you are up
+you cannot go down again until the next day** — mid-day the deck button is dead.
+The cabin returns down empty as soon as it has unloaded. The day ends when
+everyone is up or dead. Three days make a cycle. Between days the ship stays at
+sea: the crew can go straight back down to the same site, or change site on the
+monitor first. **A site reloads fresh every day**: everything it had is there
+again, and anything you dropped on the seafloor is gone. After the third day the
+monitor offers only HQ; choosing HQ earlier is allowed (an early "go home").
+Either way the ship sails back to HQ and the quota is judged.
 
 **What travels.** Whatever you carry (hands and slots) comes with you through the
 elevator and across the sea. Whatever you put down stays where you put it: on the
 seafloor it is lost when the day ends; on the ship it stays on the ship. Cargo
-sent up unattended arrives in the cabin on deck and is carried into the storage
-room by hand.
+sent up unattended rides the same cabin and arrives, dry, in the deck cabin; it
+is carried into the storage room by hand.
 
 **Leaving.** Riding up is safe for you and loud for everyone else — the noise of
 your escape tells the ocean where everyone still below is.
@@ -68,8 +90,9 @@ It is a real elevator. It carries **any number of people and any amount of cargo
 together** — one diver or the whole crew, with or without treasure.
 
 **Anything can be sent up without a passenger.** Load treasure — or a body — pull the
-lever, and keep diving. That is the banking mechanic: whatever goes up is safe
-forever, and you don't have to leave to secure it.
+lever outside the cabin (the button inside is for riding with it), and keep
+diving. That is the banking mechanic: whatever goes up is safe forever, and you
+don't have to leave to secure it.
 
 **There is only one of it.** That is the entire constraint. When it goes up, it is
 gone until it comes back — 15 seconds up and 15 seconds back down.
@@ -111,7 +134,7 @@ that window simply waits.
 | Camera | First person with a visible body. |
 | Movement | Walking only, no swimming. In-world reason still open. |
 | Suits | Identical for everyone, cosmetic skins purchasable. Each player has a distinct lamp colour — that's how you identify a shape in the dark. |
-| Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. |
+| Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. Air starts counting when the suit fade ends in the descending cabin (section 1). During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. |
 | Air drain | Faster when sprinting, carrying weight, or damaged. Greed literally costs you air. |
 | Damage | Attacks can open a leak. Patch it with an item or a teammate. No regeneration — healing is items only. |
 | Lethality | Depends on the monster, your current health, and your oxygen level. Low air makes you fragile, so a bad dive accelerates. |
@@ -207,7 +230,7 @@ your own exit.
 | Dead players | Watch any diver, click to switch, and hear what that diver hears (camera switching first; hearing arrives with proximity voice). Talk only to other dead players. Body and loot drop where you died; a body brought up in the elevator keeps its upgrades (section 4). |
 | Surfaced players | **One shared TV on the boat** — everyone up top watches the same diver and has to agree who. Talk only to each other. |
 | Talking to divers | Proposed: a purchasable surface radio. Its inclusion in the small equipment list remains undecided. |
-| Disconnects and joining | Body stays, gear recoverable. Players join or rejoin at HQ, and **on the ship at sea between days** (decided 14 September 2026; they spawn on deck). Never mid-dive. This does not change HQ-only saving. |
+| Disconnects and joining | Body stays, gear recoverable. Players join or rejoin at HQ, and **on the ship at sea between days** (decided 14 September 2026; they spawn on deck). Never mid-day: while a dive is in progress the lobby refuses with "dive in progress". This does not change HQ-only saving. |
 
 ---
 
@@ -234,7 +257,7 @@ your own exit.
 |---|---|
 | Why you can't swim | Best option: thrusters exist, but they're loud, burn air and draw creatures. Build walking-only for now. |
 | Which 5–6 monsters | Build the Bell Eater first — it's drawn to the elevator, so it tests the core loop directly. |
-| Elevator timing | Settled: 15 seconds down, 15 seconds up. Sending it up leaves a diver below waiting 30 seconds for its return. |
+| Elevator timing | Settled: 15 seconds down, 15 seconds up. Sending it up leaves a diver below waiting 30 seconds for its return. The cabin fills in about 4 s after the suit fade and drains over the last few seconds of the ascent (decided 14 September 2026; numbers provisional). |
 | Air-restoring items | Amount restored, availability and activation time are undecided. One equipped tank; no other in-dive air restoration. |
 | Between-day joining | Decided: joining on the ship at sea between days is allowed. Still open: new-player versus returning-player eligibility, gear restoration and quota scaling for a joiner. |
 | Upgrade catalogue | Keep it small. Larger oxygen tanks confirmed; other upgrades undecided. Full loss without body recovery remains the rule. |
