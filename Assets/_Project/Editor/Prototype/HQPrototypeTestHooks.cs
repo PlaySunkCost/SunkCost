@@ -6,6 +6,7 @@ using SunkCost.Interaction;
 using SunkCost.Net;
 using SunkCost.Player;
 using UnityEngine;
+using UnityEditor;
 
 namespace SunkCost.Editor.Prototype
 {
@@ -277,6 +278,14 @@ namespace SunkCost.Editor.Prototype
         }
 
         // ---- world loop (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 9.2) -------
+
+        // Hand-testing without the MCP bridge: host in Play Mode, everyone on the
+        // deck, then one of these. The monitor card replaces them.
+        [MenuItem("Sunk Cost/Prototype/Debug/Sail to Sea (host, Play Mode)")]
+        public static void MenuSailToSea() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("Sea") : "enter Play Mode and host first."));
+
+        [MenuItem("Sunk Cost/Prototype/Debug/Sail to HQ (host, Play Mode)")]
+        public static void MenuSailToHQ() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("HQ") : "enter Play Mode and host first."));
 
         // The monitor's request until the monitor card: host only.
         public static string ServerSail(string world)

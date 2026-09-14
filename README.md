@@ -78,9 +78,9 @@ the ship — inside the rails, on the deck — sails together; a sail is refused
 naming who is still ashore, otherwise. What you hold or stowed and anything
 lying on the deck sails with you and is at the same spot on the new deck; the
 base resets when the crew comes back. The monitor that chooses the destination
-is a later card: until then the host sails from the editor with
-`HQPrototypeTestHooks.ServerSail("Sea")` / `ServerSail("HQ")` (the Unity MCP
-bridge or any editor script), or a headless peer's `sail` command. Joining is
+is a later card: until then the host sails from the editor menu, *Sunk Cost >
+Prototype > Debug > Sail to Sea / Sail to HQ* (Play Mode, hosting; the result
+is logged to the console), or a headless peer's `sail` command. Joining is
 possible at the base and on the ship between days; a join while a dive is in
 progress is refused ("Dive in progress — join between days"). F3 shows every
 player's and item's scene. Menu: *Sunk Cost > Prototype > Create or Update
