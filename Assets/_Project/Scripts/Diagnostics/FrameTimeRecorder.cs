@@ -28,7 +28,18 @@ namespace SunkCost.Diagnostics
             public string Blame;      // the profiler markers that were long in that frame, e.g. "Physics.Processing 31ms"
         }
 
-        public static FrameTimeRecorder Instance { get; private set; }
+        // Survives a domain reload mid-play (a script recompile while playing keeps
+        // the object but clears the static): find it again when the static is gone.
+        private static FrameTimeRecorder instance;
+        public static FrameTimeRecorder Instance
+        {
+            get
+            {
+                if (instance == null) instance = FindAnyObjectByType<FrameTimeRecorder>(FindObjectsInactive.Include);
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         private readonly float[] window = new float[WindowFrames];
         private readonly float[] sorted = new float[WindowFrames];
