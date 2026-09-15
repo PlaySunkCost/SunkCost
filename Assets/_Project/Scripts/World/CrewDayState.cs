@@ -223,6 +223,14 @@ namespace SunkCost.World
         }
 
         [Server]
+        public void ServerRemoveRider(int clientId)
+        {
+            riders.Remove(clientId);
+            for (int i = placements.Count - 1; i >= 0; i--)
+                if (placements[i].ClientId == clientId) placements.RemoveAt(i);
+        }
+
+        [Server]
         public void ServerClearRiders()
         {
             riders.Clear();
