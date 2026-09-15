@@ -19,7 +19,13 @@ Confirmed directly with the user:
 - Keep and improve the center aiming dot so players can see where grabs and
   throws are aimed (user addition, 15 September 2026).
 - Simple gloved hands and connected forearms, visible to the owner and friends.
-  Small/one-handed items use one hand, heavy/two-handed items use two.
+  **Every held item uses both hands and sits centrally in front of the body**
+  (user revision, 15 September 2026). This supersedes the earlier one-hand pose
+  for small items. Small items remain slot-able; existing heavy-item restrictions
+  and mass-based movement/throw rules remain unchanged.
+- Drop/throw starts in clear space in front, including when looking down. Never
+  materialize a released item inside any player or directly below the releaser.
+  Prevent released cargo from lifting/supporting players (section 6A).
 - Hands visibly grip the item, inspired by the supplied image, but **no floating
   or detached hands**. Do not copy the reference game's art or textures.
 
@@ -47,6 +53,8 @@ HoldPoint, TwoHandHoldPoint or networking components.
 
 CarryableItem already has Grip, TryGetHoldPose, and an owner-written rigid held
 pose. Hands must follow this pose, not replace its physics/ownership system.
+Update hold anchors/offsets to the new centered presentation without changing
+the semantic CarryGrip classification used by inventory and heavy jump rules.
 The current player prefab contains the prototype Body/marker, with no Animator
 or mapped hand rig. GenericCharacter.blend exists but its importer has empty
 human/skeleton mappings; file existence does not prove a usable humanoid rig.
@@ -236,12 +244,15 @@ remove a newer real body rig if main changes before implementation.
 Add a non-networked `ItemHandPose` on each carryable prefab, with right/left
 grip target transforms and wrist orientation, plus a small named finger pose
 (Relaxed, BallSmall, BallLarge initially). Targets are authored in **item-local
-space**, scaled with the item's actual mesh. Existing Grip decides one/two hands;
-blue balls are currently one-handed, purple/black two-handed. Do not use the
-reference screenshot to convert basketballs into two-handed cargo.
+space**, scaled with the item's actual mesh. Every visual pose now uses both
+hands. Existing CarryGrip remains the gameplay classification: blue balls and
+basketballs are still slot-able; purple/black remain heavy TwoHands cargo.
+Do not set every prefab's Grip to TwoHands: that would wrongly block small-item
+storage and jumping. Visual hand count must be independent of inventory rules.
 
-- OneHand: right palm/curled fingers contact the item; left arm rests naturally.
-- TwoHands: palms on left/right support surfaces, fingers wrap, thumbs readable.
+- All held items: centered item anchor, palms on left/right support surfaces,
+  fingers wrap, thumbs readable. Small objects use closer wrist targets; large
+  objects use wider/lower support poses. Never put palms inside the object.
 - Empty: relaxed hands beside/in front of torso without blocking the crosshair.
 - Stowed: no hand contact; use currently Held item only. Silent storage while
   holding another item must not redirect either hand.
@@ -297,18 +308,130 @@ ForwardMarker removal must not remove this HUD dot.
   loading fades and travel/cinematic input locks; preserve the original menu state
   when restoring it. No reticle drawn for remote avatars.
 - Hands should leave the center view readable. The dot indicates camera aim,
-  not a guarantee that a thrown ball reaches that point: gravity, release offset
-  and collisions still apply. Do not add trajectory prediction or aim assistance.
+  not a guarantee that a thrown ball reaches that point: gravity, safe release
+  offset, the downward pitch clamp and collisions still apply. Do not add
+  trajectory prediction or target-seeking assistance.
 
 Verify empty hands and every grip on bright/dark backgrounds at 1280x720 and
 1920x1080, plus window resize. Confirm target highlight, unusable-target neutral
 state, prompt consistency and all hide/restore cases. This is planned HUD polish;
 the existing dot's presence does not count as completion of these checks.
 
+## 6A. Safe forward release and no cargo-standing exploit
+
+User revision, 15 September 2026. Q places an item down in front; left click
+throws it forward. Looking down must not put it under the player, launch the
+player upwards, or leave the player standing on their dropped basketball.
+Interpret 'can't be thrown on a player' as no placement inside/on their body
+and no physical pushing/support from carryables; normal throws toward friends
+and their ability to catch a moving item must continue to work.
+
+### Placement and aiming
+
+- Share a `ReleasePlacement` helper between owner prediction and server checks.
+  Resolve the actual controller capsule, stance and item collision envelope;
+  never hardcode the 0.3 m player radius or assume every future item is a sphere.
+  For the current balls use sphere casts; author a conservative shape/envelope
+  for other prefabs and validate it against all enabled physical colliders.
+- Horizontal forward is camera forward projected onto the ground plane, falling
+  back to player yaw near vertical view. Both Q and throw spawn use this direction.
+  Keep the complete item behind no part of the player's forward clearance plane:
+  minimum horizontal center distance = capsule radius + item forward extent +
+  0.10 m clearance. Also reject overlap with every other player's capsule.
+- Q ignores view pitch: find reachable free space ahead, then sweep down to the
+  nearest supporting surface. Place above it with 0.05 m skin and zero initial
+  launch velocity. Do not require a ground surface: over an edge it drops from
+  the clear forward placement point and falls naturally. Do not snap to a lower
+  floor across an arbitrarily deep shaft. Limit ground search to 1 m initially.
+- Throw direction retains horizontal aim and upward aim; clamp downward launch
+  pitch to 0 degrees (horizontal) initially. Thus looking at your feet throws
+  forward, then gravity pulls the item down. Store min/max pitch as tuning; keep
+  existing upward limit and item mass-dependent launch speed. Do not add a target
+  lock, character hit impulse or a new damage system.
+- Throw starts around chest height, stance-aware, outside the player capsule;
+  floor/ceiling clearance may adjust height within a bounded corridor. All
+  candidate poses remain within 2 m forward of the player, never behind them.
+  If a large item cannot fit within that range, reject rather than extend reach.
+- Check BOTH endpoint overlap and swept path from the player's safe interaction
+  origin to candidate (ignore self, carried item and triggers). A clear endpoint
+  beyond a wall is not sufficient. Do not use an already wall-clipped held pose
+  as the sole sweep origin. Item/geometry overlap queries fail closed on overflow.
+- Search a bounded set of closer/higher forward candidates, then refuse with
+  'Not enough room to drop/throw'. Keep Held state, slot mapping, mass, ownership
+  and hands unchanged on refusal. No fallback to feet, behind the player, through
+  a friend/wall, or to an unchecked current hold pose.
+
+### Prevent pushing/standing on cargo
+
+Use a dedicated collision relationship between player movement capsules and
+carryable physics shapes: players do not physically collide with carryables in
+Free/Released states. This prevents self-launch, standing on balls and pushing
+other players with thrown cargo, including after a ball settles. Carryables still
+collide with world geometry and each other. Catch/grab queries must explicitly
+include their layer; disabling contact must not make objects unselectable.
+Document that players can walk through loose cargo in this prototype. This is
+a scoped solution to the requested interaction, not a blanket removal of all
+player/object collisions: doors, walls and future dedicated hazards remain solid.
+Future corpse/hazard systems need their own collision rules rather than blindly
+inheriting the carryable layer. Do not add a timer that reenables collision while
+a player overlaps a ball; permanent pair/layer policy is more predictable here.
+
+Use scoped project layers or a centralized spawn-safe collision policy after
+auditing existing layers. Apply to every peer and newly spawned/late-joined
+player/carryable; do not edit unrelated layer pairs. Ground probes explicitly
+exclude carryables so the new jumping motor cannot treat an ignored ball as floor.
+Players still obstruct release placement despite not physically colliding with
+loose cargo. Catch assistance and server LOS remain unchanged.
+
+### Release transaction and network ordering
+
+Existing ServerRelease changes state before the owner computes a drop position.
+Replace this with a versioned release transaction: server validates sender,
+Held state, current motion version and a bounded proposed pose/direction against
+its observed player and geometry before accepting. No client writes SyncVars.
+Use an owner confirmation phase if local geometry has changed: while awaiting
+confirmation keep item Held and reserve that release serial; owner validates
+the approved pose locally and confirms or cancels. Server rechecks before commit.
+Expire pending requests after 1 s (tunable), refusing safely with item still Held.
+Commit Held->Released, slot clearing and mass update together, only on acceptance.
+
+Deliver approved pose/direction/version to the existing releasing writer and
+wait for matching replicated state just as TryApplyPendingRelease already does.
+Apply placement before enabling colliders/gravity and impulse, exactly once.
+If geometry changes after commit, the current writer suppresses activation and
+reports failure for that version; server restores Held/slot atomically while the
+same request is still current. Never rollback a later catch/stow/disconnect.
+Keep one in-flight release per player; reject equip/grab while reserved. Preserve
+the existing Released rest/handoff and moving-catch motionVersion protections.
+Human netcode review must inspect this rollback path and RPC/SyncVar ordering.
+
+Do not apply deliberate-drop placement to disconnect recovery without review:
+disconnect has no owner to confirm and must retain server ownership/drop recovery.
+Add a server-only safe recovery search separately if its current points overlap
+world geometry; no human/disconnected inventory may vanish on failed placement.
+
+### Extra files and validation
+
+Add `Scripts/Interaction/ReleasePlacement.cs`, release tuning in shared settings,
+and `Scripts/Interaction/CarryableCollisionPolicy.cs` if layer setup alone is not
+sufficient. Update CarryableItem, PlayerInventory, controller centered anchors,
+item hold offsets, setup/validator and relevant ProjectSettings collision layers.
+They are behavioral changes, not merely read-only detail additions.
+
+Test Q/click looking level, straight down and up; standing/crouched/airborne;
+every item size; wall/corner/low ceiling; sloped floor/stairs/ledge; friend directly
+ahead; simultaneous release/catch; delayed acceptance and refusal; disconnect
+in every pending phase. Repeat after Free handoff. Player height must not jump
+or become supported by cargo, even when walking over a settled ball. Verify
+catching a friend's moving throw still works. Check remote and host observers,
+slot/overflow preservation, no duplicate impulses and bounded request retries.
+
 ## 7. Integration boundaries
 
 - Preserve current weight/overload, fifth pickup, hands-only silent storage,
-  reach/LOS, holding, catching, monitor controls and world travel.
+  reach/LOS, single-writer holding, catching, monitor controls and world travel.
+  Centered pose, forward release and cargo/player contact are deliberate changes
+  specified above, not regressions to preserve from the old prototype.
 - The separate ship-departure plan is **not implemented on this main**. Define
   a small movement lock interface now so future travel can block Jump/Crouch/
   Move without blocking scripted following or permitted look; don't implement
@@ -338,7 +461,7 @@ Paths under `Assets/_Project/` unless stated otherwise.
 | Scripts/Player/PlayerHudUI.cs | Improve existing center dot, shared prompt/highlight eligibility and visibility gates |
 | Scripts/Player/ArmPoseSolver.cs | Small two-segment solver; no item/physics writes |
 | Scripts/Interaction/ItemHandPose.cs | Prefab-local grip targets and finger-pose settings |
-| Scripts/Interaction/CarryableItem.cs / PlayerInventory.cs | Read-only held-state notifications/eye integration if needed; preserve ownership |
+| Scripts/Interaction/CarryableItem.cs / PlayerInventory.cs | Centered hold, validated release transaction and held-state notifications; preserve single-writer ownership |
 | Editor/Prototype/PlayerMovementHandsSetup.cs | Targeted repeatable setup and project-owned glove/arm asset generation |
 | Editor/Prototype/PlayerMovementHandsChecks.cs | Math/clearance/asset invariants |
 | Editor/Prototype/PlayerMovementHandsRuntimeChecks.cs | Real-input and separate-client checks |
@@ -363,7 +486,9 @@ Preserve other uncommitted documents and the unrelated SteamManager meta file.
 3. Add safe crouch dimensions/camera and stance networking; test low passages
    with a separate client before spending time polishing the hands.
 4. Remove ForwardMarker via targeted setup; add arm/glove geometry and item
-   targets. Verify one/two-hand poses against every current prefab.
+   targets. Verify centered two-hand poses against every current prefab without
+   changing the small/heavy inventory classifications. Implement section 6A
+   release placement and collision policy with separate-client checks.
 5. Add lifecycle/travel/menu integration and regression tests. Update docs with
    actual results and pending Steam/visual review, not expected results as passes.
 6. When implementation is requested, commit/push/PR with teammate network review.
@@ -381,10 +506,10 @@ Preserve other uncommitted documents and the unrelated SteamManager meta file.
 | Menu/focus while airborne | Falls/lands safely, no input replay or stuck camera |
 | Remote stance / late join | Correct capsule/body/eye and hands from current persistent state |
 | Stance latency/refusal | No standing through ceiling; stale ack ignored, bounded retries, no frame RPC spam |
-| All item grips, both views | Correct hand count/contact, connected arms, marker absent, no stretched elbows |
+| All item grips, both views | Both hands on every centered held item, unchanged slot/heavy classification, connected arms, marker absent |
 | Center aiming dot | One centered outlined dot; correct usable-target highlight, contrast, resolution scaling and hide/restore behavior |
 | Equip/stow/throw/moving catch | Correct target switching, no hand chasing released item, sole item writer retained |
-| Crouch with heavy near floor/wall | Item/arms/camera do not clip catastrophically; drop/throw collision behavior remains safe |
+| Forward release / crouch with heavy near floor/wall | Clear forward placement or safe refusal, no underfoot release or standing/pushing on cargo; section 6A matrix passes |
 | Repeated ship world transfers / disconnect / re-host | Slots/weight/stance recover, no stale pose or buffered jump; existing travel regressions pass |
 | Four players / Steam two machines | Everyone sees stance and held hands; record revision/roles/RTT and actual results |
 | Setup twice + prefab reopen | Same assets/GUIDs, no ForwardMarker or duplicate limbs |
