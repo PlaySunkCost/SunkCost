@@ -33,12 +33,38 @@ namespace SunkCost.Player
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null && controller.CurrentButton != null) return $"Press E to sail to {controller.CurrentButton.Label}";
+                if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
                 if (!inventory.CanStoreOrHold(target)) return "Hands full";
                 if (inventory.HoldingOverflow) return $"Press E to store {name}";
                 return target.State == ItemState.Released ? $"Hold E to catch {name}" : $"Press E to grab {name}";
             }
+        }
+
+        // The deck cabin's button and the car's panel: what E would do, or why not.
+        private string CabinPrompt()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (controller.CurrentCabinControl == CabinControl.DeckCabin)
+            {
+                if (day == null || day.World != SunkCost.World.WorldId.Sea) return "Not at sea";
+                if (day.Riding) return day.CabinRide.Direction == SunkCost.World.RideDirection.Down ? "Going down…" : "Coming up…";
+                if (day.Elevator.State != SunkCost.Diving.ElevatorState.AtTop) return "Cabin below";
+                return "Press E to descend";
+            }
+            if (day == null) return string.Empty;
+            if (day.Riding) return "Cabin moving";
+            if (day.Elevator.State != SunkCost.Diving.ElevatorState.AtBottom) return "Cabin moving";
+            return "Press E to surface";
+        }
+
+        private bool CabinUsable()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null || day.Riding) return false;
+            if (controller.CurrentCabinControl == CabinControl.DeckCabin) return day.World == SunkCost.World.WorldId.Sea && day.Elevator.State == SunkCost.Diving.ElevatorState.AtTop;
+            return day.Elevator.State == SunkCost.Diving.ElevatorState.AtBottom;
         }
 
         private void Awake()
@@ -159,6 +185,7 @@ namespace SunkCost.Player
             CarryableItem target = controller.CurrentTarget;
             if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
             else if (controller.CurrentButton != null) usable = SunkCost.World.CrewDayState.Instance != null && !SunkCost.World.CrewDayState.Instance.Travelling && !SunkCost.World.CrewDayState.Instance.Sailing;
+            else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             Color previous = GUI.color;
             if (outline > 0f)
             {

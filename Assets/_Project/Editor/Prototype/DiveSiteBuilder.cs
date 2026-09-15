@@ -19,7 +19,7 @@ namespace SunkCost.Sites
         public const string VolumeProfilePath = "Assets/_Project/Settings/Prototype/DiveSite01Volume.asset";
         public const string DeepLayerName = "DiveSiteDeep";
         private const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
-        private const string GlassMaterialPath = MaterialPath + "/DiveSiteGlass.mat";
+        public const string GlassMaterialPath = MaterialPath + "/DiveSiteGlass.mat";
 
         private const float PlatformSize = 20f;
         private const float GuideCableRadius = 0.06f;
@@ -90,7 +90,7 @@ namespace SunkCost.Sites
             CreateGuideShaft(anchorTop, anchorBottom, accentMaterial);
             ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings);
             CreateShaftGate(anchorBottom, elevatorController, wallMaterial, settings);
-            CreateUnderwaterVolume();
+            CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
@@ -301,6 +301,9 @@ namespace SunkCost.Sites
             cable.transform.rotation = Quaternion.FromToRotation(Vector3.up, (bottom - top).normalized);
             cable.transform.localScale = new Vector3(GuideCableRadius * 2f, length / 2f, GuideCableRadius * 2f);
             cable.GetComponent<Renderer>().sharedMaterial = cableMaterial;
+            // A guide, not a pole: it runs through the middle of the car, where a rider
+            // may stand; with a collider the car would descend without them.
+            Object.DestroyImmediate(cable.GetComponent<Collider>());
         }
 
         private static Transform CreateSeafloor(Material floor, Material wall, float depth, int deepLayer, DiveSiteSettings settings)
@@ -404,7 +407,27 @@ namespace SunkCost.Sites
 
         // Optional: nudges the scene's global look toward teal with slightly lifted
         // blacks, to help sell "underwater" beyond raw fog/ambient. Data-only — no script.
-        private static void CreateUnderwaterVolume()
+        public const string UnderwaterVolumeName = "Underwater Volume";
+
+        // Local, not global: the site is loaded on the host's machine while the host
+        // stands on the deck at sea (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section
+        // 6.3), and a global volume would grade the deck underwater. The box covers
+        // the shaft and the seafloor from just under the surface platform down.
+        public static void ShapeUnderwaterVolume(GameObject volumeObject, DiveSiteSettings settings)
+        {
+            Volume volume = volumeObject.GetComponent<Volume>();
+            if (volume != null) { volume.isGlobal = false; volume.blendDistance = 4f; }
+            BoxCollider box = volumeObject.GetComponent<BoxCollider>();
+            if (box == null) box = volumeObject.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            float depth = settings.ShaftDepthMeters + 20f;
+            float width = settings.SeafloorSizeMeters * 1.5f;
+            volumeObject.transform.position = Vector3.zero;
+            box.center = new Vector3(0f, -1f - depth / 2f, 0f);
+            box.size = new Vector3(width, depth, width);
+        }
+
+        private static void CreateUnderwaterVolume(DiveSiteSettings settings)
         {
             VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(VolumeProfilePath);
             if (profile == null)
@@ -439,13 +462,13 @@ namespace SunkCost.Sites
 
             EditorUtility.SetDirty(profile);
 
-            GameObject volumeObject = new("Underwater Volume");
+            GameObject volumeObject = new(UnderwaterVolumeName);
             Volume volume = volumeObject.AddComponent<Volume>();
-            volume.isGlobal = true;
             volume.profile = profile;
+            ShapeUnderwaterVolume(volumeObject, settings);
         }
 
-        private static Material GetOrCreateGlassMaterial()
+        public static Material GetOrCreateGlassMaterial()
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(GlassMaterialPath);
             if (material != null)

@@ -32,10 +32,23 @@ namespace SunkCost.Diving
 
         private void HandleStateChanged(ElevatorState _) => Apply();
 
+        // The gate sits across the shaft mouth at the landing's ceiling. It must be
+        // out of the way while the car itself occupies it, not only once the car has
+        // stopped: riders inside a car passing through it would otherwise be held on
+        // it and dropped (cabin ride card, 15 September 2026). Progress is sampled
+        // every frame because a driven car changes it without a state change.
+        private const float CarAtGateProgress = 0.9f;
+
+        private void Update() => Apply();
+
         private void Apply()
         {
-            if (gateCollider != null)
-                gateCollider.enabled = controller == null || controller.State != ElevatorState.AtBottom;
+            if (gateCollider == null) return;
+            bool open = controller == null || controller.State == ElevatorState.AtBottom || controller.Progress >= CarAtGateProgress;
+            if (gateCollider.enabled == open) gateCollider.enabled = !open;
+            // The plug is drawn only while it blocks; open, it would sit inside the car.
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
+                if (renderer.enabled == open) renderer.enabled = !open;
         }
     }
 }

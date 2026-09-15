@@ -18,7 +18,10 @@ namespace SunkCost.World
         [Tooltip("Seconds a refusal (who is missing) stays on the monitor or cabin panel.")]
         [SerializeField] private float refusalDisplaySeconds = 3f;
         [Tooltip("World position of the ship in ShipAtSea; the site sits at the origin and both are loaded during a day.")]
-        [SerializeField] private Vector3 shipAtSeaOrigin = new(0f, 0f, 500f);
+        // Beyond the reach of ShipAtSea's 2 km sea plane and its fog: the site sits at
+        // the world origin and both are loaded on the host during a dive (Dan, 15
+        // September 2026: the plane read as "water rising" through the shaft).
+        [SerializeField] private Vector3 shipAtSeaOrigin = new(0f, 0f, 3000f);
         [SerializeField] private int daysPerCycle = 3;
         [Tooltip("Fallback if the parent switch pops on Steam: riders stand still for the ride.")]
         [SerializeField] private bool lockRidersDuringRide;
@@ -36,6 +39,14 @@ namespace SunkCost.World
         [SerializeField] private float gangwayLowerSeconds = 0.8f;
         [Tooltip("Seconds the server waits for every passenger to acknowledge the lock before cancelling.")]
         [SerializeField] private float prepareTimeoutSeconds = 10f;
+        [Header("Cabin ride (plan sections 5.3, 5.4)")]
+        [Tooltip("Seconds the deck cabin's doors take to close before the suit fade, and to open on arrival.")]
+        [SerializeField] private float cabinSealSeconds = 1.5f;
+        [Tooltip("Seconds of the 'putting on the suit' fade to black going down, and of the fade in inside the car.")]
+        [SerializeField] private float suitFadeSeconds = 3f;
+        [Tooltip("The car's own seal and travel times when its controller is not loaded on the server (DiveSiteSettings normally supplies them).")]
+        [SerializeField] private float carSealSecondsFallback = 1.5f;
+        [SerializeField] private float carTravelSecondsFallback = 15f;
 
         public float SailingFadeSeconds => sailingFadeSeconds;
         public float ArrivalTimeoutSeconds => arrivalTimeoutSeconds;
@@ -51,13 +62,18 @@ namespace SunkCost.World
         public float DepartureFadeSeconds => departureFadeSeconds;
         public float GangwayLowerSeconds => gangwayLowerSeconds;
         public float PrepareTimeoutSeconds => prepareTimeoutSeconds;
+        public float CabinSealSeconds => cabinSealSeconds;
+        public float SuitFadeSeconds => suitFadeSeconds;
+        public float CarSealSecondsFallback => carSealSecondsFallback;
+        public float CarTravelSecondsFallback => carTravelSecondsFallback;
 
         public bool IsValid =>
             sailingFadeSeconds >= 0f && arrivalTimeoutSeconds > 0f && unparentTimeoutSeconds > 0f &&
             syncFlushTicks >= 1 && refusalDisplaySeconds >= 0f && daysPerCycle >= 1 &&
             float.IsFinite(shipAtSeaOrigin.x) && float.IsFinite(shipAtSeaOrigin.y) && float.IsFinite(shipAtSeaOrigin.z) &&
             gangwayRaiseSeconds >= 0f && departureSeconds > 0f && float.IsFinite(departureDistanceMeters) && departureDistanceMeters > 0f &&
-            departureFadeSeconds >= 0f && gangwayLowerSeconds >= 0f && prepareTimeoutSeconds > 0f;
+            departureFadeSeconds >= 0f && gangwayLowerSeconds >= 0f && prepareTimeoutSeconds > 0f &&
+            cabinSealSeconds >= 0f && suitFadeSeconds >= 0f && carSealSecondsFallback >= 0f && carTravelSecondsFallback > 0f;
 
         private static WorldLoopSettings fallback;
 

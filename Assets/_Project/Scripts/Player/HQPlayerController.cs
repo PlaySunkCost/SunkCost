@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;
 
 namespace SunkCost.Player
 {
+    public enum CabinControl : byte { None, DeckCabin, Car }
+
     // Look, move, jump, crouch and input only. Every item request goes through
     // PlayerInventory, which owns the RPCs and the server decisions; the stance
     // goes through PlayerStance. The motor (gravity, jump, one Move call) runs
@@ -80,6 +82,9 @@ namespace SunkCost.Player
         // The carryable under the crosshair within reach this frame, owner only.
         public CarryableItem CurrentTarget { get; private set; }
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
+        // The cabin control under the crosshair within reach: the deck cabin's
+        // button on the ship or the seafloor car's panel (owner only).
+        public CabinControl CurrentCabinControl { get; private set; }
         // Riding a departing ship: look works, walking and items do not (the rider
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
@@ -188,6 +193,7 @@ namespace SunkCost.Player
             {
                 CurrentTarget = null;
                 CurrentButton = null;
+                CurrentCabinControl = CabinControl.None;
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
@@ -198,6 +204,7 @@ namespace SunkCost.Player
                 // Nothing buffered survives the trip: a fresh press is needed after the unlock.
                 CurrentTarget = null;
                 CurrentButton = null;
+                CurrentCabinControl = CabinControl.None;
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
@@ -215,6 +222,7 @@ namespace SunkCost.Player
             {
                 CurrentTarget = null;
                 CurrentButton = null;
+                CurrentCabinControl = CabinControl.None;
                 grabConsumed = true;
                 return;
             }
@@ -240,6 +248,14 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestSail(CurrentButton.Destination);
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship == null) { }
+                else if (CurrentCabinControl == CabinControl.DeckCabin) ship.RequestCabin();
+                else ship.RequestCar();
             }
             else if (keys.qKey.wasPressedThisFrame)
                 inventory.RequestDrop();
@@ -416,6 +432,7 @@ namespace SunkCost.Player
             lastFlags = CollisionFlags.None;
             CurrentTarget = null;
             CurrentButton = null;
+            CurrentCabinControl = CabinControl.None;
         }
 
         // Continuous owner-side placement while riding: no teleport flag, so the
@@ -455,7 +472,15 @@ namespace SunkCost.Player
             CurrentTarget = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
-            CurrentButton = CurrentTarget == null ? InteractionTargeting.FindButton(eye.position, eye.forward, transform, interactReach) : null;
+            CurrentButton = null;
+            CurrentCabinControl = CabinControl.None;
+            if (CurrentTarget != null) return;
+            Transform pressed = InteractionTargeting.FindPressable(eye.position, eye.forward, transform, interactReach);
+            if (pressed == null) return;
+            CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
+            if (CurrentButton != null) return;
+            if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
+            else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }
 
         private void SetLocalPresentation(bool active)

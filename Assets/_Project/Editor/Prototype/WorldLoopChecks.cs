@@ -47,8 +47,9 @@ namespace SunkCost.Editor.Prototype
             {
                 if (!settings.IsValid) errors.Add("WorldLoopSettings has an invalid value.");
                 if (settings.SyncFlushTicks < 1) errors.Add("syncFlushTicks must be at least 1 (contract section 6).");
-                if (Mathf.Abs(settings.ShipAtSeaOrigin.z) < 200f && Mathf.Abs(settings.ShipAtSeaOrigin.x) < 200f)
-                    errors.Add("shipAtSeaOrigin must be far from the site at the origin (both are loaded during a day).");
+                // The sea plane is 2 km wide (ShipStubBuilder) and the site sits at the origin.
+                if (Mathf.Abs(settings.ShipAtSeaOrigin.z) < 1200f && Mathf.Abs(settings.ShipAtSeaOrigin.x) < 1200f)
+                    errors.Add("shipAtSeaOrigin must be beyond the sea plane's reach of the site at the origin (both are loaded during a dive).");
             }
             WorldLoopSettings fallback = WorldLoopSettings.Resolve(null);
             if (fallback == null || !fallback.IsValid) errors.Add("WorldLoopSettings fallback is invalid.");

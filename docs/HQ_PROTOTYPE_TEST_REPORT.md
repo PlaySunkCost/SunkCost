@@ -1,5 +1,55 @@
 # HQ prototype verification report
 
+## Deck cabin ride branch — 15 September 2026
+
+Tested `dan/deck-cabin` based on `1fa0621` (the camera-wall merge), Unity
+6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one headless
+guest (Local build made from the same tree), one machine, RTT ≈ 0.
+`Sunk Cost > Prototype > Run deck cabin ride matrix` runs the rows, log
+`Temp/deck-cabin-matrix.log` (a line per second during every ride: stage, car
+state and position, the rider's car-frame position, lock, grounded, inside);
+captures in `Logs/deck-cabin-*.png`. These results do not certify Steam.
+
+- Pure / asset: HQ, ShipAtSea and DiveSite01 validators and the world-loop
+  checks pass; `Apply deck cabin ride setup` run twice reports no change the
+  second time (local underwater volume, guide cable collider off, the deck
+  cabin's glass and car glass, the car's cabin light).
+- Play Mode, host rows (`MATRIX_PASS`): R0 at HQ the cabin refuses ("Not at
+  sea"); sailed to sea, deck doors open, panel "Step in, press E to descend".
+  R1 refused from outside the cabin ("Step inside the cabin first") and the
+  car button from the deck ("Cabin is up"). R2 down: doors, the suit fade
+  black, the car moved with the rider inside, the rider never left the car or
+  sank into its floor (max 0.00 m), locked exactly through the swap and the
+  fades and free once the car moved (walked 1.0 m inside the descending car),
+  arrived in DiveSite01 inside the car at its bottom position, doors and shaft
+  gate open, listed below, deck doors closed and panel "Cabin below" on the
+  ship. R3 outside the car the button refuses. R4 up: same sampling, back in
+  ShipAtSea standing in the deck cabin, car up, nobody below, deck doors open
+  again, site unloaded from the server once empty. R5 down and up again on a
+  fresh site.
+- Play Mode, guest rows: G0 guest joins at sea; G1 both in the cabin, the host
+  presses, both ride down (guest snapshot: `scene=DiveSite01`, `car=AtBottom`,
+  `ride=Complete`), the guest's copy stands inside the car on the host; G2 the
+  host goes up alone, only the guest below, the site stays loaded, the car
+  goes back down empty for the guest, deck doors closed, the host's press
+  refused "Cabin below"; G3 the guest presses the car button and comes up
+  alone (`scene=ShipAtSea`, unlocked), deck doors open for the arrival, the
+  guest's copy stands in the deck cabin on the host, site unloaded.
+- Found and fixed on the way (all reproduced through the rows): riders left
+  behind by the descending car when standing dead-centre (Idan's guide cable
+  had a collider, top exactly at the car floor); riders held 3.5 m above the
+  seafloor and dropped, and a solid cylinder drawn inside the car at the
+  bottom (the shaft gate plug only opened its collider once the car had
+  stopped, and never hid its mesh — it now opens and hides while the car
+  occupies it); ShipAtSea's 2 km sea plane cutting through the shaft on the
+  host (Dan's "water rising": the at-sea world now sits 3 km out, its sun no
+  longer lights the seafloor layer); an opaque deck cabin (stub material);
+  the bright skybox at 45 m (the camera clears to the fog colour in the dive
+  world); the headlamp staying on after surfacing.
+- Not run: Steam with a separate machine; the water rising and draining
+  (not built); items carried down and up (they travel in the move list as on
+  a sail, not exercised by a row yet); four riders.
+
 ## Camera wall clearance branch — 15 September 2026
 
 Tested `dan/camera-wall` based on `61214e7` (the jump/crouch/hands merge),

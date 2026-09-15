@@ -77,6 +77,15 @@ its doors open. The deck cabin never moves and is never wet: every metre of trav
 and every drop of water lives in the dive scene. There is no way from HQ to the
 seafloor or back; the ship is always in between.
 
+**What is built (15 September 2026, `dan/deck-cabin`, Dan: "start without day
+state, just going up and down as we wish").** The ride above works both ways
+with the seafloor car driven by the server and riders locked for the trip,
+looking around, never walking inside the moving cabin yet. Not built yet, on
+purpose: the all-aboard rule (the deck button takes whoever stands in the
+cabin), once-per-day, the water rising and draining, the air. If someone stays
+below, the car goes back down for them, empty; the monitor will not sail while
+anyone is below.
+
 **A day is one dive.** The day starts when **every living player is in the deck
 cabin** and it departs — the button does nothing with anyone missing, nothing
 overrides this, and the cabin panel names who. Anyone can ride up whenever they
