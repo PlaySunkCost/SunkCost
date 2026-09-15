@@ -364,6 +364,63 @@ namespace SunkCost.Editor.Prototype
             return "requested " + target;
         }
 
+        // ---- the cabin ride (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md sections 5.3, 5.4) ----
+
+        public static string ClientRequestCabin()
+        {
+            SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.World.ShipControls controls = player != null ? player.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (controls == null) return "No local ShipControls";
+            controls.RequestCabin();
+            return "requested cabin";
+        }
+
+        public static string ClientRequestCar()
+        {
+            SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.World.ShipControls controls = player != null ? player.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (controls == null) return "No local ShipControls";
+            controls.RequestCar();
+            return "requested car";
+        }
+
+        // Puts the local player in the middle of the deck cabin of the ship in the
+        // given world, facing its button.
+        public static string MoveLocalIntoDeckCabin(string world)
+        {
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(target);
+            SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            if (ship == null || ship.DeckCabin == null || local == null) return "No ship/cabin/local player";
+            Vector3 spot = ship.DeckCabin.position + Vector3.up * 0.05f;
+            local.TeleportLocal(spot, ship.DeckCabin.eulerAngles.y);
+            return "moved into the deck cabin at " + spot;
+        }
+
+        public static string MoveLocalIntoCar()
+        {
+            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
+            SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            if (car == null || local == null) return "No car/local player";
+            Vector3 spot = car.transform.position + Vector3.up * 0.05f;
+            local.TeleportLocal(spot, car.transform.eulerAngles.y);
+            return "moved into the car at " + spot;
+        }
+
+        public static string RideStatus()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null) return "no day state";
+            SunkCost.World.ShipDepartureRider rider = SunkCost.World.WorldSceneFlow.LocalRider();
+            SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            return $"ride={day.CabinRide.Stage}/{day.CabinRide.Direction}/{day.CabinRide.Serial} car={day.Elevator.State} up={day.Elevator.Upward} carPos={(car == null ? "none" : car.transform.position.ToString("F2"))} carDriven={(car != null && car.Driven)} " +
+                   $"riders=[{string.Join(",", day.Riders)}] below=[{string.Join(",", day.Below)}] placements={day.Placements.Count} " +
+                   $"local=({(local == null ? "none" : local.gameObject.scene.name + " " + local.transform.position.ToString("F2"))}) locked={(rider != null && rider.Locked)} placed={(rider != null && rider.Placed)} " +
+                   $"deckDoors={(flow == null ? -1f : flow.DeckCabinOpenFraction()):0.00} fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.00} refusal='{day.LastRefusal.Text}' failure='{(flow == null ? "" : flow.LastFailure)}'";
+        }
+
         public static string MonitorText()
         {
             SunkCost.World.ShipMonitor monitor = Object.FindAnyObjectByType<SunkCost.World.ShipMonitor>();

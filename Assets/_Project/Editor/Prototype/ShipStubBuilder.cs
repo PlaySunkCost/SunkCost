@@ -50,7 +50,8 @@ namespace SunkCost.Editor.Prototype
             HQPrototypeBuilder.EnsureFolder("Assets/_Project/Prefabs/World");
             Material deck = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipDeck.mat", new Color(0.30f, 0.27f, 0.24f));
             Material rail = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipRail.mat", new Color(0.45f, 0.42f, 0.38f));
-            Material glass = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipCabin.mat", new Color(0.55f, 0.75f, 0.85f));
+            // The same transparent glass as the seafloor car: it is the same cabin (Dan, 15 September 2026).
+            Material glass = SunkCost.Sites.DiveSiteBuilder.GetOrCreateGlassMaterial();
             Material screen = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipScreen.mat", new Color(0.08f, 0.16f, 0.22f));
             Material button = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipButton.mat", new Color(0.9f, 0.75f, 0.2f));
             Material tape = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipTape.mat", new Color(0.85f, 0.65f, 0.1f));
@@ -147,6 +148,10 @@ namespace SunkCost.Editor.Prototype
             light.intensity = 0.9f;
             light.color = new Color(0.8f, 0.85f, 0.95f);
             light.shadows = LightShadows.Soft;
+            // Additive scenes share directional lights: the sea's sun must not reach the
+            // seafloor's own layer while the host has both worlds loaded.
+            int deep = LayerMask.NameToLayer(SunkCost.Sites.DiveSiteBuilder.DeepLayerName);
+            if (deep >= 0) light.cullingMask &= ~(1 << deep);
 
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.25f, 0.28f, 0.32f);

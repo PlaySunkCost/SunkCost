@@ -66,7 +66,12 @@ be read as checklists by other assistants.
    are walked through and never push or lift a player. Walls, corners and low
    ceilings never show what is behind them: the view stays inside the body
    (`Sunk Cost > Prototype > Apply camera clearance setup` after regenerating
-   the player prefab).
+   the player prefab). At sea, step into the glass cabin on the deck and press
+   **E** on its panel: the doors close, the suit goes on, and you ride the same
+   cabin down the shaft to the seafloor. Walk out, look around, walk back in and
+   press **E** on the car's panel to come up; you step out on the deck. Whoever
+   stands in the cabin rides along; friends left below get the empty car sent
+   back to them. The ship will not sail while anyone is down there.
    A held slot item stays assigned to its slot; new grabs fill free slots. When
    the target has no slot (four full slots, or a two-handed heavy ball), grabbing
    it automatically puts away the equipped slot item and holds the new item until

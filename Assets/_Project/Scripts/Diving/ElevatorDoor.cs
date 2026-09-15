@@ -48,6 +48,11 @@ namespace SunkCost.Diving
                 return 1f;
 
             float sealSeconds = Mathf.Max(controller.DoorSealSeconds, 0.0001f);
+            // Driven by the network (WorldSceneFlow): the top of the shaft is not a
+            // landing, riders arrive and leave through the ship's deck cabin, so the
+            // doors stay shut at the top and while sealing for the way down.
+            if (controller.Driven && (controller.State == ElevatorState.AtTop || (controller.State == ElevatorState.Sealing && !controller.Upward)))
+                return 0f;
             switch (controller.State)
             {
                 case ElevatorState.AtTop:

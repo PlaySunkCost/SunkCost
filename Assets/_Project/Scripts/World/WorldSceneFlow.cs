@@ -20,7 +20,7 @@ namespace SunkCost.World
     // writer of the trip state on CrewDayState and the only orchestrator; client
     // side it answers each stage for its own player (lock, black, placed). It
     // decides nothing about gameplay: CrewDayState (and the monitor) ask.
-    public sealed class WorldSceneFlow : MonoBehaviour
+    public sealed partial class WorldSceneFlow : MonoBehaviour
     {
         [SerializeField] private WorldLoopSettings settings;
         [SerializeField] private NetworkObject dayStatePrefab;
@@ -167,6 +167,8 @@ namespace SunkCost.World
             else if (args.ConnectionState == LocalConnectionState.Stopped)
             {
                 if (trip != null) { StopCoroutine(trip); trip = null; }
+                if (ride != null) { StopCoroutine(ride); ride = null; }
+                riding = false;
                 ResetTrip();
                 ScheduleCleanup();
             }
@@ -241,6 +243,8 @@ namespace SunkCost.World
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
             if (transitioning || dayState.Travelling) { why = "Ship travelling; try again on arrival"; return false; }
+            if (riding) { why = "Cabin in use"; return false; }
+            if (dayState.Below.Count > 0 || dayState.CabinAway) { why = "Divers below"; return false; }
             if (!dayState.ServerCanSail(to, out why)) return false;
             ShipParts fromShip = ShipParts.InWorld(currentWorld);
             if (fromShip == null) { why = "No ship in " + WorldScenes.Name(currentWorld) + "."; return false; }
@@ -455,11 +459,13 @@ namespace SunkCost.World
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             cohort.Remove(conn.ClientId);
             prepared.Remove(conn.ClientId); black.Remove(conn.ClientId); arrived.Remove(conn.ClientId);
+            if (dayState != null && networkManager.IsServerStarted) dayState.ServerRemoveEverywhere(conn.ClientId);
         }
 
         private void OnDepartureAck(NetworkConnection conn, DepartureAckBroadcast msg, Channel channel)
         {
             if (conn == null || !conn.IsActive || !conn.IsAuthenticated || dayState == null) return;
+            if (riding && msg.Serial == dayState.CabinRide.Serial) { OnRideAck(conn, msg); return; }
             ShipDepartureState state = dayState.Departure;
             if (msg.Serial != state.Serial || !cohort.Contains(conn.ClientId)) return; // stale, foreign or not on this trip
             switch (msg.Kind)
@@ -551,9 +557,9 @@ namespace SunkCost.World
 
         private void OnDayStateInstance(CrewDayState state)
         {
-            if (dayState != null) dayState.DepartureChanged -= OnDepartureChanged;
+            if (dayState != null) { dayState.DepartureChanged -= OnDepartureChanged; dayState.CabinRideChanged -= OnCabinRideChanged; }
             dayState = state;
-            if (dayState != null) dayState.DepartureChanged += OnDepartureChanged;
+            if (dayState != null) { dayState.DepartureChanged += OnDepartureChanged; dayState.CabinRideChanged += OnCabinRideChanged; }
         }
 
         // Each stage on this peer, once (the host's client pass; a pure client's
@@ -659,6 +665,7 @@ namespace SunkCost.World
             // pass; placing twice would take the ship-relative offset of an already
             // placed player. Only the client pass places.
             if (args.QueueData.AsServer) return;
+            if (dayState.CabinRide.Stage == CabinRideStage.Loading) { OnRideLoadEnd(args); return; }
             ShipDepartureState state = dayState.Departure;
             if (state.Stage != DepartureStage.Loading) return;
             bool destinationLoaded = false;

@@ -1,0 +1,615 @@
+using System.Collections;
+using System.Collections.Generic;
+using FishNet.Connection;
+using FishNet.Managing.Scened;
+using SunkCost.Diving;
+using SunkCost.Player;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace SunkCost.World
+{
+    // The cabin ride (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md sections 5.3, 5.4 and
+    // 6, without the day rules: Dan, 15 September 2026, "start without day state,
+    // just going up and down as we wish"). Down: E on the deck cabin's button at
+    // sea takes everyone standing in the cabin — doors close, the suit fade, the
+    // riders wake inside the seafloor car at the top of its shaft, the car
+    // descends, doors open. Up: E on the car's panel at the bottom takes everyone
+    // inside the car — doors close, the car climbs, at the top the riders are
+    // moved into the deck cabin (same spot, dry, doors still shut) and its doors
+    // open. The car then goes back down empty if anyone is still below.
+    //
+    // Server: the only writer of CabinRideState, ElevatorPhase and the rosters on
+    // CrewDayState, and the only orchestrator; the same cohort/ack machinery as
+    // the ship trip. Every peer: drives its copy of the car from ElevatorPhase and
+    // sweeps the deck cabin's doors from the ride state. Owner clients: lock at
+    // the captured cabin-frame spot, follow the moving car, place themselves in
+    // the other cabin after the scene move.
+    public sealed partial class WorldSceneFlow
+    {
+        private Coroutine ride;
+        private bool riding; // server view
+        private ElevatorController cachedCar;
+        private float deckDoorHalfAngle = float.NaN;
+
+        public bool Riding => riding;
+
+        // ---- shared -----------------------------------------------------------------
+
+        public static ElevatorController FindCar()
+        {
+            Scene dive = WorldScenes.Scene(WorldId.Dive);
+            if (!dive.IsValid() || !dive.isLoaded) return null;
+            foreach (GameObject root in dive.GetRootGameObjects())
+            {
+                ElevatorController car = root.GetComponentInChildren<ElevatorController>(true);
+                if (car != null) return car;
+            }
+            return null;
+        }
+
+        private ElevatorController Car()
+        {
+            if (cachedCar == null || !cachedCar.gameObject.scene.isLoaded) cachedCar = FindCar();
+            return cachedCar;
+        }
+
+        // The frame a rider of this ride stands in, decided by the scene its player
+        // object is in: the deck cabin on the ship, the car at the seafloor.
+        public static CabinFrame RideFrameFor(CabinRideState state, Scene playerScene)
+        {
+            if (playerScene == WorldScenes.Scene(WorldId.Dive)) return CabinFrame.Car(FindCar());
+            return CabinFrame.DeckCabin(ShipParts.InWorld(WorldId.Sea));
+        }
+
+        private float ElapsedSince(uint startTick)
+        {
+            if (networkManager == null || networkManager.TimeManager == null) return 0f;
+            uint now = networkManager.TimeManager.Tick;
+            return now <= startTick ? 0f : (float)networkManager.TimeManager.TicksToTime(now - startTick);
+        }
+
+        private float CarSealSeconds => Car() != null ? Car().DoorSealSeconds : Settings.CarSealSecondsFallback;
+        private float CarTravelSeconds => Car() != null ? Car().TravelSecondsOneWay : Settings.CarTravelSecondsFallback;
+
+        private void Update()
+        {
+            if (dayState == null || networkManager == null) return;
+            if (networkManager.IsServerStarted) ServerTickElevator();
+            DriveCar();
+            PresentDeckCabin();
+            PresentSky();
+        }
+
+        // Under water there is no sky: while the local player is in the dive world
+        // its camera clears to the fog colour instead of the skybox (fog never
+        // touches a skybox, so the seafloor would otherwise sit under a bright
+        // blue sky). The world scenes' own fog and ambient come with the active
+        // scene as before.
+        private void PresentSky()
+        {
+            HQPlayerController local = LocalPlayer();
+            Camera camera = local != null ? local.PlayerCamera : null;
+            if (camera == null) return;
+            bool underWater = local.gameObject.scene == WorldScenes.Scene(WorldId.Dive);
+            CameraClearFlags flags = underWater ? CameraClearFlags.SolidColor : CameraClearFlags.Skybox;
+            if (camera.clearFlags != flags) camera.clearFlags = flags;
+            if (underWater && camera.backgroundColor != RenderSettings.fogColor) camera.backgroundColor = RenderSettings.fogColor;
+            // The headlamp belongs to the dive: on below, off again on the deck
+            // (DiveSiteHeadlampActivator only ever switches it on, for a player that
+            // spawns at the site).
+            local.SetHeadlampEnabled(underWater);
+        }
+
+        // Riders are locked only across the scene swaps and the fades; once the
+        // ride is under way they walk inside the moving car (design: "you can walk
+        // around inside the cabin the whole way").
+        public static bool RidersLockedDuring(CabinRideState state)
+        {
+            if (!state.Active) return false;
+            if (state.Direction == RideDirection.Down) return state.Stage != CabinRideStage.Riding;
+            return state.Stage == CabinRideStage.Preparing || state.Stage >= CabinRideStage.Loading;
+        }
+
+        // Every peer with the site loaded moves its car from the authoritative phase;
+        // the local player inside it is carried along (the CharacterController does
+        // not follow a moving floor on its own).
+        private void DriveCar()
+        {
+            ElevatorController car = Car();
+            if (car == null) return;
+            ElevatorPhase phase = dayState.Elevator;
+            Vector3 before = car.transform.position;
+            car.SetDrivenPhase(phase.State, phase.Upward, ElapsedSince(phase.StartTick));
+            Vector3 delta = car.transform.position - before;
+            if (delta == Vector3.zero) return;
+            HQPlayerController local = LocalPlayer();
+            if (local == null || local.TravelLocked || local.gameObject.scene != car.gameObject.scene) return;
+            if (car.IsInsideCar(local.transform.position + Vector3.up * 0.5f)) local.AddExternalMotion(delta);
+        }
+
+        // The deck cabin's doors on the ship at sea: open while the car is up and
+        // idle, closing as a ride seals or the car leaves, opening as riders arrive.
+        private void PresentDeckCabin()
+        {
+            PresentDeckCabin(ShipParts.InWorld(WorldId.Sea), DeckCabinOpenFraction());
+            PresentDeckCabin(ShipParts.InWorld(WorldId.HQ), 1f); // docked: a cabin that never leaves
+        }
+
+        private void PresentDeckCabin(ShipParts ship, float open)
+        {
+            if (ship == null) return;
+            Transform doorL = ship.DeckCabinDoorL, doorR = ship.DeckCabinDoorR;
+            if (doorL == null || doorR == null) return;
+            if (float.IsNaN(deckDoorHalfAngle)) deckDoorHalfAngle = Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)); // parked open by the builder
+            // The car itself is only on the deck while it is up: its doors and its own
+            // glass show then; away, the glass housing stands empty and see-through.
+            bool present = DeckCabinCarPresent(ship);
+            SetVisible(doorL, present);
+            SetVisible(doorR, present);
+            SetVisible(ship.DeckCabinCarGlass, present);
+            doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
+            doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
+            TextMesh panel = ship.DeckCabinPanel;
+            if (panel != null)
+            {
+                string text = DeckCabinText();
+                if (panel.text != text) panel.text = text;
+            }
+        }
+
+        private static void SetVisible(Transform part, bool visible)
+        {
+            if (part == null) return;
+            foreach (Renderer renderer in part.GetComponentsInChildren<Renderer>(true))
+                if (renderer.enabled != visible) renderer.enabled = visible;
+        }
+
+        // The docked ship's cabin never leaves. At sea the car is on the deck while
+        // it is up, while the deck doors are sealing for a ride down, and once it
+        // is back up with riders arriving.
+        private bool DeckCabinCarPresent(ShipParts ship)
+        {
+            if (dayState == null || ship != ShipParts.InWorld(WorldId.Sea)) return true;
+            CabinRideState state = dayState.CabinRide;
+            if (state.Active)
+                return state.Direction == RideDirection.Down ? state.Stage <= CabinRideStage.Sealing : state.Stage >= CabinRideStage.Loading;
+            ElevatorPhase car = dayState.Elevator;
+            return car.State == ElevatorState.AtTop || (car.State == ElevatorState.Sealing && !car.Upward);
+        }
+
+        public float DeckCabinOpenFraction()
+        {
+            if (dayState == null) return 1f;
+            CabinRideState state = dayState.CabinRide;
+            float seal = Mathf.Max(Settings.CabinSealSeconds, 0.0001f);
+            if (state.Active)
+            {
+                float t = ElapsedSince(state.StageStartTick);
+                if (state.Direction == RideDirection.Down)
+                    return state.Stage == CabinRideStage.Preparing ? 1f : state.Stage == CabinRideStage.Sealing ? 1f - Mathf.Clamp01(t / seal) : 0f;
+                return state.Stage == CabinRideStage.Arriving ? Mathf.Clamp01(t / seal) : 0f;
+            }
+            ElevatorPhase car = dayState.Elevator;
+            float e = ElapsedSince(car.StartTick);
+            switch (car.State)
+            {
+                case ElevatorState.AtTop: return Mathf.Clamp01(e / seal);
+                case ElevatorState.Sealing: return car.Upward ? 0f : 1f - Mathf.Clamp01(e / seal);
+                default: return 0f;
+            }
+        }
+
+        private string DeckCabinText()
+        {
+            if (dayState == null) return string.Empty;
+            if (Time.unscaledTime - dayState.LastRefusalAt < Settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(dayState.LastRefusal.Text))
+                return dayState.LastRefusal.Text;
+            if (dayState.Riding) return dayState.CabinRide.Direction == RideDirection.Down ? "Going down…" : "Coming up…";
+            if (dayState.Elevator.State != ElevatorState.AtTop) return "Cabin below";
+            return dayState.World == WorldId.Sea ? "Step in, press E to descend" : "Not at sea";
+        }
+
+        // ---- server: the car's clock ---------------------------------------------------
+
+        private void ServerSetElevator(ElevatorState state, bool upward)
+        {
+            float seconds = state == ElevatorState.Sealing ? CarSealSeconds
+                : state == ElevatorState.Descending || state == ElevatorState.Ascending ? CarTravelSeconds : 0f;
+            dayState.ServerSetElevator(new ElevatorPhase
+            {
+                Serial = dayState.Elevator.Serial + 1,
+                State = state,
+                Upward = upward,
+                StartTick = networkManager.TimeManager.Tick,
+                DurationTicks = seconds <= 0f ? 0 : networkManager.TimeManager.TimeToTicks(seconds)
+            });
+        }
+
+        // Timed transitions of the car: the seal resolves into the move, the move
+        // ends at the landing. Requests come from the ride routines only.
+        private void ServerTickElevator()
+        {
+            ElevatorPhase phase = dayState.Elevator;
+            float elapsed = ElapsedSince(phase.StartTick);
+            switch (phase.State)
+            {
+                case ElevatorState.Sealing:
+                    if (elapsed >= CarSealSeconds) ServerSetElevator(phase.Upward ? ElevatorState.Ascending : ElevatorState.Descending, phase.Upward);
+                    break;
+                case ElevatorState.Descending:
+                    if (elapsed >= CarTravelSeconds) ServerSetElevator(ElevatorState.AtBottom, false);
+                    break;
+                case ElevatorState.Ascending:
+                    if (elapsed >= CarTravelSeconds) ServerSetElevator(ElevatorState.AtTop, true);
+                    break;
+            }
+        }
+
+        private IEnumerator WaitForCar(ElevatorState state, float timeoutSeconds)
+        {
+            float deadline = Time.unscaledTime + timeoutSeconds;
+            while (Time.unscaledTime < deadline && dayState.Elevator.State != state) yield return null;
+        }
+
+        // ---- server: requests ------------------------------------------------------------
+
+        private void SetRide(CabinRideStage stage, RideDirection direction, float seconds)
+        {
+            uint ticks = seconds <= 0f ? 0 : networkManager.TimeManager.TimeToTicks(seconds);
+            dayState.ServerSetCabinRide(new CabinRideState
+            {
+                Serial = serial,
+                Stage = stage,
+                Direction = direction,
+                StageStartTick = networkManager.TimeManager.Tick,
+                StageDurationTicks = ticks
+            });
+        }
+
+        private bool ServerRideAllowed(out string why)
+        {
+            why = string.Empty;
+            if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
+            if (dayState == null) { why = "No day state."; return false; }
+            if (transitioning || dayState.Travelling) { why = "Ship travelling"; return false; }
+            if (riding) { why = "Cabin in use"; return false; }
+            CrewSpawner spawner = FindAnyObjectByType<CrewSpawner>();
+            if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
+            return true;
+        }
+
+        // E on the deck cabin's button: everyone standing in the cabin goes down.
+        public bool ServerRequestDive(NetworkConnection sender, out string why)
+        {
+            if (!ServerRideAllowed(out why)) return false;
+            if (currentWorld != WorldId.Sea) { why = "Not at sea"; return false; }
+            ShipParts ship = ShipParts.InWorld(WorldId.Sea);
+            if (ship == null || ship.DeckCabin == null) { why = "No deck cabin."; return false; }
+            HQPlayerController presser = PlayerOf(sender);
+            if (presser == null || presser.gameObject.scene != WorldScenes.Scene(WorldId.Sea) || !ship.IsInDeckCabin(presser.transform.position)) { why = "Step inside the cabin first"; return false; }
+            if (dayState.Elevator.State != ElevatorState.AtTop)
+            {
+                // The car is away. Empty at the bottom with nobody below: call it up.
+                if (dayState.Elevator.State == ElevatorState.AtBottom && dayState.Below.Count == 0) { ServerSetElevator(ElevatorState.Ascending, true); why = "Cabin coming up"; return false; }
+                why = "Cabin below";
+                return false;
+            }
+            var riders = new List<int>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) riders.Add(conn.ClientId);
+            }
+            Debug.Log("Cabin ride: down with " + string.Join(",", riders) + " requested by " + DisplayName(sender) + "\n" + System.Environment.StackTrace);
+            ride = StartCoroutine(DiveRoutine(riders, ship));
+            return true;
+        }
+
+        // E on the car's panel at the bottom: everyone inside the car comes up.
+        public bool ServerRequestSurface(NetworkConnection sender, out string why)
+        {
+            if (!ServerRideAllowed(out why)) return false;
+            if (dayState.Elevator.State != ElevatorState.AtBottom) { why = dayState.Elevator.State == ElevatorState.AtTop ? "Cabin is up" : "Cabin moving"; return false; }
+            ElevatorController car = Car();
+            if (car == null) { why = "No car."; return false; }
+            HQPlayerController presser = PlayerOf(sender);
+            if (presser == null || presser.gameObject.scene != WorldScenes.Scene(WorldId.Dive) || !car.IsInsideCar(presser.transform.position)) { why = "Step inside the cabin first"; return false; }
+            var riders = new List<int>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(player.transform.position)) riders.Add(conn.ClientId);
+            }
+            ride = StartCoroutine(SurfaceRoutine(riders, car));
+            return true;
+        }
+
+        private void ServerCapturePlacements(CabinFrame frame)
+        {
+            foreach (NetworkConnection conn in ActiveCohort())
+            {
+                HQPlayerController player = PlayerOf(conn);
+                if (player == null || !frame.IsValid) continue;
+                dayState.ServerSetPlacement(new RiderPlacement { ClientId = conn.ClientId, Local = frame.ToLocal(player.transform.position), Yaw = frame.ToYaw(player.Yaw) });
+            }
+        }
+
+        private IEnumerator BeginRide(List<int> riders, RideDirection direction)
+        {
+            riding = true;
+            serial++;
+            ResetTrip();
+            lastFailure = string.Empty;
+            foreach (int id in riders) cohort.Add(id);
+            dayState.ServerSetRiders(riders);
+            SetRide(CabinRideStage.Preparing, direction, Settings.PrepareTimeoutSeconds);
+            float deadline = Time.unscaledTime + Settings.PrepareTimeoutSeconds;
+            while (Time.unscaledTime < deadline && !AllAcked(prepared)) yield return null;
+        }
+
+        private IEnumerator CancelRide(RideDirection direction, string why)
+        {
+            dayState.ServerReportRefusal(why);
+            lastFailure = why;
+            SetRide(CabinRideStage.Cancelled, direction, 0f);
+            dayState.ServerClearRiders();
+            ResetTrip();
+            riding = false;
+            ride = null;
+            yield break;
+        }
+
+        private void EndRide(RideDirection direction)
+        {
+            SetRide(CabinRideStage.Complete, direction, 0f);
+            dayState.ServerClearRiders();
+            ResetTrip();
+            riding = false;
+            ride = null;
+        }
+
+        // Down (plan section 5.3, no day begun).
+        private IEnumerator DiveRoutine(List<int> riders, ShipParts ship)
+        {
+            yield return BeginRide(riders, RideDirection.Down);
+            if (!AllAcked(prepared)) { yield return CancelRide(RideDirection.Down, "Not ready: " + Missing(prepared)); yield break; }
+            yield return WaitTicks(Settings.SyncFlushTicks);
+            ServerCapturePlacements(CabinFrame.DeckCabin(ship));
+
+            SetRide(CabinRideStage.Sealing, RideDirection.Down, Settings.CabinSealSeconds);
+            yield return WaitSeconds(Settings.CabinSealSeconds);
+
+            SetRide(CabinRideStage.FadingOut, RideDirection.Down, Settings.SuitFadeSeconds);
+            float deadline = Time.unscaledTime + Settings.SuitFadeSeconds + Settings.ArrivalTimeoutSeconds;
+            while (Time.unscaledTime < deadline && !AllAcked(black)) yield return null;
+            if (!AllAcked(black)) ServerKickUnresponsive(black, "Cabin ride: no black acknowledgement");
+
+            // The site on the server first (fresh when nobody was below), then the car.
+            SetRide(CabinRideStage.Loading, RideDirection.Down, 0f);
+            deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
+            if (!WorldScenes.IsLoaded(WorldId.Dive))
+            {
+                EnsureHolderKeepAlive();
+                networkManager.SceneManager.LoadConnectionScenes(LoadDataFor(WorldId.Dive, null));
+                while (!WorldScenes.IsLoaded(WorldId.Dive) && Time.unscaledTime < deadline) yield return null;
+            }
+            cachedCar = null;
+            ElevatorController car = Car();
+            if (car == null) { yield return CancelRide(RideDirection.Down, "No car in " + WorldScenes.DiveName); yield break; }
+            if (dayState.Elevator.State != ElevatorState.AtTop) ServerSetElevator(ElevatorState.AtTop, true); // a fresh site: the car waits at the top, closed
+            ServerBuildMoveList();
+            Scene destination = WorldScenes.Scene(WorldId.Dive);
+            var conns = ActiveCohort();
+            foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+            EnsureHolderKeepAlive();
+            networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()));
+            while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
+            if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
+            foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, true);
+            networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true));
+
+            // Eyes open inside the car at the top; then the ride itself.
+            SetRide(CabinRideStage.Arriving, RideDirection.Down, Settings.SuitFadeSeconds);
+            ServerCapturePlacements(CabinFrame.Car(car));
+            yield return WaitSeconds(Settings.SuitFadeSeconds);
+            SetRide(CabinRideStage.Riding, RideDirection.Down, CarTravelSeconds); // riders walk in the descending car
+            ServerSetElevator(ElevatorState.Descending, false);
+            yield return WaitForCar(ElevatorState.AtBottom, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
+            EndRide(RideDirection.Down);
+        }
+
+        // Up (plan section 5.4, no day ended).
+        private IEnumerator SurfaceRoutine(List<int> riders, ElevatorController car)
+        {
+            yield return BeginRide(riders, RideDirection.Up);
+            if (!AllAcked(prepared)) { yield return CancelRide(RideDirection.Up, "Not ready: " + Missing(prepared)); yield break; }
+            yield return WaitTicks(Settings.SyncFlushTicks);
+            ServerCapturePlacements(CabinFrame.Car(car));
+
+            SetRide(CabinRideStage.Sealing, RideDirection.Up, CarSealSeconds);
+            ServerSetElevator(ElevatorState.Sealing, true);
+            yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
+            SetRide(CabinRideStage.Riding, RideDirection.Up, CarTravelSeconds);
+            yield return WaitForCar(ElevatorState.AtTop, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
+
+            // Dry, stopped, doors shut: the riders change scene into the deck cabin.
+            SetRide(CabinRideStage.Loading, RideDirection.Up, 0f);
+            ServerCapturePlacements(CabinFrame.Car(car)); // where everyone ended up after walking about
+            float deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
+            ShipParts ship = ShipParts.InWorld(WorldId.Sea);
+            if (ship == null) { yield return CancelRide(RideDirection.Up, "No ship at sea"); yield break; }
+            ServerBuildMoveList();
+            Scene destination = WorldScenes.Scene(WorldId.Sea);
+            var conns = ActiveCohort();
+            foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+            EnsureHolderKeepAlive();
+            networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
+            while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
+            if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
+            foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
+            bool othersBelow = dayState.Below.Count > 0;
+            networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
+            if (!othersBelow) cachedCar = null;
+
+            SetRide(CabinRideStage.Arriving, RideDirection.Up, Settings.CabinSealSeconds);
+            ServerCapturePlacements(CabinFrame.DeckCabin(ship));
+            yield return WaitSeconds(Settings.CabinSealSeconds);
+            EndRide(RideDirection.Up);
+            // Someone is still down there: the car goes back for them, empty.
+            if (othersBelow) ServerSetElevator(ElevatorState.Sealing, false);
+        }
+
+        private void OnRideAck(NetworkConnection conn, DepartureAckBroadcast msg)
+        {
+            CabinRideState state = dayState.CabinRide;
+            if (!cohort.Contains(conn.ClientId)) return;
+            switch (msg.Kind)
+            {
+                case DepartureAckKind.Prepared:
+                    if (state.Stage == CabinRideStage.Preparing && msg.World == state.FromWorld) prepared.Add(conn.ClientId);
+                    break;
+                case DepartureAckKind.Black:
+                    if (state.Stage == CabinRideStage.FadingOut && msg.World == state.FromWorld) black.Add(conn.ClientId);
+                    break;
+                case DepartureAckKind.Arrived:
+                    if (state.Stage == CabinRideStage.Loading && msg.World == state.ToWorld) arrived.Add(conn.ClientId);
+                    break;
+            }
+        }
+
+        // ---- clients --------------------------------------------------------------------
+
+        private bool LocalIsRider(CabinRideState state)
+        {
+            if (!networkManager.ClientManager.Started) return false;
+            return dayState != null && dayState.IsRider(networkManager.ClientManager.Connection.ClientId);
+        }
+
+        private void OnCabinRideChanged(CabinRideState previous, CabinRideState next)
+        {
+            if (!networkManager.ClientManager.Started || ScreenFade.Instance == null) return;
+            ShipDepartureRider rider = LocalRider();
+            switch (next.Stage)
+            {
+                case CabinRideStage.Preparing:
+                    // The rider list and the stage travel in the same tick but may
+                    // apply in either order: lock as soon as this peer is listed.
+                    RunClientStage(LockWhenListed(next));
+                    break;
+                case CabinRideStage.Sealing:
+                    // Going up the doors close with everyone free inside; the spot is
+                    // tracked from here for the swap at the top.
+                    if (next.Direction == RideDirection.Up && rider != null && rider.Serial == next.Serial) { rider.Unlock(); RunClientStage(TrackInCar(next)); }
+                    break;
+                case CabinRideStage.Riding:
+                    if (next.Direction == RideDirection.Down && rider != null && rider.Locked && rider.Serial == next.Serial) RunClientStage(UnlockWhenClear(rider));
+                    break;
+                case CabinRideStage.FadingOut:
+                    if (!LocalIsRider(next)) return;
+                    ScreenFade.Instance.FadeOut(Settings.SuitFadeSeconds, "Putting on the suit…");
+                    RunClientStage(WaitBlackThenAckRide(next));
+                    break;
+                case CabinRideStage.Loading:
+                    if (next.Direction == RideDirection.Down && LocalIsRider(next)) ScreenFade.Instance.HoldBlack("Putting on the suit…");
+                    if (next.Direction == RideDirection.Up && LocalIsRider(next) && rider != null && !rider.Locked) rider.LockTracked(next.Serial);
+                    break;
+                case CabinRideStage.Arriving:
+                    if (next.Direction == RideDirection.Down && LocalIsRider(next)) ScreenFade.Instance.FadeIn(Settings.SuitFadeSeconds);
+                    break;
+                case CabinRideStage.Complete:
+                    if (rider != null && rider.Locked && rider.Serial == next.Serial) RunClientStage(UnlockWhenClear(rider));
+                    break;
+                case CabinRideStage.Cancelled:
+                    if (rider != null && rider.Serial == next.Serial) rider.Unlock();
+                    if (!ScreenFade.Instance.IsClear) ScreenFade.Instance.FadeIn(Settings.SuitFadeSeconds);
+                    break;
+            }
+        }
+
+        private IEnumerator LockWhenListed(CabinRideState state)
+        {
+            float deadline = Time.unscaledTime + Settings.PrepareTimeoutSeconds;
+            while (Time.unscaledTime < deadline)
+            {
+                if (dayState == null || dayState.CabinRide.Serial != state.Serial || dayState.CabinRide.Stage != CabinRideStage.Preparing) break;
+                ShipDepartureRider rider = LocalRider();
+                HQPlayerController local = LocalPlayer();
+                if (rider != null && local != null && LocalIsRider(state) && local.gameObject.scene == WorldScenes.Scene(state.FromWorld))
+                {
+                    CabinFrame frame = RideFrameFor(state, local.gameObject.scene);
+                    if (frame.IsValid)
+                    {
+                        rider.Lock(frame, state.Serial);
+                        Ack(state.Serial, DepartureAckKind.Prepared, state.FromWorld);
+                        break;
+                    }
+                }
+                yield return null;
+            }
+            clientStage = null;
+        }
+
+        // Going up: the rider's car-frame spot is refreshed every frame until the
+        // Loading stage locks it (that stage can arrive after the swap itself).
+        private IEnumerator TrackInCar(CabinRideState state)
+        {
+            while (dayState != null && dayState.CabinRide.Serial == state.Serial && dayState.CabinRide.Active && dayState.CabinRide.Stage < CabinRideStage.Loading)
+            {
+                ShipDepartureRider rider = LocalRider();
+                HQPlayerController local = LocalPlayer();
+                if (rider != null && local != null && local.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) rider.Track(CabinFrame.Car(Car()), state.Serial);
+                yield return null;
+            }
+            clientStage = null;
+        }
+
+        private IEnumerator WaitBlackThenAckRide(CabinRideState state)
+        {
+            while (ScreenFade.Instance != null && !ScreenFade.Instance.IsBlack) yield return null;
+            if (LocalRider() != null && LocalRider().Locked) Ack(state.Serial, DepartureAckKind.Black, state.FromWorld);
+            clientStage = null;
+        }
+
+        // The rider's own load of the other cabin's scene: place at the same
+        // cabin-frame spot, then tell the server. Retries until the car (or the
+        // ship) is actually there, within the arrival deadline.
+        private void OnRideLoadEnd(SceneLoadEndEventArgs args)
+        {
+            CabinRideState state = dayState.CabinRide;
+            bool destinationLoaded = false;
+            foreach (SceneLookupData lookup in args.QueueData.SceneLoadData.SceneLookupDatas)
+                if (lookup is not null && lookup.Name == WorldScenes.Name(state.ToWorld)) destinationLoaded = true;
+            if (!destinationLoaded || !LocalIsRider(state)) return;
+            RunClientStage(PlaceInCabinThenAck(state));
+        }
+
+        private IEnumerator PlaceInCabinThenAck(CabinRideState state)
+        {
+            float deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
+            while (Time.unscaledTime < deadline)
+            {
+                ShipDepartureRider rider = LocalRider();
+                HQPlayerController local = LocalPlayer();
+                if (rider != null && !rider.Locked && state.Direction == RideDirection.Up && rider.Serial == state.Serial) rider.LockTracked(state.Serial);
+                if (rider != null && local != null && rider.Locked && rider.Serial == state.Serial && local.gameObject.scene == WorldScenes.Scene(state.ToWorld))
+                {
+                    cachedCar = null;
+                    CabinFrame frame = RideFrameFor(state, local.gameObject.scene);
+                    if (frame.IsValid)
+                    {
+                        rider.PlaceOn(frame);
+                        Ack(state.Serial, DepartureAckKind.Arrived, state.ToWorld);
+                        clientStage = null;
+                        yield break;
+                    }
+                }
+                if (dayState == null || dayState.CabinRide.Serial != state.Serial || dayState.CabinRide.Stage > CabinRideStage.Arriving) break;
+                yield return null;
+            }
+            clientStage = null;
+        }
+    }
+}

@@ -53,6 +53,49 @@ namespace SunkCost.Diving
         public float TravelSecondsOneWay => travelSecondsOneWay;
         public float DoorSealSeconds => doorSealSeconds;
         public float AutoReturnDelaySeconds => autoReturnDelaySeconds;
+        public Vector3 TopPosition => topPosition;
+        public Vector3 BottomPosition => bottomPosition;
+        // Driven mode (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 6.1): the state and
+        // its elapsed time come from the server's ElevatorPhase every frame; this class only
+        // applies the transform, the door/gate events and the local rider push. Once driven,
+        // TryStartMove no longer starts anything itself (the car button goes to the server).
+        public bool Driven { get; private set; }
+        public bool Upward => pendingMoveState == ElevatorState.Ascending;
+        // The rider trigger's box, for the server's "who is inside the car" test.
+        private Collider carVolume;
+        public bool IsInsideCar(Vector3 worldPosition)
+        {
+            if (carVolume == null) foreach (ElevatorRiderTrigger trigger in GetComponentsInChildren<ElevatorRiderTrigger>(true)) { carVolume = trigger.GetComponent<Collider>(); break; }
+            if (carVolume == null) return false;
+            // The car is rotated to face its landing: test in the box's own space, not
+            // its world-aligned bounds (which grow by 40 % at 45 degrees).
+            if (carVolume is BoxCollider box)
+            {
+                Vector3 local = box.transform.InverseTransformPoint(worldPosition) - box.center;
+                Vector3 half = box.size * 0.5f;
+                return Mathf.Abs(local.x) <= half.x && Mathf.Abs(local.y) <= half.y && Mathf.Abs(local.z) <= half.z;
+            }
+            return carVolume.bounds.Contains(worldPosition);
+        }
+
+        public void SetDrivenPhase(ElevatorState newState, bool upward, float elapsed)
+        {
+            Driven = true;
+            pendingMoveState = upward ? ElevatorState.Ascending : ElevatorState.Descending;
+            if (newState != state) SetState(newState);
+            stateElapsed = Mathf.Max(0f, elapsed);
+            float travel = Mathf.Max(travelSecondsOneWay, 0.0001f);
+            progress = newState switch
+            {
+                ElevatorState.AtTop => 0f,
+                ElevatorState.AtBottom => 1f,
+                ElevatorState.Sealing => upward ? 1f : 0f,
+                ElevatorState.Descending => Mathf.Clamp01(stateElapsed / travel),
+                ElevatorState.Ascending => 1f - Mathf.Clamp01(stateElapsed / travel),
+                _ => progress
+            };
+            transform.position = Vector3.Lerp(topPosition, bottomPosition, progress);
+        }
 
         private void Awake()
         {
@@ -71,6 +114,7 @@ namespace SunkCost.Diving
         // not exist yet and is not built here.
         public bool TryStartMove(GameObject requester)
         {
+            if (Driven) return false; // the server owns the state machine; see WorldSceneFlow
             if (requester == null || !riders.ContainsKey(requester))
                 return false;
 
@@ -113,6 +157,7 @@ namespace SunkCost.Diving
 
         private void Update()
         {
+            if (Driven) return; // SetDrivenPhase already applied this frame's state and transform
             stateElapsed += Time.deltaTime;
 
             if (state == ElevatorState.Sealing)

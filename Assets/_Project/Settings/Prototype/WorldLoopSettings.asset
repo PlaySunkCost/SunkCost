@@ -17,6 +17,6 @@ MonoBehaviour:
   unparentTimeoutSeconds: 1
   syncFlushTicks: 2
   refusalDisplaySeconds: 3
-  shipAtSeaOrigin: {x: 0, y: 0, z: 500}
+  shipAtSeaOrigin: {x: 0, y: 0, z: 3000}
   daysPerCycle: 3
   lockRidersDuringRide: 0

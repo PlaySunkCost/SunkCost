@@ -504,7 +504,18 @@ Local, each read by Idan or Dor before merge (they all cross the network):
    `ElevatorMath`, `Riding` state, parent sync on prefabs; tested first in a
    Local session that loads `DiveSite01` directly through a debug command; rows
    S8 (car part), S9 (car part), S10.
+   *Built 15 September 2026 on `dan/deck-cabin`, together with 5 and ahead of
+   2 (Dan: "start without day state"): the car's phase lives on `CrewDayState`
+   (`ElevatorPhase`) instead of a scene `NetworkObject`, `ElevatorController`
+   gained the driven mode, riders are locked and placed from `RiderPlacement`
+   instead of parented (the section 6.2 fallback, chosen up front), water and
+   `ElevatorMath` not yet.*
 5. **The deck cabin** — `DeckCabin`, 5.3 and 5.4 end to end; rows S6–S9, S12.
+   *Built with 4 (`WorldSceneFlow.Cabin`, `CabinRideState`): the ride both ways
+   without the day rules — no all-aboard, no once-per-day, no day counter; the
+   deck cabin stays a plain part of the ship prefab, its doors and panel driven
+   from the ride state on every peer. Rows R0–R5 and G0–G3 of
+   `DeckCabinRideRuntimeChecks` stand in for S6–S9 until the day state lands.*
 6. **Cargo** — mount/unmount, lever; row S11.
 7. **Spectator** — separate card; hooks from 5.7 already in place.
 8. **Steam walk-through** — section 9.3; README walkthrough; report rows;

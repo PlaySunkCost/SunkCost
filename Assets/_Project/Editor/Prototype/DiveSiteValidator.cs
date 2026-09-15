@@ -303,6 +303,13 @@ namespace SunkCost.Sites
             // and no placed player; CrewSpawner spawns the networked player at runtime
             // from PrototypePlayer.prefab using the Spawn Points group required above.
             WorldSceneChecks.CheckNoSessionMachinery(scene, errors, "DiveSite01");
+            // The underwater grade must be local (a box), never global: the host on the
+            // deck at sea has this scene loaded too (cabin ride card).
+            foreach (UnityEngine.Rendering.Volume volume in FindComponentsInScene<UnityEngine.Rendering.Volume>(scene))
+            {
+                if (volume.isGlobal) errors.Add("'" + volume.name + "' is a global Volume; the dive site's grade must be a local box (run Apply deck cabin ride setup).");
+                else if (volume.GetComponent<Collider>() == null) errors.Add("'" + volume.name + "' is local but has no collider.");
+            }
             HQPrototypeValidator.CheckCount<NetworkObject>(scene, 0, errors);
             if (AnyComponentInScene<HQPlayerController>(scene))
                 errors.Add("Dive site must not contain a placed HQPlayerController — the player spawns at runtime from PrototypePlayer.prefab.");
@@ -398,6 +405,11 @@ namespace SunkCost.Sites
             int count = 0;
             foreach (GameObject root in scene.GetRootGameObjects()) count += root.GetComponentsInChildren<T>(true).Length;
             if (count != expected) errors.Add($"Expected {expected} {typeof(T).Name}; found {count}.");
+        }
+
+        private static IEnumerable<T> FindComponentsInScene<T>(Scene scene) where T : Component
+        {
+            return scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<T>(true));
         }
 
         private static bool AnyComponentInScene<T>(Scene scene) where T : Component

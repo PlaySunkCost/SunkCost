@@ -15,6 +15,7 @@ namespace SunkCost.Editor.Prototype
     {
         private const string Marker = "Temp/camera-clearance-driver.txt";
         private const string StageKey = "SunkCost.CameraClearanceMatrixDriver.stage";
+        private const string JobKey = "SunkCost.CameraClearanceMatrixDriver.job";
         private static double waitUntil;
 
         static CameraClearanceMatrixDriver()
@@ -22,9 +23,12 @@ namespace SunkCost.Editor.Prototype
             if (SessionState.GetInt(StageKey, -1) >= 0) EditorApplication.update += Tick;
         }
 
-        public static void Start()
+        // job: "camera" (the camera clearance matrix), "cabin" (the deck cabin ride
+        // matrix) or "host" (host and stop; the caller drives the session).
+        public static void Start(string job = "camera")
         {
-            File.WriteAllText(Marker, "started\n");
+            File.WriteAllText(Marker, "started " + job + "\n");
+            SessionState.SetString(JobKey, job ?? "camera");
             SessionState.SetInt(StageKey, 0);
             EditorApplication.update -= Tick;
             EditorApplication.update += Tick;
@@ -36,6 +40,26 @@ namespace SunkCost.Editor.Prototype
             SessionState.SetInt(StageKey, 3);
             EditorApplication.update -= Tick;
             EditorApplication.update += Tick;
+        }
+
+        // Leave the session once (the transport closes its socket on Leave; a Play
+        // Mode stopped with the host up would keep it bound), then allow 1.5 s for
+        // the shutdown before the stop. True once that time has passed.
+        private const string LeftAtKey = "SunkCost.CameraClearanceMatrixDriver.leftAt";
+        private static bool LeaveOnce()
+        {
+            string leftAt = SessionState.GetString(LeftAtKey, string.Empty);
+            if (string.IsNullOrEmpty(leftAt))
+            {
+                var session = Object.FindAnyObjectByType<SunkCost.Net.PrototypeSessionUI>();
+                if (session != null) session.LeaveSession();
+                SessionState.SetString(LeftAtKey, EditorApplication.timeSinceStartup.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                return false;
+            }
+            double at = double.Parse(leftAt, System.Globalization.CultureInfo.InvariantCulture);
+            if (EditorApplication.timeSinceStartup < at + 1.5) return false;
+            SessionState.EraseString(LeftAtKey);
+            return true;
         }
 
         private static ushort FreeUdpPort(ushort preferred)
@@ -59,10 +83,7 @@ namespace SunkCost.Editor.Prototype
                     {
                         // Leave the session before stopping: a Play Mode stopped with the
                         // host up leaves its Tugboat socket bound in the editor process.
-                        var session = Object.FindAnyObjectByType<SunkCost.Net.PrototypeSessionUI>();
-                        if (session != null && SunkCost.Editor.Prototype.HQPrototypeTestHooks.SessionUiState().Contains("server=True"))
-                        { session.LeaveSession(); waitUntil = EditorApplication.timeSinceStartup + 1.0; return; }
-                        if (EditorApplication.timeSinceStartup < waitUntil) return;
+                        if (!LeaveOnce()) return;
                         EditorApplication.ExitPlaymode();
                         return;
                     }
@@ -90,17 +111,20 @@ namespace SunkCost.Editor.Prototype
                 case 2:
                     if (EditorApplication.timeSinceStartup < waitUntil) return;
                     if (SunkCost.World.WorldSceneFlow.LocalPlayer() == null) return;
-                    try { PlayerCameraClearanceRuntimeChecks.RunAsHost(); File.AppendAllText(Marker, "matrix started\n"); }
+                    string job = SessionState.GetString(JobKey, "camera");
+                    try
+                    {
+                        if (job == "camera") PlayerCameraClearanceRuntimeChecks.RunAsHost();
+                        else if (job == "cabin") DeckCabinRideRuntimeChecks.RunAsHost();
+                        File.AppendAllText(Marker, "matrix started (" + job + ")\n");
+                    }
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }
                     SessionState.SetInt(StageKey, -1);
                     EditorApplication.update -= Tick;
                     return;
                 case 3:
                     if (!EditorApplication.isPlaying) { SessionState.SetInt(StageKey, -1); EditorApplication.update -= Tick; return; }
-                    var leaving = Object.FindAnyObjectByType<SunkCost.Net.PrototypeSessionUI>();
-                    if (leaving != null && SunkCost.Editor.Prototype.HQPrototypeTestHooks.SessionUiState().Contains("server=True"))
-                    { leaving.LeaveSession(); waitUntil = EditorApplication.timeSinceStartup + 1.0; return; }
-                    if (EditorApplication.timeSinceStartup < waitUntil) return;
+                    if (!LeaveOnce()) return;
                     EditorApplication.ExitPlaymode();
                     return;
                 default:

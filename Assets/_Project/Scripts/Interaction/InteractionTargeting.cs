@@ -39,6 +39,15 @@ namespace SunkCost.Interaction
         // anything. Buttons are exact targets: no forgiving aim.
         public static SunkCost.World.MonitorButton FindButton(Vector3 eye, Vector3 forward, Transform player, float reach)
         {
+            Transform hit = FindPressable(eye, forward, player, reach);
+            return hit != null ? hit.GetComponentInParent<SunkCost.World.MonitorButton>() : null;
+        }
+
+        // The nearest solid thing under the crosshair within reach, or null: the
+        // monitor buttons, the deck cabin's button and the car's panel are all
+        // plain colliders told apart by their components and names.
+        public static Transform FindPressable(Vector3 eye, Vector3 forward, Transform player, float reach)
+        {
             int count = Physics.RaycastNonAlloc(eye, forward, Obstructions, reach, ~0, QueryTriggerInteraction.Ignore);
             if (count == Obstructions.Length) return null;
             RaycastHit nearest = default;
@@ -48,7 +57,7 @@ namespace SunkCost.Interaction
                 if (Obstructions[i].collider.transform.IsChildOf(player)) continue;
                 if (!any || Obstructions[i].distance < nearest.distance) { nearest = Obstructions[i]; any = true; }
             }
-            return any ? nearest.collider.GetComponentInParent<SunkCost.World.MonitorButton>() : null;
+            return any ? nearest.collider.transform : null;
         }
 
         public static bool HasLineOfSight(Vector3 eye, Vector3 point, Transform player, CarryableItem item)

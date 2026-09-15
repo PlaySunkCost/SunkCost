@@ -105,7 +105,9 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 | Elevator state | **Server only** | Clients send a request, server decides |
 | Site seed and dive lifecycle | **Server only** | Replicate current state to supported entrants |
 | Scene membership | **Server only** | Which world scene each connection is in and which world scenes are loaded; a client loads and unloads exactly what the server tells it; observers follow scene membership (section 10) |
-| Day state | **Server only** | Phase (at HQ, sailing, at sea, dive in progress), current world and destination, and the last refusal (`Refusal { Serial, Text }`, shown by every monitor for `refusalDisplaySeconds`), on the global `CrewDayState` object; the day counter and the below/surfaced/dead lists join it with the day-state card |
+| Day state | **Server only** | Phase (at HQ, sailing, at sea, dive in progress), current world and destination, and the last refusal (`Refusal { Serial, Text }`, shown by every monitor and the deck cabin's panel for `refusalDisplaySeconds`), on the global `CrewDayState` object; the day counter and the surfaced/dead lists join it with the day-state card |
+| Cabin ride | **Server only** | `CabinRideState { Serial, Stage, Direction, StageStartTick, StageDurationTicks }` and the rosters `Riders` (client ids on the ride), `Placements` (`RiderPlacement { ClientId, Local, Yaw }`, each rider's spot in the cabin frame) and `Below` (client ids whose player is at the seafloor) on `CrewDayState`; `ElevatorPhase { Serial, State, Upward, StartTick, DurationTicks }` for the seafloor car (section 9). The deck cabin's doors and panel and the car's transform, doors and gate are derived on every peer from these and the synchronized tick — nothing on the ship is networked, `DiveSite01` holds no NetworkObject |
+| Cabin request | **Server only** | E on the deck cabin's button (`RequestCabin`) or the car's panel (`RequestCar`) is a `ServerRpc` on the pressing player's `ShipControls`; the server checks the world, the car's state, that the presser stands inside that cabin, and takes everyone inside it (`WorldSceneFlow.ServerRequestDive` / `ServerRequestSurface`); a client never starts a ride or moves the car itself |
 | Sailing request | **Server only** | E on a monitor button is a `ServerRpc` on the pressing player's `ShipControls`; the server checks the presser is aboard, then `WorldSceneFlow.ServerSail` (everyone aboard, phase); nothing on the ship is networked and a client never starts a sail itself |
 
 Rule of thumb: **if getting it wrong would let someone cheat or desync the run,
@@ -247,16 +249,28 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
   talk only to dead players, surfaced players to surfaced players, and divers use
   proximity voice. A spectating camera must not open access to divers' voice.
   A surface radio remains a proposed upgrade, not an approved exception yet.
-- Decided 14 September 2026, not yet implemented (design section 1): the only
-  moving cabin is in the dive scene; the cabin on the ship's deck is a static
-  object with doors. Riders change scene at the button on the way down (behind
-  sealed doors, under the suit fade) and just before the top on the way up (once
-  the cabin is dry). The cabin's water level is derived from elevator state and
-  elapsed time, like motion progress — it is not separate sync state. Riders walk
-  freely inside the moving cabin, so the moving-platform handoff listed under
-  Open must be defined by the world-loop plan before that code lands. The deck
-  button only starts a day and requires every living player inside; mid-day and
-  at HQ it does nothing.
+- Decided 14 September 2026, implemented 15 September 2026 as the **cabin
+  ride** (`WorldSceneFlow.Cabin`, `docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md`
+  sections 5.3, 5.4 and 6, without the day rules — Dan: "start without day
+  state, just going up and down as we wish"): the only moving cabin is in the
+  dive scene; the cabin on the ship's deck is a static object with doors.
+  Riders change scene at the button on the way down (behind sealed doors,
+  under the suit fade) and at the top on the way up (once the car is dry and
+  stopped, doors still shut). The car is driven on every peer from the
+  server's `ElevatorPhase` and the synchronized tick (`ElevatorController`
+  driven mode: state, direction and elapsed in; transform, door and gate
+  events out); its own state machine only runs in Idan's local harness. The
+  water level will be derived the same way. Riders are **locked** for the ride
+  (input off, look free): the owner keeps its captured cabin-frame spot every
+  frame (`ShipDepartureRider`, the ship-trip rider generalised to a
+  `CabinFrame`), and the other peers place its copy from the server's
+  `RiderPlacement` while the car moves, so a round trip's worth of
+  `NetworkTransform` lag never sinks a friend through the floor. Nothing is
+  parented under the car. Free walking inside the moving cabin (the
+  moving-platform handoff under Open) stays open. Not yet: the all-aboard rule,
+  once-per-day, the day counter — they arrive with the day-state card; until
+  then the deck button takes whoever stands in the cabin, at sea, whenever the
+  car is up, and the car button takes whoever stands in the car at the bottom.
 - Decided jointly by Idan and Dan on a call (15 September 2026), not yet
   implemented — this section still needs the PR review `CONVENTIONS.md`
   requires for contract changes before it counts as reviewed:
@@ -340,6 +354,29 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   authenticated before the lock but loads after it is disconnected rather than
   spawned into a departing world. A disconnected passenger's dropped items join
   the frozen cargo. A trip that cancels before `Loading` changes nothing.
+- A cabin ride reuses the trip machinery (cohort, `DepartureAckBroadcast` with
+  the ride's serial, kick of an unresponsive guest) with its own state. Down:
+  `Preparing` (riders lock at their deck-cabin spot, `Prepared`), capture of
+  the placements after `syncFlushTicks`, `Sealing` (`cabinSealSeconds`),
+  `FadingOut` (`suitFadeSeconds`, "Putting on the suit…", `Black`), `Loading`
+  (the site loads server-side if nobody was below — fresh every time the
+  seafloor empties; the car is put `AtTop`; every rider is added to the site
+  before the one `LoadConnectionScenes` with players and carried items; each
+  rider places itself at the same cabin-frame spot in the car, `Arrived`;
+  `ShipAtSea` is unloaded for the riders only), `Arriving` (fade in inside the
+  closed car), then `ElevatorPhase` `Descending`; `Complete` when the car is
+  `AtBottom` — riders unlock, the car's doors and the shaft gate open. Up:
+  `Preparing` (lock at the car spot), `Sealing` (the car's doors, `Upward`),
+  `Riding` (`Ascending`, riders follow the car), `Loading` at `AtTop` (riders
+  moved into `ShipAtSea`, placed in the deck cabin, `DiveSite01` unloaded for
+  them and from the server when nobody remains below), `Arriving` (the deck
+  cabin's doors open over `cabinSealSeconds`), `Complete`. If someone is still
+  below the car seals and descends again, empty. The deck button refuses at HQ
+  ("Not at sea"), outside the cabin, while a ride runs ("Cabin in use") and
+  while the car is away ("Cabin below"; an empty car at the bottom with nobody
+  below is called up instead); the monitor refuses to sail while anyone is
+  below or the car is away ("Divers below"); joins are refused during a ride.
+  A rider that disconnects leaves every roster.
 - When neither the server nor the client is running any more, every world scene
   is unloaded locally; the menu is the Session scene.
 - Workarounds for FishNet 4.7.3 on Unity 6, kept in `WorldSceneFlow` and to be

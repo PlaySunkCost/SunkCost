@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using SunkCost.Net;
@@ -31,6 +32,16 @@ namespace SunkCost.World
         // The trip in progress (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 4);
         // WorldSceneFlow is its only writer.
         private readonly SyncVar<ShipDepartureState> departure = new(new ShipDepartureState { Stage = DepartureStage.Idle });
+        // The cabin ride and the seafloor car (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md
+        // sections 5.3, 5.4 and 6, without the day rules for now: no day counter,
+        // no once-per-day, no all-aboard). Riders: the client ids on the current
+        // ride; Placements: their cabin-frame spots; Below: everyone whose player
+        // is at the seafloor.
+        private readonly SyncVar<CabinRideState> cabinRide = new(new CabinRideState { Stage = CabinRideStage.Idle });
+        private readonly SyncVar<ElevatorPhase> elevator = new(new ElevatorPhase { State = SunkCost.Diving.ElevatorState.AtTop });
+        private readonly SyncList<int> riders = new();
+        private readonly SyncList<RiderPlacement> placements = new();
+        private readonly SyncList<int> below = new();
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -43,20 +54,44 @@ namespace SunkCost.World
         public ShipDepartureState Departure => departure.Value;
         // Between the lock and the release: joins, item actions and monitor presses are refused.
         public bool Travelling => departure.Value.Active;
+        public CabinRideState CabinRide => cabinRide.Value;
+        public ElevatorPhase Elevator => elevator.Value;
+        public bool Riding => cabinRide.Value.Active;
+        // The deck cabin is not available: a ride is running, or the car is not up at the top.
+        public bool CabinAway => cabinRide.Value.Active || elevator.Value.State != SunkCost.Diving.ElevatorState.AtTop;
+        public IReadOnlyList<int> Riders => riders;
+        public IReadOnlyList<RiderPlacement> Placements => placements;
+        public IReadOnlyList<int> Below => below;
+        public bool IsRider(int clientId) => riders.Contains(clientId);
+        public bool IsBelow(int clientId) => below.Contains(clientId);
+        public bool TryGetPlacement(int clientId, out RiderPlacement placement)
+        {
+            foreach (RiderPlacement p in placements) if (p.ClientId == clientId) { placement = p; return true; }
+            placement = default;
+            return false;
+        }
         // Local time the last refusal arrived on this peer; panels show it for
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} world={world.Value} to={destination.Value}";
+        public string DebugStatus => $"phase={phase.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
+        public event Action<CabinRideState, CabinRideState> CabinRideChanged;
 
         private void Awake()
         {
             phase.OnChange += OnPhaseChanged;
             lastRefusal.OnChange += OnRefusalChanged;
             departure.OnChange += OnDepartureChanged;
+            cabinRide.OnChange += OnCabinRideChanged;
+        }
+
+        private void OnCabinRideChanged(CabinRideState previous, CabinRideState next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            CabinRideChanged?.Invoke(previous, next);
         }
 
         private void OnDepartureChanged(ShipDepartureState previous, ShipDepartureState next, bool asServer)
@@ -163,7 +198,53 @@ namespace SunkCost.World
 
         // Joins are refused while a dive is in progress (design section 1) and while
         // the ship is travelling (a temporary transition lock, not a join policy).
-        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress;
+        // ---- the cabin ride and the car (server) ----------------------------------
+
+        [Server]
+        public void ServerSetCabinRide(CabinRideState next) => cabinRide.Value = next;
+
+        [Server]
+        public void ServerSetElevator(ElevatorPhase next) => elevator.Value = next;
+
+        [Server]
+        public void ServerSetRiders(IEnumerable<int> clientIds)
+        {
+            riders.Clear();
+            placements.Clear();
+            foreach (int id in clientIds) riders.Add(id);
+        }
+
+        [Server]
+        public void ServerSetPlacement(RiderPlacement placement)
+        {
+            for (int i = 0; i < placements.Count; i++)
+                if (placements[i].ClientId == placement.ClientId) { placements[i] = placement; return; }
+            placements.Add(placement);
+        }
+
+        [Server]
+        public void ServerClearRiders()
+        {
+            riders.Clear();
+            placements.Clear();
+        }
+
+        [Server]
+        public void ServerSetBelow(int clientId, bool isBelow)
+        {
+            if (isBelow) { if (!below.Contains(clientId)) below.Add(clientId); }
+            else below.Remove(clientId);
+        }
+
+        [Server]
+        public void ServerRemoveEverywhere(int clientId)
+        {
+            riders.Remove(clientId);
+            for (int i = placements.Count - 1; i >= 0; i--) if (placements[i].ClientId == clientId) placements.RemoveAt(i);
+            below.Remove(clientId);
+        }
+
+        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || cabinRide.Value.Active;
         public bool RefusesJoinsForTravel => Travelling;
     }
 }
