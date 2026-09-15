@@ -31,7 +31,7 @@ namespace SunkCost.Sites
         // and ElevatorSelfCheckRunner both look up scene objects by that exact name.
         public const string PrefabPath = "Assets/_Project/Prefabs/World/Elevator.prefab";
 
-        private const float CarFloorThickness = 0.1f;
+        public const float CarFloorThickness = 0.1f;
         private const float CarFrameRadius = 0.06f;
         private const float CarWallInset = 0.15f;
         public const float CarDoorwayWidthMeters = 2f;

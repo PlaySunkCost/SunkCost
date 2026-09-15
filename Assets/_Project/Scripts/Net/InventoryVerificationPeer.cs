@@ -124,6 +124,12 @@ namespace SunkCost.Net
                     stance.SetDesiredCrouch(command.slot != 0);
                     break;
                 case "snapshot": break;
+                case "frames":
+                    return SunkCost.Diagnostics.FrameTimeRecorder.Instance == null ? "no frame time recorder"
+                        : SunkCost.Diagnostics.FrameTimeRecorder.Instance.Summary + "; " + SunkCost.Diagnostics.FrameTimeRecorder.Instance.HitchList;
+                case "frames_reset":
+                    SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
+                    break;
                 default: return "Unknown action";
             }
             return "requested " + command.action;

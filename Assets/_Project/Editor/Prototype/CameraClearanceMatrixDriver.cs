@@ -116,6 +116,7 @@ namespace SunkCost.Editor.Prototype
                     {
                         if (job == "camera") PlayerCameraClearanceRuntimeChecks.RunAsHost();
                         else if (job == "cabin") DeckCabinRideRuntimeChecks.RunAsHost();
+                        else if (job == "hands") PlayerMovementHandsRuntimeChecks.RunAsHost();
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }

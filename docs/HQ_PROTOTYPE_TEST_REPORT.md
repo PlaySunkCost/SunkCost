@@ -1,5 +1,49 @@
 # HQ prototype verification report
 
+## Smoothness branch — 16 September 2026
+
+Tested `dan/smooth-1` based on `1ae0360` (the car-leavers merge), Unity
+6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one **rendering**
+Local-build guest (1280×720 window on a 240 Hz monitor), one machine. Frame
+pacing comes from the new `FrameTimeRecorder` (F3 line `frames: fps=… median=…
+1%low=… worst=… hitches=…`; each hitch names the profiler markers that were
+long in that frame). Dan's reports: "sometimes it feels a bit stuck", "while
+the elevator is moving everything jumps in place", "the floor is jumping going
+up", "a thrown ball is not smooth".
+
+- **Car motion** (deck cabin matrix, `MATRIX_PASS`, 197 rows): the driven car
+  now reads the clock between network ticks — it moved on 2769/2769, 2640/2640,
+  2771/2771, 2741/2741, 2288/2288 and 2261/2261 frames of the six rides
+  (before: one frame in about seven at the 30 Hz tick), largest step 4–6 cm.
+- **Rider on the moving floor:** the rider is carried in the same frame as the
+  car with the car's colliders synced in direction order (`DriveCar`,
+  `CarryNow`). Max sink into the floor 0.000 m on every ride (before: 0.17 m on
+  the way up — the "jumping floor"); the rider's height above the floor never
+  changed by more than 0.0 cm between grounded frames. The test hooks used to
+  teleport riders 5 cm *into* the 0.1 m floor discs (an 8 cm pop on the first
+  move); they now stand on them.
+- **Frame pacing, guest build (a real player, vsync on, 240 Hz):** fps 240,
+  median 4.2 ms, 1 % low 4.3 ms, **0 hitches while the car moved**; its only
+  two hitches (53 ms, 109 ms, `PlayerLoop`) were the scene load at t+5.4 s,
+  behind the black screen. The editor host still shows 20–60 ms
+  `Semaphore.WaitForSignal` waits at the water line (the editor's own windows
+  share the GPU), recorded as notes, not gates. `DiveSiteWarmup` renders the
+  water surface, the cabin water and the underwater grade once off screen
+  while the rider is still black.
+- **Thrown ball** (movement and hands matrix, `MATRIX_PASS`, 31 rows): the item
+  prefabs' rigidbodies interpolate, and `CarryableItem` turns interpolation on
+  only after the first physics step of a body it simulates (held and replicated
+  items are placed by script and must not interpolate; a just-released one
+  would lerp from the hand). M8: the ball's rendered position changed on
+  101/101 frames in flight; launch velocity (−1.39, −8.25, 0) at 8.0 m/s; the
+  drop lands 0.52 m ahead as before. First cut (interpolation always on) broke
+  the 12 kg jump and the drop distance — both caught by the matrix.
+- **VSync** is on in both quality levels (the build rendered at the monitor's
+  240 Hz); the matrices' virtual keyboard is now the controller's keyboard for
+  the run (`KeyboardForChecks`), so a tester typing no longer steals the keys.
+- Not covered: Steam transport; a second *rendering* peer watching the car
+  from the deck; the `Semaphore.WaitForSignal` waits in the editor itself.
+
 ## Shaft tube branch — 15 September 2026
 
 Tested `dan/shaft-tube` based on `1f00975` (the deck cabin merge), Unity

@@ -72,6 +72,7 @@ namespace SunkCost.Editor.Prototype
         private static void Cleanup()
         {
             HQPlayerController.BypassInputGateForChecks = false;
+            HQPlayerController.KeyboardForChecks = null;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
             if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; inputBehaviorChanged = false; }
             try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
@@ -146,6 +147,10 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator MeasureJump(Action<float> apex)
         {
             HQPlayerController host = Host();
+            // A jump needs the ground: the rows teleport just before, and the probe
+            // only confirms the floor on the next frame or two.
+            double groundedBy = EditorApplication.timeSinceStartup + 1.0;
+            while (!host.IsGrounded && EditorApplication.timeSinceStartup < groundedBy) yield return null;
             float startY = host.transform.position.y;
             float best = 0f;
             yield return Press(Key.Space);
@@ -244,6 +249,7 @@ namespace SunkCost.Editor.Prototype
             Check(host != null && host.IsServerStarted, "editor is the host with a spawned player");
             PlayerMovementSettings settings = host.Movement;
             keyboard = InputSystem.AddDevice<Keyboard>("CheckKeyboard");
+            HQPlayerController.KeyboardForChecks = keyboard;
             HQPlayerController.BypassInputGateForChecks = true;
             SunkCost.Net.SessionInputGate.OpenMenu(); // the real keyboard/mouse stay out of the room
             Keys(); yield return null; yield return null;
@@ -320,12 +326,24 @@ namespace SunkCost.Editor.Prototype
             host.SetPitchForChecks(80f); yield return null;
             H.ClientRequestUse(); yield return Wait(0.15f);
             Rigidbody body = ball.GetComponent<Rigidbody>();
+            Vector3 launchVelocity = body.linearVelocity; // read now: the flight sampling below outlasts the fall
+            // Flight is smooth: the rendered ball moves every frame, not only on the 50 Hz
+            // physics steps (Rigidbody interpolation while the item simulates here).
+            int flightFrames = 0, stillFrames = 0; Vector3 lastBall = ball.transform.position;
+            for (double until = EditorApplication.timeSinceStartup + 0.4; EditorApplication.timeSinceStartup < until;)
+            {
+                yield return null;
+                flightFrames++;
+                if ((ball.transform.position - lastBall).sqrMagnitude < 1e-8f) stillFrames++;
+                lastBall = ball.transform.position;
+            }
+            Check(flightFrames > 20 && stillFrames <= flightFrames / 10, $"M8 the thrown ball moved on {flightFrames - stillFrames} of {flightFrames} rendered frames in flight");
             // The throw follows the crosshair: at 80° down it heads down and forward, and
             // started in front of the player, so it lands ahead rather than underfoot.
-            Vector3 flatVelocity = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
-            Check(ball.State == ItemState.Released && body.linearVelocity.y < -1f && Vector3.Dot(flatVelocity.normalized, host.transform.forward) > 0.9f,
-                $"M8 throw looking down goes down and forward (v={body.linearVelocity}, launch {ball.LastLaunchSpeed:0.0} m/s)");
-            yield return Wait(1.0f);
+            Vector3 flatVelocity = Vector3.ProjectOnPlane(launchVelocity, Vector3.up);
+            Check(ball.State == ItemState.Released && launchVelocity.y < -1f && Vector3.Dot(flatVelocity.normalized, host.transform.forward) > 0.9f,
+                $"M8 throw looking down goes down and forward (v={launchVelocity}, launch {ball.LastLaunchSpeed:0.0} m/s)");
+            yield return Wait(0.6f); // 0.4 s of flight sampling already passed
             Vector3 landedFlat = Vector3.ProjectOnPlane(ball.transform.position - host.transform.position, Vector3.up);
             Check(Vector3.Dot(landedFlat.normalized, host.transform.forward) > 0.5f && landedFlat.magnitude > host.Controller.radius, $"M8 the downward throw ended in front, not under the player ({landedFlat.magnitude:0.00} m ahead)");
             host.SetPitchForChecks(0f);

@@ -102,6 +102,12 @@ namespace SunkCost.Player
         // Editor checks feed a virtual keyboard through the Input System; the cursor
         // lock and menu gate would otherwise swallow it. Never set in a build.
         public static bool BypassInputGateForChecks;
+        // The matrices' virtual keyboard. Keyboard.current is whichever keyboard spoke
+        // last, so a tester typing during a run would silently take the checks' keys.
+        public static Keyboard KeyboardForChecks;
+        private static Keyboard ActiveKeyboard => KeyboardForChecks ?? Keyboard.current;
+#else
+        private static Keyboard ActiveKeyboard => Keyboard.current;
 #endif
         public void SetPitchForChecks(float degrees)
         {
@@ -120,6 +126,15 @@ namespace SunkCost.Player
         public void AddExternalMotion(Vector3 delta)
         {
             externalMotion += delta;
+        }
+
+        // Carried right now, by the caller's floor, not at the next Update: the driven
+        // car moves the rider in the same frame and in the order that keeps the sweep
+        // against the floor's collider clean (see WorldSceneFlow.DriveCar).
+        public void CarryNow(Vector3 delta)
+        {
+            if (controller == null || !controller.enabled || delta == Vector3.zero) return;
+            controller.Move(delta);
         }
 
         private void Awake()
@@ -154,10 +169,10 @@ namespace SunkCost.Player
             if (!IsOwner) return;
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
-            bool hasDevices = Keyboard.current != null && Mouse.current != null;
+            bool hasDevices = ActiveKeyboard != null && Mouse.current != null;
 
             // Escape opens the menu and, pressed again, closes it (the same as Resume).
-            if (hasDevices && Keyboard.current.escapeKey.wasPressedThisFrame)
+            if (hasDevices && ActiveKeyboard.escapeKey.wasPressedThisFrame)
             {
                 if (SessionInputGate.MenuOpen) SessionInputGate.Resume();
                 else SessionInputGate.OpenMenu();
@@ -179,7 +194,7 @@ namespace SunkCost.Player
                     Look();
                 if (!travelLocked)
                 {
-                    Keyboard keyboard = Keyboard.current;
+                    Keyboard keyboard = ActiveKeyboard;
                     if (keyboard.wKey.isPressed) moveInput.y += 1f;
                     if (keyboard.sKey.isPressed) moveInput.y -= 1f;
                     if (keyboard.dKey.isPressed) moveInput.x += 1f;
@@ -230,7 +245,7 @@ namespace SunkCost.Player
             if (SessionInputGate.ClickSuppressedThisFrame || inventory == null)
                 return;
 
-            Keyboard keys = Keyboard.current;
+            Keyboard keys = ActiveKeyboard;
             if (keys.eKey.wasPressedThisFrame)
             {
                 grabConsumed = false;

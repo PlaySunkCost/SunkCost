@@ -38,6 +38,7 @@ namespace SunkCost.Net
         public ushort TickRate;
         public uint Tick;
         public int ConnectedClients; // server side only, else 0
+        public string Frames = string.Empty; // FrameTimeRecorder.Summary on this machine, "" without one
         public readonly List<ObjectRow> Objects = new();
 
         public string Role =>
@@ -68,6 +69,8 @@ namespace SunkCost.Net
             }
             if (nm.IsServerStarted && nm.ServerManager != null)
                 snapshot.ConnectedClients = nm.ServerManager.Clients.Count;
+            if (SunkCost.Diagnostics.FrameTimeRecorder.Instance != null)
+                snapshot.Frames = SunkCost.Diagnostics.FrameTimeRecorder.Instance.Summary;
 
             IReadOnlyDictionary<int, NetworkObject> spawned = null;
             if (nm.IsServerStarted && nm.ServerManager != null)
@@ -161,6 +164,7 @@ namespace SunkCost.Net
                     sb.Append("  clients=").Append(ConnectedClients);
             }
             sb.AppendLine();
+            if (!string.IsNullOrEmpty(Frames)) sb.Append("frames: ").Append(Frames).AppendLine();
             sb.AppendLine(" id   name              owner     sim         scene        detail");
             foreach (ObjectRow row in Objects)
             {

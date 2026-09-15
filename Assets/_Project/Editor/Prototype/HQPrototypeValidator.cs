@@ -91,6 +91,7 @@ namespace SunkCost.Editor.Prototype
                 Rigidbody body = prefab.GetComponent<Rigidbody>();
                 if (item == null || body == null) { errors.Add(entry.PrefabPath + " needs CarryableItem and Rigidbody."); continue; }
                 if (!float.IsFinite(body.mass) || body.mass <= 0f) errors.Add(entry.PrefabPath + " has an invalid Rigidbody mass.");
+                if (body.interpolation != RigidbodyInterpolation.Interpolate) errors.Add(entry.PrefabPath + " Rigidbody must interpolate, or a thrown item steps at the physics rate (run Apply loot setup).");
                 if (prefab.GetComponent<SphereCollider>() == null) errors.Add(entry.PrefabPath + " needs a SphereCollider (drop placement is sphere-only).");
                 using var serialized = new SerializedObject(item);
                 bool twoHands = serialized.FindProperty("grip").enumValueIndex == (int)CarryGrip.TwoHands;
