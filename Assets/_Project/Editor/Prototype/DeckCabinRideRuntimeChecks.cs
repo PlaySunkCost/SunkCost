@@ -72,6 +72,7 @@ namespace SunkCost.Editor.Prototype
         private static void Cleanup()
         {
             HQPlayerController.BypassInputGateForChecks = false;
+            HQPlayerController.KeyboardForChecks = null;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
             if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; inputBehaviorChanged = false; }
             try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
@@ -88,6 +89,7 @@ namespace SunkCost.Editor.Prototype
                 InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 inputBehaviorChanged = true;
                 keyboard = InputSystem.AddDevice<Keyboard>("CabinCheckKeyboard");
+                HQPlayerController.KeyboardForChecks = keyboard;
                 HQPlayerController.BypassInputGateForChecks = true;
             }
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(pressed));
@@ -212,6 +214,8 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator RideAndSample(RideDirection direction, string label)
         {
             int serialBefore = Day.CabinRide.Serial;
+            SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
+            if (SunkCost.Diagnostics.FrameTimeRecorder.Instance != null) Note($"{label} profiler markers recorded: {SunkCost.Diagnostics.FrameTimeRecorder.Instance.RecordedMarkerCount}");
             string requested = direction == RideDirection.Down ? H.ClientRequestCabin() : H.ClientRequestCar();
             Note(label + ": " + requested);
             yield return WaitUntil(() => Day.CabinRide.Serial > serialBefore && Day.CabinRide.Active, 5f, label + " ride started");
@@ -231,6 +235,9 @@ namespace SunkCost.Editor.Prototype
             int submersionMismatchStreak = 0, worstSubmersionStreak = 0; bool everSubmerged = false, everF3Under = false, everF3Dry = false;
             bool capturedSurface = false, capturedUnder = false;
             float expectedTravel = 0f, carSpan = 0f, carSeaLevel = 0f; // read while the car exists: the site unloads after an up ride
+            int fastFrames = 0, stalledFrames = 0; float largestStep = 0f; // smoothness: the car should move every frame, by about speed * frame time
+            int hitchesSeen = 0, ridingHitches = 0; // each new hitch is noted with the ride's stage, so a spike can be blamed
+            float lastCarLocalY = float.NaN, worstFloorJitter = 0f; int jitterNotes = 0; // the rider's height above the car floor should not flicker frame to frame
             double deadline = EditorApplication.timeSinceStartup + 60.0;
             double nextNote = 0;
             while (EditorApplication.timeSinceStartup < deadline && Day.CabinRide.Active)
@@ -245,6 +252,14 @@ namespace SunkCost.Editor.Prototype
                     Note($"{label} t+{frames}: stage={state.Stage} car={Day.Elevator.State} carPos={(c0 == null ? "-" : c0.transform.position.ToString("F2"))} local={(l0 == null ? "-" : l0.transform.position.ToString("F2"))} carLocal={(c0 == null || l0 == null ? "-" : c0.transform.InverseTransformPoint(l0.transform.position).ToString("F2"))} locked={(Rider() != null && Rider().Locked)} travelLocked={(l0 != null && l0.TravelLocked)} grounded={(l0 != null && l0.IsGrounded)} inside={(c0 != null && l0 != null && c0.IsInsideCar(l0.transform.position + Vector3.up * 0.5f))}");
                 }
                 if (ScreenFade.Instance != null && ScreenFade.Instance.IsBlack) everBlack = true;
+                SunkCost.Diagnostics.FrameTimeRecorder recorder = SunkCost.Diagnostics.FrameTimeRecorder.Instance;
+                if (recorder != null && recorder.HitchesSinceReset > hitchesSeen)
+                {
+                    hitchesSeen = recorder.HitchesSinceReset;
+                    if (state.Stage == CabinRideStage.Riding) ridingHitches++;
+                    ElevatorController c1 = WorldSceneFlow.FindCar();
+                    Note($"{label} HITCH {recorder.LastFrameMs:0}ms at t+{recorder.SecondsSinceReset:0.0}s stage={state.Stage} car={Day.Elevator.State} carY={(c1 == null ? "-" : c1.transform.position.y.ToString("0.0"))} submerged={(Submersion() != null && Submersion().IsSubmerged)} scene={(Host() == null ? "-" : Host().gameObject.scene.name)} blame: {recorder.LastHitchBlame}");
+                }
                 ElevatorController car = WorldSceneFlow.FindCar();
                 HQPlayerController local = Host();
                 bool shouldBeLocked = WorldSceneFlow.RidersLockedDuring(state);
@@ -267,6 +282,13 @@ namespace SunkCost.Editor.Prototype
                             float previousDepth = car.TopPosition.y - lastCarY;
                             float lo = Mathf.Min(depth, previousDepth), hi = Mathf.Max(depth, previousDepth);
                             int band = hi < surfaceDepth - 0.3f ? 0 : lo > surfaceDepth + 0.3f && hi < surfaceDepth + car.SpanMeters - 0.3f ? 1 : lo > surfaceDepth + car.SpanMeters + 0.3f ? 2 : -1;
+                            if (band == 2 && now - lastCarTime < 0.1)
+                            {
+                                fastFrames++;
+                                float step = Mathf.Abs(carY - lastCarY);
+                                if (step < 1e-4f) stalledFrames++;
+                                largestStep = Mathf.Max(largestStep, step);
+                            }
                             if (band >= 0 && Mathf.Abs(carY - lastCarY) > 1e-4f)
                             {
                                 if (!bandMoved[band]) { bandMoved[band] = true; bandStartT[band] = lastCarTime; bandStartY[band] = lastCarY; }
@@ -298,6 +320,14 @@ namespace SunkCost.Editor.Prototype
                         }
                         if (!car.IsInsideCar(local.transform.position + Vector3.up * 0.5f)) everOutside = true;
                         maxSink = Mathf.Max(maxSink, car.transform.position.y - local.transform.position.y);
+                        float carLocalY = local.transform.position.y - car.transform.position.y;
+                        if (!float.IsNaN(lastCarLocalY) && local.IsGrounded)
+                        {
+                            float jitter = Mathf.Abs(carLocalY - lastCarLocalY);
+                            if (jitter > 0.01f && jitterNotes++ < 12) Note($"{label} JUMP {jitter * 100f:0.0}cm frame {frames}: carLocalY {lastCarLocalY:0.000}->{carLocalY:0.000} carY={car.transform.position.y:0.00} stage={state.Stage} car={cs} grounded={local.IsGrounded} locked={(Rider() != null && Rider().Locked)} walking={(walkStart != null && walked <= 0.6f)}");
+                            worstFloorJitter = Mathf.Max(worstFloorJitter, jitter);
+                        }
+                        lastCarLocalY = carLocalY;
                         // Free inside the moving car: walk forward for a while and measure it in the car frame.
                         if (!shouldBeLocked && !local.TravelLocked)
                         {
@@ -322,7 +352,8 @@ namespace SunkCost.Editor.Prototype
             Check(everMoved, label + " the car moved with the rider inside");
             Check(!everOutside, label + " the rider never left the car while it moved");
             Keys();
-            Check(maxSink < 0.3f, $"{label} the rider never sank into the car floor (max {maxSink:0.00} m)");
+            Check(maxSink < 0.05f, $"{label} the rider never sank into the car floor (max {maxSink:0.000} m)");
+            Check(worstFloorJitter < 0.01f, $"{label} the rider's height above the floor never jumped between frames (worst {worstFloorJitter * 100f:0.0} cm)");
             Check(!everUnlockedEarly, label + " the rider was locked exactly when it should be");
             Check(everFreeWhileMoving, label + " the rider was free inside the moving car");
             Check(walked > 0.5f && !everOutside, $"{label} the rider walked {walked:0.00} m inside the moving car and stayed inside");
@@ -337,6 +368,12 @@ namespace SunkCost.Editor.Prototype
             Check(bandSeconds[1] > 1f && Mathf.Abs(bandSpeed[1] - 1f) < 0.1f, $"{label} about 1 m/s through the surface band ({bandSpeed[1]:0.00} m/s)");
             Check(bandSeconds[2] > 5f && Mathf.Abs(bandSpeed[2] - 3f) < 0.3f, $"{label} about 3 m/s below the band ({bandSpeed[2]:0.00} m/s)");
             Check(Mathf.Abs(measured - expectedTravel) < 1f, $"{label} the car moved for {measured:0.0} s (profile says {expectedTravel:0.0})");
+            // Smooth motion: the car moves every frame, not once per tick (a 50 Hz tick
+            // at 200 fps would leave three frames in four standing still).
+            Check(fastFrames > 100 && stalledFrames <= fastFrames / 20, $"{label} the car moved on {fastFrames - stalledFrames} of {fastFrames} frames at full speed (largest step {largestStep:0.000} m)");
+            // No first-use stalls in the rider's face: the site's water and grade were
+            // warmed up behind the black screen (DiveSiteWarmup). Loading may hitch.
+            Note($"{label} host (editor) hitches while the car moved: {ridingHitches} (the editor's own windows share the GPU; the guest build below is the gate)");
             Check(waterError < 0.06f, $"{label} the cabin water matched sea level minus the floor every frame (worst {waterError:0.000} m)");
             Check(worstSubmersionStreak <= 2, $"{label} submersion flipped within a frame or two of the eye crossing sea level (worst streak {worstSubmersionStreak})");
             Check(everSubmerged && everF3Under && everF3Dry, $"{label} the rider went under and the F3 line read underwater=True depth= below and underwater=False above");
@@ -351,11 +388,18 @@ namespace SunkCost.Editor.Prototype
                 Check(Mathf.Abs(floorYWhenDry - carSeaLevel) < 0.15f, $"{label} the water drained to nothing as the floor passed sea level (floor y {floorYWhenDry:0.00}, sea level {carSeaLevel:0.00})");
                 Check(Submersion() != null && !Submersion().IsSubmerged, label + " not submerged at the swap");
             }
+            // Frame pacing on the host through the whole ride (measurement, not a gate yet).
+            SunkCost.Diagnostics.FrameTimeRecorder pacing = SunkCost.Diagnostics.FrameTimeRecorder.Instance;
+            if (pacing != null) Note($"{label} host frames: {pacing.Summary}; {pacing.HitchList}");
             yield return WaitUntil(() => Rider() == null || !Rider().Locked, 5f, label + " rider unlocked after the ride");
             yield return WaitUntil(() => ScreenFade.Instance == null || ScreenFade.Instance.IsClear, 5f, label + " screen clear after the ride");
         }
 
         // ---- guest ----------------------------------------------------------------------
+
+        // The guest renders (no -batchmode/-nographics): its frame pacing is the
+        // measurement that matters; the editor's is muddied by its own windows.
+        private const bool GuestRenders = true;
 
         private static Process LaunchGuest()
         {
@@ -365,7 +409,7 @@ namespace SunkCost.Editor.Prototype
             var tugboat = UnityEngine.Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
             string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
             var info = new ProcessStartInfo(Path.GetFullPath(BuildExe),
-                "-batchmode -nographics -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
+                (GuestRenders ? "-screen-width 1280 -screen-height 720 -screen-fullscreen 0 " : "-batchmode -nographics ") + "-hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
             { UseShellExecute = false, CreateNoWindow = true };
             return Process.Start(info);
         }
@@ -583,9 +627,10 @@ namespace SunkCost.Editor.Prototype
 
             // G1: both in the cabin; the host presses; both ride down.
             H.MoveLocalIntoDeckCabin("Sea");
-            Vector3 guestSpot = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + Vector3.up * 0.05f;
+            Vector3 guestSpot = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f);
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
             yield return Wait(0.5f);
+            yield return Send("{\"id\":{id},\"action\":\"frames_reset\"}");
             yield return RideAndSample(RideDirection.Down, "G1");
             Check(Day.IsBelow(guestId) && Day.IsBelow(host.OwnerId), "G1 both listed below");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("car=AtBottom") && r.Contains("ride=Complete"), 20f, "G1 guest rode down with the host");
@@ -596,6 +641,21 @@ namespace SunkCost.Editor.Prototype
             // G4: the guest's own submersion and cabin water agree with the host's.
             CabinWater sharedWater = car.GetComponent<CabinWater>();
             yield return GuestEventually(r => GuestAgrees(r, true, sharedWater != null ? sharedWater.LevelMeters : -1f), 10f, "G4 guest submerged at the bottom with the same cabin water as the host");
+            yield return Send("{\"id\":{id},\"action\":\"frames\"}");
+            string guestFrames = lastReply.Split('\n')[0];
+            Note("G1 guest frames (build" + (GuestRenders ? ", rendering" : ", headless") + "): " + guestFrames);
+            // The gate: on a real player, at most one hitch once the car is moving (the
+            // scene load before it may hitch). Hitch times are seconds since the reset
+            // at the button press; the car moves from about t+7 s.
+            int guestRidingHitches = 0;
+            foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(guestFrames, @"t=([0-9.]+)s ([0-9]+)ms"))
+                if (float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) >= 7f) guestRidingHitches++;
+            var fpsMatch = System.Text.RegularExpressions.Regex.Match(guestFrames, @"fps=([0-9]+)");
+            if (GuestRenders)
+            {
+                Check(guestRidingHitches <= 1, $"G1 the guest build had at most one hitch while the car moved ({guestRidingHitches})");
+                Check(fpsMatch.Success && int.Parse(fpsMatch.Groups[1].Value) >= 50, "G1 the guest build rendered at 50 fps or better (" + (fpsMatch.Success ? fpsMatch.Groups[1].Value : "?") + ")");
+            }
 
             // G2: the host goes up alone; the guest stays below; the car comes back down empty for the guest.
             host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); // the host steps out
@@ -615,7 +675,7 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => Day.LastRefusal.Text == "Cabin below", 3f, "G2 host refused: cabin below");
 
             // G3: the guest walks into the car and comes up alone; the host watches the doors open.
-            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * 0.05f) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f)) + "}");
             yield return Wait(0.5f);
             int serialBefore = Day.CabinRide.Serial;
             yield return Send("{\"id\":{id},\"action\":\"car\"}");

@@ -36,7 +36,7 @@ namespace SunkCost.Editor.Prototype
         private const float PanelChestHeightMeters = 1.3f;
         private const float DoorThicknessMeters = 0.1f;
         private const int DoorLeafPanelCount = 3;
-        private const float FloorThicknessMeters = 0.1f;
+        public const float FloorThicknessMeters = 0.1f;
         private const float LabelCharacterSize = 0.05f;
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the

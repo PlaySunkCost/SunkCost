@@ -387,7 +387,13 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   cabin), the tube gate's leaves and each player's own submersion
   (`PlayerSubmersion`, eye below sea level, local presentation and an event
   hook for the air card) are computed per peer from that position and the
-  site's `seaLevelY`, so a late joiner is right on its first frame.
+  site's `seaLevelY`, so a late joiner is right on its first frame. The driven
+  car is placed every frame from the authoritative `StartTick` plus the time
+  into the current tick (`TimeManager.GetTickElapsedAsDouble`), so it glides
+  between ticks on every peer without any extra state; the local rider is
+  carried by the car's frame delta with the car's colliders synced in the
+  direction's safe order (up: rider then sync; down: sync then rider) — a
+  local `CharacterController` concern, nothing replicated.
 - When neither the server nor the client is running any more, every world scene
   is unloaded locally; the menu is the Session scene.
 - Workarounds for FishNet 4.7.3 on Unity 6, kept in `WorldSceneFlow` and to be

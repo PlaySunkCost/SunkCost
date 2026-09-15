@@ -62,11 +62,16 @@ namespace SunkCost.World
             return CabinFrame.DeckCabin(ShipParts.InWorld(WorldId.Sea));
         }
 
+        // Seconds since a tick, read every frame: whole ticks plus the time into the
+        // current one, so a car or a door driven from it glides instead of stepping
+        // once per tick (Dan, 15 September 2026: "everything jumps in place").
         private float ElapsedSince(uint startTick)
         {
             if (networkManager == null || networkManager.TimeManager == null) return 0f;
-            uint now = networkManager.TimeManager.Tick;
-            return now <= startTick ? 0f : (float)networkManager.TimeManager.TicksToTime(now - startTick);
+            FishNet.Managing.Timing.TimeManager time = networkManager.TimeManager;
+            uint now = time.Tick;
+            if (now < startTick) return 0f;
+            return (float)(time.TicksToTime(now - startTick) + time.GetTickElapsedAsDouble());
         }
 
         private float CarSealSeconds => Car() != null ? Car().DoorSealSeconds : Settings.CarSealSecondsFallback;
@@ -114,6 +119,15 @@ namespace SunkCost.World
         // Every peer with the site loaded moves its car from the authoritative phase;
         // the local player inside it is carried along (the CharacterController does
         // not follow a moving floor on its own).
+        //
+        // Physics.autoSyncTransforms is off, so the car's colliders stay where the last
+        // physics step left them until something syncs them. A rider swept against that
+        // stale floor sank into it going up (the collider lagged below the visual floor,
+        // the ground stick pushed the capsule into the gap, the next step popped it out:
+        // "the floor is jumping", Dan, 16 September 2026) and floated above it going
+        // down. So the order per direction keeps every sweep against free space: up,
+        // carry the rider first (the stale floor is below), then sync; down, sync first
+        // (the floor is gone from under the feet), then carry the rider down onto it.
         private void DriveCar()
         {
             ElevatorController car = Car();
@@ -124,8 +138,17 @@ namespace SunkCost.World
             Vector3 delta = car.transform.position - before;
             if (delta == Vector3.zero) return;
             HQPlayerController local = LocalPlayer();
-            if (local == null || local.TravelLocked || local.gameObject.scene != car.gameObject.scene) return;
-            if (car.IsInsideCar(local.transform.position + Vector3.up * 0.5f)) local.AddExternalMotion(delta);
+            bool carried = local != null && !local.TravelLocked && local.gameObject.scene == car.gameObject.scene && car.IsInsideCar(local.transform.position + Vector3.up * 0.5f);
+            if (delta.y > 0f)
+            {
+                if (carried) local.CarryNow(delta);
+                Physics.SyncTransforms();
+            }
+            else
+            {
+                Physics.SyncTransforms();
+                if (carried) local.CarryNow(delta);
+            }
         }
 
         // The deck cabin's doors on the ship at sea: open while the car is up and
@@ -624,6 +647,12 @@ namespace SunkCost.World
                     CabinFrame frame = RideFrameFor(state, local.gameObject.scene);
                     if (frame.IsValid)
                     {
+                        // Still black: pay the site's first-render costs now, not mid-shaft.
+                        if (state.ToWorld == WorldId.Dive)
+                        {
+                            try { SunkCost.Sites.DiveSiteWarmup.RenderOnce(local.PlayerCamera, local.gameObject.scene); }
+                            catch (System.Exception e) { Debug.LogWarning("[WorldSceneFlow] dive site warm-up skipped: " + e.Message); }
+                        }
                         rider.PlaceOn(frame);
                         Ack(state.Serial, DepartureAckKind.Arrived, state.ToWorld);
                         clientStage = null;

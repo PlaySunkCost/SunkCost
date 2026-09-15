@@ -20,6 +20,9 @@ namespace SunkCost.World
     // writer of the trip state on CrewDayState and the only orchestrator; client
     // side it answers each stage for its own player (lock, black, placed). It
     // decides nothing about gameplay: CrewDayState (and the monitor) ask.
+    // Runs before the players (default order 0) so a rider is carried by the car's
+    // motion in the same frame the car moved, never one frame behind it.
+    [DefaultExecutionOrder(-90)]
     public sealed partial class WorldSceneFlow : MonoBehaviour
     {
         [SerializeField] private WorldLoopSettings settings;

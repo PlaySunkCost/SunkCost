@@ -392,7 +392,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(target);
             SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
             if (ship == null || ship.DeckCabin == null || local == null) return "No ship/cabin/local player";
-            Vector3 spot = ship.DeckCabin.position + Vector3.up * 0.05f;
+            Vector3 spot = ship.DeckCabin.position + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f); // on the floor disc, as a walker stands
             local.TeleportLocal(spot, ship.DeckCabin.eulerAngles.y);
             return "moved into the deck cabin at " + spot;
         }
@@ -402,7 +402,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
             SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
             if (car == null || local == null) return "No car/local player";
-            Vector3 spot = car.transform.position + Vector3.up * 0.05f;
+            Vector3 spot = car.transform.position + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f); // on the floor disc, not 5 cm inside it
             local.TeleportLocal(spot, car.transform.eulerAngles.y);
             return "moved into the car at " + spot;
         }

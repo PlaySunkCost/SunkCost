@@ -106,6 +106,7 @@ namespace SunkCost.Net
             string header = $"<b>{s.Role}</b>   client={s.LocalClientId}   transport={s.Transport}   rtt={s.RoundTripTimeMs}ms   tick={s.TickRate}Hz/{s.Tick}";
             if (s.ServerStarted) header += $"   clients={s.ConnectedClients}";
             GUILayout.Label(header, labelStyle);
+            if (!string.IsNullOrEmpty(s.Frames)) GUILayout.Label("frames: " + s.Frames, labelStyle);
             GUILayout.Space(4f);
             GUILayout.Label("<b> id   name              owner     sim         detail</b>", labelStyle);
 

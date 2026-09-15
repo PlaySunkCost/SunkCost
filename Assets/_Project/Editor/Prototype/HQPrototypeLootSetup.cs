@@ -132,6 +132,7 @@ namespace SunkCost.Editor.Prototype
                     if (renderer != null && renderer.sharedMaterial != material) { renderer.sharedMaterial = material; changes.Add("material"); }
                     Rigidbody body = root.GetComponent<Rigidbody>();
                     if (!Mathf.Approximately(body.mass, entry.MassKg)) { body.mass = entry.MassKg; changes.Add("mass"); }
+                    if (body.interpolation != RigidbodyInterpolation.Interpolate) { body.interpolation = RigidbodyInterpolation.Interpolate; changes.Add("interpolation"); } // a thrown item renders every frame, not only on physics steps
                     CarryableItem item = root.GetComponent<CarryableItem>();
                     using (var serialized = new SerializedObject(item))
                     {

@@ -222,6 +222,10 @@ namespace SunkCost.Interaction
                 hasPendingRelease = false;
                 ServerCancelRelease(pendingReleaseVersion);
             }
+            // A body this peer simulates has now stepped from wherever ApplyRole put it:
+            // interpolate its rendering between steps (see ApplyRole).
+            if (body != null && !body.isKinematic && body.interpolation == RigidbodyInterpolation.None)
+                body.interpolation = RigidbodyInterpolation.Interpolate;
             if (state.Value == ItemState.Released && LocalWriter && !hasPendingRelease && !restRequested)
             {
                 releaseTime += Time.fixedDeltaTime;
@@ -565,6 +569,13 @@ namespace SunkCost.Interaction
                 body.isKinematic = true;
                 body.useGravity = false;
             }
+            // Interpolation is off at every role change: a held or replicated (kinematic)
+            // item is placed by script each frame and Unity's interpolator would drag its
+            // transform a physics step behind that; a just-released item was teleported
+            // to the hand pose this frame and the interpolator would lerp it from the old
+            // pose. FixedUpdate turns it on once the body has simulated a step from the
+            // release pose, so a flying ball renders every frame from then on.
+            body.interpolation = RigidbodyInterpolation.None;
 
             bool physical = (current == ItemState.Free || current == ItemState.Released) && transitSerial == 0;
             foreach (Collider collider in colliders)

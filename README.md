@@ -72,7 +72,12 @@ be read as checklists by other assistants.
    the water climbing the glass and over your head (F3 shows `underwater=True`),
    then fast down the flooded tube. Walk out through the tube's gate, look
    around, walk back in and press **E** on the car's panel to come up; the
-   water drains as you pass the surface and you step out dry on the deck. Whoever
+   water drains as you pass the surface and you step out dry on the deck.
+   The car glides between network ticks and carries you without a bounce; a
+   thrown ball renders every frame. **F3** now also shows a `frames:` line
+   (fps, median and 1 % low frame times, the worst frame, hitches with the
+   profiler marker to blame) — the number that matters for "it feels stuck" is
+   the 1 % low, not the fps. VSync is on: the game runs at your monitor's rate. Whoever
    stands in the cabin rides along; friends left below get the empty car sent
    back to them. The ship will not sail while anyone is down there.
    A held slot item stays assigned to its slot; new grabs fill free slots. When
