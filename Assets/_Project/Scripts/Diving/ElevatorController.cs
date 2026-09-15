@@ -30,6 +30,14 @@ namespace SunkCost.Diving
         [SerializeField] private float travelSecondsOneWay = 15f;
         [SerializeField] private float doorSealSeconds = 1.5f;
 
+        // Tuned wait at the top before the cabin closes and starts its automatic empty
+        // return, gated on at least one living player remaining at the dive site (a
+        // disconnected player does not count as living) — docs/DESIGN.md, "Elevator rules",
+        // 15 September 2026 (Idan and Dan). Field only: the living-players-below check and
+        // the auto-return trigger itself are Dan's (day state / world loop), not implemented
+        // here.
+        [SerializeField] private float autoReturnDelaySeconds = 3f;
+
         private ElevatorState state = ElevatorState.AtTop;
         private ElevatorState pendingMoveState; // Descending or Ascending; resolved once Sealing completes
         private float progress; // 0 = at topPosition, 1 = at bottomPosition
@@ -44,6 +52,7 @@ namespace SunkCost.Diving
         public float StateElapsed => stateElapsed;
         public float TravelSecondsOneWay => travelSecondsOneWay;
         public float DoorSealSeconds => doorSealSeconds;
+        public float AutoReturnDelaySeconds => autoReturnDelaySeconds;
 
         private void Awake()
         {

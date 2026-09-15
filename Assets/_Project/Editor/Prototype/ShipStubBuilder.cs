@@ -96,23 +96,10 @@ namespace SunkCost.Editor.Prototype
                 // monitor's scale does not stretch the glyphs).
                 Label(ShipParts.MonitorStatusName, root.transform, new Vector3(0f, 1.85f, DeckLength / 2f - 1.57f), string.Empty, 0.035f, facingBow: false);
 
-                GameObject cabin = new(ShipParts.DeckCabinName);
-                cabin.transform.SetParent(root.transform, false);
-                cabin.transform.localPosition = new Vector3(0f, 0f, -8f);
-                Trigger(ShipParts.DeckCabinVolumeName, cabin.transform, new Vector3(0f, 1.75f, 0f), new Vector3(4.5f, 3.5f, 4.5f));
-                Block("PostA", cabin.transform, new Vector3(-2.25f, 1.75f, -2.25f), new Vector3(0.15f, 3.5f, 0.15f), rail);
-                Block("PostB", cabin.transform, new Vector3(2.25f, 1.75f, -2.25f), new Vector3(0.15f, 3.5f, 0.15f), rail);
-                Block("PostC", cabin.transform, new Vector3(-2.25f, 1.75f, 2.25f), new Vector3(0.15f, 3.5f, 0.15f), rail);
-                Block("PostD", cabin.transform, new Vector3(2.25f, 1.75f, 2.25f), new Vector3(0.15f, 3.5f, 0.15f), rail);
-                Block("Roof", cabin.transform, new Vector3(0f, 3.55f, 0f), new Vector3(4.6f, 0.1f, 4.6f), rail);
-                Block("WallBack", cabin.transform, new Vector3(0f, 1.75f, -2.25f), new Vector3(4.5f, 3.5f, 0.05f), glass);
-                Block("WallLeft", cabin.transform, new Vector3(-2.25f, 1.75f, 0f), new Vector3(0.05f, 3.5f, 4.5f), glass);
-                Block("WallRight", cabin.transform, new Vector3(2.25f, 1.75f, 0f), new Vector3(0.05f, 3.5f, 4.5f), glass);
-                // Doors on the bow side, open (parked to the sides) in the stub.
-                Block(ShipParts.DeckCabinDoorLName, cabin.transform, new Vector3(-1.7f, 1.75f, 2.25f), new Vector3(1.1f, 3.5f, 0.05f), glass);
-                Block(ShipParts.DeckCabinDoorRName, cabin.transform, new Vector3(1.7f, 1.75f, 2.25f), new Vector3(1.1f, 3.5f, 0.05f), glass);
-                Block(ShipParts.DeckCabinButtonName, cabin.transform, new Vector3(2.1f, 1.3f, 0f), new Vector3(0.15f, 0.15f, 0.15f), button);
-                Label(ShipParts.DeckCabinPanelName, cabin.transform, new Vector3(0f, 3.15f, 2.3f), string.Empty, 0.05f, facingBow: true);
+                // The deck cabin is the same glass elevator as DiveSite01's car, docked
+                // (docs/DESIGN.md: "the glass elevator") — built from the shared round-cabin
+                // geometry rather than a plain box, visual shell only (see DeckCabinBuilder).
+                DeckCabinBuilder.Build(root.transform, new Vector3(0f, 0f, -8f), deck, rail, glass, button);
 
                 Block(ShipParts.StorageAreaName, root.transform, new Vector3(0f, 0.02f, -13f), new Vector3(4f, 0.04f, 3.5f), tape);
 

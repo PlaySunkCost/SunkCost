@@ -226,8 +226,12 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
 - The server controls elevator requests, boarding/cargo state and motion. It
   carries **any number of the crew and any amount of cargo together**, including
   unattended loot or bodies. Do not impose a one-person-or-one-load limit.
-- Travel is **15 seconds each direction**, returning without a surface delay:
-  a diver below waits **30 seconds** after departure. Keep timing configurable.
+- Travel is **15 seconds each direction**, 30 seconds round trip, always,
+  regardless of weight. A rider-controlled return has no added wait; the
+  unmanned automatic return additionally waits a tuned delay (a new serialized
+  field on `ElevatorController`, default 3 s) at the top before descending,
+  and only when the living-players-below check below is true. Keep timing
+  configurable.
 - Each transition into motion emits authoritative elevator noise. Persistent
   elevator state, motion progress and occupants must be reconstructible from sync
   state. A surfaced diver cannot descend again during that dive.
@@ -252,6 +256,18 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
   Open must be defined by the world-loop plan before that code lands. The deck
   button only starts a day and requires every living player inside; mid-day and
   at HQ it does nothing.
+- Decided jointly by Idan and Dan on a call (15 September 2026), not yet
+  implemented — this section still needs the PR review `CONVENTIONS.md`
+  requires for contract changes before it counts as reviewed:
+  - **Living players below.** The server tracks whether at least one living
+    player remains at the dive site; a disconnected player does not count as
+    living. This single check gates both rows below.
+  - **Automatic empty return.** Gated on the living-players-below check above
+    (see the timing bullet earlier in this section).
+  - **Day-end monitor unlock.** The day no longer ends automatically when
+    everyone is up or dead. The crew ends it with a deck/monitor action, and
+    the monitor unlocks on exactly the same living-players-below check — one
+    check, not two.
 
 ## 10. Scene flow
 
