@@ -432,6 +432,11 @@ namespace SunkCost.World
             SetRide(CabinRideStage.Sealing, RideDirection.Up, CarSealSeconds);
             ServerSetElevator(ElevatorState.Sealing, true);
             yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
+            // The doors are shut and the car is climbing: whoever pressed the button
+            // and then stepped out while the doors were closing is not aboard. They
+            // stay below (the car comes back for them) instead of being moved to the
+            // deck cabin from the seafloor (Dan, 15 September 2026).
+            ServerDropRidersOutside(car);
             SetRide(CabinRideStage.Riding, RideDirection.Up, CarTravelSeconds);
             yield return WaitForCar(ElevatorState.AtTop, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
 
@@ -441,17 +446,20 @@ namespace SunkCost.World
             float deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
             ShipParts ship = ShipParts.InWorld(WorldId.Sea);
             if (ship == null) { yield return CancelRide(RideDirection.Up, "No ship at sea"); yield break; }
-            ServerBuildMoveList();
-            Scene destination = WorldScenes.Scene(WorldId.Sea);
             var conns = ActiveCohort();
-            foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
-            EnsureHolderKeepAlive();
-            networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
-            while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
-            if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
-            foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
+            if (conns.Count > 0) // an empty car (everyone stepped out at the seal) moves nobody
+            {
+                ServerBuildMoveList();
+                Scene destination = WorldScenes.Scene(WorldId.Sea);
+                foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+                EnsureHolderKeepAlive();
+                networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
+                while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
+                if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
+                foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
+            }
             bool othersBelow = dayState.Below.Count > 0;
-            networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
+            if (conns.Count > 0) networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
             if (!othersBelow) cachedCar = null;
 
             SetRide(CabinRideStage.Arriving, RideDirection.Up, Settings.CabinSealSeconds);
@@ -460,6 +468,22 @@ namespace SunkCost.World
             EndRide(RideDirection.Up);
             // Someone is still down there: the car goes back for them, empty.
             if (othersBelow) ServerSetElevator(ElevatorState.Sealing, false);
+        }
+
+        // Everyone in the cohort who is not standing inside the sealed car leaves the
+        // ride: out of the cohort, the rider list and the placements; still listed
+        // below. The client sees itself unlisted and stops tracking the car.
+        private void ServerDropRidersOutside(ElevatorController car)
+        {
+            foreach (NetworkConnection conn in ActiveCohort())
+            {
+                HQPlayerController player = PlayerOf(conn);
+                bool aboard = player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(player.transform.position);
+                if (aboard) continue;
+                cohort.Remove(conn.ClientId);
+                dayState.ServerRemoveRider(conn.ClientId);
+                Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: client {conn.ClientId} stepped out before the doors shut; left below.");
+            }
         }
 
         private void OnRideAck(NetworkConnection conn, DepartureAckBroadcast msg)
@@ -556,7 +580,7 @@ namespace SunkCost.World
         // Loading stage locks it (that stage can arrive after the swap itself).
         private IEnumerator TrackInCar(CabinRideState state)
         {
-            while (dayState != null && dayState.CabinRide.Serial == state.Serial && dayState.CabinRide.Active && dayState.CabinRide.Stage < CabinRideStage.Loading)
+            while (dayState != null && dayState.CabinRide.Serial == state.Serial && dayState.CabinRide.Active && dayState.CabinRide.Stage < CabinRideStage.Loading && LocalIsRider(state))
             {
                 ShipDepartureRider rider = LocalRider();
                 HQPlayerController local = LocalPlayer();

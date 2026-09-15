@@ -534,6 +534,28 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoCar();
             yield return Wait(0.3f);
 
+            // R3b: press the car button and step out while the doors close (Dan's bug:
+            // the rider was teleported to the deck cabin from the seafloor). The car
+            // goes up without them, they stay below, the car comes back down for them.
+            int leaverSerial = Day.CabinRide.Serial;
+            H.ClientRequestCar();
+            yield return WaitUntil(() => Day.CabinRide.Serial > leaverSerial && Day.CabinRide.Stage == CabinRideStage.Sealing, 8f, "R3b up ride sealing");
+            host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); // out through the closing doors
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Riding, 5f, "R3b the car climbs");
+            yield return WaitUntil(() => !Day.IsRider(host.OwnerId) && Day.Riders.Count == 0, 2f, "R3b the leaver is no longer a rider once the doors shut");
+            Check(Day.IsBelow(host.OwnerId), "R3b the leaver is still listed below");
+            yield return WaitUntil(() => !Day.CabinRide.Active, 40f, "R3b the empty ride completed");
+            Check(Day.CabinRide.Stage == CabinRideStage.Complete, "R3b the ride completed without a cancel");
+            Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && !host.TravelLocked, "R3b the leaver stayed in DiveSite01, unlocked");
+            Check(Vector3.Distance(host.transform.position, car.BottomPosition + doorway * 4f) < 1.5f, "R3b the leaver was not moved: " + host.transform.position.ToString("F2"));
+            Check(WorldSceneFlow.FindCar() != null, "R3b the site stays loaded while the leaver is below");
+            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.AtBottom, 40f, "R3b the car came back down for the leaver");
+            yield return WaitUntil(CarDoorsOpen, 3f, "R3b car doors open again at the bottom");
+            Check(flow.DeckCabinOpenFraction() < 0.01f, "R3b deck cabin doors stay closed with the car below");
+            car = WorldSceneFlow.FindCar();
+            H.MoveLocalIntoCar();
+            yield return Wait(0.3f);
+
             // R4: up. The car seals and climbs, the host is moved into the deck cabin, its doors open, the car stays up (nobody below).
             yield return RideAndSample(RideDirection.Up, "R4");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), "R4 the host's player is back in ShipAtSea");

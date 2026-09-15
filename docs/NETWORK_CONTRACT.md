@@ -368,8 +368,11 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   `ShipAtSea` is unloaded for the riders only), `Arriving` (fade in inside the
   closed car), then `ElevatorPhase` `Descending`; `Complete` when the car is
   `AtBottom` — riders unlock, the car's doors and the shaft gate open. Up:
-  `Preparing` (lock at the car spot), `Sealing` (the car's doors, `Upward`),
-  `Riding` (`Ascending`, riders follow the car), `Loading` at `AtTop` (riders
+  `Preparing` (lock at the car spot), `Sealing` (the car's doors, `Upward`;
+  riders are free and may still step out), then once the car is `Ascending`
+  the server drops from the ride everyone not standing inside the sealed car —
+  they stay listed below and the car comes back for them; an empty car moves
+  nobody — `Riding` (`Ascending`, riders follow the car), `Loading` at `AtTop` (riders
   moved into `ShipAtSea`, placed in the deck cabin, `DiveSite01` unloaded for
   them and from the server when nobody remains below), `Arriving` (the deck
   cabin's doors open over `cabinSealSeconds`), `Complete`. If someone is still

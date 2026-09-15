@@ -43,6 +43,13 @@ These results do not certify Steam.
 - Not covered: the look through three transparent layers with a real second
   player watching from the deck (the guest is headless), Steam transport, and
   the feel gate of section 8.3 (Dan's call).
+- `dan/car-leavers` (on the merged tube, 15 September 2026): row R3b — press
+  the car button and step out while the doors close. `MATRIX_PASS` (183 rows):
+  once the car climbed the rider list was empty, the leaver stayed listed
+  below, in DiveSite01, unlocked and unmoved (−2.83, −45.00, −2.83), the ride
+  completed without a cancel, the site stayed loaded, the car came back down
+  and opened, the deck doors stayed shut. Before the fix the leaver was moved
+  into the deck cabin from the seafloor (Dan's report).
 
 ## Deck cabin ride branch — 15 September 2026
 
