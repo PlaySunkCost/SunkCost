@@ -16,6 +16,8 @@
 .vs/
 .idea/
 .vscode/
+.claude-flow/
+.claude/settings.local.json
 *.csproj
 *.unityproj
 *.sln

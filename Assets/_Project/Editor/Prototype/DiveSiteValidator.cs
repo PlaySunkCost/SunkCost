@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FishNet.Managing;
 using FishNet.Object;
 using SunkCost.Diving;
+using SunkCost.Editor.Prototype;
+using SunkCost.Player;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -281,9 +282,16 @@ namespace SunkCost.Sites
                      && Mathf.Abs(Vector3.Distance(wreck.position, bottom.position) - settings.WreckOffset.magnitude) > WreckDistanceTolerance)
                 errors.Add($"Wreck should sit roughly {settings.WreckOffset.magnitude}m from the elevator anchor; found {Vector3.Distance(wreck.position, bottom.position)}m.");
 
-            CheckCount<DiveSiteDevPlayer>(scene, 1, errors);
-            if (AnyComponentInScene<NetworkManager>(scene) || AnyComponentInScene<NetworkObject>(scene))
-                errors.Add("Dive site must not contain networking components (this is a single-player greybox).");
+            // DiveSite01 is a world scene like HQ and ShipAtSea
+            // (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 9.1): it carries no
+            // session machinery of its own — Session.unity owns the one network root —
+            // and no placed player; CrewSpawner spawns the networked player at runtime
+            // from PrototypePlayer.prefab using the Spawn Points group required above.
+            WorldSceneChecks.CheckNoSessionMachinery(scene, errors, "DiveSite01");
+            HQPrototypeValidator.CheckCount<NetworkObject>(scene, 0, errors);
+            if (AnyComponentInScene<HQPlayerController>(scene))
+                errors.Add("Dive site must not contain a placed HQPlayerController — the player spawns at runtime from PrototypePlayer.prefab.");
+            WorldSceneChecks.CheckBuildList(errors);
 
             // --- Lighting: the sun must not reach the seafloor's own layer ---
             int deepLayer = LayerMask.NameToLayer(DiveSiteBuilder.DeepLayerName);
@@ -316,24 +324,37 @@ namespace SunkCost.Sites
             if (RenderSettings.fogMode != FogMode.ExponentialSquared) errors.Add("Fog mode should be ExponentialSquared.");
             if (RenderSettings.fogDensity <= 0f) errors.Add("Fog density must be positive.");
 
-            Transform headlamp = FindByName(scene, "Headlamp");
-            if (headlamp == null)
+            // The headlamp lives on PrototypePlayer.prefab (disabled by default; a dive
+            // site enables it at runtime via DiveSiteHeadlampActivator) rather than as a
+            // scene object, so it's checked against the prefab asset, not this scene.
+            GameObject playerPrefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
+            if (playerPrefabAsset == null)
             {
-                errors.Add("Headlamp is missing from the dev harness camera.");
+                errors.Add("PrototypePlayer.prefab is missing at " + HQPrototypeBuilder.PlayerPrefabPath + ".");
             }
             else
             {
-                Light light = headlamp.GetComponent<Light>();
-                if (light == null || light.type != LightType.Spot)
-                    errors.Add("Headlamp must be a spot light.");
-                else if (settings != null)
+                Transform headlamp = FindByName(playerPrefabAsset.transform, "Headlamp");
+                if (headlamp == null)
                 {
-                    if (Mathf.Abs(light.intensity - settings.HeadlampIntensity) > LightParamTolerance)
-                        errors.Add("Headlamp intensity does not match the expected " + settings.HeadlampIntensity + " lumens.");
-                    if (Mathf.Abs(light.range - settings.HeadlampRange) > LightParamTolerance)
-                        errors.Add("Headlamp range does not match the expected " + settings.HeadlampRange + "m.");
-                    if (Mathf.Abs(light.spotAngle - settings.HeadlampSpotAngle) > LightParamTolerance)
-                        errors.Add("Headlamp spot angle does not match the expected " + settings.HeadlampSpotAngle + " degrees.");
+                    errors.Add("Headlamp is missing from PrototypePlayer.prefab.");
+                }
+                else
+                {
+                    Light light = headlamp.GetComponent<Light>();
+                    if (light == null || light.type != LightType.Spot)
+                        errors.Add("Headlamp must be a spot light.");
+                    else if (settings != null)
+                    {
+                        if (light.enabled)
+                            errors.Add("Headlamp should start disabled on PrototypePlayer.prefab; the dive site enables it at runtime.");
+                        if (Mathf.Abs(light.intensity - settings.HeadlampIntensity) > LightParamTolerance)
+                            errors.Add("Headlamp intensity does not match the expected " + settings.HeadlampIntensity + " lumens.");
+                        if (Mathf.Abs(light.range - settings.HeadlampRange) > LightParamTolerance)
+                            errors.Add("Headlamp range does not match the expected " + settings.HeadlampRange + "m.");
+                        if (Mathf.Abs(light.spotAngle - settings.HeadlampSpotAngle) > LightParamTolerance)
+                            errors.Add("Headlamp spot angle does not match the expected " + settings.HeadlampSpotAngle + " degrees.");
+                    }
                 }
             }
 
@@ -354,7 +375,7 @@ namespace SunkCost.Sites
             if (!MaterialExists("DiveSiteGlass.mat")) errors.Add("Elevator car glass material DiveSiteGlass.mat is missing.");
 
             if (errors.Count > 0) throw new InvalidOperationException("Dive Site 01 validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log("Dive Site 01 validation passed: saved scene, platform/shaft/seafloor, elevator anchors, car, guide cable, dev player and lighting are ready.");
+            Debug.Log("Dive Site 01 validation passed: saved scene, platform/shaft/seafloor, elevator anchors, car, guide cable and lighting are ready as a world scene (no session machinery, no placed player).");
         }
 
         private static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component
@@ -383,6 +404,13 @@ namespace SunkCost.Sites
                 foreach (Transform candidate in root.GetComponentsInChildren<Transform>(true))
                     if (candidate.name == name) return candidate;
             }
+            return null;
+        }
+
+        private static Transform FindByName(Transform root, string name)
+        {
+            foreach (Transform candidate in root.GetComponentsInChildren<Transform>(true))
+                if (candidate.name == name) return candidate;
             return null;
         }
 
