@@ -339,9 +339,23 @@ namespace SunkCost.Editor.Prototype
             SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
             string loaded = string.Join("+", Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
-            return $"flow={(flow == null ? "none" : $"world={flow.CurrentWorld} transitioning={flow.Transitioning} pending={flow.PendingArrivals}")}; " +
-                   $"day={(day == null ? "none" : day.DebugStatus)}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; " +
+            SunkCost.World.ShipDepartureState trip = day == null ? default : day.Departure;
+            SunkCost.World.ShipDepartureRider rider = SunkCost.World.WorldSceneFlow.LocalRider();
+            return $"flow={(flow == null ? "none" : $"world={flow.CurrentWorld} transitioning={flow.Transitioning} pending={flow.PendingAcks}")}; " +
+                   $"day={(day == null ? "none" : day.DebugStatus)}; trip=serial={trip.Serial} stage={trip.Stage} from={trip.FromWorld} to={trip.ToWorld}; " +
+                   $"rider={(rider == null ? "none" : $"locked={rider.Locked} placed={rider.Placed} local={rider.ShipLocal}")}; " +
+                   $"loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; " +
                    $"fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}";
+        }
+
+        // The departure presentation of the ship in a world, for the checks.
+        public static string ShipStatus(string world)
+        {
+            if (!System.Enum.TryParse(world, true, out SunkCost.World.WorldId target)) return "Unknown world " + world;
+            SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(target);
+            SunkCost.World.ShipDepartureVisual visual = ship != null ? ship.GetComponent<SunkCost.World.ShipDepartureVisual>() : null;
+            if (visual == null) return "no ship";
+            return $"rest={visual.RestPosition}; pos={ship.transform.position}; gangway={visual.GangwayAngle:0.#}; lowered={visual.GangwayLowered}; rampCollider={(ship.GangwayCollider != null && ship.GangwayCollider.enabled)}; engineClip={visual.HasEngineClip}";
         }
 
         // Every player and carryable with the Unity scene it sits in on this peer.

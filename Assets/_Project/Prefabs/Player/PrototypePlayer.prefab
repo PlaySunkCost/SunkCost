@@ -264,6 +264,7 @@ GameObject:
   - component: {fileID: 2601291312213266648}
   - component: {fileID: 1877639824901941508}
   - component: {fileID: 7659595800782209619}
+  - component: {fileID: 2728412560851701136}
   m_Layer: 0
   m_Name: PrototypePlayer
   m_TagString: Untagged
@@ -482,6 +483,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e894afca9061f74bb8c9284c3cec6d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.World.ShipControls
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 364150461512337757}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &2728412560851701136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4832db752e9ce72459f06023a9789d71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.World.ShipDepartureRider
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 364150461512337757}
   _networkObjectCache: {fileID: 0}

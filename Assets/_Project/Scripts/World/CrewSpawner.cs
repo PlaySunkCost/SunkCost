@@ -23,6 +23,8 @@ namespace SunkCost.World
         private int nextSpawn;
 
         public event System.Action<NetworkObject> OnSpawned;
+        // Joiners between authentication and their spawn; a departure waits for zero.
+        public int PendingCount => pending.Count;
 
         public void SetPlayerPrefab(NetworkObject prefab) => playerPrefab = prefab;
 
@@ -48,6 +50,14 @@ namespace SunkCost.World
         private void OnClientLoadedStartScenes(NetworkConnection conn, bool asServer)
         {
             if (!asServer || flow == null) return;
+            // Admission refuses joins once the ship is under way; this is the race
+            // between that check and the load. Nobody spawns into a departing world.
+            if (flow.Transitioning)
+            {
+                Debug.LogWarning("CrewSpawner: Player " + conn.ClientId + " authenticated during a departure; disconnecting (ship travelling).");
+                conn.Disconnect(true);
+                return;
+            }
             WorldId world = flow.CurrentWorld;
             pending.Add(conn.ClientId);
             flow.EnsureHolderKeepAlive(); // see WorldSceneFlow: a load that moves nothing must not re-move the last sail

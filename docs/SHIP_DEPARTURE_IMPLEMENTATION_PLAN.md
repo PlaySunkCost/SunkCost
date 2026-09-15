@@ -1,9 +1,11 @@
 # Ship departure — implementation handoff
 
-**Status: agreed behavior, implementation plan only.** Written 15 September
-2026 on `codex/ship-departure-plan`, starting exactly from `main` at `0bb99c2`
-(PR #19, monitor controls; includes PR #18, world scene flow). No gameplay code
-or assets were changed in this planning task. Check newer main before building.
+**Status: implemented on `dan/ship-departure` (15 September 2026), Local rows
+D1–D4, D7 and the scene-flow rows verified; see the test report.** Written
+15 September 2026 as `codex/ship-departure-plan` from `main` at `0bb99c2`
+(PR #19, monitor controls; includes PR #18, world scene flow). Where the code
+differs from the plan: the engine audio has no clip yet (a reported gap); the
+gangway path and pier are the grey stub's, Idan's prefab keeps the part names.
 
 Read [DESIGN](DESIGN.md), [NETWORK_CONTRACT](NETWORK_CONTRACT.md),
 [CONVENTIONS](CONVENTIONS.md), [WORKFLOW](WORKFLOW.md) and

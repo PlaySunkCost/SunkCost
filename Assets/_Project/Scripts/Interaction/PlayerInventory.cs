@@ -148,10 +148,20 @@ namespace SunkCost.Interaction
 
         // --- Server decisions.
 
+        // Client input is gated too, but a request sent before the lock arrived or
+        // a hand-made one must not act on a ship under way (plan section 5).
+        private bool ServerTravelling(NetworkConnection sender)
+        {
+            if (SunkCost.World.CrewDayState.Instance == null || !SunkCost.World.CrewDayState.Instance.Travelling) return false;
+            TargetRefuse(sender, (byte)RefuseReason.Travelling);
+            return true;
+        }
+
         [ServerRpc]
         private void ServerRequestGrab(NetworkObject target, NetworkConnection sender = null)
         {
             if (sender != Owner) return;
+            if (ServerTravelling(sender)) return;
             CarryableItem item = target == null ? null : target.GetComponent<CarryableItem>();
             if (item == null || !item.IsSpawned) { TargetRefuse(sender, (byte)RefuseReason.NoSuchItem); return; }
             if (!item.CanGrabFromWorld) { TargetRefuse(sender, (byte)RefuseReason.NotFree); return; }
@@ -192,6 +202,7 @@ namespace SunkCost.Interaction
         private void ServerRequestEquip(int slot, NetworkConnection sender = null)
         {
             if (sender != Owner || slot < 0 || slot >= InventorySlots.Count) return;
+            if (ServerTravelling(sender)) return;
             InventorySlots current = slots.Value;
             int id = current.Get(slot);
             CarryableItem item = Resolve(id);
@@ -228,6 +239,7 @@ namespace SunkCost.Interaction
         private void ServerRequestDrop(NetworkConnection sender = null)
         {
             if (sender != Owner) return;
+            if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null) return;
             if (held.ServerRelease(sender, Vector3.zero, false))
@@ -239,6 +251,7 @@ namespace SunkCost.Interaction
         private void ServerRequestUse(Vector3 aimDirection, NetworkConnection sender = null)
         {
             if (sender != Owner) return;
+            if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null || held.UseAction != ItemUseAction.Throw) return;
             if (held.ServerRelease(sender, aimDirection, true))

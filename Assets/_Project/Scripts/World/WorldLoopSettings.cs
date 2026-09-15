@@ -23,6 +23,20 @@ namespace SunkCost.World
         [Tooltip("Fallback if the parent switch pops on Steam: riders stand still for the ride.")]
         [SerializeField] private bool lockRidersDuringRide;
 
+        [Header("Ship departure (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md)")]
+        [Tooltip("Seconds the gangway takes to lift before the ship moves.")]
+        [SerializeField] private float gangwayRaiseSeconds = 0.8f;
+        [Tooltip("Seconds of visible pull-away before the fade.")]
+        [SerializeField] private float departureSeconds = 4f;
+        [Tooltip("Metres the ship travels along its DepartureDirection during the pull-away.")]
+        [SerializeField] private float departureDistanceMeters = 8f;
+        [Tooltip("Seconds of the departure fade to black and of the fade back in.")]
+        [SerializeField] private float departureFadeSeconds = 0.75f;
+        [Tooltip("Seconds the gangway takes to lower on arrival at HQ before controls return.")]
+        [SerializeField] private float gangwayLowerSeconds = 0.8f;
+        [Tooltip("Seconds the server waits for every passenger to acknowledge the lock before cancelling.")]
+        [SerializeField] private float prepareTimeoutSeconds = 10f;
+
         public float SailingFadeSeconds => sailingFadeSeconds;
         public float ArrivalTimeoutSeconds => arrivalTimeoutSeconds;
         public float UnparentTimeoutSeconds => unparentTimeoutSeconds;
@@ -31,11 +45,19 @@ namespace SunkCost.World
         public Vector3 ShipAtSeaOrigin => shipAtSeaOrigin;
         public int DaysPerCycle => daysPerCycle;
         public bool LockRidersDuringRide => lockRidersDuringRide;
+        public float GangwayRaiseSeconds => gangwayRaiseSeconds;
+        public float DepartureSeconds => departureSeconds;
+        public float DepartureDistanceMeters => departureDistanceMeters;
+        public float DepartureFadeSeconds => departureFadeSeconds;
+        public float GangwayLowerSeconds => gangwayLowerSeconds;
+        public float PrepareTimeoutSeconds => prepareTimeoutSeconds;
 
         public bool IsValid =>
             sailingFadeSeconds >= 0f && arrivalTimeoutSeconds > 0f && unparentTimeoutSeconds > 0f &&
             syncFlushTicks >= 1 && refusalDisplaySeconds >= 0f && daysPerCycle >= 1 &&
-            float.IsFinite(shipAtSeaOrigin.x) && float.IsFinite(shipAtSeaOrigin.y) && float.IsFinite(shipAtSeaOrigin.z);
+            float.IsFinite(shipAtSeaOrigin.x) && float.IsFinite(shipAtSeaOrigin.y) && float.IsFinite(shipAtSeaOrigin.z) &&
+            gangwayRaiseSeconds >= 0f && departureSeconds > 0f && float.IsFinite(departureDistanceMeters) && departureDistanceMeters > 0f &&
+            departureFadeSeconds >= 0f && gangwayLowerSeconds >= 0f && prepareTimeoutSeconds > 0f;
 
         private static WorldLoopSettings fallback;
 

@@ -19,7 +19,8 @@ namespace SunkCost.Net
         HostNotReady,
         Timeout,
         Internal,
-        DiveInProgress
+        DiveInProgress,
+        ShipTravelling
     }
 
     public static class AdmissionRejectionText
@@ -41,6 +42,7 @@ namespace SunkCost.Net
                 case AdmissionRejection.HostNotReady: return "Host is not ready";
                 case AdmissionRejection.Timeout: return "Authentication timed out";
                 case AdmissionRejection.DiveInProgress: return "Dive in progress — join between days";
+                case AdmissionRejection.ShipTravelling: return "Ship travelling; try again on arrival";
                 default: return "Could not join";
             }
         }

@@ -22,6 +22,7 @@ namespace SunkCost.World
             WorldSceneFlow flow = WorldSceneFlow.Instance;
             CrewDayState day = CrewDayState.Instance;
             if (flow == null || day == null) return;
+            if (day.Travelling) { day.ServerReportRefusal("Ship travelling; try again on arrival"); return; }
             // A press only counts from someone on the ship (the button is on the deck).
             ShipParts ship = ShipParts.InWorld(flow.CurrentWorld);
             if (ship != null && !ship.IsAboard(transform.position)) { day.ServerReportRefusal("Not aboard: " + WorldSceneFlow.DisplayName(sender)); return; }

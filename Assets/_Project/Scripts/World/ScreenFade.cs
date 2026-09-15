@@ -77,7 +77,9 @@ namespace SunkCost.World
         private void OnGUI()
         {
             if (alpha <= 0f) return;
-            GUI.depth = -1000; // in front of the HUD and the session menu
+            // In front of the HUD; behind the session menu when it is open, so Leave
+            // stays reachable under black (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md 8).
+            GUI.depth = SunkCost.Net.SessionInputGate.MenuOpen ? 1000 : -1000;
             Color previous = GUI.color;
             GUI.color = new Color(0f, 0f, 0f, alpha);
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), black);

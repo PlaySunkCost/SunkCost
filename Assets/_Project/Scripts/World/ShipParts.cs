@@ -24,6 +24,12 @@ namespace SunkCost.World
         public const string StorageAreaName = "StorageArea";
         public const string SpawnPointPrefix = "SpawnPoint_";
         public const string BoardingPointName = "BoardingPoint";
+        // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
+        public const string SafeDeckVolumeName = "SafeDeckVolume";           // the deck proper: where a passenger must stand
+        public const string GangwayPivotName = "GangwayPivot";               // hinge at the ship's edge; rotates to raise
+        public const string GangwayName = "Gangway";                         // the ramp mesh + collider under the pivot
+        public const string GangwayExclusionVolumeName = "GangwayExclusionVolume"; // the ramp and its lip: not aboard, and cargo here blocks departure
+        public const string DepartureDirectionName = "DepartureDirection";   // its forward is the straight way out
         public const int SpawnPointCount = 4;
 
         public static readonly string[] RequiredChildren =
@@ -31,6 +37,7 @@ namespace SunkCost.World
             AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorStatusName, DeckCabinName,
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
             StorageAreaName, BoardingPointName,
+            SafeDeckVolumeName, GangwayPivotName, GangwayName, GangwayExclusionVolumeName, DepartureDirectionName,
             SpawnPointPrefix + "1", SpawnPointPrefix + "2", SpawnPointPrefix + "3", SpawnPointPrefix + "4"
         };
 
@@ -39,6 +46,11 @@ namespace SunkCost.World
         public Transform DeckCabin => Find(DeckCabinName);
         public Collider DeckCabinVolume => Find(DeckCabinVolumeName)?.GetComponent<Collider>();
         public Transform BoardingPoint => Find(BoardingPointName);
+        public Collider SafeDeckVolume => Find(SafeDeckVolumeName)?.GetComponent<Collider>();
+        public Transform GangwayPivot => Find(GangwayPivotName);
+        public Collider GangwayCollider => Find(GangwayName)?.GetComponent<Collider>();
+        public Collider GangwayExclusionVolume => Find(GangwayExclusionVolumeName)?.GetComponent<Collider>();
+        public Transform DepartureDirection => Find(DepartureDirectionName);
 
         public Transform SpawnPoint(int index) => Find(SpawnPointPrefix + (index + 1));
 
@@ -55,6 +67,18 @@ namespace SunkCost.World
         public bool IsAboard(Vector3 worldPosition) => Contains(AboardVolume, worldPosition);
 
         public bool IsInDeckCabin(Vector3 worldPosition) => Contains(DeckCabinVolume, worldPosition);
+
+        // Standing on the deck proper, not on the gangway or its lip: what a passenger
+        // needs before the ship may move. Falls back to the aboard volume on a ship
+        // without the departure parts.
+        public bool IsSafelyAboard(Vector3 worldPosition)
+        {
+            Collider deck = SafeDeckVolume;
+            if (deck == null) return IsAboard(worldPosition);
+            return Contains(deck, worldPosition) && !IsOnGangway(worldPosition);
+        }
+
+        public bool IsOnGangway(Vector3 worldPosition) => Contains(GangwayExclusionVolume, worldPosition);
 
         public static bool Contains(Collider volume, Vector3 worldPosition)
         {

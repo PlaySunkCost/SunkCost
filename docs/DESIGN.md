@@ -42,6 +42,19 @@ storage room holds everything you've hauled up, as physical objects. A readout o
 what you have against what you owe. **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
+**Sailing** (decided 15 September 2026). The gangway belongs to the ship: down
+on the pier while docked, lifted before the ship moves, stowed at sea. Someone
+standing on it is not aboard, and cargo lying on it stops the ship ("Clear the
+gangway"). When the monitor accepts a destination everyone is held where they
+stand — you can look around and talk, not walk or use items — the gangway
+lifts, the engine starts and the ship visibly pulls away for about four
+seconds with everyone and everything on the deck riding along at their own
+spots; then the screen fades to black, the scene changes, and you fade back in
+on the stopped ship at the destination. At HQ the gangway lowers before you
+can walk. No docking animation, no steering, no walking on the moving deck in
+this version. Loose deck cargo is secured for the trip: a ball thrown just
+before departure stops where it is and does not keep flying at the far end.
+
 **Scene 3 — the elevator and the site.** One scene per site, holding the shaft,
 the moving cabin and the seafloor; reached only from the deck cabin and left only
 into it. Walk, find salvage, carry it back, send it up. One tank of air each, with

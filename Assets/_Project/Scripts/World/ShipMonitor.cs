@@ -34,6 +34,18 @@ namespace SunkCost.World
             if (day == null) return string.Empty;
             if (Time.unscaledTime - day.LastRefusalAt < settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(day.LastRefusal.Text))
                 return day.LastRefusal.Text;
+            ShipDepartureState trip = day.Departure;
+            if (trip.Active)
+            {
+                string where = trip.ToWorld == WorldId.HQ ? "home" : "to Site 01";
+                switch (trip.Stage)
+                {
+                    case DepartureStage.Preparing: return "All aboard — hold on";
+                    case DepartureStage.RaisingGangway: return "Raising the gangway";
+                    case DepartureStage.Arriving: return trip.ToWorld == WorldId.HQ ? "Docked — lowering the gangway" : "Arrived at Site 01";
+                    default: return "Sailing " + where + "…";
+                }
+            }
             switch (day.Phase)
             {
                 case DayPhase.Sailing: return "Sailing to Site 01…";

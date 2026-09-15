@@ -30,6 +30,7 @@ namespace SunkCost.Player
         private float verticalSpeed;
         private bool grabConsumed;
         private float grabBufferedUntil = -1f;
+        private bool travelLocked;
 
         public Transform HoldPoint => holdPoint;
         public Transform TwoHandHoldPoint => twoHandHoldPoint;
@@ -47,6 +48,9 @@ namespace SunkCost.Player
         // The carryable under the crosshair within reach this frame, owner only.
         public CarryableItem CurrentTarget { get; private set; }
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
+        // Riding a departing ship: look works, walking and items do not (the rider
+        // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
+        public bool TravelLocked => travelLocked;
 
         private void Awake()
         {
@@ -85,6 +89,15 @@ namespace SunkCost.Player
             }
 
             Look();
+            if (travelLocked)
+            {
+                // Nothing buffered survives the trip: a fresh press is needed after the unlock.
+                CurrentTarget = null;
+                CurrentButton = null;
+                grabBufferedUntil = -1f;
+                grabConsumed = true;
+                return;
+            }
             Move();
             UpdateTarget();
 
@@ -145,6 +158,28 @@ namespace SunkCost.Player
         // For editor verification hooks, which cannot lock the cursor: sample the
         // crosshair target without going through the input gate.
         public void RefreshTarget() => UpdateTarget();
+
+        // The ship rider owns the root while locked; the CharacterController would
+        // otherwise fight the writes. Restores the controller on every unlock.
+        public void SetTravelLock(bool locked)
+        {
+            if (travelLocked == locked) return;
+            travelLocked = locked;
+            controller.enabled = !locked;
+            verticalSpeed = 0f;
+            grabBufferedUntil = -1f;
+            grabConsumed = true;
+            CurrentTarget = null;
+            CurrentButton = null;
+        }
+
+        // Continuous owner-side placement while riding: no teleport flag, so the
+        // NetworkTransform interpolates it for everyone else.
+        public void FollowTo(Vector3 position)
+        {
+            if (!IsOwner || !travelLocked) return;
+            transform.position = position;
+        }
 
         // Owner-side move across any distance (a scene change, a cabin arrival).
         // The client simulates its own movement (contract section 3), so it is the

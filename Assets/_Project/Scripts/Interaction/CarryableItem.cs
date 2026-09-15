@@ -53,6 +53,12 @@ namespace SunkCost.Interaction
         private bool pendingReleaseThrow;
         private uint pendingReleaseVersion;
         private bool restRequested;
+        // Deck cargo frozen for a ship trip (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md
+        // section 6): server only, zero = none. While set the server's scripted
+        // follow is the only position writer and the body is kinematic.
+        private int transitSerial;
+        private Vector3 transitLocalPosition;
+        private Quaternion transitLocalRotation;
 
         public string DisplayName => string.IsNullOrEmpty(displayName) ? name : displayName;
         // A two-handed item never fits a slot, whatever the serialized flag says.
@@ -76,6 +82,8 @@ namespace SunkCost.Interaction
         public Texture2D Icon => icon;
         public ItemUseAction UseAction => useAction;
         public ItemState State => state.Value;
+        public int TransitSerial => transitSerial;
+        public bool InTransit => transitSerial != 0;
         public uint MotionVersion => motionVersion.Value;
         public bool CanGrabFromWorld => state.Value == ItemState.Free || state.Value == ItemState.Released;
         private bool LocalWriter => IsOwner && ClientManager.Connection.ClientId == holderClientId.Value;
@@ -308,10 +316,64 @@ namespace SunkCost.Interaction
                 body.linearVelocity = Vector3.zero;
                 body.angularVelocity = Vector3.zero;
             }
+            // Dropped while the ship is under way (a passenger disconnected): it
+            // joins the frozen cargo instead of being left behind or unloaded.
+            SunkCost.World.WorldSceneFlow.Instance?.ServerEnrollLooseCargo(this);
         }
 
         [Server]
         public void ServerReset() => ServerDropAt(resetPosition);
+
+        // Freeze this loose item where it lies on the ship: Free, server-owned,
+        // kinematic, colliders off so the moving deck imparts nothing. A Released
+        // item's pending throw/rest is invalidated by the version bump; departure
+        // secures cargo, it does not continue a throw across worlds (DESIGN).
+        [Server]
+        public void ServerBeginDeckTransit(int serial, SunkCost.World.ShipParts ship)
+        {
+            if (serial == 0 || ship == null) return;
+            motionVersion.Value++;
+            state.Value = ItemState.Free;
+            holderClientId.Value = -1;
+            holder = null;
+            if (Owner.IsValid) RemoveOwnership();
+            transitSerial = serial;
+            transitLocalPosition = ship.ToShipLocal(transform.position);
+            transitLocalRotation = Quaternion.Inverse(ship.transform.rotation) * transform.rotation;
+            ApplyRole();
+        }
+
+        // Each frame of the pull-away: the same spot on the moving source ship.
+        [Server]
+        public void ServerFollowDeckTransit(SunkCost.World.ShipParts ship)
+        {
+            if (transitSerial == 0 || ship == null) return;
+            transform.SetPositionAndRotation(ship.FromShipLocal(transitLocalPosition), ship.transform.rotation * transitLocalRotation);
+        }
+
+        // After the scene move: the same spot on the destination ship, one snap.
+        [Server]
+        public void ServerPlaceAfterTransit(SunkCost.World.ShipParts ship)
+        {
+            if (transitSerial == 0 || ship == null) return;
+            transform.SetPositionAndRotation(ship.FromShipLocal(transitLocalPosition), ship.transform.rotation * transitLocalRotation);
+            networkTransform?.Teleport();
+        }
+
+        // Release: back to plain server-simulated Free, at rest, awake.
+        [Server]
+        public void ServerEndDeckTransit()
+        {
+            if (transitSerial == 0) return;
+            transitSerial = 0;
+            ApplyRole();
+            if (body != null && !body.isKinematic)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                body.WakeUp();
+            }
+        }
 
         // Runtime-spawned fixture items (LootFixtureSpawner) are told where they
         // rest before the server spawns them; OnStartServer then resets them there.
@@ -462,6 +524,7 @@ namespace SunkCost.Interaction
             ItemState current = state.Value;
             bool simulates = (current == ItemState.Free && IsServerStarted && !Owner.IsValid) ||
                              (current == ItemState.Released && LocalWriter);
+            if (transitSerial != 0) simulates = false; // frozen cargo: scripted, kinematic, no collider
             if (simulates)
             {
                 body.isKinematic = false;
@@ -478,7 +541,7 @@ namespace SunkCost.Interaction
                 body.useGravity = false;
             }
 
-            bool physical = current == ItemState.Free || current == ItemState.Released;
+            bool physical = (current == ItemState.Free || current == ItemState.Released) && transitSerial == 0;
             foreach (Collider collider in colliders)
                 if (collider != null) collider.enabled = physical;
 
