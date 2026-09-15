@@ -375,6 +375,31 @@ The four slot assignments remain unchanged. E and number keys are blocked
 until it is dropped or used/thrown. Disconnect drops the harness inventory near
 the departing player's last position.
 
+Jumping, crouching and hands (decided 15 September 2026,
+`docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md`). **Space** is a modest
+jump (0.65 m empty), one per press with a short buffer and coyote time; the
+carried weight lowers it linearly to 40 % at full capacity, and a two-handed
+item forbids it. **Hold Ctrl** to crouch: the collision capsule drops from 1.8 m
+to 1.0 m at the same radius, the eyes to 0.85 m, walking to half speed (sprint
+ignored), no jumping; you stay crouched under a shelf until there is headroom.
+Every held item is held **with both hands, centred in front of the body**;
+gloved arms connected to the shoulders are visible to you and to your friends
+(small items stay slot-able; the heavy rules are unchanged). The old white
+rectangle in front of the avatar is gone; the centre aiming dot is outlined
+and turns gold only when what is under it can actually be taken or pressed.
+**Q** puts an item down in clear space in front of you whatever the view
+pitch; a throw lands **on the point the crosshair is on** (Dan, 15 September
+2026): the ball leaves the hands, below and ahead of the eyes, on the low arc
+that reaches that point; beyond its range it flies straight at it and falls
+short; looking straight down it still goes forward, landing right in front
+of the feet, never under you. Crouching and standing blend the camera the same way (0.2 s), no snap.
+Escape opens the menu and Escape again closes it. A released item never
+starts inside or under a player, and never behind a wall — with no room it is
+refused ("Not enough room to drop/throw") and stays in the hands. Players and
+loose items do not collide: you walk through balls, and a dropped or thrown
+ball can never lift you or push a friend. Excluded for now: mantle, slide,
+prone, fall damage, footstep noise, a stealth bonus for crouching.
+
 Leaving (decided 13 September 2026): **Leave** returns the player to the host/join
 menu rather than quitting. If the host leaves, the room closes and every client is
 returned to their own menu; if a client leaves, only that client goes back and the

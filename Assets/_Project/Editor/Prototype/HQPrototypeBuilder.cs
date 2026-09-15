@@ -22,7 +22,9 @@ namespace SunkCost.Editor.Prototype
         public const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/PrototypePlayer.prefab";
         public const string BallPrefabPath = "Assets/_Project/Prefabs/Interaction/Basketball.prefab";
         // Lower-right of the camera, 60 cm out: the right hand (plan section 10).
-        public static readonly Vector3 HoldPointLocalPosition = new(0.30f, -0.22f, 0.60f);
+        // Centred: every held item sits in both hands in front of the body
+        // (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md section 6).
+        public static readonly Vector3 HoldPointLocalPosition = PlayerMovementHandsSetup.CenteredHoldPointLocalPosition;
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         public const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
@@ -133,14 +135,6 @@ namespace SunkCost.Editor.Prototype
                 Object.DestroyImmediate(body.GetComponent<Collider>());
                 body.GetComponent<Renderer>().sharedMaterial = material;
 
-                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                marker.name = "ForwardMarker";
-                marker.transform.SetParent(body.transform, false);
-                marker.transform.localPosition = new Vector3(0f, 0.35f, 0.55f);
-                marker.transform.localScale = new Vector3(0.2f, 0.16f, 0.2f);
-                Object.DestroyImmediate(marker.GetComponent<Collider>());
-                marker.GetComponent<Renderer>().sharedMaterial = material;
-
                 GameObject pivot = new("ViewPivot");
                 pivot.transform.SetParent(root.transform, false);
                 pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
@@ -169,6 +163,9 @@ namespace SunkCost.Editor.Prototype
                 serialized.FindProperty("bodyRenderer").objectReferenceValue = body.GetComponent<Renderer>();
                 serialized.FindProperty("headlamp").objectReferenceValue = headlamp;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
+                // Stance, hands, arms, settings, layers: the same patch the setup applies.
+                PlayerMovementHandsSetup.PatchPlayer(root, PlayerMovementHandsSetup.EnsureSettings(null),
+                    GetOrCreateMaterial(PlayerMovementHandsSetup.GloveMaterialPath, new Color(0.85f, 0.72f, 0.25f)), new List<string>());
                 return PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             }
             finally { Object.DestroyImmediate(root); }

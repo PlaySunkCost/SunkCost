@@ -43,6 +43,17 @@ namespace SunkCost.Editor.Prototype
                 errors.Add("Basketball prefab/NetworkObject is missing.");
             if (AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.BallPrefabPath)?.GetComponent<CarryableItem>() == null)
                 errors.Add("Basketball prefab/CarryableItem is missing.");
+            // Every carryable prefab in the fixture: grip targets for the hands, the Carryable layer.
+            var carryablePaths = new List<string> { HQPrototypeBuilder.BallPrefabPath };
+            foreach (HQPrototypeLootSetup.FixtureEntry entry in HQPrototypeLootSetup.Manifest) if (!carryablePaths.Contains(entry.PrefabPath)) carryablePaths.Add(entry.PrefabPath);
+            foreach (string path in carryablePaths)
+            {
+                GameObject carryable = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (carryable == null) continue;
+                ItemHandPose pose = carryable.GetComponent<ItemHandPose>();
+                if (pose == null || !pose.IsComplete) errors.Add(carryable.name + " has no complete ItemHandPose (run the movement and hands setup).");
+                if (CarryableCollisionPolicy.LayersExist && carryable.layer != CarryableCollisionPolicy.CarryableLayer) errors.Add(carryable.name + " is not on the Carryable layer.");
+            }
             WorldSceneChecks.CheckBuildList(errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
             Debug.Log($"HQ validation passed: world scene with room, four spawns, light, a loot fixture spawner for {HQPrototypeLootSetup.SceneItemCount} items and the docked ship.");
@@ -118,6 +129,19 @@ namespace SunkCost.Editor.Prototype
             if (prefab.GetComponent<PlayerHudUI>() == null) errors.Add("Player prefab has no PlayerHudUI (run Sunk Cost/Prototype/Apply inventory setup).");
             if (prefab.GetComponent<SunkCost.World.ShipControls>() == null) errors.Add("Player prefab has no ShipControls (run Sunk Cost/Prototype/Apply inventory setup).");
             if (prefab.GetComponent<SunkCost.World.ShipDepartureRider>() == null) errors.Add("Player prefab has no ShipDepartureRider (run Sunk Cost/Prototype/Apply inventory setup).");
+            // Movement and hands card (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md).
+            if (prefab.GetComponent<PlayerStance>() == null) errors.Add("Player prefab has no PlayerStance (run Sunk Cost/Prototype/Apply movement and hands setup).");
+            if (prefab.GetComponent<PlayerHands>() == null) errors.Add("Player prefab has no PlayerHands (run the movement and hands setup).");
+            foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
+                if (t.name == PlayerMovementHandsSetup.ForwardMarkerName) errors.Add("Player prefab still has a ForwardMarker.");
+            if (prefab.transform.Find(PlayerHands.ArmRightName) == null || prefab.transform.Find(PlayerHands.ArmLeftName) == null) errors.Add("Player prefab has no arms.");
+            SerializedObject controllerSerialized = new(prefab.GetComponent<HQPlayerController>());
+            if (controllerSerialized.FindProperty("movement").objectReferenceValue == null) errors.Add("Player prefab HQPlayerController has no PlayerMovementSettings.");
+            if (controllerSerialized.FindProperty("viewPivot").objectReferenceValue == null) errors.Add("Player prefab HQPlayerController has no viewPivot.");
+            if (!SunkCost.Interaction.CarryableCollisionPolicy.LayersExist) errors.Add("Player/Carryable layers missing (run the movement and hands setup).");
+            else if (prefab.layer != SunkCost.Interaction.CarryableCollisionPolicy.PlayerLayer) errors.Add("Player prefab is not on the Player layer.");
+            PlayerMovementSettings movement = AssetDatabase.LoadAssetAtPath<PlayerMovementSettings>(PlayerMovementHandsSetup.SettingsPath);
+            if (movement == null || !movement.IsValid) errors.Add("PlayerMovementSettings asset missing or invalid.");
             using var serialized = new SerializedObject(controller);
             var camera = serialized.FindProperty("playerCamera").objectReferenceValue as Camera;
             var hold = serialized.FindProperty("holdPoint").objectReferenceValue as Transform;

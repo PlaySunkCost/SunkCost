@@ -52,10 +52,7 @@ namespace SunkCost.Player
             if (inventory == null || !inventory.IsOwner || SessionInputGate.MenuOpen)
                 return;
             EnsureStyles();
-            Color previous = GUI.color;
-            GUI.color = controller.CurrentTarget != null || controller.CurrentButton != null ? new Color(1f, 0.85f, 0.2f) : Color.white;
-            GUI.DrawTexture(new Rect(Screen.width * 0.5f - 2f, Screen.height * 0.5f - 2f, 4f, 4f), whiteTexture);
-            GUI.color = previous;
+            DrawAimingDot();
             DrawPrompt();
             DrawSlots();
             DrawWeightMeter();
@@ -130,6 +127,35 @@ namespace SunkCost.Player
                 }
                 GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 20f, 18f), (i + 1).ToString(), numberStyle);
             }
+        }
+
+        // The centre aiming dot (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md
+        // section 6, "Center aiming dot"): one outlined dot, scaled with the screen
+        // height, gold only when the thing under it is locally usable. Hidden with
+        // the menu, the overlay, lost focus, a fade and the travel lock; the prompt
+        // text, not the colour, carries refusals.
+        private void DrawAimingDot()
+        {
+            if (!SessionInputGate.CanPlay || controller.TravelLocked) return;
+            if (SunkCost.World.ScreenFade.Instance != null && !SunkCost.World.ScreenFade.Instance.IsClear) return;
+            PlayerMovementSettings settings = controller.Movement;
+            float scale = Screen.height / 1080f;
+            float diameter = Mathf.Max(2f, Mathf.Round(settings.DotDiameterPx * scale));
+            float outline = Mathf.Round(settings.DotOutlinePx * scale);
+            float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f;
+            bool usable = false;
+            CarryableItem target = controller.CurrentTarget;
+            if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
+            else if (controller.CurrentButton != null) usable = SunkCost.World.CrewDayState.Instance != null && !SunkCost.World.CrewDayState.Instance.Travelling && !SunkCost.World.CrewDayState.Instance.Sailing;
+            Color previous = GUI.color;
+            if (outline > 0f)
+            {
+                GUI.color = settings.DotOutlineColor;
+                GUI.DrawTexture(new Rect(cx - diameter * 0.5f - outline, cy - diameter * 0.5f - outline, diameter + outline * 2f, diameter + outline * 2f), whiteTexture);
+            }
+            GUI.color = usable ? settings.DotUsableColor : settings.DotColor;
+            GUI.DrawTexture(new Rect(cx - diameter * 0.5f, cy - diameter * 0.5f, diameter, diameter), whiteTexture);
+            GUI.color = previous;
         }
 
         private void EnsureStyles()

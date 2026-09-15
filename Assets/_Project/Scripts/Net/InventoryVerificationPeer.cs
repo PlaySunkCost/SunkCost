@@ -71,7 +71,13 @@ namespace SunkCost.Net
         private string Execute(Command command)
         {
             var player = FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
-            var item = FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == command.item);
+            // Spawned copies keep the prefab's "(Clone)" suffix on a client and the
+            // host's per-instance names never replicate: "#<objectId>" is exact.
+            CarryableItem item = null;
+            if (!string.IsNullOrEmpty(command.item) && command.item.StartsWith("#") && int.TryParse(command.item.Substring(1), out int objectId))
+                item = FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.IsSpawned && i.ObjectId == objectId);
+            else
+                item = FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == command.item || i.name == command.item + "(Clone)");
             if (player == null) return "No owned player";
             // Keep uncontrolled physical keyboard/mouse input out of hook tests.
             SessionInputGate.OpenMenu();
@@ -103,6 +109,12 @@ namespace SunkCost.Net
                     var controls = player.GetComponent<SunkCost.World.ShipControls>();
                     if (controls == null) return "No ShipControls";
                     controls.RequestSail(pressed);
+                    break;
+                // Stance intent as the player's own Ctrl would give it (slot: 1 = crouch, 0 = stand).
+                case "crouch":
+                    var stance = player.GetComponent<SunkCost.Player.PlayerStance>();
+                    if (stance == null) return "No PlayerStance";
+                    stance.SetDesiredCrouch(command.slot != 0);
                     break;
                 case "snapshot": break;
                 default: return "Unknown action";
@@ -147,7 +159,11 @@ namespace SunkCost.Net
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
             string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
-                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}\n";
+            {
+                var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
+                var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
+                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}\n";
+            }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {
                 var body = item.GetComponent<Rigidbody>();

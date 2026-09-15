@@ -1,5 +1,61 @@
 # HQ prototype verification report
 
+## Jump, crouch and hands branch — 15 September 2026
+
+Tested uncommitted `dan/player-movement-hands` based on `5b4a192` (the ship
+departure merge), Unity 6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as
+host, one headless guest (build `local-dev:5b4a192`), one machine, RTT ≈ 0. The
+rows are driven through a **virtual keyboard on the Input System** (the real
+input path: `Keyboard.current`, `wasPressedThisFrame`), with the editor's
+focus gate lifted for the run; positions and heights are measured every frame.
+`Sunk Cost > Prototype > Run movement and hands matrix` runs them, log
+`Temp/movement-hands-matrix.log`. These results do not certify Steam.
+
+- Pure (*Run movement and hands checks*): jump table 0 / 12.5 / 25 / 75 kg →
+  0.65 / 0.455 / 0.26 / 0.26 m, takeoff 3.57 m/s at 9.81; crouched capsule
+  1.0 m centred 0.5, headroom capsule spans exactly 1.0–1.85 m; arm solver
+  keeps segment lengths, clamps beyond reach, no NaN; a downward look throws
+  level, 45° keeps 45°, a vertical look uses the body yaw; prefab: no
+  ForwardMarker, one torso and two arms with no colliders, centred HoldPoint,
+  Player/Carryable layers exist and ignore each other, grips on every fixture
+  prefab centred on the item.
+- M1 jump: apex **0.640 m** (target 0.65) with actual Space presses at the
+  editor's frame rate; landed; holding Space for 3 s → exactly one takeoff.
+- M2 weight: two blue balls (12 kg) → apex **0.454 m** (target 0.463); the
+  purple two-handed ball → **0.000 m** (refused).
+- M6 hands (owner): both palms within 3 cm of the basketball's grip targets,
+  no reach clamp; the ball centred (x within 0.3 m of the eye line).
+- M8 forward release: looking 80° down, Q placed the ball **0.52 m ahead on
+  the floor** (y 0.12), the player's height unchanged; a throw looking down
+  launched at 8.0 m/s level and forward (v = (−7.98, −0.59, 0) sampled ≤ 0.15 s
+  later); after Dan's change the throw follows the crosshair: at 80° down it
+  launched at (−1.39, −8.44, 0) and came to rest 1.61 m ahead, not under the
+  player; against the south wall Q was refused ("Not enough room to
+  drop/throw") and the ball stayed Held.
+- M9 no standing on cargo: teleported onto a settled ball, the player ended on
+  the floor (y 0.03), the ball walked through.
+- M3 crouch: capsule 1.00 m / centre 0.50 / radius unchanged; eye 0.85 m;
+  crouch walk with Shift held **2.00 m in 1 s** (sprint ignored); no jump while
+  crouched; stood up on release.
+- M4 blocked standing: a 0.2 m shelf at 1.45 m over the player, Ctrl released
+  → still crouched 0.8 s later; shelf removed → standing within 0.8 s.
+- M7 remote / late-join state: the guest's `crouch` → the host's copy of its
+  capsule read 1.0 m and its own snapshot `crouched=True; height=1`; stood
+  again; the guest grabbed a basketball → the host's copy of its `PlayerHands`
+  bound to that item, and the guest's snapshot showed its own
+  `hands=Basketball` and the host's `hands=rest`.
+- `MATRIX_PASS` (30 rows after the tweaks: crouch and stand blend both ways
+  over 0.2 s with no snap, Escape toggles the menu, throws follow the
+  crosshair). Captures: `Logs/hands-owner-0.png` (level: arms
+  and ball at the bottom of the view), `Logs/hands-owner-20.png`,
+  `Logs/hands-owner-lookdown.png`, `Logs/hands-remote-stand.png` (a friend's
+  view: the arms meet the ball above the placeholder's head — the 1.19 m model
+  under a 1.6 m eye), `Logs/hands-remote-crouch.png`.
+
+Not run: 30/60/120 FPS apex comparison (one editor frame rate), coyote time
+and the 1.1 m / 0.9 m tunnel rows, menu/focus while airborne, stance latency
+with real RTT, the four-player and Steam rows, human feel review of the arms.
+
 ## Ship departure branch — 15 September 2026
 
 Tested uncommitted `dan/ship-departure` based on `0bb99c2` (the monitor merge),

@@ -287,6 +287,72 @@ namespace SunkCost.Editor.Prototype
         [MenuItem("Sunk Cost/Prototype/Debug/Sail to HQ (host, Play Mode)")]
         public static void MenuSailToHQ() => Debug.Log("Sail: " + (Application.isPlaying ? ServerSail("HQ") : "enter Play Mode and host first."));
 
+        // ---- movement and hands (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md) ----
+
+        public static string ClientSetPitch(float degrees)
+        {
+            HQPlayerController local = LocalPlayer();
+            if (local == null) return "No local player.";
+            local.SetPitchForChecks(degrees);
+            return "pitch " + degrees;
+        }
+
+        public static string ClientCrouch(bool crouch)
+        {
+            HQPlayerController local = LocalPlayer();
+            var stance = local != null ? local.GetComponent<PlayerStance>() : null;
+            if (stance == null) return "No local stance.";
+            stance.SetDesiredCrouch(crouch);
+            return crouch ? "crouch requested" : "stand requested";
+        }
+
+        public static string StanceText()
+        {
+            HQPlayerController local = LocalPlayer();
+            if (local == null) return "No local player.";
+            return $"crouched={local.IsCrouched}; height={local.Controller.height:0.##}; centre={local.Controller.center.y:0.##}; eye={local.EyeHeight:0.##}; grounded={local.IsGrounded}; vy={local.VerticalSpeed:0.##}";
+        }
+
+        // Game-view evidence: the local player's camera, or a free camera looking at a point.
+        public static string CaptureLocalCamera(string path) => Capture(LocalPlayer()?.PlayerCamera, path);
+
+        public static string CaptureFrom(Vector3 position, Vector3 lookAt, string path)
+        {
+            GameObject go = new("CheckCaptureCamera", typeof(Camera));
+            try
+            {
+                go.transform.position = position;
+                go.transform.LookAt(lookAt);
+                Camera camera = go.GetComponent<Camera>();
+                camera.fieldOfView = 60f;
+                return Capture(camera, path);
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        private static string Capture(Camera camera, string path)
+        {
+            if (camera == null) return "No camera.";
+            var rt = new RenderTexture(1280, 720, 24);
+            RenderTexture previousTarget = camera.targetTexture;
+            bool wasEnabled = camera.enabled;
+            camera.enabled = true;
+            camera.targetTexture = rt;
+            camera.Render();
+            camera.targetTexture = previousTarget;
+            camera.enabled = wasEnabled;
+            RenderTexture.active = rt;
+            var texture = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+            texture.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+            texture.Apply();
+            RenderTexture.active = null;
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+            System.IO.File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            rt.Release();
+            return "saved " + path;
+        }
+
         // The monitor as the local player presses it (owner request through ShipControls).
         public static string ClientRequestSail(string world)
         {

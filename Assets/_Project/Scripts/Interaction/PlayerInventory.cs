@@ -41,6 +41,7 @@ namespace SunkCost.Interaction
         public string DebugStatus => $"slots={slots.Value} {carriedMassKg.Value:0.##}kg x{SpeedFactor:0.00}{(Overloaded ? " OVERLOADED" : "")}";
         public WeightSettings Weight => WeightSettings.Resolve(weightSettings);
         public float CarriedMassKg => carriedMassKg.Value;
+        public float CapacityKg => Weight.CapacityKg;
         public float MeterFill => Weight.Fill(carriedMassKg.Value);
         // Full meter: the bar is red and the player crawls until something is dropped.
         public bool Overloaded => Weight.IsOverloaded(carriedMassKg.Value);
@@ -134,16 +135,63 @@ namespace SunkCost.Interaction
             ServerRequestEquip(slot);
         }
 
+        // Q: put the item down in clear space ahead, whatever the view pitch.
         public void RequestDrop()
         {
             if (!IsOwner || heldItem == null) return;
-            ServerRequestDrop();
+            if (!TryProposeRelease(heldItem, drop: true, out Vector3 pose, out _)) { ShowRefusal(RefuseReason.NoRoom); return; }
+            ServerRequestDrop(pose);
         }
 
+        // Left click: throw forward from chest height; looking down throws level.
         public void RequestUse(Vector3 aimDirection)
         {
             if (!IsOwner || heldItem == null) return;
-            ServerRequestUse(aimDirection);
+            if (!TryProposeRelease(heldItem, drop: false, out Vector3 pose, out Vector3 direction)) { ShowRefusal(RefuseReason.NoRoom); return; }
+            ServerRequestUse(pose, direction);
+        }
+
+        // The owner's proposal from its own capsule, stance and camera
+        // (ReleasePlacement); the server checks it again from its view.
+        private bool TryProposeRelease(CarryableItem item, bool drop, out Vector3 pose, out Vector3 direction)
+        {
+            HQPlayerController player = GetComponent<HQPlayerController>();
+            CharacterController capsule = GetComponent<CharacterController>();
+            pose = Vector3.zero; direction = transform.forward;
+            if (player == null || capsule == null) return false;
+            Vector3 cameraForward = player.PlayerCamera != null ? player.PlayerCamera.transform.forward : transform.forward;
+            PlayerMovementSettings settings = player.Movement;
+            Vector3 forward = ReleasePlacement.HorizontalForward(cameraForward, transform.forward);
+            if (!ReleasePlacement.TryFind(transform.position, capsule.radius, capsule.height, forward, item.Radius, drop, settings, transform, item.transform, out pose)) return false;
+            if (drop) return true;
+            // Aim at what the crosshair is on, from where the ball actually starts:
+            // the hands sit below and ahead of the eyes, so a parallel throw would
+            // miss what the player is looking at.
+            Vector3 eye = player.PlayerCamera != null ? player.PlayerCamera.transform.position : player.EyePosition;
+            Vector3 target = ReleasePlacement.CrosshairPoint(eye, cameraForward.normalized, 60f, transform, item.transform);
+            // Looking almost straight down the crosshair hits the floor behind the
+            // start pose; the ball still goes forward and down, landing right in
+            // front of the feet — never back under the player.
+            const float minAhead = 0.15f;
+            float ahead = Vector3.Dot(Vector3.ProjectOnPlane(target - pose, Vector3.up), forward);
+            if (ahead < minAhead) target = pose + forward * minAhead + Vector3.up * (target.y - pose.y);
+            direction = ReleasePlacement.AimAt(pose, target, item.LaunchSpeed, Physics.gravity.y, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
+            return true;
+        }
+
+        // The server's view of a proposed start pose: in front, within reach of the
+        // player it sees, clear of world and other players. Bounded, never trusted.
+        private bool ServerAcceptsPose(CarryableItem item, Vector3 pose)
+        {
+            if (!float.IsFinite(pose.x) || !float.IsFinite(pose.y) || !float.IsFinite(pose.z)) return false;
+            HQPlayerController player = GetComponent<HQPlayerController>();
+            PlayerMovementSettings settings = player != null ? player.Movement : PlayerMovementSettings.Resolve(null);
+            Vector3 offset = pose - transform.position;
+            Vector3 flat = Vector3.ProjectOnPlane(offset, Vector3.up);
+            if (flat.magnitude > settings.ReleaseMaxForward + item.Radius + 0.5f) return false;
+            if (Mathf.Abs(offset.y) > 3f) return false;
+            if (Vector3.Dot(flat, transform.forward) < -0.2f) return false; // never behind the player
+            return ReleasePlacement.IsClear(pose, item.Radius, transform, item.transform);
         }
 
         // --- Server decisions.
@@ -236,27 +284,57 @@ namespace SunkCost.Interaction
         }
 
         [ServerRpc]
-        private void ServerRequestDrop(NetworkConnection sender = null)
+        private void ServerRequestDrop(Vector3 pose, NetworkConnection sender = null)
         {
             if (sender != Owner) return;
             if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null) return;
-            if (held.ServerRelease(sender, Vector3.zero, false))
-                ServerClearSlotOf(held);
-            ServerRecomputeCarriedMass();
+            if (!ServerAcceptsPose(held, pose)) { TargetRefuse(sender, (byte)RefuseReason.NoRoom); return; }
+            if (held.ServerRelease(sender, pose, Vector3.zero, false))
+                ServerCommitRelease(held);
         }
 
         [ServerRpc]
-        private void ServerRequestUse(Vector3 aimDirection, NetworkConnection sender = null)
+        private void ServerRequestUse(Vector3 pose, Vector3 direction, NetworkConnection sender = null)
         {
             if (sender != Owner) return;
             if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null || held.UseAction != ItemUseAction.Throw) return;
-            if (held.ServerRelease(sender, aimDirection, true))
-                ServerClearSlotOf(held);
+            if (!ServerAcceptsPose(held, pose)) { TargetRefuse(sender, (byte)RefuseReason.NoRoom); return; }
+            if (held.ServerRelease(sender, pose, direction, true))
+                ServerCommitRelease(held);
+        }
+
+        // Slot and mass change together with the state, and can be put back
+        // together if the owner cancels the release (plan section 6A).
+        private int lastReleasedSlot = -1;
+        private int lastReleasedItemId = -1;
+
+        [Server]
+        private void ServerCommitRelease(CarryableItem item)
+        {
+            lastReleasedItemId = item.ObjectId;
+            lastReleasedSlot = slots.Value.IndexOf(item.ObjectId);
+            ServerClearSlotOf(item);
             ServerRecomputeCarriedMass();
+        }
+
+        [Server]
+        public static void ServerRestoreAfterFailedRelease(CarryableItem item, NetworkConnection holder)
+        {
+            foreach (PlayerInventory inventory in FindObjectsByType<PlayerInventory>())
+            {
+                if (!inventory.Owner.IsValid || inventory.Owner.ClientId != holder.ClientId) continue;
+                if (inventory.lastReleasedItemId == item.ObjectId && inventory.lastReleasedSlot >= 0 &&
+                    inventory.slots.Value.Get(inventory.lastReleasedSlot) == InventorySlots.Empty)
+                    inventory.slots.Value = inventory.slots.Value.With(inventory.lastReleasedSlot, item.ObjectId);
+                inventory.lastReleasedItemId = -1;
+                inventory.lastReleasedSlot = -1;
+                inventory.ServerRecomputeCarriedMass();
+                return;
+            }
         }
 
         [TargetRpc]
