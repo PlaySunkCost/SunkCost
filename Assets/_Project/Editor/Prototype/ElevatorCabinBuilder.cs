@@ -19,6 +19,10 @@ namespace SunkCost.Sites
     // built pre-rotated. That keeps the prefab's own local geometry fixed (a real prefab,
     // not something CreateOrUpdate re-shapes per bearing) while preserving the old behavior
     // of always facing the way into the car from wherever the crew actually spawns.
+    //
+    // The ring/shell/door geometry itself lives in RoundCabinGeometry, shared with the
+    // ship's static deck cabin (DeckCabinBuilder) — the same object in the fiction, docked
+    // versus descending (docs/DESIGN.md: "the glass elevator").
     public static class ElevatorCabinBuilder
     {
         // PrefabUtility.SaveAsPrefabAsset renames the saved root to match the asset's file
@@ -53,25 +57,17 @@ namespace SunkCost.Sites
             GameObject root = new("Elevator");
             try
             {
-                GameObject carFloor = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                carFloor.name = "Car Floor";
-                carFloor.transform.SetParent(root.transform, false);
-                carFloor.transform.localPosition = new Vector3(0f, CarFloorThickness / 2f, 0f);
-                carFloor.transform.localScale = new Vector3(settings.CarDiameterMeters, CarFloorThickness / 2f, settings.CarDiameterMeters);
-                carFloor.GetComponent<Renderer>().sharedMaterial = floor;
-                // CreatePrimitive(Cylinder) attaches a CapsuleCollider in this Unity version, not a
-                // MeshCollider — and CapsuleCollider silently clamps its own height to at least
-                // 2*radius, inflating a thin wide disc into a multi-metre sphere. Swap in a
-                // MeshCollider built from the same primitive mesh so collision matches the disc.
-                Object.DestroyImmediate(carFloor.GetComponent<Collider>());
-                carFloor.AddComponent<MeshCollider>().sharedMesh = carFloor.GetComponent<MeshFilter>().sharedMesh;
-                // The floor stays a full circle (no doorway gap) — it's walkable surface, not a wall.
+                RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
+                RoundCabinGeometry.CreateFramePosts(root.transform, carRadius, interiorHeight, frame, BakedDoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
+                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
 
-                CreateElevatorFramePosts(root.transform, carRadius, interiorHeight, frame, BakedDoorwayBearingDeg);
-                float doorwayHalfAngleDeg = CreateElevatorShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg);
-                CreateElevatorControlPanel(root.transform, interiorRadius, panelAccent, panelAngleDeg);
+                GameObject panel = RoundCabinGeometry.CreateWallPanel(root.transform, "Control Panel", interiorRadius, panelAngleDeg, PanelWidthMeters, PanelHeightMeters, PanelThicknessMeters, PanelChestHeightMeters, panelAccent);
+                panel.AddComponent<ElevatorControlPanel>();
+                // Cube's default BoxCollider is exactly what the interactor's raycast needs to
+                // hit, and it visually stands out from the frame posts via the accent material.
+
                 CreateElevatorRiderTrigger(root.transform, interiorRadius, interiorHeight);
-                CreateElevatorRoof(root.transform, settings.CarDiameterMeters, interiorHeight, glass);
+                RoundCabinGeometry.CreateDisc(root.transform, "Car Roof", settings.CarDiameterMeters, CarFloorThickness, glass, interiorHeight - CarFloorThickness / 2f);
 
                 // Fields left at their serialized defaults (topPosition/bottomPosition/travel/
                 // doorSeal): those vary per dive site, so DiveSiteBuilder sets them on the
@@ -88,104 +84,16 @@ namespace SunkCost.Sites
             }
         }
 
-        private static void CreateElevatorFramePosts(Transform parent, float carRadius, float interiorHeight, Material frameMaterial, float doorwayCenterAngleDeg)
-        {
-            const int postCount = 4;
-            float postRadius = carRadius - CarFrameRadius;
-            for (int i = 0; i < postCount; i++)
-            {
-                float angle = (doorwayCenterAngleDeg + PostDoorwayOffsetDeg + i * 360f / postCount) * Mathf.Deg2Rad;
-                Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * postRadius;
-                GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                post.name = "Frame Post " + (i + 1);
-                post.transform.SetParent(parent, false);
-                post.transform.localPosition = offset + new Vector3(0f, interiorHeight / 2f, 0f);
-                post.transform.localScale = new Vector3(CarFrameRadius * 2f, interiorHeight / 2f, CarFrameRadius * 2f);
-                post.GetComponent<Renderer>().sharedMaterial = frameMaterial;
-                // Default CapsuleCollider kept: unlike Car Floor, these posts are tall and
-                // thin (height 3.5m vs radius 0.06m), so Unity's height>=2*radius clamp never
-                // engages and the capsule matches the visible post exactly. Thin corner beams
-                // are fine to feel solid, and they're derived from the doorway angle (always
-                // PostDoorwayOffsetDeg away, every 90 degrees) so they can never end up
-                // standing in the opening.
-            }
-        }
-
-        // Visible glass shell and invisible wall colliders, generated from ONE loop over the
-        // same ring of angles so the doorway gap in what you SEE and what BLOCKS you can never
-        // drift apart. Segmented panes (rather than one smooth cylinder) are the tradeoff that
-        // buys an exact, provably-matching opening.
-        private static float CreateElevatorShell(Transform parent, float glassRadius, float wallRadius, float height, Material glass, float doorwayCenterAngleDeg, float panelAngleDeg)
-        {
-            const int segmentCount = 24;
-            const float wallThickness = 0.15f;
-            const float glassThickness = 0.05f;
-
-            GameObject shellRoot = new("Glass Shell");
-            shellRoot.transform.SetParent(parent, false);
-            GameObject wallsRoot = new("Interior Walls");
-            wallsRoot.transform.SetParent(parent, false);
-
-            // Doorway width is measured at the glass (the actual opening a player walks
-            // through); the same angular range is then skipped for the inset wall ring too.
-            float doorwayHalfAngleDeg = Mathf.Asin(Mathf.Clamp01(CarDoorwayWidthMeters / 2f / glassRadius)) * Mathf.Rad2Deg;
-            // The panel sits on the wall ring's own radius, so without a matching gap here a
-            // wall segment lands physically inside the panel and a raycast aimed at the panel
-            // can hit the wall instead — a real, previously-shipped bug (a panel you can walk
-            // up to and still can't reliably press E on). The glass stays solid at this
-            // bearing; only the wall collider needs to step aside for the panel's own collider.
-            float panelHalfAngleDeg = Mathf.Asin(Mathf.Clamp01(PanelWidthMeters / 2f / wallRadius)) * Mathf.Rad2Deg + 3f;
-            float glassSegmentArcLength = Mathf.PI * 2f * glassRadius / segmentCount * 1.05f;
-            float wallSegmentArcLength = Mathf.PI * 2f * wallRadius / segmentCount * 1.05f;
-
-            for (int i = 0; i < segmentCount; i++)
-            {
-                float angleDeg = i * 360f / segmentCount;
-                bool inDoorway = Mathf.Abs(Mathf.DeltaAngle(angleDeg, doorwayCenterAngleDeg)) <= doorwayHalfAngleDeg;
-                bool inPanel = Mathf.Abs(Mathf.DeltaAngle(angleDeg, panelAngleDeg)) <= panelHalfAngleDeg;
-                if (inDoorway)
-                    continue; // doorway gap: no glass pane, no wall collider here
-
-                float angleRad = angleDeg * Mathf.Deg2Rad;
-                Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
-                Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
-
-                GameObject glassPane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                glassPane.name = "Glass Pane " + (i + 1);
-                glassPane.transform.SetParent(shellRoot.transform, false);
-                glassPane.transform.localPosition = direction * glassRadius + new Vector3(0f, height / 2f, 0f);
-                glassPane.transform.localRotation = rotation;
-                glassPane.transform.localScale = new Vector3(glassSegmentArcLength, height, glassThickness);
-                glassPane.GetComponent<Renderer>().sharedMaterial = glass;
-                // CreatePrimitive(Cube) attaches a BoxCollider that would seal the car shut
-                // (this was the original placeholder's bug: nobody could walk in). The shell
-                // is a visual shroud only — collision comes from the floor and the wall ring.
-                Object.DestroyImmediate(glassPane.GetComponent<Collider>());
-
-                if (inPanel)
-                    continue; // the control panel's own collider covers this arc instead
-
-                GameObject wallSegment = new("Wall Segment " + (i + 1), typeof(BoxCollider));
-                wallSegment.transform.SetParent(wallsRoot.transform, false);
-                wallSegment.transform.localPosition = direction * wallRadius + new Vector3(0f, height / 2f, 0f);
-                wallSegment.transform.localRotation = rotation;
-                wallSegment.GetComponent<BoxCollider>().size = new Vector3(wallSegmentArcLength, height, wallThickness);
-            }
-
-            return doorwayHalfAngleDeg;
-        }
-
-        // Two curved leaves built from small flat panels, plus one collider spanning the
-        // full doorway gap at the wall ring's own radius. Reuses doorwayHalfAngleDeg computed
-        // above in CreateElevatorShell (same formula, same radius) so the doorway arc stays a
-        // single source of truth between glass, walls and door.
+        // Two curved leaves (RoundCabinGeometry.CreateDoorLeafPanels), plus one collider
+        // spanning the full doorway gap at the wall ring's own radius, and the ElevatorDoor
+        // that sweeps both leaves live from ElevatorController's state.
         private static void CreateElevatorDoor(Transform parent, float wallRadius, float height, Material doorMaterial, float doorwayCenterAngleDeg, float doorwayHalfAngleDeg)
         {
             GameObject doorRoot = new("Elevator Door");
             doorRoot.transform.SetParent(parent, false);
 
-            Transform leafRightPivot = CreateDoorLeaf(doorRoot.transform, "Leaf Right", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: true);
-            Transform leafLeftPivot = CreateDoorLeaf(doorRoot.transform, "Leaf Left", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: false);
+            Transform leafRightPivot = RoundCabinGeometry.CreateDoorLeafPanels(doorRoot.transform, "Leaf Right", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters);
+            Transform leafLeftPivot = RoundCabinGeometry.CreateDoorLeafPanels(doorRoot.transform, "Leaf Left", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
 
             float doorwayCenterRad = doorwayCenterAngleDeg * Mathf.Deg2Rad;
             Vector3 doorwayDirection = new Vector3(Mathf.Cos(doorwayCenterRad), 0f, Mathf.Sin(doorwayCenterRad));
@@ -206,81 +114,6 @@ namespace SunkCost.Sites
             serializedDoor.FindProperty("doorCollider").objectReferenceValue = doorBoxCollider;
             serializedDoor.FindProperty("doorwayHalfAngleDeg").floatValue = doorwayHalfAngleDeg;
             serializedDoor.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        // A leaf is a pivot at the car's own local origin carrying DoorLeafPanelCount small
-        // flat panels, built at the leaf's CLOSED angular span (from the doorway edge on this
-        // side to the doorway centre). ElevatorDoor rotates the pivot at runtime to sweep this
-        // whole rigid set further around the circumference as the door opens — see its
-        // comment for the sign convention.
-        private static Transform CreateDoorLeaf(Transform parent, string name, float radius, float height, float doorwayCenterAngleDeg, float doorwayHalfAngleDeg, Material material, bool rightSide)
-        {
-            GameObject pivot = new(name);
-            pivot.transform.SetParent(parent, false);
-            pivot.transform.localPosition = Vector3.zero;
-            pivot.transform.localRotation = Quaternion.identity;
-
-            float startAngleDeg = rightSide ? doorwayCenterAngleDeg : doorwayCenterAngleDeg - doorwayHalfAngleDeg;
-            float endAngleDeg = rightSide ? doorwayCenterAngleDeg + doorwayHalfAngleDeg : doorwayCenterAngleDeg;
-            float segmentArcLength = radius * (doorwayHalfAngleDeg * Mathf.Deg2Rad) / DoorLeafPanelCount * 1.05f;
-
-            for (int i = 0; i < DoorLeafPanelCount; i++)
-            {
-                float segStartDeg = Mathf.Lerp(startAngleDeg, endAngleDeg, (float)i / DoorLeafPanelCount);
-                float segEndDeg = Mathf.Lerp(startAngleDeg, endAngleDeg, (float)(i + 1) / DoorLeafPanelCount);
-                float angleRad = (segStartDeg + segEndDeg) / 2f * Mathf.Deg2Rad;
-                Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
-
-                GameObject panelObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                panelObject.name = name + " Panel " + (i + 1);
-                panelObject.transform.SetParent(pivot.transform, false);
-                panelObject.transform.localPosition = direction * radius + new Vector3(0f, height / 2f, 0f);
-                panelObject.transform.localRotation = Quaternion.LookRotation(direction, Vector3.up);
-                panelObject.transform.localScale = new Vector3(segmentArcLength, height, DoorThicknessMeters);
-                panelObject.GetComponent<Renderer>().sharedMaterial = material;
-                // Blocking comes from the single Door Collider on the parent, not the leaves —
-                // same reasoning as the glass panes: a per-panel BoxCollider here would seal
-                // (or half-seal) the car regardless of door state.
-                Object.DestroyImmediate(panelObject.GetComponent<Collider>());
-            }
-
-            return pivot.transform;
-        }
-
-        // Ceiling disc matching the floor's own diameter, with a collider so nothing enters
-        // or exits from above. Sides stay fully transparent (the glass shell); only the roof
-        // needs to block, since the Bell Eater is drawn to the elevator by design and a
-        // reachable open top would make a docked car unsurvivable.
-        private static void CreateElevatorRoof(Transform parent, float carDiameterMeters, float interiorHeight, Material glass)
-        {
-            GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            roof.name = "Car Roof";
-            roof.transform.SetParent(parent, false);
-            roof.transform.localPosition = new Vector3(0f, interiorHeight - CarFloorThickness / 2f, 0f);
-            roof.transform.localScale = new Vector3(carDiameterMeters, CarFloorThickness / 2f, carDiameterMeters);
-            roof.GetComponent<Renderer>().sharedMaterial = glass;
-            // Same CapsuleCollider-clamp problem as Car Floor (see its comment): a thin wide
-            // disc gets its default capsule inflated to a multi-metre sphere. Swap in a
-            // MeshCollider built from the same disc mesh so collision matches what's visible.
-            Object.DestroyImmediate(roof.GetComponent<Collider>());
-            roof.AddComponent<MeshCollider>().sharedMesh = roof.GetComponent<MeshFilter>().sharedMesh;
-        }
-
-        private static void CreateElevatorControlPanel(Transform parent, float radius, Material accent, float panelAngleDeg)
-        {
-            float angleRad = panelAngleDeg * Mathf.Deg2Rad;
-            Vector3 offset = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad)) * radius;
-
-            GameObject panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            panel.name = "Control Panel";
-            panel.transform.SetParent(parent, false);
-            panel.transform.localPosition = offset + new Vector3(0f, PanelChestHeightMeters, 0f);
-            panel.transform.localRotation = Quaternion.LookRotation(offset.normalized, Vector3.up);
-            panel.transform.localScale = new Vector3(PanelWidthMeters, PanelHeightMeters, PanelThicknessMeters);
-            panel.GetComponent<Renderer>().sharedMaterial = accent;
-            panel.AddComponent<ElevatorControlPanel>();
-            // Cube's default BoxCollider is exactly what the interactor's raycast needs to
-            // hit, and it visually stands out from the frame posts via the accent material.
         }
 
         private static void CreateElevatorRiderTrigger(Transform parent, float radius, float height)
