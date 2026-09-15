@@ -132,6 +132,19 @@ namespace SunkCost.Editor.Prototype
             // Movement and hands card (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md).
             if (prefab.GetComponent<PlayerStance>() == null) errors.Add("Player prefab has no PlayerStance (run Sunk Cost/Prototype/Apply movement and hands setup).");
             if (prefab.GetComponent<PlayerHands>() == null) errors.Add("Player prefab has no PlayerHands (run the movement and hands setup).");
+            PlayerCameraClearance clearance = prefab.GetComponent<PlayerCameraClearance>();
+            if (clearance == null) errors.Add("Player prefab has no PlayerCameraClearance (run Sunk Cost/Prototype/Apply camera clearance setup).");
+            else
+            {
+                SerializedObject clearanceSerialized = new(clearance);
+                if (clearanceSerialized.FindProperty("playerCamera").objectReferenceValue == null || clearanceSerialized.FindProperty("viewPivot").objectReferenceValue == null) errors.Add("PlayerCameraClearance is missing its camera or ViewPivot reference.");
+                if (clearanceSerialized.FindProperty("settings").objectReferenceValue == null) errors.Add("PlayerCameraClearance has no PlayerCameraSettings.");
+            }
+            PlayerCameraSettings cameraSettings = AssetDatabase.LoadAssetAtPath<PlayerCameraSettings>(PlayerCameraClearanceSetup.SettingsPath);
+            if (cameraSettings == null || !cameraSettings.IsValid) errors.Add("PlayerCameraSettings asset missing or invalid.");
+            Camera prefabCamera = prefab.GetComponentInChildren<Camera>(true);
+            if (prefabCamera != null && cameraSettings != null && !Mathf.Approximately(prefabCamera.nearClipPlane, cameraSettings.NearClip)) errors.Add($"Player camera near clip is {prefabCamera.nearClipPlane}, expected {cameraSettings.NearClip}.");
+            if (prefabCamera != null && prefabCamera.transform.localPosition != Vector3.zero) errors.Add("Player camera must sit on the ViewPivot; the clearance offset is runtime only.");
             foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
                 if (t.name == PlayerMovementHandsSetup.ForwardMarkerName) errors.Add("Player prefab still has a ForwardMarker.");
             if (prefab.transform.Find(PlayerHands.ArmRightName) == null || prefab.transform.Find(PlayerHands.ArmLeftName) == null) errors.Add("Player prefab has no arms.");

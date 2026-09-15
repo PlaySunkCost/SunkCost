@@ -52,6 +52,7 @@ namespace SunkCost.Player
             if (inventory == null || !inventory.IsOwner || SessionInputGate.MenuOpen)
                 return;
             EnsureStyles();
+            if (controller != null && controller.ViewObstructed) { DrawObstructionCover(); return; }
             DrawAimingDot();
             DrawPrompt();
             DrawSlots();
@@ -134,6 +135,17 @@ namespace SunkCost.Player
         // height, gold only when the thing under it is locally usable. Hidden with
         // the menu, the overlay, lost focus, a fade and the travel lock; the prompt
         // text, not the colour, carries refusals.
+        // No clear camera pose exists (docs/CAMERA_WALL_CLEARANCE_IMPLEMENTATION_PLAN.md
+        // section 4 step 6): an opaque cover instead of a view from inside a wall.
+        // The travel fade, when up, draws in front of it anyway.
+        private void DrawObstructionCover()
+        {
+            Color previous = GUI.color;
+            GUI.color = Color.black;
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), whiteTexture);
+            GUI.color = previous;
+        }
+
         private void DrawAimingDot()
         {
             if (!SessionInputGate.CanPlay || controller.TravelLocked) return;

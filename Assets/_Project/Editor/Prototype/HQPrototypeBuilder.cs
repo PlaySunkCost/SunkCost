@@ -142,6 +142,7 @@ namespace SunkCost.Editor.Prototype
                 cameraObject.transform.SetParent(pivot.transform, false);
                 Camera camera = cameraObject.GetComponent<Camera>();
                 camera.fieldOfView = 75f;
+                camera.nearClipPlane = PlayerCameraSettings.Resolve(null).NearClip;
                 camera.enabled = false;
                 cameraObject.GetComponent<AudioListener>().enabled = false;
 
@@ -166,6 +167,9 @@ namespace SunkCost.Editor.Prototype
                 // Stance, hands, arms, settings, layers: the same patch the setup applies.
                 PlayerMovementHandsSetup.PatchPlayer(root, PlayerMovementHandsSetup.EnsureSettings(null),
                     GetOrCreateMaterial(PlayerMovementHandsSetup.GloveMaterialPath, new Color(0.85f, 0.72f, 0.25f)), new List<string>());
+                // Explicit near clip and the wall clearance: regeneration must not
+                // bring back Unity's 0.3 m default (see-through corners).
+                PlayerCameraClearanceSetup.PatchPlayer(root, PlayerCameraClearanceSetup.EnsureSettings(null), new List<string>());
                 return PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             }
             finally { Object.DestroyImmediate(root); }

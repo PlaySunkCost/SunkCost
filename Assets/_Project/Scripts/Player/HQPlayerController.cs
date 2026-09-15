@@ -38,6 +38,7 @@ namespace SunkCost.Player
         private CharacterController controller;
         private PlayerInventory inventory;
         private PlayerStance stance;
+        private PlayerCameraClearance clearance;
         private float pitch;
         private float verticalSpeed;
         private bool grabConsumed;
@@ -86,6 +87,10 @@ namespace SunkCost.Player
         public bool IsCrouched => stanceCrouched;
         public float VerticalSpeed => verticalSpeed;
         public float EyeHeight => eyeHeight;
+        // The camera clearance found no clear pose: the HUD covers the view and no
+        // target is offered until it does (docs/CAMERA_WALL_CLEARANCE_IMPLEMENTATION_PLAN.md section 4).
+        public bool ViewObstructed => clearance != null && clearance.Obstructed;
+        public PlayerCameraClearance CameraClearance => clearance;
         // Diagnostics for the checks: the last takeoff speed.
         public float LastTakeoffSpeed { get; private set; }
 #if UNITY_EDITOR
@@ -117,6 +122,7 @@ namespace SunkCost.Player
             controller = GetComponent<CharacterController>();
             inventory = GetComponent<PlayerInventory>();
             stance = GetComponent<PlayerStance>();
+            clearance = GetComponent<PlayerCameraClearance>();
             if (bodyVisual != null)
             {
                 standingBodyScaleY = bodyVisual.localScale.y;
@@ -195,12 +201,23 @@ namespace SunkCost.Player
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
+                clearance?.Solve(); // the rider moved the root; the view still keeps out of the ship's walls
                 return;
             }
 
+            // Frame order: input, move and stance, desired eye, corrected eye, then
+            // the target ray from the eye that actually renders.
             Motor(moveInput, sprint);
+            clearance?.Solve();
             if (!canPlay) return;
 
+            if (ViewObstructed)
+            {
+                CurrentTarget = null;
+                CurrentButton = null;
+                grabConsumed = true;
+                return;
+            }
             UpdateTarget();
             if (SessionInputGate.ClickSuppressedThisFrame || inventory == null)
                 return;
@@ -391,6 +408,7 @@ namespace SunkCost.Player
             if (travelLocked == locked) return;
             travelLocked = locked;
             controller.enabled = !locked;
+            if (!locked) clearance?.ResetView(); // a new world: no old safe point, no blend across it
             verticalSpeed = 0f;
             grabBufferedUntil = -1f;
             grabConsumed = true;
@@ -420,6 +438,7 @@ namespace SunkCost.Player
             controller.enabled = false;
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yawDegrees, 0f));
             controller.enabled = wasEnabled;
+            clearance?.ResetView();
             verticalSpeed = 0f;
             jumpBufferedUntil = float.NegativeInfinity;
             lastFlags = CollisionFlags.None;

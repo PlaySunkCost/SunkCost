@@ -400,6 +400,21 @@ loose items do not collide: you walk through balls, and a dropped or thrown
 ball can never lift you or push a friend. Excluded for now: mantle, slide,
 prone, fall damage, footstep noise, a stealth bonus for crouching.
 
+Camera wall clearance (decided 15 September 2026,
+`docs/CAMERA_WALL_CLEARANCE_IMPLEMENTATION_PLAN.md`): you never see through a
+wall, a corner or a ceiling from the first-person view. The near clip plane is
+**0.05 m** (it was Unity's 0.3 m default, whose corners reached 0.5 m out of the
+head and showed the sea through a room corner), so with the eyes inside the
+movement capsule ordinary wall contact needs no camera motion at all. When the
+near plane would still cut geometry — a low overhang while the crouch camera is
+still blending down, a cabin wall or door moving onto the head — the **view**
+is pushed back toward the body along a checked sweep, immediately, and glides
+back (0.1 s) once clear; the body, the server's idea of the player and any held
+item never move for it. If no clear view exists at all (spawned inside a wall,
+a door closed on the head) the screen is covered and nothing can be targeted
+until it does. The crosshair, aiming dot and grab reach start from the eye that
+actually renders. Owner only; friends' avatars are untouched.
+
 Leaving (decided 13 September 2026): **Leave** returns the player to the host/join
 menu rather than quitting. If the host leaves, the room closes and every client is
 returned to their own menu; if a client leaves, only that client goes back and the

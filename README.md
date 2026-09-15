@@ -63,7 +63,10 @@ be read as checklists by other assistants.
    and **1–4** equip or put away inventory slots. Everything is held in both
    hands in front of you; you and your friends see the gloved arms. The centre
    dot turns gold when what is under it can be taken or pressed. Loose balls
-   are walked through and never push or lift a player.
+   are walked through and never push or lift a player. Walls, corners and low
+   ceilings never show what is behind them: the view stays inside the body
+   (`Sunk Cost > Prototype > Apply camera clearance setup` after regenerating
+   the player prefab).
    A held slot item stays assigned to its slot; new grabs fill free slots. When
    the target has no slot (four full slots, or a two-handed heavy ball), grabbing
    it automatically puts away the equipped slot item and holds the new item until
