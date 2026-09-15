@@ -497,6 +497,10 @@ namespace SunkCost.Net
             Transport selected;
             if (mode == SessionMode.Steam)
             {
+                // Never bind the Steam transport without Steam: FishySteamworks's
+                // Update and IterateIncoming throw every frame on an uninitialised
+                // socket (seen 16 September 2026 with Steam closed).
+                if (!steam.Initialized) { error = "Steam is not running; start Steam or use Local."; return false; }
                 if (steamTransport == null)
                 {
                     if (steamTransportPrefab == null) { error = "Steam transport prefab is missing."; return false; }
@@ -510,6 +514,10 @@ namespace SunkCost.Net
             transportManager.Transport = selected;
             networkRoot.SetActive(true);
             if (!networkManager.Initialized) { error = "Network manager did not initialize."; return false; }
+            // FishNet initialises only the transport it finds when the NetworkManager
+            // wakes; one assigned afterwards (the Steam transport, instantiated on
+            // demand) must be initialised the same way or its sockets stay null.
+            if (selected.NetworkManager == null) selected.Initialize(networkManager, 0);
             boundMode = mode;
 
             if (!wired)
