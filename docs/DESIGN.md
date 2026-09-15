@@ -388,9 +388,11 @@ gloved arms connected to the shoulders are visible to you and to your friends
 rectangle in front of the avatar is gone; the centre aiming dot is outlined
 and turns gold only when what is under it can actually be taken or pressed.
 **Q** puts an item down in clear space in front of you whatever the view
-pitch; a throw goes where the crosshair points, up or down (Dan, 15 September
-2026), starting in front of you so a steep throw lands ahead, never under
-you. Crouching and standing blend the camera the same way (0.2 s), no snap.
+pitch; a throw lands **on the point the crosshair is on** (Dan, 15 September
+2026): the ball leaves the hands, below and ahead of the eyes, on the low arc
+that reaches that point; beyond its range it flies straight at it and falls
+short; looking straight down it still goes forward, landing right in front
+of the feet, never under you. Crouching and standing blend the camera the same way (0.2 s), no snap.
 Escape opens the menu and Escape again closes it. A released item never
 starts inside or under a player, and never behind a wall — with no room it is
 refused ("Not enough room to drop/throw") and stays in the hands. Players and

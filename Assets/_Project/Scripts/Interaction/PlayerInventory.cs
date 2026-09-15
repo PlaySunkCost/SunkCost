@@ -162,8 +162,21 @@ namespace SunkCost.Interaction
             Vector3 cameraForward = player.PlayerCamera != null ? player.PlayerCamera.transform.forward : transform.forward;
             PlayerMovementSettings settings = player.Movement;
             Vector3 forward = ReleasePlacement.HorizontalForward(cameraForward, transform.forward);
-            direction = ReleasePlacement.ThrowDirection(cameraForward, transform.forward, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
-            return ReleasePlacement.TryFind(transform.position, capsule.radius, capsule.height, forward, item.Radius, drop, settings, transform, item.transform, out pose);
+            if (!ReleasePlacement.TryFind(transform.position, capsule.radius, capsule.height, forward, item.Radius, drop, settings, transform, item.transform, out pose)) return false;
+            if (drop) return true;
+            // Aim at what the crosshair is on, from where the ball actually starts:
+            // the hands sit below and ahead of the eyes, so a parallel throw would
+            // miss what the player is looking at.
+            Vector3 eye = player.PlayerCamera != null ? player.PlayerCamera.transform.position : player.EyePosition;
+            Vector3 target = ReleasePlacement.CrosshairPoint(eye, cameraForward.normalized, 60f, transform, item.transform);
+            // Looking almost straight down the crosshair hits the floor behind the
+            // start pose; the ball still goes forward and down, landing right in
+            // front of the feet — never back under the player.
+            const float minAhead = 0.15f;
+            float ahead = Vector3.Dot(Vector3.ProjectOnPlane(target - pose, Vector3.up), forward);
+            if (ahead < minAhead) target = pose + forward * minAhead + Vector3.up * (target.y - pose.y);
+            direction = ReleasePlacement.AimAt(pose, target, item.LaunchSpeed, Physics.gravity.y, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
+            return true;
         }
 
         // The server's view of a proposed start pose: in front, within reach of the

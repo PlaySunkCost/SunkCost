@@ -471,6 +471,8 @@ namespace SunkCost.Interaction
 
         // Launch speed of the most recent throw applied on this peer (diagnostics).
         public float LastLaunchSpeed { get; private set; }
+        // The speed a throw of this item leaves the hands with (mass-scaled).
+        public float LaunchSpeed => throwSpeed * Weight.ThrowFactor(MassKg);
 
         private float ReleaseTimeoutSeconds()
         {

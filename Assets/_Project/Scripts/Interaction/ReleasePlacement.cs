@@ -34,6 +34,48 @@ namespace SunkCost.Interaction
             return (flat * Mathf.Cos(rad) + Vector3.up * Mathf.Sin(rad)).normalized;
         }
 
+        // The point the crosshair is on: the first solid thing along the view, or
+        // a far point along it. Other players count (you can throw at a friend).
+        public static Vector3 CrosshairPoint(Vector3 eye, Vector3 forward, float maxDistance, Transform ignoreSelf, Transform ignoreItem)
+        {
+            int count = Physics.RaycastNonAlloc(eye, forward, Hits, maxDistance, CarryableCollisionPolicy.PlacementMask, QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit hit = Hits[i];
+                if (hit.collider == null) continue;
+                if (ignoreSelf != null && hit.collider.transform.IsChildOf(ignoreSelf)) continue;
+                if (ignoreItem != null && hit.collider.transform.IsChildOf(ignoreItem)) continue;
+                if (hit.distance < nearest) nearest = hit.distance;
+            }
+            return eye + forward * (float.IsPositiveInfinity(nearest) ? maxDistance : nearest);
+        }
+
+        // The launch direction that lands a projectile of `speed` on `target`
+        // from `origin` under gravity (the low arc), so a throw hits what the
+        // crosshair is on rather than flying parallel to the view (Dan,
+        // 15 September 2026). Out of range: the straight line to the target,
+        // which falls short but points at it. Pitch is clamped afterwards.
+        public static Vector3 AimAt(Vector3 origin, Vector3 target, float speed, float gravityY, float minPitchDegrees, float maxPitchDegrees)
+        {
+            Vector3 delta = target - origin;
+            Vector3 flat = Vector3.ProjectOnPlane(delta, Vector3.up);
+            float d = flat.magnitude;
+            float h = delta.y;
+            float g = Mathf.Abs(gravityY);
+            Vector3 flatDirection = d > 1e-4f ? flat / d : Vector3.forward;
+            float pitch;
+            float v2 = speed * speed;
+            float discriminant = v2 * v2 - g * (g * d * d + 2f * h * v2);
+            if (speed > 0f && g > 0f && d > 1e-4f && discriminant >= 0f)
+                pitch = Mathf.Atan2(v2 - Mathf.Sqrt(discriminant), g * d) * Mathf.Rad2Deg; // the low arc
+            else
+                pitch = Mathf.Atan2(h, Mathf.Max(d, 1e-4f)) * Mathf.Rad2Deg;                // straight at it
+            pitch = Mathf.Clamp(pitch, minPitchDegrees, maxPitchDegrees);
+            float rad = pitch * Mathf.Deg2Rad;
+            return (flatDirection * Mathf.Cos(rad) + Vector3.up * Mathf.Sin(rad)).normalized;
+        }
+
         // A clear start pose for the item, or false. `drop` sweeps down to the
         // nearest support within dropGroundSearch and rests the item on it.
         public static bool TryFind(Vector3 feet, float capsuleRadius, float capsuleHeight, Vector3 forward, float itemRadius, bool drop,

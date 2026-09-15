@@ -63,6 +63,16 @@ namespace SunkCost.Editor.Prototype
             Near(errors, up.y, Mathf.Sin(45f * Mathf.Deg2Rad), 1e-3f, "45° aim keeps 45°");
             Vector3 vertical = ReleasePlacement.HorizontalForward(Vector3.down, new Vector3(1f, 0f, 0f));
             Near(errors, vertical.x, 1f, 1e-4f, "straight-down look uses the body yaw");
+            // Aiming at a point: the low arc lands on it (checked by flight), out of range points straight at it.
+            Vector3 origin = new(0f, 1.3f, 0f), targetPoint = new(0f, 0.2f, 5f);
+            Vector3 aim = ReleasePlacement.AimAt(origin, targetPoint, 8f, -9.81f, -80f, 80f);
+            Vector3 velocity = aim * 8f, position = origin;
+            float closest = float.PositiveInfinity;
+            for (int i = 0; i < 400; i++) { position += velocity * 0.005f; velocity += Vector3.down * 9.81f * 0.005f; closest = Mathf.Min(closest, Vector3.Distance(position, targetPoint)); }
+            if (closest > 0.08f) errors.Add($"AimAt: the low arc misses a 5 m target by {closest:0.00} m.");
+            if (aim.y <= 0f) errors.Add("AimAt: a 5 m level target needs a slight lift, not a dip.");
+            Vector3 farAim = ReleasePlacement.AimAt(origin, new Vector3(0f, 1.3f, 60f), 8f, -9.81f, -80f, 80f);
+            if (Vector3.Angle(farAim, Vector3.forward) > 1f) errors.Add("AimAt: an unreachable target is aimed at directly.");
 
             // Prefab invariants.
             GameObject player = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
