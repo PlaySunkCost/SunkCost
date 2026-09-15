@@ -38,7 +38,16 @@ namespace SunkCost.Diving
                 controller.StateChanged -= HandleStateChanged;
         }
 
-        private void HandleStateChanged(ElevatorState _) => Apply(ComputeOpenFraction());
+        // A seal closes from wherever the leaves are, at the same speed, not from
+        // "fully open": a button pressed while the doors are still opening (the
+        // matrix's R3b, or a hurried player) must not snap them open first.
+        private float sealFrom = 1f;
+
+        private void HandleStateChanged(ElevatorState next)
+        {
+            if (next == ElevatorState.Sealing) sealFrom = OpenFraction;
+            Apply(ComputeOpenFraction());
+        }
 
         private void Update() => Apply(ComputeOpenFraction());
 
@@ -59,14 +68,18 @@ namespace SunkCost.Diving
                 case ElevatorState.AtBottom:
                     return Mathf.Clamp01(controller.StateElapsed / sealSeconds); // opens on arrival, saturates at 1 while resting
                 case ElevatorState.Sealing:
-                    return 1f - Mathf.Clamp01(controller.StateElapsed / sealSeconds);
+                    return Mathf.Clamp01(sealFrom - controller.StateElapsed / sealSeconds);
                 default: // Descending, Ascending
                     return 0f;
             }
         }
 
+        // 0 shut, 1 open; the tube's gate mirrors it (ShaftGate).
+        public float OpenFraction { get; private set; }
+
         private void Apply(float openFraction)
         {
+            OpenFraction = openFraction;
             float sweepDeg = doorwayHalfAngleDeg * openFraction;
             // Each leaf's child panels are built at their CLOSED angular span (see
             // ElevatorCabinBuilder.CreateElevatorDoor); rotating the pivot sweeps that whole rigid

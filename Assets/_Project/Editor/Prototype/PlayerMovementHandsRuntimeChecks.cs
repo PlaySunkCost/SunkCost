@@ -33,6 +33,7 @@ namespace SunkCost.Editor.Prototype
         // focus; the checks lift that for their virtual keyboard and put it back.
         private static InputSettings.EditorInputBehaviorInPlayMode savedInputBehavior;
         private static bool inputBehaviorChanged;
+        private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
         private static Process guest;
         private static int guestId = 700;
         public static string Status { get; private set; } = "Not run";
@@ -53,6 +54,11 @@ namespace SunkCost.Editor.Prototype
             savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
             InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             inputBehaviorChanged = true;
+                // The editor loses focus whenever the tester types elsewhere; by default the
+                // Input System then disables devices and drops their events, the virtual
+                // keyboard included ("walked 0.00 m"). Ignore focus for the run.
+                savedBackgroundBehavior = InputSystem.settings.backgroundBehavior;
+                InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
             Status = "Running";
             steps = Run();
             stack.Clear();
@@ -74,7 +80,7 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController.BypassInputGateForChecks = false;
             HQPlayerController.KeyboardForChecks = null;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
-            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; inputBehaviorChanged = false; }
+            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; InputSystem.settings.backgroundBehavior = savedBackgroundBehavior; inputBehaviorChanged = false; }
             try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
             guest = null;
             foreach (GameObject block in GameObject.FindObjectsByType<GameObject>().Where(g => g.name.StartsWith("CheckBlock")).ToArray()) UnityEngine.Object.Destroy(block);
@@ -348,6 +354,20 @@ namespace SunkCost.Editor.Prototype
             Check(Vector3.Dot(landedFlat.normalized, host.transform.forward) > 0.5f && landedFlat.magnitude > host.Controller.radius, $"M8 the downward throw ended in front, not under the player ({landedFlat.magnitude:0.00} m ahead)");
             host.SetPitchForChecks(0f);
             yield return Wait(0.5f);
+            // M8b: a throw looking up leaves from where the ball is held, not from a
+            // chest-height spot below it (Dan, 16 September 2026).
+            H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
+            H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
+            host.SetPitchForChecks(-60f); yield return Wait(0.2f);
+            Vector3 heldUp = ball.transform.position;
+            H.ClientRequestUse();
+            yield return WaitUntil(() => ball.State == ItemState.Released, 2f, "M8b throw looking up released");
+            Vector3 startUp = ball.transform.position;
+            Check(Vector3.Distance(startUp, heldUp) < 0.15f && startUp.y > host.EyePosition.y - 0.4f, $"M8b the upward throw starts where the ball was held (moved {Vector3.Distance(startUp, heldUp):0.00} m, y={startUp.y:0.00}, held y={heldUp.y:0.00})");
+            yield return Wait(0.1f);
+            Check(ball.GetComponent<Rigidbody>().linearVelocity.y > 2f, $"M8b the upward throw goes up (v={ball.GetComponent<Rigidbody>().linearVelocity})");
+            host.SetPitchForChecks(0f);
+            yield return Wait(1.5f);
             // Refusal against a wall: face the south wall from 0.35 m and try to drop.
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);

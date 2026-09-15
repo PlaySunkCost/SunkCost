@@ -38,6 +38,7 @@ namespace SunkCost.Editor.Prototype
         private static Keyboard keyboard;
         private static InputSettings.EditorInputBehaviorInPlayMode savedInputBehavior;
         private static bool inputBehaviorChanged;
+        private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
         public static string Status { get; private set; } = "Not run";
 
         [MenuItem("Sunk Cost/Prototype/Run deck cabin ride matrix (Local host, Play Mode)")]
@@ -74,7 +75,7 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController.BypassInputGateForChecks = false;
             HQPlayerController.KeyboardForChecks = null;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
-            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; inputBehaviorChanged = false; }
+            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; InputSystem.settings.backgroundBehavior = savedBackgroundBehavior; inputBehaviorChanged = false; }
             try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
             guest = null;
         }
@@ -88,6 +89,11 @@ namespace SunkCost.Editor.Prototype
                 savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
                 InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 inputBehaviorChanged = true;
+                // The editor loses focus whenever the tester types elsewhere; by default the
+                // Input System then disables devices and drops their events, the virtual
+                // keyboard included ("walked 0.00 m"). Ignore focus for the run.
+                savedBackgroundBehavior = InputSystem.settings.backgroundBehavior;
+                InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
                 keyboard = InputSystem.AddDevice<Keyboard>("CabinCheckKeyboard");
                 HQPlayerController.KeyboardForChecks = keyboard;
                 HQPlayerController.BypassInputGateForChecks = true;
@@ -237,7 +243,8 @@ namespace SunkCost.Editor.Prototype
             float expectedTravel = 0f, carSpan = 0f, carSeaLevel = 0f; // read while the car exists: the site unloads after an up ride
             int fastFrames = 0, stalledFrames = 0; float largestStep = 0f; // smoothness: the car should move every frame, by about speed * frame time
             int hitchesSeen = 0, ridingHitches = 0; // each new hitch is noted with the ride's stage, so a spike can be blamed
-            float lastCarLocalY = float.NaN, worstFloorJitter = 0f; int jitterNotes = 0; // the rider's height above the car floor should not flicker frame to frame
+            float lastCarLocalY = float.NaN, worstFloorJitter = 0f; int jitterNotes = 0;
+            float worstGateLag = 0f; int gateSamples = 0, gateNotes = 0; // the tube gate mirrors the car door at the bottom // the rider's height above the car floor should not flicker frame to frame
             double deadline = EditorApplication.timeSinceStartup + 60.0;
             double nextNote = 0;
             while (EditorApplication.timeSinceStartup < deadline && Day.CabinRide.Active)
@@ -263,6 +270,18 @@ namespace SunkCost.Editor.Prototype
                 ElevatorController car = WorldSceneFlow.FindCar();
                 HQPlayerController local = Host();
                 bool shouldBeLocked = WorldSceneFlow.RidersLockedDuring(state);
+                if (car != null && (Day.Elevator.State == ElevatorState.AtBottom || (Day.Elevator.State == ElevatorState.Sealing && car.Upward)))
+                {
+                    ShaftGate gate0 = UnityEngine.Object.FindAnyObjectByType<ShaftGate>(FindObjectsInactive.Include);
+                    ElevatorDoor door0 = car.GetComponentInChildren<ElevatorDoor>(true);
+                    if (gate0 != null && door0 != null)
+                    {
+                        gateSamples++;
+                        float gap = Mathf.Abs(gate0.OpenFraction - door0.OpenFraction);
+                        if (gap > 0.2f && gateNotes++ < 6) Note($"{label} GATE GAP {gap:0.00} frame {frames}: gate={gate0.OpenFraction:0.00} door={door0.OpenFraction:0.00} carState={car.State} synced={Day.Elevator.State} upward={car.Upward} elapsed={car.StateElapsed:0.00} stage={state.Stage}");
+                        worstGateLag = Mathf.Max(worstGateLag, gap);
+                    }
+                }
                 if (state.Stage != CabinRideStage.Preparing && shouldBeLocked && Rider() != null && !Rider().Locked) everUnlockedEarly = true;
                 if (car != null && local != null && local.gameObject.scene == WorldScenes.Scene(WorldId.Dive))
                 {
@@ -354,6 +373,7 @@ namespace SunkCost.Editor.Prototype
             Keys();
             Check(maxSink < 0.05f, $"{label} the rider never sank into the car floor (max {maxSink:0.000} m)");
             Check(worstFloorJitter < 0.01f, $"{label} the rider's height above the floor never jumped between frames (worst {worstFloorJitter * 100f:0.0} cm)");
+            if (gateSamples > 0) Check(worstGateLag < 0.05f, $"{label} the tube gate mirrored the car door at the bottom on {gateSamples} frames (worst gap {worstGateLag:0.00})");
             Check(!everUnlockedEarly, label + " the rider was locked exactly when it should be");
             Check(everFreeWhileMoving, label + " the rider was free inside the moving car");
             Check(walked > 0.5f && !everOutside, $"{label} the rider walked {walked:0.00} m inside the moving car and stayed inside");
