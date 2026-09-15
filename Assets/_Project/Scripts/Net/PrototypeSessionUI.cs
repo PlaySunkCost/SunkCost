@@ -63,6 +63,10 @@ namespace SunkCost.Net
             // automated development build starts its session.
             yield return null;
             string[] arguments = Environment.GetCommandLineArgs();
+            // Automated local peers can be told which port the host is on (the
+            // editor checks host on a free port when 7770 is still held).
+            if (TryGetArgumentValue(arguments, "-hq-local-port", out string portText) && ushort.TryParse(portText, out ushort port) && localTransport != null)
+                localTransport.SetPort(port);
             if (HasArgument(arguments, "-hq-auto-host-local"))
                 StartLocalHost();
             else if (TryGetArgumentValue(arguments, "-hq-auto-join-local", out string hostAddress))

@@ -30,6 +30,14 @@ namespace SunkCost.Editor.Prototype
             EditorApplication.update += Tick;
         }
 
+        // Leave the session and stop Play Mode without leaking the host socket.
+        public static void StopCleanly()
+        {
+            SessionState.SetInt(StageKey, 3);
+            EditorApplication.update -= Tick;
+            EditorApplication.update += Tick;
+        }
+
         private static ushort FreeUdpPort(ushort preferred)
         {
             for (ushort port = preferred; port < preferred + 20; port++)
@@ -47,7 +55,17 @@ namespace SunkCost.Editor.Prototype
             switch (stage)
             {
                 case 0:
-                    if (EditorApplication.isPlaying) { EditorApplication.ExitPlaymode(); return; }
+                    if (EditorApplication.isPlaying)
+                    {
+                        // Leave the session before stopping: a Play Mode stopped with the
+                        // host up leaves its Tugboat socket bound in the editor process.
+                        var session = Object.FindAnyObjectByType<SunkCost.Net.PrototypeSessionUI>();
+                        if (session != null && SunkCost.Editor.Prototype.HQPrototypeTestHooks.SessionUiState().Contains("server=True"))
+                        { session.LeaveSession(); waitUntil = EditorApplication.timeSinceStartup + 1.0; return; }
+                        if (EditorApplication.timeSinceStartup < waitUntil) return;
+                        EditorApplication.ExitPlaymode();
+                        return;
+                    }
                     if (EditorApplication.isPlayingOrWillChangePlaymode) return;
                     EditorSceneManager.OpenScene("Assets/_Project/Scenes/Prototype/Session.unity", OpenSceneMode.Single);
                     SessionState.SetInt(StageKey, 1);
@@ -76,6 +94,14 @@ namespace SunkCost.Editor.Prototype
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }
                     SessionState.SetInt(StageKey, -1);
                     EditorApplication.update -= Tick;
+                    return;
+                case 3:
+                    if (!EditorApplication.isPlaying) { SessionState.SetInt(StageKey, -1); EditorApplication.update -= Tick; return; }
+                    var leaving = Object.FindAnyObjectByType<SunkCost.Net.PrototypeSessionUI>();
+                    if (leaving != null && SunkCost.Editor.Prototype.HQPrototypeTestHooks.SessionUiState().Contains("server=True"))
+                    { leaving.LeaveSession(); waitUntil = EditorApplication.timeSinceStartup + 1.0; return; }
+                    if (EditorApplication.timeSinceStartup < waitUntil) return;
+                    EditorApplication.ExitPlaymode();
                     return;
                 default:
                     EditorApplication.update -= Tick;

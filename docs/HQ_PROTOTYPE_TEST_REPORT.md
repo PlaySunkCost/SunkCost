@@ -40,11 +40,13 @@ These results do not certify Steam.
   clear at the new spot.
 - Far view from the pier at the sea with the 0.05 m near plane: no depth
   artefacts seen (`camera-wall-nearclip-sea.png`).
-- Jump/crouch/hands matrix rerun on this branch: M1–M4 pass (host rows). The
-  guest rows (M5–M9) could not run in this editor session: a stopped Play Mode
-  left the previous Tugboat socket bound on 7770 in the editor process and the
-  guest build joins 7770; the clearance matrix hosted on 7771 instead. Rerun
-  after an editor restart before merge.
+- Jump/crouch/hands matrix rerun on this branch with a fresh Local guest
+  build: **MATRIX_PASS, 30 rows** including the guest rows M5–M9 (remote
+  stance and hands unchanged). Found on the way: stopping Play Mode with the
+  host still up leaves its Tugboat socket bound in the editor process until
+  Unity restarts (Leave releases it). The matrix driver now leaves the session
+  before stopping, hosts on the first free port when 7770 is held, and the
+  automated guest joins that port (`-hq-local-port`, development builds only).
 - Not run: a separate non-host client over Steam; 21:9 and resized windows at
   runtime (the envelope is recomputed from the live aspect every frame; only
   the arithmetic was checked at 21:9); moving cabin geometry (the elevator) in
