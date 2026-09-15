@@ -265,6 +265,9 @@ namespace SunkCost.Net
             // server's, so this is the one gameplay rule the handshake consults.
             if (SunkCost.World.CrewDayState.Instance != null && SunkCost.World.CrewDayState.Instance.RefusesJoins)
             { Finish(connection, false, AdmissionRejection.DiveInProgress, entry.Nonce); return; }
+            // A temporary transition lock while the ship is under way, not a join policy.
+            if (SunkCost.World.CrewDayState.Instance != null && SunkCost.World.CrewDayState.Instance.RefusesJoinsForTravel)
+            { Finish(connection, false, AdmissionRejection.ShipTravelling, entry.Nonce); return; }
             if (ledger.HoldsIdentity(identity)) { Finish(connection, false, AdmissionRejection.DuplicateIdentity, entry.Nonce); return; }
             if (!ledger.TryReserve(connection.ClientId, identity)) { Finish(connection, false, AdmissionRejection.RoomFull, entry.Nonce); return; }
             Finish(connection, true, AdmissionRejection.None, entry.Nonce);

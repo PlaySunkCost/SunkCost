@@ -1,5 +1,56 @@
 # HQ prototype verification report
 
+## Ship departure branch — 15 September 2026
+
+Tested uncommitted `dan/ship-departure` based on `0bb99c2` (the monitor merge),
+same rig as the sections below (editor host + headless guests, Local/Tugboat,
+one machine, build `local-dev:0bb99c2`). The trip of
+`docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md`: lock → gangway up (0.8 s) →
+pull away 8 m over 4 s → fade 0.75 s → scene move under black → fade in
+(+0.8 s gangway down at HQ). Rows are the plan's section 11 ids where they
+were run; the scene-flow and monitor rows still run in the same matrix.
+
+- Pure: the ship prefab carries `ShipDepartureVisual`, `SafeDeckVolume`,
+  `GangwayPivot`/`Gangway` (solid collider), `GangwayExclusionVolume`,
+  `DepartureDirection`; the boarding point and the ramp centre are not
+  "safely aboard", the deck middle is; a zero-length stage reads complete;
+  settings validated. HQ was rebuilt: the base-owned plank is gone, a 3 m pier
+  and a 400 m water plane replace it, the ship is moored so its gangway tip
+  rests 1 m onto the pier.
+- D3 (refusals, no motion): host on the ramp → `refused: Not aboard: Player 0`;
+  a ball dropped on the ramp → `refused: Clear the gangway`; phase `AtHQ`,
+  ship at rest, gangway down and walkable after both.
+- D1 (HQ → sea, host presses): monitor `Raising the gangway`; in `PullingAway`
+  the host is travel-locked with the screen still visible, the gangway at 80°
+  with its collider off, the guest snapshot `trip=PullingAway/1;
+  travelLocked=True`; 3 s in, the ship was 7.7 m from its rest position, the
+  host still at its ship-relative spot (< 0.15 m); the fade started after the
+  move; both peers arrived on the sea ship at rest with the gangway stowed;
+  the host unlocked after the fade-in. Game-view capture 2.5 s into a
+  departure: `Logs/ship-departure-pullaway.png` (the raised gangway, the base
+  and pier receding over water, the deck ball at its spot).
+- D4 (input during the trip): a drop request for the held ball during
+  `PullingAway` changed nothing (still `Held`); the server refuses with
+  `Travelling`.
+- D7 (cargo): the deck ball rode frozen at its spot (`InTransit`, < 0.15 m),
+  arrived within 0.15 m with its rotation within 2°, and was released; the held
+  ball stayed held.
+- D2 (sea → HQ, guest presses): the same trip; in `Arriving` the host was in
+  `HQPrototype` and still locked; when unlocked the gangway read `lowered=True;
+  rampCollider=True`.
+- Regression: S1, S2, S4, S5, S13, S15 rows unchanged and passing;
+  `MATRIX_PASS`.
+
+Not run: D5 (menu/overlay/focus during the follow — the Leave-under-black
+ordering is implemented, not exercised), D6 (four players), D8 (airborne item
+outside the volume), D9 (a deliberately delayed guest), D10 (forged acks — the
+serial/cohort filter is code-reviewed only), D11 (guest disconnect in each
+stage), D12 (join racing the lock), D13 (missing destination — the cancel path
+exists, not triggered), D14 (host Leave in every stage), D15 (repeated trips
+with a rotated ship), every Steam row. Engine audio: no clip in the project, so
+`engineClip=False` — a reported gap, not silence by design. Feel: nobody has
+stood on the deck for a real departure yet.
+
 ## Monitor branch — 15 September 2026
 
 Tested uncommitted `dan/monitor` based on `dfc6f57` (the scene-flow merge),

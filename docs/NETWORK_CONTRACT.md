@@ -281,19 +281,48 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   transforms that are both still loaded at that moment; no RPC carries them.
   The `NetworkTransform` snap (`Teleport()`) keeps observers from interpolating
   across the world.
-- Sailing order on the server (`WorldSceneFlow.SailRoutine`): set the phase,
-  wait `syncFlushTicks`, collect the travellers (each connection's player, its
-  Held and Stowed items, loose items in `AboardVolume`), load the destination
-  server-side if it is not loaded yet, add **every** travelling connection to the
-  destination scene before the load (`AddConnectionToScene`, so observers are
-  rebuilt once with everyone already there and nobody blinks out of a
-  teammate's view), then send one `LoadConnectionScenes` with the moved objects
-  to all of them. Each client places its own player on its load-end and answers
-  with a `WorldArrivedBroadcast`; the server waits for every traveller's
-  broadcast (`arrivalTimeoutSeconds`, then it proceeds and logs who was late),
-  and only then unloads the scene they left. A connection that disconnects
-  mid-sail leaves the gate. FishNet raises load-end twice on a host (server
-  pass, client pass); placement runs on the client pass only.
+- A sail is a **trip** (`WorldSceneFlow.TripRoutine`, decided 15 September
+  2026 with `docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md`): one server-written
+  `ShipDepartureState { Serial, Stage, FromWorld, ToWorld, StageStartTick,
+  StageDurationTicks }` SyncVar on `CrewDayState`, stages `Preparing →
+  RaisingGangway → PullingAway → FadingOut → Loading → Arriving → Complete`
+  (or `Cancelled`). `DayPhase` stays `Sailing`/`SailingHome` throughout. Each
+  stage carries the server tick it started on; every peer evaluates the ship's
+  displacement and the gangway angle from the synchronized tick
+  (`ShipDepartureVisual`), so the ship itself is never replicated and nothing
+  is parented under it. Clients answer stages with a `DepartureAckBroadcast
+  { Serial, Kind, World }` — `Prepared` (locked at the captured deck spot),
+  `Black` (screen fully black), `Arrived` (placed on the destination ship); the
+  server ignores anything from outside the trip's cohort or with another serial.
+- Order on the server: refuse unless every active connection's player stands on
+  the deck proper (`SafeDeckVolume` minus `GangwayExclusionVolume`; the
+  refusal names who is not) and no join is pending; `Preparing` and wait for
+  every `Prepared` (`prepareTimeoutSeconds`, else cancel) and `syncFlushTicks`;
+  re-check aboard (a player who stepped onto the gangway before the lock
+  cancels the trip, nobody is teleported aboard); freeze loose deck cargo
+  (Free and Released items in `AboardVolume`, position and rotation, kinematic,
+  server-followed) and close the root move list (players, Held, Stowed, cargo);
+  `RaisingGangway`, `PullingAway` (the server drags the cargo with the moving
+  ship); `FadingOut` and wait for every `Black` (a guest that never answers is
+  disconnected with a reason, never shown a half-loaded world); `Loading`: load
+  the destination server-side if needed, add **every** traveller to the
+  destination before the one `LoadConnectionScenes` with the moved objects
+  (observers rebuilt once, nobody blinks out of view), place the cargo on the
+  destination ship, wait for every `Arrived`; `Arriving`: fade in, at HQ also
+  the gangway lowering, unload the source scene; only then `ServerArrive`,
+  `Complete`. FishNet raises load-end twice on a host (server pass, client
+  pass); placement runs on the client pass only.
+- Writers during a trip: the server writes the trip state, the cohort, the
+  cargo poses and the day state; the owning client writes its own player root
+  (`ShipDepartureRider` keeps the captured ship-relative spot every frame,
+  one `Teleport()` at the cross-world placement); remote players arrive through
+  their `NetworkTransform` only; frozen cargo is server-written and replicated
+  normally. Item requests, monitor presses and joins are refused while
+  `CrewDayState.Travelling` (`RefuseReason.Travelling`, "Ship travelling; try
+  again on arrival", `AdmissionRejection.ShipTravelling`); a connection that
+  authenticated before the lock but loads after it is disconnected rather than
+  spawned into a departing world. A disconnected passenger's dropped items join
+  the frozen cargo. A trip that cancels before `Loading` changes nothing.
 - When neither the server nor the client is running any more, every world scene
   is unloaded locally; the menu is the Session scene.
 - Workarounds for FishNet 4.7.3 on Unity 6, kept in `WorldSceneFlow` and to be

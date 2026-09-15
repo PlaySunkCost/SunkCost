@@ -74,6 +74,11 @@ namespace SunkCost.Editor.Prototype
                     root.AddComponent<SunkCost.World.ShipControls>();
                     changes.Add("ShipControls added");
                 }
+                if (root.GetComponent<SunkCost.World.ShipDepartureRider>() == null)
+                {
+                    root.AddComponent<SunkCost.World.ShipDepartureRider>();
+                    changes.Add("ShipDepartureRider added");
+                }
                 if (changes.Count > 0)
                     PrefabUtility.SaveAsPrefabAsset(root, HQPrototypeBuilder.PlayerPrefabPath);
             }

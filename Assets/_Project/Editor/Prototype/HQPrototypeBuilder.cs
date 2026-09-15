@@ -25,8 +25,10 @@ namespace SunkCost.Editor.Prototype
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         public const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
-        public const float PlankLength = 6f;
+        public const float PlankLength = 6f;   // historical: the old base-owned plank; the ship's gangway is this long now
         public const float PlankWidth = 1.6f;
+        public const float PierLength = 3f;
+        public const float PierOverlap = 1f;   // how far the gangway tip reaches onto the pier
         public const float DoorwayWidth = 2.4f;
 
         // The HQ world scene: the room, its spawn points, the light, the loot fixture
@@ -119,6 +121,7 @@ namespace SunkCost.Editor.Prototype
                 root.AddComponent<PlayerInventory>();
                 root.AddComponent<PlayerHudUI>();
                 root.AddComponent<SunkCost.World.ShipControls>();
+                root.AddComponent<SunkCost.World.ShipDepartureRider>();
 
                 GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 body.name = "Body";
@@ -281,19 +284,31 @@ namespace SunkCost.Editor.Prototype
             spawner.SetEntries(entries.ToArray());
         }
 
-        // Stub dock until Idan's pier card: a plank through the north doorway onto
-        // the docked ship, whose BoardingPoint meets the plank's far end.
+        // Stub dock until Idan's pier card: a short pier through the north doorway,
+        // water beyond it, and the docked ship moored so its own gangway (part of
+        // the ship prefab, docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7)
+        // lands on the pier. Nothing of the crossing belongs to the base any more.
         private static void CreateDock(GameObject shipPrefab, Material plankMaterial)
         {
             GameObject dock = new("Dock");
-            float plankStart = 6f;
-            CreateBlock("Plank", new Vector3(0f, -0.05f, plankStart + PlankLength / 2f), new Vector3(PlankWidth, 0.1f, PlankLength), plankMaterial, dock.transform);
+            float pierStart = 6f;
+            CreateBlock("Pier", new Vector3(0f, -0.05f, pierStart + PierLength / 2f), new Vector3(PlankWidth + 2f, 0.1f, PierLength), plankMaterial, dock.transform);
+            Material water = GetOrCreateMaterial(MaterialPath + "/SeaWater.mat", new Color(0.05f, 0.14f, 0.2f));
+            GameObject sea = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            sea.name = "Sea";
+            sea.transform.SetParent(dock.transform, false);
+            sea.transform.position = new Vector3(0f, -1f, 60f);
+            sea.transform.localScale = new Vector3(40f, 1f, 40f); // 400 m: the departure route and the horizon from the deck
+            sea.GetComponent<Renderer>().sharedMaterial = water;
+            Object.DestroyImmediate(sea.GetComponent<Collider>()); // nothing stands on the water
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
             ship.transform.SetParent(dock.transform, true);
             ShipParts parts = ship.GetComponent<ShipParts>();
             Transform boarding = parts != null ? parts.BoardingPoint : null;
             Vector3 boardingLocal = boarding != null ? boarding.localPosition : Vector3.zero;
-            ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, plankStart + PlankLength) - boardingLocal, Quaternion.identity);
+            // The gangway tip rests on the pier: stern at pier end + gangway length - the overlap.
+            float sternZ = pierStart + PierLength - PierOverlap + ShipStubBuilder.GangwayLength;
+            ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, sternZ) - boardingLocal, Quaternion.identity);
         }
 
         internal static Type FindType(string fullName)

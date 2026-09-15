@@ -79,7 +79,12 @@ naming who is still ashore, otherwise. What you hold or stowed and anything
 lying on the deck sails with you and is at the same spot on the new deck; the
 base resets when the crew comes back. The monitor that chooses the destination
 is the screen at the bow: look at the **Site 01** or **HQ** button and press
-**E**. The screen says where you are ("Docked at HQ…", "At Site 01…"), and a
+**E**. Everyone must be on the deck itself — the gangway does not count, and a
+ball left on it stops the ship ("Clear the gangway"). Then everyone is held
+where they stand (look around, no walking or items), the gangway lifts, the
+ship pulls away for about four seconds, the screen fades, and you fade back in
+on the stopped ship; at HQ the gangway comes down before you can move. The
+screen says where you are ("Docked at HQ…", "At Site 01…"), and a
 refusal ("Not aboard: Player 2") stays on it for three seconds on every
 player's ship. The editor menu *Sunk Cost > Prototype > Debug > Sail to Sea /
 Sail to HQ* (Play Mode, hosting) does the same without walking. Joining is

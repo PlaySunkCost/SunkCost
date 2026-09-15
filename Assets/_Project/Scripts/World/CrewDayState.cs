@@ -28,6 +28,9 @@ namespace SunkCost.World
         private readonly SyncVar<WorldId> destination = new(WorldId.HQ);
         private readonly SyncVar<Refusal> lastRefusal = new(new Refusal { Serial = 0, Text = string.Empty });
         private float lastRefusalAt = float.NegativeInfinity;
+        // The trip in progress (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 4);
+        // WorldSceneFlow is its only writer.
+        private readonly SyncVar<ShipDepartureState> departure = new(new ShipDepartureState { Stage = DepartureStage.Idle });
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -37,6 +40,9 @@ namespace SunkCost.World
         public WorldId Destination => destination.Value;
         public bool Sailing => phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome;
         public Refusal LastRefusal => lastRefusal.Value;
+        public ShipDepartureState Departure => departure.Value;
+        // Between the lock and the release: joins, item actions and monitor presses are refused.
+        public bool Travelling => departure.Value.Active;
         // Local time the last refusal arrived on this peer; panels show it for
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
@@ -44,11 +50,19 @@ namespace SunkCost.World
         public string DebugStatus => $"phase={phase.Value} world={world.Value} to={destination.Value}";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
+        public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
 
         private void Awake()
         {
             phase.OnChange += OnPhaseChanged;
             lastRefusal.OnChange += OnRefusalChanged;
+            departure.OnChange += OnDepartureChanged;
+        }
+
+        private void OnDepartureChanged(ShipDepartureState previous, ShipDepartureState next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return; // once per peer, like the phase
+            DepartureChanged?.Invoke(previous, next);
         }
 
         private void OnRefusalChanged(Refusal previous, Refusal next, bool asServer)
@@ -101,6 +115,17 @@ namespace SunkCost.World
             phase.Value = to == WorldId.HQ ? DayPhase.SailingHome : DayPhase.Sailing;
         }
 
+        // A trip that stopped before anything moved: back to the docked/at-sea phase.
+        [Server]
+        public void ServerCancelSail()
+        {
+            destination.Value = world.Value;
+            phase.Value = world.Value == WorldId.HQ ? DayPhase.AtHQ : DayPhase.AtSea;
+        }
+
+        [Server]
+        public void ServerSetDeparture(ShipDepartureState next) => departure.Value = next;
+
         [Server]
         public void ServerArrive(WorldId at)
         {
@@ -136,7 +161,9 @@ namespace SunkCost.World
             lastRefusal.Value = new Refusal { Serial = lastRefusal.Value.Serial + 1, Text = why ?? string.Empty };
         }
 
-        // Joins are refused while a dive is in progress (design section 1).
+        // Joins are refused while a dive is in progress (design section 1) and while
+        // the ship is travelling (a temporary transition lock, not a join policy).
         public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress;
+        public bool RefusesJoinsForTravel => Travelling;
     }
 }

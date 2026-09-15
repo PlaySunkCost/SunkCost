@@ -22,7 +22,8 @@ namespace SunkCost.Interaction
         HandsFull = 1,
         TooFar = 2,
         NotFree = 3,
-        NoSuchItem = 4
+        NoSuchItem = 4,
+        Travelling = 5   // the ship is under way: no item actions until arrival
     }
 
     // The inventory decision table (docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md
@@ -61,6 +62,7 @@ namespace SunkCost.Interaction
                 case RefuseReason.TooFar: return "Too far";
                 case RefuseReason.NotFree: return "Someone else has it";
                 case RefuseReason.NoSuchItem: return "Nothing to grab";
+                case RefuseReason.Travelling: return "Hold on — the ship is moving";
                 default: return string.Empty;
             }
         }

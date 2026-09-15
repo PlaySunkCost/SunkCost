@@ -28,6 +28,7 @@ namespace SunkCost.Player
             get
             {
                 if (inventory == null || controller == null) return string.Empty;
+                if (controller.TravelLocked) return string.Empty;
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
