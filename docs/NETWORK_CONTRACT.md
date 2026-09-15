@@ -90,9 +90,10 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 
 | State | Decided by | Notes |
 |---|---|---|
-| Player movement | Client, corrected by server | Clients move themselves (weight factor included); server validates position deltas loosely |
+| Player movement | Client, corrected by server | Clients move themselves (weight factor, jump and gravity included); server validates position deltas loosely |
+| Stance (crouched / standing) | **Server only** | `PlayerStance`: the owner requests with a serial (`ServerRpc`); the server checks headroom at the position it sees and writes `StanceState { Crouched, Serial }` — the serial advances on refusal too. The owner predicts crouching, never standing: it expands only after the server accepts *and* its own headroom check passes. Every peer applies the accepted posture to its capsule, eyes and body |
 | Grabbed object transform | Owning client | Broadcast, not simulated elsewhere |
-| Released object before rest/handoff | Releasing client | Server validates release and decides handoff |
+| Released object before rest/handoff | Releasing client | Server validates release and decides handoff. The start pose is a transaction: the owner proposes a clear pose from `ReleasePlacement`, the server re-checks it from its view (bounded distance, in front, clear of world and other players) before `Held → Released`; the owner re-checks its geometry before activating physics and cancels (`ServerCancelRelease`, same version) if it changed, whereupon the server restores Held, the slot and the mass together. No client writes SyncVars; a stale version is ignored |
 | Free object transform | Server | Standard replication |
 | Inventory contents and slot assignment | **Server only** | Four slots plus hands; clients request grabs, equips, drops and use |
 | Stowed item | Server | Hidden, kinematic; carrier identity retained; equipping grants ownership |

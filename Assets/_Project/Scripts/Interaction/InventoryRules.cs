@@ -23,7 +23,8 @@ namespace SunkCost.Interaction
         TooFar = 2,
         NotFree = 3,
         NoSuchItem = 4,
-        Travelling = 5   // the ship is under way: no item actions until arrival
+        Travelling = 5,  // the ship is under way: no item actions until arrival
+        NoRoom = 6       // no clear space in front to drop or throw into
     }
 
     // The inventory decision table (docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md
@@ -63,6 +64,7 @@ namespace SunkCost.Interaction
                 case RefuseReason.NotFree: return "Someone else has it";
                 case RefuseReason.NoSuchItem: return "Nothing to grab";
                 case RefuseReason.Travelling: return "Hold on — the ship is moving";
+                case RefuseReason.NoRoom: return "Not enough room to drop/throw";
                 default: return string.Empty;
             }
         }

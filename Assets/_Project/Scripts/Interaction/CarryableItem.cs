@@ -50,8 +50,10 @@ namespace SunkCost.Interaction
         // SyncVar flush, so neither may assume the other has arrived.
         private bool hasPendingRelease;
         private Vector3 pendingReleaseDirection;
+        private Vector3 pendingReleasePose;
         private bool pendingReleaseThrow;
         private uint pendingReleaseVersion;
+        private float pendingReleaseSince;
         private bool restRequested;
         // Deck cargo frozen for a ship trip (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md
         // section 6): server only, zero = none. While set the server's scripted
@@ -213,6 +215,13 @@ namespace SunkCost.Interaction
         {
             if (!IsSpawned)
                 return;
+            // An accepted release whose state never arrived: give it back rather
+            // than leave a ghost in the hands (plan section 6A, releaseTimeoutSeconds).
+            if (hasPendingRelease && LocalWriter && Time.unscaledTime - pendingReleaseSince > ReleaseTimeoutSeconds())
+            {
+                hasPendingRelease = false;
+                ServerCancelRelease(pendingReleaseVersion);
+            }
             if (state.Value == ItemState.Released && LocalWriter && !hasPendingRelease && !restRequested)
             {
                 releaseTime += Time.fixedDeltaTime;
@@ -285,18 +294,38 @@ namespace SunkCost.Interaction
             return true;
         }
 
+        // Held -> Released at a start pose the server has validated
+        // (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md section 6A). The owner
+        // stays the writer; it places the item at the pose, re-checks its own
+        // geometry, and either activates physics or cancels (ServerCancelRelease),
+        // in which case the server puts the item back in the hands.
         [Server]
-        public bool ServerRelease(NetworkConnection connection, Vector3 direction, bool throwIt)
+        public bool ServerRelease(NetworkConnection connection, Vector3 pose, Vector3 direction, bool throwIt)
         {
             if (state.Value != ItemState.Held || connection == null || connection.ClientId != holderClientId.Value)
                 return false;
+            if (!float.IsFinite(pose.x) || !float.IsFinite(pose.y) || !float.IsFinite(pose.z)) return false;
             if (throwIt && (!float.IsFinite(direction.x) || !float.IsFinite(direction.y) || !float.IsFinite(direction.z) || direction.sqrMagnitude < 0.01f))
                 return false;
             motionVersion.Value++;
             state.Value = ItemState.Released;
             Vector3 safeDirection = direction.sqrMagnitude > 0.01f ? direction.normalized : Vector3.zero;
-            TargetApplyRelease(connection, safeDirection, throwIt && useAction == ItemUseAction.Throw, motionVersion.Value);
+            TargetApplyRelease(connection, pose, safeDirection, throwIt && useAction == ItemUseAction.Throw, motionVersion.Value);
             return true;
+        }
+
+        // The owner could not apply the accepted release (its geometry changed, or
+        // the accepted state never replicated in time): back into the hands, same
+        // holder, same ownership, as long as this is still the current release.
+        [ServerRpc]
+        private void ServerCancelRelease(uint version, NetworkConnection sender = null)
+        {
+            if (sender == null || sender.ClientId != holderClientId.Value) return;
+            if (state.Value != ItemState.Released || version != motionVersion.Value) return;
+            motionVersion.Value++;
+            state.Value = ItemState.Held;
+            ApplyRole();
+            PlayerInventory.ServerRestoreAfterFailedRelease(this, sender);
         }
 
         // Server decision from any state: loose, server-simulated, at a position.
@@ -395,23 +424,36 @@ namespace SunkCost.Interaction
         }
 
         [TargetRpc]
-        private void TargetApplyRelease(NetworkConnection connection, Vector3 direction, bool throwIt, uint version)
+        private void TargetApplyRelease(NetworkConnection connection, Vector3 pose, Vector3 direction, bool throwIt, uint version)
         {
             if (version < motionVersion.Value) return;
             hasPendingRelease = true;
             pendingReleaseVersion = version;
+            pendingReleasePose = pose;
             pendingReleaseDirection = direction;
             pendingReleaseThrow = throwIt;
+            pendingReleaseSince = Time.unscaledTime;
             TryApplyPendingRelease();
         }
 
         // Runs from both the TargetRpc and the state OnChange; whichever arrives
-        // second applies the impulse, exactly once.
+        // second applies the release, exactly once: the item is placed at the
+        // accepted pose, the owner's own geometry is re-checked, then physics and
+        // the impulse start. A blocked pose cancels instead of releasing anywhere.
         private void TryApplyPendingRelease()
         {
             if (!hasPendingRelease || pendingReleaseVersion != motionVersion.Value || state.Value != ItemState.Released || !LocalWriter)
                 return;
             hasPendingRelease = false;
+            if (holder == null) ResolveHolder();
+            Transform holderRoot = holder != null ? holder.transform : null;
+            if (!ReleasePlacement.IsClear(pendingReleasePose, Radius, holderRoot, transform))
+            {
+                ServerCancelRelease(pendingReleaseVersion);
+                return;
+            }
+            transform.position = pendingReleasePose;
+            networkTransform?.Teleport();
             ApplyRole();
             body.useGravity = true;
             body.angularVelocity = Vector3.zero;
@@ -423,36 +465,17 @@ namespace SunkCost.Interaction
             }
             else
             {
-                // Q is a drop at the feet, not a throw from camera height. The point
-                // clears the player capsule and the floor for this item's radius; if
-                // it is inside geometry (facing a wall), the held pose is used instead.
-                if (holder == null) ResolveHolder();
-                if (holder != null)
-                    transform.position = DropPosition(holder);
                 body.linearVelocity = Vector3.zero;
-                networkTransform?.Teleport();
             }
         }
 
         // Launch speed of the most recent throw applied on this peer (diagnostics).
         public float LastLaunchSpeed { get; private set; }
 
-        private Vector3 DropPosition(HQPlayerController player)
+        private float ReleaseTimeoutSeconds()
         {
-            float radius = Radius;
-            float playerRadius = 0.3f;
-            var capsule = player.GetComponent<CharacterController>();
-            if (capsule != null) playerRadius = capsule.radius;
-            Vector3 feet = player.transform.position;
-            Vector3 candidate = feet + player.transform.forward * (playerRadius + radius + 0.1f) + Vector3.up * (radius + 0.05f);
-            // Anything solid other than the player and this item means the point is
-            // inside a wall or another object; fall back to where the hands are.
-            foreach (Collider hit in Physics.OverlapSphere(candidate, radius, ~0, QueryTriggerInteraction.Ignore))
-            {
-                if (hit.transform.IsChildOf(player.transform) || hit.transform.IsChildOf(transform)) continue;
-                return TryGetHoldPose(player, out Vector3 pose, out _) ? pose : transform.position;
-            }
-            return candidate;
+            if (holder == null) ResolveHolder();
+            return holder != null ? holder.Movement.ReleaseTimeoutSeconds : 1f;
         }
 
         // The local player's held item comes from the replicated SyncVars, not from

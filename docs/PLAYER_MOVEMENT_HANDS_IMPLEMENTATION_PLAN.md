@@ -1,5 +1,14 @@
 # Player jump, crouch and connected holding hands
 
+**Status: implemented on `dan/player-movement-hands` (15 September 2026); Local
+rows M1–M9 verified, see the test report.** Deviations from the plan below:
+the player's visible body is Dor's 1.19 m placeholder model, not the capsule
+the plan assumed — on friends' screens the arms meet the held item above its
+head, and the owner's own body is hidden (the arms are not). The visible-body
+card owns the proportions. The one-second release expiry runs on the owner
+(an accepted release that never became applicable is cancelled), not on the
+server. Setup twice, prefab reopened: no duplicates.
+
 **Status: implementation handoff, documentation only.** Written 15 September
 2026 on `codex/player-movement-hands-plan`, created from fetched `origin/main`
 at `0bb99c2`. No movement code, meshes, prefabs or scenes changed in this task.

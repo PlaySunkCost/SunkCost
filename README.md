@@ -54,9 +54,16 @@ be read as checklists by other assistants.
 3. Choose **Local / LAN** and **Host**. Up to three other players can choose
    **Join** with `127.0.0.1` on the same computer, or the host's LAN IP on another
    computer. Four players total, including the host.
-4. Move with WASD, sprint with Shift, look with the mouse. **E** grabs; hold E to
-   catch an approaching ball with forgiving aim within 2 m. **Q** drops at your
-   feet, **left click** uses/throws, and **1–4** equip or put away inventory slots.
+4. Move with WASD, sprint with Shift, look with the mouse. **Space** jumps
+   (lower the more you carry; not with a two-handed ball), **hold Ctrl** to
+   crouch (half height, half speed; you stay down under a shelf until it is
+   clear). **E** grabs; hold E to
+   catch an approaching ball with forgiving aim within 2 m. **Q** puts the item
+   down in front of you, **left click** uses/throws (looking down throws level),
+   and **1–4** equip or put away inventory slots. Everything is held in both
+   hands in front of you; you and your friends see the gloved arms. The centre
+   dot turns gold when what is under it can be taken or pressed. Loose balls
+   are walked through and never push or lift a player.
    A held slot item stays assigned to its slot; new grabs fill free slots. When
    the target has no slot (four full slots, or a two-handed heavy ball), grabbing
    it automatically puts away the equipped slot item and holds the new item until
