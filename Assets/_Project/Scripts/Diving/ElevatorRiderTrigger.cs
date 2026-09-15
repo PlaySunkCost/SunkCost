@@ -1,4 +1,4 @@
-using SunkCost.Sites;
+using SunkCost.Player;
 using UnityEngine;
 
 namespace SunkCost.Diving
@@ -17,13 +17,13 @@ namespace SunkCost.Diving
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.GetComponent<DiveSiteDevPlayer>() != null)
+            if (other.GetComponent<HQPlayerController>() != null)
                 controller.RegisterRider(other.gameObject);
         }
 
         private void OnTriggerExit(Collider other)
         {
-            if (other.GetComponent<DiveSiteDevPlayer>() != null)
+            if (other.GetComponent<HQPlayerController>() != null)
                 controller.UnregisterRider(other.gameObject);
         }
     }

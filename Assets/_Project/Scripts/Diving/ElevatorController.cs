@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
-using SunkCost.Sites;
+using SunkCost.Player;
 using UnityEngine;
 
 namespace SunkCost.Diving
 {
-    // Local, non-networked harness: DiveSite01 has no networked player yet, so this drives
-    // itself directly instead of through the network. The networked version makes this a
+    // Local, non-networked harness: this still drives itself directly instead of through the
+    // network, running independently on every peer. DiveSite01 now spawns a networked
+    // HQPlayerController (via CrewSpawner, docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 3.3),
+    // but that only made the RIDER networked — TryStartMove and the state machine below are
+    // unchanged and are not yet server-authoritative. The networked version makes this a
     // NetworkBehaviour with state as SyncVars and TryStartMove behind a ServerRpc named
     // ServerRequestElevatorMove per NETWORK_CONTRACT.md §4 and §9, and emits authoritative
     // noise on each transition into motion. None of that is implemented here.
@@ -31,7 +34,7 @@ namespace SunkCost.Diving
         private ElevatorState pendingMoveState; // Descending or Ascending; resolved once Sealing completes
         private float progress; // 0 = at topPosition, 1 = at bottomPosition
         private float stateElapsed; // seconds since entering the current state
-        private readonly Dictionary<GameObject, DiveSiteDevPlayer> riders = new();
+        private readonly Dictionary<GameObject, HQPlayerController> riders = new();
         private readonly List<GameObject> staleRiders = new();
 
         public event Action<ElevatorState> StateChanged;
@@ -87,7 +90,7 @@ namespace SunkCost.Diving
             // frame in Update(). A rider without the component (shouldn't happen given
             // ElevatorRiderTrigger only registers GameObjects it found one on, but cheap to
             // guard) is still tracked for TryStartMove's boarding check, just never moved.
-            riders.Add(rider, rider.GetComponent<DiveSiteDevPlayer>());
+            riders.Add(rider, rider.GetComponent<HQPlayerController>());
         }
 
         internal void UnregisterRider(GameObject rider) => riders.Remove(rider);
@@ -126,12 +129,15 @@ namespace SunkCost.Diving
             Vector3 delta = transform.position - previousPosition;
             if (delta != Vector3.zero)
             {
-                // DiveSiteDevPlayer.Move() does not track a moving platform on its own (a
+                // HQPlayerController.Move() does not track a moving platform on its own (a
                 // CharacterController never does), so the elevator pushes its own world-space
                 // delta into each rider before that rider's own input movement runs. This
                 // class only calls the rider's public hook; it does not reach into
-                // DiveSiteDevPlayer's internals.
-                foreach (KeyValuePair<GameObject, DiveSiteDevPlayer> entry in riders)
+                // HQPlayerController's internals. Only the local owner's Move() actually
+                // applies it (see HQPlayerController.Update()'s IsOwner gate) — a remote
+                // rider's copy just accumulates the delta harmlessly until this class becomes
+                // server-authoritative.
+                foreach (KeyValuePair<GameObject, HQPlayerController> entry in riders)
                 {
                     if (entry.Key == null)
                     {

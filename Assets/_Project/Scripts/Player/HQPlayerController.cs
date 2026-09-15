@@ -16,6 +16,9 @@ namespace SunkCost.Player
         // Two-handed items sit here: centred and low, in front of the camera.
         [SerializeField] private Transform twoHandHoldPoint;
         [SerializeField] private Renderer bodyRenderer;
+        // Disabled by default so HQ stays behaviourally unchanged; a dive site enables it
+        // on the local owner via DiveSiteHeadlampActivator once the player has spawned.
+        [SerializeField] private Light headlamp;
         [SerializeField] private float walkSpeed = 4f;
         [SerializeField] private float sprintSpeed = 6f;
         [SerializeField] private float lookSensitivity = 0.1f;
@@ -31,6 +34,7 @@ namespace SunkCost.Player
         private bool grabConsumed;
         private float grabBufferedUntil = -1f;
         private bool travelLocked;
+        private Vector3 externalMotion;
 
         public Transform HoldPoint => holdPoint;
         public Transform TwoHandHoldPoint => twoHandHoldPoint;
@@ -51,6 +55,19 @@ namespace SunkCost.Player
         // Riding a departing ship: look works, walking and items do not (the rider
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
+
+        public void SetHeadlampEnabled(bool value)
+        {
+            if (headlamp != null) headlamp.enabled = value;
+        }
+
+        // Minimal hook for a moving platform (e.g. the elevator): a CharacterController does
+        // not follow platform motion on its own, so a mover accumulates its world-space delta
+        // here and Move() applies it alongside the player's own input each frame.
+        public void AddExternalMotion(Vector3 delta)
+        {
+            externalMotion += delta;
+        }
 
         private void Awake()
         {
@@ -143,6 +160,23 @@ namespace SunkCost.Player
 
         private void Move()
         {
+            // Carried platform motion (e.g. the elevator) is swept on its own, separately
+            // from and before the player's own input move, rather than summed into one
+            // vector. Summing let the grounded stick force (below) net against a moving
+            // floor instead of being blocked by it: on descent the floor happened to sit
+            // under the combined vector and absorbed the excess, but on ascent nothing
+            // above blocked the stick force's downward component, so the rider lost ground
+            // every frame until depenetration found a false equilibrium a third of a metre
+            // below the floor. Applying the carry first means it resolves against whatever
+            // is actually there; the stick force then resolves afterwards against the floor
+            // the rider is now standing on and is correctly blocked by it. Standard
+            // CharacterController moving-platform pattern — no tuning constant involved.
+            if (externalMotion != Vector3.zero)
+            {
+                controller.Move(externalMotion);
+                externalMotion = Vector3.zero;
+            }
+
             Vector2 input = Vector2.zero;
             if (Keyboard.current.wKey.isPressed) input.y += 1f;
             if (Keyboard.current.sKey.isPressed) input.y -= 1f;

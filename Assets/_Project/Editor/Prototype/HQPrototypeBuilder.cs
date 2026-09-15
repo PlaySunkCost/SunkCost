@@ -5,6 +5,7 @@ using FishNet.Object;
 using FishNet.Transporting;
 using SunkCost.Interaction;
 using SunkCost.Player;
+using SunkCost.Sites;
 using SunkCost.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -81,6 +82,7 @@ namespace SunkCost.Editor.Prototype
             EnsureFolder("Assets/_Project/Prefabs/Player");
             EnsureFolder("Assets/_Project/Prefabs/Interaction");
             EnsureFolder("Assets/_Project/Prefabs/Net");
+            EnsureFolder("Assets/_Project/Settings/Prototype");
             EnsureFolder(MaterialPath);
             Material ballMaterial = GetOrCreateMaterial(MaterialPath + "/BallOrange.mat", new Color(0.95f, 0.28f, 0.035f));
             Material playerMaterial = GetOrCreateMaterial(MaterialPath + "/PlayerBase.mat", Color.white);
@@ -158,15 +160,43 @@ namespace SunkCost.Editor.Prototype
                 twoHand.transform.SetParent(cameraObject.transform, false);
                 twoHand.transform.localPosition = HQPrototypeLootSetup.TwoHandHoldPointLocalPosition;
 
+                Light headlamp = CreateHeadlamp(cameraObject.transform);
+
                 SerializedObject serialized = new(controller);
                 serialized.FindProperty("playerCamera").objectReferenceValue = camera;
                 serialized.FindProperty("holdPoint").objectReferenceValue = hold.transform;
                 serialized.FindProperty("twoHandHoldPoint").objectReferenceValue = twoHand.transform;
                 serialized.FindProperty("bodyRenderer").objectReferenceValue = body.GetComponent<Renderer>();
+                serialized.FindProperty("headlamp").objectReferenceValue = headlamp;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 return PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             }
             finally { Object.DestroyImmediate(root); }
+        }
+
+        // Lives on the shared player prefab (not a dive-site-only object) so both HQ and
+        // every dive site follow the same prefab; disabled by default so HQ stays
+        // behaviourally unchanged. A dive site turns it on via
+        // HQPlayerController.SetHeadlampEnabled (see DiveSiteHeadlampActivator). Tuning
+        // values come from DiveSiteSettings — the only place they're set — so this and
+        // DiveSiteValidator's check against that same asset can never drift apart.
+        private static Light CreateHeadlamp(Transform cameraTransform)
+        {
+            DiveSiteSettings settings = DiveSiteBuilder.GetOrCreateSettings();
+
+            GameObject go = new("Headlamp", typeof(Light));
+            go.transform.SetParent(cameraTransform, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            Light light = go.GetComponent<Light>();
+            light.type = LightType.Spot;
+            light.intensity = settings.HeadlampIntensity;
+            light.range = settings.HeadlampRange;
+            light.spotAngle = settings.HeadlampSpotAngle;
+            light.color = new Color(1f, 0.93f, 0.82f);
+            light.shadows = LightShadows.None;
+            light.enabled = false;
+            return light;
         }
 
         internal static GameObject CreateBallPrefab(Material material)

@@ -88,7 +88,6 @@ namespace SunkCost.Sites
             Material floorMaterial = LoadMaterial("HQFloor.mat");
             Material wallMaterial = LoadMaterial("HQWall.mat");
             Material accentMaterial = LoadMaterial("BallOrange.mat");
-            Material playerMaterial = LoadMaterial("PlayerBase.mat");
             Material glassMaterial = GetOrCreateGlassMaterial();
 
             int deepLayer = GetOrCreateLayer(DeepLayerName);
@@ -97,12 +96,13 @@ namespace SunkCost.Sites
             scene.name = "DiveSite01";
 
             ConfigureAmbience(settings);
-            (Transform anchorTop, Vector3 playerSpawnPosition) = CreateSurfacePlatform(floorMaterial, accentMaterial, playerMaterial, settings);
+            (Transform anchorTop, Vector3 playerSpawnPosition) = CreateSurfacePlatform(floorMaterial, accentMaterial, settings);
             CreateSurfaceLight(deepLayer, settings);
             Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
             CreateGuideShaft(anchorTop, anchorBottom, accentMaterial);
             CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings);
             CreateUnderwaterVolume();
+            CreateHeadlampActivator();
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
                 throw new InvalidOperationException("Unity could not save " + ScenePath);
@@ -127,13 +127,12 @@ namespace SunkCost.Sites
             RenderSettings.fogDensity = settings.FogDensity;
         }
 
-        private static (Transform anchorTop, Vector3 playerSpawnPosition) CreateSurfacePlatform(Material floor, Material accent, Material playerMaterial, DiveSiteSettings settings)
+        private static (Transform anchorTop, Vector3 playerSpawnPosition) CreateSurfacePlatform(Material floor, Material accent, DiveSiteSettings settings)
         {
             GameObject root = new("Surface Platform");
             float shaftRadius = settings.CarDiameterMeters / 2f + ElevatorClearanceMeters;
             CreatePlatformRing(root.transform, floor, shaftRadius);
             Transform[] spawnPoints = CreateSpawnPoints(root.transform);
-            CreateDevPlayer(spawnPoints[0], playerMaterial, settings);
 
             GameObject anchor = new("ElevatorAnchor_Top");
             anchor.transform.SetParent(root.transform, false);
@@ -218,68 +217,14 @@ namespace SunkCost.Sites
             return result;
         }
 
-        // Non-networked walk-around harness — see DiveSiteDevPlayer. Delete this method's
-        // output (the "DevHarnessPlayer_DeleteWhenNetworkedPlayerLands" GameObject) once a
-        // real networked player is spawned into dive sites instead.
-        private static void CreateDevPlayer(Transform spawnPoint, Material bodyMaterial, DiveSiteSettings settings)
+        // The networked player is spawned at runtime by CrewSpawner from
+        // PrototypePlayer.prefab, using this scene's own Spawn Points group — this
+        // scene must never place one by hand (see DiveSiteValidator's HQPlayerController
+        // check). Its headlamp is disabled by default (see HQPrototypeBuilder); this is
+        // the one place that turns it on.
+        private static void CreateHeadlampActivator()
         {
-            GameObject root = new("DevHarnessPlayer_DeleteWhenNetworkedPlayerLands");
-            root.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
-            CharacterController controller = root.AddComponent<CharacterController>();
-            controller.height = 1.8f;
-            controller.radius = 0.3f;
-            controller.center = new Vector3(0f, 0.9f, 0f);
-            controller.stepOffset = 0.25f;
-            controller.slopeLimit = 45f;
-            controller.skinWidth = 0.03f;
-
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.6f, 0.9f, 0.6f);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            body.GetComponent<Renderer>().sharedMaterial = bodyMaterial;
-
-            GameObject pivot = new("ViewPivot");
-            pivot.transform.SetParent(root.transform, false);
-            pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-            GameObject cameraObject = new("DevCamera", typeof(Camera), typeof(AudioListener));
-            cameraObject.transform.SetParent(pivot.transform, false);
-            Camera camera = cameraObject.GetComponent<Camera>();
-            camera.fieldOfView = 75f;
-            // URP cameras don't render post-processing by default; without this the
-            // Underwater Volume's Exposure/Tonemapping/ColorAdjustments never apply.
-            UniversalAdditionalCameraData cameraData = cameraObject.AddComponent<UniversalAdditionalCameraData>();
-            cameraData.renderPostProcessing = true;
-            CreateHeadlamp(cameraObject.transform, settings);
-
-            DiveSiteDevPlayer devPlayer = root.AddComponent<DiveSiteDevPlayer>();
-            SerializedObject serialized = new(devPlayer);
-            serialized.FindProperty("playerCamera").objectReferenceValue = camera;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            ElevatorInteractor interactor = root.AddComponent<ElevatorInteractor>();
-            SerializedObject interactorSerialized = new(interactor);
-            interactorSerialized.FindProperty("interactCamera").objectReferenceValue = camera;
-            interactorSerialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        // Exists so the darkness can be judged during greybox testing. No battery, no
-        // per-player colour, no toggle — just a headlamp that follows where you look.
-        private static void CreateHeadlamp(Transform cameraTransform, DiveSiteSettings settings)
-        {
-            GameObject go = new("Headlamp", typeof(Light));
-            go.transform.SetParent(cameraTransform, false);
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-            Light light = go.GetComponent<Light>();
-            light.type = LightType.Spot;
-            light.intensity = settings.HeadlampIntensity; // tuned empirically against real game-camera renders (see below)
-            light.range = settings.HeadlampRange;
-            light.spotAngle = settings.HeadlampSpotAngle;
-            light.color = new Color(1f, 0.93f, 0.82f);
-            light.shadows = LightShadows.None;
+            new GameObject("Dive Site Headlamp Activator", typeof(DiveSiteHeadlampActivator));
         }
 
         // Real elevator car: its own scene root (not a child of the anchors, so it can move
@@ -766,7 +711,11 @@ namespace SunkCost.Sites
                 SetLayerRecursively(child.gameObject, layer);
         }
 
-        private static DiveSiteSettings GetOrCreateSettings()
+        // Internal (not private): HQPrototypeBuilder reads HeadlampIntensity/Range/SpotAngle
+        // from here too, so the headlamp it builds onto PrototypePlayer.prefab stays in sync
+        // with the one value DiveSiteValidator checks against — one source of truth, not two
+        // numbers that can drift apart.
+        internal static DiveSiteSettings GetOrCreateSettings()
         {
             DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(SettingsPath);
             if (settings == null)
