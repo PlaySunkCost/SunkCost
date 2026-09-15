@@ -1,8 +1,9 @@
 # First-person camera wall clearance — implementation handoff
 
-Status: documentation only, 15 September 2026. Branch `codex/camera-wall-plan`
-starts from fetched `origin/main` at `0bb99c29f79fcd229a4abf033b3d34cad56e1a9c`.
-No Unity code, assets or settings changed by this planning task.
+Status: implemented on `dan/camera-wall` (15 September 2026), based on the
+jump/crouch/hands merge (`61214e7`). Evidence and the acceptance rows run are in
+`docs/HQ_PROTOTYPE_TEST_REPORT.md` ("Camera wall clearance branch"). The plan was
+written on `codex/camera-wall-plan` from `0bb99c29f79fcd229a4abf033b3d34cad56e1a9c`.
 
 ## 1. Requested outcome
 

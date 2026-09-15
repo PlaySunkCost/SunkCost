@@ -1,5 +1,55 @@
 # HQ prototype verification report
 
+## Camera wall clearance branch — 15 September 2026
+
+Tested `dan/camera-wall` based on `61214e7` (the jump/crouch/hands merge),
+Unity 6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one
+machine. The rows are host-only (the clearance is owner presentation; nothing
+replicated changed). `Sunk Cost > Prototype > Run camera clearance matrix`
+runs them, log `Temp/camera-clearance-matrix.log`; captures in `Logs/`.
+These results do not certify Steam.
+
+- Reproduction (before): player camera near clip **0.3 m** (Unity default,
+  never set by the builder), FOV 75, Game view aspect 2.19. Nose in the
+  south-east corner of the HQ room looking into it: both walls cut by the near
+  plane, the sea and sky visible through the corner
+  (`Logs/camera-wall-before-corner.png`). Flat wall head-on was already fine
+  (`camera-wall-before-flat.png`): the plane touched the face.
+- Pure (*Run camera clearance checks*): envelope radius at 75°/16:9/0.05 m =
+  0.093 m (+0.01 margin); a 0.3 m near plane does not fit the 0.3 m capsule;
+  the eye envelope fits both stance capsules at 16:9 and 21:9 (standing
+  0.1+0.115 ≤ 0.3, crouched 0.15+0.115 ≤ 0.3); prefab has the component, near
+  clip 0.05, camera on the ViewPivot. Solver fixtures on temporary colliders:
+  flat wall and corner at the capsule radius → no move; overhang → eye pushed
+  down on the safe line, envelope clear; thin ledge through the desired eye →
+  resolves below it, never through; enclosure → obstructed; own colliders
+  ignored, foreign ones count. Setup applied twice: second run "already set up".
+- Play Mode, host (`MATRIX_PASS`, 28 rows): C1 corner (level, −70°, +70°),
+  flat wall head-on and sideways: clear with **no** correction, envelope
+  0.115 m at aspect 2.19 (`camera-wall-after-corner.png`,
+  `camera-wall-after-corner-down.png`). C2 a slab cutting the standing eye's
+  envelope: eye corrected down 0.062 m, envelope clear, root unmoved
+  (`camera-wall-after-overhang.png`). C3 slab removed: monotonic return to the
+  desired eye. C4 crouch under a slab at 1.3 m spawned while the eye was still
+  at 1.62: 182 frames, envelope clear on every one, no cover, the camera held
+  at 1.180 while the desired eye blended through the slab, then free once
+  crouched (`camera-wall-after-crouch-low.png`); stand refused under it, stood
+  once it was gone. C5 a box around the head: obstructed, no target, root
+  unmoved; box gone → cover down at once, view back within the blend. C6
+  corrected under a slab, teleport to open floor → offset zero immediately,
+  clear at the new spot.
+- Far view from the pier at the sea with the 0.05 m near plane: no depth
+  artefacts seen (`camera-wall-nearclip-sea.png`).
+- Jump/crouch/hands matrix rerun on this branch: M1–M4 pass (host rows). The
+  guest rows (M5–M9) could not run in this editor session: a stopped Play Mode
+  left the previous Tugboat socket bound on 7770 in the editor process and the
+  guest build joins 7770; the clearance matrix hosted on 7771 instead. Rerun
+  after an editor restart before merge.
+- Not run: a separate non-host client over Steam; 21:9 and resized windows at
+  runtime (the envelope is recomputed from the live aspect every frame; only
+  the arithmetic was checked at 21:9); moving cabin geometry (the elevator) in
+  Play Mode — C5/C6 cover the obstructed and reset paths it would take.
+
 ## Jump, crouch and hands branch — 15 September 2026
 
 Tested uncommitted `dan/player-movement-hands` based on `5b4a192` (the ship
