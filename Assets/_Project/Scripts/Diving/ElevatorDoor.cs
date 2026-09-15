@@ -64,7 +64,7 @@ namespace SunkCost.Diving
         {
             float sweepDeg = doorwayHalfAngleDeg * openFraction;
             // Each leaf's child panels are built at their CLOSED angular span (see
-            // DiveSiteBuilder.CreateElevatorDoor); rotating the pivot sweeps that whole rigid
+            // ElevatorCabinBuilder.CreateElevatorDoor); rotating the pivot sweeps that whole rigid
             // set further around the car's circumference, away from the doorway centre, as
             // the door opens. Signs are opposite so the two leaves part symmetrically.
             if (leafRightPivot != null)

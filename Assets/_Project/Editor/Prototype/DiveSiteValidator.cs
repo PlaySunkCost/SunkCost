@@ -186,6 +186,21 @@ namespace SunkCost.Sites
             CheckCount<ElevatorController>(scene, 1, errors);
             CheckCount<ElevatorDoor>(scene, 1, errors);
 
+            // Idan/Dan, 15 September 2026 elevator rules: "gated shut at the bottom when the
+            // cabin is away; a player cannot walk in."
+            Transform shaftGate = FindByName(scene, "Shaft Gate");
+            if (shaftGate == null)
+            {
+                errors.Add("Shaft gate is missing.");
+            }
+            else
+            {
+                if (shaftGate.GetComponent<Collider>() == null)
+                    errors.Add("Shaft gate must have a collider.");
+                if (shaftGate.GetComponent<ShaftGate>() == null)
+                    errors.Add("Shaft gate is missing its ShaftGate component.");
+            }
+
             // The platform hole is now a circle (a fan of radial wedges — see
             // CreatePlatformRing), not a square, so there is no single "half-width" to check.
             // Instead confirm the inner (car-facing) edge of a sampled wedge sits at the
