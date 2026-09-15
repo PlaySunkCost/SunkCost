@@ -361,6 +361,13 @@ transitions happen on the server only (`ServerDepart`, `ServerRequestMove`,
 timers on elapsed). `TryStartMove(GameObject)` routes to `ServerRequestMove` when
 driven. Late-loading clients reconstruct the ride from the struct alone.
 
+> **Superseded 15 September 2026 by docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md:**
+> the water is geometry, not timers. `ElevatorMath` as built gives the depth
+> profile (`DepthAt`, `ProgressAt`, `TravelSeconds` from depth and speeds) and
+> `WaterLevelInCar(seaLevelY, carFloorY, h)`; `fillDelay`/`fill`/`drain` and
+> `travelSecondsOneWay` do not exist. The table below is kept as the record of
+> what was planned.
+
 Pure functions in `ElevatorMath` (no Unity dependencies, checked by the pure
 tests): `Progress(state, upward, t, travel)`, `WaterLevel(state, upward, t,
 settings)`, `DoorOpenFraction(state, t, seal)`, `IsDry(...)`:

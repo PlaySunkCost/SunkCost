@@ -1,5 +1,6 @@
 using System;
 using SunkCost.Diving;
+using SunkCost.Editor.Prototype;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -22,7 +23,6 @@ namespace SunkCost.Sites
         public const string GlassMaterialPath = MaterialPath + "/DiveSiteGlass.mat";
 
         private const float PlatformSize = 20f;
-        private const float GuideCableRadius = 0.06f;
         private const float SeafloorThickness = 0.5f;
         private const float SeafloorWallHeight = 6f;
         private const float WreckLength = 16f;
@@ -68,8 +68,8 @@ namespace SunkCost.Sites
                 throw new InvalidOperationException("DiveSiteSettings.CarDiameterMeters must be positive.");
             if (settings.CarInteriorHeightMeters <= 0f)
                 throw new InvalidOperationException("DiveSiteSettings.CarInteriorHeightMeters must be positive.");
-            if (settings.ElevatorTravelSecondsOneWay <= 0f)
-                throw new InvalidOperationException("DiveSiteSettings.ElevatorTravelSecondsOneWay must be positive.");
+            if (!settings.IsValid)
+                throw new InvalidOperationException("DiveSiteSettings has an invalid value (depth, car size, speeds, tube).");
             if (settings.DoorSealSeconds <= 0f)
                 throw new InvalidOperationException("DiveSiteSettings.DoorSealSeconds must be positive.");
 
@@ -87,9 +87,8 @@ namespace SunkCost.Sites
             (Transform anchorTop, Vector3 playerSpawnPosition) = CreateSurfacePlatform(floorMaterial, accentMaterial, settings);
             CreateSurfaceLight(deepLayer, settings);
             Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
-            CreateGuideShaft(anchorTop, anchorBottom, accentMaterial);
-            ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings);
-            CreateShaftGate(anchorBottom, elevatorController, wallMaterial, settings);
+            ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings, out float doorwayBearingDeg);
+            CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, glassMaterial, wallMaterial, deepLayer, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
 
@@ -228,7 +227,7 @@ namespace SunkCost.Sites
         // collisions (rider trigger, floor, interior walls) working against the physics layer
         // collision matrix — real work, not done here. Revisit before this scene is used for
         // anything beyond a smoke test.
-        private static ElevatorController CreateElevator(Vector3 topAnchorPosition, Vector3 bottomAnchorPosition, Vector3 playerSpawnPosition, Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings)
+        private static ElevatorController CreateElevator(Vector3 topAnchorPosition, Vector3 bottomAnchorPosition, Vector3 playerSpawnPosition, Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings, out float doorwayBearingDegOut)
         {
             GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(floor, frame, glass, panelAccent, settings);
 
@@ -239,6 +238,7 @@ namespace SunkCost.Sites
             // instance by -bearing around Y points that baked doorway at the spawn direction.
             Vector3 toSpawn = playerSpawnPosition - topAnchorPosition;
             float doorwayBearingDeg = Mathf.Atan2(toSpawn.z, toSpawn.x) * Mathf.Rad2Deg;
+            doorwayBearingDegOut = doorwayBearingDeg;
 
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             instance.transform.SetPositionAndRotation(topAnchorPosition, Quaternion.Euler(0f, -doorwayBearingDeg, 0f));
@@ -247,65 +247,91 @@ namespace SunkCost.Sites
             SerializedObject serialized = new(controller);
             serialized.FindProperty("topPosition").vector3Value = topAnchorPosition;
             serialized.FindProperty("bottomPosition").vector3Value = bottomAnchorPosition;
-            serialized.FindProperty("travelSecondsOneWay").floatValue = settings.ElevatorTravelSecondsOneWay;
             serialized.FindProperty("doorSealSeconds").floatValue = settings.DoorSealSeconds;
+            // The motion profile (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section 5).
+            serialized.FindProperty("seaLevelY").floatValue = settings.SeaLevelY;
+            serialized.FindProperty("spanMeters").floatValue = settings.CarInteriorHeightMeters;
+            serialized.FindProperty("travelSpeed").floatValue = settings.TravelSpeedMetersPerSecond;
+            serialized.FindProperty("crossingSpeed").floatValue = settings.SurfaceCrossingSpeedMetersPerSecond;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             return controller;
         }
 
-        // The blocker at the bottom landing (Idan/Dan, 15 September 2026 elevator rules:
-        // "gated shut at the bottom when the cabin is away; a player cannot walk in"). Solid
-        // whenever the cabin is not docked at the bottom; ShaftGate flips it on ElevatorState.
-        // Sized to the same shaft radius as the platform hole at the top so it fully covers
-        // the car's own footprint. A separate object from the cabin — it has to keep blocking
-        // after the car has left, so it cannot live on the (moving) prefab instance.
-        private static void CreateShaftGate(Transform anchorBottom, ElevatorController controller, Material wallMaterial, DiveSiteSettings settings)
+        // The glass tube around the shaft (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section
+        // 4, Dan 15 September 2026): a snug clear column from the seafloor up past the
+        // parked car, sealed but for a doorway cut into its bottom metres facing the
+        // car's own doorway; a gate of two leaves closes that doorway while the car is
+        // away; a translucent disc marks the water standing at sea level inside it.
+        // Without the ship shell (its own card) the tube's top is the parked car's roof;
+        // with it, the shell's deck cabin continues the column.
+        public const string ShaftTubeName = "Shaft Tube";
+        public const string TubeGlassName = "TubeGlass";
+        public const string TubeWallsName = "TubeWalls";
+        public const string TubeRibPrefix = "TubeRib";
+        public const string TubeGateName = "TubeGate";
+        public const string WaterSurfaceName = "WaterSurface";
+        public const string WaterSurfaceMaterialPath = MaterialPath + "/DiveSiteWaterSurface.mat";
+        public const float TubeDoorwayExtraWidthMeters = 0.4f;
+
+        private static void CreateShaftTube(Transform anchorTop, Transform anchorBottom, ElevatorController controller, float doorwayBearingDeg, Material glass, Material frame, int deepLayer, DiveSiteSettings settings)
         {
-            float shaftRadius = settings.CarDiameterMeters / 2f + ElevatorClearanceMeters;
-            float gateHeight = settings.CarInteriorHeightMeters;
+            GameObject root = new(ShaftTubeName);
+            float bottomY = anchorBottom.position.y;
+            float topY = anchorTop.position.y + settings.CarInteriorHeightMeters; // section 4.1: no ship shell yet
+            float doorwayWidth = ElevatorCabinBuilder.CarDoorwayWidthMeters + TubeDoorwayExtraWidthMeters;
+            float doorwayHalfAngleDeg = RoundCabinGeometry.CreateTube(root.transform, settings.TubeRadiusMeters, bottomY, topY, glass, frame,
+                doorwayBearingDeg, doorwayWidth, settings.CarInteriorHeightMeters, settings.TubeRibSpacingMeters, TubeGlassName, TubeWallsName, TubeRibPrefix);
 
-            GameObject gate = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            gate.name = "Shaft Gate";
-            gate.transform.position = anchorBottom.position + new Vector3(0f, gateHeight / 2f, 0f);
-            gate.transform.localScale = new Vector3(shaftRadius * 2f, gateHeight / 2f, shaftRadius * 2f);
-            gate.GetComponent<Renderer>().sharedMaterial = wallMaterial;
-            // Same CapsuleCollider-clamp problem as Car Floor/Car Roof (see ElevatorCabinBuilder):
-            // swap in a MeshCollider built from the same cylinder mesh so collision matches what
-            // is visible instead of an inflated capsule.
-            Object.DestroyImmediate(gate.GetComponent<Collider>());
-            MeshCollider gateCollider = gate.AddComponent<MeshCollider>();
-            gateCollider.sharedMesh = gate.GetComponent<MeshFilter>().sharedMesh;
-
+            // The gate: two leaves like the car's, closed at rest; ShaftGate opens them
+            // while the car is parked or occupies the bottom of the tube.
+            GameObject gate = new(TubeGateName);
+            gate.transform.SetParent(root.transform, false);
+            gate.transform.position = anchorBottom.position;
+            float leafRadius = settings.TubeRadiusMeters - 0.03f;
+            Transform leafRight = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Right", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: true, 3, 0.1f);
+            Transform leafLeft = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Left", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: false, 3, 0.1f);
+            float bearingRad = doorwayBearingDeg * Mathf.Deg2Rad;
+            Vector3 doorwayDirection = new Vector3(Mathf.Cos(bearingRad), 0f, Mathf.Sin(bearingRad));
+            GameObject gateCollider = new("Gate Collider", typeof(BoxCollider));
+            gateCollider.transform.SetParent(gate.transform, false);
+            gateCollider.transform.position = anchorBottom.position + doorwayDirection * leafRadius + new Vector3(0f, settings.CarInteriorHeightMeters / 2f, 0f);
+            gateCollider.transform.rotation = Quaternion.LookRotation(doorwayDirection, Vector3.up);
+            gateCollider.GetComponent<BoxCollider>().size = new Vector3(doorwayWidth + 0.3f, settings.CarInteriorHeightMeters, 0.25f);
             ShaftGate shaftGate = gate.AddComponent<ShaftGate>();
             SerializedObject serialized = new(shaftGate);
             serialized.FindProperty("controller").objectReferenceValue = controller;
-            serialized.FindProperty("gateCollider").objectReferenceValue = gateCollider;
+            serialized.FindProperty("gateCollider").objectReferenceValue = gateCollider.GetComponent<BoxCollider>();
+            serialized.FindProperty("leafLeftPivot").objectReferenceValue = leafLeft;
+            serialized.FindProperty("leafRightPivot").objectReferenceValue = leafRight;
+            serialized.FindProperty("doorwayHalfAngleDeg").floatValue = doorwayHalfAngleDeg;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            SetLayerRecursively(gate, deepLayer);
+
+            // The water standing in the tube: a translucent disc at sea level, no collider.
+            GameObject water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            water.name = WaterSurfaceName;
+            water.transform.SetParent(root.transform, false);
+            water.transform.position = new Vector3(anchorTop.position.x, settings.SeaLevelY, anchorTop.position.z);
+            water.transform.localScale = new Vector3((settings.TubeRadiusMeters - 0.03f) * 2f, 0.01f, (settings.TubeRadiusMeters - 0.03f) * 2f);
+            water.GetComponent<Renderer>().sharedMaterial = GetOrCreateWaterSurfaceMaterial();
+            Object.DestroyImmediate(water.GetComponent<Collider>());
+        }
+
+        public static Material GetOrCreateWaterSurfaceMaterial()
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(WaterSurfaceMaterialPath);
+            if (material != null)
+                return material;
+            material = new Material(GetOrCreateGlassMaterial());
+            material.SetColor("_BaseColor", new Color(0.25f, 0.55f, 0.6f, 0.55f));
+            if (material.HasProperty("_Color")) material.SetColor("_Color", new Color(0.25f, 0.55f, 0.6f, 0.55f));
+            AssetDatabase.CreateAsset(material, WaterSurfaceMaterialPath);
+            return material;
         }
 
         // The elevator descends through open water: no enclosing tube, just a guide
         // cable marking the line of descent between the two anchors.
-        private static void CreateGuideShaft(Transform anchorTop, Transform anchorBottom, Material cableMaterial)
-        {
-            GameObject root = new("Shaft");
-            Vector3 top = anchorTop.position;
-            Vector3 bottom = anchorBottom.position;
-            Vector3 mid = (top + bottom) / 2f;
-            float length = Vector3.Distance(top, bottom);
-
-            GameObject cable = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            cable.name = "Guide Cable";
-            cable.transform.SetParent(root.transform, false);
-            cable.transform.position = mid;
-            cable.transform.rotation = Quaternion.FromToRotation(Vector3.up, (bottom - top).normalized);
-            cable.transform.localScale = new Vector3(GuideCableRadius * 2f, length / 2f, GuideCableRadius * 2f);
-            cable.GetComponent<Renderer>().sharedMaterial = cableMaterial;
-            // A guide, not a pole: it runs through the middle of the car, where a rider
-            // may stand; with a collider the car would descend without them.
-            Object.DestroyImmediate(cable.GetComponent<Collider>());
-        }
-
         private static Transform CreateSeafloor(Material floor, Material wall, float depth, int deepLayer, DiveSiteSettings settings)
         {
             GameObject root = new("Seafloor");
@@ -416,14 +442,16 @@ namespace SunkCost.Sites
         public static void ShapeUnderwaterVolume(GameObject volumeObject, DiveSiteSettings settings)
         {
             Volume volume = volumeObject.GetComponent<Volume>();
-            if (volume != null) { volume.isGlobal = false; volume.blendDistance = 4f; }
+            // The box top is the water surface: the grade switches on when the eyes go
+            // under it (a short blend so it does not fade in a metre above the water).
+            if (volume != null) { volume.isGlobal = false; volume.blendDistance = 0.5f; }
             BoxCollider box = volumeObject.GetComponent<BoxCollider>();
             if (box == null) box = volumeObject.AddComponent<BoxCollider>();
             box.isTrigger = true;
             float depth = settings.ShaftDepthMeters + 20f;
             float width = settings.SeafloorSizeMeters * 1.5f;
             volumeObject.transform.position = Vector3.zero;
-            box.center = new Vector3(0f, -1f - depth / 2f, 0f);
+            box.center = new Vector3(0f, settings.SeaLevelY - depth / 2f, 0f);
             box.size = new Vector3(width, depth, width);
         }
 

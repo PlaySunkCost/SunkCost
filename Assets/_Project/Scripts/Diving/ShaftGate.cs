@@ -2,53 +2,59 @@ using UnityEngine;
 
 namespace SunkCost.Diving
 {
-    // A physical blocker across the shaft opening at the bottom landing. Solid whenever the
-    // cabin is anywhere but docked at the bottom, so nobody can walk into an empty shaft —
-    // docs/DESIGN.md, "Elevator rules" (15 September 2026, Idan and Dan): "gated shut at the
-    // bottom when the cabin is away; a player cannot walk in." Open only in
-    // ElevatorState.AtBottom, matching "the cabin parks open and waits" there.
-    //
-    // A separate component from ElevatorDoor rather than reusing it: this sits at the
-    // stationary bottom landing, not on the moving car, so it needs its own
-    // ElevatorController reference (wired externally, not GetComponentInParent<>()) and its
-    // presentation is binary (blocked/clear), not a door sweep.
+    // The tube's own doorway at the seafloor (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md
+    // section 4.2; Idan/Dan, 15 September 2026 elevator rules: "gated shut at the
+    // bottom when the cabin is away; a player cannot walk in"). Two curved leaves
+    // like the car's and one collider across the opening: closed while the car is
+    // away, open while the car is parked or occupies the bottom of the tube — not
+    // only once it has stopped, or riders inside a car passing through would be
+    // held on the collider and dropped. Progress is sampled every frame because a
+    // driven car changes it without a state change.
     public sealed class ShaftGate : MonoBehaviour
     {
         [SerializeField] private ElevatorController controller;
         [SerializeField] private Collider gateCollider;
+        [SerializeField] private Transform leafLeftPivot;
+        [SerializeField] private Transform leafRightPivot;
+        [SerializeField] private float doorwayHalfAngleDeg;
+        [SerializeField] private float sweepSeconds = 1.5f;
+
+        private const float CarAtGateProgress = 0.9f;
+        private float openFraction;
+
+        // For the validator: the leaves rest closed (no rotation), and the doorway
+        // faces where the gate collider was placed.
+        public bool ClosedAtRest => leafLeftPivot != null && leafRightPivot != null &&
+            Mathf.Abs(Mathf.DeltaAngle(0f, leafLeftPivot.localEulerAngles.y)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(0f, leafRightPivot.localEulerAngles.y)) < 0.5f;
+        public Vector3 DoorwayDirection => gateCollider != null ? Vector3.ProjectOnPlane(gateCollider.transform.position - transform.position, Vector3.up).normalized : Vector3.forward;
+        public float OpenFraction => openFraction;
 
         private void OnEnable()
         {
-            if (controller != null)
-                controller.StateChanged += HandleStateChanged;
+            openFraction = ShouldBeOpen ? 1f : 0f;
             Apply();
         }
 
-        private void OnDisable()
+        private bool ShouldBeOpen => controller == null || controller.State == ElevatorState.AtBottom || controller.Progress >= CarAtGateProgress;
+
+        private void Update()
         {
-            if (controller != null)
-                controller.StateChanged -= HandleStateChanged;
+            float target = ShouldBeOpen ? 1f : 0f;
+            float rate = sweepSeconds <= 0f ? 1f : Time.deltaTime / sweepSeconds;
+            openFraction = Mathf.MoveTowards(openFraction, target, rate);
+            Apply();
         }
-
-        private void HandleStateChanged(ElevatorState _) => Apply();
-
-        // The gate sits across the shaft mouth at the landing's ceiling. It must be
-        // out of the way while the car itself occupies it, not only once the car has
-        // stopped: riders inside a car passing through it would otherwise be held on
-        // it and dropped (cabin ride card, 15 September 2026). Progress is sampled
-        // every frame because a driven car changes it without a state change.
-        private const float CarAtGateProgress = 0.9f;
-
-        private void Update() => Apply();
 
         private void Apply()
         {
-            if (gateCollider == null) return;
-            bool open = controller == null || controller.State == ElevatorState.AtBottom || controller.Progress >= CarAtGateProgress;
-            if (gateCollider.enabled == open) gateCollider.enabled = !open;
-            // The plug is drawn only while it blocks; open, it would sit inside the car.
-            foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
-                if (renderer.enabled == open) renderer.enabled = !open;
+            float sweepDeg = doorwayHalfAngleDeg * openFraction;
+            if (leafRightPivot != null) leafRightPivot.localRotation = Quaternion.Euler(0f, -sweepDeg, 0f);
+            if (leafLeftPivot != null) leafLeftPivot.localRotation = Quaternion.Euler(0f, sweepDeg, 0f);
+            if (gateCollider != null)
+            {
+                bool blocks = openFraction <= 0.01f;
+                if (gateCollider.enabled != blocks) gateCollider.enabled = blocks;
+            }
         }
     }
 }

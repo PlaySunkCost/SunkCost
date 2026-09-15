@@ -34,7 +34,7 @@ namespace SunkCost.Sites
         private const float CarFloorThickness = 0.1f;
         private const float CarFrameRadius = 0.06f;
         private const float CarWallInset = 0.15f;
-        private const float CarDoorwayWidthMeters = 2f;
+        public const float CarDoorwayWidthMeters = 2f;
         private const float PostDoorwayOffsetDeg = 45f; // posts sit this far off the doorway centre, evenly spaced every 90 degrees
         private const float PanelWidthMeters = 0.6f;
         private const float PanelHeightMeters = 0.4f;
@@ -75,6 +75,13 @@ namespace SunkCost.Sites
                 root.AddComponent<ElevatorController>();
 
                 CreateElevatorDoor(root.transform, interiorRadius, interiorHeight, frame, BakedDoorwayBearingDeg, doorwayHalfAngleDeg);
+
+                // The prefab is regenerated whole on every site rebuild, so the later
+                // cards' additions are part of the build, not patches that a rebuild
+                // would lose: the cabin light (deck cabin ride) and the standing water
+                // (shaft tube). Their setup menus keep patching an older prefab in place.
+                DeckCabinRideSetup.AddCarLight(root.transform, interiorHeight);
+                ShaftTubeSetup.AddCabinWater(root, settings);
 
                 return PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }

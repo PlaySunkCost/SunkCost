@@ -27,8 +27,15 @@ namespace SunkCost.Diving
     {
         [SerializeField] private Vector3 topPosition;
         [SerializeField] private Vector3 bottomPosition;
-        [SerializeField] private float travelSecondsOneWay = 15f;
         [SerializeField] private float doorSealSeconds = 1.5f;
+        // The motion profile (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section 5): 3 m/s,
+        // 1 m/s while the floor-to-roof span crosses the water at seaLevelY, 3 m/s
+        // again. Set by DiveSiteBuilder from DiveSiteSettings; the travel time is
+        // derived, not a setting.
+        [SerializeField] private float seaLevelY = -1f;
+        [SerializeField] private float spanMeters = 3.5f;
+        [SerializeField] private float travelSpeed = 3f;
+        [SerializeField] private float crossingSpeed = 1f;
 
         // Tuned wait at the top before the cabin closes and starts its automatic empty
         // return, gated on at least one living player remaining at the dive site (a
@@ -50,7 +57,10 @@ namespace SunkCost.Diving
         public ElevatorState State => state;
         public float Progress => progress;
         public float StateElapsed => stateElapsed;
-        public float TravelSecondsOneWay => travelSecondsOneWay;
+        public ElevatorMath.Profile Profile => ElevatorMath.Profile.Of(Vector3.Distance(topPosition, bottomPosition), topPosition.y - seaLevelY, spanMeters, travelSpeed, crossingSpeed);
+        public float TravelSecondsOneWay => ElevatorMath.TravelSeconds(Profile);
+        public float SeaLevelY => seaLevelY;
+        public float SpanMeters => spanMeters;
         public float DoorSealSeconds => doorSealSeconds;
         public float AutoReturnDelaySeconds => autoReturnDelaySeconds;
         public Vector3 TopPosition => topPosition;
@@ -84,14 +94,13 @@ namespace SunkCost.Diving
             pendingMoveState = upward ? ElevatorState.Ascending : ElevatorState.Descending;
             if (newState != state) SetState(newState);
             stateElapsed = Mathf.Max(0f, elapsed);
-            float travel = Mathf.Max(travelSecondsOneWay, 0.0001f);
             progress = newState switch
             {
                 ElevatorState.AtTop => 0f,
                 ElevatorState.AtBottom => 1f,
                 ElevatorState.Sealing => upward ? 1f : 0f,
-                ElevatorState.Descending => Mathf.Clamp01(stateElapsed / travel),
-                ElevatorState.Ascending => 1f - Mathf.Clamp01(stateElapsed / travel),
+                ElevatorState.Descending => ElevatorMath.ProgressAt(Profile, stateElapsed, false),
+                ElevatorState.Ascending => ElevatorMath.ProgressAt(Profile, stateElapsed, true),
                 _ => progress
             };
             transform.position = Vector3.Lerp(topPosition, bottomPosition, progress);
@@ -170,14 +179,10 @@ namespace SunkCost.Diving
             if (state != ElevatorState.Descending && state != ElevatorState.Ascending)
                 return;
 
-            float distance = Vector3.Distance(topPosition, bottomPosition);
-            float speed = travelSecondsOneWay > 0f ? distance / travelSecondsOneWay : distance;
-            float progressDelta = distance > 0f ? speed * Time.deltaTime / distance : 1f;
-
+            // Time-based, from the same profile the driven mode uses, so both modes put
+            // the car in the same place at the same elapsed time.
             Vector3 previousPosition = transform.position;
-            progress = state == ElevatorState.Descending
-                ? Mathf.Clamp01(progress + progressDelta)
-                : Mathf.Clamp01(progress - progressDelta);
+            progress = ElevatorMath.ProgressAt(Profile, stateElapsed, state == ElevatorState.Ascending);
             transform.position = Vector3.Lerp(topPosition, bottomPosition, progress);
 
             Vector3 delta = transform.position - previousPosition;
@@ -210,9 +215,9 @@ namespace SunkCost.Diving
                 }
             }
 
-            if (state == ElevatorState.Descending && progress >= 1f)
+            if (state == ElevatorState.Descending && stateElapsed >= TravelSecondsOneWay)
                 SetState(ElevatorState.AtBottom);
-            else if (state == ElevatorState.Ascending && progress <= 0f)
+            else if (state == ElevatorState.Ascending && stateElapsed >= TravelSecondsOneWay)
                 SetState(ElevatorState.AtTop);
         }
     }

@@ -132,6 +132,7 @@ namespace SunkCost.Editor.Prototype
             // Movement and hands card (docs/PLAYER_MOVEMENT_HANDS_IMPLEMENTATION_PLAN.md).
             if (prefab.GetComponent<PlayerStance>() == null) errors.Add("Player prefab has no PlayerStance (run Sunk Cost/Prototype/Apply movement and hands setup).");
             if (prefab.GetComponent<PlayerHands>() == null) errors.Add("Player prefab has no PlayerHands (run the movement and hands setup).");
+            if (prefab.GetComponent<PlayerSubmersion>() == null) errors.Add("Player prefab has no PlayerSubmersion (run Sunk Cost/Prototype/Apply shaft tube setup).");
             PlayerCameraClearance clearance = prefab.GetComponent<PlayerCameraClearance>();
             if (clearance == null) errors.Add("Player prefab has no PlayerCameraClearance (run Sunk Cost/Prototype/Apply camera clearance setup).");
             else

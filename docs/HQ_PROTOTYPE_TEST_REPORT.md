@@ -1,5 +1,49 @@
 # HQ prototype verification report
 
+## Shaft tube branch — 15 September 2026
+
+Tested `dan/shaft-tube` based on `1f00975` (the deck cabin merge), Unity
+6000.6.0f1, FishNet 4.7.3 over Local/Tugboat: editor as host, one headless
+guest (Local build from the same tree), one machine, RTT ≈ 0. The deck cabin
+ride matrix carries the tube rows (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md
+section 8.2: T1–T4, G4); log `Temp/deck-cabin-matrix.log`, captures
+`Logs/shaft-tube-floor-at-surface.png` and `Logs/shaft-tube-eyes-under.png`.
+These results do not certify Steam.
+
+- Pure / asset (`Run shaft tube checks`): travel 17.33 s with the defaults
+  (45 m, surface 1 m down, 3.5 m span, 3 and 1 m/s); the descent is monotonic
+  and continuous, 3 m/s at t = 0.1 s and 10 s, 1 m/s at 2 s; the ascent equals
+  the descent read backwards; a surface outside the shaft gives the plain 15 s;
+  `WaterLevelInCar` 0 / 1.5 / 3.5 m at floor 0 / −2.5 / −45 with sea level −1;
+  the car prefab carries `CabinWater` and its disc (no collider), the player
+  prefab `PlayerSubmersion`. `Apply shaft tube setup` run twice: the second run
+  only rebuilds the site. HQ, ShipAtSea, Session and DiveSite01 validators and
+  the world-loop, camera and movement checks pass; the dive site validator now
+  checks the tube (24 panes without colliders, 24 walls with, radius, ribs, the
+  gate's leaves closed at rest and facing the car's doorway, the water surface
+  disc at sea level, the volume top at sea level, no guide cable, no old plug).
+- Play Mode (`MATRIX_PASS`, 151 rows): every ride (R2, R4, R5a, R5b, G1, G2)
+  sampled per frame — 3.0–3.6 m/s over the 1 m above the surface (a 0.15–0.2 s
+  window, tick-quantized), 1.00–1.01 m/s through the crossing band, 3.00–3.01
+  m/s below it; the car moved for 17.32–17.33 s (profile 17.33); the cabin
+  water matched sea level minus the floor every frame (worst error 0.000 m),
+  3.50 m on arrival at the bottom, 0 at the top with the last drop at floor
+  y = −1.00; submersion flipped in the same frame as the eye crossed −1
+  (worst streak 0) and the F3 line read `underwater=True depth=` below and
+  `underwater=False` above; the rider walked 0.62 m inside every moving car.
+  T2: at the bottom the water stands at 3.50 m with the doors open, the tube
+  gate's leaves open, the host walked out through the car's and the tube's
+  doorways onto the seafloor by the real input path and stayed submerged
+  (F3 `underwater=True depth=42.3`). T3: the player's capsule swept into the
+  tube from behind and from the side is stopped by `Tube Wall 4` / `Tube Wall
+  10`; from the car's centre the sweep away from the doorway is blocked and
+  the sweep through the doorway passes. G4: the guest at the bottom reported
+  `underwater=True` at the host's depth and `cabinWater=3.50` within 0.2 m of
+  the host's, and `underwater=False` back on the ship.
+- Not covered: the look through three transparent layers with a real second
+  player watching from the deck (the guest is headless), Steam transport, and
+  the feel gate of section 8.3 (Dan's call).
+
 ## Deck cabin ride branch — 15 September 2026
 
 Tested `dan/deck-cabin` based on `1fa0621` (the camera-wall merge), Unity

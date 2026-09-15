@@ -46,7 +46,7 @@ namespace SunkCost.World
         [SerializeField] private float suitFadeSeconds = 3f;
         [Tooltip("The car's own seal and travel times when its controller is not loaded on the server (DiveSiteSettings normally supplies them).")]
         [SerializeField] private float carSealSecondsFallback = 1.5f;
-        [SerializeField] private float carTravelSecondsFallback = 15f;
+        [SerializeField] private float carTravelSecondsFallback = 17.33f; // the profile of docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section 5 with the defaults
 
         public float SailingFadeSeconds => sailingFadeSeconds;
         public float ArrivalTimeoutSeconds => arrivalTimeoutSeconds;

@@ -68,8 +68,11 @@ be read as checklists by other assistants.
    (`Sunk Cost > Prototype > Apply camera clearance setup` after regenerating
    the player prefab). At sea, step into the glass cabin on the deck and press
    **E** on its panel: the doors close, the suit goes on, and you ride the same
-   cabin down the shaft to the seafloor. Walk out, look around, walk back in and
-   press **E** on the car's panel to come up; you step out on the deck. Whoever
+   cabin down a clear glass tube to the seafloor — slowly through the surface,
+   the water climbing the glass and over your head (F3 shows `underwater=True`),
+   then fast down the flooded tube. Walk out through the tube's gate, look
+   around, walk back in and press **E** on the car's panel to come up; the
+   water drains as you pass the surface and you step out dry on the deck. Whoever
    stands in the cabin rides along; friends left below get the empty car sent
    back to them. The ship will not sail while anyone is down there.
    A held slot item stays assigned to its slot; new grabs fill free slots. When
