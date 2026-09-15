@@ -27,8 +27,8 @@ namespace SunkCost.Player
         [SerializeField] private float crouchEyeHeight = 0.85f;
         [SerializeField] private float standingStepOffset = 0.25f;
         [SerializeField] private float crouchStepOffset = 0.15f;
-        [Tooltip("Seconds the camera and body take to blend between stances (presentation only).")]
-        [SerializeField] private float crouchBlendSeconds = 0.15f;
+        [Tooltip("Seconds the camera and body take to blend between stances, both ways (presentation only).")]
+        [SerializeField] private float crouchBlendSeconds = 0.2f;
         [Tooltip("Crouched walking speed as a fraction of walking speed; the weight factor multiplies it.")]
         [SerializeField] private float crouchSpeedFactor = 0.5f;
         [Tooltip("Seconds between stand attempts while the desired stance is standing and the head is blocked.")]
@@ -45,8 +45,8 @@ namespace SunkCost.Player
         [SerializeField] private float dropGroundSearch = 1.0f;
         [Tooltip("Skin above the surface a dropped item is placed with, metres.")]
         [SerializeField] private float dropSkin = 0.05f;
-        [Tooltip("Lowest allowed launch pitch in degrees; 0 = horizontal, looking down throws forward.")]
-        [SerializeField] private float minThrowPitchDegrees = 0f;
+        [Tooltip("Lowest allowed launch pitch in degrees: the throw follows the crosshair down to this (the look clamp is -80).")]
+        [SerializeField] private float minThrowPitchDegrees = -80f;
         [SerializeField] private float maxThrowPitchDegrees = 80f;
         [Tooltip("Seconds an accepted release may stay unapplied by its owner before the server takes the item back.")]
         [SerializeField] private float releaseTimeoutSeconds = 1f;

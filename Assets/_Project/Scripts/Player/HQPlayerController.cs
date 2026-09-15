@@ -145,8 +145,12 @@ namespace SunkCost.Player
             // still runs so gravity, grounding and the stance keep working.
             bool hasDevices = Keyboard.current != null && Mouse.current != null;
 
+            // Escape opens the menu and, pressed again, closes it (the same as Resume).
             if (hasDevices && Keyboard.current.escapeKey.wasPressedThisFrame)
-                SessionInputGate.OpenMenu();
+            {
+                if (SessionInputGate.MenuOpen) SessionInputGate.Resume();
+                else SessionInputGate.OpenMenu();
+            }
 
             // Menu open, Steam overlay up, or window unfocused: no look, move or
             // item input. Gravity keeps running below; only commands stop.
@@ -354,8 +358,10 @@ namespace SunkCost.Player
             float step = settings.CrouchBlendSeconds <= 0f ? 1f : Time.unscaledDeltaTime / settings.CrouchBlendSeconds;
             eyeHeight = Mathf.MoveTowards(eyeHeight, targetEye, eyeSpan * step);
             bodyScaleY = Mathf.MoveTowards(bodyScaleY, targetScale, scaleSpan * step);
-            // Never let the eye sit above the current capsule top while blending.
-            eyeHeight = Mathf.Min(eyeHeight, controller.height - 0.1f);
+            // The same blend both ways (Dan, 15 September 2026: no snap down). The
+            // eye never leaves the taller of the two capsules: going down it is still
+            // inside the standing one it had room for, going up standing was only
+            // accepted with headroom.
             if (viewPivot != null) viewPivot.localPosition = new Vector3(0f, eyeHeight, 0f);
             if (bodyVisual != null)
             {

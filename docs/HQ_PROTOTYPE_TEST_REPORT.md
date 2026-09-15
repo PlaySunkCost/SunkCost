@@ -28,7 +28,9 @@ focus gate lifted for the run; positions and heights are measured every frame.
 - M8 forward release: looking 80° down, Q placed the ball **0.52 m ahead on
   the floor** (y 0.12), the player's height unchanged; a throw looking down
   launched at 8.0 m/s level and forward (v = (−7.98, −0.59, 0) sampled ≤ 0.15 s
-  later); against the south wall Q was refused ("Not enough room to
+  later); after Dan's change the throw follows the crosshair: at 80° down it
+  launched at (−1.39, −8.44, 0) and came to rest 1.61 m ahead, not under the
+  player; against the south wall Q was refused ("Not enough room to
   drop/throw") and the ball stayed Held.
 - M9 no standing on cargo: teleported onto a settled ball, the player ended on
   the floor (y 0.03), the ball walked through.
@@ -42,7 +44,9 @@ focus gate lifted for the run; positions and heights are measured every frame.
   again; the guest grabbed a basketball → the host's copy of its `PlayerHands`
   bound to that item, and the guest's snapshot showed its own
   `hands=Basketball` and the host's `hands=rest`.
-- `MATRIX_PASS` (29 rows). Captures: `Logs/hands-owner-0.png` (level: arms
+- `MATRIX_PASS` (30 rows after the tweaks: crouch and stand blend both ways
+  over 0.2 s with no snap, Escape toggles the menu, throws follow the
+  crosshair). Captures: `Logs/hands-owner-0.png` (level: arms
   and ball at the bottom of the view), `Logs/hands-owner-20.png`,
   `Logs/hands-owner-lookdown.png`, `Logs/hands-remote-stand.png` (a friend's
   view: the arms meet the ball above the placeholder's head — the 1.19 m model

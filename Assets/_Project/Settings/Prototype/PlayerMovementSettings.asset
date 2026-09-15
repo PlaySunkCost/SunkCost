@@ -23,7 +23,7 @@ MonoBehaviour:
   crouchEyeHeight: 0.85
   standingStepOffset: 0.25
   crouchStepOffset: 0.15
-  crouchBlendSeconds: 0.15
+  crouchBlendSeconds: 0.2
   crouchSpeedFactor: 0.5
   standRetrySeconds: 0.2
   standClearance: 0.05
@@ -31,7 +31,7 @@ MonoBehaviour:
   releaseMaxForward: 2
   dropGroundSearch: 1
   dropSkin: 0.05
-  minThrowPitchDegrees: 0
+  minThrowPitchDegrees: -80
   maxThrowPitchDegrees: 80
   releaseTimeoutSeconds: 1
   dotDiameterPx: 4

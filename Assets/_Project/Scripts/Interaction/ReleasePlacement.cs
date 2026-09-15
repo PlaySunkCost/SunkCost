@@ -22,8 +22,9 @@ namespace SunkCost.Interaction
             return flat.sqrMagnitude < 1e-6f ? Vector3.forward : flat.normalized;
         }
 
-        // Throw direction with the launch pitch clamped: looking at your feet
-        // throws forward, then gravity does the rest.
+        // Throw direction along the crosshair, pitch clamped to the tunable range
+        // (default the full look range: up goes up, down goes down; the start
+        // pose in front of the player and the floor are what stop a steep throw).
         public static Vector3 ThrowDirection(Vector3 cameraForward, Vector3 bodyForward, float minPitchDegrees, float maxPitchDegrees)
         {
             Vector3 flat = HorizontalForward(cameraForward, bodyForward);

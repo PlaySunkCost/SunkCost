@@ -59,7 +59,7 @@ be read as checklists by other assistants.
    crouch (half height, half speed; you stay down under a shelf until it is
    clear). **E** grabs; hold E to
    catch an approaching ball with forgiving aim within 2 m. **Q** puts the item
-   down in front of you, **left click** uses/throws (looking down throws level),
+   down in front of you, **left click** throws where you look (up or down),
    and **1–4** equip or put away inventory slots. Everything is held in both
    hands in front of you; you and your friends see the gloved arms. The centre
    dot turns gold when what is under it can be taken or pressed. Loose balls

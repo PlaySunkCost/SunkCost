@@ -317,12 +317,16 @@ namespace SunkCost.Editor.Prototype
             host.SetPitchForChecks(80f); yield return null;
             H.ClientRequestUse(); yield return Wait(0.15f);
             Rigidbody body = ball.GetComponent<Rigidbody>();
-            // Sampled up to 0.15 s after the launch: gravity may have taken ~1.5 m/s off a level throw.
+            // The throw follows the crosshair: at 80° down it heads down and forward, and
+            // started in front of the player, so it lands ahead rather than underfoot.
             Vector3 flatVelocity = Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up);
-            Check(ball.State == ItemState.Released && body.linearVelocity.y > -1.6f && flatVelocity.magnitude > 5f && Vector3.Dot(flatVelocity.normalized, host.transform.forward) > 0.9f,
-                $"M8 throw looking down launches level and forward (v={body.linearVelocity}, launch {ball.LastLaunchSpeed:0.0} m/s)");
+            Check(ball.State == ItemState.Released && body.linearVelocity.y < -1f && Vector3.Dot(flatVelocity.normalized, host.transform.forward) > 0.9f,
+                $"M8 throw looking down goes down and forward (v={body.linearVelocity}, launch {ball.LastLaunchSpeed:0.0} m/s)");
+            yield return Wait(1.0f);
+            Vector3 landedFlat = Vector3.ProjectOnPlane(ball.transform.position - host.transform.position, Vector3.up);
+            Check(Vector3.Dot(landedFlat.normalized, host.transform.forward) > 0.5f && landedFlat.magnitude > host.Controller.radius, $"M8 the downward throw ended in front, not under the player ({landedFlat.magnitude:0.00} m ahead)");
             host.SetPitchForChecks(0f);
-            yield return Wait(1.5f);
+            yield return Wait(0.5f);
             // Refusal against a wall: face the south wall from 0.35 m and try to drop.
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);

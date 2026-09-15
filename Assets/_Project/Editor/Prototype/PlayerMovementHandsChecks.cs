@@ -54,9 +54,11 @@ namespace SunkCost.Editor.Prototype
             ArmPoseSolver.Result same = ArmPoseSolver.Solve(Vector3.zero, Vector3.zero, Vector3.right, 0.28f, 0.26f);
             if (float.IsNaN(same.Wrist.x)) errors.Add("a target on the shoulder produced NaN.");
 
-            // Release direction: looking down throws level; looking up keeps the aim; horizontal forward falls back to the body yaw.
-            Vector3 down = ReleasePlacement.ThrowDirection(new Vector3(0f, -0.9f, 0.4f).normalized, Vector3.forward, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
-            if (down.y < -1e-4f) errors.Add("a downward look must not throw downward (clamped to the minimum pitch).");
+            // Release direction follows the crosshair within the pitch range; a steeper look is clamped; horizontal forward falls back to the body yaw.
+            Vector3 down = ReleasePlacement.ThrowDirection(new Vector3(0f, -0.999f, 0.04f).normalized, Vector3.forward, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
+            Near(errors, Mathf.Asin(down.y) * Mathf.Rad2Deg, settings.MinThrowPitchDegrees, 0.5f, "a nearly vertical look clamps to the minimum pitch");
+            Vector3 gentleDown = ReleasePlacement.ThrowDirection(new Vector3(0f, -0.5f, 0.5f).normalized, Vector3.forward, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
+            Near(errors, gentleDown.y, -Mathf.Sin(45f * Mathf.Deg2Rad), 1e-3f, "a 45° downward aim throws 45° down");
             Vector3 up = ReleasePlacement.ThrowDirection(new Vector3(0f, 0.5f, 0.5f).normalized, Vector3.forward, settings.MinThrowPitchDegrees, settings.MaxThrowPitchDegrees);
             Near(errors, up.y, Mathf.Sin(45f * Mathf.Deg2Rad), 1e-3f, "45° aim keeps 45°");
             Vector3 vertical = ReleasePlacement.HorizontalForward(Vector3.down, new Vector3(1f, 0f, 0f));
