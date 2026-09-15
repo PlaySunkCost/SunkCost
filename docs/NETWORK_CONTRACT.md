@@ -229,8 +229,10 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
 - The server controls elevator requests, boarding/cargo state and motion. It
   carries **any number of the crew and any amount of cargo together**, including
   unattended loot or bodies. Do not impose a one-person-or-one-load limit.
-- Travel is **15 seconds each direction**, 30 seconds round trip, always,
-  regardless of weight. A rider-controlled return has no added wait; the
+- Travel takes the **same time in each direction**, always, regardless of
+  weight; the time is derived on every peer from the site's depth and the
+  serialized speed profile (`ElevatorMath`; about 17.3 s on the 45 m prototype
+  site, formerly a fixed 15 s), never sent. A rider-controlled return has no added wait; the
   unmanned automatic return additionally waits a tuned delay (a new serialized
   field on `ElevatorController`, default 3 s) at the top before descending,
   and only when the living-players-below check below is true. Keep timing
@@ -376,7 +378,13 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   while the car is away ("Cabin below"; an empty car at the bottom with nobody
   below is called up instead); the monitor refuses to sail while anyone is
   below or the car is away ("Divers below"); joins are refused during a ride.
-  A rider that disconnects leaves every roster.
+  A rider that disconnects leaves every roster. The shaft tube adds **no sync
+  state**: the car's position is the only replicated motion; the water standing
+  in the car (`CabinWater`: sea level minus the car floor, clamped to the
+  cabin), the tube gate's leaves and each player's own submersion
+  (`PlayerSubmersion`, eye below sea level, local presentation and an event
+  hook for the air card) are computed per peer from that position and the
+  site's `seaLevelY`, so a late joiner is right on its first frame.
 - When neither the server nor the client is running any more, every world scene
   is unloaded locally; the menu is the Session scene.
 - Workarounds for FishNet 4.7.3 on Unity 6, kept in `WorldSceneFlow` and to be

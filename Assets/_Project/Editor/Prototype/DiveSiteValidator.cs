@@ -32,7 +32,7 @@ namespace SunkCost.Sites
             if (settings == null) errors.Add("DiveSiteSettings asset is missing at " + DiveSiteBuilder.SettingsPath);
 
             if (!HasRoot(scene, "Surface Platform")) errors.Add("Surface Platform is missing.");
-            if (!HasRoot(scene, "Shaft")) errors.Add("Shaft is missing.");
+            if (!HasRoot(scene, DiveSiteBuilder.ShaftTubeName)) errors.Add("Shaft Tube is missing.");
             if (!HasRoot(scene, "Seafloor")) errors.Add("Seafloor is missing.");
 
             Transform top = FindByName(scene, "ElevatorAnchor_Top");
@@ -44,8 +44,10 @@ namespace SunkCost.Sites
             if (spawnGroup == null || spawnGroup.childCount != 4)
                 errors.Add("Expected a Spawn Points group with 4 spawn markers.");
 
-            if (FindByName(scene, "Guide Cable") == null)
-                errors.Add("Guide Cable is missing between the elevator anchors.");
+            // The red guide cable down the shaft's centre is gone (Dan, 15 September 2026:
+            // "remove the red pole in the middle"); the tube walls give the shaft its shape.
+            if (FindByName(scene, "Guide Cable") != null)
+                errors.Add("Guide Cable is still in the scene; regenerate the dive site.");
 
             GameObject elevatorRootObject = scene.GetRootGameObjects().FirstOrDefault(r => r.name == "Elevator");
             if (elevatorRootObject == null)
@@ -186,19 +188,54 @@ namespace SunkCost.Sites
             CheckCount<ElevatorController>(scene, 1, errors);
             CheckCount<ElevatorDoor>(scene, 1, errors);
 
-            // Idan/Dan, 15 September 2026 elevator rules: "gated shut at the bottom when the
-            // cabin is away; a player cannot walk in."
-            Transform shaftGate = FindByName(scene, "Shaft Gate");
-            if (shaftGate == null)
-            {
-                errors.Add("Shaft gate is missing.");
-            }
+            // The glass tube (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section 4) and its gate
+            // (Idan/Dan, 15 September 2026 elevator rules: "gated shut at the bottom when the
+            // cabin is away; a player cannot walk in" — now the tube's own doorway).
+            Transform tube = FindByName(scene, DiveSiteBuilder.ShaftTubeName);
+            if (tube == null) errors.Add("Shaft tube is missing (run Create or Update Dive Site 01).");
             else
             {
-                if (shaftGate.GetComponent<Collider>() == null)
-                    errors.Add("Shaft gate must have a collider.");
-                if (shaftGate.GetComponent<ShaftGate>() == null)
-                    errors.Add("Shaft gate is missing its ShaftGate component.");
+                Transform tubeGlass = tube.Find(DiveSiteBuilder.TubeGlassName);
+                Transform tubeWalls = tube.Find(DiveSiteBuilder.TubeWallsName);
+                if (tubeGlass == null || tubeGlass.childCount == 0) errors.Add("Shaft tube has no glass.");
+                if (tubeWalls == null || tubeWalls.GetComponentsInChildren<Collider>(true).Length == 0) errors.Add("Shaft tube has no wall colliders.");
+                if (tubeGlass != null && settings != null)
+                {
+                    Transform pane = tubeGlass.childCount > 0 ? tubeGlass.GetChild(0) : null;
+                    if (pane != null)
+                    {
+                        float radius = new Vector2(pane.position.x, pane.position.z).magnitude;
+                        if (Mathf.Abs(radius - settings.TubeRadiusMeters) > 0.05f) errors.Add($"Shaft tube radius is {radius:0.00} m, expected {settings.TubeRadiusMeters:0.00} m (car radius + tubeClearanceMeters).");
+                    }
+                }
+                if (tubeGlass != null && tubeGlass.GetComponentsInChildren<Collider>(true).Length > 0) errors.Add("Shaft tube glass must carry no colliders (the walls block).");
+                bool anyRib = false;
+                foreach (Transform child in tube) if (child.name.StartsWith(DiveSiteBuilder.TubeRibPrefix)) anyRib = true;
+                if (!anyRib) errors.Add("Shaft tube has no ribs.");
+                Transform gate = tube.Find(DiveSiteBuilder.TubeGateName);
+                ShaftGate gateComponent = gate != null ? gate.GetComponent<ShaftGate>() : null;
+                if (gate == null || gateComponent == null) errors.Add("Tube gate is missing its ShaftGate component.");
+                else
+                {
+                    if (gate.GetComponentInChildren<Collider>(true) == null) errors.Add("Tube gate must have a collider.");
+                    if (!gateComponent.ClosedAtRest) errors.Add("Tube gate leaves must be closed at rest.");
+                    // The doorway faces the parked car's own doorway (the car is rotated to its spawn side).
+                    ElevatorController elevator = FindComponentsInScene<ElevatorController>(scene).FirstOrDefault();
+                    if (elevator != null)
+                    {
+                        Vector3 carDoorway = elevator.transform.TransformDirection(Quaternion.Euler(0f, SunkCost.World.CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+                        Vector3 gateDoorway = gateComponent.DoorwayDirection;
+                        if (Vector3.Angle(carDoorway, gateDoorway) > 2f) errors.Add($"Tube doorway is {Vector3.Angle(carDoorway, gateDoorway):0.0} degrees off the car's doorway.");
+                    }
+                }
+                Transform water = tube.Find(DiveSiteBuilder.WaterSurfaceName);
+                if (water == null) errors.Add("Water surface is missing.");
+                else
+                {
+                    if (settings != null && Mathf.Abs(water.position.y - settings.SeaLevelY) > 0.01f) errors.Add($"Water surface sits at y={water.position.y:0.00}, expected seaLevelY {settings.SeaLevelY:0.00}.");
+                    if (water.GetComponent<Collider>() != null) errors.Add("Water surface must carry no collider.");
+                }
+                if (FindByName(scene, "Shaft Gate") != null) errors.Add("The old shaft gate plug is still in the scene.");
             }
 
             // The platform hole is now a circle (a fan of radial wedges — see
@@ -254,8 +291,12 @@ namespace SunkCost.Sites
                     for (float r = shaftRadius + 0.05f; r < 8f; r += 0.3f)
                     {
                         Vector3 point = dir * r + new Vector3(0f, 5f, 0f);
-                        bool hit = Physics.Raycast(point, Vector3.down, out RaycastHit hitInfo, 10f, ~0, QueryTriggerInteraction.Ignore);
-                        bool onPlatform = hit && hitInfo.collider.name.StartsWith("Platform Segment") && Mathf.Abs(hitInfo.point.y) < 0.1f;
+                        // All hits, not the first: the shaft tube's wall ring stands on the
+                        // platform's inner edge (shaft tube card) and would otherwise shadow
+                        // the segment beneath it. A wall over solid floor is not a gap.
+                        bool onPlatform = false;
+                        foreach (RaycastHit hitInfo in Physics.RaycastAll(point, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore))
+                            if (hitInfo.collider.name.StartsWith("Platform Segment") && Mathf.Abs(hitInfo.point.y) < 0.1f) { onPlatform = true; break; }
                         if (!onPlatform)
                         {
                             gapCount++;
@@ -273,7 +314,7 @@ namespace SunkCost.Sites
             {
                 if (settings.CarDiameterMeters <= 0f) errors.Add("DiveSiteSettings.CarDiameterMeters must be positive.");
                 if (settings.CarInteriorHeightMeters <= 0f) errors.Add("DiveSiteSettings.CarInteriorHeightMeters must be positive.");
-                if (settings.ElevatorTravelSecondsOneWay <= 0f) errors.Add("DiveSiteSettings.ElevatorTravelSecondsOneWay must be positive.");
+                if (!settings.IsValid) errors.Add("DiveSiteSettings has an invalid value (depth, car size, speeds, tube).");
                 if (settings.DoorSealSeconds <= 0f) errors.Add("DiveSiteSettings.DoorSealSeconds must be positive.");
             }
 
@@ -309,6 +350,12 @@ namespace SunkCost.Sites
             {
                 if (volume.isGlobal) errors.Add("'" + volume.name + "' is a global Volume; the dive site's grade must be a local box (run Apply deck cabin ride setup).");
                 else if (volume.GetComponent<Collider>() == null) errors.Add("'" + volume.name + "' is local but has no collider.");
+                else if (settings != null && volume.GetComponent<BoxCollider>() is BoxCollider volumeBox)
+                {
+                    // The grade's box top is the water surface (docs/SHAFT_TUBE_IMPLEMENTATION_PLAN.md section 4).
+                    float boxTop = volume.transform.position.y + volumeBox.center.y + volumeBox.size.y / 2f;
+                    if (Mathf.Abs(boxTop - settings.SeaLevelY) > 0.05f) errors.Add($"'{volume.name}' box top is at y={boxTop:0.00}, expected seaLevelY {settings.SeaLevelY:0.00}.");
+                }
             }
             HQPrototypeValidator.CheckCount<NetworkObject>(scene, 0, errors);
             if (AnyComponentInScene<HQPlayerController>(scene))
@@ -397,7 +444,7 @@ namespace SunkCost.Sites
             if (!MaterialExists("DiveSiteGlass.mat")) errors.Add("Elevator car glass material DiveSiteGlass.mat is missing.");
 
             if (errors.Count > 0) throw new InvalidOperationException("Dive Site 01 validation failed:\n- " + string.Join("\n- ", errors));
-            Debug.Log("Dive Site 01 validation passed: saved scene, platform/shaft/seafloor, elevator anchors, car, guide cable and lighting are ready as a world scene (no session machinery, no placed player).");
+            Debug.Log("Dive Site 01 validation passed: saved scene, platform/shaft/seafloor, elevator anchors, car, tube and lighting are ready as a world scene (no session machinery, no placed player).");
         }
 
         private static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component

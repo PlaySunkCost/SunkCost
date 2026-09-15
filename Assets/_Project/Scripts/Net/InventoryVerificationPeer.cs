@@ -155,6 +155,22 @@ namespace SunkCost.Net
             return "spawned " + count + " basketballs";
         }
 
+        // Shaft tube card: the local player's submersion and the water standing in the
+        // car, so the matrix can compare a guest's values with the host's.
+        private static string Underwater()
+        {
+            SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.Player.PlayerSubmersion submersion = local != null ? local.GetComponent<SunkCost.Player.PlayerSubmersion>() : null;
+            return submersion == null ? "none" : submersion.IsSubmerged + "/" + submersion.DepthMeters.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private static string CabinWaterLevel()
+        {
+            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
+            SunkCost.Diving.CabinWater water = car != null ? car.GetComponent<SunkCost.Diving.CabinWater>() : null;
+            return water == null ? "none" : water.LevelMeters.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         public static string Snapshot()
         {
             var nm = InstanceFinder.NetworkManager;
@@ -164,7 +180,7 @@ namespace SunkCost.Net
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}\n";
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();

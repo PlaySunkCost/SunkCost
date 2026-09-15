@@ -77,14 +77,23 @@ its doors open. The deck cabin never moves and is never wet: every metre of trav
 and every drop of water lives in the dive scene. There is no way from HQ to the
 seafloor or back; the ship is always in between.
 
-**What is built (15 September 2026, `dan/deck-cabin`, Dan: "start without day
-state, just going up and down as we wish").** The ride above works both ways
-with the seafloor car driven by the server and riders locked for the trip,
-looking around, never walking inside the moving cabin yet. Not built yet, on
+**What is built (15 September 2026, `dan/deck-cabin` and `dan/shaft-tube`,
+Dan: "start without day state, just going up and down as we wish"; "the
+elevator inside a tube, transparent as well").** The ride above works both
+ways with the seafloor car driven by the server; riders are locked only through
+the swap and the fades and walk freely inside the moving car. The shaft is a
+snug clear glass tube (0.5 m around the car, thin ring ribs, a gated doorway at
+the seafloor) that runs from the seafloor up through the surface platform; it
+holds water only below sea level (1 m under the top), so the cabin floods and
+drains **by geometry** as it passes the surface — no fill timers. The car runs
+at 3 m/s and slows to 1 m/s while its floor-to-roof span crosses the surface;
+the travel time follows from the site's depth and that profile (about 17.3 s
+for the 45 m prototype site), the same both ways. When your eyes go under, F3
+says `underwater=True depth=…`; nothing else happens yet. Not built yet, on
 purpose: the all-aboard rule (the deck button takes whoever stands in the
-cabin), once-per-day, the water rising and draining, the air. If someone stays
-below, the car goes back down for them, empty; the monitor will not sail while
-anyone is below.
+cabin), once-per-day, the air, the ship shell over the tube's top. If someone
+stays below, the car goes back down for them, empty; the monitor will not sail
+while anyone is below.
 
 **A day is one dive.** The day starts when **every living player is in the deck
 cabin** and it departs — the button does nothing with anyone missing, nothing
@@ -328,7 +337,7 @@ your own exit.
 |---|---|
 | Why you can't swim | Best option: thrusters exist, but they're loud, burn air and draw creatures. Build walking-only for now. |
 | Which 5–6 monsters | Build the Bell Eater first — it's drawn to the elevator, so it tests the core loop directly. |
-| Elevator timing | Settled: 15 seconds down, 15 seconds up, 30 seconds round trip, always, regardless of weight. A rider-controlled return has no added wait; the unmanned automatic return additionally waits a tuned delay (default 3 s) at the top before descending, and only when a living player remains below (15 September 2026, Idan and Dan). The cabin fills in about 4 s after the suit fade and drains over the last few seconds of the ascent (decided 14 September 2026; numbers provisional). |
+| Elevator timing | Settled: the same both ways, always, regardless of weight; 15 seconds each way was the target. **Amended 15 September 2026 (Dan, shaft tube card):** the time is derived from the shaft depth and a speed profile (3 m/s, 1 m/s while the cabin crosses the surface) — about 17.3 s each way on the 45 m prototype site — and the water level in the cabin is sea level minus the floor, not a timer. A rider-controlled return has no added wait; the unmanned automatic return additionally waits a tuned delay (default 3 s) at the top before descending, and only when a living player remains below (15 September 2026, Idan and Dan). The cabin fills in about 4 s after the suit fade and drains over the last few seconds of the ascent (decided 14 September 2026; numbers provisional). |
 | Air-restoring items | Amount restored, availability and activation time are undecided. One equipped tank; no other in-dive air restoration. |
 | Between-day joining | Decided: joining on the ship at sea between days is allowed. Still open: new-player versus returning-player eligibility, gear restoration and quota scaling for a joiner. |
 | Upgrade catalogue | Keep it small. Larger oxygen tanks confirmed; other upgrades undecided. Full loss without body recovery remains the rule. |

@@ -112,7 +112,7 @@ the dry part and the sun never reaches the wet part).
 | `TubeGate` | The doorway's door: two curved leaves like the car's, closed while the car is away, opening when the car is parked or occupies the bottom (`ShaftGate` keeps its component and its `Progress ≥ 0.9` rule; it now drives leaves instead of a plug). The plug cylinder is deleted. Collider only while closed. |
 | `WaterSurface` | A disc of the tube's inner radius at **y = `SeaLevelY`** (−1), two-sided translucent material (`SeaWater.mat` at 55 % alpha, a new `DiveSiteWaterSurface.mat`), renderer only, no collider. |
 | `Underwater Volume` | Unchanged shape; its box top moved to `SeaLevelY` exactly (today −1 by coincidence of `ShapeUnderwaterVolume`; make it read the setting). |
-| `Guide Cable` | Stays, no collider (PR #25). |
+| `Guide Cable` | Removed in the implementation (Dan, 15 September 2026: "remove the red pole in the middle"); the validator now fails if one is present. |
 | Surface platform | Removed once the ship shell is in; until then it stays as the temporary top (4.1). |
 
 `DiveSiteSettings` gains `seaLevelY` (−1), `tubeClearanceMeters` (0.5),
@@ -157,8 +157,8 @@ fast:  d1 + h → D        at v_travel,           D  = ShaftDepthMeters = 45 m  
 TravelSeconds = d1/v_t + h/v_c + (D − d1 − h)/v_t ≈ 17.33 s
 ```
 
-The ascent is the mirror: `DepthAt(t, up) = D − DepthAt(t, down)` with the same
-profile (fast, slow through the surface while the roof-to-floor span crosses,
+The ascent is the descent run backwards in time: `DepthAt(t, up) =
+DepthAt(T − t, down)` with the same profile (fast, slow through the surface while the roof-to-floor span crosses,
 fast to the top). `Progress = DepthAt / D` feeds the existing `transform`
 lerp. `ElevatorMath` also gives `WaterLevelInCar(carFloorY) =
 clamp(SeaLevelY − carFloorY, 0, h)` and `IsBelowSurface(eyeY)`.
@@ -230,7 +230,7 @@ patching in place.
 - `ElevatorMath`: `DepthAt` is continuous and monotonic, 0 at t = 0, D at
   `TravelSeconds`; speed 3 m/s at t = 0.1 s and t = 10 s, 1 m/s at t = 2 s;
   `TravelSeconds` ≈ 17.33 with the defaults; the ascent mirrors the descent
-  (`DepthAt(t, up) + DepthAt(T − t, down) = D`); `WaterLevelInCar` is 0 with the
+  (`DepthAt(t, up) = DepthAt(T − t, down)`); `WaterLevelInCar` is 0 with the
   floor above sea level, `h` with the roof below it, `SeaLevelY − floorY`
   between; `IsBelowSurface` flips exactly at `SeaLevelY`.
 - Asset: everything in section 4's validator list; the car prefab has one

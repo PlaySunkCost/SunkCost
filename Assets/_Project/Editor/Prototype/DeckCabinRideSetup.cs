@@ -34,17 +34,6 @@ namespace SunkCost.Editor.Prototype
             bool dirty = false;
             foreach (GameObject root in dive.GetRootGameObjects())
             {
-                // The guide cable runs through the middle of the car; a rider standing on it
-                // would be left behind by the descending floor (see DiveSiteBuilder).
-                foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
-                {
-                    if (t.name != "Guide Cable") continue;
-                    Collider cableCollider = t.GetComponent<Collider>();
-                    if (cableCollider == null) continue;
-                    UnityEngine.Object.DestroyImmediate(cableCollider);
-                    changes.Add("guide cable collider removed");
-                    dirty = true;
-                }
                 foreach (Volume volume in root.GetComponentsInChildren<Volume>(true))
                 {
                     if (!volume.isGlobal && volume.GetComponent<BoxCollider>() != null) continue;
@@ -70,25 +59,31 @@ namespace SunkCost.Editor.Prototype
             GameObject root = PrefabUtility.LoadPrefabContents(SunkCost.Sites.ElevatorCabinBuilder.PrefabPath);
             try
             {
-                if (root.transform.Find(CarLightName) == null)
+                DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(DiveSiteBuilder.SettingsPath);
+                if (AddCarLight(root.transform, settings != null ? settings.CarInteriorHeightMeters : 3.5f))
                 {
-                    DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(DiveSiteBuilder.SettingsPath);
-                    float height = settings != null ? settings.CarInteriorHeightMeters : 3.5f;
-                    GameObject lamp = new(CarLightName, typeof(Light));
-                    lamp.transform.SetParent(root.transform, false);
-                    lamp.transform.localPosition = new Vector3(0f, height - 0.4f, 0f);
-                    Light light = lamp.GetComponent<Light>();
-                    light.type = LightType.Point;
-                    light.range = 7f;
-                    light.intensity = 6f;
-                    light.color = new Color(1f, 0.95f, 0.85f);
-                    light.shadows = LightShadows.None;
                     PrefabUtility.SaveAsPrefabAsset(root, SunkCost.Sites.ElevatorCabinBuilder.PrefabPath);
                     changes.Add("cabin light added to the car");
                 }
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             return changes;
+        }
+
+        // Also called by ElevatorCabinBuilder while it generates the prefab. True if added.
+        public static bool AddCarLight(Transform root, float interiorHeight)
+        {
+            if (root.Find(CarLightName) != null) return false;
+            GameObject lamp = new(CarLightName, typeof(Light));
+            lamp.transform.SetParent(root, false);
+            lamp.transform.localPosition = new Vector3(0f, interiorHeight - 0.4f, 0f);
+            Light light = lamp.GetComponent<Light>();
+            light.type = LightType.Point;
+            light.range = 7f;
+            light.intensity = 6f;
+            light.color = new Color(1f, 0.95f, 0.85f);
+            light.shadows = LightShadows.None;
+            return true;
         }
 
         // The deck cabin is the same glass car as the seafloor's (Dan, 15 September

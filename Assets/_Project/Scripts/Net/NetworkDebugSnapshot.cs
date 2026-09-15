@@ -108,17 +108,22 @@ namespace SunkCost.Net
                 Scene = nob.gameObject.scene.name ?? string.Empty
             };
 
-            INetworkDebugInfo info = nob.GetComponent<INetworkDebugInfo>();
+            // Every debug-info component on the object contributes to the line (the
+            // player's inventory and its submersion, for instance); the first one that
+            // states a writer override wins.
             bool? writerOverride = null;
-            if (info != null)
+            var details = new System.Collections.Generic.List<string>();
+            foreach (INetworkDebugInfo info in nob.GetComponents<INetworkDebugInfo>())
             {
                 try
                 {
-                    row.Detail = info.DebugStatus ?? string.Empty;
-                    writerOverride = info.WriterOverride;
+                    string detail = info.DebugStatus;
+                    if (!string.IsNullOrEmpty(detail)) details.Add(detail);
+                    if (!writerOverride.HasValue) writerOverride = info.WriterOverride;
                 }
-                catch (Exception) { row.Detail = "<error>"; }
+                catch (Exception) { details.Add("<error>"); }
             }
+            row.Detail = string.Join("; ", details);
 
             // Who simulates this object here? Rules in priority order.
             // 0. The object says so (INetworkDebugInfo.WriterOverride): objects that

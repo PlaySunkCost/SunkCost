@@ -1747,6 +1747,7 @@ GameObject:
   - component: {fileID: 7884826763284320265}
   - component: {fileID: 6580416660040837458}
   - component: {fileID: 7867210717290791062}
+  - component: {fileID: 5977058300289628473}
   m_Layer: 9
   m_Name: PrototypePlayer
   m_TagString: Untagged
@@ -2044,6 +2045,18 @@ MonoBehaviour:
   playerCamera: {fileID: 1450484080442625533}
   viewPivot: {fileID: 6196993300733097364}
   settings: {fileID: 11400000, guid: 8b5a8dc874bd7ea47a58e81eaf731600, type: 2}
+--- !u!114 &5977058300289628473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0662126d86b3e6b408a6189f39a44c8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Player.PlayerSubmersion
 --- !u!1 &6745529598594192403
 GameObject:
   m_ObjectHideFlags: 0

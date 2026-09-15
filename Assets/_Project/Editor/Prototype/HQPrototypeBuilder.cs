@@ -170,6 +170,7 @@ namespace SunkCost.Editor.Prototype
                 // Explicit near clip and the wall clearance: regeneration must not
                 // bring back Unity's 0.3 m default (see-through corners).
                 PlayerCameraClearanceSetup.PatchPlayer(root, PlayerCameraClearanceSetup.EnsureSettings(null), new List<string>());
+                if (root.GetComponent<PlayerSubmersion>() == null) root.AddComponent<PlayerSubmersion>(); // the underwater indicator (shaft tube card)
                 return PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             }
             finally { Object.DestroyImmediate(root); }
