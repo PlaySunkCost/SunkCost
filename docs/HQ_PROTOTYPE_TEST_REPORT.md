@@ -1,5 +1,34 @@
 # HQ prototype verification report
 
+## Gate and throw branch — 16 September 2026
+
+Tested `dan/gate-and-throw` based on `88e8914` (the smoothness merge), same
+rig as the smoothness section below. Dan: "the tube door closes long after
+the elevator door"; "throwing up, the ball starts from below where it is".
+
+- **Tube gate mirrors the car door.** `ShaftGate` now takes the car door's
+  own open fraction (`ElevatorDoor.OpenFraction`) whenever the car is parked
+  at the bottom or sealing to leave, and is shut otherwise (was: its own
+  `Progress ≥ 0.9` rule plus a 1.5 s sweep — open until the car had climbed
+  4.5 m, and open before the doors on arrival). Deck cabin matrix
+  `MATRIX_PASS`, 200 rows: worst gate/door gap 0.01 over 371, 396 and 261
+  sampled frames on the three up rides; the walk-out row T2 passes.
+- **The car door seals from where it is.** The matrix's R3b presses the button
+  0.4 s after arrival, while the doors are still opening; `ElevatorDoor` used
+  to snap them fully open and close from there (a 0.66 jump the new gate row
+  caught). It now closes from the current opening at the same speed.
+- **A throw leaves from the hands.** `PlayerInventory.TryProposeRelease` uses
+  the held pose when it is clear and ahead of the player, the chest-height scan
+  otherwise (drops unchanged). Movement and hands matrix `MATRIX_PASS`, 33
+  rows: M8b, looking 60° up, the ball starts 0.00 m from where it was held
+  (y = 1.96) and leaves at v = (−2.29, 7.05, 0); M8's level drop still lands
+  0.52 m ahead.
+- **Matrices ignore editor focus.** A tester typing elsewhere unfocuses the
+  editor and the Input System's default background behaviour then disables
+  devices and drops their events — the virtual keyboard's too ("walked 0.00
+  m"). Both matrices set `InputSettings.BackgroundBehavior.IgnoreFocus` for
+  the run and restore it.
+
 ## Smoothness branch — 16 September 2026
 
 Tested `dan/smooth-1` based on `1ae0360` (the car-leavers merge), Unity

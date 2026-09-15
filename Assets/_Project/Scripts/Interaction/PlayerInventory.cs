@@ -162,7 +162,15 @@ namespace SunkCost.Interaction
             Vector3 cameraForward = player.PlayerCamera != null ? player.PlayerCamera.transform.forward : transform.forward;
             PlayerMovementSettings settings = player.Movement;
             Vector3 forward = ReleasePlacement.HorizontalForward(cameraForward, transform.forward);
-            if (!ReleasePlacement.TryFind(transform.position, capsule.radius, capsule.height, forward, item.Radius, drop, settings, transform, item.transform, out pose)) return false;
+            // A throw leaves from where the ball is held: the hands follow the view,
+            // so looking up the ball is high and a chest-height start would snap it
+            // down first (Dan, 16 September 2026). The chest scan is the fallback when
+            // the held spot is against something. A drop always uses the scan.
+            Vector3 held = Vector3.zero;
+            bool fromHands = !drop && item.TryGetHoldPose(player, out held, out _) && ReleasePlacement.IsClear(held, item.Radius, transform, item.transform)
+                && Vector3.Dot(Vector3.ProjectOnPlane(held - transform.position, Vector3.up), transform.forward) > 0f;
+            if (fromHands) pose = held;
+            else if (!ReleasePlacement.TryFind(transform.position, capsule.radius, capsule.height, forward, item.Radius, drop, settings, transform, item.transform, out pose)) return false;
             if (drop) return true;
             // Aim at what the crosshair is on, from where the ball actually starts:
             // the hands sit below and ahead of the eyes, so a parallel throw would

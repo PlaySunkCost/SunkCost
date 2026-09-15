@@ -289,8 +289,12 @@ Idan reviews and someone other than Dan merges.
   (docs, the harness self-check, `CarTravelSecondsFallback`) drifts — step 1's
   pure check pins the derived value and the matrix times the ride.
 - The gate leaves must open before the car reaches them going down and stay
-  open until it has left going up — the `Progress ≥ 0.9` rule from PR #25 is
-  reused; T1/T4 sample a rider inside the car through the band.
+  open until it has left going up — the `Progress ≥ 0.9` rule from PR #25 was
+  reused at first. **Changed 16 September 2026 (Dan: "make them close at the
+  same time"):** the leaves now mirror the car's own door fraction whenever the
+  car is at the bottom or sealing there, and are shut otherwise; they sit in
+  the tube wall outside the car's footprint, so a passing car never meets the
+  collider. T1/T4 sample a rider inside the car through the band.
 - A translucent disc inside a translucent cabin inside a translucent tube:
   three transparent layers sort by distance, and the URP default can flicker
   where they nearly coincide (the cabin's water at the same height as the
