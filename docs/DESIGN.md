@@ -78,16 +78,24 @@ and every drop of water lives in the dive scene. There is no way from HQ to the
 seafloor or back; the ship is always in between.
 
 **A day is one dive.** The day starts when **every living player is in the deck
-cabin** and it departs — the button does nothing with anyone missing, and the
-cabin panel names who. Anyone can ride up whenever they want; **once you are up
-you cannot go down again until the next day** — mid-day the deck button is dead.
-The cabin returns down empty as soon as it has unloaded. The day ends when
-everyone is up or dead. Three days make a cycle. Between days the ship stays at
+cabin** and it departs — the button does nothing with anyone missing, nothing
+overrides this, and the cabin panel names who. Anyone can ride up whenever they
+want; **once you are up you cannot go down again until the next day** — mid-day
+the deck button is dead. **Amended 15 September 2026 (Idan and Dan):** the
+cabin no longer returns down empty automatically as soon as it unloads. At the
+top, after the doors open, it waits a tuned delay (default 3 s), then closes
+and descends — but only if at least one living player remains at the dive site;
+a disconnected player does not count as living. The empty automatic descent
+makes full winch noise, identical to any other move. The day likewise no
+longer ends automatically when everyone is up or dead: the crew ends it with a
+deck/monitor action, which unlocks on that same living-players-below check —
+one check, not two. Three days make a cycle. Between days the ship stays at
 sea: the crew can go straight back down to the same site, or change site on the
 monitor first. **A site reloads fresh every day**: everything it had is there
 again, and anything you dropped on the seafloor is gone. After the third day the
 monitor offers only HQ; choosing HQ earlier is allowed (an early "go home").
-Either way the ship sails back to HQ and the quota is judged.
+Either way the ship sails back to HQ and the quota is judged. See "Elevator
+rules" below for the full detail and the deliberate body-recovery consequence.
 
 **What travels.** Whatever you carry (hands and slots) comes with you through the
 elevator and across the sea. Whatever you put down stays where you put it: on the
@@ -109,9 +117,11 @@ diving. That is the banking mechanic: whatever goes up is safe forever, and you
 don't have to leave to secure it.
 
 **There is only one of it.** That is the entire constraint. When it goes up, it is
-gone until it comes back — 15 seconds up and 15 seconds back down.
-It returns without an added surface delay, so a diver waiting below waits 30 seconds total. Anyone who needs it during
-that window simply waits.
+gone until it comes back — 15 seconds up and 15 seconds back down, 30 seconds
+round trip, always, regardless of weight. A rider-controlled return has no
+added wait; the unmanned automatic return waits an extra tuned delay at the top
+first — see "Elevator rules" below. Anyone who needs it during that window
+simply waits.
 
 > **Sending it up is dangerous twice.** The winch screams and tells the ocean where
 > you are, *and* your only exit is gone for 30 seconds. The original concept called
@@ -123,6 +133,44 @@ that window simply waits.
 > bailing early means everyone else is stranded — and they watch it happen through the
 > glass. A diver at 6% air, standing in the dark, watching the lights rise away
 > without them, is the game working exactly as designed.
+
+#### Elevator rules (approved 15 September 2026 — Idan and Dan)
+
+Settled on a call between Idan and Dan. These are approved rules, not a
+proposal.
+
+- **Down.** Every living player must be inside the deck cabin before the down
+  button does anything; nothing overrides this. The panel names who is
+  missing.
+- **At the bottom.** The cabin parks open and waits.
+- **Up.** Any rider presses the button. During the 1.5 s door seal, any player
+  entering the cabin reopens the doors. Once the cabin is moving, the ascent
+  cannot be aborted.
+- **At the top.** After the doors open, the cabin waits a tuned delay (a new
+  serialized field on `ElevatorController`, default 3 s), then closes and
+  descends — but only if at least one living player remains at the dive site.
+  A disconnected player does not count as living. The empty automatic descent
+  makes full winch noise, identical to any other move.
+- **Day end.** The day no longer ends automatically. The crew ends it with a
+  deck/monitor action. The monitor unlocks on exactly the same server check
+  that governs the automatic return above: no living players below. One
+  check, not two.
+- **Carrying.** Four inventory slots hold everything — air, tools and loot
+  compete for the same four. Cabin floor cargo is unlimited and rides up on
+  the outside lever.
+- **Death.** A dead player's four slots scatter on the seafloor.
+- **Disconnect mid-ride.** The player despawns; their four slots drop in the
+  cabin and finish the trip.
+- **The shaft.** Gated shut at the bottom when the cabin is away; a player
+  cannot walk in.
+- **Weight.** Has no effect on the cabin. 15 seconds each way, 30 seconds
+  round trip, always.
+
+**Consequence, recorded deliberately:** body recovery now only exists during
+a dive. If a player dies after the rest of the crew has surfaced, no living
+player remains below, the cabin stays at the top, the deck button is dead
+(mid-day), and the dead player's loot is on the seafloor, which the site wipes
+at the next day's fresh reload. That body is lost. This is intentional.
 
 ---
 
@@ -271,7 +319,7 @@ your own exit.
 |---|---|
 | Why you can't swim | Best option: thrusters exist, but they're loud, burn air and draw creatures. Build walking-only for now. |
 | Which 5–6 monsters | Build the Bell Eater first — it's drawn to the elevator, so it tests the core loop directly. |
-| Elevator timing | Settled: 15 seconds down, 15 seconds up. Sending it up leaves a diver below waiting 30 seconds for its return. The cabin fills in about 4 s after the suit fade and drains over the last few seconds of the ascent (decided 14 September 2026; numbers provisional). |
+| Elevator timing | Settled: 15 seconds down, 15 seconds up, 30 seconds round trip, always, regardless of weight. A rider-controlled return has no added wait; the unmanned automatic return additionally waits a tuned delay (default 3 s) at the top before descending, and only when a living player remains below (15 September 2026, Idan and Dan). The cabin fills in about 4 s after the suit fade and drains over the last few seconds of the ascent (decided 14 September 2026; numbers provisional). |
 | Air-restoring items | Amount restored, availability and activation time are undecided. One equipped tank; no other in-dive air restoration. |
 | Between-day joining | Decided: joining on the ship at sea between days is allowed. Still open: new-player versus returning-player eligibility, gear restoration and quota scaling for a joiner. |
 | Upgrade catalogue | Keep it small. Larger oxygen tanks confirmed; other upgrades undecided. Full loss without body recovery remains the rule. |

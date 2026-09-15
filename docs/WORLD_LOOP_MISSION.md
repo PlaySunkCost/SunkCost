@@ -81,17 +81,28 @@ rule server-decided.
     water; every metre of travel and every drop of water lives in the dive scene.
 11. Anyone can ride up any time. **Once up, you cannot go down again until the
     next day**; mid-day the deck button is dead ("cabin below"). The deck button
-    only ever starts a day. The cabin returns down empty as soon as it has
-    unloaded (a diver below waits 30 s, as the contract already says).
+    only ever starts a day. **Amended 15 September 2026 (Idan and Dan):** the
+    cabin no longer returns down empty automatically as soon as it has
+    unloaded. At the top, after the doors open, it waits a tuned delay (a new
+    serialized field on `ElevatorController`, default 3 s), then closes and
+    descends — but only if at least one living player remains at the dive
+    site; a disconnected player does not count as living. The empty automatic
+    descent makes full winch noise, identical to any other move. A diver below
+    waits 30 s for a rider-controlled return, or 30 s plus the tuned delay for
+    the automatic one.
 12. Unattended cargo (and bodies): loaded at the bottom and sent up with the
     lever outside the cabin (design section 1, "The elevator"); it rides the same
     way and is moved to the deck cabin at the top.
 
 **The day**
-13. **A day = one dive.** It starts when the cabin departs with everyone; it ends
-    when everyone is up or dead. Three days per cycle. Ship and dive run **at
-    the same time**: deck and seafloor coexist, each player sees only their own
-    scene.
+13. **A day = one dive.** It starts when the cabin departs with everyone.
+    **Amended 15 September 2026 (Idan and Dan):** the day no longer ends
+    automatically when everyone is up or dead. The crew ends it with a
+    deck/monitor action, which unlocks on exactly the same server check that
+    gates the automatic return in #11: no living players remain below (a
+    disconnected player does not count as living). One check, not two. Three
+    days per cycle. Ship and dive run **at the same time**: deck and seafloor
+    coexist, each player sees only their own scene.
 14. Between days the ship stays at sea; the crew may go straight back down or
     change site first. **A site reloads fresh every day**: all its loot is there
     again, anything dropped on the seafloor is gone. Dan accepted that a crew can
