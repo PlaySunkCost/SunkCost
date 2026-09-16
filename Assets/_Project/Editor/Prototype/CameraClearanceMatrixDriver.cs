@@ -140,6 +140,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "cabin") DeckCabinRideRuntimeChecks.RunAsHost();
                         else if (job == "hands") PlayerMovementHandsRuntimeChecks.RunAsHost();
                         else if (job == "loop") WorldLoopRuntimeChecks.RunAsHost();
+                        else if (job == "fullrun") FullRunRuntimeChecks.RunAsHost();
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }

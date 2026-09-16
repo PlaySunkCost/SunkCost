@@ -277,7 +277,7 @@ namespace SunkCost.Editor.Prototype
             plate.name = "Board Plate";
             plate.transform.SetParent(board.transform, false);
             plate.transform.localPosition = new Vector3(0f, 0f, 0.03f);
-            plate.transform.localScale = new Vector3(2.2f, 0.9f, 0.05f);
+            plate.transform.localScale = new Vector3(3.0f, 0.9f, 0.05f);
             Object.DestroyImmediate(plate.GetComponent<Collider>());
             plate.GetComponent<Renderer>().sharedMaterial = plateMaterial;
             GameObject text = new("Board Text", typeof(TextMesh));
@@ -293,7 +293,7 @@ namespace SunkCost.Editor.Prototype
             mesh.color = new Color(0.95f, 0.85f, 0.4f);
             BoxCollider box = board.AddComponent<BoxCollider>(); // the pressable: the whole plate
             box.center = new Vector3(0f, 0f, 0.03f);
-            box.size = new Vector3(2.2f, 0.9f, 0.08f);
+            box.size = new Vector3(3.0f, 0.9f, 0.08f);
             board.AddComponent<SunkCost.World.QuotaBoard>().Configure(mesh);
         }
 
