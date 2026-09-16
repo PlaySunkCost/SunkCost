@@ -391,7 +391,10 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   below the car seals and descends again, empty. **Cabin cargo** (built 16
   September 2026, Dan: "items on the elevator floor should stay on it"): a
   loose item on the cabin's floor when the ride's placements are captured (the
-  deck cabin going down, the car going up) is frozen exactly as deck cargo is
+  deck cabin going down, the car going up) — and again whatever lies loose
+  there when the move list closes at `Loading` (thrown or put down during the
+  ride; Dan: "some of the items on the ground disappeared" at the top) — is
+  frozen exactly as deck cargo is
   (`ServerBeginCabinTransit`: Free, server-owned, kinematic, colliders off, its
   spot kept in the cabin frame), server-followed through the ride, moved with
   the riders in the same `LoadConnectionScenes`, placed by the server at the

@@ -190,8 +190,14 @@ namespace SunkCost.Net
             var car = SunkCost.World.WorldSceneFlow.FindCar();
             if (car == null) return "carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0";
             var door = car.GetComponentInChildren<SunkCost.Diving.ElevatorDoor>(true);
-            return string.Format(System.Globalization.CultureInfo.InvariantCulture, "carDoor={0:0.00}; carDriven={1}; cargoFrames={2}; cargoWorstStep={3:0.000}; doorWorstOpenAtTop={4:0.00}",
-                door == null ? -1f : door.OpenFraction, car.Driven, cargoFrames, cargoWorstStep, doorWorstOpenAtTop);
+            int inside = 0, pinned = 0, restKnown = 0;
+            foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
+            {
+                if (!item.IsSpawned || !item.CanGrabFromWorld || !car.IsInsideCar(item.transform.position + Vector3.up * 0.25f)) continue;
+                inside++; if (item.PinnedToCar) pinned++; if (item.CarRestKnown) restKnown++;
+            }
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture, "carDoor={0:0.00}; carDriven={1}; carState={2}; cargoFrames={3}; cargoWorstStep={4:0.000}; doorWorstOpenAtTop={5:0.00}; itemsInCar={6}; pinned={7}; restKnown={8}",
+                door == null ? -1f : door.OpenFraction, car.Driven, car.State, cargoFrames, cargoWorstStep, doorWorstOpenAtTop, inside, pinned, restKnown);
         }
 
         private void LateUpdate()
