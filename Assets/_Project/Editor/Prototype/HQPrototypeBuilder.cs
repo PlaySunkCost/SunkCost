@@ -259,6 +259,40 @@ namespace SunkCost.Editor.Prototype
             CreateBlock("East Wall", new Vector3(6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
             CreateBlock("West Wall", new Vector3(-6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
             CreateBlock("Ceiling", new Vector3(0f, 3.65f, 0f), new Vector3(12f, 0.3f, 12f), wall, room.transform);
+            CreateColourPanel(room.transform);
+        }
+
+        // The colour panel on the south wall's inner face (Dan, 16 September 2026):
+        // a plate printed with the wheel of swatches (ColourPanel bakes it at
+        // runtime) and a small square that shows your current colour. Look at the
+        // plate and press E for the picker.
+        internal static void CreateColourPanel(Transform room)
+        {
+            Material plateMaterial = GetOrCreateMaterial(MaterialPath + "/ColourPanel.mat", Color.white);
+            Material swatchMaterial = GetOrCreateMaterial(MaterialPath + "/ColourSwatch.mat", Color.gray);
+            GameObject panel = new(SunkCost.World.ColourPanel.PanelName);
+            panel.transform.SetParent(room);
+            panel.transform.position = new Vector3(2.5f, 1.5f, -5.85f); // the south wall's inner face is z = -5.85
+            panel.transform.rotation = Quaternion.identity;
+            GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            plate.name = "Wheel Plate";
+            plate.transform.SetParent(panel.transform, false);
+            plate.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+            plate.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // faces +Z, into the room
+            plate.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+            Object.DestroyImmediate(plate.GetComponent<Collider>());
+            plate.GetComponent<Renderer>().sharedMaterial = plateMaterial;
+            GameObject swatch = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            swatch.name = SunkCost.World.ColourPanel.SwatchName;
+            swatch.transform.SetParent(panel.transform, false);
+            swatch.transform.localPosition = new Vector3(0.5f, 0f, 0.03f);
+            swatch.transform.localScale = new Vector3(0.14f, 0.14f, 0.04f);
+            Object.DestroyImmediate(swatch.GetComponent<Collider>());
+            swatch.GetComponent<Renderer>().sharedMaterial = swatchMaterial;
+            BoxCollider box = panel.AddComponent<BoxCollider>(); // the pressable: the whole plate
+            box.center = new Vector3(0.1f, 0f, 0.02f);
+            box.size = new Vector3(0.95f, 0.75f, 0.06f);
+            panel.AddComponent<SunkCost.World.ColourPanel>().Configure(plate.GetComponent<Renderer>(), swatch.GetComponent<Renderer>());
         }
 
         internal static void CreateBlock(string name, Vector3 position, Vector3 scale, Material material, Transform parent)

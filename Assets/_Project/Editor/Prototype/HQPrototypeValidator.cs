@@ -34,6 +34,10 @@ namespace SunkCost.Editor.Prototype
             CheckCount<AudioListener>(scene, 0, errors);
             CheckLootFixture(scene, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
+            var panels = new System.Collections.Generic.List<SunkCost.World.ColourPanel>();
+            foreach (GameObject root in scene.GetRootGameObjects()) panels.AddRange(root.GetComponentsInChildren<SunkCost.World.ColourPanel>(true));
+            if (panels.Count != 1) errors.Add("HQ needs exactly one Colour Panel (found " + panels.Count + ").");
+            else if (panels[0].GetComponent<Collider>() == null || panels[0].transform.Find(SunkCost.World.ColourPanel.SwatchName) == null) errors.Add("The Colour Panel needs its collider and swatch.");
             if (HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root belongs in Session.unity, not the HQ world scene.");
             if (CrewSpawner.SpawnPointsIn(scene).Count != new LobbySessionSettings().LocalSocketCap)
                 errors.Add($"HQ needs {new LobbySessionSettings().LocalSocketCap} spawn points under 'Spawn Points'.");

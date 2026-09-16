@@ -23,6 +23,7 @@ namespace SunkCost.Net
             public bool IsOwner;  // this machine owns it
             public bool IsWriter; // this machine simulates it; everyone else renders replicated state
             public string Detail; // INetworkDebugInfo.DebugStatus or ""
+            public string Swatch; // "#rrggbb" for a player (its colour), else null
             public string Scene;  // Unity scene the object sits in on this peer
 
             public string OwnerText => IsOwner ? "me" : OwnerId < 0 ? "server" : "client " + OwnerId;
@@ -110,6 +111,8 @@ namespace SunkCost.Net
                 Detail = string.Empty,
                 Scene = nob.gameObject.scene.name ?? string.Empty
             };
+            SunkCost.Player.PlayerIdentity identity = nob.GetComponent<SunkCost.Player.PlayerIdentity>();
+            if (identity != null) { row.Swatch = identity.ColourHex; row.Name = identity.DisplayName; }
 
             // Every debug-info component on the object contributes to the line (the
             // player's inventory and its submersion, for instance); the first one that

@@ -691,7 +691,7 @@ namespace SunkCost.Net
                 {
                     SteamId = 0,
                     OwnerClientId = owner,
-                    Name = identity != null ? identity.DisplayName : SunkCost.Player.PlayerIdentity.Fallback(owner),
+                    Name = identity != null ? $"<color={identity.ColourHex}>■</color> {identity.DisplayName}" : SunkCost.Player.PlayerIdentity.Fallback(owner),
                     IsHost = false,
                     IsSelf = player.IsOwner
                 });

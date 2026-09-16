@@ -113,7 +113,8 @@ namespace SunkCost.Net
             foreach (NetworkDebugSnapshot.ObjectRow row in s.Objects)
             {
                 string simColor = row.IsWriter ? SimHereColor : ReplicatedColor;
-                string line = $"{row.ObjectId,3}   {Pad(row.Name, 17)} {Pad(row.OwnerText, 9)} <color={simColor}>{Pad(row.SimText, 11)}</color> {row.Detail}";
+                string mark = row.Swatch != null ? $"<color={row.Swatch}>■</color> " : "  ";
+                string line = $"{mark}{row.ObjectId,3}   {Pad(row.Name, 17)} {Pad(row.OwnerText, 9)} <color={simColor}>{Pad(row.SimText, 11)}</color> {row.Detail}";
                 if (row.IsOwner && row.OwnerId >= 0)
                     line = $"<color={OwnRowColor}>{line}</color>";
                 GUILayout.Label(line, labelStyle);

@@ -191,6 +191,19 @@ namespace SunkCost.Editor.Prototype
             return "saved '" + name + "'" + (identity != null ? "; requested" : "; no local player yet");
         }
 
+        // Turns the local player to face a named scene object (the colour panel).
+        public static string ClientLookAtNamed(string objectName)
+        {
+            HQPlayerController local = LocalPlayer();
+            GameObject target = GameObject.Find(objectName);
+            if (target == null || local == null) return "Missing object or local player.";
+            Vector3 to = target.transform.position - local.EyePosition;
+            Vector3 flat = new(to.x, 0f, to.z);
+            if (flat.sqrMagnitude > 0.0001f) local.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
+            local.SetPitchForChecks(-Mathf.Atan2(to.y, flat.magnitude) * Mathf.Rad2Deg);
+            return $"looking at {objectName}: distance={to.magnitude:0.00}";
+        }
+
         public static string ItemStateText(string itemName = "Basketball")
         {
             CarryableItem item = Item(itemName);

@@ -203,6 +203,8 @@ namespace SunkCost.Editor.Prototype
         }
 
         // One command, then its reply (the peer answers 0.4 s after executing).
+        private static bool ColoursClose(Color a, Color b) => Mathf.Abs(a.r - b.r) < 0.02f && Mathf.Abs(a.g - b.g) < 0.02f && Mathf.Abs(a.b - b.b) < 0.02f;
+
         private static IEnumerator Send(string json)
         {
             Command(json);
@@ -422,6 +424,34 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => !remote.IsCrouched, 5f, "host sees the guest standing");
             File.AppendAllText(Log, "PASS M7 host sees the guest stand again\n");
             // Hands on the remote view: the guest grabs a ball; the host's copy of its arms binds to it.
+            // P: the colour panel on the HQ wall. Look at it, press E, pick a swatch:
+            // the body wears it, the pick is saved, the guest sees it; the guest picks too.
+            PlayerIdentity hostIdentity = host.GetComponent<PlayerIdentity>();
+            Check(hostIdentity != null && hostIdentity.ColourIndex == 2, "P0 the host's saved colour (amber, 2) reached its player: " + (hostIdentity == null ? "no identity" : hostIdentity.ColourIndex.ToString()));
+            GameObject panel = GameObject.Find(SunkCost.World.ColourPanel.PanelName);
+            Check(panel != null, "P1 the colour panel is on the HQ wall");
+            H.ClientMoveLocalPlayerTo(new Vector3(panel.transform.position.x, 0f, panel.transform.position.z + 1.3f)); yield return null;
+            H.ClientLookAtNamed(SunkCost.World.ColourPanel.PanelName); yield return null; yield return null;
+            Check(host.CurrentColourPanel != null && H.PromptText().Contains("Press E to pick your colour"), "P1 looking at the panel offers the pick: " + H.PromptText());
+            Keys(Key.E); yield return null; yield return null; Keys(); yield return null;
+            Check(SunkCost.Net.SessionInputGate.PickerOpen, "P2 E opens the colour picker");
+            host.GetComponent<PlayerHudUI>().PickColourForChecks(9); // blue
+            yield return WaitUntil(() => hostIdentity.ColourIndex == 9, 3f, "P3 the pick was written by the server");
+            yield return null;
+            Check(ColoursClose(host.BodyColour, PlayerPalette.Get(9)), $"P3 the body wears the pick ({host.BodyColour} vs {PlayerPalette.Get(9)})");
+            Check(PlayerColourPrefs.Load() == 9, "P3 the pick is saved for next time");
+            SunkCost.Net.SessionInputGate.ClosePicker(); yield return null;
+            Check(!SunkCost.Net.SessionInputGate.PickerOpen, "P2 the picker closes");
+            yield return GuestEventually(r => GuestPlayerLine(r, host.OwnerId).Contains("colour=9"), 5f, "P4 the guest sees the host's colour");
+            yield return Send("{\"id\":{id},\"action\":\"colour\",\"slot\":13}"); // pink
+            PlayerIdentity remoteIdentity = remote.GetComponent<PlayerIdentity>();
+            yield return WaitUntil(() => remoteIdentity != null && remoteIdentity.ColourIndex == 13, 5f, "P4 the guest's pick reached the host");
+            yield return null;
+            Check(ColoursClose(remote.BodyColour, PlayerPalette.Get(13)), "P4 the host's copy of the guest wears the guest's colour");
+            yield return Send("{\"id\":{id},\"action\":\"colour\",\"slot\":99}"); // out of the palette: refused, kept
+            yield return Wait(0.5f);
+            Check(remoteIdentity.ColourIndex == 13, "P5 an index outside the palette does not stick");
+
             // A ball the host's rows did not move: Basketball (2) at its fixture spot.
             CarryableItem target = H.Item("Basketball (2)");
             Vector3 stand = target.transform.position + new Vector3(0f, 0f, 0.7f);

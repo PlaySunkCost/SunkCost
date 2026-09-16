@@ -27,6 +27,7 @@ namespace SunkCost.Net
         private PrototypeSessionController controller;
         private string lobbyIdField = string.Empty;
         private string nameField;
+        private GUIStyle rosterStyle;
         private int lastReportedPlayerCount = -1;
         private Vector2 rosterScroll;
 
@@ -224,13 +225,14 @@ namespace SunkCost.Net
             }
 
             if (controller.InRoom) controller.RefreshMembers();
+            rosterStyle ??= new GUIStyle(GUI.skin.label) { richText = true };
             rosterScroll = GUILayout.BeginScrollView(rosterScroll, GUILayout.Height(110));
             foreach (PrototypeSessionController.MemberInfo member in controller.Members)
             {
                 string line = member.Name;
                 if (member.IsHost) line += "  (host)";
                 if (member.IsSelf) line += "  (you)";
-                GUILayout.Label(line);
+                GUILayout.Label(line, rosterStyle);
             }
             GUILayout.EndScrollView();
 
