@@ -105,6 +105,13 @@ shared elevator, rescue or abandon bodies, surface and meet the quota. Record wh
 players actually do before expanding content. This is a practice, not an invented
 calendar commitment or a change to the launch scope in `docs/DESIGN.md`.
 
+## Editor matrices
+
+The Play Mode checks (`Assets/_Project/Editor/Prototype/*RuntimeChecks.cs`,
+started through `CameraClearanceMatrixDriver.Start(job)`) and how to write and
+run one without losing an afternoon: [EDITOR_MATRIX_PLAYBOOK.md](EDITOR_MATRIX_PLAYBOOK.md).
+The scripted full playthrough and its recorded runs: [FULL_RUN_PLAYTHROUGH.md](FULL_RUN_PLAYTHROUGH.md).
+
 ## Continuous integration
 
 **Every push to `main` produces a Windows build you can download from the
