@@ -277,7 +277,7 @@ your own exit.
 
 | Element | Decision |
 |---|---|
-| Visor | Shows the basics as an AR overlay. Loot values appear floating over objects. **Built 16 September 2026 (Dan):** on automatically in the dive (the suit), off on the deck, everyone has it, no item, no key. Air and health bars (both full until those systems exist), depth, a compass strip, HOME (arrow + distance to the tube doorway), crew names + distance in view; every item within 12 m in view gets bracket corners, the one under the aiming dot turns gold with `Name · $value`. Seen through the suit's diving mask: one wide lens with a nose bridge, a thin dark rim with a faint cyan edge, the readouts on the glass. Not a zoom, not see-through-the-fog. |
+| Visor | Shows the basics as an AR overlay. Loot values appear floating over objects. **Built 16 September 2026 (Dan):** on automatically in the dive (the suit), off on the deck, everyone has it, no item, no key. Air and health bars (both full until those systems exist), depth, a compass strip, HOME (arrow + distance to the tube doorway), crew names + distance in view; every item within 12 m in view gets bracket corners, the one under the aiming dot turns gold with `Name · $value`. Seen through the suit's helmet visor (Dan's reference picture): one wide chamfered lens, a compass housing in the top edge, a dark rim with a cyan line, the readouts on the glass. Not a zoom, not see-through-the-fog. |
 | Handheld device | Detailed readouts, scans, compass. Raising it narrows your view and occupies a hand — checking your air means not watching the dark. |
 | Navigation | A compass in the suit. No map. |
 | Leak feedback | Must be unmissable: a hiss in the helmet, bubbles past the visor, a visible jump in drain rate. |

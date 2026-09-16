@@ -47,7 +47,17 @@ namespace SunkCost.Player
         private GUIStyle tagStyle;
         private Texture2D whiteTexture;
         private Texture2D maskTexture;
+        private Texture2D reticleTexture;
+        private Texture2D ringTexture;
+        private Texture2D lungsTexture;
         private int maskWidth, maskHeight;
+        private GUIStyle visorTinyStyle;
+        private GUIStyle visorRightStyle;
+        private GUIStyle visorSmallLeftStyle;
+        private GUIStyle visorNumberStyle;
+        private GUIStyle visorBigStyle;
+        private static readonly Color VisorText = new(0.55f, 0.93f, 1f, 0.95f);
+        private static readonly Color VisorDark = new(0.02f, 0.06f, 0.07f, 0.85f);
 
         // What the visor decided this frame (docs/VISOR_IMPLEMENTATION_PLAN.md section 6).
         public struct VisorReadout
@@ -240,6 +250,9 @@ namespace SunkCost.Player
         private void OnDestroy()
         {
             if (maskTexture != null) Destroy(maskTexture);
+            if (reticleTexture != null) Destroy(reticleTexture);
+            if (ringTexture != null) Destroy(ringTexture);
+            if (lungsTexture != null) Destroy(lungsTexture);
         }
 
         // The frame, stretched over the screen; re-baked when the screen changes size.
@@ -260,27 +273,56 @@ namespace SunkCost.Player
             maskTexture = PlayerVisorMask.Bake(maskWidth, maskHeight, Mathf.Max(64, maskWidth / 2), Mathf.Max(36, maskHeight / 2));
         }
 
-        // On the glass: vitals bottom-left inside the rounded corner, the compass
-        // strip under the top rim (PlayerVisorMask places them).
+        // The readouts, laid out as Dan's reference picture: the compass in the
+        // housing let into the top edge with the heading under it, status labels
+        // in the top corners, AIR / HP / DEPTH / PRESS bottom-left, the reticle
+        // around the dot (PlayerVisorMask places them).
         private void DrawVisorGlass()
         {
             float s = Screen.height / 1080f;
             Color previous = GUI.color;
+            float w = Screen.width, h = Screen.height;
 
-            // Vitals, bottom-left: AIR, HP, DEPTH.
-            Rect vitals = PlayerVisorMask.VitalsRect(Screen.width, Screen.height);
-            float left = vitals.x, bottom = vitals.yMax - 4f * s, barWidth = 220f * s, barHeight = 8f * s, row = 30f * s;
-            DrawBar(left, bottom - row * 3f, barWidth, barHeight, "AIR", Visor.AirFraction, s);
-            DrawBar(left, bottom - row * 2f, barWidth, barHeight, "HP", Visor.HealthFraction, s);
-            GUI.color = VisorColor;
-            GUI.Label(new Rect(left, bottom - row, barWidth + 80f * s, row), $"DEPTH  {Visor.DepthMeters:0.0} m", visorStyle);
+            DrawFrameDetails(w, h, s);
 
-            // Compass strip, top-centre, with the way home on it.
-            float stripW = CompassWidthPx * s, stripH = 26f * s;
-            float stripTop = PlayerVisorMask.CompassRect(Screen.width, Screen.height, stripW).y + 6f * s;
-            float cx = Screen.width * 0.5f;
-            GUI.color = new Color(0f, 0f, 0f, 0.35f);
-            GUI.DrawTexture(new Rect(cx - stripW / 2f, stripTop, stripW, stripH), whiteTexture);
+            // Top corners: the suit's status line and the mode, with the little dashes.
+            Rect tl = PlayerVisorMask.TopLeftLabelRect(w, h), tr = PlayerVisorMask.TopRightLabelRect(w, h);
+            GUI.color = VisorText;
+            GUI.Label(new Rect(tl.x, tl.y, tl.width, 18f * s), "HELMET VISOR", visorStyle);
+            GUI.Label(new Rect(tl.x, tl.y + 18f * s, tl.width, 14f * s), "SYS  v0.1  ·  SUIT ON", visorTinyStyle);
+            DrawDashes(tl.x, tl.y + 36f * s, 6, s);
+            GUI.color = VisorText;
+            GUI.Label(new Rect(tr.x, tr.y, tr.width, 18f * s), "MODE: DIVE", visorRightStyle);
+            DrawDashes(tr.xMax - 6f * 10f * s, tr.y + 24f * s, 6, s);
+
+            // Vitals, bottom-left, as the picture: the lungs badge, then O2 and HP as
+            // thick bars with the label left and the percentage right, then DEPTH and
+            // PRESS (1 atm + one per 10 m).
+            Rect vitals = PlayerVisorMask.VitalsRect(w, h);
+            float left = vitals.x, barRow = 30f * s, row = 26f * s, barWidth = 200f * s, barHeight = 11f * s;
+            float top = vitals.y;
+            DrawBar(left, top, barWidth, barHeight, "O2", Visor.AirFraction, s);
+            DrawBar(left, top + barRow, barWidth, barHeight, "HP", Visor.HealthFraction, s);
+            float textTop = top + barRow * 2f;
+            GUI.color = VisorText;
+            GUI.Label(new Rect(left, textTop, 70f * s, row), "DEPTH", visorSmallLeftStyle);
+            GUI.Label(new Rect(left + 72f * s, textTop - 4f * s, 120f * s, row + 4f * s), $"{Visor.DepthMeters:0.0} m", visorBigStyle);
+            GUI.Label(new Rect(left, textTop + row, 70f * s, row), "PRESS", visorSmallLeftStyle);
+            GUI.Label(new Rect(left + 72f * s, textTop + row, 120f * s, row), $"{1f + Mathf.Max(0f, Visor.DepthMeters) / 10f:0.00} ATA", visorSmallLeftStyle);
+            if (ringTexture != null && lungsTexture != null)
+            {
+                float badge = 52f * s, badgeTop = top + barRow - badge * 0.5f + 4f * s, badgeLeft = left - badge - 10f * s;
+                GUI.color = VisorDim;
+                GUI.DrawTexture(new Rect(badgeLeft, badgeTop, badge, badge), ringTexture);
+                GUI.color = VisorColor;
+                GUI.DrawTexture(new Rect(badgeLeft + badge * 0.2f, badgeTop + badge * 0.2f, badge * 0.6f, badge * 0.6f), lungsTexture);
+            }
+
+            // Compass, in the housing: cardinals and ticks on the dark band, the heading
+            // and HOME on the glass under it, the heading mark on the housing's floor.
+            float stripW = CompassWidthPx * s;
+            Rect compass = PlayerVisorMask.CompassRect(w, h, stripW);
+            float cx = w * 0.5f, stripTop = compass.y, stripH = compass.height;
             string[] cardinals = { "N", "E", "S", "W" };
             for (int deg = 0; deg < 360; deg += 15)
             {
@@ -289,12 +331,13 @@ namespace SunkCost.Player
                 bool cardinal = deg % 90 == 0;
                 GUI.color = cardinal ? VisorColor : VisorDim;
                 float tickH = cardinal ? 10f * s : 5f * s;
-                GUI.DrawTexture(new Rect(cx + px.Value - 1f, stripTop + stripH - tickH - 2f * s, 2f, tickH), whiteTexture);
-                if (cardinal) GUI.Label(new Rect(cx + px.Value - 12f * s, stripTop, 24f * s, 16f * s), cardinals[deg / 90], visorSmallStyle);
+                GUI.DrawTexture(new Rect(cx + px.Value - 1f, stripTop + stripH - tickH, 2f, tickH), whiteTexture);
+                if (cardinal) GUI.Label(new Rect(cx + px.Value - 12f * s, stripTop, 24f * s, 18f * s), cardinals[deg / 90], visorStyle);
             }
             GUI.color = VisorColor;
-            GUI.DrawTexture(new Rect(cx - 1f, stripTop - 6f * s, 2f, 6f * s), whiteTexture); // the heading mark
-            GUI.Label(new Rect(cx - 40f * s, stripTop + stripH + 2f * s, 80f * s, 16f * s), $"{Mathf.RoundToInt(Visor.HeadingDeg) % 360:000}°", visorSmallStyle);
+            DrawTriangle(cx, stripTop + stripH + 1f * s, 5f * s, s, down: false); // the heading mark, on the housing's floor
+            Rect heading = PlayerVisorMask.HeadingRect(w, h);
+            GUI.Label(new Rect(heading.x, heading.y, heading.width, 18f * s), $"{Mathf.RoundToInt(Visor.HeadingDeg) % 360:000}°", visorSmallStyle);
             if (Visor.HomeShown)
             {
                 float? homePx = PlayerVisorMath.CompassOffsetPx(Visor.HeadingDeg, Mathf.Repeat(Visor.HeadingDeg + Visor.HomeScreenAngleDeg, 360f), stripW, CompassArcDeg);
@@ -302,9 +345,65 @@ namespace SunkCost.Player
                 GUI.color = GoldColor;
                 GUI.DrawTexture(new Rect(markerX - 3f * s, stripTop + 2f * s, 6f * s, 6f * s), whiteTexture);
                 string homeText = homePx.HasValue ? $"HOME {Visor.HomeDistance:0} m" : (Visor.HomeScreenAngleDeg < 0f ? $"◄ HOME {Visor.HomeDistance:0} m" : $"HOME {Visor.HomeDistance:0} m ►");
-                GUI.Label(new Rect(cx - 90f * s, stripTop + stripH + 18f * s, 180f * s, 18f * s), homeText, visorSmallStyle);
+                GUI.Label(new Rect(heading.x, heading.y + 18f * s, heading.width, 18f * s), homeText, visorSmallStyle);
+            }
+
+            // The reticle around the dot: the ring, four bracket corners, two dashes.
+            if (reticleTexture != null && SessionInputGate.CanPlay)
+            {
+                float ring = 150f * s;
+                GUI.color = VisorDim;
+                GUI.DrawTexture(new Rect(cx - ring / 2f, h * 0.5f - ring / 2f, ring, ring), reticleTexture);
+                DrawBrackets(new Rect(cx - 100f * s, h * 0.5f - 75f * s, 200f * s, 150f * s), 14f * s, 1.5f);
+                GUI.DrawTexture(new Rect(cx - 180f * s, h * 0.5f - 1f, 60f * s, 1.5f), whiteTexture);
+                GUI.DrawTexture(new Rect(cx + 120f * s, h * 0.5f - 1f, 60f * s, 1.5f), whiteTexture);
             }
             GUI.color = previous;
+        }
+
+        // The picture's tech marks on the rim: tick rows along the top and bottom
+        // edges either side of the housings, dash columns down the sides.
+        private void DrawFrameDetails(float w, float h, float s)
+        {
+            float sx = PlayerVisorMask.SideRimPx(w), ty = PlayerVisorMask.TopRimPx(h), by = PlayerVisorMask.BottomRimPx(h), c = h * PlayerVisorMask.ChamferFrac;
+            GUI.color = VisorDim;
+            for (int i = 0; i < 14; i++)
+            {
+                float x = sx + c + 40f * s + i * 12f * s;
+                float th = i % 4 == 0 ? 8f * s : 4f * s;
+                GUI.DrawTexture(new Rect(x, ty - 10f * s - th, 1.5f, th), whiteTexture);                    // top-left run
+                GUI.DrawTexture(new Rect(w - x, ty - 10f * s - th, 1.5f, th), whiteTexture);                // top-right run
+                GUI.DrawTexture(new Rect(x, h - by + 10f * s, 1.5f, th), whiteTexture);                     // bottom-left run
+                GUI.DrawTexture(new Rect(w - x, h - by + 10f * s, 1.5f, th), whiteTexture);                 // bottom-right run
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                float y = h * 0.36f + i * 16f * s;
+                GUI.DrawTexture(new Rect(sx - 12f * s, y, 4f * s, 1.5f), whiteTexture);                      // left column
+                GUI.DrawTexture(new Rect(w - sx + 8f * s, y, 4f * s, 1.5f), whiteTexture);                   // right column
+            }
+            GUI.color = VisorColor;
+            GUI.DrawTexture(new Rect(sx + c * 0.5f, ty - 24f * s, 60f * s, 2f), whiteTexture);              // the corner accents
+            GUI.DrawTexture(new Rect(w - sx - c * 0.5f - 60f * s, ty - 24f * s, 60f * s, 2f), whiteTexture);
+            GUI.DrawTexture(new Rect(sx + c * 0.5f, h - by + 22f * s, 60f * s, 2f), whiteTexture);
+            GUI.DrawTexture(new Rect(w - sx - c * 0.5f - 60f * s, h - by + 22f * s, 60f * s, 2f), whiteTexture);
+        }
+
+        private void DrawDashes(float x, float y, int count, float s)
+        {
+            GUI.color = VisorDim;
+            for (int i = 0; i < count; i++) GUI.DrawTexture(new Rect(x + i * 10f * s, y, 6f * s, 2f * s), whiteTexture);
+        }
+
+        // A small solid triangle (rows of a widening rectangle), pointing up or down.
+        private void DrawTriangle(float cx, float y, float size, float s, bool down)
+        {
+            int rows = Mathf.Max(2, Mathf.RoundToInt(size));
+            for (int i = 0; i < rows; i++)
+            {
+                float half = (down ? rows - i : i + 1) * 0.5f * (size / rows) * 1.6f;
+                GUI.DrawTexture(new Rect(cx - half, y + i, half * 2f, 1f), whiteTexture);
+            }
         }
 
         // Through the glass: the HOME marker on the doorway, crew tags, item brackets
@@ -355,15 +454,16 @@ namespace SunkCost.Player
 
         private void DrawBar(float x, float y, float width, float height, string label, float fraction, float s)
         {
-            GUI.color = VisorColor;
-            GUI.Label(new Rect(x, y - 2f * s, 50f * s, 18f * s), label, visorSmallStyle);
-            float barX = x + 44f * s;
-            GUI.color = new Color(0f, 0f, 0f, 0.45f);
-            GUI.DrawTexture(new Rect(barX, y + 3f * s, width, height), whiteTexture);
+            GUI.color = VisorText;
+            GUI.Label(new Rect(x, y - 2f * s, 60f * s, 22f * s), label, visorStyle);
+            float barX = x + 56f * s, barY = y + 4f * s;
+            GUI.color = new Color(0.1f, 0.35f, 0.4f, 0.35f);
+            GUI.DrawTexture(new Rect(barX, barY, width, height), whiteTexture);
             float fill = PlayerVisorMath.FillWidthPx(fraction, width);
             GUI.color = fraction < 0.25f ? new Color(1f, 0.35f, 0.3f, 0.95f) : VisorColor;
-            if (fill > 0f) GUI.DrawTexture(new Rect(barX, y + 3f * s, fill, height), whiteTexture);
-            GUI.Label(new Rect(barX + width + 8f * s, y - 2f * s, 50f * s, 18f * s), $"{Mathf.RoundToInt(fraction * 100f)}%", visorSmallStyle);
+            if (fill > 0f) GUI.DrawTexture(new Rect(barX, barY, fill, height), whiteTexture);
+            GUI.color = VisorText;
+            GUI.Label(new Rect(barX + width + 12f * s, y - 2f * s, 60f * s, 22f * s), $"{Mathf.RoundToInt(fraction * 100f)}%", visorStyle);
         }
 
         private void DrawBrackets(Rect rect, float arm, float thickness)
@@ -441,10 +541,23 @@ namespace SunkCost.Player
                 bool held = i == heldSlot;
 
                 Color previous = GUI.color;
-                GUI.color = held ? new Color(1f, 0.85f, 0.2f, 0.95f) : new Color(0f, 0f, 0f, 0.55f);
-                GUI.DrawTexture(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), whiteTexture);
-                GUI.color = new Color(0.12f, 0.12f, 0.12f, 0.85f);
-                GUI.DrawTexture(rect, whiteTexture);
+                if (Visor.On)
+                {
+                    // The visor's slots: dark panel, thin cyan border, bracket corners; gold when in hand.
+                    GUI.color = held ? GoldColor : VisorDim;
+                    GUI.DrawTexture(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), whiteTexture);
+                    GUI.color = VisorDark;
+                    GUI.DrawTexture(rect, whiteTexture);
+                    GUI.color = held ? GoldColor : VisorColor;
+                    DrawBrackets(new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f), 9f, 1.5f);
+                }
+                else
+                {
+                    GUI.color = held ? new Color(1f, 0.85f, 0.2f, 0.95f) : new Color(0f, 0f, 0f, 0.55f);
+                    GUI.DrawTexture(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), whiteTexture);
+                    GUI.color = new Color(0.12f, 0.12f, 0.12f, 0.85f);
+                    GUI.DrawTexture(rect, whiteTexture);
+                }
                 GUI.color = previous;
 
                 if (item != null)
@@ -454,7 +567,7 @@ namespace SunkCost.Player
                     else
                         GUI.Label(new Rect(rect.x, rect.y + rect.height * 0.5f - 10f, rect.width, 20f), item.DisplayName, labelStyle);
                 }
-                GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 20f, 18f), (i + 1).ToString(), numberStyle);
+                GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, 20f, 18f), (i + 1).ToString(), Visor.On ? visorNumberStyle : numberStyle);
             }
         }
 
@@ -515,7 +628,20 @@ namespace SunkCost.Player
             visorSmallStyle.normal.textColor = Color.white;
             tagStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 22 * s / 10, fontStyle = FontStyle.Bold, wordWrap = false }; // big: the value must read at a glance (Dan)
             tagStyle.normal.textColor = Color.white;
+            visorTinyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 10 * s / 10, wordWrap = false };
+            visorTinyStyle.normal.textColor = Color.white;
+            visorRightStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight, fontSize = 12 * s / 10, wordWrap = false };
+            visorRightStyle.normal.textColor = Color.white;
+            visorSmallLeftStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 12 * s / 10, wordWrap = false };
+            visorSmallLeftStyle.normal.textColor = Color.white;
+            visorNumberStyle = new GUIStyle(GUI.skin.label) { fontSize = 12 * s / 10, fontStyle = FontStyle.Bold };
+            visorNumberStyle.normal.textColor = VisorText;
             whiteTexture = Texture2D.whiteTexture;
+            visorBigStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 18 * s / 10, fontStyle = FontStyle.Bold, wordWrap = false };
+            visorBigStyle.normal.textColor = Color.white;
+            reticleTexture = PlayerVisorMask.BakeReticle(128);
+            ringTexture = PlayerVisorMask.BakeReticle(128, gaps: false);
+            lungsTexture = PlayerVisorMask.BakeLungs(64);
             BakeMask(); // here, at the first frame on the ship, not at the first frame in the dive
         }
     }

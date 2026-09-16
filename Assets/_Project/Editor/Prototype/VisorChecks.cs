@@ -122,15 +122,30 @@ namespace SunkCost.Editor.Prototype
                 if (PlayerVisorMask.DistancePx(w / 2f, h - bottomRim - nose * 0.5f, w, h) <= 0f) errors.Add("the nose bridge must be frame" + at);
                 if (PlayerVisorMask.DistancePx(w / 2f, h - bottomRim - nose - 0.05f * h, w, h) >= 0f) errors.Add("above the nose bridge must be glass" + at);
                 if (PlayerVisorMask.DistancePx(w / 2f - 0.3f * h, h - bottomRim - 0.02f * h, w, h) >= 0f) errors.Add("beside the nose bridge the bottom edge must be glass" + at);
+                // The chamfers: the corner just inside the rims is frame, the same corner past the chamfer is glass.
+                if (PlayerVisorMask.DistancePx(sideRim + 0.01f * h, PlayerVisorMask.TopRimPx(h) + 0.01f * h, w, h) <= 0f) errors.Add("the top-left corner inside the rims must be cut off (frame)" + at);
+                if (PlayerVisorMask.DistancePx(sideRim + 0.12f * h, PlayerVisorMask.TopRimPx(h) + 0.12f * h, w, h) >= 0f) errors.Add("past the chamfer must be glass" + at);
                 float s = h / 1080f;
                 if (!PlayerVisorMask.OnGlass(PlayerVisorMask.VitalsRect(w, h), w, h, 2f)) errors.Add("the vitals block must lie on the glass" + at);
-                if (!PlayerVisorMask.OnGlass(PlayerVisorMask.CompassRect(w, h, 380f * s), w, h, 2f)) errors.Add("the compass strip must lie on the glass" + at);
+                if (!PlayerVisorMask.OnFrame(PlayerVisorMask.CompassRect(w, h, 380f * s), w, h, 2f)) errors.Add("the compass strip must lie in the housing, on the frame" + at);
+                if (!PlayerVisorMask.OnGlass(PlayerVisorMask.HeadingRect(w, h), w, h, 2f)) errors.Add("the heading under the housing must lie on the glass" + at);
+                if (!PlayerVisorMask.OnGlass(PlayerVisorMask.TopLeftLabelRect(w, h), w, h, 2f) || !PlayerVisorMask.OnGlass(PlayerVisorMask.TopRightLabelRect(w, h), w, h, 2f)) errors.Add("the corner labels must lie on the glass" + at);
+                if (PlayerVisorMask.DistancePx(w / 2f, PlayerVisorMask.TopRimPx(h) + PlayerVisorMask.HousingDepthPx(h) * 0.5f, w, h) <= 0f) errors.Add("the compass housing must be frame" + at);
+                if (PlayerVisorMask.DistancePx(w / 2f, PlayerVisorMask.TopRimPx(h) + PlayerVisorMask.HousingDepthPx(h) + 0.03f * h, w, h) >= 0f) errors.Add("under the compass housing must be glass" + at);
+                if (PlayerVisorMask.DistancePx(w * 0.25f, PlayerVisorMask.TopRimPx(h) + 0.02f * h, w, h) >= 0f) errors.Add("beside the housing the top edge must be glass" + at);
                 if (!PlayerVisorMask.OnGlass(PlayerVisorMask.SlotRowRect(w, h, 280f, 78f), w, h, 2f)) errors.Add("the slot row must lie on the glass" + at);
             }
             Texture2D baked = PlayerVisorMask.Bake(1920, 1080, 192, 108, readable: true);
             try
             {
                 Color centre = baked.GetPixel(96, 54), corner = baked.GetPixel(0, 0), rim = baked.GetPixel(96, 2);
+                Texture2D reticle = PlayerVisorMask.BakeReticle(64, readable: true);
+                try
+                {
+                    if (reticle.GetPixel(32 + 27, 32).a < 0.5f) errors.Add("the reticle ring must be drawn at its right side.");
+                    if (reticle.GetPixel(32, 32 + 27).a > 0.1f) errors.Add("the reticle ring must have a gap at the top/bottom.");
+                }
+                finally { UnityEngine.Object.DestroyImmediate(reticle); }
                 if (centre.a > 0.02f) errors.Add("the baked mask must be clear at the centre: alpha " + centre.a);
                 if (corner.a < 0.85f || corner.r > 0.2f) errors.Add("the baked mask must be dark frame at the corner: " + corner);
                 if (rim.a < 0.85f) errors.Add("the baked mask must be frame on the bottom rim: " + rim);

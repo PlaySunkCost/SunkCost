@@ -150,7 +150,25 @@ namespace SunkCost.Editor.Prototype
             Vector3 towardAxis = -new Vector3(coinLocal.x, 0f, coinLocal.z).normalized;
             Vector3 standLocal = coinLocal + towardAxis * 0.9f; standLocal.y = 0.15f;
             host.TeleportLocal(car.transform.TransformPoint(standLocal), host.Yaw); yield return null; yield return null;
-            yield return WaitUntil(() => { H.ClientLookAtItem(coin.name); return host.CurrentTarget == coin; }, 3f, "E1 mid-ride the dot finds the cargo on the car's floor");
+            // The rider is carried by the moving floor every frame; place and look again
+            // until the dot lands (the ray is a fact of the frame it is cast in).
+            float lookDeadline = Time.unscaledTime + 8f; int lookTries = 0;
+            while (Time.unscaledTime < lookDeadline && host.CurrentTarget != coin)
+            {
+                if (lookTries++ % 30 == 0) host.TeleportLocal(car.transform.TransformPoint(standLocal), host.Yaw);
+                H.ClientLookAtItem(coin.name);
+                yield return null;
+                if (lookTries % 60 == 1)
+                {
+                    // Why not: everything the targeting looks at, in one line.
+                    Vector3 eye = host.EyePosition, fwd = host.PlayerCamera.transform.forward;
+                    Collider col = coin.PrimaryCollider;
+                    Vector3 closest = col != null && col.enabled ? col.ClosestPoint(eye) : coin.transform.position;
+                    bool los = InteractionTargeting.HasLineOfSight(eye, closest, host.transform, coin);
+                    CarryableItem found = InteractionTargeting.Find(eye, fwd, host.transform, host.InteractReach, 0.35f);
+                    Note($"E1 look try {lookTries}: target={(host.CurrentTarget == null ? "none" : host.CurrentTarget.name)} find={(found == null ? "none" : found.name)} obstructed={host.ViewObstructed} travelLocked={host.TravelLocked} eye={eye:F2} coin={coin.transform.position:F2} dist={Vector3.Distance(eye, closest):0.00} colliderOn={(col != null && col.enabled)} los={los} state={coin.State} transit={coin.InTransit} camPitch={host.PlayerCamera.transform.localEulerAngles.x:0} hostLocal={car.transform.InverseTransformPoint(host.transform.position):F2}");
+                }
+            }
             Note($"E1 host at car-local {car.transform.InverseTransformPoint(host.transform.position):F2}, coin at {coinLocal:F2}");
             Check(host.CurrentTarget == coin, "E1 mid-ride the dot finds the cargo on the car's floor (target " + (host.CurrentTarget == null ? "none" : host.CurrentTarget.name) + ")");
             Check(hud.Visor.BracketCount >= 1 && hud.Visor.TargetTag.StartsWith(coin.DisplayName), $"E2 mid-ride the visor brackets and tags it ({hud.Visor.BracketCount}, '{hud.Visor.TargetTag}')");
