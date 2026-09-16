@@ -246,6 +246,10 @@ namespace SunkCost.Editor.Prototype
             int hitchesSeen = 0, ridingHitches = 0; // each new hitch is noted with the ride's stage, so a spike can be blamed
             float lastCarLocalY = float.NaN, worstFloorJitter = 0f; int jitterNotes = 0;
             float worstGateLag = 0f; int gateSamples = 0, gateNotes = 0; // the tube gate mirrors the car door at the bottom
+            // C: loose items on the car's floor ride with it, on every peer: their spot in the car's frame does not change between frames.
+            var cargoLastLocal = new Dictionary<int, Vector3>(); float cargoWorstStep = 0f; int cargoSamples = 0, cargoNotes = 0;
+            // D: the car's doors read shut from the moment the rider is in the car at the top until the car is at the bottom (Dan: "it looks like the door is open").
+            float doorWorstOpenAtTop = 0f; int doorSamples = 0, doorNotes = 0; bool capturedTopArrival = false;
             // A remote rider's copy (the guest as the host sees it) stays on the moving floor, no hover, no steps.
             float remoteLastLocalY = float.NaN, remoteWorstJitter = 0f, remoteMinLocalY = float.PositiveInfinity, remoteMaxLocalY = float.NegativeInfinity; int remoteSamples = 0; // the rider's height above the car floor should not flicker frame to frame
             double deadline = EditorApplication.timeSinceStartup + 60.0;
@@ -286,6 +290,37 @@ namespace SunkCost.Editor.Prototype
                     }
                 }
                 if (state.Stage != CabinRideStage.Preparing && shouldBeLocked && Rider() != null && !Rider().Locked) everUnlockedEarly = true;
+                if (car != null && (Day.Elevator.State == ElevatorState.Descending || Day.Elevator.State == ElevatorState.Ascending))
+                {
+                    foreach (CarryableItem item in UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude))
+                    {
+                        if (!item.IsSpawned || !item.CanGrabFromWorld || !car.IsInsideCar(item.transform.position + Vector3.up * 0.25f)) continue;
+                        Vector3 itemLocal = car.transform.InverseTransformPoint(item.transform.position);
+                        if (cargoLastLocal.TryGetValue(item.ObjectId, out Vector3 lastLocal))
+                        {
+                            cargoSamples++;
+                            float step = (itemLocal - lastLocal).magnitude;
+                            if (step > 0.01f && cargoNotes++ < 6) Note($"{label} CARGO STEP {step * 100f:0.0} cm frame {frames}: {item.name} local {lastLocal:F3} -> {itemLocal:F3} car={Day.Elevator.State} transit={item.InTransit} pinned={item.PinnedToCar}");
+                            cargoWorstStep = Mathf.Max(cargoWorstStep, step);
+                        }
+                        cargoLastLocal[item.ObjectId] = itemLocal;
+                    }
+                }
+                if (direction == RideDirection.Down && car != null && local != null && local.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && Day.Elevator.State != ElevatorState.AtBottom)
+                {
+                    ElevatorDoor doorTop = car.GetComponentInChildren<ElevatorDoor>(true);
+                    if (doorTop != null)
+                    {
+                        doorSamples++;
+                        if (doorTop.OpenFraction > 0.01f && doorNotes++ < 6) Note($"{label} DOOR OPEN {doorTop.OpenFraction:0.00} frame {frames}: stage={state.Stage} car={Day.Elevator.State} driven={car.Driven} carState={car.State}");
+                        doorWorstOpenAtTop = Mathf.Max(doorWorstOpenAtTop, doorTop.OpenFraction);
+                    }
+                    if (!capturedTopArrival && ScreenFade.Instance != null && ScreenFade.Instance.IsClear)
+                    {
+                        capturedTopArrival = true;
+                        SunkCost.Net.SessionInputGate.Resume(); H.CaptureScreen($"Logs/car-top-arrival-{label}.png"); SunkCost.Net.SessionInputGate.OpenMenu();
+                    }
+                }
                 if (car != null && local != null && local.gameObject.scene == WorldScenes.Scene(WorldId.Dive))
                 {
                     ElevatorState cs = Day.Elevator.State;
@@ -385,6 +420,8 @@ namespace SunkCost.Editor.Prototype
             Check(maxSink < 0.05f, $"{label} the rider never sank into the car floor (max {maxSink:0.000} m)");
             Check(worstFloorJitter < 0.01f, $"{label} the rider's height above the floor never jumped between frames (worst {worstFloorJitter * 100f:0.0} cm)");
             if (gateSamples > 0) Check(worstGateLag < 0.05f, $"{label} the tube gate mirrored the car door at the bottom on {gateSamples} frames (worst gap {worstGateLag:0.00})");
+            if (cargoSamples > 0) Check(cargoWorstStep < 0.01f, $"C {label} loose items on the car's floor rode with it on {cargoSamples} frames (worst step {cargoWorstStep * 100f:0.0} cm)");
+            if (doorSamples > 0) Check(doorWorstOpenAtTop < 0.01f, $"D {label} the car's doors read shut from the swap to the bottom on {doorSamples} frames (worst open {doorWorstOpenAtTop:0.00})");
             if (remoteSamples > 100)
             {
                 Note($"{label} remote rider copy: {remoteSamples} moving frames, height above the car {remoteMinLocalY:0.000}..{remoteMaxLocalY:0.000}, worst frame-to-frame change {remoteWorstJitter * 100f:0.0} cm");
@@ -657,6 +694,17 @@ namespace SunkCost.Editor.Prototype
             Check(hud.Visor.BracketCount >= 1, $"V5 looking back at the trail the near coins are bracketed ({hud.Visor.BracketCount})");
             host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); yield return Wait(0.3f);
 
+            // C1: Coin 3 on the car's floor. It rides everything from here: the empty
+            // up-and-back of R3b (pinned, loose), the up ride of R4 (frozen cargo, into
+            // the deck cabin), the down ride of R5a (into a fresh site's car), R5b, G1.
+            Vector3 coinSpot = car.transform.position - doorway * 0.6f + Vector3.up * 0.3f;
+            coin3.ServerDropAt(coinSpot);
+            yield return Wait(1f);
+            Check(coin3.CanGrabFromWorld && car.IsInsideCar(coin3.transform.position + Vector3.up * 0.25f), "C1 Coin 3 lies on the car's floor: " + coin3.transform.position.ToString("F2"));
+            float coinCarLocalY = car.transform.InverseTransformPoint(coin3.transform.position).y;
+            Note($"C1 Coin 3 rests {coinCarLocalY:0.000} above the car's origin (value ${coin3.Value}, id #{coin3.ObjectId})");
+            int coin3Id = coin3.ObjectId;
+
             // R3: back in; the car button from outside refuses.
             Check(!car.IsInsideCar(host.transform.position + Vector3.up * 0.5f), "R3 host outside the car");
             H.ClientRequestCar();
@@ -695,6 +743,13 @@ namespace SunkCost.Editor.Prototype
             Check(sea != null && sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "R4 the host stands in the deck cabin");
             Check(Day.Elevator.State == ElevatorState.AtTop, "R4 the car is up");
             Check(Day.Below.Count == 0, "R4 nobody below");
+            // C2: the coin came up in the car and now lies on the deck cabin's floor at the same spot.
+            CarryableItem coinUp = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coin3Id);
+            Check(coinUp != null && coinUp.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && sea.IsInDeckCabin(coinUp.transform.position), "C2 Coin 3 rode up into the deck cabin: " + (coinUp == null ? "gone" : coinUp.gameObject.scene.name + " " + coinUp.transform.position.ToString("F2")));
+            yield return Wait(0.6f); // released cargo settles
+            Check(coinUp != null && coinUp.CanGrabFromWorld && !coinUp.InTransit, "C2 Coin 3 is loose again on the deck cabin's floor");
+            float coinDeckLocalY = coinUp == null ? -1f : CabinFrame.DeckCabin(sea).ToLocal(coinUp.transform.position).y;
+            Check(coinUp != null && Mathf.Abs(coinDeckLocalY - coinCarLocalY) < 0.08f, $"C2 Coin 3 lies at the same height in the deck cabin ({coinDeckLocalY:0.000} vs {coinCarLocalY:0.000} in the car)");
             yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 3f, "R4 deck cabin doors open again");
             yield return WaitUntil(() => WorldSceneFlow.FindCar() == null, 10f, "R4 the site unloaded from the server once empty");
             H.CaptureLocalCamera("Logs/deck-cabin-back-on-deck.png");
@@ -702,6 +757,13 @@ namespace SunkCost.Editor.Prototype
             // R5: again, from a fresh site: down and up once more.
             yield return RideAndSample(RideDirection.Down, "R5a");
             Check(Day.Elevator.State == ElevatorState.AtBottom && host.gameObject.scene == WorldScenes.Scene(WorldId.Dive), "R5a down again on a fresh site");
+            // C3: the coin came down again in the car, onto the fresh site's floor.
+            car = WorldSceneFlow.FindCar();
+            CarryableItem coinDown = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coin3Id);
+            yield return Wait(0.6f);
+            Check(coinDown != null && car != null && coinDown.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(coinDown.transform.position + Vector3.up * 0.25f) && coinDown.CanGrabFromWorld && !coinDown.InTransit,
+                "C3 Coin 3 rode down again in the car and is loose on its floor: " + (coinDown == null ? "gone" : coinDown.gameObject.scene.name + " " + coinDown.transform.position.ToString("F2")));
+            Check(coinDown != null && car != null && Mathf.Abs(car.transform.InverseTransformPoint(coinDown.transform.position).y - coinCarLocalY) < 0.08f, "C3 Coin 3 at the same height on the car's floor");
             yield return Wait(0.5f);
             yield return RideAndSample(RideDirection.Up, "R5b");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && Day.Elevator.State == ElevatorState.AtTop, "R5b up again");
@@ -719,6 +781,7 @@ namespace SunkCost.Editor.Prototype
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
             yield return Wait(0.5f);
             yield return Send("{\"id\":{id},\"action\":\"frames_reset\"}");
+            yield return Send("{\"id\":{id},\"action\":\"cargo_reset\"}");
             yield return RideAndSample(RideDirection.Down, "G1");
             Check(Day.IsBelow(guestId) && Day.IsBelow(host.OwnerId), "G1 both listed below");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("car=AtBottom") && r.Contains("ride=Complete"), 20f, "G1 guest rode down with the host");
@@ -738,6 +801,18 @@ namespace SunkCost.Editor.Prototype
             hostCoins.Sort(string.CompareOrdinal);
             Check(guestCoins == string.Join(",", hostCoins), "V4 the guest sees the same coin values as the host: " + guestCoins);
             Check(lastReply.Contains("visor=on"), "V1 the guest's visor is on at the bottom");
+            // C4: the guest's copy of the coin rode on the car's floor (its own per-frame record) and lies where the host's does.
+            var cargoMatch = System.Text.RegularExpressions.Regex.Match(lastReply, @"cargoFrames=([0-9]+); cargoWorstStep=([0-9.]+)");
+            int guestCargoFrames = cargoMatch.Success ? int.Parse(cargoMatch.Groups[1].Value) : -1;
+            float guestCargoStep = cargoMatch.Success ? float.Parse(cargoMatch.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) : -1f;
+            Check(guestCargoFrames > 100 && guestCargoStep < 0.01f, $"C4 the guest's copy of the coin rode with the car's floor ({guestCargoFrames} frames, worst step {guestCargoStep * 100f:0.0} cm)");
+            CarryableItem coinBottom = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coin3Id);
+            var guestCoinLine = System.Text.RegularExpressions.Regex.Match(lastReply, @"item=[^\n]*; id=" + coin3Id + @";[^\n]*position=\(([-0-9.]+), ([-0-9.]+), ([-0-9.]+)\)");
+            Vector3 guestCoinPos = guestCoinLine.Success ? new Vector3(float.Parse(guestCoinLine.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), float.Parse(guestCoinLine.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), float.Parse(guestCoinLine.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture)) : Vector3.zero;
+            Check(coinBottom != null && guestCoinLine.Success && Vector3.Distance(guestCoinPos, coinBottom.transform.position) < 0.05f, $"C4 the guest sees Coin 3 where the host has it ({guestCoinPos:F2} vs {(coinBottom == null ? "gone" : coinBottom.transform.position.ToString("F2"))})");
+            // D: the guest's car door never read open between the swap and the bottom.
+            var doorMatch = System.Text.RegularExpressions.Regex.Match(lastReply, @"doorWorstOpenAtTop=([0-9.]+)");
+            Check(doorMatch.Success && float.Parse(doorMatch.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) < 0.01f, "D the guest's car doors read shut from the swap to the bottom (worst open " + (doorMatch.Success ? doorMatch.Groups[1].Value : "?") + ")");
             guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
             host.SetPitchForChecks(0f); host.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(guestPlayer.transform.position - host.transform.position, Vector3.up)); yield return null; yield return null;
             float trueCrewDistance = Vector3.Distance(host.EyePosition, guestPlayer.transform.position + Vector3.up * 1.85f);

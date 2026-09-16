@@ -33,7 +33,7 @@ namespace SunkCost.Player
         [SerializeField] private float sprintSpeed = 6f;
         [SerializeField] private float lookSensitivity = 0.1f;
         // Eyes to the item's surface; aim allowance does not extend this reach.
-        [SerializeField] private float interactReach = 2f;
+        [SerializeField] private float interactReach = 3.5f; // eyes to the item's surface; Lethal Company ~5, Minecraft 4.5, most shooters ~2 (Dan, 16 September 2026: farther)
         [SerializeField, Min(0f)] private float grabAimRadius = 0.35f;
         [SerializeField, Min(0f)] private float grabBufferSeconds = 0.3f;
 

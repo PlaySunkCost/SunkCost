@@ -14,6 +14,7 @@ namespace SunkCost.Net
     // Opt-in Local-only verification for a second standalone process. No network
     // listener, arbitrary code execution, or Steam/session-auth bypass. A normal
     // game launch never creates this component. Release builds exclude it.
+    [DefaultExecutionOrder(1000)] // its LateUpdate reads after every item has placed itself (the car pin)
     public sealed class InventoryVerificationPeer : MonoBehaviour
     {
         [Serializable] public sealed class Command
@@ -130,6 +131,7 @@ namespace SunkCost.Net
                 case "frames":
                     return SunkCost.Diagnostics.FrameTimeRecorder.Instance == null ? "no frame time recorder"
                         : SunkCost.Diagnostics.FrameTimeRecorder.Instance.Summary + "; " + SunkCost.Diagnostics.FrameTimeRecorder.Instance.HitchList;
+                case "cargo_reset": cargoWorstStep = 0f; cargoFrames = 0; doorWorstOpenAtTop = 0f; cargoLastLocal.Clear(); break;
                 case "frames_reset":
                     SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
                     break;
@@ -173,6 +175,49 @@ namespace SunkCost.Net
             return submersion == null ? "none" : submersion.IsSubmerged + "/" + submersion.DepthMeters.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
         }
 
+        // The car as this peer presents it: its door's opening, whether the network
+        // drives it yet, and how still the loose items on its floor stayed while it
+        // moved (the worst frame-to-frame change of an item's height above the
+        // floor, and the worst gap between two frames' readings of an item's
+        // spot in the car: a carried item reads 0, a lagging copy reads centimetres).
+        private static float cargoWorstStep = 0f;
+        private static int cargoFrames = 0;
+        private static float doorWorstOpenAtTop = 0f;
+        private static readonly System.Collections.Generic.Dictionary<int, Vector3> cargoLastLocal = new();
+
+        private static string CarLine()
+        {
+            var car = SunkCost.World.WorldSceneFlow.FindCar();
+            if (car == null) return "carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0";
+            var door = car.GetComponentInChildren<SunkCost.Diving.ElevatorDoor>(true);
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture, "carDoor={0:0.00}; carDriven={1}; cargoFrames={2}; cargoWorstStep={3:0.000}; doorWorstOpenAtTop={4:0.00}",
+                door == null ? -1f : door.OpenFraction, car.Driven, cargoFrames, cargoWorstStep, doorWorstOpenAtTop);
+        }
+
+        private void LateUpdate()
+        {
+            var car = SunkCost.World.WorldSceneFlow.FindCarCached();
+            var localPlayer = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            if (car != null && localPlayer != null && localPlayer.gameObject.scene == car.gameObject.scene && (car.State == SunkCost.Diving.ElevatorState.AtTop || car.State == SunkCost.Diving.ElevatorState.Descending))
+            {
+                var door = car.GetComponentInChildren<SunkCost.Diving.ElevatorDoor>(true);
+                if (door != null) doorWorstOpenAtTop = Mathf.Max(doorWorstOpenAtTop, door.OpenFraction);
+            }
+            bool moving = car != null && (car.State == SunkCost.Diving.ElevatorState.Descending || car.State == SunkCost.Diving.ElevatorState.Ascending);
+            if (!moving) { cargoLastLocal.Clear(); return; }
+            foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
+            {
+                if (!item.IsSpawned || !item.CanGrabFromWorld || !car.IsInsideCar(item.transform.position + Vector3.up * 0.25f)) continue;
+                Vector3 local = car.transform.InverseTransformPoint(item.transform.position);
+                if (cargoLastLocal.TryGetValue(item.ObjectId, out Vector3 last))
+                {
+                    cargoFrames++;
+                    cargoWorstStep = Mathf.Max(cargoWorstStep, (local - last).magnitude);
+                }
+                cargoLastLocal[item.ObjectId] = local;
+            }
+        }
+
         private static string CabinWaterLevel()
         {
             SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
@@ -204,7 +249,7 @@ namespace SunkCost.Net
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {VisorLine()}\n";
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {CarLine()}; {VisorLine()}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();

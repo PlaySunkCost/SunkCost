@@ -232,6 +232,27 @@ physics on). For the ride up it is moved with the riders (section 5.4). This is
 the "Elevator: cargo rides with the car" card; the elevator card only needs the
 `Riding` state to exist so items are never simulated inside a moving car.
 
+**As built (16 September 2026, `dan/fixes`):** no `Riding` state and no
+parenting — the deck cargo's freeze was reused. `WorldSceneFlow` freezes every
+loose item on the cabin's floor when the placements are captured
+(`CarryableItem.ServerBeginCabinTransit`, the spot kept in the `CabinFrame`),
+follows it every frame through the ride (the car moves; the deck cabin does
+not), moves it with the riders and places it at the same spot in the other
+cabin (`ServerPlaceAfterCabinTransit`, one teleport); `ResetTrip` releases it.
+Loose items that are inside the car while it moves and are not frozen (dropped
+mid-ride, an empty car's floor) are pinned to the car's frame on every peer in
+`CarryableItem.LateUpdate` (`PinToMovingCar`) — the same idea as the remote
+rider's pin; the server's body is kinematic while pinned. Rows C1–C4 and D in
+the deck cabin ride matrix.
+
+Found while building it: `CarryableItem` reset any Free item below y = −2
+("fell overboard") to its reset spot every physics step — on the seafloor,
+45 m down, that was every loose item, every step: a coin dropped in the car
+snapped back to its spawn spot (Dan: "dropping items on the bottom of the
+elevator makes them disappear"), and nothing loose on the site could ever be
+moved. The void line is now per world: −2 m at HQ and aboard, 20 m under the
+car's landing in the dive (`CarryableItem.VoidY`).
+
 ### 4.9 Contract rows (written in the same PRs)
 
 - Section 3: **Scene membership** — server only; a client loads and unloads

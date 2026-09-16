@@ -214,12 +214,85 @@ namespace SunkCost.Interaction
         // item; the client-authoritative NetworkTransform sends whatever is here.
         private void LateUpdate()
         {
-            if (!IsSpawned || state.Value != ItemState.Held || !LocalWriter || hasPendingRelease)
+            if (!IsSpawned) return;
+            if (state.Value == ItemState.Free) { PinToMovingCar(); return; }
+            if (state.Value != ItemState.Held || !LocalWriter || hasPendingRelease)
                 return;
             if (holder == null) ResolveHolder();
             if (holder == null || !TryGetHoldPose(holder, out Vector3 position, out Quaternion rotation)) return;
             transform.SetPositionAndRotation(position, rotation);
         }
+
+        // A loose item on the car's floor rides with the car (Dan, 16 September
+        // 2026: "items on the elevator floor should stay on it, even if the
+        // elevator is going up and down"). The car is moved by transform on every
+        // peer, so physics carries nothing on it, and a replicated copy would lag
+        // the floor by the interpolation delay as a remote rider's did. So, like
+        // the rider pin (ShipDepartureRider), every peer holds the item at the spot
+        // in the car's frame it had while the car stood still — the replicated pose
+        // is exact then; a few frames into the ride a copy already lags the floor,
+        // and a spot captured then would be held wrong for the whole ride and left
+        // wrong at the end (a NetworkTransform never corrects a displaced copy once
+        // its last goal has no rate). The server's body is kinematic meanwhile (the
+        // contract's writer, still); a client's copy overrides its NetworkTransform
+        // for the frame. Released once the car has stood still a moment.
+        private bool carPinned;
+        private Vector3 carLocalPosition;
+        private Quaternion carLocalRotation;
+        private bool carRestKnown;                 // the spot recorded while the car was still
+        private Vector3 carRestLocalPosition;
+        private Quaternion carRestLocalRotation;
+        private float carStillSince = -1f;
+        private const float CarPinInsideProbeMeters = 0.25f;  // a coin lies 3 cm up; the rider volume starts at the floor
+        private const float CarPinReleaseSeconds = 0.25f;     // longer than the transport's interpolation delay
+
+        private void PinToMovingCar()
+        {
+            if (transitSerial != 0) { carPinned = false; return; } // frozen cargo: the server follows it itself
+            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
+            bool moving = car != null && (car.State == SunkCost.Diving.ElevatorState.Descending || car.State == SunkCost.Diving.ElevatorState.Ascending);
+            if (car == null) { carPinned = false; carRestKnown = false; return; }
+            if (!moving && !carPinned)
+            {
+                // Still car: the pose is the truth; remember the spot for the next ride.
+                carRestKnown = car.IsInsideCar(transform.position + Vector3.up * CarPinInsideProbeMeters);
+                if (carRestKnown)
+                {
+                    carRestLocalPosition = car.transform.InverseTransformPoint(transform.position);
+                    carRestLocalRotation = Quaternion.Inverse(car.transform.rotation) * transform.rotation;
+                }
+                return;
+            }
+            if (!moving)
+            {
+                if (carStillSince < 0f) carStillSince = Time.unscaledTime;
+                if (Time.unscaledTime - carStillSince >= CarPinReleaseSeconds) { UnpinFromCar(); return; }
+            }
+            else carStillSince = -1f;
+            if (!carPinned)
+            {
+                if (!car.IsInsideCar(transform.position + Vector3.up * CarPinInsideProbeMeters)) return;
+                // An item that entered the car under way (dropped mid-ride) has no
+                // resting spot on record: its current one has to do.
+                carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(transform.position);
+                carLocalRotation = carRestKnown ? carRestLocalRotation : Quaternion.Inverse(car.transform.rotation) * transform.rotation;
+                carPinned = true;
+                if (body != null && !body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.isKinematic = true; }
+                if (body != null) body.interpolation = RigidbodyInterpolation.None; // placed by script each frame, like a held item
+            }
+            PlaceBody(car.transform.TransformPoint(carLocalPosition), car.transform.rotation * carLocalRotation);
+        }
+
+        private void UnpinFromCar()
+        {
+            carPinned = false;
+            carRestKnown = false;
+            carStillSince = -1f;
+            ApplyRole(); // the server's body simulates again, at rest on the floor
+            if (body != null && !body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.WakeUp(); }
+        }
+
+        public bool PinnedToCar => carPinned;
 
         // The pose for this item's grip on a given player: the right hand or the
         // two-handed centre point, plus the item's own forward offset. One
@@ -260,8 +333,23 @@ namespace SunkCost.Interaction
                 }
             }
 
-            if (IsServerStarted && state.Value == ItemState.Free && transform.position.y < -2f)
+            if (IsServerStarted && state.Value == ItemState.Free && transform.position.y < VoidY())
                 ServerReset();
+        }
+
+        // Below this an item is lost and comes back to its reset spot: the sea at
+        // HQ and aboard (y = -2, under the hull), and 20 m under the car's landing
+        // in the dive — the seafloor itself is 45 m down, and a rule of "-2"
+        // there reset every loose item to its spawn spot every physics step (a
+        // coin dropped in the car "disappeared" back onto the seafloor; Dan, 16
+        // September 2026).
+        private const float SeaVoidY = -2f;
+        private const float DiveVoidBelowLandingMeters = 20f;
+        private float VoidY()
+        {
+            if (!SunkCost.World.WorldScenes.TryParse(gameObject.scene.name, out SunkCost.World.WorldId world) || world != SunkCost.World.WorldId.Dive) return SeaVoidY;
+            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
+            return car != null ? car.BottomPosition.y - DiveVoidBelowLandingMeters : float.NegativeInfinity;
         }
 
         // From Free (a world grab) or from Stowed by the same connection (equip).
@@ -354,6 +442,18 @@ namespace SunkCost.Interaction
             PlayerInventory.ServerRestoreAfterFailedRelease(this, sender);
         }
 
+        // A pose written to the transform and the body both: a transform write alone
+        // is undone by an interpolating body on the next frame (the interpolator
+        // rewrites the transform from the body's last physics poses before the step
+        // that would have synced the change), and the item stays where it was.
+        private void PlaceBody(Vector3 position, Quaternion rotation)
+        {
+            transform.SetPositionAndRotation(position, rotation);
+            if (body == null) return;
+            body.position = position;
+            body.rotation = rotation;
+        }
+
         // Server decision from any state: loose, server-simulated, at a position.
         [Server]
         public void ServerDropAt(Vector3 position)
@@ -363,7 +463,7 @@ namespace SunkCost.Interaction
             holderClientId.Value = -1;
             holder = null;
             if (Owner.IsValid) RemoveOwnership();
-            transform.SetPositionAndRotation(position, Quaternion.identity);
+            PlaceBody(position, Quaternion.identity);
             networkTransform?.Teleport();
             ApplyRole();
             if (!body.isKinematic)
@@ -412,6 +512,46 @@ namespace SunkCost.Interaction
         {
             if (transitSerial == 0 || ship == null) return;
             transform.SetPositionAndRotation(ship.FromShipLocal(transitLocalPosition), ship.transform.rotation * transitLocalRotation);
+            networkTransform?.Teleport();
+        }
+
+        // Cabin cargo (DESIGN: "cabin floor cargo is unlimited and rides up"): a
+        // loose item on a cabin's floor is frozen at its spot in the cabin frame
+        // when the ride seals, follows that cabin (the car moves; the deck cabin
+        // does not), crosses to the other world with the riders and is placed at
+        // the same spot in the other cabin. Same freeze as the deck's, a cabin
+        // frame instead of a ship.
+        [Server]
+        public void ServerBeginCabinTransit(int serial, SunkCost.World.CabinFrame frame)
+        {
+            if (serial == 0 || !frame.IsValid) return;
+            motionVersion.Value++;
+            state.Value = ItemState.Free;
+            holderClientId.Value = -1;
+            holder = null;
+            if (Owner.IsValid) RemoveOwnership();
+            transitSerial = serial;
+            carPinned = false;
+            carRestKnown = false;
+            transitLocalPosition = frame.ToLocal(transform.position);
+            transitLocalRotation = frame.ToLocalRotation(transform.rotation);
+            ApplyRole();
+        }
+
+        // Each frame of the ride: the same spot in the cabin it is in now.
+        [Server]
+        public void ServerFollowCabinTransit(SunkCost.World.CabinFrame frame)
+        {
+            if (transitSerial == 0 || !frame.IsValid) return;
+            PlaceBody(frame.FromLocal(transitLocalPosition), frame.FromLocalRotation(transitLocalRotation));
+        }
+
+        // After the scene move: the same spot in the other cabin, one snap.
+        [Server]
+        public void ServerPlaceAfterCabinTransit(SunkCost.World.CabinFrame frame)
+        {
+            if (transitSerial == 0 || !frame.IsValid) return;
+            ServerFollowCabinTransit(frame);
             networkTransform?.Teleport();
         }
 

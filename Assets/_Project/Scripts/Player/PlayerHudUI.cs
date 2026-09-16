@@ -340,7 +340,13 @@ namespace SunkCost.Player
                 GUI.color = isTarget ? GoldColor : VisorDim;
                 DrawBrackets(rect, Mathf.Clamp(rect.width * 0.25f, 6f * s, 14f * s), 2f);
                 if (isTarget) // above the brackets: the prompt sits under the dot
-                    GUI.Label(new Rect(rect.center.x - 110f * s, rect.yMin - 24f * s, 220f * s, 20f * s), Visor.TargetTag, tagStyle);
+                {
+                    Rect tagRect = new(rect.center.x - 160f * s, rect.yMin - 36f * s, 320f * s, 30f * s);
+                    GUI.color = new Color(0f, 0f, 0f, 0.45f);
+                    GUI.DrawTexture(new Rect(tagRect.x + 40f * s, tagRect.y + 2f * s, tagRect.width - 80f * s, tagRect.height - 4f * s), whiteTexture);
+                    GUI.color = GoldColor;
+                    GUI.Label(tagRect, Visor.TargetTag, tagStyle);
+                }
             }
             GUI.color = previous;
         }
@@ -507,7 +513,7 @@ namespace SunkCost.Player
             visorStyle.normal.textColor = Color.white;
             visorSmallStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 * s / 10, wordWrap = false };
             visorSmallStyle.normal.textColor = Color.white;
-            tagStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 13 * s / 10, fontStyle = FontStyle.Bold, wordWrap = false };
+            tagStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 22 * s / 10, fontStyle = FontStyle.Bold, wordWrap = false }; // big: the value must read at a glance (Dan)
             tagStyle.normal.textColor = Color.white;
             whiteTexture = Texture2D.whiteTexture;
             BakeMask(); // here, at the first frame on the ship, not at the first frame in the dive

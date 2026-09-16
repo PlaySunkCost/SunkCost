@@ -381,9 +381,13 @@ player only after checking the game marker, protocol, build revision and Steam
 lobby membership. No public lobby browser or matchmaking.
 
 Catching (user decision, 14 September 2026): a ball may be caught while flying,
-before its release/rest handoff. The prototype keeps 2 m eyes-to-surface reach
-with a tunable 0.35 m aim allowance around the crosshair and 0.3 s early-press
-buffer. Hold E to catch an approaching ball; one gesture grabs at most one item.
+before its release/rest handoff. The prototype's eyes-to-surface reach is
+**3.5 m** (Dan, 16 September 2026: "pick up items from farther away, ×1.5–2";
+it was 2 m — the shooter norm, Half-Life 2 / Subnautica about 2 m; Deep Rock
+Galactic about 3; Minecraft 4.5; Lethal Company about 5, built around grabbing
+scrap fast — 3.5 m sits between the shooters and the loot games, and the suit's
+bulk reads as the reason), with a tunable 0.35 m aim allowance around the
+crosshair and 0.3 s early-press buffer. Hold E to catch an approaching ball; one gesture grabs at most one item.
 The server checks reach and line of sight, so assistance does not grab through
 walls or steal something held/stowed by another player. Grabbing with a slot item
 already in hand stores the new item silently if a slot is free. With four occupied

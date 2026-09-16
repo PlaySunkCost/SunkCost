@@ -388,7 +388,23 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   moved into `ShipAtSea`, placed in the deck cabin, `DiveSite01` unloaded for
   them and from the server when nobody remains below), `Arriving` (the deck
   cabin's doors open over `cabinSealSeconds`), `Complete`. If someone is still
-  below the car seals and descends again, empty. The deck button refuses at HQ
+  below the car seals and descends again, empty. **Cabin cargo** (built 16
+  September 2026, Dan: "items on the elevator floor should stay on it"): a
+  loose item on the cabin's floor when the ride's placements are captured (the
+  deck cabin going down, the car going up) is frozen exactly as deck cargo is
+  (`ServerBeginCabinTransit`: Free, server-owned, kinematic, colliders off, its
+  spot kept in the cabin frame), server-followed through the ride, moved with
+  the riders in the same `LoadConnectionScenes`, placed by the server at the
+  same cabin-frame spot in the other cabin (one `Teleport()`), and released
+  when the ride completes — so what lies on the floor going down lies on the
+  car's floor at the bottom, and what lies on the car's floor going up lies on
+  the deck cabin's floor. Anything loose that is inside the car while it moves
+  and is not frozen cargo (dropped mid-ride, or riding an empty car) is
+  **pinned to the car's frame on every peer** for presentation, like a remote
+  rider's copy: the server's body is kinematic meanwhile and the server is
+  still the only writer; a client's copy overrides its `NetworkTransform` for
+  the frame and lets it back in a quarter second after the car stops. No new
+  sync state. The deck button refuses at HQ
   ("Not at sea"), outside the cabin, while a ride runs ("Cabin in use") and
   while the car is away ("Cabin below"; an empty car at the bottom with nobody
   below is called up instead); the monitor refuses to sail while anyone is
