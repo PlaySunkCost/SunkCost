@@ -1,62 +1,53 @@
-name: Build
+name: Windows build
 
-# Builds the HQ prototype for Windows and Linux via the project's own build
-# entry points (Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs), which
-# stamp the Steam build-identity manifest the same way a developer's manual
-# build does. Requires a one-time Unity license secret — see
-# docs/WORKFLOW.md#continuous-integration.
+# Every push to main becomes a downloadable Windows build on the Releases page:
+#   https://github.com/PlaySunkCost/SunkCost/releases/latest
+# It calls the project's own build entry point (BuildWindowsCI in
+# Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs), so the build carries
+# the same Steam build-identity manifest a developer's manual build does, stamped
+# with the pushed commit. The ten newest releases are kept; older ones are removed.
+# Needs the Unity licence secrets — see docs/WORKFLOW.md#continuous-integration.
 on:
   push:
     branches: [main]
     paths-ignore:
       - "**.md"
       - "docs/**"
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
   workflow_dispatch: {}
 
+# A newer push to main supersedes a build still running.
 concurrency:
-  group: build-${{ github.workflow }}-${{ github.ref }}
+  group: windows-build-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write # to publish the release
 
 env:
   UNITY_VERSION: 6000.6.0f1
+  BUILD_DIR: Builds/HQPrototype
 
 jobs:
   build:
-    name: Build (${{ matrix.targetPlatform }})
+    name: Build and release
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - targetPlatform: StandaloneWindows64
-            buildMethod: SunkCost.Editor.Prototype.HQPrototypeBuild.BuildWindowsDevelopment
-            buildsDir: Builds/HQPrototype
-            artifactName: sunkcost-hq-windows
-          - targetPlatform: StandaloneLinux64
-            buildMethod: SunkCost.Editor.Prototype.HQPrototypeBuild.BuildLinuxDevelopment
-            buildsDir: Builds/HQPrototypeLinux
-            artifactName: sunkcost-hq-linux
+    timeout-minutes: 60
     steps:
       - name: Checkout (with LFS)
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Cache Unity Library
-        uses: actions/cache@v4
+      # The Library cache is only saved after a successful build (see the save
+      # step); a cache written by a failed run used to poison every later one.
+      - name: Restore Unity Library cache
+        id: cache
+        uses: actions/cache/restore@v4
         with:
           path: Library
-          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Library-Windows-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ matrix.targetPlatform }}-
+            Library-Windows-
 
       - name: Build
         uses: game-ci/unity-builder@v4
@@ -66,14 +57,84 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
-          targetPlatform: ${{ matrix.targetPlatform }}
-          buildMethod: ${{ matrix.buildMethod }}
-          allowDirtyBuild: false
+          targetPlatform: StandaloneWindows64
+          buildMethod: SunkCost.Editor.Prototype.HQPrototypeBuild.BuildWindowsCI
+          allowDirtyBuild: true # Unity rewrites Packages/*.json at import; BuildWindowsCI checks the rest
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Show what Unity changed in the checkout
+        if: always()
+        run: |
+          git status --porcelain --untracked-files=all || true
+          git --no-pager diff -- Packages/ || true
+
+      - name: Save Unity Library cache
+        if: success() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
         with:
-          name: ${{ matrix.artifactName }}
-          path: ${{ matrix.buildsDir }}
-          if-no-files-found: error
-          retention-days: 14
+          path: Library
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Describe this build
+        id: info
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          short=$(git rev-parse --short=7 "$GITHUB_SHA")
+          subject=$(git log -1 --format=%s "$GITHUB_SHA")
+          author=$(git log -1 --format=%an "$GITHUB_SHA")
+          built=$(date -u +'%Y-%m-%d %H:%M UTC')
+          # A merge to main is normally a pull request: name the build after it.
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0] | select(.number != null) | "PR #\(.number) · \(.title)"' 2>/dev/null || true)
+          title=${pr:-$subject}
+          title=${title:0:90}
+          echo "short=$short" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+          echo "zip=SunkCost-Windows-build${GITHUB_RUN_NUMBER}-${short}.zip" >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<BODY_$GITHUB_RUN_ID"
+            echo "**Built from:** [\`$short\`](https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA) — $subject"
+            echo "**Pushed by:** $author · **Built:** $built · [workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+            echo
+            echo "### How to play"
+            echo "1. Download the zip below and extract it anywhere."
+            echo "2. Run \`SunkCostHQ.exe\` (Steam must be running)."
+            echo "3. Everyone in a room must be on the **same build** — the game refuses a mismatch."
+            echo
+            echo "<details><summary>Full commit message</summary>"
+            echo
+            echo '```'
+            git log -1 --format=%B "$GITHUB_SHA"
+            echo '```'
+            echo "</details>"
+            echo "BODY_$GITHUB_RUN_ID"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Zip the build
+        run: |
+          test -f "$BUILD_DIR/SunkCostHQ.exe"
+          test -f "$BUILD_DIR/sunkcost-build.json"
+          (cd "$BUILD_DIR" && zip -qr "$GITHUB_WORKSPACE/${{ steps.info.outputs.zip }}" .)
+          ls -lh "${{ steps.info.outputs.zip }}"
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: "Build ${{ github.run_number }} · ${{ steps.info.outputs.title }}"
+          body: ${{ steps.info.outputs.body }}
+          files: ${{ steps.info.outputs.zip }}
+          make_latest: true
+          fail_on_unmatched_files: true
+
+      - name: Keep only the ten newest releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+          while read -r tag; do
+            [ -n "$tag" ] || continue
+            echo "Removing old release $tag"
+            gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done

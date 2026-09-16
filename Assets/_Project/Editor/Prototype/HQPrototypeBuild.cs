@@ -25,6 +25,31 @@ namespace SunkCost.Editor.Prototype
             Build(OutputPath, BuildTarget.StandaloneWindows64, PrototypeBuildIdentityEditor.Create(localOnly: false));
         }
 
+        // The GitHub Actions build (.github/workflows/build.yml): the checkout is
+        // the pushed commit, so the build carries that revision as a shared Steam
+        // build. Unity rewrites Packages/manifest.json and packages-lock.json when
+        // it imports on the runner; that rewrite is Unity's own and is tolerated
+        // (and logged). Any other change means the runner is not building the
+        // commit it claims, and the build refuses.
+        public static void BuildWindowsCI()
+        {
+            if (PrototypeBuildIdentityEditor.IsWorkingTreeDirty(out string details))
+            {
+                var unexpected = new System.Collections.Generic.List<string>();
+                foreach (string rawLine in details.Split('\n'))
+                {
+                    string line = rawLine.Trim();
+                    if (line.Length == 0) continue;
+                    string path = line.Length > 3 ? line.Substring(2).Trim() : line;
+                    if (path != "Packages/manifest.json" && path != "Packages/packages-lock.json") unexpected.Add(line);
+                }
+                if (unexpected.Count > 0)
+                    throw new InvalidOperationException("The CI checkout differs from the pushed commit:\n" + string.Join("\n", unexpected));
+                Debug.Log("[Build] Unity rewrote the package files at import; building the checked-out commit anyway:\n" + details);
+            }
+            Build(OutputPath, BuildTarget.StandaloneWindows64, PrototypeBuildIdentityEditor.Create(localOnly: false));
+        }
+
         // Local two-process testing of uncommitted work. The manifest is marked
         // localOnly and the runtime refuses Steam with it.
         [MenuItem("Sunk Cost/Prototype/Build Windows Local Development")]

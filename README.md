@@ -46,6 +46,11 @@ be read as checklists by other assistants.
 
 ## Start the HQ basketball prototype
 
+**Just want to play the latest build?** Every push to `main` is built for
+Windows automatically: download the newest zip from
+https://github.com/PlaySunkCost/SunkCost/releases/latest, extract it, run
+`SunkCostHQ.exe` with Steam running. Everyone in a room needs the same build.
+
 1. Open this repository with Unity `6000.6.0f1`.
 2. Open `Assets/_Project/Scenes/Prototype/Session.unity` and press Play. That
    scene is the menu and the network root; hosting loads the base
