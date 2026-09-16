@@ -97,6 +97,13 @@ by Claude through the peer commands. What was heard and measured:
   mechanism would surface with a real clock drift between two machines' devices
   (44.1 vs 48 kHz, cheap USB mics): drift compensation (re-prime on underrun or
   adaptive resampling) is still to do.
+- **Second round** (after both fixes, fresh host and client): Dan talked for a
+  minute — decoded at 52 frames/s throughout, zero concealed, "I hear myself
+  good". The tone, now stopwatch-paced (49.8 frames/s measured), had **2
+  misses in 21 s** instead of ~20: most likely the editor host's own main-thread
+  hitches (incoming packets are handed over on the main thread; the editor
+  stalls 50–100 ms now and then, longer than the 60 ms cushion). A built game
+  hitches far less; an adaptive jitter buffer is the proper follow-up.
 - Not covered: two machines, Steam, a second person's ears, latency, echo.
 
 ## Still requires people/hardware

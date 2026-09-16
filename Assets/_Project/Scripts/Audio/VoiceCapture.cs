@@ -27,6 +27,10 @@ namespace SunkCost.Audio
             IntPtr encoder = encode ? NativeAudioBridge.sc_encoder_create() : IntPtr.Zero;
             var pcm = new float[960];
             long toneSample = 0;
+            // The generated tone is paced by a stopwatch, not by Sleep(20) per frame:
+            // sleep granularity made it 48.3 frames/s against the receiver's 50, which
+            // drained the playback ring once a second (Dan heard the click, 17 Sep 2026).
+            var toneClock = System.Diagnostics.Stopwatch.StartNew(); long toneDue = 0;
             try
             {
                 if (encode && encoder == IntPtr.Zero) { running = false; return; }
@@ -38,8 +42,10 @@ namespace SunkCost.Audio
                     if (available < 960) { Thread.Sleep(2); continue; }
                     if (synthetic)
                     {
-                        Thread.Sleep(20);
-                        for (int i = 0; i < pcm.Length; i++) pcm[i] = .02f * (float)Math.Sin(2 * Math.PI * 440 * toneSample++ / 48000);
+                        toneDue += 20;
+                        long wait = toneDue - toneClock.ElapsedMilliseconds;
+                        if (wait > 0) Thread.Sleep((int)wait);
+                        for (int i = 0; i < pcm.Length; i++) pcm[i] = .08f * (float)Math.Sin(2 * Math.PI * 440 * toneSample++ / 48000);
                     }
                     else if (NativeAudioBridge.sc_capture_read(pcm, 960) != 960) continue;
                     double square = 0; foreach (float sample in pcm) square += sample * sample;
