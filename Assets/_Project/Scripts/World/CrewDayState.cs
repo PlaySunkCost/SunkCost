@@ -25,7 +25,8 @@ namespace SunkCost.World
         public int Had;     // balance + sales, before the charge
         public int Balance; // after the charge
         public bool Paid;
-        public bool Lost;   // short at the quota: the run is over, everything reset
+        public bool Short;  // short before payday: the box is banked, the day count goes on
+        public bool Lost;   // short at payday: the run is over, everything reset
     }
 
     // The one server-owned object that knows where the crew is. It is a global
@@ -42,6 +43,10 @@ namespace SunkCost.World
         private readonly SyncVar<DayPhase> phase = new(DayPhase.AtHQ);
         private readonly SyncVar<int> day = new(0);
         private readonly SyncVar<bool> payday = new(false);
+        // Today's dive has happened and everyone is up: nobody goes down again until
+        // the crew ends the day at the monitor (Dan, 16 September 2026: "the crew
+        // ends the day — but remember they can go down only once").
+        private readonly SyncVar<bool> diveDone = new(false);
         // The crew's money (Dan, 16 September 2026): the pay button at HQ sells
         // the storage room into it and charges the quota out of it; what is
         // left carries over. Server-written; the HQ board and the box read it.
@@ -77,6 +82,7 @@ namespace SunkCost.World
         // 0 at HQ; at sea the number of the current day (the one being dived, or
         // the next one to dive). Stays at the last day through payday.
         public int Day => day.Value;
+        public bool DiveDone => diveDone.Value;
         // The cycle's dives are spent: the monitor offers only HQ, the deck cabin refuses,
         // and at HQ the ship stays docked until the quota is paid.
         public bool Payday => payday.Value;
@@ -112,7 +118,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
@@ -229,10 +235,11 @@ namespace SunkCost.World
         {
             int total = balance.Value + Mathf.Max(0, sales);
             bool paid = total >= quota;
-            balance.Value = paid ? total - quota : 0;
-            day.Value = 0;
-            payday.Value = false;
-            var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = Mathf.Max(0, sales), Quota = quota, Had = total, Balance = balance.Value, Paid = paid, Lost = !paid };
+            bool lost = !paid && payday.Value; // short with no dives left
+            if (paid) { balance.Value = total - quota; day.Value = 0; payday.Value = false; diveDone.Value = false; }
+            else if (lost) { balance.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
+            else balance.Value = total; // short, days left: the box is banked, dive again (Dan: "not a loss instantly")
+            var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = Mathf.Max(0, sales), Quota = quota, Had = total, Balance = balance.Value, Paid = paid, Short = !paid && !lost, Lost = lost };
             lastPay.Value = report;
             return report;
         }
@@ -249,16 +256,41 @@ namespace SunkCost.World
             return true;
         }
 
-        // The day ends by itself when nobody living is below (Dan, 16 September
-        // 2026: "once all up or dead — it says day 2"). The last day ends in payday.
+        // When nobody living is below the dive is done: the phase returns to at-sea
+        // (joins allowed, the monitor free) but the day is not over — the deck
+        // cabin refuses until the crew ends it.
         [Server]
         public bool ServerEndDayIfDone(int daysPerCycle)
         {
             if (phase.Value != DayPhase.DiveInProgress || below.Count > 0) return false;
             phase.Value = DayPhase.AtSea;
+            diveDone.Value = true;
+            return true;
+        }
+
+        // The monitor's End day (Dan, 16 September 2026): only after today's dive,
+        // with everyone up. The next day, or payday after the last.
+        [Server]
+        public bool ServerEndDay(int daysPerCycle, out string why)
+        {
+            why = string.Empty;
+            if (phase.Value != DayPhase.AtSea) { why = phase.Value == DayPhase.DiveInProgress ? "Divers below" : "Not at sea"; return false; }
+            if (payday.Value) { why = "Payday — sail home"; return false; }
+            if (!diveDone.Value) { why = "Nobody has dived today"; return false; }
+            diveDone.Value = false;
             if (day.Value >= daysPerCycle) payday.Value = true;
             else day.Value = day.Value + 1;
             return true;
+        }
+
+        // Editor checks only: put the cycle where a row needs it (a payday at the
+        // dock without three dives). Never called by gameplay.
+        [Server]
+        public void ServerForceCycleForChecks(int dayValue, bool paydayValue)
+        {
+            day.Value = dayValue;
+            payday.Value = paydayValue;
+            diveDone.Value = false;
         }
 
         [Server]

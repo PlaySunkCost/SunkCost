@@ -104,11 +104,14 @@ cabin no longer returns down empty automatically as soon as it unloads. At the
 top, after the doors open, it waits a tuned delay (default 3 s), then closes
 and descends — but only if at least one living player remains at the dive site;
 a disconnected player does not count as living. The empty automatic descent
-makes full winch noise, identical to any other move. **Amended again 16
-September 2026 (Dan, building it): the day ends by itself** — "once all up or
-dead, it says day 2" — on that same living-players-below check the moment the
-last living player is up (or the last one below disconnects); there is no
-end-day action. Three days make a cycle. Between days the ship stays at
+makes full winch noise, identical to any other move. **Settled 16 September
+2026 (Dan, building it): the crew ends the day at the monitor's End day
+button** — it unlocks on that same living-players-below check, once today's
+dive has happened and everyone is up (or the last one below disconnected).
+Until it is pressed the deck cabin refuses ("Dive done — end the day at the
+monitor"): you go down once a day, no matter how long the day is left open.
+Before any dive the button refuses ("Nobody has dived today"). Three days
+make a cycle. Between days the ship stays at
 sea: the crew can go straight back down to the same site, or change site on the
 monitor first. **A site reloads fresh every day**: everything it had is there
 again, and anything you dropped on the seafloor is gone. After the third day it
@@ -117,8 +120,11 @@ is **payday**: the monitor says so and offers only HQ, the deck cabin refuses
 **The quota is paid at a button (Dan, 16 September 2026):** the board on the
 HQ wall — look, E — sells everything in the ship's storage room into the crew
 balance and charges the quota out of it. Paid: a new cycle, the next dive is
-day 1, what is left carries over. Short: **GAME LOST** — day 0, balance $0,
-a new run (nothing else happens yet). On payday the docked ship will not sail
+day 1, what is left carries over. Short **before payday**: not a loss — the
+box is banked into the balance, the board says "SHORT BY $n — sail out and
+dive again", and the crew sails out on the same day count to earn the rest
+(Dan: "not a loss instantly"). Short **at payday**: **GAME LOST** — day 0,
+balance $0, a new run (nothing else happens yet). On payday the docked ship will not sail
 out again until the quota is paid ("Pay the quota first"); before payday the
 crew may pay early or sail out again on the same day count — days are spent
 only by dives, never by sailing. With no dive taken the board says "Nothing to
@@ -126,8 +132,9 @@ pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
 $500 for the prototype). **Built 16
 September 2026 (Dan):** the day counter lives on the crew's day state — day 1
 on arrival from HQ, the day in progress from the moment the riders stand in
-the car below, the next day (or payday) the moment nobody living is below,
-day 0 again when the ship docks. The deck button refuses with a reason in each
+the car below, *dive done* the moment nobody living is below, the next day
+(or payday after the third) when the crew presses End day on the monitor,
+day 0 again when the quota is paid. The deck button refuses with a reason in each
 case: "Waiting for: <names>" when not everyone is in the cabin, "Dive in
 progress — 2 below: <names>" mid-day, "Payday — sail home" after. The monitor
 reads "Day 2 of 3 — Site 01" / "PAYDAY"; the visor's top-left corner says
@@ -190,9 +197,10 @@ proposal.
   descends — but only if at least one living player remains at the dive site.
   A disconnected player does not count as living. The empty automatic descent
   makes full winch noise, identical to any other move.
-- **Day end.** Automatic (16 September 2026, Dan; supersedes the 15 September
-  crew action): the day ends the moment no living player is below — the same
-  server check that governs the automatic return above. One check, not two.
+- **Day end.** The crew's End day button on the monitor (settled 16 September
+  2026, Dan), which unlocks on the same server check that governs the
+  automatic return above: today's dive taken and no living player below. One
+  check, not two. Once up, nobody goes down again until it is pressed.
 - **Carrying.** Four inventory slots hold everything — air, tools and loot
   compete for the same four. Cabin floor cargo is unlimited and rides up on
   the outside lever.

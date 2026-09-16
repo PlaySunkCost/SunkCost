@@ -40,9 +40,9 @@ namespace SunkCost.World
             if (Time.unscaledTime - day.LastPayAt < settings.PayReportSeconds && day.LastPay.Serial != 0)
             {
                 PayReport pay = day.LastPay;
-                return pay.Paid
-                    ? $"PAID ${pay.Quota}\nsold ${pay.Sales} · balance ${pay.Balance}\nnext dive is day 1"
-                    : $"GAME LOST\nquota ${pay.Quota} missed (had ${pay.Had})\nnew run: day 1, $0";
+                if (pay.Paid) return $"PAID ${pay.Quota}\nsold ${pay.Sales} · balance ${pay.Balance}\nnext dive is day 1";
+                if (pay.Short) return $"SHORT BY ${pay.Quota - pay.Had}\nsold ${pay.Sales} · balance ${pay.Balance}\nsail out and dive again";
+                return $"GAME LOST\nquota ${pay.Quota} missed (had ${pay.Had})\nnew run: day 1, $0";
             }
             if (Time.unscaledTime - day.LastRefusalAt < settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(day.LastRefusal.Text))
                 return day.LastRefusal.Text;

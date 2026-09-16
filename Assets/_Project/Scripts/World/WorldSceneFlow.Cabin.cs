@@ -111,6 +111,22 @@ namespace SunkCost.World
             dayState.ServerSetBoxValue(ship != null ? StorageReadout.SumInside(ship) : 0);
         }
 
+        // E on the monitor's End day (Dan, 16 September 2026): the crew ends the day
+        // once everyone is up; the day state refuses otherwise.
+        public bool ServerEndDay(NetworkConnection sender, out string why)
+        {
+            why = string.Empty;
+            if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
+            if (dayState == null) { why = "No day state."; return false; }
+            if (transitioning || dayState.Travelling) { why = "Ship travelling"; return false; }
+            if (riding) { why = "Cabin in use"; return false; }
+            if (currentWorld != WorldId.Sea) { why = "Not at sea"; return false; }
+            if (dayState.Below.Count > 0) { why = DiveInProgressText(); return false; }
+            if (!dayState.ServerEndDay(Settings.DaysPerCycle, out why)) return false;
+            Debug.Log($"[WorldSceneFlow] Day ended by {DisplayName(sender)}: day {dayState.Day}{(dayState.Payday ? " PAYDAY" : string.Empty)}");
+            return true;
+        }
+
         // E on the HQ board (Dan, 16 September 2026): sell the box, pay the quota.
         // Only at the dock, only with a cycle to pay for; the day state decides
         // paid or lost and resets the count either way.
@@ -365,6 +381,7 @@ namespace SunkCost.World
             if (dayState.Riding) return dayState.CabinRide.Direction == RideDirection.Down ? "Going down…" : "Coming up…";
             if (dayState.Payday) return "Payday — sail home";
             if (dayState.Phase == DayPhase.DiveInProgress) return DiveInProgressText();
+            if (dayState.DiveDone) return "Dive done — end the day at the monitor";
             if (dayState.Elevator.State != ElevatorState.AtTop) return "Cabin below";
             return dayState.World == WorldId.Sea ? $"Day {dayState.Day} of {Settings.DaysPerCycle} — all in, press E to descend" : "Not at sea";
         }
@@ -461,6 +478,7 @@ namespace SunkCost.World
             // day starts only with everyone in the cabin, named otherwise.
             if (dayState.Payday) { why = "Payday — sail home"; return false; }
             if (dayState.Phase == DayPhase.DiveInProgress) { why = DiveInProgressText(); return false; }
+            if (dayState.DiveDone) { why = "Dive done — end the day at the monitor"; return false; }
             var missing = new List<string>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {

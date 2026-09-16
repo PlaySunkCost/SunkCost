@@ -272,7 +272,9 @@ namespace SunkCost.Player
             {
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
-                if (ship != null) ship.RequestSail(CurrentButton.Destination);
+                if (ship == null) { }
+                else if (CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay) ship.RequestEndDay();
+                else ship.RequestSail(CurrentButton.Destination);
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentColourPanel != null)
             {

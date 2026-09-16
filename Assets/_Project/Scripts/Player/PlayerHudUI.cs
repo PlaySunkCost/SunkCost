@@ -96,7 +96,8 @@ namespace SunkCost.Player
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
-                if (target == null && controller.CurrentButton != null) return $"Press E to sail to {controller.CurrentButton.Label}";
+                if (target == null && controller.CurrentButton != null)
+                    return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();

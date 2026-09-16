@@ -23,6 +23,24 @@ namespace SunkCost.World
             ServerRequestCabin();
         }
 
+        // E on the monitor's End day.
+        public void RequestEndDay()
+        {
+            if (!IsOwner) return;
+            ServerRequestEndDay();
+        }
+
+        [ServerRpc]
+        private void ServerRequestEndDay(NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            ShipParts ship = ShipParts.InWorld(flow.CurrentWorld);
+            if (ship != null && !ship.IsAboard(transform.position)) { day.ServerReportRefusal("Not aboard: " + WorldSceneFlow.DisplayName(sender)); return; }
+            if (!flow.ServerEndDay(sender, out string why)) day.ServerReportRefusal(why);
+        }
+
         // E on the HQ board: sell the storage room and pay the quota.
         public void RequestPay()
         {
