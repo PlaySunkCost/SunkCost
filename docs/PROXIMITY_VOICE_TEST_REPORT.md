@@ -69,6 +69,36 @@ preserved rate limits across repeated start/stop, suppressed redundant stopped
 announcements, and discarded stale PCM when a silent/virtualized source resumes.
 The user rebased/committed the WIP; the follow-up commit records these fixes.
 
+## First human listening — 17 September 2026 (Dan, one machine, Local)
+
+Editor host + the local client build on the same PC, Dan on a headset, driven
+by Claude through the peer commands. What was heard and measured:
+
+- **Test sound**: the left/right cue on the default output — heard on both ears.
+- **Client tone → host**: the client's generated 440 Hz "voice" relayed by the
+  host — heard, "a bit low" (the test tone is deliberately at ~10 % amplitude;
+  distance 4.8 m, gain 0.94). At that point the host decoded only **79 of 527**
+  received frames; over a measured 20 s window **117 of 835** (14 %).
+- **Dan's mic → client** (P in the editor, the client plays it back on the same
+  headset): 616 frames captured and sent in ~12 s, all relayed, but the client
+  decoded ~6 frames/s — Dan: "I heard it bad, maybe 50 % of the word".
+- **Cause** (`VoicePlayback.Run`): the decoder was allowed to run only two
+  frames (40 ms) ahead of the audio consumer (`write - read <= 1920`), while
+  Unity pulls a streaming clip in blocks it decides (1408–2816 samples seen) at
+  its own cadence; most of each pull found nothing to play. **Fix**: decode at
+  the pace frames arrive, bounded by a 65536-sample ring, and wait for a missing
+  frame until three later ones have arrived before concealing it. After the
+  fix: **892 of 892** and **1419 of 1419** frames decoded, zero concealed; Dan's
+  speech decoded at ~52 frames/s — Dan: **"I hear it very good."**
+- **Remaining click** on the *test tone* once per second: the tone is paced by a
+  software timer at 48.3 frames/s against the output's 50/s, so the ring drains
+  one frame per second (30 underruns in 29 s). A test-signal artefact — the
+  microphone is clocked by the audio device and showed none — but the same
+  mechanism would surface with a real clock drift between two machines' devices
+  (44.1 vs 48 kHz, cheap USB mics): drift compensation (re-prime on underrun or
+  adaptive resampling) is still to do.
+- Not covered: two machines, Steam, a second person's ears, latency, echo.
+
 ## Still requires people/hardware
 
 - Audible, intelligible speech and correct physical endpoints on two Steam

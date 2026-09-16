@@ -297,6 +297,7 @@ namespace SunkCost.Audio
         public void SetVoiceVolume(float value) { VoiceVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }
         public bool PeerMuted(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Muted;
         public int PeerDecoded(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Decoded ?? 0 : 0;
+        public string PeerReadStats(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Playback != null ? $"reads={receiver.Playback.Reads} block={receiver.Playback.LastReadLength} underruns={receiver.Playback.Underruns} concealed={receiver.Playback.Concealed}" : "none";
         public float PeerPlaybackGain(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Gain ?? 0 : 0;
         public float PeerPlaybackPan(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Pan ?? 0 : 0;
         public float PeerVolume(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Volume : 1;

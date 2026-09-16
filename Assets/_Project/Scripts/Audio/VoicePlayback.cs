@@ -13,16 +13,26 @@ namespace SunkCost.Audio
         private readonly int[] lengths = new int[16];
         private readonly ushort[] sequences = new ushort[16];
         // Power-of-two capacity keeps masking valid when long sessions wrap signed counters.
-        private readonly float[] ring = new float[16384];
+        // Unity pulls a streaming clip in large blocks (~16k samples every ~340 ms on
+        // Windows), so the ring must hold well over one block: 65536 = 1.36 s at 48 kHz.
+        private readonly float[] ring = new float[65536];
         private int read, write, lastArrival, discard;
         private bool haveSequence;
-        private ushort expected;
+        private ushort expected, newest;
+        // How many frames past `expected` must have arrived before a missing frame is
+        // treated as lost and concealed: 60 ms of reorder slack.
+        private const int ReorderFrames = 3;
         private volatile bool running = true;
         private readonly Thread worker;
         private readonly AudioSource source;
         private AudioClip clip;
         public int Decoded { get; private set; }
         public int Concealed { get; private set; }
+        // The audio consumer's behaviour, for diagnostics: how big Unity's pulls are,
+        // how many there were, and how many found less audio than they asked for.
+        public int Reads { get; private set; }
+        public int LastReadLength { get; private set; }
+        public int Underruns { get; private set; }
         public float Gain => source != null ? source.volume : 0;
         public float Pan => source != null ? source.panStereo : 0;
         public VoicePlayback(GameObject owner, AudioDeviceService devices)
@@ -51,11 +61,12 @@ namespace SunkCost.Audio
                 { Array.Clear(lengths, 0, lengths.Length); expected = sequence; haveSequence = true; Volatile.Write(ref discard, 1); }
                 int delta = (short)(sequence - expected);
                 if (delta < 0) return;
-                if (delta >= 10) { Array.Clear(lengths, 0, lengths.Length); expected = sequence; }
+                if (delta >= 10) { Array.Clear(lengths, 0, lengths.Length); expected = sequence; newest = sequence; }
                 int slot = sequence % 16;
                 if (lengths[slot] != 0 && sequences[slot] == sequence) return;
                 Buffer.BlockCopy(payload.Array, payload.Offset, packets[slot], 0, payload.Count);
                 lengths[slot] = payload.Count; sequences[slot] = sequence; lastArrival = now;
+                if ((short)(sequence - newest) > 0) newest = sequence;
             }
         }
         private void Run()
@@ -75,13 +86,19 @@ namespace SunkCost.Audio
                         { haveSequence = false; primed = false; start = 0; }
                         if (haveSequence && !primed)
                         { if (start == 0) start = Environment.TickCount; primed = unchecked(Environment.TickCount - start) >= 60; }
-                        if (primed && write - Volatile.Read(ref read) <= 1920)
+                        // Decode at the pace frames arrive, not at the pace Unity pulls:
+                        // the old gate (two frames ahead of the consumer) left every
+                        // large Unity pull mostly empty and played about one word in
+                        // seven (Dan, 17 September 2026: "I heard it bad, maybe 50%").
+                        // The ring bounds the lead; a frame that has not arrived is
+                        // waited for until ReorderFrames later ones have, then concealed.
+                        if (primed && write - Volatile.Read(ref read) <= ring.Length - 960)
                         {
                             int slot = expected % 16;
                             if (lengths[slot] > 0 && sequences[slot] == expected)
-                            { size = lengths[slot]; Buffer.BlockCopy(packets[slot], 0, packet, 0, size); lengths[slot] = 0; missing = 0; }
-                            else missing++;
-                            expected++; ready = true;
+                            { size = lengths[slot]; Buffer.BlockCopy(packets[slot], 0, packet, 0, size); lengths[slot] = 0; missing = 0; expected++; ready = true; }
+                            else if ((short)(newest - expected) >= ReorderFrames)
+                            { missing++; expected++; ready = true; }
                         }
                     }
                     if (!ready) { Thread.Sleep(2); continue; }
@@ -103,6 +120,7 @@ namespace SunkCost.Audio
             int r = read, count = Math.Min(data.Length, Volatile.Read(ref write) - r);
             for (int i = 0; i < count; i++) data[i] = ring[unchecked(r + i) & (ring.Length - 1)];
             Array.Clear(data, count, data.Length - count); Volatile.Write(ref read, r + count);
+            Reads++; LastReadLength = data.Length; if (count < data.Length && count > 0) Underruns++;
         }
         public void Dispose()
         {
