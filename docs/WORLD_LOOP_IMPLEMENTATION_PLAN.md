@@ -466,7 +466,7 @@ Relative to `Assets/_Project/` unless stated.
 | Scripts/Interaction/LootFixtureSpawner.cs (new), CarryableItem.cs, PlayerInventory.cs | Runtime fixture; `Riding` state; helpers listing a player's carried NetworkObjects | Scene flow / cargo |
 | Prefabs/Player/PrototypePlayer.prefab, Prefabs/Interaction/*.prefab | `_synchronizeParent` on | Elevator |
 | Prefabs/World/Ship.prefab (stub then Idan's), Scenes/Prototype/ShipAtSea.unity, Editor/Prototype/ShipStubBuilder.cs (temporary) | Section 4.4 | Scene flow (stub) / Idan |
-| Scripts/World/CrewDayState.cs (new), DayPhase.cs, CrewMember.cs, Refusal.cs, Prefabs/World/CrewDayState.prefab (global) | Section 4.1 (the phase, world and destination and the phase half of `ServerBeginDay`/`ServerEndDay` came with scene flow) | Day state |
+| Scripts/World/CrewDayState.cs (new), DayPhase.cs, CrewMember.cs, Refusal.cs, Prefabs/World/CrewDayState.prefab (global) | Section 4.1 — **built 16 September 2026 (`dan/day-state`)** as `Day` + `Payday` on `CrewDayState`, `ServerBeginDay` when the riders stand below, `ServerEndDayIfDone(daysPerCycle)` on the last one up or a disconnect below; the deck cabin's all-aboard / dive-in-progress / payday refusals in `WorldSceneFlow.ServerRequestDive`; the monitor's payday lock in `ServerCanSail`. No `SurfacedToday` (the dive-in-progress lock covers once-per-day), no `Dead`/`Roster` (no death system yet; refusals name `Player N`) | Day state |
 | Scripts/World/ShipMonitor.cs (new) | Section 4.5, sailing fade | Monitor |
 | Scripts/World/DeckCabin.cs (new), CabinPhase.cs | Section 4.6, 5.3, 5.4 steps 6–8 | Deck cabin |
 | Scripts/Diving/NetworkElevator.cs (new), ElevatorMath.cs (new), ElevatorPhase.cs (new); ElevatorController.cs (driven mode, with Idan) | Section 6 | Elevator |

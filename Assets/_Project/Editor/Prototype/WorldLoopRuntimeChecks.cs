@@ -396,11 +396,12 @@ namespace SunkCost.Editor.Prototype
                 GuestLine(r, "server=").Contains("phase=DiveInProgress") && r.Split('\n').Count(l => l.StartsWith("player=")) == 2,
                 8f, "S5 first guest unaffected: sees the day in progress and two players");
             secondGuest.Kill(); secondGuest = null;
-            CrewDayState.Instance.ServerEndDay();
+            Check(CrewDayState.Instance.ServerEndDayIfDone(3), "S5 the day ends with nobody below");
             yield return WaitUntil(() => Phase() == "AtSea", 5f, "day ended");
+            Check(CrewDayState.Instance.Day == 2, "S12 the day counter advanced to 2: " + CrewDayState.Instance.Day);
 
             // S13 (scene part): the guest presses HQ; everything comes back, HQ is fresh.
-            yield return WaitUntil(() => H.MonitorText().StartsWith("At Site 01"), 5f, "monitor back to the at-sea line after the day ended");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Day 2 of 3"), 5f, "monitor back to the at-sea line after the day ended: " + H.MonitorText());
             File.AppendAllText(Log, "PASS S13 monitor at sea: " + H.MonitorText() + "\n");
             Command(GuestDir, "{\"id\":{id},\"action\":\"monitor\",\"item\":\"HQ\"}");
             yield return AwaitReply(GuestDir);

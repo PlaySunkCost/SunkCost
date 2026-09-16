@@ -104,16 +104,28 @@ cabin no longer returns down empty automatically as soon as it unloads. At the
 top, after the doors open, it waits a tuned delay (default 3 s), then closes
 and descends — but only if at least one living player remains at the dive site;
 a disconnected player does not count as living. The empty automatic descent
-makes full winch noise, identical to any other move. The day likewise no
-longer ends automatically when everyone is up or dead: the crew ends it with a
-deck/monitor action, which unlocks on that same living-players-below check —
-one check, not two. Three days make a cycle. Between days the ship stays at
+makes full winch noise, identical to any other move. **Amended again 16
+September 2026 (Dan, building it): the day ends by itself** — "once all up or
+dead, it says day 2" — on that same living-players-below check the moment the
+last living player is up (or the last one below disconnects); there is no
+end-day action. Three days make a cycle. Between days the ship stays at
 sea: the crew can go straight back down to the same site, or change site on the
 monitor first. **A site reloads fresh every day**: everything it had is there
-again, and anything you dropped on the seafloor is gone. After the third day the
-monitor offers only HQ; choosing HQ earlier is allowed (an early "go home").
-Either way the ship sails back to HQ and the quota is judged. See "Elevator
-rules" below for the full detail and the deliberate body-recovery consequence.
+again, and anything you dropped on the seafloor is gone. After the third day it
+is **payday**: the monitor says so and offers only HQ, the deck cabin refuses
+("Payday — sail home"); choosing HQ earlier is allowed (an early "go home").
+Either way the ship sails back to HQ and the quota is judged. **Built 16
+September 2026 (Dan):** the day counter lives on the crew's day state — day 1
+on arrival from HQ, the day in progress from the moment the riders stand in
+the car below, the next day (or payday) the moment nobody living is below,
+day 0 again when the ship docks. The deck button refuses with a reason in each
+case: "Waiting for: <names>" when not everyone is in the cabin, "Dive in
+progress — 2 below: <names>" mid-day, "Payday — sail home" after. The monitor
+reads "Day 2 of 3 — Site 01" / "PAYDAY"; the visor's top-left corner says
+"DAY 2/3"; F3 carries `day=`. No death system exists yet, so *living* means
+*connected*: a disconnected player never blocks the day from ending. See
+"Elevator rules" below for the full detail and the deliberate body-recovery
+consequence.
 
 **What travels.** Whatever you carry (hands and slots) comes with you through the
 elevator and across the sea. Whatever you put down stays where you put it: on the
@@ -169,10 +181,9 @@ proposal.
   descends — but only if at least one living player remains at the dive site.
   A disconnected player does not count as living. The empty automatic descent
   makes full winch noise, identical to any other move.
-- **Day end.** The day no longer ends automatically. The crew ends it with a
-  deck/monitor action. The monitor unlocks on exactly the same server check
-  that governs the automatic return above: no living players below. One
-  check, not two.
+- **Day end.** Automatic (16 September 2026, Dan; supersedes the 15 September
+  crew action): the day ends the moment no living player is below — the same
+  server check that governs the automatic return above. One check, not two.
 - **Carrying.** Four inventory slots hold everything — air, tools and loot
   compete for the same four. Cabin floor cargo is unlimited and rides up on
   the outside lever.
