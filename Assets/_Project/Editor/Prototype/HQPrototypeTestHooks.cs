@@ -316,6 +316,15 @@ namespace SunkCost.Editor.Prototype
         // Game-view evidence: the local player's camera, or a free camera looking at a point.
         public static string CaptureLocalCamera(string path) => Capture(LocalPlayer()?.PlayerCamera, path);
 
+        // The game view as shown, HUD and visor included (ScreenCapture reads the
+        // frame after IMGUI); written at the end of the frame.
+        public static string CaptureScreen(string path)
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path)));
+            ScreenCapture.CaptureScreenshot(path);
+            return path;
+        }
+
         public static string CaptureFrom(Vector3 position, Vector3 lookAt, string path)
         {
             GameObject go = new("CheckCaptureCamera", typeof(Camera));

@@ -277,7 +277,7 @@ your own exit.
 
 | Element | Decision |
 |---|---|
-| Visor | Shows the basics as an AR overlay. Loot values appear floating over objects. |
+| Visor | Shows the basics as an AR overlay. Loot values appear floating over objects. **Built 16 September 2026 (Dan):** on automatically in the dive (the suit), off on the deck, everyone has it, no item, no key. Air and health bars (both full until those systems exist), depth, a compass strip, HOME (arrow + distance to the tube doorway), crew names + distance in view; every item within 12 m in view gets bracket corners, the one under the aiming dot turns gold with `Name · $value`. Seen through the suit's diving mask: one wide lens with a nose bridge, a thin dark rim with a faint cyan edge, the readouts on the glass. Not a zoom, not see-through-the-fog. |
 | Handheld device | Detailed readouts, scans, compass. Raising it narrows your view and occupies a hand — checking your air means not watching the dark. |
 | Navigation | A compass in the suit. No map. |
 | Leak feedback | Must be unmissable: a hiss in the helmet, bubbles past the visor, a visible jump in drain rate. |
@@ -294,7 +294,7 @@ your own exit.
 | Size | Bounded content that feels unbounded. No walls or warnings — the built area simply stops containing anything. Oxygen is the real limit. |
 | Conditions | Zero to two rolled per dive. Mostly bad (blackout, infestation, silt storm), occasionally good (calm, rich vein). |
 | Condition info | Not shown beforehand. A harder dive silently rolls item values toward the top of their range. **Reveal them on the results screen** (`BLACKOUT · +30%`) or players never learn the system exists. |
-| Loot values | Randomised within a fixed range each run, always visible through the visor. |
+| Loot values | Randomised within a fixed range each run, always visible through the visor. **Built 16 September 2026:** each loot type carries a range; the server rolls once at spawn and replicates. The first loot is coins in three sizes on the seafloor between the tube doorway and the wreck (small $10–30, medium $40–90, large $150–300); the HQ balls are not loot and show no value. |
 | Breakage | Nothing breaks, for now. |
 | Monsters | Five or six at launch. Behaviour varies — some hunt until the dive ends, some lose interest once they can't reach you. |
 

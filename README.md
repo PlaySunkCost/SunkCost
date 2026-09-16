@@ -73,6 +73,13 @@ be read as checklists by other assistants.
    then fast down the flooded tube. Walk out through the tube's gate, look
    around, walk back in and press **E** on the car's panel to come up; the
    water drains as you pass the surface and you step out dry on the deck.
+   In the dive you look through the suit's **diving mask** — one wide lens
+   with a nose bridge, a thin dark rim edging the view — and its **visor** is
+   on: air and health bars (full for now), depth, a compass with **HOME** (the
+   way back to the tube), crew names, and bracket corners on every coin in
+   view — look at one and it turns gold with its dollar value. Coins of three
+   sizes lie on the seafloor beyond the tube's doorway; their values are
+   rolled fresh every dive, and each size has its own picture in the slots.
    The car glides between network ticks and carries you without a bounce; a
    thrown ball renders every frame. **F3** now also shows a `frames:` line
    (fps, median and 1 % low frame times, the worst frame, hitches with the

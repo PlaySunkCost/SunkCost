@@ -1,8 +1,21 @@
 # The diving visor — implementation plan
 
-Status: plan, 16 September 2026. Owner Dan; touches the contract (one item
-value rule) and `PlayerHudUI`, `CarryableItem`, the loot manifest. Idan reads
-the contract paragraph before the implementation PR merges.
+Status: built, 16 September 2026 (`dan/visor`). Owner Dan; touches the
+contract (one item value row) and `PlayerHudUI`, `CarryableItem`, the loot
+setup. Idan reads the contract row before the PR merges.
+
+Decisions taken on the open questions (Dan: "check what other games do and
+figure it yourself"): vitals bottom-left (where DRG and most co-op games keep
+them; the centre stays for the world), the compass strip top-centre with HOME
+as a marker on it (the waypoint-on-compass pattern of Subnautica and open
+world games) plus an on-world marker when the doorway is in view; crew tags
+always within 40 m and brighter when looked at (DRG's always-visible team,
+the co-op safety tool in the dark); the visor off at the deck swap. Air and
+health read full, always, for now (Dan). The balls carry no value: they are
+the HQ game's; the loot is coins of three sizes (section 3.3 as built). The
+planned vignette became the **diving mask itself** (Dan, later the same day:
+"not all the vision is open on the screen — some of it blocked because of the
+binoculars"; section 3.5), and the coins carry their own slot icons.
 
 ## 1. Decision (Dan, 16 September 2026)
 
@@ -21,6 +34,7 @@ Dan's answers on the card:
 | Values | **Randomised per dive** within a fixed range per item type, rolled by the server, replicated — the doc's rule, made real now. |
 | Look | **Minimal readouts plus a faint vignette**: thin futuristic text and bars in the corners, a barely-there darkening of the screen edge that says "you are behind glass". Never blocks the view. |
 | Carrying | Automatic, on with the suit, everyone has one. |
+| The mask (later) | "The screen is the black rectangle — the player sees through the binoculars": the mask's frame edges the view. Picks: **one wide lens with a nose bridge** (his picture: a swim mask), a **thin rim** (light coverage), the **readouts on the glass**, **dark matte with a faint cyan edge glow**. |
 
 Not a zoom, not a see-through-the-fog device: the visor tells you about what
 you can already nearly see. The handheld device (detailed readouts, scans) of
@@ -52,48 +66,79 @@ while the screen is dry and the doors are shut). No extra state — the world
 the player stands in is already replicated and already drives the headlamp
 and the sky (`WorldSceneFlow.PresentSky`).
 
-### 3.2 Layout (1920 × 1080 reference, scaled by screen height)
+### 3.2 Layout as built (1920 × 1080 reference, scaled by screen height)
 
 ```
- AIR  ████████████░░  86%          ▲ HOME 23 m            N · · E · · S
- HP   ██████████████ 100%                                 (compass strip)
- DEPTH 42.3 m                                             [crew tags follow
-                                                           the divers]
-                       [item outlines follow the items]
-                            ·  ← aiming dot, gold on a takeable item
-                       "Basketball · $48"  (tag under the dot's item)
-
- [slots] [weight meter] — unchanged, on the ship too
+ ╭──────────────────────────────────────────────────────────────╮
+ │              N · · E · · S   ▲ 047°   ● HOME 23 m             │  ← compass strip on the glass
+ │                                          [crew tags follow    │     under the top rim
+ │          ⌐ ¬                              the divers]         │
+ │          ∟ ┘ ← brackets on every coin in view                 │
+ │                          ·  ← aiming dot, gold on a takeable  │
+ │                     "Coin · $48"  (tag under the dot's coin)  │
+ │  AIR ████████ 100%                                            │
+ │  HP  ████████ 100%       [slots] [weight meter]               │  ← above the nose bridge
+ │  DEPTH 42.3 m        ╭────╮                                   │
+ ╰──────────────────────╯    ╰───────────────────────────────────╯
 ```
 
-- Top-left cluster: AIR and HP bars, DEPTH. Bars are thin (8 px), pale cyan,
-  a red tint below 25 % (both stay full for now).
-- Top-centre: HOME — an arrow that points toward the tube doorway *relative
-  to the view* (up = ahead, rotates as you turn) and the distance in metres.
-  Hidden while inside the car.
-- Top-right: a compass strip, 90° of heading visible, the cardinal letters
-  sliding as you turn.
-- Crew tags: `Name · 12 m` above each other diver's head, projected from the
-  head position, drawn only when the diver is in front of the camera and
+- Bottom-left, inside the rounded corner: AIR and HP bars, DEPTH. Bars are
+  thin (8 px), pale cyan, a red tint below 25 % (both stay full for now).
+- Top-centre, under the rim: a compass strip, 90° of heading visible, the
+  cardinal letters sliding as you turn, the heading in degrees under it.
+  HOME is a gold marker on the strip with `HOME 23 m` beneath (an arrow-head
+  at the strip's edge when the doorway is outside the arc), plus a gold mark
+  on the doorway itself when it is in view. Hidden while inside the car.
+- Crew tags: `Diver N · 12 m` above each other diver's head, projected from
+  the head position, drawn only when the diver is in front of the camera and
   within 40 m; brighter and slightly larger when the dot is on them.
 - Item outlines: four bracket corners around the screen bounds of every
   `CarryableItem` in front of the camera within **12 m** (fog is 15–20 m, so
   the visor confirms what you can nearly see — it does not see through the
-  murk). Pale; the targeted item's brackets turn gold and its tag appears:
-  `Name · $value`, or `Name · $value · too heavy` when the weight rule refuses
-  it, or `Name · $value · needs two hands`.
-- Vignette: a radial darkening from 78 % of the half-diagonal outward, 35 %
-  black at the corners. One texture, one `GUI.DrawTexture`.
+  murk), the 12 nearest at most. Pale; the targeted item's brackets turn gold
+  and its tag appears: `Name · $value` (`$…` until the roll has landed).
+- The slot row and weight meter move up onto the glass, just above the nose
+  bridge, while the visor is on; on the ship they sit along the bottom edge.
 - Everything is `OnGUI` in `PlayerHudUI`, like the rest of the HUD, so one
   file draws the whole surface and the editor test hooks keep reading it.
+  Order: world-anchored marks (brackets, tags, the HOME mark on the doorway),
+  then the mask, then the readouts, dot, prompt and slots — so the frame hides
+  what a frame would hide and the glass shows everything else.
 
-### 3.3 Item values
+### 3.5 The mask (Dan, 16 September 2026, after the first build)
 
-- `ItemValueRange` (`minValue`, `maxValue`, integers, dollars) serialized on
-  `CarryableItem`; the loot manifest (`HQPrototypeLootSetup`) sets it per type:
-  proposal, to confirm with Dan — Basketball 20–60, HeavyBallBlue 120–200,
-  HeavyBallPurple 250–400, HeavyBallBlack 500–800 (the two-handed ones are
-  the "alien artifacts" stand-ins: heavy, valuable, awkward).
+The view is seen through the suit's diving mask: `PlayerVisorMask` is one
+wide lens with rounded corners and a nose bridge rising from the bottom
+centre, described as a signed distance in screen pixels and baked once (at
+half the screen's size, re-baked when the window changes) into a texture
+`PlayerHudUI` stretches over the screen.
+
+- Coverage, "light": the side rim is 5 % of the width, the top and bottom rim
+  6 % of the height, the corner radius 20 % of the height; the bridge rises
+  10 % of the height above the bottom rim and is 22 % of the height wide at
+  its base, with a 3.5 %-of-height fillet where it meets the rim. Fractions of
+  the height keep the lens' look at 16:9 and 21:9; the screen centre is always
+  deep on the glass.
+- Look: a near-black matte rim (94 % opaque), a thin cyan line just onto the
+  frame (1.6 px wide at 1080p) with a soft cyan bloom either side, and the
+  rim's shadow on the glass (30 % black at the edge fading over 60 px). No
+  tint on the glass.
+- The mask is on exactly when the visor is on, the car ride included (the
+  readouts wait for the travel lock to lift, as the dot and prompt do); it
+  draws under the readouts and above the world-anchored marks.
+- On the ship there is no mask and the HUD is as before.
+
+### 3.3 Item values — as built
+
+- `valueMin`/`valueMax` (integers, dollars) serialized on `CarryableItem`;
+  both zero means "not loot" — the HQ balls (Dan: "they should not have a
+  value, they are HQ game only").
+- The loot is **coins in three sizes** (`DiveLootSetup`): small ⌀ 0.16 m,
+  0.4 kg, $10–30; medium ⌀ 0.26 m, 1.5 kg, $40–90; large ⌀ 0.42 m, 5 kg,
+  $150–300. Gold, flat, one-hand, slot-able, throwable. Seven of them lie on
+  the seafloor in a trail from the tube doorway toward the wreck (5–24 m out),
+  spawned by a `LootFixtureSpawner` in `DiveSite01` when the server loads the
+  site — fresh, and re-rolled, every dive.
 - `SyncVar<int> value`, written **once by the server at spawn** from the
   range (`UnityEngine.Random.Range(min, max + 1)`), never re-rolled while the
   item exists. Items the dive site spawns fresh each load roll fresh each dive
@@ -121,8 +166,11 @@ needed by every later feature that says who did what.
 
 | File | Change |
 |---|---|
-| `Player/PlayerHudUI.cs` | The visor layer: bars, depth, compass, home arrow, crew tags, item brackets and tag, vignette; on only in the dive. |
+| `Player/PlayerHudUI.cs` | The visor layer: the mask, bars, depth, compass, HOME, crew tags, item brackets and tag; on only in the dive. |
 | `Player/PlayerVisorMath.cs` (new, pure) | Screen projection helpers, bracket bounds, compass strip offsets, home-arrow angle, bar fill; testable without a scene. |
+| `Player/PlayerVisorMask.cs` (new, pure) | The mask's shape (signed distance), where the readouts sit on the glass, the frame baked to a texture. |
+| `Editor/Prototype/DiveLootSetup.cs` (new) | The coin prefabs (three sizes, gold, box collider, value range, their own slot icons), their placements, the `LootFixtureSpawner` in `DiveSite01`. |
+| `Editor/Prototype/ItemIconGenerator.cs` | Per-prefab framing: the coins are seen from higher up and all framed to the largest, so a small coin looks small in the slot. |
 | `Interaction/CarryableItem.cs` | `value` SyncVar rolled at spawn; `Value`; `ItemValueRange` fields. |
 | `Editor/Prototype/HQPrototypeLootSetup.cs` | Value ranges per manifest entry; validator requires `max ≥ min > 0`. |
 | `Player/HQPlayerController.cs` | Display name, if needed (3.4). |
@@ -132,22 +180,26 @@ needed by every later feature that says who did what.
 
 ## 6. Verification
 
-Pure (`Run visor checks`): bracket bounds for a sphere at several depths and
-edges of the screen; compass offsets at 0/90/359°; home-arrow angle for a
-target behind the camera; bar fill clamping; value ranges valid on every
-manifest entry; layout fits at 16:9 and 21:9.
+Pure (`Run visor checks`): bearings and screen angles; compass offsets at
+0/45/350° and outside the arc; bar fill clamping; projection refuses points
+behind the camera, a box ahead brackets around its centre; the mask is glass
+at the centre and frame at the corners, the rims and the nose bridge, and the
+vitals block, the compass strip and the slot row lie on the glass at 16:9,
+21:9 and 720p; a baked mask is clear at the centre and dark at the corner;
+each coin prefab carries its range, a box collider, its mass and its own
+icon; the basketball carries no value; placements distinct, off the doorway.
 
 Play Mode, in the deck cabin matrix (host + rendering guest):
 
 | Row | Check |
 |---|---|
-| V1 | Visor off on the ship, on the first frame in DiveSite01 (host snapshot and guest snapshot both say so), off again on the deck after the up ride. |
-| V2 | DEPTH readout equals `PlayerSubmersion.DepthMeters` ± 0.1; compass heading equals the camera yaw ± 1°. |
-| V3 | HOME: from 10 m out on the seafloor, the arrow's angle equals the true bearing to the tube doorway ± 3° and the distance ± 0.3 m; hidden inside the car. |
-| V4 | A basketball carried down: the host's tag shows `Basketball · $value`, the guest's snapshot shows the same value for the same item id; the value lies in the manifest range. |
-| V5 | Two items in view: both bracketed; only the one under the dot tagged; an item behind the camera or beyond 12 m: no bracket. |
-| V6 | The guest's copy in view: a crew tag with its name and a distance within 0.3 m of the truth. |
-| Captures | `Logs/visor-arrival.png` (first frame in the car), `Logs/visor-seafloor.png` (home arrow + a bracketed item), `Logs/visor-crew.png`. |
+| V1 | Visor off on the ship, on at the bottom of the down ride (host readout and guest snapshot both say so), off again on the deck after the up ride. |
+| V2 | DEPTH readout equals `PlayerSubmersion.DepthMeters` ± 0.1; compass heading equals the camera yaw ± 1°; air and health read full. |
+| V3 | HOME: hidden inside the car; from 10 m out on the seafloor facing the doorway, the screen angle is under 3° and the distance 10 ± 0.6 m; facing away, ± 180°. |
+| V4 | Seven coins on the seafloor with values in their ranges; standing at Coin 3 with the dot on it, the tag reads `Coin · $value` and it is bracketed; the guest's snapshot lists the same coins with the same values. |
+| V5 | From 27 m out facing away: no brackets; facing back: at least one. |
+| V6 | The guest's copy in view: one crew tag with a distance within 0.3 m of the truth. |
+| Captures | `Logs/visor-seafloor.png` (the mask, the compass with HOME, a gold-bracketed coin with its tag), `Logs/visor-crew.png` (a crew tag). |
 
 ## 7. Build sequence
 
@@ -157,16 +209,54 @@ Play Mode, in the deck cabin matrix (host + rendering guest):
 4. Item brackets + tag; crew tags; rows V4–V6; captures.
 5. Docs; PR (contract → Idan reviews, someone other than Dan merges).
 
-## 8. Open questions for Dan
+## 8. Open questions — answered
 
-- The value ranges in 3.3 — keep, or different numbers?
-- Should the visor stay on inside the deck cabin at the top, until you step
-  out onto the deck (the suit is still on), or switch off at the swap as
-  planned? Planned: off at the swap, so the deck is always "dry".
-- Vignette strength: 35 % at the corners as planned, or fainter?
-- Crew tags always, or only when looked at? Planned: always within 40 m, brighter when looked at.
+- Value ranges: the coins' (3.3), Dan's to retune in `DiveLootSetup`.
+- The visor switches off at the deck swap, so the deck is always "dry".
+- Vignette: replaced by the mask (3.5); no extra darkening.
+- Crew tags: always within 40 m, brighter when looked at.
+- Still open: players' display names on the crew tags (now `Diver N`).
 
-## 9. Risks
+## 9. Test report (16 September 2026, `dan/visor`)
+
+Host in the editor (Unity 6000.6.0f1, 60 Hz tick), guest the Windows Local
+Development build over Tugboat on one machine (UDP 7771), 240 Hz monitor.
+
+- `Run visor checks`: passed — bearings, compass strip, bars, projection and
+  brackets, the mask and its layout at 1920×1080, 2560×1080 and 1280×720, the
+  baked mask's alpha, the coin prefabs (ranges, box collider wrapping the disc,
+  mass, own icon), the basketball valueless, the placements.
+- Dive site validator: passed (one `Dive Loot` spawner, seven entries, coins
+  registered in the spawnable collection, resting on the seafloor).
+- Deck cabin ride matrix: **MATRIX_PASS**, 200 rows. Visor rows: V1 off on the
+  ship / on at the bottom / off again on the deck (host readout and guest
+  snapshot); V2 depth 42.3 m = submersion, heading = camera yaw, air and
+  health 100 %; V3 HOME hidden in the car, 0.0° and 10.0 m from 10 m out
+  facing the doorway, 180.0° facing away; V4 seven coins, every value in its
+  range, the host's tag on Coin 3 `Coin · $72`, the guest's snapshot lists the
+  same seven network ids with the same values, and the guest's own visor tags
+  Coin 3 `Coin · $67` (a later dive's roll) and brackets it; V5 one bracket at
+  Coin 3, none from 27 m out looking away, one looking back down the trail;
+  V6 the host tags the guest's copy at 1.4 m (truth 1.4 m). Guest build during
+  the descent: 240 fps, 0 hitches ≥ 30 ms while the car moved.
+- Player movement and hands matrix (the item and controller changed): **MATRIX_PASS**, 33 rows (M8 flight and the M8b upward throw included).
+- Captures: `Logs/visor-seafloor.png` (the mask, the compass with HOME, the
+  vitals, the slot row above the nose bridge, Coin 3 gold-bracketed under the
+  dot with the grab prompt), `Logs/visor-crew.png` (inside the car, the crew
+  tag row passing).
+
+Found and fixed on the way: the coins were built on Unity's legacy cylinder
+mesh, which is 2 units wide — every coin was twice its designed diameter with
+a box collider over half the disc (now the primitive mesh, scaled from its
+real bounds, with a pure check on the size); a client instantiates the
+server's spawns into the session scene, so the visor's "same scene" filter
+hid every coin from guests (now "not another world's scene"); the dot's
+target was only found while the input gate was open, so a guest with the
+session menu up (as the hook tests keep it) had no tag (the target is a view
+fact now; only presses need the gate); the hook "look" command set the camera
+directly and lost its pitch (it goes through the controller now).
+
+## 10. Risks
 
 - `OnGUI` draws per item per frame; brackets for a dozen items are cheap, a
   hundred would not be — cap the bracketed set at the 12 nearest in view.

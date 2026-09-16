@@ -142,6 +142,8 @@ namespace SunkCost.Editor.Prototype
                         SetEnum(serialized, "grip", (int)entry.Grip, changes);
                         SetEnum(serialized, "useAction", (int)ItemUseAction.Throw, changes);
                         SetObject(serialized, "weightSettings", settings, changes);
+                        // The balls are the HQ game's, not loot: no value, so the visor shows a bare name.
+                        if (serialized.FindProperty("valueMin").intValue != 0 || serialized.FindProperty("valueMax").intValue != 0) { serialized.FindProperty("valueMin").intValue = 0; serialized.FindProperty("valueMax").intValue = 0; changes.Add("no value"); }
                         serialized.ApplyModifiedPropertiesWithoutUndo();
                     }
                     if (created || changes.Count > 0)

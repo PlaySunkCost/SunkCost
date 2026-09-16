@@ -89,6 +89,7 @@ namespace SunkCost.Sites
             Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
             ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings, out float doorwayBearingDeg);
             CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, glassMaterial, wallMaterial, deepLayer, settings);
+            CreateDiveLoot(anchorBottom.position, doorwayBearingDeg, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
 
@@ -332,6 +333,27 @@ namespace SunkCost.Sites
 
         // The elevator descends through open water: no enclosing tube, just a guide
         // cable marking the line of descent between the two anchors.
+        // The coins (docs/VISOR_IMPLEMENTATION_PLAN.md; SunkCost.Editor.Prototype.DiveLootSetup):
+        // a LootFixtureSpawner the server runs when the site loads, so the loot is
+        // fresh — and re-rolled — every dive. Positions run out from the tube's
+        // doorway foot along the doorway bearing.
+        private static void CreateDiveLoot(Vector3 bottomAnchor, float doorwayBearingDeg, DiveSiteSettings settings)
+        {
+            float rad = doorwayBearingDeg * Mathf.Deg2Rad;
+            Vector3 doorwayFoot = bottomAnchor + new Vector3(Mathf.Cos(rad), 0f, Mathf.Sin(rad)) * settings.TubeRadiusMeters;
+            var entries = new System.Collections.Generic.List<SunkCost.Interaction.LootFixtureSpawner.Entry>();
+            foreach (SunkCost.Editor.Prototype.DiveLootSetup.Placement placement in SunkCost.Editor.Prototype.DiveLootSetup.Placements)
+            {
+                SunkCost.Editor.Prototype.DiveLootSetup.CoinType coin = SunkCost.Editor.Prototype.DiveLootSetup.Coin(placement.Coin);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(coin.PrefabPath);
+                if (prefab == null) throw new InvalidOperationException("Coin prefab missing at " + coin.PrefabPath + " (run Apply dive loot setup).");
+                Vector3 position = SunkCost.Editor.Prototype.DiveLootSetup.PlacementPosition(placement, doorwayFoot, doorwayBearingDeg, bottomAnchor.y);
+                entries.Add(new SunkCost.Interaction.LootFixtureSpawner.Entry { Name = placement.Name, Prefab = prefab, Position = position });
+            }
+            GameObject fixture = new(SunkCost.Editor.Prototype.DiveLootSetup.FixtureName);
+            fixture.AddComponent<SunkCost.Interaction.LootFixtureSpawner>().SetEntries(entries.ToArray());
+        }
+
         private static Transform CreateSeafloor(Material floor, Material wall, float depth, int deepLayer, DiveSiteSettings settings)
         {
             GameObject root = new("Seafloor");

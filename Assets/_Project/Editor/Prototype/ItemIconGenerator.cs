@@ -23,7 +23,26 @@ namespace SunkCost.Editor.Prototype
             Debug.Log(GenerateAll());
         }
 
+        // How a prefab is framed in its icon: the camera's elevation and azimuth,
+        // and the radius the picture is fitted to (0 = the prefab's own bounds).
+        // Same-family items share a radius so their sizes read in the slot.
+        public struct Framing
+        {
+            public float RadiusMeters;
+            public float ElevationDeg;
+            public float AzimuthDeg;
+            public static Framing Fit => new() { RadiusMeters = 0f, ElevationDeg = 30f, AzimuthDeg = -35f };
+        }
+
         public static string GenerateAll()
+        {
+            var paths = new List<string>();
+            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { PrefabFolder }))
+                paths.Add(AssetDatabase.GUIDToAssetPath(guid));
+            return Generate(paths);
+        }
+
+        public static string Generate(IEnumerable<string> prefabPaths)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 throw new InvalidOperationException("Exit Play Mode before generating icons.");
@@ -34,22 +53,30 @@ namespace SunkCost.Editor.Prototype
             }
 
             var results = new List<string>();
-            foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { PrefabFolder }))
+            foreach (string path in prefabPaths)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 CarryableItem item = prefab != null ? prefab.GetComponent<CarryableItem>() : null;
                 if (item == null) continue;
-                results.Add(Generate(prefab, item));
+                results.Add(Generate(prefab, item, FramingFor(prefab)));
             }
             AssetDatabase.SaveAssets();
             return results.Count == 0 ? "No CarryableItem prefabs under " + PrefabFolder : string.Join("; ", results);
         }
 
-        private static string Generate(GameObject prefab, CarryableItem item)
+        // The coins: seen from higher up (a flat disc from 30 degrees is a sliver)
+        // and all framed to the largest, so a small coin looks small.
+        private static Framing FramingFor(GameObject prefab)
+        {
+            if (DiveLootSetup.IsCoin(prefab.name))
+                return new Framing { RadiusMeters = DiveLootSetup.IconFrameRadiusMeters, ElevationDeg = 58f, AzimuthDeg = -35f };
+            return Framing.Fit;
+        }
+
+        private static string Generate(GameObject prefab, CarryableItem item, Framing framing)
         {
             string pngPath = IconFolder + "/" + prefab.name + ".png";
-            Texture2D rendered = RenderPreview(prefab) ?? WaitForAssetPreview(prefab);
+            Texture2D rendered = RenderPreview(prefab, framing) ?? WaitForAssetPreview(prefab);
             if (rendered == null) return prefab.name + ": no preview could be rendered";
 
             File.WriteAllBytes(pngPath, rendered.EncodeToPNG());
@@ -77,7 +104,7 @@ namespace SunkCost.Editor.Prototype
 
         // Three-quarter view from 30 degrees above, framed on the renderer bounds,
         // through the scriptable pipeline so URP materials render correctly.
-        private static Texture2D RenderPreview(GameObject prefab)
+        private static Texture2D RenderPreview(GameObject prefab, Framing framing)
         {
             var preview = new PreviewRenderUtility();
             try
@@ -95,8 +122,8 @@ namespace SunkCost.Editor.Prototype
                 GameObject instance = UnityEngine.Object.Instantiate(prefab);
                 preview.AddSingleGO(instance);
                 Bounds bounds = RendererBounds(instance);
-                float radius = Mathf.Max(bounds.extents.magnitude, 0.05f);
-                Vector3 direction = Quaternion.Euler(30f, -35f, 0f) * Vector3.back;
+                float radius = Mathf.Max(framing.RadiusMeters > 0f ? framing.RadiusMeters : bounds.extents.magnitude, 0.05f);
+                Vector3 direction = Quaternion.Euler(framing.ElevationDeg, framing.AzimuthDeg, 0f) * Vector3.back;
                 float distance = radius / Mathf.Sin(preview.camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * 1.1f;
                 preview.camera.transform.position = bounds.center + direction * distance;
                 preview.camera.transform.LookAt(bounds.center);
