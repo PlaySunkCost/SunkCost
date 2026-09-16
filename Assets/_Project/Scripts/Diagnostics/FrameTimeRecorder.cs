@@ -17,7 +17,9 @@ namespace SunkCost.Diagnostics
         public const string ObjectName = "Frame Time Recorder";
         private const int WindowFrames = 600;          // the rolling window the summary describes
         private const float HitchFactor = 2.5f;        // a frame this many times the rolling median...
-        private const float HitchMinimumMs = 16f;      // ...and at least this long counts as a hitch
+        private const float HitchMinimumMs = 30f;      // ...and at least this long counts as a hitch: two 60 Hz frames, the
+                                                       // usual threshold for a stall a player notices; a single 17 ms frame on
+                                                       // a 240 Hz display is one vsync quantum, not a hitch
         private const int KeptHitches = 12;
 
         public struct Hitch
