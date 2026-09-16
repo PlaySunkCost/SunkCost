@@ -1,4 +1,16 @@
-# Sunk Cost — starter repo
+# Sunk Cost
+
+## ⬇️ Play the latest build
+
+[![Latest build](https://img.shields.io/github/v/release/PlaySunkCost/SunkCost?label=latest%20build&style=for-the-badge&color=2ea043)](https://github.com/PlaySunkCost/SunkCost/releases/latest)
+[![Build status](https://img.shields.io/github/actions/workflow/status/PlaySunkCost/SunkCost/build.yml?branch=main&label=main%20build&style=for-the-badge)](https://github.com/PlaySunkCost/SunkCost/actions/workflows/build.yml)
+
+**[Download the newest Windows build →](https://github.com/PlaySunkCost/SunkCost/releases/latest)**
+— extract the zip, run `SunkCostHQ.exe` with Steam running. Every push to `main`
+is built automatically; each release says which pull request it came from.
+Everyone in a room needs the same build.
+
+---
 
 A 1–4 player co-op salvage horror game. You walk the floor of an alien ocean in a
 weighted suit, drag treasure to a glass elevator, and every time it rises it screams
@@ -46,10 +58,7 @@ be read as checklists by other assistants.
 
 ## Start the HQ basketball prototype
 
-**Just want to play the latest build?** Every push to `main` is built for
-Windows automatically: download the newest zip from
-https://github.com/PlaySunkCost/SunkCost/releases/latest, extract it, run
-`SunkCostHQ.exe` with Steam running. Everyone in a room needs the same build.
+Just want to play? See [Play the latest build](#%EF%B8%8F-play-the-latest-build) at the top.
 
 1. Open this repository with Unity `6000.6.0f1`.
 2. Open `Assets/_Project/Scenes/Prototype/Session.unity` and press Play. That
