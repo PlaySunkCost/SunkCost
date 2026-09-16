@@ -6,6 +6,7 @@ name: Windows build
 # Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs), so the build carries
 # the same Steam build-identity manifest a developer's manual build does, stamped
 # with the pushed commit. The ten newest releases are kept; older ones are removed.
+# The zip is also attached to the workflow run as an artifact (90 days).
 # Needs the Unity licence secrets — see docs/WORKFLOW.md#continuous-integration.
 on:
   push:
@@ -115,6 +116,18 @@ jobs:
           test -f "$BUILD_DIR/sunkcost-build.json"
           (cd "$BUILD_DIR" && zip -qr "$GITHUB_WORKSPACE/${{ steps.info.outputs.zip }}" .)
           ls -lh "${{ steps.info.outputs.zip }}"
+
+      # The same zip on the workflow run itself (Actions → the run → Artifacts),
+      # so every build stays downloadable from its run for 90 days even after
+      # the release pruning below has retired it.
+      - name: Attach the zip to this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.info.outputs.zip }}
+          path: ${{ steps.info.outputs.zip }}
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
