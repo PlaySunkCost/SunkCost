@@ -107,14 +107,25 @@ calendar commitment or a change to the launch scope in `docs/DESIGN.md`.
 
 ## Continuous integration
 
-`.github/workflows/build.yml` builds the HQ prototype for Windows and Linux on
-every push/PR to `main`, calling the same
-`Sunk Cost/Prototype/Build Windows Development` /
-`Sunk Cost/Prototype/Build Linux Development` entry points a developer would use
-locally (`Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs`), so CI produces
-the same identity-stamped build a manual build does. It runs on GitHub-hosted
-`ubuntu-latest` runners via `game-ci/unity-builder`, which cross-builds both
-platforms from Linux-based Unity Editor images.
+**Every push to `main` produces a Windows build you can download from the
+Releases page: https://github.com/PlaySunkCost/SunkCost/releases/latest.**
+Download the `SunkCost-Windows-build<N>-<commit>.zip`, extract it anywhere and
+run `SunkCostHQ.exe` with Steam running. Each release is named after the pull
+request that was merged and says which commit it was built from; the ten newest
+are kept. The same build can also be started by hand from the Actions tab
+(**Windows build → Run workflow**).
+
+`.github/workflows/build.yml` does this on a GitHub-hosted `ubuntu-latest`
+runner through `game-ci/unity-builder`, which cross-builds Windows from a
+Linux Unity Editor image. It calls `HQPrototypeBuild.BuildWindowsCI`
+(`Assets/_Project/Editor/Prototype/HQPrototypeBuild.cs`), the CI twin of
+**Sunk Cost/Prototype/Build Windows Development**: the same identity-stamped
+shared Steam build, with the pushed commit as its revision, so everyone on the
+same release can join each other. Unity rewrites `Packages/manifest.json` and
+`packages-lock.json` when it imports on the runner; `BuildWindowsCI` tolerates
+exactly that and refuses any other difference from the pushed commit. The
+Library cache is saved only after a successful build. Documentation-only pushes
+do not build.
 
 This needs a one-time Unity license secret, since headless Unity requires
 activation. GameCI's `unity-request-activation-file` action is retired; get the
