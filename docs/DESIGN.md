@@ -307,8 +307,19 @@ scatters the four slots and the hands, hides you, and takes you out of every
 living count: the dead never block the deck button, the car's return or End day.
 When the last living diver is up the dead are carried to the ship unseen; **End
 day revives them on the deck** with the base kit — next to their body if it came
-up (the body disappears). Spectating while dead and the TV are the next cards
-(docs/SPECTATING_IMPLEMENTATION_PLAN.md).
+up (the body disappears).
+
+**Built 17 September 2026 (Dan, the second spectating card — dead spectating):**
+you keep your own camera for about a second (you see yourself fall), a short fade,
+then you are on the **nearest living player's eyes** — their screen exactly, visor
+and all, with `SPECTATING <name>` at the top and `left click — next player` at the
+bottom. **Left click** cycles the living players, below or above water; a target
+who dies or leaves is replaced by the nearest living one; nobody living left is
+**NO SIGNAL** over your body. You hear what your target hears — every voice at
+their distances — **plus every dead player anywhere**; the dead talk only to the
+dead, the living never hear them. A living player being watched sees a red
+**ON AIR · N watching** mark. Spectating lasts until End day, which revives you as
+above. The TV is the next card (docs/SPECTATING_IMPLEMENTATION_PLAN.md).
 
 ---
 

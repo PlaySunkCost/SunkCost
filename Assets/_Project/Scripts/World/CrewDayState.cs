@@ -29,6 +29,15 @@ namespace SunkCost.World
         public bool Lost;   // short at payday: the run is over, everything reset
     }
 
+    // Who a dead player watches (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 2):
+    // server-written, one entry per dead player; Target is a living client id or
+    // -1 when nobody living is left. Watcher counts are derived from the list.
+    public struct SpectateEntry
+    {
+        public int Dead;
+        public int Target;
+    }
+
     // The one server-owned object that knows where the crew is. It is a global
     // NetworkObject (prefab flag "Is Global"), so it lives in DontDestroyOnLoad,
     // has no observer conditions and survives every world scene change
@@ -77,6 +86,8 @@ namespace SunkCost.World
         // Dead this day (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 1): never
         // below, never a rider, never waited for; revived at End day.
         private readonly SyncList<int> dead = new();
+        // Who each dead player watches (card 2); WorldSceneFlow is its only writer.
+        private readonly SyncList<SpectateEntry> spectate = new();
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -111,6 +122,20 @@ namespace SunkCost.World
         public IReadOnlyList<int> Below => below;
         public IReadOnlyList<int> Dead => dead;
         public bool IsDead(int clientId) => dead.Contains(clientId);
+        public IReadOnlyList<SpectateEntry> Spectate => spectate;
+        // The living player a dead one watches; -1 when none (alive, or nobody living left).
+        public int SpectateTargetOf(int clientId)
+        {
+            foreach (SpectateEntry e in spectate) if (e.Dead == clientId) return e.Target;
+            return -1;
+        }
+        // How many dead players watch this one (the TV adds its own in card 3).
+        public int WatchersOf(int clientId)
+        {
+            int count = 0;
+            foreach (SpectateEntry e in spectate) if (e.Target == clientId && clientId >= 0) count++;
+            return count;
+        }
         public bool IsRider(int clientId) => riders.Contains(clientId);
         public bool IsBelow(int clientId) => below.Contains(clientId);
         public bool TryGetPlacement(int clientId, out RiderPlacement placement)
@@ -123,7 +148,13 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}]";
+        private string SpectateText()
+        {
+            var parts = new List<string>();
+            foreach (SpectateEntry e in spectate) parts.Add(e.Dead + ">" + e.Target);
+            return string.Join(",", parts);
+        }
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
@@ -366,6 +397,27 @@ namespace SunkCost.World
             for (int i = placements.Count - 1; i >= 0; i--) if (placements[i].ClientId == clientId) placements.RemoveAt(i);
             below.Remove(clientId);
             dead.Remove(clientId);
+            ServerClearSpectate(clientId);
+        }
+
+        // ---- spectating (card 2) --------------------------------------------------
+
+        [Server]
+        public void ServerSetSpectateTarget(int deadId, int target)
+        {
+            for (int i = 0; i < spectate.Count; i++)
+            {
+                if (spectate[i].Dead != deadId) continue;
+                if (spectate[i].Target != target) spectate[i] = new SpectateEntry { Dead = deadId, Target = target };
+                return;
+            }
+            spectate.Add(new SpectateEntry { Dead = deadId, Target = target });
+        }
+
+        [Server]
+        public void ServerClearSpectate(int deadId)
+        {
+            for (int i = spectate.Count - 1; i >= 0; i--) if (spectate[i].Dead == deadId) spectate.RemoveAt(i);
         }
 
         // A player died: out of the living lists, into the dead. Living now means
@@ -380,7 +432,11 @@ namespace SunkCost.World
         }
 
         [Server]
-        public void ServerRevive(int clientId) => dead.Remove(clientId);
+        public void ServerRevive(int clientId)
+        {
+            dead.Remove(clientId);
+            ServerClearSpectate(clientId);
+        }
 
         public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || cabinRide.Value.Active;
         public bool RefusesJoinsForTravel => Travelling;

@@ -100,6 +100,7 @@ namespace SunkCost.Net
                 case "throw": player.Inventory.RequestUse(command.aim); break;
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
                 case "die": player.RequestDebugDeath(); break;
+                case "spectate_next": player.RequestNextSpectate(); break; // left click while dead (card 2)
                 case "spawn_light": return SpawnLightItems(Mathf.Clamp(command.slot, 1, 4));
                 // Server only (the monitor's request until the monitor card): the
                 // world name rides in the item field.
@@ -250,8 +251,8 @@ namespace SunkCost.Net
             SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
             SunkCost.Player.PlayerHudUI hud = local != null ? local.GetComponent<SunkCost.Player.PlayerHudUI>() : null;
             var ci = System.Globalization.CultureInfo.InvariantCulture;
-            string visor = hud == null ? "visor=none" : string.Format(ci, "visor={0}; home={1}/{2:0.0}; brackets={3}; tag={4}; tagValue={5}; crew={6}",
-                hud.Visor.On ? "on" : "off", hud.Visor.HomeShown ? "shown" : "hidden", hud.Visor.HomeDistance, hud.Visor.BracketCount, hud.Visor.TargetTag, hud.Visor.TargetValue, hud.Visor.CrewTagCount);
+            string visor = hud == null ? "visor=none" : string.Format(ci, "visor={0}; home={1}/{2:0.0}; brackets={3}; tag={4}; tagValue={5}; crew={6}; spectatingName={7}; noSignal={8}; onAir={9}",
+                hud.Visor.On ? "on" : "off", hud.Visor.HomeShown ? "shown" : "hidden", hud.Visor.HomeDistance, hud.Visor.BracketCount, hud.Visor.TargetTag, hud.Visor.TargetValue, hud.Visor.CrewTagCount, hud.Visor.SpectatingName, hud.Visor.NoSignal, hud.Visor.OnAirCount);
             var coins = new System.Collections.Generic.List<string>();
             foreach (SunkCost.Interaction.CarryableItem item in FindObjectsByType<SunkCost.Interaction.CarryableItem>(FindObjectsSortMode.None))
                 if (item.HasValue) coins.Add("#" + item.ObjectId.ToString(ci) + ":" + item.Value.ToString(ci));
@@ -276,7 +277,7 @@ namespace SunkCost.Net
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
                 var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
                 SunkCost.Player.PlayerIdentity identity = player.GetComponent<SunkCost.Player.PlayerIdentity>();
-                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; dead={(pc != null && pc.IsDead)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
+                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; dead={(pc != null && pc.IsDead)}; spectating={(day == null ? -1 : day.SpectateTargetOf(player.OwnerId))}; watchers={(day == null ? 0 : day.WatchersOf(player.OwnerId))}; spectatorActive={(pc != null && pc.Spectator != null && pc.Spectator.Active)}; spectatorTarget={(pc == null || pc.Spectator == null || pc.Spectator.Target == null ? -1 : pc.Spectator.Target.OwnerId)}; camPos={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.position)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {

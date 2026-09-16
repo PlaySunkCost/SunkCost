@@ -14,7 +14,7 @@ namespace SunkCost.Net
     {
         public const string ManifestFileName = "sunkcost-build.json";
         public const string Project = "sunkcost-hq";
-        public const int Protocol = 2;
+        public const int Protocol = 3; // 3: voice frames carry a route byte (spectating card 2)
         public const int MaxProjectLength = 32;
         public const int MaxBuildLength = 64;
         public const string LocalDevPrefix = "local-dev:";

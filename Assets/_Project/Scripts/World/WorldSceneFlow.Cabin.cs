@@ -90,7 +90,7 @@ namespace SunkCost.World
         private void Update()
         {
             if (dayState == null || networkManager == null) return;
-            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerSumBox(); }
+            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerSumBox(); ServerTickSpectators(); }
             DriveCar();
             if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
@@ -675,7 +675,7 @@ namespace SunkCost.World
             if (!othersBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle); // the last living one up: the dive is done
             // The dead in the site ride to the ship first, hidden; their clients join the unload.
             if (!othersBelow) yield return ServerMoveDeadToShip();
-            NetworkConnection[] unloaders = SiteUnloaders(ActiveCohort());
+            NetworkConnection[] unloaders = SiteUnloaders(ActiveCohort(), closing: !othersBelow);
             if (conns.Count > 0 || unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
             if (!othersBelow) cachedCar = null;
 

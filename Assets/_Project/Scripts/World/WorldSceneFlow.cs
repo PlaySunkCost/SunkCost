@@ -463,6 +463,7 @@ namespace SunkCost.World
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             cohort.Remove(conn.ClientId);
             prepared.Remove(conn.ClientId); black.Remove(conn.ClientId); arrived.Remove(conn.ClientId);
+            watching.Remove(conn.ClientId);
             if (dayState != null && networkManager.IsServerStarted)
             {
                 bool wasBelow = dayState.IsBelow(conn.ClientId);

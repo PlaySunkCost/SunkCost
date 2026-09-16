@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using SunkCost.Audio;
 using SunkCost.Diving;
 using SunkCost.Interaction;
 using SunkCost.Player;
@@ -16,20 +17,26 @@ using H = SunkCost.Editor.Prototype.HQPrototypeTestHooks;
 namespace SunkCost.Editor.Prototype
 {
     // The Play Mode rows of docs/SPECTATING_IMPLEMENTATION_PLAN.md §6, as the host
-    // with one guest build. Card 1 (death-minimum): K on deck does nothing; K
-    // below kills — body where you stood, slots scattered, Dead holds you, out of
-    // Below, the dive done, the site gone with the dead carried to the ship; End
-    // day revives on deck; a guest's body carried up revives its owner next to it.
+    // with one guest build (D rows) and then two (S rows). Card 1 (death-minimum):
+    // K on deck does nothing; K below kills — body where you stood, slots
+    // scattered, Dead holds you, out of Below, the dive done, the site gone with
+    // the dead carried to the ship; End day revives on deck; a guest's body
+    // carried up revives its owner next to it. Card 2 (dead spectating): a dead
+    // guest watches the nearest living player, left click cycles, the watched
+    // player reads ON AIR, the dead hear through their target and are never heard
+    // by the living, a dead diver watching the deck holds both worlds and drops
+    // the extra one when its target changes or it is carried up; End day ends it.
     // Log: Temp/spectate-matrix.log. Started by CameraClearanceMatrixDriver.Start("spectate").
     public static class SpectateRuntimeChecks
     {
         private const string Log = "Temp/spectate-matrix.log";
         private const string GuestDir = "Temp/spectate-guest";
+        private const string GuestDirB = "Temp/spectate-guest-b";
         private const string BuildExe = "Builds/HQPrototypeLocal/SunkCostHQ.exe";
 
         private static IEnumerator steps;
         private static readonly Stack<IEnumerator> stack = new();
-        private static Process guest;
+        private static Process guest, guestB;
         private static int guestCommand = 700;
         private static string lastReply = string.Empty;
         public static string Status { get; private set; } = "Not run";
@@ -75,7 +82,8 @@ namespace SunkCost.Editor.Prototype
             File.AppendAllText(Log, Status + "\n");
             if (Status == "MATRIX_PASS") Debug.Log("Spectate matrix: MATRIX_PASS"); else Debug.LogError("Spectate matrix: " + Status);
             try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
-            guest = null;
+            try { if (guestB != null && !guestB.HasExited) guestB.Kill(); } catch (Exception) { }
+            guest = null; guestB = null;
             steps = null;
             stack.Clear();
             EditorApplication.update -= Tick;
@@ -102,25 +110,27 @@ namespace SunkCost.Editor.Prototype
             while (Time.unscaledTime < until) yield return null;
         }
 
-        private static Process LaunchGuest()
+        // Each guest build has its own command directory; the command ids are one
+        // rising sequence for both (each peer only needs its own to rise).
+        private static Process LaunchGuest(string dir = GuestDir)
         {
-            Directory.CreateDirectory(GuestDir);
+            Directory.CreateDirectory(dir);
             foreach (string stale in new[] { "command.json", "reply.txt" })
-                if (File.Exists(Path.Combine(GuestDir, stale))) File.Delete(Path.Combine(GuestDir, stale));
+                if (File.Exists(Path.Combine(dir, stale))) File.Delete(Path.Combine(dir, stale));
             var tugboat = UnityEngine.Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
             string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
             var info = new ProcessStartInfo(Path.GetFullPath(BuildExe),
-                "-screen-width 960 -screen-height 540 -screen-fullscreen 0 -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
+                "-screen-width 960 -screen-height 540 -screen-fullscreen 0 -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(dir) + "\" -logFile \"" + Path.GetFullPath(dir + "/player.log") + "\"")
             { UseShellExecute = false, CreateNoWindow = true };
             return Process.Start(info);
         }
-        private static IEnumerator Send(string json)
+        private static IEnumerator Send(string json, string dir = GuestDir)
         {
             string text = json.Replace("{id}", (++guestCommand).ToString());
             for (int attempt = 0; ; attempt++)
             {
                 bool written = false;
-                try { File.WriteAllText(Path.Combine(GuestDir, "command.json"), text); written = true; }
+                try { File.WriteAllText(Path.Combine(dir, "command.json"), text); written = true; }
                 catch (IOException) when (attempt < 20) { }
                 if (written) break;
                 yield return null;
@@ -128,27 +138,58 @@ namespace SunkCost.Editor.Prototype
             float deadline = Time.unscaledTime + 10f;
             while (Time.unscaledTime < deadline)
             {
-                string reply = Reply();
+                string reply = Reply(dir);
                 if (reply.StartsWith("id=" + guestCommand + ";")) { lastReply = reply; yield break; }
                 yield return null;
             }
-            throw new Exception("guest did not answer command " + guestCommand + ": " + json);
+            throw new Exception("guest (" + dir + ") did not answer command " + guestCommand + ": " + json);
         }
-        private static string Reply()
+        private static string Reply(string dir)
         {
-            try { string p = Path.Combine(GuestDir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
+            try { string p = Path.Combine(dir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
             catch (IOException) { return string.Empty; }
         }
-        private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label)
+        private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label, string dir = GuestDir)
         {
             float deadline = Time.unscaledTime + seconds;
             while (Time.unscaledTime < deadline)
             {
-                yield return Send("{\"id\":{id},\"action\":\"snapshot\"}");
+                yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", dir);
                 if (predicate(lastReply)) { Check(true, label); yield break; }
                 yield return Wait(0.5f);
             }
             throw new Exception(label + "\n" + lastReply);
+        }
+        // Snapshot readers: the scenes a guest holds, its voice counters, a player line's camera.
+        private static bool Loaded(string reply, string scene)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(reply, @"loaded=([^;]*);");
+            return m.Success && Array.IndexOf(m.Groups[1].Value.Split('+'), scene) >= 0;
+        }
+        private static uint CounterOf(string reply, string key)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(reply, key + @"=(\d+)");
+            return m.Success ? uint.Parse(m.Groups[1].Value) : 0;
+        }
+        private static Vector3? CamPosOf(string playerLine)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(playerLine, @"camPos=\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)");
+            if (!m.Success) return null;
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            return new Vector3(float.Parse(m.Groups[1].Value, ci), float.Parse(m.Groups[2].Value, ci), float.Parse(m.Groups[3].Value, ci));
+        }
+        private static List<int> OtherIds()
+        {
+            var ids = new List<int>();
+            foreach (HQPlayerController p in UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude))
+                if (!p.IsOwner && p.IsSpawned) ids.Add(p.OwnerId);
+            ids.Sort();
+            return ids;
+        }
+        private static string NameOf(HQPlayerController player)
+        {
+            PlayerIdentity identity = player.GetComponent<PlayerIdentity>();
+            return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(player.OwnerId);
         }
         private static string GuestPlayerLine(string reply, int ownerId)
         {
@@ -274,6 +315,9 @@ namespace SunkCost.Editor.Prototype
             Check(Vector3.Distance(body.transform.position, deathSpot) < 1.5f, $"D1 the body lies where the host died ({Vector3.Distance(body.transform.position, deathSpot):0.0} m)");
             Check(!host.Controller.enabled, "D1 the dead host's capsule is off");
             yield return Expect(() => Day.Phase == DayPhase.AtSea && Day.DiveDone, 5f, () => $"D1 nobody living below: the dive is done (phase={Day.Phase} diveDone={Day.DiveDone})");
+            PlayerHudUI hostHud = host.GetComponent<PlayerHudUI>();
+            yield return Expect(() => host.Spectator != null && host.Spectator.Active && host.Spectator.Target == null, 4f, () => "D1 nobody living to watch: the spectator view is on with no target (after the second of own camera)");
+            yield return Expect(() => hostHud.Visor.NoSignal && Day.SpectateTargetOf(host.OwnerId) < 0, 2f, () => "D1 the screen says NO SIGNAL"); // the HUD reads the view a frame later
             Check(H.PromptText().Contains("DEAD") || true, "D1 prompt while dead: " + H.PromptText());
             yield return Expect(() => WorldSceneFlow.FindCar() == null, 60f, () => "D1 the site unloaded with the dead carried out");
             yield return Expect(() => host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 10f, () => "D1 the dead host's object is on the ship: " + host.gameObject.scene.name);
@@ -286,6 +330,7 @@ namespace SunkCost.Editor.Prototype
             Check(flow.ServerEndDay(host.Owner, out string endWhy), "D2 End day accepted: " + endWhy);
             yield return Expect(() => !host.IsDead && Day.Dead.Count == 0, 5f, () => "D2 the host is alive again");
             yield return Wait(0.5f);
+            Check(host.Spectator != null && !host.Spectator.Active && !hostHud.Visor.NoSignal, "D2 the spectator view ended with the revival");
             Check(host.Controller.enabled && sea.IsAboard(host.transform.position), "D2 standing on the deck with the capsule on: " + sea.ToShipLocal(host.transform.position).ToString("F1"));
             Check(host.Inventory.Slots.FirstFree() == 0 && host.Inventory.HeldItem == null, "D2 base kit: nothing carried");
             Check(Day.Day == 2 && !Day.DiveDone, "D2 day 2");
@@ -354,7 +399,115 @@ namespace SunkCost.Editor.Prototype
             Check(!RenderersOff(remote), "D3 the guest's copy is visible again");
             Check(Day.Day == 3 && !Day.DiveDone, "D3 day 3");
 
+            // ---- card 2: dead spectating (docs/SPECTATING_IMPLEMENTATION_PLAN.md §6) ----
+            Heading("S0 — a second guest joins; the cycle is put back to day 1 for the rows below");
+            Day.ServerForceCycleForChecks(1, false);
+            guestB = LaunchGuest(GuestDirB);
+            yield return Expect(() => OtherIds().Count == 2, 40f, () => "S0 second guest player spawned: " + string.Join(",", OtherIds()));
+            int idA = guestId;
+            int idB = OtherIds().Find(i => i != idA);
+            HQPlayerController remoteA = PlayerWithId(idA), remoteB = PlayerWithId(idB);
+            yield return GuestEventually(r => GuestPlayerLine(r, idB).Contains("local=True") && r.Contains("world=Sea"), 20f, "S0 guest B joined at sea", GuestDirB);
+            Check(remoteA != null && remoteB != null && idA != idB, $"S0 guests A={idA} B={idB}");
+
+            Heading("S1 — guest A dies below with two living: it watches the nearest, the host reads ON AIR, left click cycles");
+            H.MoveLocalIntoDeckCabin("Sea");
+            float cabinFloor = DeckCabinBuilder.FloorThicknessMeters + 0.05f;
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position + sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}", GuestDirB);
+            yield return Wait(0.5f);
+            yield return Descend(1);
+            Check(Day.Below.Count == 3, "S1 three below");
+            yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "S1 guest A is in the site");
+            yield return GuestEventually(r => GuestPlayerLine(r, idB).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "S1 guest B is in the site", GuestDirB);
+            car = WorldSceneFlow.FindCar();
+            doorway = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+            Vector3 side = Vector3.Cross(Vector3.up, doorway);
+            Vector3 spotA = car.transform.position + doorway * 4f + side * 1.5f + Vector3.up * 0.05f;
+            Vector3 spotB = car.transform.position + doorway * 9f + Vector3.up * 0.05f;
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(spotA) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(spotB) + "}", GuestDirB);
+            host.TeleportLocal(car.transform.position + doorway * 4f - side * 0.5f, host.Yaw); yield return Wait(0.8f);
+            yield return Send("{\"id\":{id},\"action\":\"die\"}");
+            yield return Expect(() => Day.IsDead(idA), 5f, () => "S1 guest A died below");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S1 A watches the nearest living player, the host (target " + Day.SpectateTargetOf(idA) + ")");
+            yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "S1 the host's visor reads ON AIR · 1 watching (" + hostHud.Visor.OnAirCount + ")");
+            yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("spectatorActive=True") && GuestPlayerLine(r, idA).Contains("spectatorTarget=" + host.OwnerId + ";"), 6f, "S1 A's spectator view is on the host (after its second of own camera and the fade)");
+            yield return GuestEventually(r => r.Contains("spectatingName=" + NameOf(host) + ";"), 4f, "S1 A's screen says SPECTATING " + NameOf(host));
+            yield return GuestEventually(r => CamPosOf(GuestPlayerLine(r, idA)) is Vector3 p && Vector3.Distance(p, host.EyePosition) < 1.5f, 4f, "S1 A's camera sits on the host's eyes");
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == idB, 3f, () => "S1 left click: A now watches guest B (target " + Day.SpectateTargetOf(idA) + ")");
+            yield return Expect(() => hostHud.Visor.OnAirCount == 0 && Day.WatchersOf(idB) == 1, 3f, () => "S1 the host is off air, B has one watcher");
+            yield return GuestEventually(r => r.Contains("onAir=1"), 4f, "S1 B's visor reads ON AIR · 1 watching", GuestDirB);
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S1 left click again wraps back to the host");
+
+            Heading("S2 — dead voice: A hears the living through its target; the living never hear A");
+            ProximityVoice voice = UnityEngine.Object.FindAnyObjectByType<ProximityVoice>();
+            Check(voice != null, "S2 the host has a voice service");
+            voice.StartLocalTestTone();
+            yield return Expect(() => voice.SentFrames > 20, 8f, () => "S2 the host's tone is sending (" + voice.SentFrames + ")");
+            yield return GuestEventually(r => CounterOf(r, "received") > 20 && r.Contains("route=1"), 8f, "S2 dead A receives the host's frames on the Spectate route");
+            yield return GuestEventually(r => CounterOf(r, "received") > 20 && r.Contains("route=0"), 8f, "S2 living B, nearby, receives them on the Direct route", GuestDirB);
+            voice.SetMicrophone(false);
+            yield return Wait(0.6f);
+            uint hostReceived = voice.ReceivedFrames;
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            uint bReceived = CounterOf(lastReply, "received");
+            yield return Send("{\"id\":{id},\"action\":\"voice_tone\"}");
+            yield return GuestEventually(r => CounterOf(r, "sent") > 20, 8f, "S2 dead A's tone is sending");
+            yield return Wait(1f);
+            Check(voice.ReceivedFrames == hostReceived, $"S2 the living host received none of A's frames ({voice.ReceivedFrames - hostReceived})");
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            Check(CounterOf(lastReply, "received") == bReceived, $"S2 living B received none of A's frames ({CounterOf(lastReply, "received") - bReceived})");
+            yield return Send("{\"id\":{id},\"action\":\"voice_off\"}");
+
+            Heading("S3 — dual world: the host surfaces alone; dead A below watches the deck and back; B's surfacing carries A up");
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == idB, 3f, () => "S3 A watches B before the host leaves");
+            yield return Surface();
+            Check(Day.Below.Count == 1 && Day.IsBelow(idB) && Day.Phase == DayPhase.DiveInProgress, "S3 B still below: the dive goes on (below=" + Day.Below.Count + ")");
+            Check(WorldSceneFlow.FindCar() != null, "S3 the site stays loaded on the host");
+            yield return GuestEventually(r => Loaded(r, "DiveSite01") && !Loaded(r, "ShipAtSea") && GuestPlayerLine(r, idA).Contains("scene=DiveSite01"), 10f, "S3 A (dead, below, watching B) holds only the site");
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S3 A now watches the host on the deck");
+            yield return GuestEventually(r => Loaded(r, "DiveSite01") && Loaded(r, "ShipAtSea") && r.Contains("active=DiveSite01;"), 15f, "S3 A's client loaded the ship as well (dual world), its own world still active");
+            Check(WorldSceneFlow.Instance.IsWatching(idA, out WorldId watched) && watched == WorldId.Sea, "S3 the server tracks A watching the ship");
+            yield return GuestEventually(r => CamPosOf(GuestPlayerLine(r, idA)) is Vector3 p && Vector3.Distance(p, host.EyePosition) < 1.5f, 6f, "S3 A's camera is on the host's eyes on the deck");
+            yield return GuestEventually(r => r.Contains("visor=off;") && r.Contains("spectatingName=" + NameOf(host) + ";"), 4f, "S3 A's screen is the host's deck view: no visor, SPECTATING " + NameOf(host));
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == idB, 3f, () => "S3 A back to B");
+            yield return GuestEventually(r => Loaded(r, "DiveSite01") && !Loaded(r, "ShipAtSea"), 15f, "S3 the ship was dropped from A's client again");
+            Check(!WorldSceneFlow.Instance.IsWatching(idA, out _), "S3 the server tracks no watch for A");
+            yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S3 A on the host again");
+            yield return GuestEventually(r => Loaded(r, "DiveSite01") && Loaded(r, "ShipAtSea"), 15f, "S3 dual world again");
+            // B surfaces: the last living diver up — the site closes with A carried to the ship.
+            // The car went back down for B after the host's ride; it must be at the bottom first.
+            yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "S3 the car came back down for B (" + Day.Elevator.State + ")");
+            yield return Wait(1f);
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * 0.15f) + "}", GuestDirB);
+            yield return Wait(0.5f);
+            int rideSerial = Day.CabinRide.Serial;
+            yield return Send("{\"id\":{id},\"action\":\"car\"}", GuestDirB);
+            yield return Expect(() => Day.CabinRide.Serial > rideSerial, 5f, () => "S3 B's car press was taken");
+            yield return Expect(() => !Day.CabinRide.Active && Day.CabinRide.Serial > rideSerial, 70f, () => "S3 B's ride up completed");
+            yield return Expect(() => Day.Below.Count == 0 && Day.DiveDone, 5f, () => "S3 nobody below: dive done");
+            yield return Expect(() => WorldSceneFlow.FindCar() == null, 20f, () => "S3 the site unloaded");
+            yield return Expect(() => remoteA != null && remoteA.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 10f, () => "S3 A's object was carried to the ship");
+            yield return GuestEventually(r => Loaded(r, "ShipAtSea") && !Loaded(r, "DiveSite01") && GuestPlayerLine(r, idA).Contains("scene=ShipAtSea") && GuestPlayerLine(r, idA).Contains("dead=True"), 20f, "S3 A holds only the ship now, dead on it");
+            Check(!WorldSceneFlow.Instance.IsWatching(idA, out _), "S3 the server tracks no watch for A after the move");
+            yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId || Day.SpectateTargetOf(idA) == idB, 3f, () => "S3 A still watches a living player (" + Day.SpectateTargetOf(idA) + ")");
+
+            Heading("S4 — End day: A revives, watches nobody, nobody is on air");
+            Check(flow.ServerEndDay(host.Owner, out string endWhy3), "S4 End day accepted: " + endWhy3);
+            yield return Expect(() => !Day.IsDead(idA) && Day.SpectateTargetOf(idA) < 0 && Day.Spectate.Count == 0, 5f, () => "S4 A is alive and the spectate list is empty");
+            yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("dead=False") && GuestPlayerLine(r, idA).Contains("spectatorActive=False") && Loaded(r, "ShipAtSea") && !Loaded(r, "DiveSite01"), 10f, "S4 A's spectator view ended; one world");
+            Check(hostHud.Visor.OnAirCount == 0 && Day.WatchersOf(idB) == 0, "S4 nobody is on air");
+            Check(Day.Day == 2, "S4 day 2");
+
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");
+            yield return Send("{\"id\":{id},\"action\":\"leave\"}", GuestDirB);
             Say("done");
         }
     }
