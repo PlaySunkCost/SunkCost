@@ -12,8 +12,9 @@ namespace SunkCost.Audio
         private readonly byte[][] packets = new byte[16][];
         private readonly int[] lengths = new int[16];
         private readonly ushort[] sequences = new ushort[16];
+        // Power-of-two capacity keeps masking valid when long sessions wrap signed counters.
         private readonly float[] ring = new float[16384];
-        private int read, write, lastArrival;
+        private int read, write, lastArrival, discard;
         private bool haveSequence;
         private ushort expected;
         private volatile bool running = true;
@@ -22,6 +23,8 @@ namespace SunkCost.Audio
         private AudioClip clip;
         public int Decoded { get; private set; }
         public int Concealed { get; private set; }
+        public float Gain => source != null ? source.volume : 0;
+        public float Pan => source != null ? source.panStereo : 0;
         public VoicePlayback(GameObject owner, AudioDeviceService devices)
         {
             for (int i = 0; i < packets.Length; i++) packets[i] = new byte[400];
@@ -32,6 +35,7 @@ namespace SunkCost.Audio
         }
         public void RecreateClip()
         {
+            Volatile.Write(ref discard, 1);
             source.Stop(); if (clip != null) UnityEngine.Object.Destroy(clip);
             clip = AudioClip.Create("Live crew voice", 48000, 1, 48000, true, Read);
             source.clip = clip; source.Play();
@@ -44,7 +48,7 @@ namespace SunkCost.Audio
             {
                 int now = Environment.TickCount;
                 if (!haveSequence || unchecked(now - lastArrival) > 200)
-                { Array.Clear(lengths, 0, lengths.Length); expected = sequence; haveSequence = true; }
+                { Array.Clear(lengths, 0, lengths.Length); expected = sequence; haveSequence = true; Volatile.Write(ref discard, 1); }
                 int delta = (short)(sequence - expected);
                 if (delta < 0) return;
                 if (delta >= 10) { Array.Clear(lengths, 0, lengths.Length); expected = sequence; }
@@ -85,7 +89,7 @@ namespace SunkCost.Audio
                     if (count != 960) Array.Clear(pcm, 0, pcm.Length);
                     if (size == 0) Concealed++; else Decoded++;
                     int w = write;
-                    for (int i = 0; i < 960; i++) ring[(w + i) % ring.Length] = pcm[i];
+                    for (int i = 0; i < 960; i++) ring[unchecked(w + i) & (ring.Length - 1)] = pcm[i];
                     Volatile.Write(ref write, w + 960);
                 }
             }
@@ -93,8 +97,11 @@ namespace SunkCost.Audio
         }
         private void Read(float[] data)
         {
+            // Only the audio consumer advances read; discard stale PCM after silence
+            // even if Unity virtualized the inaudible source and stopped its callbacks.
+            if (Interlocked.Exchange(ref discard, 0) != 0) Volatile.Write(ref read, Volatile.Read(ref write));
             int r = read, count = Math.Min(data.Length, Volatile.Read(ref write) - r);
-            for (int i = 0; i < count; i++) data[i] = ring[(r + i) % ring.Length];
+            for (int i = 0; i < count; i++) data[i] = ring[unchecked(r + i) & (ring.Length - 1)];
             Array.Clear(data, count, data.Length - count); Volatile.Write(ref read, r + count);
         }
         public void Dispose()

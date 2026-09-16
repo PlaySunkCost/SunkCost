@@ -22,7 +22,7 @@
   scenes and contradictory membership deny delivery. Travel invalidates the
   stream and creates a fresh generation after arrival while retaining the user's
   requested mic state. Join/rejoin/re-host always reset that state to OFF.
-- The implemented cabin prototype has no death/surfaced day state. Add its
+- Day/payday and surface/Below state exist; player death does not. Add death's
   authoritative cohorts to `ProximityVoice.WorldOf` before adding spectator
   voice; the dead/surfaced/diver design elsewhere in this contract is unchanged.
 - Decoder reorder buffering starts at 60 ms; packet/capture queues are bounded,

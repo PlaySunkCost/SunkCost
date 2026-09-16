@@ -1,8 +1,11 @@
 # Proximity voice and audio devices — implementation handoff
 
-Status: planning only; no voice code, audio plugin or settings UI has been built by
-this task. Written 15 September 2026 on `codex/proximity-voice-plan`, created from
-freshly fetched `origin/main` at `0bb99c29f79fcd229a4abf033b3d34cad56e1a9c`.
+Status: prototype implementation on `codex/proximity-voice`, rebased onto the day
+state/payday main at `57d20c7` on 16 September 2026. The original handoff below
+was written 15 September on `codex/proximity-voice-plan` from main `0bb99c2`.
+See section 14 and [test report](PROXIMITY_VOICE_TEST_REPORT.md) for actual
+implementation and verification status; original acceptance rows are not claims
+that their hardware/Steam tests have passed.
 Read [DESIGN](DESIGN.md), [NETWORK_CONTRACT](NETWORK_CONTRACT.md),
 [CONVENTIONS](CONVENTIONS.md) and [WORKFLOW](WORKFLOW.md) before implementation.
 
@@ -13,6 +16,8 @@ Voices originate at the speaker and get quieter with distance. Settings let each
 player choose and test their microphone and headphones/speakers inside the game.
 
 - P toggles microphone transmission ON/OFF; it is not hold-to-talk.
+- Audio settings also has a **Mute microphone / Unmute microphone** button,
+  using the same action (user addition, 16 September).
 - Start OFF on every join, reconnect and newly hosted session. Device and volume
   preferences persist locally; microphone enabled state never persists.
 - Keep transmitting and receiving while Alt-Tabbed if already enabled. P is a
@@ -331,3 +336,42 @@ It is not proof that native device routing or multiplayer audio already works.
 - [Unity AudioSettings](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AudioSettings.html)
   and [audio filter callback](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/MonoBehaviour.OnAudioFilterRead.html):
   baseline documentation; inspect the installed 6000.6 API and verify routing.
+
+## 14. Implementation handoff — 16 September 2026
+
+Runtime code is in `Assets/_Project/Scripts/Audio/`; native source, pinned
+dependency build and licenses are in `Assets/_Project/Native/Audio/`; platform
+binaries are in `Assets/_Project/Plugins/Audio/`. Resources holds the voice tuning
+asset and master mixer. Session UI creates one voice/device/settings service;
+there are no shared scene/prefab changes for this feature.
+
+The listener OnAudioFilterRead experiment failed. The implemented fallback is a
+native **Sunk Cost Output** effect on `SunkCostOutput.mixer` Master. Existing
+ship engine, generated cue and remote voice sources route there before playing.
+Future game audio sources must do the same. Automatic and explicit headset
+routes carried nonzero samples. This verifies routing code, not human audibility.
+Output playback now prebuffers 50 ms; capture/device and codec workers are shut
+down before the native context. Configuration changes recreate procedural clips.
+
+`ProximityVoice` handles authenticated routing, epochs, current day/scene/Below
+membership, volume and lifecycle. `VoiceCapture` and `VoicePlayback` own bounded
+worker queues. `VoiceMessages` bounds payloads before allocation; protocol is 2.
+`VoiceSettingsUI` includes the requested mute button, device dropdowns, local
+tests/meters and player controls in both Local and Steam sessions. An input
+device/default change mutes deliberately; the user unmutes the new input.
+
+New main's day/payday rules are retained. Current players have no death state;
+the future death/spectator cohort must be added before dead-player voice is enabled.
+The host independently invalidates an enabled stream when world eligibility
+changes, so it does not depend on a cooperative client's stop request.
+
+Use `VoiceChecks.Run()` for codec/serializer/sequence/gain checks and the editor
+job `CameraClearanceMatrixDriver.Start("voice")` after building the exact current
+tree with `HQPrototypeBuild.BuildWindowsLocalDevelopment()`. It uses generated
+tones only and a separate Local client; it never captures a microphone or joins
+Steam. Evidence lives in `Library/VoiceVerification`, which survives editor exit.
+Stop the editor host with `CameraClearanceMatrixDriver.StopCleanly()`.
+
+Real two-machine Steam listening, hotplug/permission fixtures, Linux runtime,
+four simultaneous speakers and network impairment remain release acceptance
+work. Human network review remains required; no review is claimed here.

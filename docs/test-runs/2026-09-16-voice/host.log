@@ -1,0 +1,27 @@
+2026-09-16T20:46:43.6902284Z generated-tone voice matrix
+PASS: sequence wrap/reorder/duplicates; proximity; bounded serializer; 100 Opus frames + PLC. Largest packet 93 bytes, decoded peak 0.105.
+PASS host starts muted
+PASS native output has test samples
+PASS generated tone sends after acknowledgement
+mic=True; test=False; tone=True; world=0; epoch=5477797523679141577; sent=21; received=0; relayed=0; rejected=0; mix=119; output=150; status=Generated test tone — microphone NOT captured
+PASS sail begins toward Sea
+PASS travel invalidates stream
+PASS travel retains requested mic state
+PASS no capture frames sent during travel
+mic=True; test=False; tone=True; world=-1; epoch=0; sent=37; received=0; relayed=0; rejected=1; mix=149; output=200; status=Generated test tone — microphone NOT captured
+PASS arrived Sea
+PASS fresh stream resumes after arrival
+mic=True; test=False; tone=True; world=1; epoch=5477797523679141579; sent=48; received=0; relayed=0; rejected=1; mix=186; output=200; status=Generated test tone — microphone NOT captured
+PASS sail begins toward HQ
+PASS travel invalidates stream
+PASS travel retains requested mic state
+PASS no capture frames sent during travel
+mic=True; test=False; tone=True; world=-1; epoch=0; sent=63; received=0; relayed=0; rejected=2; mix=186; output=200; status=Generated test tone — microphone NOT captured
+PASS arrived HQ
+PASS fresh stream resumes after arrival
+mic=True; test=False; tone=True; world=0; epoch=5477797523679141581; sent=74; received=0; relayed=0; rejected=2; mix=186; output=200; status=Generated test tone — microphone NOT captured
+PASS mute action stops outgoing stream
+PASS leave resets microphone
+PASS re-host succeeds
+PASS re-host muted
+HOST_MATRIX_PASS (separate-client rows not run)

@@ -121,6 +121,16 @@ namespace SunkCost.Audio
             foreach (var player in FindObjectsByType<HQPlayerController>())
                 if (player.IsSpawned) players[player.OwnerId] = player;
             if (!manager.ServerManager.Started) senders.Clear();
+            else
+            {
+                foreach (var pair in senders)
+                {
+                    var sender = pair.Value;
+                    if (!sender.Enabled || sender.World == WorldOf(pair.Key)) continue;
+                    sender.Enabled = false; sender.Generation = ++nextGeneration;
+                    Publish(new VoiceState { Speaker = pair.Key, Request = sender.Request, Generation = sender.Generation });
+                }
+            }
             int localId = connected ? manager.ClientManager.Connection.ClientId : -1;
             int nextWorld = WorldOf(localId);
             if (world != nextWorld)
@@ -154,9 +164,10 @@ namespace SunkCost.Audio
         {
             if (!players.TryGetValue(id, out var player) || !player.gameObject.activeInHierarchy) return -1;
             var day = CrewDayState.Instance;
-            if (day != null && (day.Travelling || (day.Riding && day.IsRider(id)))) return -1;
+            if (day == null || day.Travelling || (day.Riding && day.IsRider(id))) return -1;
             if (!WorldScenes.TryParse(player.gameObject.scene.name, out var result)) return -1;
-            if (day != null && day.IsBelow(id) != (result == WorldId.Dive)) return -1;
+            if (day.IsBelow(id) != (result == WorldId.Dive)) return -1;
+            if (result != WorldId.Dive && result != day.World) return -1;
             return (int)result;
         }
         private void Mix(int localId)
@@ -221,13 +232,16 @@ namespace SunkCost.Audio
         {
             if (channel != Channel.Reliable) return;
             int id = connection.ClientId;
-            if (!senders.TryGetValue(id, out var sender)) senders[id] = sender = new Sender();
+            bool firstRequest = !senders.TryGetValue(id, out var sender);
+            if (firstRequest) senders[id] = sender = new Sender { Updated = Time.unscaledTime };
             if ((int)(message.Request - sender.Request) <= 0) return;
             // Stops are never rate limited. Starts are bounded before allocating a generation.
             if (message.Enabled && Time.unscaledTime < sender.ControlAt) return;
-            sender.ControlAt = Time.unscaledTime + .125f; sender.Request = message.Request;
+            sender.Request = message.Request;
+            if (!message.Enabled && !sender.Enabled && !firstRequest) return;
+            if (message.Enabled) sender.ControlAt = Time.unscaledTime + .125f;
             sender.World = WorldOf(id); sender.Enabled = message.Enabled && sender.World >= 0;
-            sender.Generation = ++nextGeneration; sender.Sequence.Reset(); sender.Tokens = 10; sender.Updated = Time.unscaledTime;
+            sender.Generation = ++nextGeneration; sender.Sequence.Reset();
             Publish(new VoiceState { Speaker = id, Request = message.Request, Generation = sender.Generation, Enabled = sender.Enabled });
             // A newly joined muted listener also learns current speakers' epochs.
             if (!message.Enabled)
@@ -282,6 +296,9 @@ namespace SunkCost.Audio
         }
         public void SetVoiceVolume(float value) { VoiceVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }
         public bool PeerMuted(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Muted;
+        public int PeerDecoded(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Decoded ?? 0 : 0;
+        public float PeerPlaybackGain(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Gain ?? 0 : 0;
+        public float PeerPlaybackPan(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Pan ?? 0 : 0;
         public float PeerVolume(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Volume : 1;
         public void SetPeer(int id, bool muted, float volume)
         {

@@ -11,6 +11,9 @@ namespace SunkCost.Audio
         private bool open;
         private int dropdown;
         private Vector2 scroll;
+#if UNITY_EDITOR
+        public void ShowForChecks() { open = true; SessionInputGate.OpenMenu(); }
+#endif
         private void Start() { voice = GetComponent<ProximityVoice>(); session = GetComponent<PrototypeSessionController>(); }
         private void OnGUI()
         {
