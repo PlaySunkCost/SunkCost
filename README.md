@@ -12,6 +12,29 @@ Everyone in a room needs the same build.
 
 ---
 
+## Proximity voice prototype
+
+Open **Audio settings** in the lobby or **Esc → Audio settings** in game.
+The **Mute microphone / Unmute microphone** button and **P** toggle your mic.
+Every join/rejoin/re-host starts muted. Typing in a menu field does not toggle P.
+Already-enabled voice continues when you Alt-Tab; P is not a global shortcut.
+
+Microphone and sound output default to **Automatic (system default)**. Choose
+either device in its dropdown. **Test microphone** shows the selected input's
+level locally, suspends transmission, and ends muted. **Test sound** plays a short
+left/right cue on the selected output. There is no microphone self-monitoring.
+Master volume affects all routed game audio; voice volume and individual player
+mute/volume affect received speech only. Voices fade from full gain at 2 m to
+silence at 20 m. Settings are local to each computer.
+
+If the mic is unavailable, check OS microphone permissions, reconnect or select
+the intended device, then unmute. Input changes deliberately mute the mic;
+a missing output falls back to Automatic. A missing native plugin preserves
+ordinary Unity audio and reports voice unavailable. Both peers must use protocol
+2 / matching shared builds. Use a headset for the two-computer check.
+See [voice verification and remaining checks](docs/PROXIMITY_VOICE_TEST_REPORT.md)
+and [native build instructions](Assets/_Project/Native/Audio/README.md).
+
 A 1–4 player co-op salvage horror game. You walk the floor of an alien ocean in a
 weighted suit, drag treasure to a glass elevator, and every time it rises it screams
 your position across the water.

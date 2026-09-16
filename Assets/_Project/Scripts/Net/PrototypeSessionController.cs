@@ -794,8 +794,8 @@ namespace SunkCost.Net
             {
                 if (networkManager != null)
                 {
-                    if (networkManager.ClientManager.Started) networkManager.ClientManager.StopConnection();
-                    if (networkManager.ServerManager.Started) networkManager.ServerManager.StopConnection(true);
+                    if (networkManager.ClientManager != null && networkManager.ClientManager.Started) networkManager.ClientManager.StopConnection();
+                    if (networkManager.ServerManager != null && networkManager.ServerManager.Started) networkManager.ServerManager.StopConnection(true);
                 }
                 if (steamTransport != null) steamTransport.Shutdown();
                 lobby?.Leave();

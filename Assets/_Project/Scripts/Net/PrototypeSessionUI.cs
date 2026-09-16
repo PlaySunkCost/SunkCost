@@ -57,6 +57,8 @@ namespace SunkCost.Net
         {
             controller = GetComponent<PrototypeSessionController>() ?? gameObject.AddComponent<PrototypeSessionController>();
             controller.Configure(networkRoot, networkManager, transportManager, localTransport, steamTransportPrefab, previewCamera, settings);
+            if (GetComponent<SunkCost.Audio.ProximityVoice>() == null) gameObject.AddComponent<SunkCost.Audio.ProximityVoice>();
+            if (GetComponent<SunkCost.Audio.VoiceSettingsUI>() == null) gameObject.AddComponent<SunkCost.Audio.VoiceSettingsUI>();
         }
 
         private IEnumerator Start()

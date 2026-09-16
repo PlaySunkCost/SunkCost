@@ -1,5 +1,39 @@
 # Network contract
 
+## Proximity voice transport (16 September 2026)
+
+- Voice uses authenticated FishNet broadcasts on the existing connection. Protocol
+  version is **2**. It does not change gameplay ownership, physics or Noise events.
+- The client requests start/stop reliably. The host issues a fresh 64-bit stream
+  generation and acknowledges the request; no frames are sent before acknowledgement.
+  Speaker identity comes from the authenticated sending connection, never the
+  claimed frame ID. Stops discard local capture and queued playback.
+- Frames carry a generation, 16-bit sequence and at most 400 Opus bytes (48 kHz
+  mono, 960 samples / 20 ms, 24 kbit/s constrained VBR). The custom serializer
+  bounds headers and payload lengths before slicing; the callback copies only
+  accepted bounded payloads. Frames use Unreliable, control uses Reliable.
+- Host checks generation, physical player/world membership, a 60 frame/s token
+  bucket with a 10-frame burst, and a 16-frame duplicate/reorder window. Start
+  requests are limited to 8/s; stops are never suppressed. The host relays only
+  to authenticated other players in the same eligible world within 22 m by
+  default. The receiver fades to zero at 20 m. No local self-playback.
+- Scene membership and CrewDayState Below/rider state decide eligibility;
+  cameras never grant cross-world access. Sailing, a rider in transit, unknown
+  scenes and contradictory membership deny delivery. Travel invalidates the
+  stream and creates a fresh generation after arrival while retaining the user's
+  requested mic state. Join/rejoin/re-host always reset that state to OFF.
+- The implemented cabin prototype has no death/surfaced day state. Add its
+  authoritative cohorts to `ProximityVoice.WorldOf` before adding spectator
+  voice; the dead/surfaced/diver design elsewhere in this contract is unchanged.
+- Decoder reorder buffering starts at 60 ms; packet/capture queues are bounded,
+  stale capture older than 200 ms is discarded, and a long receive gap silences
+  output. Codec workers own their handles; stop joins workers before releasing
+  capture/context. Audio callbacks use bounded rings, without Unity API calls,
+  managed allocations or locks. No speech is recorded to disk.
+- Human networking review is required before merging. Automated local tests do
+  not substitute for audible two-machine Steam checks. See
+  [voice test report](PROXIMITY_VOICE_TEST_REPORT.md).
+
 **Read this before writing any networked code. Nobody writes a single `[ServerRpc]`
 until they have read this file.**
 

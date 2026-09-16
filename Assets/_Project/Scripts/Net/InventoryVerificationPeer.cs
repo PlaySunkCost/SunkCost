@@ -128,6 +128,10 @@ namespace SunkCost.Net
                     stance.SetDesiredCrouch(command.slot != 0);
                     break;
                 case "snapshot": break;
+                case "voice_tone": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().StartLocalTestTone(); break;
+                case "voice_off": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetMicrophone(false); break;
+                case "voice_peer_mute": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetPeer(command.slot, true, 1); break;
+                case "voice_peer_unmute": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetPeer(command.slot, false, 1); break;
                 case "frames":
                     return SunkCost.Diagnostics.FrameTimeRecorder.Instance == null ? "no frame time recorder"
                         : SunkCost.Diagnostics.FrameTimeRecorder.Instance.Summary + "; " + SunkCost.Diagnostics.FrameTimeRecorder.Instance.HitchList;
@@ -259,11 +263,13 @@ namespace SunkCost.Net
             var nm = InstanceFinder.NetworkManager;
             if (nm == null) return "No network manager";
             var day = SunkCost.World.CrewDayState.Instance;
+            var voice = FindFirstObjectByType<SunkCost.Audio.ProximityVoice>();
             string loaded = string.Join("+", Enumerable.Range(0, UnityEngine.SceneManagement.SceneManager.sceneCount)
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
             string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {CarLine()}; {VisorLine()}\n";
+            if (voice != null) text += voice.Diagnostics + "\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();

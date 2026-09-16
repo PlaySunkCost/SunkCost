@@ -34,6 +34,7 @@ namespace SunkCost.World
 
         private void Awake()
         {
+            if (engine != null) SunkCost.Audio.AudioDeviceService.RouteSource(engine);
             parts = GetComponent<ShipParts>();
             restPosition = transform.position;
             restRotation = transform.rotation;
