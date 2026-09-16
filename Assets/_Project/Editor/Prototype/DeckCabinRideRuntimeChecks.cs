@@ -278,8 +278,10 @@ namespace SunkCost.Editor.Prototype
         {
             HQPlayerController local = Host();
             if (local == null) return string.Empty;
+            // Player rows carry the display name and a swatch since the names/colour
+            // cards; the owned player row is the host's own.
             foreach (SunkCost.Net.NetworkDebugSnapshot.ObjectRow row in SunkCost.Net.NetworkDebugSnapshot.Capture().Objects)
-                if (row.IsOwner && row.Name == local.name.Replace("(Clone)", string.Empty)) return row.Detail;
+                if (row.IsOwner && (row.Swatch != null || row.Name == local.name.Replace("(Clone)", string.Empty))) return row.Detail;
             return string.Empty;
         }
 
@@ -685,8 +687,12 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => Rider() != null && !Rider().Locked, 5f, "R0 unlocked at sea");
             Check(Mathf.Approximately(flow.DeckCabinOpenFraction(), 1f), "R0 deck cabin doors open at sea");
             ShipParts sea = ShipParts.InWorld(WorldId.Sea);
-            yield return WaitUntil(() => sea != null && sea.DeckCabinPanel != null && sea.DeckCabinPanel.text.Contains("Step in"), 3f, "R0 deck cabin panel invites");
+            yield return WaitUntil(() => sea != null && sea.DeckCabinPanel != null && sea.DeckCabinPanel.text.Contains("press E to descend"), 3f, "R0 deck cabin panel invites");
             Check(true, "R0 deck cabin panel invites: " + sea.DeckCabinPanel.text);
+            // Y: the day state (Dan, 16 September 2026). Y1 arriving from HQ is day 1.
+            Check(Day.Day == 1 && !Day.Payday && Day.Phase == DayPhase.AtSea, $"Y1 arriving at sea is day 1 (day={Day.Day} payday={Day.Payday} phase={Day.Phase})");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Day 1 of 3"), 3f, "Y1 the monitor says 'Day 1 of 3': " + H.MonitorText());
+            Check(sea.DeckCabinPanel.text.StartsWith("Day 1 of 3"), "Y1 the cabin panel says 'Day 1 of 3': " + sea.DeckCabinPanel.text);
 
             // R1: refusals from outside the cabin and from the wrong scene.
             host.TeleportLocal(sea.BoardingPoint != null ? sea.BoardingPoint.position : sea.SpawnPoint(0).position, 0f);
@@ -720,7 +726,10 @@ namespace SunkCost.Editor.Prototype
             Check(!ShaftGateBlocks(), "R2 shaft gate open at the bottom");
             Check(Day.IsBelow(host.OwnerId), "R2 host listed below");
             Check(flow.DeckCabinOpenFraction() < 0.01f, "R2 deck cabin doors closed while the car is below");
-            yield return WaitUntil(() => sea.DeckCabinPanel.text == "Cabin below", 3f, "R2 deck cabin panel says 'Cabin below'");
+            yield return WaitUntil(() => sea.DeckCabinPanel.text.StartsWith("Dive in progress \u2014 1 below"), 3f, "R2/Y2 deck cabin panel says the dive is in progress: " + sea.DeckCabinPanel.text);
+            Check(Day.Phase == DayPhase.DiveInProgress && Day.Day == 1, $"Y2 the day began when the riders arrived below (phase={Day.Phase} day={Day.Day})");
+            Check(hud.Visor.DayText == "DAY 1/3", "Y2 the visor's corner says DAY 1/3: " + hud.Visor.DayText);
+            Check(H.MonitorText().StartsWith("Day 1 of 3 \u2014 dive in progress"), "Y2 the monitor is locked for the dive: " + H.MonitorText());
             Check(true, "R2 deck cabin panel says 'Cabin below'");
             yield return Wait(1.6f); // doors fully open
             H.CaptureLocalCamera("Logs/deck-cabin-bottom.png");
@@ -843,6 +852,8 @@ namespace SunkCost.Editor.Prototype
             Check(sea != null && sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "R4 the host stands in the deck cabin");
             Check(Day.Elevator.State == ElevatorState.AtTop, "R4 the car is up");
             Check(Day.Below.Count == 0, "R4 nobody below");
+            Check(Day.Phase == DayPhase.AtSea && Day.Day == 2 && !Day.Payday, $"Y3 the last one up ended the day: day 2 (phase={Day.Phase} day={Day.Day})");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Day 2 of 3"), 3f, "Y3 the monitor says 'Day 2 of 3': " + H.MonitorText());
             // C2: the coin came up in the car and now lies on the deck cabin's floor at the same spot.
             CarryableItem coinUp = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coin3Id);
             Check(coinUp != null && coinUp.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && sea.IsInDeckCabin(coinUp.transform.position), "C2 Coin 3 rode up into the deck cabin: " + (coinUp == null ? "gone" : coinUp.gameObject.scene.name + " " + coinUp.transform.position.ToString("F2")));
@@ -868,6 +879,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.5f);
             yield return RideAndSample(RideDirection.Up, "R5b");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && Day.Elevator.State == ElevatorState.AtTop, "R5b up again");
+            Check(Day.Day == 3 && !Day.Payday && Day.Phase == DayPhase.AtSea, $"Y4 two dives done: day 3, not yet payday (day={Day.Day} payday={Day.Payday})");
 
             // ---- guest rows ----
             guest = LaunchGuest();
@@ -885,6 +897,15 @@ namespace SunkCost.Editor.Prototype
             Note("N2 guest name on the host: '" + guestIdentity.DisplayName + "'");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("name=Mate bof the/b d") && GuestPlayerLine(r, host.OwnerId).Contains("name=Skipper"), 5f, "N3 the guest reads both names");
             Check(!Day.Riding, "G0 no ride running");
+            yield return GuestEventually(r => r.Contains("day=3;") && r.Contains("payday=False"), 5f, "Y5 the guest joined between days and reads day 3");
+
+            // Y6: the day starts only with everyone in the cabin: the host inside, the
+            // guest still at its spawn; the button names the guest.
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Wait(0.3f);
+            H.ClientRequestCabin();
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Waiting for: Player " + guestId, 3f, "Y6 the deck button waits for the guest by name: " + Day.LastRefusal.Text);
+            Check(!Day.Riding && Day.Phase == DayPhase.AtSea, "Y6 no ride started without everyone aboard");
 
             // G1: both in the cabin; the host presses; both ride down.
             H.MoveLocalIntoDeckCabin("Sea");
@@ -984,7 +1005,8 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.3f);
             H.ClientRequestCabin();
-            yield return WaitUntil(() => Day.LastRefusal.Text == "Cabin below", 3f, "G2 host refused: cabin below");
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Dive in progress \u2014 1 below: Player " + guestId, 3f, "G2/Y7 host refused mid-day, the guest named: " + Day.LastRefusal.Text);
+            Check(Day.Phase == DayPhase.DiveInProgress && Day.Day == 3, "Y7 the day is still in progress while the guest is below");
             host.TeleportLocal(sea.BoardingPoint != null ? sea.BoardingPoint.position : sea.SpawnPoint(0).position, host.Yaw); // out of the housing: nobody stands where the car arrives
             yield return Wait(0.3f);
             Check(!sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "G2 host out of the housing before the guest rides up");
@@ -1007,7 +1029,29 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => r.Contains("underwater=False/"), 10f, "G4 guest dry again on the ship");
             yield return WaitUntil(() => WorldSceneFlow.FindCar() == null, 10f, "G3 the site unloaded once empty");
 
+            // Y8: the third day is over: payday. The monitor offers only HQ, the deck
+            // button refuses, the guest reads the same.
+            Check(Day.Payday && Day.Day == 3 && Day.Phase == DayPhase.AtSea, $"Y8 the third dive ended in payday (day={Day.Day} payday={Day.Payday} phase={Day.Phase})");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("PAYDAY"), 3f, "Y8 the monitor says PAYDAY: " + H.MonitorText());
+            string paydaySail = H.ServerSail("Sea");
+            Check(paydaySail.Contains("Payday \u2014 only HQ"), "Y8 the monitor refuses Site 01 on payday: " + paydaySail);
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Wait(0.3f);
+            H.ClientRequestCabin();
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Payday \u2014 sail home", 3f, "Y8 the deck button refuses on payday: " + Day.LastRefusal.Text);
+            Check(!Day.Riding, "Y8 no ride on payday");
+            yield return GuestEventually(r => r.Contains("payday=True"), 5f, "Y8 the guest reads payday");
+
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");
+
+            // Y9: home. Docking resets the cycle: day 0, no payday.
+            yield return WaitUntil(() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).Length == 1, 10f, "Y9 the guest left");
+            host.TeleportLocal(sea.SpawnPoint(0).position, 0f);
+            yield return Wait(0.3f);
+            string homeSail = H.ServerSail("HQ");
+            Check(homeSail.StartsWith("sailing"), "Y9 sailing home on payday: " + homeSail);
+            yield return WaitUntil(() => Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.HQ, 30f, "Y9 docked at HQ");
+            Check(Day.Day == 0 && !Day.Payday && Day.Phase == DayPhase.AtHQ, $"Y9 docking reset the cycle (day={Day.Day} payday={Day.Payday} phase={Day.Phase})");
             SunkCost.Net.SessionInputGate.Resume();
         }
     }

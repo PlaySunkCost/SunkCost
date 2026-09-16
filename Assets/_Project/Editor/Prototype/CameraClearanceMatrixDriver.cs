@@ -40,7 +40,8 @@ namespace SunkCost.Editor.Prototype
         }
 
         // job: "camera" (the camera clearance matrix), "cabin" (the deck cabin ride
-        // matrix) or "host" (host and stop; the caller drives the session).
+        // matrix), "hands" (movement and hands), "loop" (the world loop) or "host"
+        // (host and stop; the caller drives the session).
         public static void Start(string job = "camera")
         {
             File.WriteAllText(Marker, "started " + job + "\n");
@@ -138,6 +139,7 @@ namespace SunkCost.Editor.Prototype
                         if (job == "camera") PlayerCameraClearanceRuntimeChecks.RunAsHost();
                         else if (job == "cabin") DeckCabinRideRuntimeChecks.RunAsHost();
                         else if (job == "hands") PlayerMovementHandsRuntimeChecks.RunAsHost();
+                        else if (job == "loop") WorldLoopRuntimeChecks.RunAsHost();
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }

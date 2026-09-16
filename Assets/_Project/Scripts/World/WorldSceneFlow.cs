@@ -260,7 +260,8 @@ namespace SunkCost.World
             return true;
         }
 
-        public static string DisplayName(NetworkConnection conn) => conn == null ? "?" : "Player " + conn.ClientId;
+        public static string DisplayName(NetworkConnection conn) => conn == null ? "?" : DisplayName(conn.ClientId);
+        public static string DisplayName(int clientId) => "Player " + clientId;
 
         // Every player of every active connection stands on the deck proper, in the
         // current world. A player still spawning counts as missing.
@@ -462,7 +463,15 @@ namespace SunkCost.World
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             cohort.Remove(conn.ClientId);
             prepared.Remove(conn.ClientId); black.Remove(conn.ClientId); arrived.Remove(conn.ClientId);
-            if (dayState != null && networkManager.IsServerStarted) dayState.ServerRemoveEverywhere(conn.ClientId);
+            if (dayState != null && networkManager.IsServerStarted)
+            {
+                bool wasBelow = dayState.IsBelow(conn.ClientId);
+                dayState.ServerRemoveEverywhere(conn.ClientId);
+                // A disconnected player does not count as living: if they were the
+                // last one below, the day ends. (Only a leaver from below: a refused
+                // joiner's disconnect must not touch a day in progress.)
+                if (wasBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
+            }
         }
 
         private void OnDepartureAck(NetworkConnection conn, DepartureAckBroadcast msg, Channel channel)

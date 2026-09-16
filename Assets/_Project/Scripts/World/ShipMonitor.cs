@@ -50,8 +50,9 @@ namespace SunkCost.World
             {
                 case DayPhase.Sailing: return "Sailing to Site 01…";
                 case DayPhase.SailingHome: return "Sailing home…";
-                case DayPhase.AtSea: return "At Site 01 — E on HQ to sail home";
-                case DayPhase.DiveInProgress: return "Dive in progress — monitor locked";
+                case DayPhase.AtSea:
+                    return day.Payday ? "PAYDAY — E on HQ to sail home" : $"Day {day.Day} of {settings.DaysPerCycle} — Site 01 — E on HQ to sail home";
+                case DayPhase.DiveInProgress: return $"Day {day.Day} of {settings.DaysPerCycle} — dive in progress — monitor locked";
                 default: return "Docked at HQ — E on Site 01 to sail";
             }
         }

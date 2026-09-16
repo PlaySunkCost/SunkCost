@@ -19,11 +19,16 @@ namespace SunkCost.World
     // NetworkObject (prefab flag "Is Global"), so it lives in DontDestroyOnLoad,
     // has no observer conditions and survives every world scene change
     // (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 4.1). The scene-flow card
-    // gives it the phase and the world; the day-state card adds the day counter
-    // and the below/surfaced/dead lists.
+    // gave it the phase and the world; the day-state card (Dan, 16 September
+    // 2026) the day counter and payday: Day is 0 at HQ and 1..DaysPerCycle at
+    // sea; a day begins when the riders arrive below and ends by itself when the
+    // last living player is up (living = connected until a death system exists);
+    // after the last day Payday holds until the ship docks at HQ.
     public sealed class CrewDayState : NetworkBehaviour, INetworkDebugInfo
     {
         private readonly SyncVar<DayPhase> phase = new(DayPhase.AtHQ);
+        private readonly SyncVar<int> day = new(0);
+        private readonly SyncVar<bool> payday = new(false);
         private readonly SyncVar<WorldId> world = new(WorldId.HQ);
         // The world a sail is heading for; equals World when not sailing.
         private readonly SyncVar<WorldId> destination = new(WorldId.HQ);
@@ -47,6 +52,11 @@ namespace SunkCost.World
         public static event Action<CrewDayState> InstanceChanged;
 
         public DayPhase Phase => phase.Value;
+        // 0 at HQ; at sea the number of the current day (the one being dived, or
+        // the next one to dive). Stays at the last day through payday.
+        public int Day => day.Value;
+        // The cycle's dives are spent: the monitor offers only HQ, the deck cabin refuses.
+        public bool Payday => payday.Value;
         public WorldId World => world.Value;
         public WorldId Destination => destination.Value;
         public bool Sailing => phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome;
@@ -74,7 +84,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(payday.Value ? " PAYDAY" : string.Empty)} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
@@ -138,6 +148,7 @@ namespace SunkCost.World
             if (to == WorldId.Dive) { why = "The ship does not sail to the seafloor."; return false; }
             if (phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome) { why = "Already sailing."; return false; }
             if (phase.Value == DayPhase.DiveInProgress) { why = "Dive in progress."; return false; }
+            if (payday.Value && to != WorldId.HQ) { why = "Payday — only HQ"; return false; }
             if (to == world.Value) { why = "Already there."; return false; }
             why = string.Empty;
             return true;
@@ -161,32 +172,41 @@ namespace SunkCost.World
         [Server]
         public void ServerSetDeparture(ShipDepartureState next) => departure.Value = next;
 
+        // Docking at HQ ends the cycle (day 0, no payday); leaving HQ starts one at
+        // day 1. Arriving at another site mid-cycle would keep the count.
         [Server]
         public void ServerArrive(WorldId at)
         {
+            bool fromHQ = world.Value == WorldId.HQ;
             world.Value = at;
             destination.Value = at;
             phase.Value = at == WorldId.HQ ? DayPhase.AtHQ : DayPhase.AtSea;
+            if (at == WorldId.HQ) { day.Value = 0; payday.Value = false; }
+            else if (fromHQ) { day.Value = 1; payday.Value = false; }
         }
 
-        // The phase half of the day API (plan section 4.1): the deck-cabin card
-        // calls ServerBeginDay when the car departs and the day-state card adds the
-        // riders, the day counter and the below/surfaced/dead lists that turn
-        // ServerEndDay into ServerEndDayIfDone. Until then the Local matrix drives
-        // them directly (row S5).
+        // The day begins when the riders stand in the car below (plan section 4.1;
+        // WorldSceneFlow calls it after ServerSetBelow). Refused on payday.
         [Server]
         public bool ServerBeginDay(out string why)
         {
             if (phase.Value != DayPhase.AtSea) { why = "Not at sea (" + phase.Value + ")."; return false; }
+            if (payday.Value) { why = "Payday — sail home"; return false; }
             phase.Value = DayPhase.DiveInProgress;
             why = string.Empty;
             return true;
         }
 
+        // The day ends by itself when nobody living is below (Dan, 16 September
+        // 2026: "once all up or dead — it says day 2"). The last day ends in payday.
         [Server]
-        public void ServerEndDay()
+        public bool ServerEndDayIfDone(int daysPerCycle)
         {
-            if (phase.Value == DayPhase.DiveInProgress) phase.Value = DayPhase.AtSea;
+            if (phase.Value != DayPhase.DiveInProgress || below.Count > 0) return false;
+            phase.Value = DayPhase.AtSea;
+            if (day.Value >= daysPerCycle) payday.Value = true;
+            else day.Value = day.Value + 1;
+            return true;
         }
 
         // A refused monitor or cabin request, for every peer's panel (plan 4.1).

@@ -74,6 +74,7 @@ namespace SunkCost.Player
             public int TargetValue;            // -1 when none
             public int CrewTagCount;
             public float NearestCrewDistance;  // +inf when none
+            public string DayText;             // "DAY 2/3" in the top-left corner (Dan, 16 September 2026)
         }
         public VisorReadout Visor { get; private set; }
 
@@ -138,6 +139,15 @@ namespace SunkCost.Player
 
         // ---- the visor's numbers -------------------------------------------------------
 
+        // The day this dive belongs to, from the crew's day state; empty at HQ.
+        private static string DayText()
+        {
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null || day.Day <= 0) return string.Empty;
+            int days = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings.DaysPerCycle : 3;
+            return day.Payday ? "PAYDAY" : $"DAY {day.Day}/{days}";
+        }
+
         // The visor is on exactly while the player stands in the dive world: that is
         // where the suit is on (section 3.1). No extra state.
         public bool VisorOn => inventory != null && inventory.IsOwner && gameObject.scene == WorldScenes.Scene(WorldId.Dive);
@@ -148,6 +158,7 @@ namespace SunkCost.Player
             VisorReadout r = default;
             r.On = VisorOn;
             r.TargetTag = string.Empty;
+            r.DayText = DayText();
             r.TargetValue = -1;
             r.NearestCrewDistance = float.PositiveInfinity;
             bracketed.Clear();
@@ -291,7 +302,7 @@ namespace SunkCost.Player
             Rect tl = PlayerVisorMask.TopLeftLabelRect(w, h), tr = PlayerVisorMask.TopRightLabelRect(w, h);
             GUI.color = VisorText;
             GUI.Label(new Rect(tl.x, tl.y, tl.width, 18f * s), "HELMET VISOR", visorStyle);
-            GUI.Label(new Rect(tl.x, tl.y + 18f * s, tl.width, 14f * s), "SYS  v0.1  ·  SUIT ON", visorTinyStyle);
+            GUI.Label(new Rect(tl.x, tl.y + 18f * s, tl.width, 14f * s), (string.IsNullOrEmpty(Visor.DayText) ? "SYS  v0.1" : Visor.DayText) + "  ·  SUIT ON", visorTinyStyle);
             DrawDashes(tl.x, tl.y + 36f * s, 6, s);
             GUI.color = VisorText;
             GUI.Label(new Rect(tr.x, tr.y, tr.width, 18f * s), "MODE: DIVE", visorRightStyle);

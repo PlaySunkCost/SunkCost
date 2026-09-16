@@ -308,8 +308,19 @@ namespace SunkCost.World
             if (Time.unscaledTime - dayState.LastRefusalAt < Settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(dayState.LastRefusal.Text))
                 return dayState.LastRefusal.Text;
             if (dayState.Riding) return dayState.CabinRide.Direction == RideDirection.Down ? "Going down…" : "Coming up…";
+            if (dayState.Payday) return "Payday — sail home";
+            if (dayState.Phase == DayPhase.DiveInProgress) return DiveInProgressText();
             if (dayState.Elevator.State != ElevatorState.AtTop) return "Cabin below";
-            return dayState.World == WorldId.Sea ? "Step in, press E to descend" : "Not at sea";
+            return dayState.World == WorldId.Sea ? $"Day {dayState.Day} of {Settings.DaysPerCycle} — all in, press E to descend" : "Not at sea";
+        }
+
+        // Mid-day the deck button is dead: once you are up you cannot go down
+        // again until the next day (design section 1); the panel says who is below.
+        private string DiveInProgressText()
+        {
+            var names = new List<string>();
+            foreach (int id in dayState.Below) names.Add(DisplayName(id));
+            return $"Dive in progress — {names.Count} below: {string.Join(", ", names)}";
         }
 
         // ---- server: the car's clock ---------------------------------------------------
@@ -390,6 +401,19 @@ namespace SunkCost.World
             if (ship == null || ship.DeckCabin == null) { why = "No deck cabin."; return false; }
             HQPlayerController presser = PlayerOf(sender);
             if (presser == null || presser.gameObject.scene != WorldScenes.Scene(WorldId.Sea) || !ship.IsInDeckCabin(presser.transform.position)) { why = "Step inside the cabin first"; return false; }
+            // The day rules (Dan, 16 September 2026): no dive on payday; none while
+            // a day is in progress (whoever surfaced waits for the others); and the
+            // day starts only with everyone in the cabin, named otherwise.
+            if (dayState.Payday) { why = "Payday — sail home"; return false; }
+            if (dayState.Phase == DayPhase.DiveInProgress) { why = DiveInProgressText(); return false; }
+            var missing = new List<string>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || !conn.IsAuthenticated) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player == null || player.gameObject.scene != WorldScenes.Scene(WorldId.Sea) || !ship.IsInDeckCabin(player.transform.position)) missing.Add(DisplayName(conn));
+            }
+            if (missing.Count > 0) { why = "Waiting for: " + string.Join(", ", missing); return false; }
             if (dayState.Elevator.State != ElevatorState.AtTop)
             {
                 // The car is away. Empty at the bottom with nobody below: call it up.
@@ -516,6 +540,7 @@ namespace SunkCost.World
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
             ServerPlaceCabinCargo(CabinFrame.Car(car)); // the deck cabin's floor cargo, now on the car's floor
             foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, true);
+            if (!dayState.ServerBeginDay(out string dayWhy)) Debug.LogWarning("[WorldSceneFlow] The day did not begin: " + dayWhy);
             networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true));
 
             // Eyes open inside the car at the top; then the ride itself.
@@ -573,6 +598,7 @@ namespace SunkCost.World
                 foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
             }
             bool othersBelow = dayState.Below.Count > 0;
+            if (!othersBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle); // the last one up ends the day
             if (conns.Count > 0) networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
             if (!othersBelow) cachedCar = null;
 
