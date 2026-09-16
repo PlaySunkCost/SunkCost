@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SunkCost.Diving;
+using SunkCost.Interaction;
 using SunkCost.Player;
 using SunkCost.World;
 using UnityEditor;
@@ -558,11 +559,21 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestCar();
             yield return WaitUntil(() => Day.LastRefusal.Text == "Cabin is up", 3f, "R1 car button refused from the deck");
 
+            Check(!host.GetComponent<PlayerHudUI>().Visor.On, "V1 the visor is off on the ship");
+
             // R2: down. Sealing closes the deck doors, the suit fade, the car at the top, the descent, doors open at the bottom.
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.2f);
             yield return RideAndSample(RideDirection.Down, "R2");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Dive), "R2 the host's player is in DiveSite01");
+            // V1/V2: the visor came on with the dive; its numbers are the truth's.
+            PlayerHudUI hud = host.GetComponent<PlayerHudUI>();
+            yield return null;
+            Check(hud != null && hud.Visor.On, "V1 the visor is on in the dive");
+            Check(Mathf.Abs(hud.Visor.DepthMeters - (Submersion() != null ? Submersion().DepthMeters : -1f)) < 0.1f, $"V2 the visor's depth is the submersion's ({hud.Visor.DepthMeters:0.0} m)");
+            Check(Mathf.Abs(Mathf.DeltaAngle(hud.Visor.HeadingDeg, host.PlayerCamera.transform.eulerAngles.y)) < 1f, $"V2 the visor's heading is the camera's ({hud.Visor.HeadingDeg:0}°)");
+            Check(hud.Visor.AirFraction >= 0.999f && hud.Visor.HealthFraction >= 0.999f, "V2 air and health read full (nothing drains them yet)");
+            Check(!hud.Visor.HomeShown, "V3 HOME is hidden inside the car");
             Check(Day.Elevator.State == ElevatorState.AtBottom, "R2 car at the bottom");
             ElevatorController car = WorldSceneFlow.FindCar();
             Check(car != null && car.Driven && Vector3.Distance(car.transform.position, car.BottomPosition) < 0.05f, "R2 the driven car sits on its bottom position");
@@ -607,6 +618,45 @@ namespace SunkCost.Editor.Prototype
             Check(Sweep(centre, -doorway, tubeRadius + 1f) != null, "T3 sweep out of the car away from the doorway is blocked");
             Check(Sweep(centre, doorway, tubeRadius + 1f) == null, "T3 sweep out of the car through the doorway passes");
 
+            // V3: HOME from the seafloor: the arrow points at the tube doorway, the distance is the true one.
+            Vector3 doorwayFoot = car.BottomPosition + doorway * 3.5f;
+            Vector3 tenOut = doorwayFoot + doorway * 10f; tenOut.y = car.BottomPosition.y + 0.15f;
+            host.TeleportLocal(tenOut, host.Yaw);
+            host.SetPitchForChecks(0f); host.transform.rotation = Quaternion.LookRotation(-doorway); yield return null; yield return null;
+            Check(hud.Visor.HomeShown && Mathf.Abs(hud.Visor.HomeScreenAngleDeg) < 3f && Mathf.Abs(hud.Visor.HomeDistance - 10f) < 0.6f, $"V3 facing the tube from 10 m out HOME reads ahead at 10 m (angle {hud.Visor.HomeScreenAngleDeg:0.0}°, {hud.Visor.HomeDistance:0.0} m)");
+            host.transform.rotation = Quaternion.LookRotation(doorway); yield return null; yield return null;
+            Check(Mathf.Abs(Mathf.Abs(hud.Visor.HomeScreenAngleDeg) - 180f) < 3f, $"V3 facing away HOME reads behind (angle {hud.Visor.HomeScreenAngleDeg:0.0}°)");
+
+            // V4: the coins are there, valued within their ranges; the dot's coin is tagged with its value.
+            var coins = new List<CarryableItem>();
+            foreach (CarryableItem item in UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude))
+                if (item.HasValue && item.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) coins.Add(item);
+            Check(coins.Count >= DiveLootSetup.Placements.Length, $"V4 {coins.Count} coins spawned on the seafloor (placements: {DiveLootSetup.Placements.Length})");
+            int badValues = 0;
+            foreach (CarryableItem coin in coins) if (coin.Value < coin.ValueMin || coin.Value > coin.ValueMax) badValues++;
+            Check(badValues == 0, "V4 every coin's value lies in its range");
+            CarryableItem coin3 = coins.Find(c => c.name.StartsWith("Coin 3"));
+            Check(coin3 != null, "V4 Coin 3 exists");
+            Vector3 lookFrom = coin3.transform.position - doorway * 0.6f; lookFrom.y = car.BottomPosition.y + 0.15f; // within grab reach, as the hands matrix stands
+            host.TeleportLocal(lookFrom, host.Yaw);
+            yield return null;
+            H.ClientLookAtItem(coin3.name); yield return null; yield return null;
+            yield return WaitUntil(() => host.CurrentTarget == coin3, 2f, "V4 the dot is on Coin 3");
+            Check(hud.Visor.TargetValue == coin3.Value && hud.Visor.TargetTag == $"{coin3.DisplayName} · ${coin3.Value}", "V4 the tag under the dot reads the coin's value: " + hud.Visor.TargetTag);
+            Check(hud.Visor.BracketCount >= 1, $"V5 the coin in view is bracketed ({hud.Visor.BracketCount})");
+            // The hook commands open the session menu (no stray input); the capture
+            // wants the HUD, so close it for the frame and reopen it after.
+            SunkCost.Net.SessionInputGate.Resume(); H.CaptureScreen("Logs/visor-seafloor.png"); yield return null; yield return null; SunkCost.Net.SessionInputGate.OpenMenu();
+            // V5: nothing bracketed with every coin behind the camera: from past the last coin, looking away.
+            Vector3 beyond = doorwayFoot + doorway * 27f; beyond.y = car.BottomPosition.y + 0.15f;
+            host.TeleportLocal(beyond, host.Yaw);
+            host.SetPitchForChecks(-15f); // the look at Coin 3 left the camera aimed at the floor; down the trail now
+            host.transform.rotation = Quaternion.LookRotation(doorway); yield return null; yield return null;
+            Check(hud.Visor.BracketCount == 0, $"V5 looking away from every coin nothing is bracketed ({hud.Visor.BracketCount})");
+            host.transform.rotation = Quaternion.LookRotation(-doorway); yield return null; yield return null;
+            Check(hud.Visor.BracketCount >= 1, $"V5 looking back at the trail the near coins are bracketed ({hud.Visor.BracketCount})");
+            host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); yield return Wait(0.3f);
+
             // R3: back in; the car button from outside refuses.
             Check(!car.IsInsideCar(host.transform.position + Vector3.up * 0.5f), "R3 host outside the car");
             H.ClientRequestCar();
@@ -639,6 +689,8 @@ namespace SunkCost.Editor.Prototype
             // R4: up. The car seals and climbs, the host is moved into the deck cabin, its doors open, the car stays up (nobody below).
             yield return RideAndSample(RideDirection.Up, "R4");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), "R4 the host's player is back in ShipAtSea");
+            yield return null;
+            Check(!hud.Visor.On, "V1 the visor is off again on the deck");
             sea = ShipParts.InWorld(WorldId.Sea);
             Check(sea != null && sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "R4 the host stands in the deck cabin");
             Check(Day.Elevator.State == ElevatorState.AtTop, "R4 the car is up");
@@ -677,6 +729,31 @@ namespace SunkCost.Editor.Prototype
             // G4: the guest's own submersion and cabin water agree with the host's.
             CabinWater sharedWater = car.GetComponent<CabinWater>();
             yield return GuestEventually(r => GuestAgrees(r, true, sharedWater != null ? sharedWater.LevelMeters : -1f), 10f, "G4 guest submerged at the bottom with the same cabin water as the host");
+            // V4 (guest): the guest sees the same values on the same coins; V6: the host tags the guest's copy.
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}");
+            string guestCoins = System.Text.RegularExpressions.Regex.Match(lastReply, @"coins=([^\n;]*)").Groups[1].Value;
+            var hostCoins = new List<string>();
+            foreach (CarryableItem item in UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude))
+                if (item.HasValue && item.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) hostCoins.Add("#" + item.ObjectId + ":" + item.Value);
+            hostCoins.Sort(string.CompareOrdinal);
+            Check(guestCoins == string.Join(",", hostCoins), "V4 the guest sees the same coin values as the host: " + guestCoins);
+            Check(lastReply.Contains("visor=on"), "V1 the guest's visor is on at the bottom");
+            guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
+            host.SetPitchForChecks(0f); host.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(guestPlayer.transform.position - host.transform.position, Vector3.up)); yield return null; yield return null;
+            float trueCrewDistance = Vector3.Distance(host.EyePosition, guestPlayer.transform.position + Vector3.up * 1.85f);
+            Check(hud.Visor.CrewTagCount == 1 && Mathf.Abs(hud.Visor.NearestCrewDistance - trueCrewDistance) < 0.3f, $"V6 the host's visor tags the guest ({hud.Visor.CrewTagCount} tag, {hud.Visor.NearestCrewDistance:0.0} m vs {trueCrewDistance:0.0})");
+            SunkCost.Net.SessionInputGate.Resume(); H.CaptureScreen("Logs/visor-crew.png"); yield return null; yield return null; SunkCost.Net.SessionInputGate.OpenMenu();
+            // V4 (guest): the guest's own visor tags Coin 3 with the same value and
+            // brackets it — its copies live in the session scene, not the site's.
+            CarryableItem guestCoin3 = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.name.StartsWith("Coin 3"));
+            Check(guestCoin3 != null, "V4 Coin 3 still on the seafloor for the guest's look");
+            Vector3 guestStand = guestCoin3.transform.position - doorway * 0.6f; guestStand.y = car.BottomPosition.y + 0.15f;
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestStand) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(guestCoin3.transform.position - (guestStand + Vector3.up * 1.6f)) + "}");
+            yield return Wait(0.5f);
+            string wantedTag = $"{guestCoin3.DisplayName} · ${guestCoin3.Value}";
+            yield return GuestEventually(r => System.Text.RegularExpressions.Regex.Match(r, @"tag=([^;\n]*)").Groups[1].Value == wantedTag, 4f, "V4 the guest's visor tags Coin 3 with the host's value: " + wantedTag);
+            Check(int.TryParse(System.Text.RegularExpressions.Regex.Match(lastReply, @"brackets=([0-9]+)").Groups[1].Value, out int guestBrackets) && guestBrackets >= 1, $"V5 the guest's visor brackets the coin in view ({guestBrackets})");
             yield return Send("{\"id\":{id},\"action\":\"frames\"}");
             string guestFrames = lastReply.Split('\n')[0];
             Note("G1 guest frames (build" + (GuestRenders ? ", rendering" : ", headless") + "): " + guestFrames);

@@ -206,9 +206,8 @@ namespace SunkCost.Player
             }
             else
             {
-                CurrentTarget = null;
-                CurrentButton = null;
-                CurrentCabinControl = CabinControl.None;
+                // Nothing buffered while the gate is shut; what the dot rests on is
+                // still found below.
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
@@ -231,8 +230,10 @@ namespace SunkCost.Player
             // the target ray from the eye that actually renders.
             Motor(moveInput, sprint);
             clearance?.Solve();
-            if (!canPlay) return;
 
+            // What the dot rests on is a fact of the view, not of input: the visor
+            // tags it with the menu open too (the HUD only reads it). The presses
+            // below are what the gate stops.
             if (ViewObstructed)
             {
                 CurrentTarget = null;
@@ -242,7 +243,7 @@ namespace SunkCost.Player
                 return;
             }
             UpdateTarget();
-            if (SessionInputGate.ClickSuppressedThisFrame || inventory == null)
+            if (!canPlay || SessionInputGate.ClickSuppressedThisFrame || inventory == null)
                 return;
 
             Keyboard keys = ActiveKeyboard;

@@ -87,9 +87,12 @@ namespace SunkCost.Net
                     player.TeleportLocal(command.position, player.Yaw);
                     break;
                 case "look":
-                    player.transform.rotation = Quaternion.LookRotation(new Vector3(command.aim.x, 0, command.aim.z));
-                    player.GetComponentInChildren<Camera>(true).transform.rotation = Quaternion.LookRotation(command.aim);
+                {
+                    Vector3 flat = new(command.aim.x, 0f, command.aim.z);
+                    if (flat.sqrMagnitude > 0.0001f) player.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
+                    player.SetPitchForChecks(-Mathf.Atan2(command.aim.y, flat.magnitude) * Mathf.Rad2Deg);
                     break;
+                }
                 case "grab": player.Inventory.RequestGrab(item); break;
                 case "equip": player.Inventory.RequestEquip(command.slot); break;
                 case "drop": player.Inventory.RequestDrop(); break;
@@ -177,6 +180,21 @@ namespace SunkCost.Net
             return water == null ? "none" : water.LevelMeters.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
         }
 
+        // The visor's readout on this peer, and every loot value it can see (docs/VISOR_IMPLEMENTATION_PLAN.md).
+        private static string VisorLine()
+        {
+            SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.Player.PlayerHudUI hud = local != null ? local.GetComponent<SunkCost.Player.PlayerHudUI>() : null;
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            string visor = hud == null ? "visor=none" : string.Format(ci, "visor={0}; home={1}/{2:0.0}; brackets={3}; tag={4}; tagValue={5}; crew={6}",
+                hud.Visor.On ? "on" : "off", hud.Visor.HomeShown ? "shown" : "hidden", hud.Visor.HomeDistance, hud.Visor.BracketCount, hud.Visor.TargetTag, hud.Visor.TargetValue, hud.Visor.CrewTagCount);
+            var coins = new System.Collections.Generic.List<string>();
+            foreach (SunkCost.Interaction.CarryableItem item in FindObjectsByType<SunkCost.Interaction.CarryableItem>(FindObjectsSortMode.None))
+                if (item.HasValue) coins.Add("#" + item.ObjectId.ToString(ci) + ":" + item.Value.ToString(ci));
+            coins.Sort(string.CompareOrdinal);
+            return visor + "; coins=" + string.Join(",", coins);
+        }
+
         public static string Snapshot()
         {
             var nm = InstanceFinder.NetworkManager;
@@ -186,12 +204,12 @@ namespace SunkCost.Net
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}\n";
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {VisorLine()}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
                 var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
-                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}\n";
+                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {

@@ -21,6 +21,32 @@ namespace SunkCost.Sites
         private const float MaxDeepAmbientChannel = 0.05f;
 
         [MenuItem("Sunk Cost/Prototype/Validate Dive Site 01")]
+        // The coins (docs/VISOR_IMPLEMENTATION_PLAN.md): one fixture, every placement,
+        // each prefab a spawnable carryable with a value range, none spawned in the
+        // scene itself (the server spawns them on load).
+        private static void CheckDiveLoot(Scene scene, List<string> errors)
+        {
+            DiveSiteSettings settings = AssetDatabase.LoadAssetAtPath<DiveSiteSettings>(DiveSiteBuilder.SettingsPath);
+            if (settings == null) return; // reported by the settings check
+            var spawners = new List<SunkCost.Interaction.LootFixtureSpawner>(FindComponentsInScene<SunkCost.Interaction.LootFixtureSpawner>(scene));
+            if (spawners.Count != 1) { errors.Add("Expected exactly one LootFixtureSpawner (" + SunkCost.Editor.Prototype.DiveLootSetup.FixtureName + "); found " + spawners.Count + " (run Apply dive loot setup)."); return; }
+            var spawner = spawners[0];
+            int expected = SunkCost.Editor.Prototype.DiveLootSetup.Placements.Length;
+            if (spawner.Entries.Count != expected) errors.Add("Dive loot has " + spawner.Entries.Count + " entries; the placements say " + expected + ".");
+            var collection = AssetDatabase.LoadAssetAtPath<FishNet.Managing.Object.DefaultPrefabObjects>(SunkCost.Editor.Prototype.HQPrototypeLootSetup.PrefabObjectsPath);
+            foreach (SunkCost.Interaction.LootFixtureSpawner.Entry entry in spawner.Entries)
+            {
+                if (entry.Prefab == null) { errors.Add("Dive loot entry " + entry.Name + " has no prefab."); continue; }
+                var item = entry.Prefab.GetComponent<SunkCost.Interaction.CarryableItem>();
+                if (item == null) { errors.Add("Dive loot entry " + entry.Name + " is not a CarryableItem."); continue; }
+                if (!item.HasValue || item.ValueMin <= 0 || item.ValueMin > item.ValueMax) errors.Add("Dive loot entry " + entry.Name + " needs a value range 0 < min <= max.");
+                var nob = entry.Prefab.GetComponent<NetworkObject>();
+                if (nob == null) errors.Add("Dive loot entry " + entry.Name + " has no NetworkObject.");
+                else if (collection != null && !SunkCost.Editor.Prototype.HQPrototypeLootSetup.IsRegistered(collection, nob)) errors.Add("Dive loot prefab " + entry.Prefab.name + " is not in the spawnable prefab collection (run Apply dive loot setup).");
+                if (Mathf.Abs(entry.Position.y - (-settings.ShaftDepthMeters)) > 0.5f) errors.Add("Dive loot entry " + entry.Name + " is not on the seafloor (y=" + entry.Position.y + ").");
+            }
+        }
+
         public static void ValidateOrThrow()
         {
             var errors = new List<string>();
@@ -358,6 +384,7 @@ namespace SunkCost.Sites
                 }
             }
             HQPrototypeValidator.CheckCount<NetworkObject>(scene, 0, errors);
+            CheckDiveLoot(scene, errors);
             if (AnyComponentInScene<HQPlayerController>(scene))
                 errors.Add("Dive site must not contain a placed HQPlayerController — the player spawns at runtime from PrototypePlayer.prefab.");
             WorldSceneChecks.CheckBuildList(errors);

@@ -32,8 +32,16 @@ namespace SunkCost.Interaction
         [SerializeField] private float throwSpeed = 8f;
         [SerializeField] private float releaseHandoffTimeout = 4f;
         [SerializeField] private Vector3 resetPosition = new(0f, 1f, 0f);
+        // Loot value in dollars, rolled once by the server when the item spawns
+        // (docs/VISOR_IMPLEMENTATION_PLAN.md section 3.3; DESIGN.md section 6:
+        // "randomised within a fixed range each run, always visible through the
+        // visor"). Both zero: the item is not loot (the HQ balls) and shows no value.
+        [SerializeField, Min(0)] private int valueMin;
+        [SerializeField, Min(0)] private int valueMax;
 
         private readonly SyncVar<ItemState> state = new();
+        // The rolled value; 0 until the server rolls it, and always 0 for non-loot.
+        private readonly SyncVar<int> value = new();
         // Holder while Held/Released, carrier while Stowed, -1 while Free.
         private readonly SyncVar<int> holderClientId = new(-1);
         private readonly SyncVar<uint> motionVersion = new();
@@ -75,12 +83,22 @@ namespace SunkCost.Interaction
         {
             get
             {
-                var sphere = PrimaryCollider as SphereCollider;
-                if (sphere == null) return 0.12f;
                 Vector3 scale = transform.lossyScale;
-                return sphere.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+                float largest = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+                if (PrimaryCollider is SphereCollider sphere) return sphere.radius * largest;
+                // A flat coin: half its widest extent, so placement keeps it clear of walls.
+                if (PrimaryCollider is BoxCollider box)
+                    return 0.5f * Mathf.Max(box.size.x * Mathf.Abs(scale.x), box.size.y * Mathf.Abs(scale.y), box.size.z * Mathf.Abs(scale.z));
+                return 0.12f;
             }
         }
+
+        // Loot value (docs/VISOR_IMPLEMENTATION_PLAN.md): HasValue is a prefab fact,
+        // Value the server's roll for this instance (0 until it lands on a client).
+        public bool HasValue => valueMax > 0;
+        public int Value => value.Value;
+        public int ValueMin => valueMin;
+        public int ValueMax => valueMax;
         public Texture2D Icon => icon;
         public ItemUseAction UseAction => useAction;
         public ItemState State => state.Value;
@@ -141,6 +159,10 @@ namespace SunkCost.Interaction
             // A scene object keeps its last transform across sessions; a newly opened
             // room should not inherit where the previous room's last throw ended.
             ServerReset();
+            // Rolled once per spawn: the dive site spawns its loot fresh on every load,
+            // so every dive re-rolls; nothing re-rolls while the item exists.
+            if (HasValue && value.Value == 0)
+                value.Value = UnityEngine.Random.Range(Mathf.Min(valueMin, valueMax), valueMax + 1);
         }
 
         public override void OnStopServer()
