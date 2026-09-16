@@ -27,6 +27,7 @@ namespace SunkCost.Editor.Prototype
         private const float InteriorHeightMeters = 3.5f;
         private const float CarFrameRadius = 0.06f;
         private const float CarWallInset = 0.15f;
+        public static float InteriorRadiusMeters => DiameterMeters / 2f - CarWallInset;
         private const float CarDoorwayWidthMeters = 2f;
         private const float PostDoorwayOffsetDeg = 45f;
         private const float PanelDoorwayOffsetDeg = 75f;
@@ -67,6 +68,8 @@ namespace SunkCost.Editor.Prototype
             doorRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
             doorLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
 
+            CreateDoorCollider(cabin.transform, interiorRadius, doorwayHalfAngleDeg);
+
             GameObject volume = new(ShipParts.DeckCabinVolumeName, typeof(BoxCollider));
             volume.transform.SetParent(cabin.transform, false);
             volume.transform.localPosition = new Vector3(0f, InteriorHeightMeters / 2f, 0f);
@@ -82,6 +85,27 @@ namespace SunkCost.Editor.Prototype
         // The status plate outside the doorway (WORLD_LOOP_IMPLEMENTATION_PLAN.md section 4.4:
         // "a TextMesh the panel writes to") — empty until Dan's DeckCabin writes a refusal to
         // it, same pattern as ShipMonitor's MonitorStatus label.
+        // One box across the doorway, like the car's own (ElevatorCabinBuilder): a
+        // player cannot walk into the housing while its doors are shut or moving —
+        // with the car below there is nothing to stand in but the space the car
+        // will arrive into (Dan, 16 September 2026: "that case can never happen").
+        // Disabled here (the doors are parked open); WorldSceneFlow.PresentDeckCabin
+        // switches it every frame.
+        public static GameObject CreateDoorCollider(Transform cabin, float wallRadius, float doorwayHalfAngleDeg)
+        {
+            float doorwayCenterRad = DoorwayBearingDeg * Mathf.Deg2Rad;
+            Vector3 doorwayDirection = new Vector3(Mathf.Cos(doorwayCenterRad), 0f, Mathf.Sin(doorwayCenterRad));
+            float arcLength = wallRadius * (doorwayHalfAngleDeg * 2f * Mathf.Deg2Rad);
+            GameObject colliderObject = new(ShipParts.DeckCabinDoorColliderName, typeof(BoxCollider));
+            colliderObject.transform.SetParent(cabin, false);
+            colliderObject.transform.localPosition = doorwayDirection * wallRadius + new Vector3(0f, InteriorHeightMeters / 2f, 0f);
+            colliderObject.transform.localRotation = Quaternion.LookRotation(doorwayDirection, Vector3.up);
+            BoxCollider box = colliderObject.GetComponent<BoxCollider>();
+            box.size = new Vector3(arcLength, InteriorHeightMeters, DoorThicknessMeters);
+            box.enabled = false;
+            return colliderObject;
+        }
+
         private static void CreatePanelLabel(Transform cabinTransform, float interiorRadius)
         {
             float angleRad = DoorwayBearingDeg * Mathf.Deg2Rad;

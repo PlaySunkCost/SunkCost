@@ -707,10 +707,22 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => Day.Elevator.State == ElevatorState.AtBottom, 30f, "G2 the car went back down empty for the guest");
             Check(WorldSceneFlow.FindCar() != null, "G2 the site stays loaded on the server while the guest is below");
             Check(flow.DeckCabinOpenFraction() < 0.01f, "G2 deck cabin doors closed on the ship");
+            // With the car below the housing is shut: a capsule sweep in through the
+            // doorway is stopped by the doorway collider (Dan, 16 September 2026: a
+            // player standing in the housing while the car comes up "can never
+            // happen"). The refusal row below teleports in through it on purpose and
+            // steps out again before the guest rides up.
+            Vector3 deckDoorway = sea.DeckCabin.forward;
+            Vector3 outsideDoor = sea.DeckCabin.position + deckDoorway * 4f; outsideDoor.y = sea.DeckCabin.position.y + 0.15f;
+            Collider deckBlocker = Sweep(outsideDoor, -deckDoorway, 4f);
+            Check(deckBlocker != null && deckBlocker.name == ShipParts.DeckCabinDoorColliderName, "G2 the deck cabin doorway is blocked while the car is below (" + (deckBlocker == null ? "nothing" : deckBlocker.name) + ")");
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.3f);
             H.ClientRequestCabin();
             yield return WaitUntil(() => Day.LastRefusal.Text == "Cabin below", 3f, "G2 host refused: cabin below");
+            host.TeleportLocal(sea.BoardingPoint != null ? sea.BoardingPoint.position : sea.SpawnPoint(0).position, host.Yaw); // out of the housing: nobody stands where the car arrives
+            yield return Wait(0.3f);
+            Check(!sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "G2 host out of the housing before the guest rides up");
 
             // G3: the guest walks into the car and comes up alone; the host watches the doors open.
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f)) + "}");
@@ -722,6 +734,8 @@ namespace SunkCost.Editor.Prototype
             Check(Day.CabinRide.Stage == CabinRideStage.Complete && Day.Below.Count == 0, "G3 guest surfaced, nobody below");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=ShipAtSea") && r.Contains("ride=Complete") && r.Contains("travelLocked=False"), 20f, "G3 guest is back on the ship, unlocked");
             yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 3f, "G3 deck cabin doors open for the guest's arrival");
+            yield return null;
+            Check(Sweep(outsideDoor, -deckDoorway, 4f) == null || Sweep(outsideDoor, -deckDoorway, 4f).name != ShipParts.DeckCabinDoorColliderName, "G3 the deck cabin doorway is open again with the car up");
             guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
             sea = ShipParts.InWorld(WorldId.Sea);
             Check(guestPlayer != null && sea.IsInDeckCabin(guestPlayer.transform.position + Vector3.up * 0.5f), "G3 the guest's copy stands in the deck cabin on the host");
