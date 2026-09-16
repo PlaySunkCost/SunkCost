@@ -33,6 +33,19 @@ namespace SunkCost.Audio
         public int Reads { get; private set; }
         public int LastReadLength { get; private set; }
         public int Underruns { get; private set; }
+        // Adaptive jitter buffer, the way voice apps do it (Dan, 17 September 2026,
+        // after hearing two misses at the start of every stream): the cushion of
+        // audio held before playing starts at 100 ms, follows the arrival jitter
+        // (1.5 x the worst inter-arrival gap seen lately, 100..300 ms), grows a
+        // frame on every underrun, relaxes a frame every 10 s of calm, and is
+        // remembered per player across streams (ProximityVoice hands it back in).
+        public const int MinCushion = 4800, MaxCushion = 14400; // 100 ms .. 300 ms
+        // refilling starts set: a stream pre-buffers its cushion before the first
+        // sample plays (Dan, 17 September 2026: "3 at the start, then 0").
+        private int cushion = MinCushion, refilling = 1, played;
+        private int worstGapMs, lastGapAt, calmSince;
+        public int CushionMs => cushion / 48;
+        public int Cushion { get => cushion; set => cushion = Math.Max(MinCushion, Math.Min(MaxCushion, value)); }
         public float Gain => source != null ? source.volume : 0;
         public float Pan => source != null ? source.panStereo : 0;
         public VoicePlayback(GameObject owner, AudioDeviceService devices)
@@ -59,6 +72,16 @@ namespace SunkCost.Audio
                 int now = Environment.TickCount;
                 if (!haveSequence || unchecked(now - lastArrival) > 200)
                 { Array.Clear(lengths, 0, lengths.Length); expected = sequence; haveSequence = true; Volatile.Write(ref discard, 1); }
+                else
+                {
+                    // Arrival jitter: the worst gap between consecutive packets sets the
+                    // cushion target (1.5 x, so a gap that size is absorbed with margin);
+                    // the memory of it fades after 10 s so a calm link can shrink back.
+                    int gap = unchecked(now - lastArrival);
+                    if (gap > worstGapMs || unchecked(now - lastGapAt) > 10000) { worstGapMs = gap; lastGapAt = now; }
+                    int target = Math.Max(MinCushion, Math.Min(MaxCushion, worstGapMs * 48 * 3 / 2));
+                    if (target > cushion) cushion = target;
+                }
                 int delta = (short)(sequence - expected);
                 if (delta < 0) return;
                 if (delta >= 10) { Array.Clear(lengths, 0, lengths.Length); expected = sequence; newest = sequence; }
@@ -116,11 +139,30 @@ namespace SunkCost.Audio
         {
             // Only the audio consumer advances read; discard stale PCM after silence
             // even if Unity virtualized the inaudible source and stopped its callbacks.
-            if (Interlocked.Exchange(ref discard, 0) != 0) Volatile.Write(ref read, Volatile.Read(ref write));
-            int r = read, count = Math.Min(data.Length, Volatile.Read(ref write) - r);
+            if (Interlocked.Exchange(ref discard, 0) != 0) { Volatile.Write(ref read, Volatile.Read(ref write)); played = 0; refilling = 1; }
+            int r = read, available = Volatile.Read(ref write) - r;
+            Reads++; LastReadLength = data.Length;
+            // Unity's streaming reader tops itself up in bursts of two blocks whenever
+            // it runs low, so the cushion can never be smaller than two blocks plus a
+            // frame (about 137 ms at the 2816-sample blocks seen), whatever the link.
+            int floor = 2 * data.Length + 960;
+            if (cushion < floor) cushion = Math.Min(floor, MaxCushion);
+            if (refilling != 0)
+            {
+                // The first play of a stream also covers Unity's own prefetch: when a
+                // streaming source starts, Unity pulls two or three blocks in a burst,
+                // which would empty a cushion that was filled to exactly one cushion
+                // (Dan, 17 September 2026: "2 at the start", every stream).
+                int need = played == 0 ? cushion + 3 * data.Length : cushion;
+                if (available < need) { Array.Clear(data, 0, data.Length); return; }
+                refilling = 0;
+            }
+            int count = Math.Min(data.Length, available);
             for (int i = 0; i < count; i++) data[i] = ring[unchecked(r + i) & (ring.Length - 1)];
             Array.Clear(data, count, data.Length - count); Volatile.Write(ref read, r + count);
-            Reads++; LastReadLength = data.Length; if (count < data.Length && count > 0) Underruns++;
+            if (count > 0) played = 1;
+            if (count < data.Length && played != 0) { Underruns++; refilling = 1; cushion = Math.Min(cushion + 960, MaxCushion); calmSince = Environment.TickCount; }
+            else if (played != 0 && cushion - 960 >= Math.Max(MinCushion, floor) && unchecked(Environment.TickCount - calmSince) > 10000) { cushion -= 960; calmSince = Environment.TickCount; }
         }
         public void Dispose()
         {

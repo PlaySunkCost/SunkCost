@@ -104,6 +104,24 @@ by Claude through the peer commands. What was heard and measured:
   hitches (incoming packets are handed over on the main thread; the editor
   stalls 50–100 ms now and then, longer than the 60 ms cushion). A built game
   hitches far less; an adaptive jitter buffer is the proper follow-up.
+- **Rounds three to six — the jitter buffer.** With the decoder fixed the tone
+  still stopped twice per stream, always near the start. The client build was
+  smooth (237 fps, worst frame 39 ms), so the sender was not it. Found and
+  fixed in turn: (1) the receiver held a fixed 60 ms and forgot it at every
+  unmute — now an adaptive jitter buffer the way voice apps do it: starts at
+  100 ms, follows the measured arrival gaps (1.5 x the worst gap, up to
+  300 ms), grows a frame on every underrun, relaxes a frame per 10 s of calm,
+  and is remembered per player across streams; (2) the cushion was only
+  enforced after an underrun — a stream now pre-buffers before its first
+  sample plays; (3) Unity's streaming reader tops itself up in bursts of two
+  2816-sample blocks, so the cushion is floored at two blocks plus a frame
+  (about 137 ms) and the first play of a stream waits for cushion + three
+  blocks. Round six: 2049 frames, **Dan counted zero stops in 41 s**.
+- What that does and does not promise: any arrival gap shorter than the
+  cushion is silent; the buffer grows to what a link shows, to 300 ms; a lost
+  packet is concealed by Opus (a 20 ms blur, not a stop). A stall over 300 ms
+  still gaps, and slow clock drift between two machines' sound cards is not
+  compensated yet (time-stretching later).
 - Not covered: two machines, Steam, a second person's ears, latency, echo.
 
 ## Still requires people/hardware

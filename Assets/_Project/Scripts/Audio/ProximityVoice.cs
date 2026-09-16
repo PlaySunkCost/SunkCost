@@ -26,6 +26,7 @@ namespace SunkCost.Audio
             public ulong Generation; public VoicePlayback Playback;
             public float Volume = 1; public bool Muted;
             public float LastFrame;
+            public int Cushion = VoicePlayback.MinCushion; // the jitter buffer this player's link needed, kept across streams
         }
         public AudioDeviceService Devices { get; private set; }
         public bool MicrophoneEnabled { get; private set; }
@@ -285,19 +286,20 @@ namespace SunkCost.Audio
                 receivers[state.Speaker] = receiver = new Receiver();
             }
             if (state.Enabled && receiver.Generation == state.Generation) return;
+            if (receiver.Playback != null) receiver.Cushion = receiver.Playback.Cushion;
             receiver.Playback?.Dispose(); receiver.Playback = null;
             receiver.Generation = state.Enabled ? state.Generation : 0;
         }
         private void ClientFrame(VoiceFrame frame, Channel channel)
         {
             if (channel != Channel.Unreliable || !Connected || frame.Speaker == manager.ClientManager.Connection.ClientId || world < 0 || WorldOf(frame.Speaker) != world || !Devices.Available || !receivers.TryGetValue(frame.Speaker, out var receiver) || receiver.Generation == 0 || receiver.Generation != frame.Generation || receiver.Muted) return;
-            receiver.Playback ??= new VoicePlayback(gameObject, Devices);
+            if (receiver.Playback == null) { receiver.Playback = new VoicePlayback(gameObject, Devices); receiver.Playback.Cushion = receiver.Cushion; }
             receiver.Playback.Enqueue(frame.Sequence, frame.Payload); receiver.LastFrame = Time.unscaledTime; ReceivedFrames++;
         }
         public void SetVoiceVolume(float value) { VoiceVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }
         public bool PeerMuted(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Muted;
         public int PeerDecoded(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Decoded ?? 0 : 0;
-        public string PeerReadStats(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Playback != null ? $"reads={receiver.Playback.Reads} block={receiver.Playback.LastReadLength} underruns={receiver.Playback.Underruns} concealed={receiver.Playback.Concealed}" : "none";
+        public string PeerReadStats(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Playback != null ? $"reads={receiver.Playback.Reads} block={receiver.Playback.LastReadLength} underruns={receiver.Playback.Underruns} cushion={receiver.Playback.CushionMs}ms concealed={receiver.Playback.Concealed}" : "none";
         public float PeerPlaybackGain(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Gain ?? 0 : 0;
         public float PeerPlaybackPan(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Pan ?? 0 : 0;
         public float PeerVolume(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Volume : 1;
