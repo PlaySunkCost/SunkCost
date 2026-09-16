@@ -189,13 +189,37 @@ namespace SunkCost.World
             if (delta.y > 0f)
             {
                 if (carried) local.CarryNow(delta);
+                CarryLooseBodies(car, delta);
                 Physics.SyncTransforms();
             }
             else
             {
                 Physics.SyncTransforms();
                 if (carried) local.CarryNow(delta);
+                CarryLooseBodies(car, delta);
             }
+        }
+
+        // Bodies this peer simulates inside the moving car (a ball just thrown by
+        // the local player; on the server a loose item not yet at rest) move with
+        // the car's frame, in the rider's order against the floor.
+        private static void CarryLooseBodies(ElevatorController car, Vector3 delta)
+        {
+            foreach (CarryableItem item in CarryableItem.Spawned)
+            {
+                if (item == null || !item.SimulatesHere) continue;
+                Vector3 p = item.transform.position;
+                if (car.IsInsideCar(p) || car.IsInsideCar(p + Vector3.up * 0.25f)) item.CarryWithCar(delta);
+            }
+        }
+
+        // Cabin cargo grabbed mid-ride: out of the cargo list, transit over, so the
+        // follow no longer fights the hand. Server only (ServerGrab calls it).
+        public void ServerReleaseCabinCargo(CarryableItem item)
+        {
+            if (networkManager == null || !networkManager.IsServerStarted || item == null) return;
+            cargo.Remove(item);
+            item.ServerEndDeckTransit();
         }
 
         // The deck cabin's doors on the ship at sea: open while the car is up and

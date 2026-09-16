@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FishNet.Component.Transforming;
 using FishNet.Connection;
 using FishNet.Object;
@@ -67,6 +68,7 @@ namespace SunkCost.Interaction
         // section 6): server only, zero = none. While set the server's scripted
         // follow is the only position writer and the body is kinematic.
         private int transitSerial;
+        private bool transitInCabin;        // cabin cargo keeps its colliders: it can be looked at and grabbed mid-ride
         private Vector3 transitLocalPosition;
         private Quaternion transitLocalRotation;
 
@@ -136,11 +138,22 @@ namespace SunkCost.Interaction
             motionVersion.OnChange += OnMotionVersionChanged;
         }
 
+        // Every spawned item on this peer, for the per-frame passes (the car
+        // carrying loose bodies) that must not search the scene each frame.
+        public static readonly HashSet<CarryableItem> Spawned = new();
+
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
+            Spawned.Add(this);
             ApplyRole();
             ResolveHolder();
+        }
+
+        public override void OnStopNetwork()
+        {
+            base.OnStopNetwork();
+            Spawned.Remove(this);
         }
 
         public override void OnStartClient()
@@ -216,6 +229,11 @@ namespace SunkCost.Interaction
         {
             if (!IsSpawned) return;
             if (state.Value == ItemState.Free) { PinToMovingCar(); return; }
+            // Held, Released or Stowed: whatever spot the pin remembered is stale (a
+            // grab and a throw mid-ride put it somewhere else; a stale pin snapped the
+            // copy back to the old spot when it next came to rest).
+            carPinned = false;
+            carRestKnown = false;
             if (state.Value != ItemState.Held || !LocalWriter || hasPendingRelease)
                 return;
             if (holder == null) ResolveHolder();
@@ -272,8 +290,12 @@ namespace SunkCost.Interaction
             if (!carPinned)
             {
                 if (!car.IsInsideCar(transform.position + Vector3.up * CarPinInsideProbeMeters)) return;
-                // An item that entered the car under way (dropped mid-ride) has no
-                // resting spot on record: its current one has to do.
+                // An item that came to rest under way (thrown mid-ride) has no resting
+                // spot on record. The server (its writer) pins it where it lies; a
+                // client's copy is left to its NetworkTransform — it lags the floor a
+                // little until the car stops, but ends exactly where the server has it,
+                // where a pin from the lagged copy would leave it wrong for good.
+                if (!carRestKnown && !IsServerStarted) return;
                 carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(transform.position);
                 carLocalRotation = carRestKnown ? carRestLocalRotation : Quaternion.Inverse(car.transform.rotation) * transform.rotation;
                 carPinned = true;
@@ -319,7 +341,7 @@ namespace SunkCost.Interaction
             }
             // A body this peer simulates has now stepped from wherever ApplyRole put it:
             // interpolate its rendering between steps (see ApplyRole).
-            if (body != null && !body.isKinematic && body.interpolation == RigidbodyInterpolation.None)
+            if (body != null && !body.isKinematic && body.interpolation == RigidbodyInterpolation.None && Time.unscaledTime > carriedUntil)
                 body.interpolation = RigidbodyInterpolation.Interpolate;
             if (state.Value == ItemState.Released && LocalWriter && !hasPendingRelease && !restRequested)
             {
@@ -362,6 +384,8 @@ namespace SunkCost.Interaction
             bool fromInventory = state.Value == ItemState.Stowed && holderClientId.Value == connection.ClientId;
             if (!fromWorld && !fromInventory)
                 return false;
+            // Cabin cargo picked up mid-ride is cargo no more: it travels in the hand.
+            if (InCabinTransit) SunkCost.World.WorldSceneFlow.Instance?.ServerReleaseCabinCargo(this);
             if (fromInventory && TryGetHoldPose(player, out Vector3 pose, out Quaternion poseRotation))
             {
                 // Still server-controlled here, so the teleport flag is honoured and
@@ -531,6 +555,7 @@ namespace SunkCost.Interaction
             holder = null;
             if (Owner.IsValid) RemoveOwnership();
             transitSerial = serial;
+            transitInCabin = true;
             carPinned = false;
             carRestKnown = false;
             transitLocalPosition = frame.ToLocal(transform.position);
@@ -561,6 +586,7 @@ namespace SunkCost.Interaction
         {
             if (transitSerial == 0) return;
             transitSerial = 0;
+            transitInCabin = false;
             ApplyRole();
             if (body != null && !body.isKinematic)
             {
@@ -568,6 +594,29 @@ namespace SunkCost.Interaction
                 body.angularVelocity = Vector3.zero;
                 body.WakeUp();
             }
+        }
+
+        public bool InCabinTransit => transitSerial != 0 && transitInCabin;
+
+        // ---- the car carries loose bodies ---------------------------------------------
+
+        // The body this peer simulates (the server's Free item, the thrower's Released
+        // one) inside the car while it moves: WorldSceneFlow moves it by the car's
+        // frame delta, so it flies and lands as in a still room (Dan, 16 September
+        // 2026: a ball thrown in the moving car fell through the floor into the
+        // tube — it was falling against a floor that had moved on between physics
+        // steps). Interpolation stays off while carried: the interpolator would
+        // render it a step behind the floor.
+        public bool SimulatesHere => body != null && !body.isKinematic && transitSerial == 0 && !carPinned;
+        private float carriedUntil = -1f;
+
+        public void CarryWithCar(Vector3 delta)
+        {
+            if (!SimulatesHere) return;
+            body.interpolation = RigidbodyInterpolation.None;
+            carriedUntil = Time.unscaledTime + 0.1f;
+            body.position += delta;
+            transform.position += delta;
         }
 
         // Runtime-spawned fixture items (LootFixtureSpawner) are told where they
@@ -739,7 +788,7 @@ namespace SunkCost.Interaction
             // release pose, so a flying ball renders every frame from then on.
             body.interpolation = RigidbodyInterpolation.None;
 
-            bool physical = (current == ItemState.Free || current == ItemState.Released) && transitSerial == 0;
+            bool physical = (current == ItemState.Free || current == ItemState.Released) && (transitSerial == 0 || transitInCabin);
             foreach (Collider collider in colliders)
                 if (collider != null) collider.enabled = physical;
 

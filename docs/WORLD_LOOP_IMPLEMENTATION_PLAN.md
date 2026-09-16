@@ -245,6 +245,19 @@ mid-ride, an empty car's floor) are pinned to the car's frame on every peer in
 rider's pin; the server's body is kinematic while pinned. Rows C1–C4 and D in
 the deck cabin ride matrix.
 
+**Mid-ride (16 September 2026, `dan/car-bugs`, Dan's three bugs):** cabin
+cargo keeps its colliders (`transitInCabin`), so the dot finds it and the
+visor brackets it; `ServerGrab` on cabin cargo calls
+`WorldSceneFlow.ServerReleaseCabinCargo` (out of the list, transit over) so
+the follow never fights the hand; `DriveCar` moves every body this peer
+simulates inside the car by the car's delta (`CarryLooseBodies` →
+`CarryWithCar`, in the rider's order against the floor, interpolation held
+off while carried) so a thrown ball lands on the car's floor instead of
+falling through it into the tube; a client pins only from a resting spot it
+recorded while the car was still (a thrown ball's copy is left to its
+NetworkTransform until the stop, and ends where the server has it). Rows E1–E3
+on host and guest.
+
 Found while building it: `CarryableItem` reset any Free item below y = −2
 ("fell overboard") to its reset spot every physics step — on the seafloor,
 45 m down, that was every loose item, every step: a coin dropped in the car
