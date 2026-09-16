@@ -102,7 +102,7 @@ namespace SunkCost.Editor.Prototype
                 // geometry rather than a plain box, visual shell only (see DeckCabinBuilder).
                 DeckCabinBuilder.Build(root.transform, new Vector3(0f, 0f, -8f), deck, rail, glass, button);
 
-                Block(ShipParts.StorageAreaName, root.transform, new Vector3(0f, 0.02f, -13f), new Vector3(4f, 0.04f, 3.5f), tape);
+                BuildStorageRoom(root.transform, rail, tape);
 
                 Vector3[] spawns = { new(-3f, 0f, 5f), new(3f, 0f, 5f), new(-3f, 0f, 1f), new(3f, 0f, 1f) };
                 for (int i = 0; i < spawns.Length; i++)
@@ -119,6 +119,42 @@ namespace SunkCost.Editor.Prototype
                 return PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { Object.DestroyImmediate(root); }
+        }
+
+        // The storage room (Dan, 16 September 2026: "a small box, like a small
+        // room, in which we put our loot"): a walled box at the stern on the
+        // starboard side, clear of the boarding path down the middle, with a
+        // doorway toward the centre line and the readout over it. StorageArea is
+        // its taped floor; StorageVolume its inside (what the pay button sells).
+        private static void BuildStorageRoom(Transform root, Material wall, Material tape)
+        {
+            const float cx = 3.2f, cz = -12.5f;     // centre on the deck
+            const float w = 2.8f, d = 3.0f, h = 2.2f; // outer width (x), depth (z), height
+            const float t = 0.1f;                    // wall thickness
+            const float door = 1.1f;                 // doorway width along z, in the port wall
+            Block(ShipParts.StorageAreaName, root, new Vector3(cx, 0.02f, cz), new Vector3(w, 0.04f, d), tape);
+            Block("StorageWallStarboard", root, new Vector3(cx + w / 2f - t / 2f, h / 2f, cz), new Vector3(t, h, d), wall);
+            Block("StorageWallStern", root, new Vector3(cx, h / 2f, cz - d / 2f + t / 2f), new Vector3(w, h, t), wall);
+            Block("StorageWallBow", root, new Vector3(cx, h / 2f, cz + d / 2f - t / 2f), new Vector3(w, h, t), wall);
+            Block("StorageRoof", root, new Vector3(cx, h - t / 2f, cz), new Vector3(w, t, d), wall);
+            float side = (d - door) / 2f;            // the port wall's two pieces either side of the doorway
+            Block("StorageWallPortStern", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz - d / 2f + side / 2f), new Vector3(t, h, side), wall);
+            Block("StorageWallPortBow", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz + d / 2f - side / 2f), new Vector3(t, h, side), wall);
+            Block("StorageLintel", root, new Vector3(cx - w / 2f + t / 2f, h - 0.2f, cz), new Vector3(t, 0.4f, door), wall);
+            Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, h / 2f, cz), new Vector3(w - 2f * t, h - t, d - 2f * t));
+            // The readout on the outside of the port wall, over the doorway, facing port.
+            GameObject go = new(ShipParts.StorageReadoutName, typeof(TextMesh));
+            go.transform.SetParent(root, false);
+            go.transform.localPosition = new Vector3(cx - w / 2f - 0.02f, h + 0.35f, cz);
+            go.transform.localRotation = Quaternion.Euler(0f, 90f, 0f); // text faces -x (port)
+            TextMesh mesh = go.GetComponent<TextMesh>();
+            mesh.text = "STORAGE\n$0 / $0";
+            mesh.characterSize = 0.05f;
+            mesh.fontSize = 48;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
+            mesh.color = new Color(0.95f, 0.85f, 0.4f);
+            root.gameObject.AddComponent<StorageReadout>();
         }
 
         public static void CreateOrUpdateSeaScene()

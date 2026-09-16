@@ -175,6 +175,7 @@ namespace SunkCost.Editor.Prototype
             host.Inventory.RequestGrab(coin);
             yield return WaitUntil(() => coin.State == ItemState.Held && coin.HolderClientId == host.OwnerId, 3f, "E1 the cargo was grabbed mid-ride");
             Check(!coin.InTransit, "E1 grabbed cargo is cargo no more");
+            Check(hud.Visor.OnMeValue == coin.Value && hud.Visor.MoneyText.EndsWith("ON ME $" + coin.Value), $"M2 the held coin counts on me ({hud.Visor.MoneyText})");
             yield return Wait(0.5f);
             // Throw it at the floor toward the back wall, away from the doorway: a coin
             // that lands in the shut door's threshold is behind the door collider and
@@ -717,6 +718,7 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(Mathf.DeltaAngle(hud.Visor.HeadingDeg, host.PlayerCamera.transform.eulerAngles.y)) < 1f, $"V2 the visor's heading is the camera's ({hud.Visor.HeadingDeg:0}°)");
             Check(hud.Visor.AirFraction >= 0.999f && hud.Visor.HealthFraction >= 0.999f, "V2 air and health read full (nothing drains them yet)");
             Check(!hud.Visor.HomeShown, "V3 HOME is hidden inside the car");
+            Check(hud.Visor.MoneyText == "BOX $0/$500  ·  ON ME $0" && hud.Visor.OnMeValue == 0, "M1 the visor's money line reads an empty box against the quota and nothing on me: " + hud.Visor.MoneyText);
             Check(Day.Elevator.State == ElevatorState.AtBottom, "R2 car at the bottom");
             ElevatorController car = WorldSceneFlow.FindCar();
             Check(car != null && car.Driven && Vector3.Distance(car.transform.position, car.BottomPosition) < 0.05f, "R2 the driven car sits on its bottom position");
@@ -1042,6 +1044,22 @@ namespace SunkCost.Editor.Prototype
             Check(!Day.Riding, "Y8 no ride on payday");
             yield return GuestEventually(r => r.Contains("payday=True"), 5f, "Y8 the guest reads payday");
 
+            // Z1: the storage room. Coin 3 into the box: the server's sum, the readout
+            // on the box, the visor line and the guest agree; out of the box it is nothing.
+            CarryableItem boxCoin = H.Item("Coin 3");
+            Check(boxCoin != null && boxCoin.gameObject.scene == WorldScenes.Scene(WorldId.Sea), "Z1 Coin 3 is on the ship");
+            int coinValue = boxCoin.Value;
+            boxCoin.ServerDropAt(sea.FromShipLocal(new Vector3(3.2f, 0.3f, -12.5f)));
+            yield return WaitUntil(() => Day.BoxValue == coinValue, 2f, $"Z1 the box is worth the coin (${coinValue}): box=${Day.BoxValue}");
+            Check(sea.IsInStorageRoom(boxCoin.transform.position), "Z1 the coin lies inside the storage volume");
+            SunkCost.World.StorageReadout readout = sea.GetComponent<SunkCost.World.StorageReadout>();
+            yield return WaitUntil(() => readout != null && readout.Text == $"STORAGE\n${coinValue} / $500\nbalance $0", 2f, "Z1 the box's readout says " + (readout == null ? "(none)" : readout.Text.Replace("\n", " | ")));
+            yield return GuestEventually(r => r.Contains($"box={coinValue};"), 5f, "Z1 the guest reads the box's worth");
+            boxCoin.ServerDropAt(sea.FromShipLocal(new Vector3(-3f, 0.3f, 3f)));
+            yield return WaitUntil(() => Day.BoxValue == 0, 2f, "Z1 out of the box it counts for nothing");
+            boxCoin.ServerDropAt(sea.FromShipLocal(new Vector3(3.2f, 0.3f, -12.5f)));
+            yield return WaitUntil(() => Day.BoxValue == coinValue, 2f, "Z1 back in the box for the sale");
+
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");
 
             // Y9: home. Docking resets the cycle: day 0, no payday.
@@ -1051,7 +1069,47 @@ namespace SunkCost.Editor.Prototype
             string homeSail = H.ServerSail("HQ");
             Check(homeSail.StartsWith("sailing"), "Y9 sailing home on payday: " + homeSail);
             yield return WaitUntil(() => Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.HQ, 30f, "Y9 docked at HQ");
-            Check(Day.Day == 0 && !Day.Payday && Day.Phase == DayPhase.AtHQ, $"Y9 docking reset the cycle (day={Day.Day} payday={Day.Payday} phase={Day.Phase})");
+            Check(Day.Day == 3 && Day.Payday && Day.Phase == DayPhase.AtHQ, $"Y9 docking keeps the payday until it is paid (day={Day.Day} payday={Day.Payday} phase={Day.Phase})");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ — PAYDAY"), 3f, "Y9 the monitor says payday at the dock: " + H.MonitorText());
+
+            // Z2: the ship stays docked until the quota is paid; the coin came home in the box.
+            string paydayOut = H.ServerSail("Sea");
+            Check(paydayOut == "refused: Pay the quota first", "Z2 the monitor refuses Site 01 until the quota is paid: " + paydayOut);
+            ShipParts hqShip = ShipParts.InWorld(WorldId.HQ);
+            CarryableItem homeCoin = H.Item("Coin 3");
+            Check(hqShip != null && homeCoin != null && homeCoin.gameObject.scene == WorldScenes.Scene(WorldId.HQ) && hqShip.IsInStorageRoom(homeCoin.transform.position), "Z2 Coin 3 crossed to HQ inside the storage room");
+            yield return WaitUntil(() => Day.BoxValue == coinValue, 2f, "Z2 the docked ship's box is worth the coin");
+            yield return WaitUntil(() => H.QuotaBoardText().StartsWith("PAYDAY"), 3f, "Z2 the HQ board says PAYDAY: " + H.QuotaBoardText().Replace("\n", " | "));
+
+            // Z3: look at the board: the prompt offers the pay. Pay with the quota set to
+            // the coin's worth: sold, paid exactly, a new cycle, the coin gone.
+            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return null;
+            H.ClientLookAtNamed(SunkCost.World.QuotaBoard.BoardName); yield return null; yield return null;
+            Check(host.CurrentQuotaBoard != null && H.PromptText().Contains("Press E to pay the quota"), "Z3 looking at the board offers the pay: " + H.PromptText());
+            WorldLoopSettings.QuotaOverrideForTests = coinValue;
+            H.ClientRequestPay();
+            yield return WaitUntil(() => Day.LastPay.Serial == 1, 3f, "Z3 the pay was processed");
+            PayReport pay = Day.LastPay;
+            Check(pay.Paid && !pay.Lost && pay.Sales == coinValue && pay.Quota == coinValue && pay.Balance == 0, $"Z3 sold ${pay.Sales}, quota ${pay.Quota}, paid={pay.Paid}, balance ${pay.Balance}");
+            Check(Day.Day == 0 && !Day.Payday && Day.Balance == 0, $"Z3 a new cycle after paying (day={Day.Day} payday={Day.Payday} balance={Day.Balance})");
+            yield return WaitUntil(() => H.Item("Coin 3") == null || !H.Item("Coin 3").IsSpawned, 2f, "Z3 the sold coin is gone");
+            yield return WaitUntil(() => Day.BoxValue == 0, 2f, "Z3 the box is empty");
+            Check(H.QuotaBoardText().StartsWith($"PAID ${coinValue}"), "Z3 the board says PAID: " + H.QuotaBoardText().Replace("\n", " | "));
+            Check(Day.ServerCanSail(WorldId.Sea, out string sailWhy), "Z3 the monitor may sail again: " + sailWhy);
+
+            // Z4: nothing to pay in a fresh cycle.
+            H.ClientRequestPay();
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Nothing to pay yet — dive first", 3f, "Z4 paying with no dive taken is refused: " + Day.LastRefusal.Text);
+            Check(Day.LastPay.Serial == 1, "Z4 no second pay happened");
+
+            // Z5: short at the quota: GAME LOST, everything from nothing (the server
+            // API directly; the button's path is Z3).
+            WorldLoopSettings.QuotaOverrideForTests = 99999;
+            PayReport lost = Day.ServerPay(sales: 40, quota: 99999);
+            Check(lost.Lost && !lost.Paid && lost.Had == 40 && lost.Balance == 0 && Day.Balance == 0 && Day.Day == 0 && !Day.Payday, $"Z5 short at the quota is GAME LOST and a reset (had ${lost.Had}, balance ${Day.Balance})");
+            yield return null;
+            Check(H.QuotaBoardText().StartsWith("GAME LOST"), "Z5 the board says GAME LOST: " + H.QuotaBoardText().Replace("\n", " | "));
+            WorldLoopSettings.QuotaOverrideForTests = null;
             SunkCost.Net.SessionInputGate.Resume();
         }
     }

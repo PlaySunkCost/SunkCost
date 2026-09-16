@@ -75,6 +75,8 @@ namespace SunkCost.Player
             public int CrewTagCount;
             public float NearestCrewDistance;  // +inf when none
             public string DayText;             // "DAY 2/3" in the top-left corner (Dan, 16 September 2026)
+            public string MoneyText;           // "BOX $100/$200 · ON ME $45" under it (Dan, 16 September 2026)
+            public int OnMeValue;              // what the player carries, hands and slots
         }
         public VisorReadout Visor { get; private set; }
 
@@ -96,6 +98,7 @@ namespace SunkCost.Player
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null && controller.CurrentButton != null) return $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
+                if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
@@ -148,6 +151,42 @@ namespace SunkCost.Player
             return day.Payday ? "PAYDAY" : $"DAY {day.Day}/{days}";
         }
 
+        // The worth of what this player carries: the held item and the four slots.
+        private int OnMeValue()
+        {
+            if (inventory == null) return 0;
+            // An equipped item is in a slot and in the hands at once: count it once.
+            int sum = 0;
+            bool heldInSlot = false;
+            for (int i = 0; i < InventorySlots.Count; i++)
+            {
+                CarryableItem item = inventory.ItemInSlot(i);
+                if (item == null) continue;
+                sum += item.Value;
+                if (item == inventory.HeldItem) heldInSlot = true;
+            }
+            if (inventory.HeldItem != null && !heldInSlot) sum += inventory.HeldItem.Value;
+            return sum;
+        }
+
+        // The box against the quota, and what is on you (Dan, 16 September 2026).
+        private static string MoneyText(int onMe)
+        {
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null) return string.Empty;
+            int quota = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings.QuotaPerCycle : 0;
+            return $"BOX ${day.BoxValue}/${quota}  ·  ON ME ${onMe}";
+        }
+
+        private string PayPrompt()
+        {
+            CrewDayState day = CrewDayState.Instance;
+            int quota = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings.QuotaPerCycle : 0;
+            if (day == null) return "Press E to pay the quota";
+            if (day.Day == 0 && !day.Payday) return "Nothing to pay yet " + "—" + " dive first";
+            return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
+        }
+
         // The visor is on exactly while the player stands in the dive world: that is
         // where the suit is on (section 3.1). No extra state.
         public bool VisorOn => inventory != null && inventory.IsOwner && gameObject.scene == WorldScenes.Scene(WorldId.Dive);
@@ -159,6 +198,8 @@ namespace SunkCost.Player
             r.On = VisorOn;
             r.TargetTag = string.Empty;
             r.DayText = DayText();
+            r.OnMeValue = OnMeValue();
+            r.MoneyText = MoneyText(r.OnMeValue);
             r.TargetValue = -1;
             r.NearestCrewDistance = float.PositiveInfinity;
             bracketed.Clear();
@@ -304,6 +345,7 @@ namespace SunkCost.Player
             GUI.Label(new Rect(tl.x, tl.y, tl.width, 18f * s), "HELMET VISOR", visorStyle);
             GUI.Label(new Rect(tl.x, tl.y + 18f * s, tl.width, 14f * s), (string.IsNullOrEmpty(Visor.DayText) ? "SYS  v0.1" : Visor.DayText) + "  ·  SUIT ON", visorTinyStyle);
             DrawDashes(tl.x, tl.y + 36f * s, 6, s);
+            if (!string.IsNullOrEmpty(Visor.MoneyText)) GUI.Label(new Rect(tl.x, tl.y + 44f * s, tl.width + 80f * s, 14f * s), Visor.MoneyText, visorTinyStyle);
             GUI.color = VisorText;
             GUI.Label(new Rect(tr.x, tr.y, tr.width, 18f * s), "MODE: DIVE", visorRightStyle);
             DrawDashes(tr.xMax - 6f * 10f * s, tr.y + 24f * s, 6, s);

@@ -83,6 +83,7 @@ namespace SunkCost.Player
         public CarryableItem CurrentTarget { get; private set; }
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
+        public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
         // The cabin control under the crosshair within reach: the deck cabin's
         // button on the ship or the seafloor car's panel (owner only).
         public CabinControl CurrentCabinControl { get; private set; }
@@ -277,6 +278,12 @@ namespace SunkCost.Player
             {
                 grabConsumed = true;
                 SessionInputGate.OpenPicker();
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentQuotaBoard != null)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship != null) ship.RequestPay();
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
             {
@@ -500,6 +507,7 @@ namespace SunkCost.Player
         {
             CurrentTarget = null;
             CurrentColourPanel = null;
+            CurrentQuotaBoard = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
@@ -511,6 +519,8 @@ namespace SunkCost.Player
             if (CurrentButton != null) return;
             CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();
             if (CurrentColourPanel != null) return;
+            CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
+            if (CurrentQuotaBoard != null) return;
             if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }

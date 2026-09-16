@@ -15,6 +15,19 @@ namespace SunkCost.World
         public string Text;
     }
 
+    // What the last press of the pay button did (Dan, 16 September 2026): the
+    // box sold for Sales, the quota charged or missed. Shown by the HQ board.
+    public struct PayReport
+    {
+        public int Serial;
+        public int Sales;
+        public int Quota;
+        public int Had;     // balance + sales, before the charge
+        public int Balance; // after the charge
+        public bool Paid;
+        public bool Lost;   // short at the quota: the run is over, everything reset
+    }
+
     // The one server-owned object that knows where the crew is. It is a global
     // NetworkObject (prefab flag "Is Global"), so it lives in DontDestroyOnLoad,
     // has no observer conditions and survives every world scene change
@@ -29,6 +42,15 @@ namespace SunkCost.World
         private readonly SyncVar<DayPhase> phase = new(DayPhase.AtHQ);
         private readonly SyncVar<int> day = new(0);
         private readonly SyncVar<bool> payday = new(false);
+        // The crew's money (Dan, 16 September 2026): the pay button at HQ sells
+        // the storage room into it and charges the quota out of it; what is
+        // left carries over. Server-written; the HQ board and the box read it.
+        private readonly SyncVar<int> balance = new(0);
+        private readonly SyncVar<PayReport> lastPay = new(new PayReport { Serial = 0 });
+        private float lastPayAt = float.NegativeInfinity;
+        // What the storage room holds, summed by the server (the only peer that
+        // always has the ship loaded); the box readout, the visor and the board show it.
+        private readonly SyncVar<int> boxValue = new(0);
         private readonly SyncVar<WorldId> world = new(WorldId.HQ);
         // The world a sail is heading for; equals World when not sailing.
         private readonly SyncVar<WorldId> destination = new(WorldId.HQ);
@@ -55,8 +77,14 @@ namespace SunkCost.World
         // 0 at HQ; at sea the number of the current day (the one being dived, or
         // the next one to dive). Stays at the last day through payday.
         public int Day => day.Value;
-        // The cycle's dives are spent: the monitor offers only HQ, the deck cabin refuses.
+        // The cycle's dives are spent: the monitor offers only HQ, the deck cabin refuses,
+        // and at HQ the ship stays docked until the quota is paid.
         public bool Payday => payday.Value;
+        public int Balance => balance.Value;
+        public int BoxValue => boxValue.Value;
+        public PayReport LastPay => lastPay.Value;
+        // Local time the last pay report arrived on this peer.
+        public float LastPayAt => lastPayAt;
         public WorldId World => world.Value;
         public WorldId Destination => destination.Value;
         public bool Sailing => phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome;
@@ -84,7 +112,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(payday.Value ? " PAYDAY" : string.Empty)} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
@@ -94,6 +122,7 @@ namespace SunkCost.World
         {
             phase.OnChange += OnPhaseChanged;
             lastRefusal.OnChange += OnRefusalChanged;
+            lastPay.OnChange += OnPayChanged;
             departure.OnChange += OnDepartureChanged;
             cabinRide.OnChange += OnCabinRideChanged;
         }
@@ -108,6 +137,12 @@ namespace SunkCost.World
         {
             if (IsServerStarted && !asServer) return; // once per peer, like the phase
             DepartureChanged?.Invoke(previous, next);
+        }
+
+        private void OnPayChanged(PayReport previous, PayReport next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (next.Serial != 0) lastPayAt = Time.unscaledTime;
         }
 
         private void OnRefusalChanged(Refusal previous, Refusal next, bool asServer)
@@ -148,7 +183,7 @@ namespace SunkCost.World
             if (to == WorldId.Dive) { why = "The ship does not sail to the seafloor."; return false; }
             if (phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome) { why = "Already sailing."; return false; }
             if (phase.Value == DayPhase.DiveInProgress) { why = "Dive in progress."; return false; }
-            if (payday.Value && to != WorldId.HQ) { why = "Payday — only HQ"; return false; }
+            if (payday.Value && to != WorldId.HQ) { why = world.Value == WorldId.HQ ? "Pay the quota first" : "Payday — only HQ"; return false; }
             if (to == world.Value) { why = "Already there."; return false; }
             why = string.Empty;
             return true;
@@ -172,17 +207,34 @@ namespace SunkCost.World
         [Server]
         public void ServerSetDeparture(ShipDepartureState next) => departure.Value = next;
 
-        // Docking at HQ ends the cycle (day 0, no payday); leaving HQ starts one at
-        // day 1. Arriving at another site mid-cycle would keep the count.
+        // Days are spent only by dives (Dan, 16 September 2026): sailing between
+        // the site and HQ keeps the count; paying the quota resets it. A crew with
+        // no cycle running (day 0) that leaves HQ is on day 1.
         [Server]
         public void ServerArrive(WorldId at)
         {
-            bool fromHQ = world.Value == WorldId.HQ;
             world.Value = at;
             destination.Value = at;
             phase.Value = at == WorldId.HQ ? DayPhase.AtHQ : DayPhase.AtSea;
-            if (at == WorldId.HQ) { day.Value = 0; payday.Value = false; }
-            else if (fromHQ) { day.Value = 1; payday.Value = false; }
+            if (at != WorldId.HQ && day.Value == 0) day.Value = 1;
+        }
+
+        // The pay button (WorldSceneFlow.ServerPay decides whether it may be
+        // pressed): the box's worth joins the balance, the quota comes out of it.
+        // Paid: the cycle is over, the next dive is day 1. Short: the run is lost
+        // and everything starts from nothing (Dan: "say game lost, start from the
+        // start"; walking the plank is a later card).
+        [Server]
+        public PayReport ServerPay(int sales, int quota)
+        {
+            int total = balance.Value + Mathf.Max(0, sales);
+            bool paid = total >= quota;
+            balance.Value = paid ? total - quota : 0;
+            day.Value = 0;
+            payday.Value = false;
+            var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = Mathf.Max(0, sales), Quota = quota, Had = total, Balance = balance.Value, Paid = paid, Lost = !paid };
+            lastPay.Value = report;
+            return report;
         }
 
         // The day begins when the riders stand in the car below (plan section 4.1;
@@ -207,6 +259,12 @@ namespace SunkCost.World
             if (day.Value >= daysPerCycle) payday.Value = true;
             else day.Value = day.Value + 1;
             return true;
+        }
+
+        [Server]
+        public void ServerSetBoxValue(int value)
+        {
+            if (boxValue.Value != value) boxValue.Value = value;
         }
 
         // A refused monitor or cabin request, for every peer's panel (plan 4.1).

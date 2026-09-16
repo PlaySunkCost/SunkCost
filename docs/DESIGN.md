@@ -114,7 +114,16 @@ monitor first. **A site reloads fresh every day**: everything it had is there
 again, and anything you dropped on the seafloor is gone. After the third day it
 is **payday**: the monitor says so and offers only HQ, the deck cabin refuses
 ("Payday — sail home"); choosing HQ earlier is allowed (an early "go home").
-Either way the ship sails back to HQ and the quota is judged. **Built 16
+**The quota is paid at a button (Dan, 16 September 2026):** the board on the
+HQ wall — look, E — sells everything in the ship's storage room into the crew
+balance and charges the quota out of it. Paid: a new cycle, the next dive is
+day 1, what is left carries over. Short: **GAME LOST** — day 0, balance $0,
+a new run (nothing else happens yet). On payday the docked ship will not sail
+out again until the quota is paid ("Pay the quota first"); before payday the
+crew may pay early or sail out again on the same day count — days are spent
+only by dives, never by sailing. With no dive taken the board says "Nothing to
+pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
+$500 for the prototype). **Built 16
 September 2026 (Dan):** the day counter lives on the crew's day state — day 1
 on arrival from HQ, the day in progress from the moment the riders stand in
 the car below, the next day (or payday) the moment nobody living is below,
@@ -330,12 +339,12 @@ your own exit.
 | System | Decision |
 |---|---|
 | Funds | Shared crew pot. One shop, at HQ only. |
-| Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. |
+| Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. **Built 16 September 2026 (Dan):** a small walled room at the stern (doorway toward the centre line) with a readout over the door — `$<in the box> / $<quota>` and the balance — and the same line in the visor's corner with what is on you (`BOX $100/$500 · ON ME $45`). The server sums the loose items inside the room four times a second (`CrewDayState.BoxValue`). |
 | Banked loot | Anything sent up is safe permanently, even on a total wipe. |
 | Quota curve | Gentle for the first few cycles, then accelerating past what a careful crew can earn. Most runs end between cycle 6 and 12. |
-| Early return | You can go back to HQ before all three dives. The cycle ends and the quota is judged immediately. |
+| Early return | You can go back to HQ before all three dives. **Amended 16 September 2026 (Dan):** sailing costs no day — days are spent only by dives — and docking judges nothing. At HQ the crew *may* pay early at the board; if it does not, it sails out again on the same day count. |
 | Run length | Endless. The run recap screen is the ending, every time — give it real production value. |
-| Failure | Miss the quota, walk the plank, run over. |
+| Failure | Miss the quota, walk the plank, run over. **For now (16 September 2026):** the board says GAME LOST and everything starts from nothing — day 0, balance $0 — with no other consequence; the plank is a later card. |
 | Between runs | Cosmetics only, unlocked through achievements. No permanent power. |
 | Difficulty | One difficulty for everyone. The site vote is how you choose your risk. |
 | Teaching | No tutorial. The starter site is survivable enough that players learn noise matters by getting away with it once. |

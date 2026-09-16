@@ -260,6 +260,41 @@ namespace SunkCost.Editor.Prototype
             CreateBlock("West Wall", new Vector3(-6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
             CreateBlock("Ceiling", new Vector3(0f, 3.65f, 0f), new Vector3(12f, 0.3f, 12f), wall, room.transform);
             CreateColourPanel(room.transform);
+            CreateQuotaBoard(room.transform);
+        }
+
+        // The quota board on the south wall's inner face (Dan, 16 September 2026):
+        // a dark plate with the crew's money and the quota on it. Look at it and
+        // press E to pay: the docked ship's storage room is sold, the quota charged.
+        internal static void CreateQuotaBoard(Transform room)
+        {
+            Material plateMaterial = GetOrCreateMaterial(MaterialPath + "/QuotaBoard.mat", new Color(0.06f, 0.07f, 0.09f));
+            GameObject board = new(SunkCost.World.QuotaBoard.BoardName);
+            board.transform.SetParent(room);
+            board.transform.position = new Vector3(-2.5f, 1.6f, -5.85f); // the south wall's inner face is z = -5.85
+            board.transform.rotation = Quaternion.identity;
+            GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plate.name = "Board Plate";
+            plate.transform.SetParent(board.transform, false);
+            plate.transform.localPosition = new Vector3(0f, 0f, 0.03f);
+            plate.transform.localScale = new Vector3(2.2f, 0.9f, 0.05f);
+            Object.DestroyImmediate(plate.GetComponent<Collider>());
+            plate.GetComponent<Renderer>().sharedMaterial = plateMaterial;
+            GameObject text = new("Board Text", typeof(TextMesh));
+            text.transform.SetParent(board.transform, false);
+            text.transform.localPosition = new Vector3(0f, 0f, 0.06f);
+            text.transform.localRotation = Quaternion.identity; // faces +Z, into the room
+            TextMesh mesh = text.GetComponent<TextMesh>();
+            mesh.text = "QUOTA BOARD";
+            mesh.characterSize = 0.05f;
+            mesh.fontSize = 48;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
+            mesh.color = new Color(0.95f, 0.85f, 0.4f);
+            BoxCollider box = board.AddComponent<BoxCollider>(); // the pressable: the whole plate
+            box.center = new Vector3(0f, 0f, 0.03f);
+            box.size = new Vector3(2.2f, 0.9f, 0.08f);
+            board.AddComponent<SunkCost.World.QuotaBoard>().Configure(mesh);
         }
 
         // The colour panel on the south wall's inner face (Dan, 16 September 2026):
