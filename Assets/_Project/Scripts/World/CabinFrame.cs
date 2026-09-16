@@ -28,6 +28,8 @@ namespace SunkCost.World
         public Vector3 FromLocal(Vector3 local) => Root.TransformPoint(Quaternion.Euler(0f, DoorwayYaw, 0f) * local);
         public float ToYaw(float worldYaw) => worldYaw - Root.eulerAngles.y - DoorwayYaw;
         public float FromYaw(float localYaw) => localYaw + Root.eulerAngles.y + DoorwayYaw;
+        public Quaternion ToLocalRotation(Quaternion world) => Quaternion.Inverse(Root.rotation * Quaternion.Euler(0f, DoorwayYaw, 0f)) * world;
+        public Quaternion FromLocalRotation(Quaternion local) => Root.rotation * Quaternion.Euler(0f, DoorwayYaw, 0f) * local;
 
         public static CabinFrame DeckCabin(ShipParts ship) => new(ship != null ? ship.DeckCabin : null, DeckCabinDoorwayYaw);
         public static CabinFrame Car(SunkCost.Diving.ElevatorController car) => new(car != null ? car.transform : null, CarDoorwayYaw);

@@ -1929,7 +1929,7 @@ MonoBehaviour:
   walkSpeed: 4
   sprintSpeed: 6
   lookSensitivity: 0.1
-  interactReach: 2
+  interactReach: 3.5
   grabAimRadius: 0.35
   grabBufferSeconds: 0.3
 --- !u!114 &2601291312213266648

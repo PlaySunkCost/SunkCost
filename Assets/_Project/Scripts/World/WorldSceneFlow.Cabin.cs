@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FishNet.Connection;
 using FishNet.Managing.Scened;
 using SunkCost.Diving;
+using SunkCost.Interaction;
 using SunkCost.Player;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -54,6 +55,15 @@ namespace SunkCost.World
             return cachedCar;
         }
 
+        // FindCar for every loose item every frame: found once per frame.
+        private static ElevatorController frameCar;
+        private static int frameCarFrame = -1;
+        public static ElevatorController FindCarCached()
+        {
+            if (frameCarFrame != Time.frameCount || (frameCar != null && !frameCar.gameObject.scene.isLoaded)) { frameCar = FindCar(); frameCarFrame = Time.frameCount; }
+            return frameCar;
+        }
+
         // The frame a rider of this ride stands in, decided by the scene its player
         // object is in: the deck cabin on the ship, the car at the seafloor.
         public static CabinFrame RideFrameFor(CabinRideState state, Scene playerScene)
@@ -82,9 +92,46 @@ namespace SunkCost.World
             if (dayState == null || networkManager == null) return;
             if (networkManager.IsServerStarted) ServerTickElevator();
             DriveCar();
+            if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
             PresentSky();
         }
+
+        // ---- cabin cargo (server) ------------------------------------------------------
+
+        // The cabin the frozen cargo is in: the one it was frozen in until the
+        // scene move, the other one after. Riders are placed by themselves; cargo
+        // is placed by the server, here.
+        private CabinFrame cargoFrame;
+
+        private void ServerFreezeCabinCargo(CabinFrame frame, System.Func<Vector3, bool> inside)
+        {
+            cargoFrame = frame;
+            foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude))
+            {
+                if (!item.IsSpawned || item.NetworkObject.IsSceneObject || item.transform.parent != null) continue;
+                if (!item.CanGrabFromWorld || item.InTransit || cargo.Contains(item)) continue;
+                if (!inside(item.transform.position)) continue;
+                item.ServerBeginCabinTransit(serial, frame);
+                cargo.Add(item);
+            }
+        }
+
+        private void ServerFollowCabinCargo()
+        {
+            if (!cargoFrame.IsValid) return;
+            foreach (CarryableItem item in cargo) if (item != null && item.IsSpawned) item.ServerFollowCabinTransit(cargoFrame);
+        }
+
+        private void ServerPlaceCabinCargo(CabinFrame frame)
+        {
+            cargoFrame = frame;
+            foreach (CarryableItem item in cargo) if (item != null && item.IsSpawned) item.ServerPlaceAfterCabinTransit(frame);
+        }
+
+        // A loose item on the car's floor, for the freeze: the rider volume starts at
+        // the floor, so probe a little above where it lies.
+        private static bool InsideCarForCargo(ElevatorController car, Vector3 position) => car != null && car.IsInsideCar(position + Vector3.up * 0.25f);
 
         // Under water there is no sky: while the local player is in the dive world
         // its camera clears to the fog colour instead of the skybox (fog never
@@ -409,6 +456,7 @@ namespace SunkCost.World
             if (!AllAcked(prepared)) { yield return CancelRide(RideDirection.Down, "Not ready: " + Missing(prepared)); yield break; }
             yield return WaitTicks(Settings.SyncFlushTicks);
             ServerCapturePlacements(CabinFrame.DeckCabin(ship));
+            ServerFreezeCabinCargo(CabinFrame.DeckCabin(ship), p => ship.IsInDeckCabin(p));
 
             SetRide(CabinRideStage.Sealing, RideDirection.Down, Settings.CabinSealSeconds);
             yield return WaitSeconds(Settings.CabinSealSeconds);
@@ -439,6 +487,7 @@ namespace SunkCost.World
             networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()));
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
+            ServerPlaceCabinCargo(CabinFrame.Car(car)); // the deck cabin's floor cargo, now on the car's floor
             foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, true);
             networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true));
 
@@ -459,6 +508,7 @@ namespace SunkCost.World
             if (!AllAcked(prepared)) { yield return CancelRide(RideDirection.Up, "Not ready: " + Missing(prepared)); yield break; }
             yield return WaitTicks(Settings.SyncFlushTicks);
             ServerCapturePlacements(CabinFrame.Car(car));
+            ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
 
             SetRide(CabinRideStage.Sealing, RideDirection.Up, CarSealSeconds);
             ServerSetElevator(ElevatorState.Sealing, true);
@@ -487,6 +537,7 @@ namespace SunkCost.World
                 networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
                 while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
                 if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
+                ServerPlaceCabinCargo(CabinFrame.DeckCabin(ship)); // the car's floor cargo, now on the deck cabin's floor
                 foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
             }
             bool othersBelow = dayState.Below.Count > 0;
