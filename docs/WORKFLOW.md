@@ -112,8 +112,10 @@ Releases page: https://github.com/PlaySunkCost/SunkCost/releases/latest.**
 Download the `SunkCost-Windows-build<N>-<commit>.zip`, extract it anywhere and
 run `SunkCostHQ.exe` with Steam running. Each release is named after the pull
 request that was merged and says which commit it was built from; the ten newest
-are kept. The same build can also be started by hand from the Actions tab
-(**Windows build → Run workflow**).
+are kept. The same zip is also attached to the workflow run itself (Actions →
+the run → **Artifacts** at the bottom; needs a GitHub login, kept 90 days), so
+every build stays downloadable after its release has been pruned. A build can
+also be started by hand from the Actions tab (**Windows build → Run workflow**).
 
 `.github/workflows/build.yml` does this on a GitHub-hosted `ubuntu-latest`
 runner through `game-ci/unity-builder`, which cross-builds Windows from a
