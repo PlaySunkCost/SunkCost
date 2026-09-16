@@ -283,7 +283,7 @@ namespace SunkCost.Editor.Prototype
             GameObject text = new("Board Text", typeof(TextMesh));
             text.transform.SetParent(board.transform, false);
             text.transform.localPosition = new Vector3(0f, 0f, 0.06f);
-            text.transform.localRotation = Quaternion.identity; // faces +Z, into the room
+            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // a TextMesh reads along its +Z: turned to face the room (Dan: "mirrored")
             TextMesh mesh = text.GetComponent<TextMesh>();
             mesh.text = "QUOTA BOARD";
             mesh.characterSize = 0.05f;
