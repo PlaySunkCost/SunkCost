@@ -315,6 +315,7 @@ namespace SunkCost.Interaction
         }
 
         public bool PinnedToCar => carPinned;
+        public bool CarRestKnown => carRestKnown;
 
         // The pose for this item's grip on a given player: the right hand or the
         // two-handed centre point, plus the item's own forward offset. One

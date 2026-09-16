@@ -503,6 +503,9 @@ namespace SunkCost.World
             ElevatorController car = Car();
             if (car == null) { yield return CancelRide(RideDirection.Down, "No car in " + WorldScenes.DiveName); yield break; }
             if (dayState.Elevator.State != ElevatorState.AtTop) ServerSetElevator(ElevatorState.AtTop, true); // a fresh site: the car waits at the top, closed
+            // Whatever became loose on the cabin's floor since the seal (dropped, put
+            // down after a grab) crosses too: freeze again just before the move list closes.
+            ServerFreezeCabinCargo(CabinFrame.DeckCabin(ship), p => ship.IsInDeckCabin(p));
             ServerBuildMoveList();
             Scene destination = WorldScenes.Scene(WorldId.Dive);
             var conns = ActiveCohort();
@@ -554,6 +557,11 @@ namespace SunkCost.World
             var conns = ActiveCohort();
             if (conns.Count > 0) // an empty car (everyone stepped out at the seal) moves nobody
             {
+                // Items thrown or put down during the ride are loose on the car's floor
+                // now, not cargo: freeze them too, or they stay in the site and go with it
+                // when it unloads (Dan, 16 September 2026: "some of the items on the
+                // ground disappeared" at the top).
+                ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
                 ServerBuildMoveList();
                 Scene destination = WorldScenes.Scene(WorldId.Sea);
                 foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);

@@ -184,7 +184,12 @@ namespace SunkCost.Editor.Prototype
             Vector3 local = car.transform.InverseTransformPoint(coin.transform.position);
             Check(car.IsInsideCar(coin.transform.position + Vector3.up * 0.25f) && local.y > 0.03f, $"E3 it rests on the moving car's floor, not below it (car-local {local:F2})");
             Check(coin.PinnedToCar, "E3 at rest it is pinned to the car");
+            lastThrownCabinLocal = CabinFrame.Car(car).ToLocal(coin.transform.position);
         }
+
+        // Where the last mid-ride throw came to rest, in the cabin frame: the same
+        // spot must show in the other cabin after the swap (C2, C3).
+        private static Vector3 lastThrownCabinLocal;
 
         private static IEnumerator GuestGrabsAndThrowsCargoMidRide(int coinId, int guestId)
         {
@@ -192,6 +197,8 @@ namespace SunkCost.Editor.Prototype
             CarryableItem coin = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coinId);
             HQPlayerController guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
             Check(coin != null && coin.InTransit && guestPlayer != null, "E1 (guest) the coin rides as frozen cargo and the guest is aboard");
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}");
+            Note("E1 (guest) car line mid-ride: " + System.Text.RegularExpressions.Regex.Match(lastReply, @"carDoor=[^\n]*?; itemsInCar=[^;\n]*; pinned=[^;\n]*; restKnown=[^;\n]*").Value);
             Vector3 coinLocal = car.transform.InverseTransformPoint(coin.transform.position);
             Vector3 standLocal = coinLocal - new Vector3(coinLocal.x, 0f, coinLocal.z).normalized * 0.9f; standLocal.y = 0.15f;
             Vector3 stand = car.transform.TransformPoint(standLocal);
@@ -820,7 +827,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.3f);
 
             // R4: up. The car seals and climbs, the host is moved into the deck cabin, its doors open, the car stays up (nobody below).
-            yield return RideAndSample(RideDirection.Up, "R4");
+            yield return RideAndSample(RideDirection.Up, "R4", () => HostGrabsAndThrowsCargoMidRide(coin3Id));
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), "R4 the host's player is back in ShipAtSea");
             yield return null;
             Check(!hud.Visor.On, "V1 the visor is off again on the deck");
@@ -833,8 +840,9 @@ namespace SunkCost.Editor.Prototype
             Check(coinUp != null && coinUp.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && sea.IsInDeckCabin(coinUp.transform.position), "C2 Coin 3 rode up into the deck cabin: " + (coinUp == null ? "gone" : coinUp.gameObject.scene.name + " " + coinUp.transform.position.ToString("F2")));
             yield return Wait(0.6f); // released cargo settles
             Check(coinUp != null && coinUp.CanGrabFromWorld && !coinUp.InTransit, "C2 Coin 3 is loose again on the deck cabin's floor");
-            float coinDeckLocalY = coinUp == null ? -1f : CabinFrame.DeckCabin(sea).ToLocal(coinUp.transform.position).y;
-            Check(coinUp != null && Mathf.Abs(coinDeckLocalY - coinCarLocalY) < 0.08f, $"C2 Coin 3 lies at the same height in the deck cabin ({coinDeckLocalY:0.000} vs {coinCarLocalY:0.000} in the car)");
+            Vector3 coinDeckLocal = coinUp == null ? Vector3.zero : CabinFrame.DeckCabin(sea).ToLocal(coinUp.transform.position);
+            // Thrown mid-ride (so loose, not cargo, when the car reached the top): it crossed to the same cabin-frame spot.
+            Check(coinUp != null && Vector3.Distance(coinDeckLocal, lastThrownCabinLocal) < 0.1f, $"C2 the coin thrown mid-ride crossed to the same spot in the deck cabin ({coinDeckLocal:F2} vs {lastThrownCabinLocal:F2} in the car)");
             yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 3f, "R4 deck cabin doors open again");
             yield return WaitUntil(() => WorldSceneFlow.FindCar() == null, 10f, "R4 the site unloaded from the server once empty");
             H.CaptureLocalCamera("Logs/deck-cabin-back-on-deck.png");
@@ -848,7 +856,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.6f);
             Check(coinDown != null && car != null && coinDown.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(coinDown.transform.position + Vector3.up * 0.25f) && coinDown.CanGrabFromWorld && !coinDown.InTransit,
                 "C3 Coin 3 rode down again in the car and is loose on its floor: " + (coinDown == null ? "gone" : coinDown.gameObject.scene.name + " " + coinDown.transform.position.ToString("F2")));
-            Check(coinDown != null && car != null && Mathf.Abs(car.transform.InverseTransformPoint(coinDown.transform.position).y - coinCarLocalY) < 0.15f, "C3 Coin 3 at the same height on the car's floor (thrown mid-ride, it lies wherever it landed)");
+            Check(coinDown != null && car != null && Vector3.Distance(CabinFrame.Car(car).ToLocal(coinDown.transform.position), lastThrownCabinLocal) < 0.1f, $"C3 the coin thrown mid-ride lies where it landed in the car ({(coinDown == null ? "gone" : CabinFrame.Car(car).ToLocal(coinDown.transform.position).ToString("F2"))} vs {lastThrownCabinLocal:F2})");
             yield return Wait(0.5f);
             yield return RideAndSample(RideDirection.Up, "R5b");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && Day.Elevator.State == ElevatorState.AtTop, "R5b up again");
