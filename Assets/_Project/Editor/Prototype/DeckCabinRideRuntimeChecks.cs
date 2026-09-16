@@ -135,6 +135,63 @@ namespace SunkCost.Editor.Prototype
 
         private static void Note(string text) => File.AppendAllText(Log, "  " + text + "\n");
 
+        // E1/E2/E3 (Dan, 16 September 2026): mid-ride the dot finds the frozen cargo
+        // and the visor brackets it, a grab takes it, a throw lands on the car's floor.
+        private static IEnumerator HostGrabsAndThrowsCargoMidRide(int coinId)
+        {
+            HQPlayerController host = Host();
+            PlayerHudUI hud = host.GetComponent<PlayerHudUI>();
+            ElevatorController car = WorldSceneFlow.FindCar();
+            CarryableItem coin = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coinId);
+            Check(coin != null && coin.InTransit && car != null && car.IsInsideCar(coin.transform.position + Vector3.up * 0.25f), "E1 the coin rides as frozen cargo in the moving car");
+            Keys();
+            // Stand 0.9 m from the coin toward the car's axis, on the floor, in the car's own frame.
+            Vector3 coinLocal = car.transform.InverseTransformPoint(coin.transform.position);
+            Vector3 towardAxis = -new Vector3(coinLocal.x, 0f, coinLocal.z).normalized;
+            Vector3 standLocal = coinLocal + towardAxis * 0.9f; standLocal.y = 0.15f;
+            host.TeleportLocal(car.transform.TransformPoint(standLocal), host.Yaw); yield return null; yield return null;
+            yield return WaitUntil(() => { H.ClientLookAtItem(coin.name); return host.CurrentTarget == coin; }, 3f, "E1 mid-ride the dot finds the cargo on the car's floor");
+            Note($"E1 host at car-local {car.transform.InverseTransformPoint(host.transform.position):F2}, coin at {coinLocal:F2}");
+            Check(host.CurrentTarget == coin, "E1 mid-ride the dot finds the cargo on the car's floor (target " + (host.CurrentTarget == null ? "none" : host.CurrentTarget.name) + ")");
+            Check(hud.Visor.BracketCount >= 1 && hud.Visor.TargetTag.StartsWith(coin.DisplayName), $"E2 mid-ride the visor brackets and tags it ({hud.Visor.BracketCount}, '{hud.Visor.TargetTag}')");
+            host.Inventory.RequestGrab(coin);
+            yield return WaitUntil(() => coin.State == ItemState.Held && coin.HolderClientId == host.OwnerId, 3f, "E1 the cargo was grabbed mid-ride");
+            Check(!coin.InTransit, "E1 grabbed cargo is cargo no more");
+            yield return Wait(0.5f);
+            // Throw it at the floor a metre ahead, against the car's motion.
+            Vector3 aim = (host.PlayerCamera.transform.forward + Vector3.down * 0.8f).normalized;
+            host.Inventory.RequestUse(aim);
+            yield return WaitUntil(() => coin.State == ItemState.Released, 2f, "E3 the throw left the hand mid-ride");
+            yield return WaitUntil(() => coin.State == ItemState.Free, 6f, "E3 the thrown coin came to rest");
+            Vector3 local = car.transform.InverseTransformPoint(coin.transform.position);
+            Check(car.IsInsideCar(coin.transform.position + Vector3.up * 0.25f) && local.y > 0.03f, $"E3 it rests on the moving car's floor, not below it (car-local {local:F2})");
+            Check(coin.PinnedToCar, "E3 at rest it is pinned to the car");
+        }
+
+        private static IEnumerator GuestGrabsAndThrowsCargoMidRide(int coinId, int guestId)
+        {
+            ElevatorController car = WorldSceneFlow.FindCar();
+            CarryableItem coin = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coinId);
+            HQPlayerController guestPlayer = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
+            Check(coin != null && coin.InTransit && guestPlayer != null, "E1 (guest) the coin rides as frozen cargo and the guest is aboard");
+            Vector3 coinLocal = car.transform.InverseTransformPoint(coin.transform.position);
+            Vector3 standLocal = coinLocal - new Vector3(coinLocal.x, 0f, coinLocal.z).normalized * 0.9f; standLocal.y = 0.15f;
+            Vector3 stand = car.transform.TransformPoint(standLocal);
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(stand) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(coin.transform.position - (stand + Vector3.up * 1.6f)) + "}");
+            yield return Wait(0.3f);
+            yield return Send("{\"id\":{id},\"action\":\"grab\",\"item\":\"#" + coinId + "\"}");
+            yield return WaitUntil(() => coin.State == ItemState.Held && coin.HolderClientId == guestId, 4f, "E1 (guest) the cargo was grabbed mid-ride by the guest");
+            Check(!coin.InTransit, "E1 (guest) grabbed cargo is cargo no more");
+            yield return Wait(0.5f);
+            Vector3 aim = (car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward) + Vector3.down * 0.8f).normalized;
+            yield return Send("{\"id\":{id},\"action\":\"throw\",\"aim\":" + Vec(aim) + "}");
+            yield return WaitUntil(() => coin.State == ItemState.Released, 3f, "E3 (guest) the throw left the guest's hand mid-ride");
+            yield return WaitUntil(() => coin.State == ItemState.Free, 8f, "E3 (guest) the coin thrown by the guest came to rest");
+            Vector3 local = car.transform.InverseTransformPoint(coin.transform.position);
+            Check(car.IsInsideCar(coin.transform.position + Vector3.up * 0.25f) && local.y > 0.03f, $"E3 (guest) it rests on the moving car's floor on the server (car-local {local:F2})");
+        }
+
         private static IEnumerator Wait(float seconds)
         {
             double until = EditorApplication.timeSinceStartup + seconds;
@@ -218,8 +275,11 @@ namespace SunkCost.Editor.Prototype
         // Rides as the local player from the current cabin, sampling every frame:
         // the player stays inside the moving car, the fade behaves, and the ride
         // completes with the car at the expected landing.
-        private static IEnumerator RideAndSample(RideDirection direction, string label)
+        // `midRide`, when given, runs once a few seconds into the moving stage (the
+        // sampling pauses while it yields; the frame-to-frame checks tolerate a gap).
+        private static IEnumerator RideAndSample(RideDirection direction, string label, Func<IEnumerator> midRide = null)
         {
+            bool midRideDone = false;
             int serialBefore = Day.CabinRide.Serial;
             SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
             if (SunkCost.Diagnostics.FrameTimeRecorder.Instance != null) Note($"{label} profiler markers recorded: {SunkCost.Diagnostics.FrameTimeRecorder.Instance.RecordedMarkerCount}");
@@ -266,6 +326,13 @@ namespace SunkCost.Editor.Prototype
                     Note($"{label} t+{frames}: stage={state.Stage} car={Day.Elevator.State} carPos={(c0 == null ? "-" : c0.transform.position.ToString("F2"))} local={(l0 == null ? "-" : l0.transform.position.ToString("F2"))} carLocal={(c0 == null || l0 == null ? "-" : c0.transform.InverseTransformPoint(l0.transform.position).ToString("F2"))} locked={(Rider() != null && Rider().Locked)} travelLocked={(l0 != null && l0.TravelLocked)} grounded={(l0 != null && l0.IsGrounded)} inside={(c0 != null && l0 != null && c0.IsInsideCar(l0.transform.position + Vector3.up * 0.5f))}");
                 }
                 if (ScreenFade.Instance != null && ScreenFade.Instance.IsBlack) everBlack = true;
+                if (midRide != null && !midRideDone && state.Stage == CabinRideStage.Riding && firstMoveTime > 0 && EditorApplication.timeSinceStartup - firstMoveTime > 4.0)
+                {
+                    midRideDone = true;
+                    yield return midRide();
+                    cargoLastLocal.Clear(); // the script moved things on purpose; the next sample starts fresh
+                    continue;
+                }
                 SunkCost.Diagnostics.FrameTimeRecorder recorder = SunkCost.Diagnostics.FrameTimeRecorder.Instance;
                 if (recorder != null && recorder.HitchesSinceReset > hitchesSeen)
                 {
@@ -755,7 +822,7 @@ namespace SunkCost.Editor.Prototype
             H.CaptureLocalCamera("Logs/deck-cabin-back-on-deck.png");
 
             // R5: again, from a fresh site: down and up once more.
-            yield return RideAndSample(RideDirection.Down, "R5a");
+            yield return RideAndSample(RideDirection.Down, "R5a", () => HostGrabsAndThrowsCargoMidRide(coin3Id));
             Check(Day.Elevator.State == ElevatorState.AtBottom && host.gameObject.scene == WorldScenes.Scene(WorldId.Dive), "R5a down again on a fresh site");
             // C3: the coin came down again in the car, onto the fresh site's floor.
             car = WorldSceneFlow.FindCar();
@@ -763,7 +830,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.6f);
             Check(coinDown != null && car != null && coinDown.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(coinDown.transform.position + Vector3.up * 0.25f) && coinDown.CanGrabFromWorld && !coinDown.InTransit,
                 "C3 Coin 3 rode down again in the car and is loose on its floor: " + (coinDown == null ? "gone" : coinDown.gameObject.scene.name + " " + coinDown.transform.position.ToString("F2")));
-            Check(coinDown != null && car != null && Mathf.Abs(car.transform.InverseTransformPoint(coinDown.transform.position).y - coinCarLocalY) < 0.08f, "C3 Coin 3 at the same height on the car's floor");
+            Check(coinDown != null && car != null && Mathf.Abs(car.transform.InverseTransformPoint(coinDown.transform.position).y - coinCarLocalY) < 0.15f, "C3 Coin 3 at the same height on the car's floor (thrown mid-ride, it lies wherever it landed)");
             yield return Wait(0.5f);
             yield return RideAndSample(RideDirection.Up, "R5b");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && Day.Elevator.State == ElevatorState.AtTop, "R5b up again");
@@ -782,7 +849,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.5f);
             yield return Send("{\"id\":{id},\"action\":\"frames_reset\"}");
             yield return Send("{\"id\":{id},\"action\":\"cargo_reset\"}");
-            yield return RideAndSample(RideDirection.Down, "G1");
+            yield return RideAndSample(RideDirection.Down, "G1", () => GuestGrabsAndThrowsCargoMidRide(coin3Id, guestId));
             Check(Day.IsBelow(guestId) && Day.IsBelow(host.OwnerId), "G1 both listed below");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("car=AtBottom") && r.Contains("ride=Complete"), 20f, "G1 guest rode down with the host");
             car = WorldSceneFlow.FindCar();
@@ -810,6 +877,7 @@ namespace SunkCost.Editor.Prototype
             var guestCoinLine = System.Text.RegularExpressions.Regex.Match(lastReply, @"item=[^\n]*; id=" + coin3Id + @";[^\n]*position=\(([-0-9.]+), ([-0-9.]+), ([-0-9.]+)\)");
             Vector3 guestCoinPos = guestCoinLine.Success ? new Vector3(float.Parse(guestCoinLine.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), float.Parse(guestCoinLine.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), float.Parse(guestCoinLine.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture)) : Vector3.zero;
             Check(coinBottom != null && guestCoinLine.Success && Vector3.Distance(guestCoinPos, coinBottom.transform.position) < 0.05f, $"C4 the guest sees Coin 3 where the host has it ({guestCoinPos:F2} vs {(coinBottom == null ? "gone" : coinBottom.transform.position.ToString("F2"))})");
+            Check(coinBottom != null && car != null && coinBottom.CanGrabFromWorld && !coinBottom.InTransit && car.IsInsideCar(coinBottom.transform.position + Vector3.up * 0.25f) && car.transform.InverseTransformPoint(coinBottom.transform.position).y > 0.03f, "E3 the coin the guest threw mid-ride rests on the car's floor, not below it: " + (coinBottom == null ? "gone" : car.transform.InverseTransformPoint(coinBottom.transform.position).ToString("F2")));
             // D: the guest's car door never read open between the swap and the bottom.
             var doorMatch = System.Text.RegularExpressions.Regex.Match(lastReply, @"doorWorstOpenAtTop=([0-9.]+)");
             Check(doorMatch.Success && float.Parse(doorMatch.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) < 0.01f, "D the guest's car doors read shut from the swap to the bottom (worst open " + (doorMatch.Success ? doorMatch.Groups[1].Value : "?") + ")");
@@ -820,14 +888,15 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Net.SessionInputGate.Resume(); H.CaptureScreen("Logs/visor-crew.png"); yield return null; yield return null; SunkCost.Net.SessionInputGate.OpenMenu();
             // V4 (guest): the guest's own visor tags Coin 3 with the same value and
             // brackets it — its copies live in the session scene, not the site's.
-            CarryableItem guestCoin3 = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.name.StartsWith("Coin 3"));
-            Check(guestCoin3 != null, "V4 Coin 3 still on the seafloor for the guest's look");
+            // Coin 4: Coin 3 rode down in the car and was thrown about by the guest (E3).
+            CarryableItem guestCoin3 = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.name.StartsWith("Coin 4"));
+            Check(guestCoin3 != null, "V4 Coin 4 still on the seafloor for the guest's look");
             Vector3 guestStand = guestCoin3.transform.position - doorway * 0.6f; guestStand.y = car.BottomPosition.y + 0.15f;
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestStand) + "}");
             yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(guestCoin3.transform.position - (guestStand + Vector3.up * 1.6f)) + "}");
             yield return Wait(0.5f);
             string wantedTag = $"{guestCoin3.DisplayName} · ${guestCoin3.Value}";
-            yield return GuestEventually(r => System.Text.RegularExpressions.Regex.Match(r, @"tag=([^;\n]*)").Groups[1].Value == wantedTag, 4f, "V4 the guest's visor tags Coin 3 with the host's value: " + wantedTag);
+            yield return GuestEventually(r => System.Text.RegularExpressions.Regex.Match(r, @"tag=([^;\n]*)").Groups[1].Value == wantedTag, 4f, "V4 the guest's visor tags Coin 4 with the host's value: " + wantedTag);
             Check(int.TryParse(System.Text.RegularExpressions.Regex.Match(lastReply, @"brackets=([0-9]+)").Groups[1].Value, out int guestBrackets) && guestBrackets >= 1, $"V5 the guest's visor brackets the coin in view ({guestBrackets})");
             yield return Send("{\"id\":{id},\"action\":\"frames\"}");
             string guestFrames = lastReply.Split('\n')[0];

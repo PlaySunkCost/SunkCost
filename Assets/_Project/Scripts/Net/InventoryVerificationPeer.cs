@@ -207,7 +207,8 @@ namespace SunkCost.Net
             if (!moving) { cargoLastLocal.Clear(); return; }
             foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
             {
-                if (!item.IsSpawned || !item.CanGrabFromWorld || !car.IsInsideCar(item.transform.position + Vector3.up * 0.25f)) continue;
+                // Pinned copies only: a copy left to its NetworkTransform (thrown mid-ride) lags by design.
+                if (!item.IsSpawned || !item.CanGrabFromWorld || !item.PinnedToCar || !car.IsInsideCar(item.transform.position + Vector3.up * 0.25f)) continue;
                 Vector3 local = car.transform.InverseTransformPoint(item.transform.position);
                 if (cargoLastLocal.TryGetValue(item.ObjectId, out Vector3 last))
                 {

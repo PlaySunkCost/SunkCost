@@ -396,7 +396,15 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   spot kept in the cabin frame), server-followed through the ride, moved with
   the riders in the same `LoadConnectionScenes`, placed by the server at the
   same cabin-frame spot in the other cabin (one `Teleport()`), and released
-  when the ride completes — so what lies on the floor going down lies on the
+  when the ride completes. Unlike deck cargo it **keeps its colliders** (it is
+  kinematic and server-followed, so nothing is imparted), so a rider can look
+  at it and grab it mid-ride: a grab takes it out of the cargo list and ends
+  its transit; it then travels in the hand like anything held. A body a peer
+  simulates inside the moving car (the thrower's Released item, the server's
+  Free one before rest) is moved by the car's frame delta every frame by that
+  peer (`CarryWithCar`), so it flies and lands as in a still room and cannot
+  fall through a floor that moved on between physics steps — presentation of
+  the writer's own simulation, not a second writer. So what lies on the floor going down lies on the
   car's floor at the bottom, and what lies on the car's floor going up lies on
   the deck cabin's floor. Anything loose that is inside the car while it moves
   and is not frozen cargo (dropped mid-ride, or riding an empty car) is
