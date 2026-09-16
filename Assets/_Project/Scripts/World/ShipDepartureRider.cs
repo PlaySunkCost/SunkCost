@@ -113,17 +113,55 @@ namespace SunkCost.World
             PlaceRemoteCopy();
         }
 
-        // Another peer's rider while the car moves: its spot in the car frame is
-        // known from the server, so the copy is placed there directly.
+        // Another peer's rider: while riders are locked its spot in the car frame is
+        // known from the server, so the copy is placed there directly. While they are
+        // free and the car moves, the copy is pinned to the floor (below).
         private void PlaceRemoteCopy()
         {
             CrewDayState day = CrewDayState.Instance;
             if (day == null || !day.CabinRide.Active || !day.IsRider(OwnerId)) return;
-            if (!WorldSceneFlow.RidersLockedDuring(day.CabinRide)) return; // free riders walk; their copies interpolate
+            if (!WorldSceneFlow.RidersLockedDuring(day.CabinRide)) { PinRemoteCopyToMovingFloor(); return; }
             if (!day.TryGetPlacement(OwnerId, out RiderPlacement placement)) return;
             CabinFrame frame = WorldSceneFlow.RideFrameFor(day.CabinRide, gameObject.scene);
             if (!frame.IsValid) return;
             transform.position = frame.FromLocal(placement.Local);
+        }
+
+        // A free rider's copy is replicated in world space with the transport's
+        // interpolation delay behind it. Inside a car moving at 3 m/s that delay is
+        // 10-20 cm of height error against the floor that changes as packets land:
+        // the copy hovered, sank and stepped (Dan, 16 September 2026: "the second
+        // player jumps down"). The car's own motion is known exactly on every peer,
+        // so while it moves the copy's height above the floor is held at the height
+        // it stood at while the car was still; its walking across the floor still
+        // comes from the replicated position. A jump higher than the delay could
+        // ever fake (0.45 m) is let through.
+        private float remoteRestingLocalY = DefaultRestingLocalY;
+        private int remoteFramesOffFloor;
+        private const float DefaultRestingLocalY = 0.13f; // floor disc top + controller skin, as the local rider settles
+        private const float JumpAllowanceMeters = 0.45f;
+        private const int JumpFramesBeforeTrusted = 6;   // a jump stays up for many frames; a replication spike for one or two
+
+        private void PinRemoteCopyToMovingFloor()
+        {
+            SunkCost.Diving.ElevatorController car = WorldSceneFlow.FindCar();
+            if (car == null || gameObject.scene != car.gameObject.scene) return;
+            if (!car.IsInsideCar(transform.position + Vector3.up * 0.5f)) return;
+            Vector3 local = car.transform.InverseTransformPoint(transform.position);
+            bool moving = car.State == SunkCost.Diving.ElevatorState.Descending || car.State == SunkCost.Diving.ElevatorState.Ascending;
+            if (!moving)
+            {
+                // Still car: the replicated height is the truth; remember where it stands.
+                if (local.y < DefaultRestingLocalY + JumpAllowanceMeters) remoteRestingLocalY = local.y;
+                return;
+            }
+            // A real jump takes the copy well off the floor and keeps it there for many
+            // frames; a one-frame replication spike does not earn its way off the floor.
+            bool offFloor = Mathf.Abs(local.y - remoteRestingLocalY) >= JumpAllowanceMeters;
+            remoteFramesOffFloor = offFloor ? remoteFramesOffFloor + 1 : 0;
+            if (remoteFramesOffFloor >= JumpFramesBeforeTrusted) return;
+            local.y = remoteRestingLocalY;
+            transform.position = car.transform.TransformPoint(local);
         }
 
         public override void OnStopClient()

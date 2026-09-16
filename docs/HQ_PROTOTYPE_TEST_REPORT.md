@@ -1,5 +1,23 @@
 # HQ prototype verification report
 
+## Remote rider branch — 16 September 2026
+
+Tested `dan/remote-rider` based on `232d877` (the 60 Hz tick merge), same
+rig as below. Dan: "when going down I saw the second player jump down, like
+it was with the elevator floor".
+
+- `ShipDepartureRider.PinRemoteCopyToMovingFloor`: a remote rider's copy
+  keeps the height above the car it stood at while the car was still, while
+  the car moves; a jump is trusted after six frames off the floor, a one-frame
+  spike is not (one seen: 0.88 m for a single frame). Deck cabin matrix
+  `MATRIX_PASS`, 202 rows: the guest's copy on the host held 0.150 m above the
+  floor for all 2748 moving frames, range 0.0 cm, worst step 0.0 cm.
+- `FrameTimeRecorder` counts a hitch from 30 ms; the guest gate allows two
+  while the car moves (the editor host shares the GPU). Guest build 240 fps,
+  0 hitches while the car moved on the passing run; a run with the guest
+  window being handled showed 17 ms vsync-quantum frames that the old 16 ms
+  threshold counted.
+
 ## Tick 60 Hz branch — 16 September 2026
 
 Tested `dan/tick-50` (the branch name predates the choice of 60) based on
