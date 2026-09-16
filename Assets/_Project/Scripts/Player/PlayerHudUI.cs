@@ -450,7 +450,11 @@ namespace SunkCost.Player
             GUI.color = previous;
         }
 
-        private static string CrewName(HQPlayerController other) => "Diver " + other.OwnerId;
+        private static string CrewName(HQPlayerController other)
+        {
+            PlayerIdentity identity = other.GetComponent<PlayerIdentity>();
+            return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(other.OwnerId);
+        }
 
         private void DrawBar(float x, float y, float width, float height, string label, float fraction, float s)
         {

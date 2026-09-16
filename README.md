@@ -76,7 +76,8 @@ be read as checklists by other assistants.
    In the dive you look through the suit's **diving mask** — one wide lens
    with a nose bridge, a thin dark rim edging the view — and its **visor** is
    on: air and health bars (full for now), depth, a compass with **HOME** (the
-   way back to the tube), crew names, and bracket corners on every coin in
+   way back to the tube), crew names (your Steam name, or whatever you typed
+   in the lobby's "Your name" field — it is remembered), and bracket corners on every coin in
    view — look at one and it turns gold with its dollar value. Coins of three
    sizes lie on the seafloor beyond the tube's doorway; their values are
    rolled fresh every dive, and each size has its own picture in the slots.

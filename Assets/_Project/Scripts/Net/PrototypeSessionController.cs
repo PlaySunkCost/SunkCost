@@ -66,6 +66,8 @@ namespace SunkCost.Net
         public string LobbyIdText => lobbyId == 0 ? string.Empty : LobbyMetadata.FormatULong(lobbyId);
         public bool SteamInitialized => steam != null && steam.Initialized;
         public bool SteamOverlayAvailable => steam != null && steam.IsOverlayEnabled;
+        // The default display name: the Steam persona while Steam is up.
+        public string LocalPersonaName => steam != null ? steam.LocalPersonaName : string.Empty;
         public IReadOnlyList<MemberInfo> Members => members;
         public LobbySessionSettings Settings => settings;
         public NetworkManager NetworkManager => networkManager;
@@ -684,11 +686,12 @@ namespace SunkCost.Net
             foreach (HQPlayerController player in FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None))
             {
                 int owner = player.OwnerId;
+                SunkCost.Player.PlayerIdentity identity = player.GetComponent<SunkCost.Player.PlayerIdentity>();
                 members.Add(new MemberInfo
                 {
                     SteamId = 0,
                     OwnerClientId = owner,
-                    Name = "Player " + (owner + 1),
+                    Name = identity != null ? identity.DisplayName : SunkCost.Player.PlayerIdentity.Fallback(owner),
                     IsHost = false,
                     IsSelf = player.IsOwner
                 });
