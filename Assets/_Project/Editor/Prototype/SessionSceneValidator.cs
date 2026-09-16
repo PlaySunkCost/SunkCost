@@ -80,6 +80,17 @@ namespace SunkCost.Editor.Prototype
                 foreach (NetworkManager manager in root.GetComponentsInChildren<NetworkManager>(true))
                 {
                     if (manager.SpawnablePrefabs == null) errors.Add("NetworkManager has no spawnable prefab collection.");
+                    // Tick == physics rate (contract section 7): a serialized TimeManager at 50 Hz.
+                    var timeManager = manager.GetComponent<FishNet.Managing.Timing.TimeManager>();
+                    if (timeManager == null) errors.Add("NetworkManager has no TimeManager component (run Create or Update Session).");
+                    else
+                    {
+                        using var serializedTime = new SerializedObject(timeManager);
+                        int tickRate = serializedTime.FindProperty("_tickRate").intValue;
+                        if (tickRate != SessionSceneBuilder.NetworkTickRate) errors.Add($"TimeManager tick rate is {tickRate} Hz; the contract's section 7 says {SessionSceneBuilder.NetworkTickRate} Hz (the physics rate).");
+                        float physicsHz = 1f / UnityEngine.Time.fixedDeltaTime;
+                        if (Mathf.Abs(physicsHz - SessionSceneBuilder.NetworkTickRate) > 0.5f) errors.Add($"Physics runs at {physicsHz:0} Hz but the network tick is {SessionSceneBuilder.NetworkTickRate} Hz; they must match.");
+                    }
                 }
             }
         }
