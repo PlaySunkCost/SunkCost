@@ -23,6 +23,11 @@ namespace SunkCost.Editor.Prototype
     // no NetworkObjects: FishNet never loads or unloads this scene.
     public static class SessionSceneBuilder
     {
+        // The network tick equals the physics rate (Fixed Timestep 1/60), so every
+        // tick samples exactly one physics step (docs/NETWORK_CONTRACT.md section 7,
+        // decided 16 September 2026). FishNet's default is 30.
+        public const ushort NetworkTickRate = 60;
+
         public const string DayStatePrefabPath = "Assets/_Project/Prefabs/World/CrewDayState.prefab";
         public const string SceneConditionAssetPath = "Packages/com.firstgeargames.fishnet/Runtime/Observing/Conditions/ScriptableObjects/SceneCondition.asset";
         public const string PrefabObjectsPath = "Assets/_Project/Settings/Prototype/PrototypePrefabObjects.asset";
@@ -125,6 +130,8 @@ namespace SunkCost.Editor.Prototype
             GameObject networkRoot = new("Prototype Network Root");
             networkRoot.SetActive(false);
             NetworkManager manager = networkRoot.AddComponent<NetworkManager>();
+            FishNet.Managing.Timing.TimeManager timeManager = networkRoot.AddComponent<FishNet.Managing.Timing.TimeManager>();
+            HQPrototypeBuilder.SetPrivate(timeManager, "_tickRate", NetworkTickRate);
             TransportManager transportManager = networkRoot.AddComponent<TransportManager>();
             GameObject localTransportObject = new("Local Transport");
             localTransportObject.transform.SetParent(networkRoot.transform, false);

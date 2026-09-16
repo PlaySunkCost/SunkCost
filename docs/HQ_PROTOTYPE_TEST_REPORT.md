@@ -1,5 +1,30 @@
 # HQ prototype verification report
 
+## Tick 60 Hz branch — 16 September 2026
+
+Tested `dan/tick-50` (the branch name predates the choice of 60) based on
+`9a29bb4`, same rig as the sections below. Contract section 7: the server tick
+is 60 Hz, the physics rate (Fixed Timestep 1/60); FishNet's default was 30 and
+physics was Unity's default 50.
+
+- Session validator requires the serialized `TimeManager` at 60 Hz and the
+  physics step to match; world-loop, shaft-tube and movement/hands pure checks
+  pass.
+- Deck cabin matrix `MATRIX_PASS`, 200 rows, on the new tick: the car still
+  moved on every frame (2916/2916 …), band speeds 3.0 / 1.00 / 3.00 m/s, the
+  gate mirrored the door, the guest build (rendering, vsync, 240 Hz) 240 fps,
+  1 % low 4.2 ms, 0 hitches while the car moved (its 3 hitches are the scene
+  load behind the black screen). A first run showed 6 riding hitches on the
+  guest while its window was being handled; the rerun with the window left
+  alone showed none.
+- Movement and hands matrix `MATRIX_PASS`, 33 rows: the thrown ball moved on
+  104/104 rendered frames; M8b unchanged.
+- Seen during the run, not fixed here: the *remote* copy of a rider is
+  replicated in world space with two ticks of interpolation delay, so inside
+  the moving car it sits 10–20 cm off the floor and steps as packets arrive
+  (Dan: "the second player jumps down"). Next card: pin remote riders to the
+  car floor while it moves, as the local rider already is.
+
 ## Gate and throw branch — 16 September 2026
 
 Tested `dan/gate-and-throw` based on `88e8914` (the smoothness merge), same

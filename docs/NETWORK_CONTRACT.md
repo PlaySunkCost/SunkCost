@@ -195,9 +195,20 @@ If a method name does not say who calls it and who runs it, rename it.
 
 ## 7. Tick rate
 
-Start at **30 Hz** server tick. Do not tune this until the prototype is playable;
-it is the kind of number that eats a week and changes nothing about whether the
-game is fun.
+The server tick is **60 Hz — the physics rate** (Unity `Fixed Timestep` 1/60),
+serialized on the Session scene's `TimeManager` and checked by the session
+validator, which also fails if the physics step drifts from it. Decided 16
+September 2026 (Dan, after the smoothness work): with the tick equal to the
+physics step every tick samples exactly one simulation step, so replicated
+bodies carry no sampling jitter; input reaches the server within about 8 ms and
+remote objects show 33 ms behind (two ticks of interpolation) instead of 66 ms.
+60 rather than 50 because the displays we target (60, 120, 144, 240 Hz) are
+multiples of it, so physics and rendering do not beat against each other. The
+two rates change together or not at all; going above the physics rate is the
+one setting that costs bandwidth and host CPU and shows nothing. Rendering is a
+separate clock: everything the player sees is interpolated or placed sub-tick,
+so frame rate never depends on the tick. (The prototype started at 30 Hz,
+FishNet's default, with physics at Unity's default 50.)
 
 ---
 
@@ -438,6 +449,6 @@ this document "signed off" unless that review actually occurred.
   cabin (decided 14 September 2026), so the world-loop plan has to define it.
 - Two-person carrying protocol, if included; a single simulation writer still holds.
 - Movement correction and transform interpolation settings for the selected
-  FishNet version; start with the existing 30 Hz server baseline.
+  FishNet version; the tick is 60 Hz (section 7).
 
 API reference: [FishNet ownership](https://fish-networking.gitbook.io/docs/guides/features/ownership).
