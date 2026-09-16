@@ -379,7 +379,16 @@ your own exit.
 
 - **Engine:** Unity 6 (`6000.6.0f1`), URP. Everyone on the same version.
 - **Networking:** FishNet over Steam P2P, host-as-server. See `NETWORK_CONTRACT.md`.
-- **Voice:** Steam's built-in voice API. Free. Radio degradation written by hand.
+- **Voice:** proximity speech over the existing authenticated FishNet connection
+  (Steam P2P or Local/LAN), with miniaudio device capture/playback and Opus encoding.
+  This supersedes Steam's capture API so the requested microphone and whole-game
+  output dropdowns select the devices actually used. P and the Audio settings
+  mute button toggle transmission; each new session starts muted. Default gain
+  is full through 2 m, fading smoothly to silence at 20 m. Both device selectors
+  default to Automatic; tests are local, with signal meters. Master/voice volume
+  and per-player mute/volume are local. Enabled voice continues in the background.
+  Walls, radios, underwater filters and monster hearing from speech remain future
+  work. See [voice verification](PROXIMITY_VOICE_TEST_REPORT.md).
 - **Release:** Early Access, $10–15.
 - **Team:** 3 developers, ~20 hours each per week. See `CONVENTIONS.md` for ownership.
 
