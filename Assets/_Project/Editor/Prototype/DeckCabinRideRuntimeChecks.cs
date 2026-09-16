@@ -176,8 +176,14 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => coin.State == ItemState.Held && coin.HolderClientId == host.OwnerId, 3f, "E1 the cargo was grabbed mid-ride");
             Check(!coin.InTransit, "E1 grabbed cargo is cargo no more");
             yield return Wait(0.5f);
-            // Throw it at the floor a metre ahead, against the car's motion.
-            Vector3 aim = (host.PlayerCamera.transform.forward + Vector3.down * 0.8f).normalized;
+            // Throw it at the floor toward the back wall, away from the doorway: a coin
+            // that lands in the shut door's threshold is behind the door collider and
+            // rightly out of the dot's line of sight.
+            Vector3 doorwayDir = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+            // Steeply, so it lands mid-floor: a coin that skids into the wall ends with its
+            // near edge inside the wall collider and the dot cannot see it.
+            host.transform.rotation = Quaternion.LookRotation(-doorwayDir); yield return null;
+            Vector3 aim = (-doorwayDir * 0.25f + Vector3.down).normalized;
             host.Inventory.RequestUse(aim);
             yield return WaitUntil(() => coin.State == ItemState.Released, 2f, "E3 the throw left the hand mid-ride");
             yield return WaitUntil(() => coin.State == ItemState.Free, 6f, "E3 the thrown coin came to rest");
@@ -209,7 +215,7 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => coin.State == ItemState.Held && coin.HolderClientId == guestId, 4f, "E1 (guest) the cargo was grabbed mid-ride by the guest");
             Check(!coin.InTransit, "E1 (guest) grabbed cargo is cargo no more");
             yield return Wait(0.5f);
-            Vector3 aim = (car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward) + Vector3.down * 0.8f).normalized;
+            Vector3 aim = (-car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward) * 0.25f + Vector3.down).normalized; // steeply at the floor, away from the door
             yield return Send("{\"id\":{id},\"action\":\"throw\",\"aim\":" + Vec(aim) + "}");
             yield return WaitUntil(() => coin.State == ItemState.Released, 3f, "E3 (guest) the throw left the guest's hand mid-ride");
             yield return WaitUntil(() => coin.State == ItemState.Free, 8f, "E3 (guest) the coin thrown by the guest came to rest");
@@ -529,8 +535,10 @@ namespace SunkCost.Editor.Prototype
             for (int b = 0; b < 3; b++) { bandSeconds[b] = (float)(bandEndT[b] - bandStartT[b]); bandSpeed[b] = bandMoved[b] && bandSeconds[b] > 0f ? Mathf.Abs(bandEndY[b] - bandStartY[b]) / bandSeconds[b] : 0f; }
             Note($"{label} bands: above {bandSpeed[0]:0.00} m/s over {bandSeconds[0]:0.00} s, crossing {bandSpeed[1]:0.00} m/s over {bandSeconds[1]:0.00} s, below {bandSpeed[2]:0.00} m/s over {bandSeconds[2]:0.00} s; moving {measured:0.00} s (expected {expectedTravel:0.00}); waterError {waterError:0.000}; deepest {deepestWater:0.00}; end {waterAtEnd:0.00}; dry at floor y {floorYWhenDry:0.00}; submersion streak {worstSubmersionStreak}");
             // The stretch above the surface is 1 m (seaLevelY -1): a 0.2 s window, where one
-            // tick's step of the driven car is 0.35 m/s of the average. A loose band there.
-            Check(bandSeconds[0] > 0.1f && Mathf.Abs(bandSpeed[0] - 3f) < 0.7f, $"{label} about 3 m/s above the surface band ({bandSpeed[0]:0.00} m/s over {bandSeconds[0]:0.00} s)");
+            // tick's step of the driven car is 0.35 m/s of the average, and a single hitched
+            // frame at the start of the ride is another 0.5. A loose band there; the two
+            // long bands below carry the real measurement.
+            Check(bandSeconds[0] > 0.1f && Mathf.Abs(bandSpeed[0] - 3f) < 1.2f, $"{label} about 3 m/s above the surface band ({bandSpeed[0]:0.00} m/s over {bandSeconds[0]:0.00} s)");
             Check(bandSeconds[1] > 1f && Mathf.Abs(bandSpeed[1] - 1f) < 0.1f, $"{label} about 1 m/s through the surface band ({bandSpeed[1]:0.00} m/s)");
             Check(bandSeconds[2] > 5f && Mathf.Abs(bandSpeed[2] - 3f) < 0.3f, $"{label} about 3 m/s below the band ({bandSpeed[2]:0.00} m/s)");
             Check(Mathf.Abs(measured - expectedTravel) < 1f, $"{label} the car moved for {measured:0.0} s (profile says {expectedTravel:0.0})");
@@ -866,6 +874,16 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => GuestId() >= 0 && UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).Length >= 2, 40f, "guest player spawned");
             int guestId = GuestId();
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=Sea"), 20f, "G0 guest joined at sea");
+            // N: display names. The host's saved name reached its player; the guest's
+            // wish reaches the server, is sanitised, and both peers read both names.
+            PlayerIdentity hostIdentity = host.GetComponent<PlayerIdentity>();
+            Check(hostIdentity != null && hostIdentity.DisplayName == "Skipper", "N1 the host's saved name reached its player: " + (hostIdentity == null ? "no identity" : hostIdentity.DisplayName));
+            yield return Send("{\"id\":{id},\"action\":\"name\",\"item\":\"  Mate <b>of the</b> deep, honestly too long  \"}");
+            HQPlayerController guestCopy = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.OwnerId == guestId);
+            PlayerIdentity guestIdentity = guestCopy != null ? guestCopy.GetComponent<PlayerIdentity>() : null;
+            yield return WaitUntil(() => guestIdentity != null && guestIdentity.DisplayName == "Mate bof the/b d", 5f, "N2 the guest's name was sanitised and written by the server");
+            Note("N2 guest name on the host: '" + guestIdentity.DisplayName + "'");
+            yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("name=Mate bof the/b d") && GuestPlayerLine(r, host.OwnerId).Contains("name=Skipper"), 5f, "N3 the guest reads both names");
             Check(!Day.Riding, "G0 no ride running");
 
             // G1: both in the cabin; the host presses; both ride down.

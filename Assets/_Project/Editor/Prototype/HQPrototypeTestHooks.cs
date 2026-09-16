@@ -180,6 +180,17 @@ namespace SunkCost.Editor.Prototype
             return $"prompt='{hud.PromptText}'; target={target}";
         }
 
+        // The local player's display name: saved as the lobby field would, and
+        // requested from the server if the player is already spawned.
+        public static string SetLocalDisplayName(string name)
+        {
+            SunkCost.Player.PlayerNamePrefs.Save(name);
+            HQPlayerController local = LocalPlayer();
+            SunkCost.Player.PlayerIdentity identity = local != null ? local.GetComponent<SunkCost.Player.PlayerIdentity>() : null;
+            identity?.RequestDisplayName(name);
+            return "saved '" + name + "'" + (identity != null ? "; requested" : "; no local player yet");
+        }
+
         public static string ItemStateText(string itemName = "Basketball")
         {
             CarryableItem item = Item(itemName);

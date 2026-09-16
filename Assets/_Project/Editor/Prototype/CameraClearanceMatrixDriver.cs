@@ -14,6 +14,16 @@ namespace SunkCost.Editor.Prototype
     public static class CameraClearanceMatrixDriver
     {
         private const string Marker = "Temp/camera-clearance-driver.txt";
+        private const string SavedNameKey = "SunkCost.CameraClearanceMatrixDriver.savedName";
+        private const string NoSavedName = "(none)";
+
+        private static void RestoreName()
+        {
+            string saved = SessionState.GetString(SavedNameKey, NoSavedName);
+            if (saved == NoSavedName) UnityEngine.PlayerPrefs.DeleteKey(SunkCost.Player.PlayerNamePrefs.Key);
+            else SunkCost.Player.PlayerNamePrefs.Save(saved);
+            SessionState.EraseString(SavedNameKey);
+        }
         private const string StageKey = "SunkCost.CameraClearanceMatrixDriver.stage";
         private const string JobKey = "SunkCost.CameraClearanceMatrixDriver.job";
         private static double waitUntil;
@@ -104,6 +114,9 @@ namespace SunkCost.Editor.Prototype
                         ushort port = FreeUdpPort(tugboat.GetPort());
                         if (port != tugboat.GetPort()) { tugboat.SetPort(port); File.AppendAllText(Marker, "port " + port + "\n"); }
                     }
+                    // The matrix hosts as "Skipper"; the tester's own saved name comes back at the stop.
+                    SessionState.SetString(SavedNameKey, SunkCost.Player.PlayerNamePrefs.HasSaved ? SunkCost.Player.PlayerNamePrefs.Load() : NoSavedName);
+                    SunkCost.Player.PlayerNamePrefs.Save("Skipper");
                     ui.StartLocalHost();
                     waitUntil = EditorApplication.timeSinceStartup + 2.0;
                     SessionState.SetInt(StageKey, 2);
@@ -124,7 +137,7 @@ namespace SunkCost.Editor.Prototype
                     EditorApplication.update -= Tick;
                     return;
                 case 3:
-                    if (!EditorApplication.isPlaying) { SessionState.SetInt(StageKey, -1); EditorApplication.update -= Tick; return; }
+                    if (!EditorApplication.isPlaying) { RestoreName(); SessionState.SetInt(StageKey, -1); EditorApplication.update -= Tick; return; }
                     if (!LeaveOnce()) return;
                     EditorApplication.ExitPlaymode();
                     return;

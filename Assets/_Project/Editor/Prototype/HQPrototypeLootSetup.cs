@@ -178,6 +178,7 @@ namespace SunkCost.Editor.Prototype
                 PlayerInventory inventory = root.GetComponent<PlayerInventory>();
                 if (controller == null || inventory == null)
                     throw new InvalidOperationException("Player prefab needs HQPlayerController and PlayerInventory (run Apply inventory setup first).");
+                if (root.GetComponent<SunkCost.Player.PlayerIdentity>() == null) { root.AddComponent<SunkCost.Player.PlayerIdentity>(); changes.Add("PlayerIdentity added"); }
                 using var serializedController = new SerializedObject(controller);
                 var camera = serializedController.FindProperty("playerCamera").objectReferenceValue as Camera;
                 if (camera == null) throw new InvalidOperationException("Player prefab has no camera reference.");

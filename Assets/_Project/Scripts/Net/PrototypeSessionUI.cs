@@ -26,6 +26,7 @@ namespace SunkCost.Net
 
         private PrototypeSessionController controller;
         private string lobbyIdField = string.Empty;
+        private string nameField;
         private int lastReportedPlayerCount = -1;
         private Vector2 rosterScroll;
 
@@ -175,6 +176,20 @@ namespace SunkCost.Net
                 GUILayout.Label("Host IP (127.0.0.1 on same PC)");
                 address = GUILayout.TextField(address);
             }
+
+            // Your name: saved on this machine as you type; the Steam persona until you
+            // change it. It goes to the server with your player when you enter a room.
+            if (nameField == null)
+            {
+                string persona = controller.LocalPersonaName;
+                if (!string.IsNullOrEmpty(persona)) SunkCost.Player.PlayerNamePrefs.DefaultName = persona;
+                nameField = SunkCost.Player.PlayerNamePrefs.Load();
+            }
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Your name", GUILayout.Width(80));
+            string typed = GUILayout.TextField(nameField, SunkCost.Player.PlayerIdentity.MaxLength);
+            if (typed != nameField) { nameField = typed; SunkCost.Player.PlayerNamePrefs.Save(typed); }
+            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Host")) { if (steamMode) StartSteamHost(); else StartLocalHost(); }

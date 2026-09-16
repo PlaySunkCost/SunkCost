@@ -132,6 +132,12 @@ namespace SunkCost.Net
                     return SunkCost.Diagnostics.FrameTimeRecorder.Instance == null ? "no frame time recorder"
                         : SunkCost.Diagnostics.FrameTimeRecorder.Instance.Summary + "; " + SunkCost.Diagnostics.FrameTimeRecorder.Instance.HitchList;
                 case "cargo_reset": cargoWorstStep = 0f; cargoFrames = 0; doorWorstOpenAtTop = 0f; cargoLastLocal.Clear(); break;
+                case "name":
+                {
+                    SunkCost.Player.PlayerNamePrefs.Save(command.item);
+                    player.GetComponent<SunkCost.Player.PlayerIdentity>()?.RequestDisplayName(command.item);
+                    break;
+                }
                 case "frames_reset":
                     SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
                     break;
@@ -261,7 +267,8 @@ namespace SunkCost.Net
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
                 var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
-                text += $"player={player.OwnerId}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
+                SunkCost.Player.PlayerIdentity identity = player.GetComponent<SunkCost.Player.PlayerIdentity>();
+                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {

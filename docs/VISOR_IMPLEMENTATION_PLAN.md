@@ -89,7 +89,7 @@ and the sky (`WorldSceneFlow.PresentSky`).
   HOME is a gold marker on the strip with `HOME 23 m` beneath (an arrow-head
   at the strip's edge when the doorway is outside the arc), plus a gold mark
   on the doorway itself when it is in view. Hidden while inside the car.
-- Crew tags: `Diver N · 12 m` above each other diver's head, projected from
+- Crew tags: `Name · 12 m` (the player's display name, `PlayerIdentity`; `Diver N` until one lands) above each other diver's head, projected from
   the head position, drawn only when the diver is in front of the camera and
   within 40 m; brighter and slightly larger when the dot is on them.
 - Item outlines: four bracket corners around the screen bounds of every
@@ -223,7 +223,7 @@ Play Mode, in the deck cabin matrix (host + rendering guest):
 - The visor switches off at the deck swap, so the deck is always "dry".
 - Vignette: replaced by the mask (3.5); no extra darkening.
 - Crew tags: always within 40 m, brighter when looked at.
-- Still open: players' display names on the crew tags (now `Diver N`).
+- Display names on the crew tags: built 16 September 2026 (`dan/player-names`): `PlayerIdentity` on the player, server-written from the owner's saved name (Steam persona by default, editable in the lobby, kept in PlayerPrefs).
 
 ## 9. Test report (16 September 2026, `dan/visor`)
 

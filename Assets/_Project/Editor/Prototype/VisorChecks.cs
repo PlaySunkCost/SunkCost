@@ -107,6 +107,16 @@ namespace SunkCost.Editor.Prototype
             // Tag text.
             if (PlayerHudUI.TagFor(null) != string.Empty) errors.Add("a null item has no tag.");
 
+            // Display names (the crew tags): the server's sanitiser.
+            if (PlayerIdentity.Sanitize(null, 0) != "Diver 1" || PlayerIdentity.Sanitize("   ", 2) != "Diver 3") errors.Add("an empty name must fall back to Diver N.");
+            if (PlayerIdentity.Sanitize("  Dan  ", 0) != "Dan") errors.Add("a name must be trimmed.");
+            if (PlayerIdentity.Sanitize("a  b   c", 0) != "a b c") errors.Add("runs of spaces must collapse.");
+            if (PlayerIdentity.Sanitize("<b>Dan</b>", 0) != "bDan/b") errors.Add("angle brackets and control characters must go.");
+            if (PlayerIdentity.Sanitize("abcdefghijklmnopqrstuvwxyz", 0) != "abcdefghijklmnop") errors.Add("a name must be cut at " + PlayerIdentity.MaxLength + ".");
+            if (PlayerIdentity.Sanitize("abcdefghijklmno pqr", 0) != "abcdefghijklmno") errors.Add("a cut must not leave a trailing space.");
+            GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
+            if (playerPrefab == null || playerPrefab.GetComponent<PlayerIdentity>() == null) errors.Add("the player prefab must carry PlayerIdentity (run Apply loot setup).");
+
             // The mask: glass at the centre, frame at the corners, on the rim and on the
             // nose bridge; every readout on the glass, at 16:9, 21:9 and 720p.
             foreach ((int w, int h) in new[] { (1920, 1080), (2560, 1080), (1280, 720) })
