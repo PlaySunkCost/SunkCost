@@ -37,6 +37,10 @@ namespace SunkCost.Editor.Prototype
             var panels = new System.Collections.Generic.List<SunkCost.World.ColourPanel>();
             foreach (GameObject root in scene.GetRootGameObjects()) panels.AddRange(root.GetComponentsInChildren<SunkCost.World.ColourPanel>(true));
             if (panels.Count != 1) errors.Add("HQ needs exactly one Colour Panel (found " + panels.Count + ").");
+            var boards = new System.Collections.Generic.List<SunkCost.World.QuotaBoard>();
+            foreach (GameObject root in scene.GetRootGameObjects()) boards.AddRange(root.GetComponentsInChildren<SunkCost.World.QuotaBoard>(true));
+            if (boards.Count != 1) errors.Add("HQ needs exactly one Quota Board (found " + boards.Count + ").");
+            else if (boards[0].GetComponent<Collider>() == null) errors.Add("The Quota Board needs a collider to be looked at.");
             else if (panels[0].GetComponent<Collider>() == null || panels[0].transform.Find(SunkCost.World.ColourPanel.SwatchName) == null) errors.Add("The Colour Panel needs its collider and swatch.");
             if (HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root belongs in Session.unity, not the HQ world scene.");
             if (CrewSpawner.SpawnPointsIn(scene).Count != new LobbySessionSettings().LocalSocketCap)

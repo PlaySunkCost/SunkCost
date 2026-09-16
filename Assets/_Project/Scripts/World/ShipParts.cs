@@ -14,6 +14,7 @@ namespace SunkCost.World
         public const string MonitorName = "Monitor";
         public const string MonitorButtonSite01Name = "MonitorButton_Site01";
         public const string MonitorButtonHQName = "MonitorButton_HQ";
+        public const string MonitorButtonEndDayName = "MonitorButton_EndDay";
         public const string MonitorStatusName = "MonitorStatus"; // TextMesh the ShipMonitor writes
         public const string DeckCabinName = "DeckCabin";
         public const string DeckCabinVolumeName = "DeckCabinVolume";
@@ -24,6 +25,8 @@ namespace SunkCost.World
         public const string DeckCabinCarGlassName = "DeckCabinCarGlass"; // the car's own glass, shown while the car is up (optional part)
         public const string DeckCabinDoorColliderName = "DeckCabinDoorCollider"; // blocks the doorway while the doors are not fully open (optional part)
         public const string StorageAreaName = "StorageArea";
+        public const string StorageVolumeName = "StorageVolume";   // the room's inside: what the pay button sells
+        public const string StorageReadoutName = "StorageReadout"; // TextMesh the StorageReadout writes ("$100 / $200")
         public const string SpawnPointPrefix = "SpawnPoint_";
         public const string BoardingPointName = "BoardingPoint";
         // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
@@ -36,9 +39,9 @@ namespace SunkCost.World
 
         public static readonly string[] RequiredChildren =
         {
-            AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorStatusName, DeckCabinName,
+            AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorButtonEndDayName, MonitorStatusName, DeckCabinName,
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
-            StorageAreaName, BoardingPointName,
+            StorageAreaName, StorageVolumeName, StorageReadoutName, BoardingPointName,
             SafeDeckVolumeName, GangwayPivotName, GangwayName, GangwayExclusionVolumeName, DepartureDirectionName,
             SpawnPointPrefix + "1", SpawnPointPrefix + "2", SpawnPointPrefix + "3", SpawnPointPrefix + "4"
         };
@@ -53,6 +56,8 @@ namespace SunkCost.World
         public TextMesh DeckCabinPanel => Find(DeckCabinPanelName)?.GetComponent<TextMesh>();
         public Transform DeckCabinCarGlass => Find(DeckCabinCarGlassName);
         public Collider DeckCabinDoorCollider { get { Transform t = Find(DeckCabinDoorColliderName); return t != null ? t.GetComponent<Collider>() : null; } }
+        public Collider StorageVolume => Find(StorageVolumeName)?.GetComponent<Collider>();
+        public TextMesh StorageReadout => Find(StorageReadoutName)?.GetComponent<TextMesh>();
         public Transform BoardingPoint => Find(BoardingPointName);
         public Collider SafeDeckVolume => Find(SafeDeckVolumeName)?.GetComponent<Collider>();
         public Transform GangwayPivot => Find(GangwayPivotName);
@@ -75,6 +80,8 @@ namespace SunkCost.World
         public bool IsAboard(Vector3 worldPosition) => Contains(AboardVolume, worldPosition);
 
         public bool IsInDeckCabin(Vector3 worldPosition) => Contains(DeckCabinVolume, worldPosition);
+
+        public bool IsInStorageRoom(Vector3 worldPosition) => Contains(StorageVolume, worldPosition);
 
         // Standing on the deck proper, not on the gangway or its lip: what a passenger
         // needs before the ship may move. Falls back to the aboard volume on a ship

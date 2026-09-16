@@ -468,7 +468,7 @@ namespace SunkCost.World
                 bool wasBelow = dayState.IsBelow(conn.ClientId);
                 dayState.ServerRemoveEverywhere(conn.ClientId);
                 // A disconnected player does not count as living: if they were the
-                // last one below, the day ends. (Only a leaver from below: a refused
+                // last one below, the dive is done. (Only a leaver from below: a refused
                 // joiner's disconnect must not touch a day in progress.)
                 if (wasBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
             }

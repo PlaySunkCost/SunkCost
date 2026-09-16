@@ -408,6 +408,30 @@ namespace SunkCost.Editor.Prototype
             return "requested cabin";
         }
 
+        public static string ClientRequestEndDay()
+        {
+            SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.World.ShipControls controls = player != null ? player.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (controls == null) return "No local ShipControls";
+            controls.RequestEndDay();
+            return "requested end day";
+        }
+
+        public static string ClientRequestPay()
+        {
+            SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            SunkCost.World.ShipControls controls = player != null ? player.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (controls == null) return "No local ShipControls";
+            controls.RequestPay();
+            return "requested pay";
+        }
+
+        public static string QuotaBoardText()
+        {
+            SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();
+            return board == null ? "(no board)" : board.Text;
+        }
+
         public static string ClientRequestCar()
         {
             SunkCost.Player.HQPlayerController player = SunkCost.World.WorldSceneFlow.LocalPlayer();

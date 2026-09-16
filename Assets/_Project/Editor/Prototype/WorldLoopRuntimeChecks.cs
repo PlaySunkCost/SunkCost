@@ -396,9 +396,11 @@ namespace SunkCost.Editor.Prototype
                 GuestLine(r, "server=").Contains("phase=DiveInProgress") && r.Split('\n').Count(l => l.StartsWith("player=")) == 2,
                 8f, "S5 first guest unaffected: sees the day in progress and two players");
             secondGuest.Kill(); secondGuest = null;
-            Check(CrewDayState.Instance.ServerEndDayIfDone(3), "S5 the day ends with nobody below");
-            yield return WaitUntil(() => Phase() == "AtSea", 5f, "day ended");
-            Check(CrewDayState.Instance.Day == 2, "S12 the day counter advanced to 2: " + CrewDayState.Instance.Day);
+            Check(CrewDayState.Instance.ServerEndDayIfDone(3), "S5 the dive is done with nobody below");
+            yield return WaitUntil(() => Phase() == "AtSea", 5f, "dive done");
+            Check(CrewDayState.Instance.Day == 1 && CrewDayState.Instance.DiveDone, "S12 the day waits for the crew: still day 1, dive done");
+            Check(CrewDayState.Instance.ServerEndDay(3, out string endWhy), "S12 End day: " + endWhy);
+            Check(CrewDayState.Instance.Day == 2 && !CrewDayState.Instance.DiveDone, "S12 the day counter advanced to 2: " + CrewDayState.Instance.Day);
 
             // S13 (scene part): the guest presses HQ; everything comes back, HQ is fresh.
             yield return WaitUntil(() => H.MonitorText().StartsWith("Day 2 of 3"), 5f, "monitor back to the at-sea line after the day ended: " + H.MonitorText());

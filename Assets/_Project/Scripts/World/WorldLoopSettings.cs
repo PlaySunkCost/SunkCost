@@ -23,6 +23,10 @@ namespace SunkCost.World
         // September 2026: the plane read as "water rising" through the shaft).
         [SerializeField] private Vector3 shipAtSeaOrigin = new(0f, 0f, 3000f);
         [SerializeField] private int daysPerCycle = 3;
+        [Tooltip("Dollars the crew owes at each payday (the pay button at HQ charges it out of the balance after selling the storage room).")]
+        [SerializeField] private int quotaPerCycle = 500;
+        [Tooltip("Seconds the HQ board shows what the last pay did (PAID / GAME LOST) before going back to the status line.")]
+        [SerializeField] private float payReportSeconds = 8f;
         [Tooltip("Fallback if the parent switch pops on Steam: riders stand still for the ride.")]
         [SerializeField] private bool lockRidersDuringRide;
 
@@ -55,6 +59,10 @@ namespace SunkCost.World
         public float RefusalDisplaySeconds => refusalDisplaySeconds;
         public Vector3 ShipAtSeaOrigin => shipAtSeaOrigin;
         public int DaysPerCycle => daysPerCycle;
+        // The editor matrices pay against a known number without touching the asset.
+        public static int? QuotaOverrideForTests;
+        public int QuotaPerCycle => QuotaOverrideForTests ?? quotaPerCycle;
+        public float PayReportSeconds => payReportSeconds;
         public bool LockRidersDuringRide => lockRidersDuringRide;
         public float GangwayRaiseSeconds => gangwayRaiseSeconds;
         public float DepartureSeconds => departureSeconds;
