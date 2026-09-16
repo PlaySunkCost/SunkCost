@@ -105,24 +105,32 @@ and the sky (`WorldSceneFlow.PresentSky`).
   then the mask, then the readouts, dot, prompt and slots — so the frame hides
   what a frame would hide and the glass shows everything else.
 
-### 3.5 The mask (Dan, 16 September 2026, after the first build)
+### 3.5 The mask (Dan, 16 September 2026; the helmet visor after his reference picture, later the same day)
 
-The view is seen through the suit's diving mask: `PlayerVisorMask` is one
-wide lens with rounded corners and a nose bridge rising from the bottom
-centre, described as a signed distance in screen pixels and baked once (at
-half the screen's size, re-baked when the window changes) into a texture
-`PlayerHudUI` stretches over the screen.
+The view is seen through the suit's helmet visor: `PlayerVisorMask` is one
+wide lens described as a **polygon** in screen pixels — chamfered corners, a
+compass housing let into the top edge, a small nose notch in the bottom edge
+— whose exact signed distance is baked once (at half the screen's size,
+re-baked when the window changes) into a texture `PlayerHudUI` stretches over
+the screen. Dan's picture: an angular cyan-lined HUD frame; the first build's
+round swim-mask shape is gone.
 
-- Coverage, "light": the side rim is 5 % of the width, the top and bottom rim
-  6 % of the height, the corner radius 20 % of the height; the bridge rises
-  10 % of the height above the bottom rim and is 22 % of the height wide at
-  its base, with a 3.5 %-of-height fillet where it meets the rim. Fractions of
-  the height keep the lens' look at 16:9 and 21:9; the screen centre is always
-  deep on the glass.
-- Look: a near-black matte rim (94 % opaque), a thin cyan line just onto the
-  frame (1.6 px wide at 1080p) with a soft cyan bloom either side, and the
-  rim's shadow on the glass (30 % black at the edge fading over 60 px). No
-  tint on the glass.
+- Proportions: side rim 4.5 % of the width, top rim 6.5 % and bottom rim
+  7.5 % of the height, chamfers 10 % of the height; the compass housing is
+  4.5 % of the height deep and 30 % of the width wide at its floor; the nose
+  notch 3.5 % deep and 10 % wide. Fractions of the height keep the look at
+  16:9 and 21:9; the centre is always deep on the glass.
+- Look: a near-black teal rim (95 % opaque), a bright cyan line at the glass
+  edge and a fainter second line 18 px out on the rim, a soft bloom, the rim's
+  shadow on the glass. Tick rows along the top and bottom edges and dash
+  columns down the sides, drawn by the HUD on the rim. No tint on the glass.
+- Readouts, as the picture: `HELMET VISOR` and a status line top-left,
+  `MODE: DIVE` top-right; the compass strip in the housing (cardinals, ticks,
+  a heading mark on the housing's floor) with the heading and HOME on the
+  glass under it; AIR, HP, DEPTH and PRESS (1 ATA + one per 10 m) bottom-left
+  with an O₂ ring badge; a reticle around the dot (a ring with gaps top and
+  bottom, four bracket corners, a dash either side); the slots as dark panels
+  with cyan bracket corners, gold when in hand.
 - The mask is on exactly when the visor is on, the car ride included (the
   readouts wait for the travel lock to lift, as the dot and prompt do); it
   draws under the readouts and above the world-anchored marks.
