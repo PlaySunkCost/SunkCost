@@ -173,6 +173,14 @@ namespace SunkCost.World
             SetVisible(ship.DeckCabinCarGlass, present);
             doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
             doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
+            // The doorway is passable only with the doors fully open: nobody walks into
+            // the housing while the car is away or the doors are moving.
+            Collider doorway = ship.DeckCabinDoorCollider;
+            if (doorway != null)
+            {
+                bool blocks = open < 0.999f;
+                if (doorway.enabled != blocks) doorway.enabled = blocks;
+            }
             TextMesh panel = ship.DeckCabinPanel;
             if (panel != null)
             {

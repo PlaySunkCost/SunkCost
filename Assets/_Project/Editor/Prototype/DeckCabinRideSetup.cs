@@ -110,6 +110,15 @@ namespace SunkCost.Editor.Prototype
                     // The car's own glass inside the housing's (Dan, 15 September 2026):
                     // with the car up you look through two panes, with it below through
                     // one. A shrunken copy of the housing's shell, shown while the car is up.
+                    // The doorway collider (DeckCabinBuilder.CreateDoorCollider) for a ship built before it.
+                    if (cabin.Find(SunkCost.World.ShipParts.DeckCabinDoorColliderName) == null)
+                    {
+                        Transform doorR = ship.DeckCabinDoorR;
+                        float halfAngle = doorR != null ? Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)) : 25f; // parked open at the half-angle
+                        DeckCabinBuilder.CreateDoorCollider(cabin, DeckCabinBuilder.InteriorRadiusMeters, halfAngle);
+                        changes.Add("deck cabin doorway collider added");
+                        dirty = true;
+                    }
                     if (cabin.Find(SunkCost.World.ShipParts.DeckCabinCarGlassName) == null)
                     {
                         Transform shell = cabin.Find("Glass Shell");
