@@ -11,40 +11,75 @@ namespace SunkCost.Player
     // seeds "Diver N" at spawn, and the owning client asks once for the name it
     // saved (PlayerNamePrefs) — the server sanitises and writes, never trusting
     // the string as sent. Read by the visor's crew tags and the session roster.
+    // The player's colour rides with it (Dan, 16 September 2026): an index into
+    // PlayerPalette, server-written the same way — a random swatch saved on the
+    // machine the first time, changed at the HQ wall's colour panel. Shown on
+    // the body, the roster and the F3 panel; the lamp card will tint from it.
     public sealed class PlayerIdentity : NetworkBehaviour
     {
         public const int MaxLength = 16;
 
         private readonly SyncVar<string> displayName = new(string.Empty);
+        private readonly SyncVar<byte> colourIndex = new(0);
 
         public string DisplayName => string.IsNullOrEmpty(displayName.Value) ? Fallback(OwnerId) : displayName.Value;
         public static string Fallback(int ownerId) => "Diver " + (ownerId + 1);
+        public int ColourIndex => colourIndex.Value;
+        public Color Colour => PlayerPalette.Get(colourIndex.Value);
+        public string ColourHex => PlayerPalette.Hex(colourIndex.Value);
+
+        public event System.Action<Color> ColourChanged;
+
+        private void Awake()
+        {
+            colourIndex.OnChange += (_, next, _) => ColourChanged?.Invoke(PlayerPalette.Get(next));
+        }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
             displayName.Value = Fallback(OwnerId);
+            colourIndex.Value = (byte)(OwnerId % PlayerPalette.Count); // until the owner's saved pick lands
         }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
-            if (IsOwner) ServerRequestDisplayName(PlayerNamePrefs.Load());
+            ColourChanged?.Invoke(Colour);
+            if (IsOwner) ServerRequestIdentity(PlayerNamePrefs.Load(), PlayerColourPrefs.Load());
         }
 
         // The owner's wish; the server decides what it becomes.
         [ServerRpc]
-        private void ServerRequestDisplayName(string wanted)
+        private void ServerRequestIdentity(string wantedName, int wantedColour)
         {
-            displayName.Value = Sanitize(wanted, OwnerId);
+            displayName.Value = Sanitize(wantedName, OwnerId);
+            colourIndex.Value = (byte)SanitizeColour(wantedColour, OwnerId);
+        }
+
+        [ServerRpc]
+        private void ServerRequestColour(int wantedColour)
+        {
+            colourIndex.Value = (byte)SanitizeColour(wantedColour, OwnerId);
         }
 
         // Hooks and the lobby's field may re-send (the UI only exposes the field
         // before a room is entered; nothing forbids a later request).
         public void RequestDisplayName(string wanted)
         {
-            if (IsOwner && IsSpawned) ServerRequestDisplayName(wanted);
+            if (IsOwner && IsSpawned) ServerRequestIdentity(wanted, PlayerColourPrefs.Load());
         }
+
+        // The colour panel's pick: saved here, asked of the server.
+        public void RequestColour(int index)
+        {
+            if (!PlayerPalette.IsValid(index)) return;
+            PlayerColourPrefs.Save(index);
+            if (IsOwner && IsSpawned) ServerRequestColour(index);
+        }
+
+        // An index outside the palette falls back to the owner's seat.
+        public static int SanitizeColour(int wanted, int ownerId) => PlayerPalette.IsValid(wanted) ? wanted : ownerId % PlayerPalette.Count;
 
         // Trimmed, printable, no angle brackets (the roster is IMGUI rich text),
         // runs of spaces collapsed, at most MaxLength characters; empty falls

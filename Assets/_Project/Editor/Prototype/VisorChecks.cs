@@ -114,6 +114,25 @@ namespace SunkCost.Editor.Prototype
             if (PlayerIdentity.Sanitize("<b>Dan</b>", 0) != "bDan/b") errors.Add("angle brackets and control characters must go.");
             if (PlayerIdentity.Sanitize("abcdefghijklmnopqrstuvwxyz", 0) != "abcdefghijklmnop") errors.Add("a name must be cut at " + PlayerIdentity.MaxLength + ".");
             if (PlayerIdentity.Sanitize("abcdefghijklmno pqr", 0) != "abcdefghijklmno") errors.Add("a cut must not leave a trailing space.");
+            // Player colours: the palette and the wheel.
+            if (PlayerPalette.Count != 16) errors.Add("the palette holds sixteen swatches.");
+            for (int i = 0; i < PlayerPalette.Count; i++)
+            {
+                Color c = PlayerPalette.Get(i);
+                if (Mathf.Max(c.r, c.g, c.b) < 0.85f) errors.Add("swatch " + i + " is too dark to read in the dark.");
+                if (PlayerPalette.SwatchAt(PlayerPalette.WheelPosition(i) * 0.8f) != i) errors.Add("swatch " + i + " is not found at its own wheel position.");
+            }
+            if (PlayerPalette.SwatchAt(Vector2.zero) != -1 || PlayerPalette.SwatchAt(new Vector2(1.3f, 0f)) != -1) errors.Add("the wheel's centre and outside are no swatch.");
+            if (PlayerIdentity.SanitizeColour(99, 3) != 3 || PlayerIdentity.SanitizeColour(-1, 0) != 0 || PlayerIdentity.SanitizeColour(7, 0) != 7) errors.Add("a colour outside the palette must fall back to the owner's seat.");
+            Texture2D wheel = PlayerPalette.BakeWheel(128, readable: true);
+            try
+            {
+                Vector2 top = PlayerPalette.WheelPosition(0) * (128 * 0.38f);
+                Color atTop = wheel.GetPixel(64 + Mathf.RoundToInt(top.x), 64 + Mathf.RoundToInt(top.y));
+                if (atTop.a < 0.9f || Mathf.Abs(atTop.r - PlayerPalette.Get(0).r) > 0.05f) errors.Add("the baked wheel must show swatch 0 at the top.");
+                if (wheel.GetPixel(64, 64).a > 0.05f) errors.Add("the baked wheel's centre is clear.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(wheel); }
             GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);
             if (playerPrefab == null || playerPrefab.GetComponent<PlayerIdentity>() == null) errors.Add("the player prefab must carry PlayerIdentity (run Apply loot setup).");
 

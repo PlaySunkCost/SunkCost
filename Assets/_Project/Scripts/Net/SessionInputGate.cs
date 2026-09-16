@@ -11,11 +11,26 @@ namespace SunkCost.Net
     {
         public static bool MenuOpen { get; private set; }
         public static bool OverlayOpen { get; private set; }
+        public static bool PickerOpen { get; private set; }   // the colour panel's wheel, cursor free
         public static bool ApplicationFocused { get; private set; } = true;
 
         private static int suppressedFrame = -1;
 
-        public static bool CanPlay => !MenuOpen && !OverlayOpen && ApplicationFocused;
+        public static bool CanPlay => !MenuOpen && !OverlayOpen && !PickerOpen && ApplicationFocused;
+
+        public static void OpenPicker()
+        {
+            PickerOpen = true;
+            ReleaseCursor();
+        }
+
+        public static void ClosePicker()
+        {
+            if (!PickerOpen) return;
+            PickerOpen = false;
+            suppressedFrame = Time.frameCount;
+            if (!MenuOpen && !OverlayOpen && ApplicationFocused) CaptureCursor();
+        }
         public static bool ClickSuppressedThisFrame => Time.frameCount == suppressedFrame;
 
         public static void OpenMenu()

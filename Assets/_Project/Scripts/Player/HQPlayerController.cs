@@ -82,6 +82,7 @@ namespace SunkCost.Player
         // The carryable under the crosshair within reach this frame, owner only.
         public CarryableItem CurrentTarget { get; private set; }
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
+        public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         // The cabin control under the crosshair within reach: the deck cabin's
         // button on the ship or the seafloor car's panel (owner only).
         public CabinControl CurrentCabinControl { get; private set; }
@@ -157,8 +158,14 @@ namespace SunkCost.Player
         {
             base.OnStartClient();
             SetLocalPresentation(IsOwner);
-            if (bodyRenderer != null)
-                bodyRenderer.material.color = Owner.ClientId % 2 == 0 ? new Color(0.15f, 0.5f, 1f) : new Color(1f, 0.55f, 0.12f);
+            // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
+            PlayerIdentity identity = GetComponent<PlayerIdentity>();
+            if (identity != null)
+            {
+                identity.ColourChanged += SetBodyColour;
+                SetBodyColour(identity.Colour);
+            }
+            else if (bodyRenderer != null) bodyRenderer.material.color = PlayerPalette.Get(Owner.ClientId);
             // Cursor capture is owned by SessionInputGate (entering the room captures,
             // Escape/overlay/focus loss releases, Resume recaptures).
         }
@@ -174,7 +181,8 @@ namespace SunkCost.Player
             // Escape opens the menu and, pressed again, closes it (the same as Resume).
             if (hasDevices && ActiveKeyboard.escapeKey.wasPressedThisFrame)
             {
-                if (SessionInputGate.MenuOpen) SessionInputGate.Resume();
+                if (SessionInputGate.PickerOpen) SessionInputGate.ClosePicker();
+                else if (SessionInputGate.MenuOpen) SessionInputGate.Resume();
                 else SessionInputGate.OpenMenu();
             }
 
@@ -264,6 +272,11 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestSail(CurrentButton.Destination);
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentColourPanel != null)
+            {
+                grabConsumed = true;
+                SessionInputGate.OpenPicker();
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
             {
@@ -486,6 +499,7 @@ namespace SunkCost.Player
         private void UpdateTarget()
         {
             CurrentTarget = null;
+            CurrentColourPanel = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
@@ -495,9 +509,18 @@ namespace SunkCost.Player
             if (pressed == null) return;
             CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
             if (CurrentButton != null) return;
+            CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();
+            if (CurrentColourPanel != null) return;
             if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }
+
+        public void SetBodyColour(Color colour)
+        {
+            if (bodyRenderer != null) bodyRenderer.material.color = colour;
+        }
+
+        public Color BodyColour => bodyRenderer != null ? bodyRenderer.material.color : Color.clear;
 
         private void SetLocalPresentation(bool active)
         {

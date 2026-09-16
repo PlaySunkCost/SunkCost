@@ -94,6 +94,7 @@ namespace SunkCost.Player
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null && controller.CurrentButton != null) return $"Press E to sail to {controller.CurrentButton.Label}";
+                if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
@@ -235,6 +236,7 @@ namespace SunkCost.Player
                 return;
             EnsureStyles();
             if (controller != null && controller.ViewObstructed) { DrawObstructionCover(); return; }
+            if (SessionInputGate.PickerOpen) { DrawColourPicker(); return; }
             bool faded = ScreenFade.Instance != null && !ScreenFade.Instance.IsClear;
             bool maskOn = Visor.On && !faded;                    // the mask is on with the suit, car ride included
             bool readoutsOn = maskOn && !controller.TravelLocked;
@@ -425,7 +427,10 @@ namespace SunkCost.Player
             {
                 if (!PlayerVisorMath.TryProject(controller.PlayerCamera, head, out Vector2 p)) continue;
                 bool lookedAt = Mathf.Abs(p.x - Screen.width * 0.5f) < 60f * s && Mathf.Abs(p.y - Screen.height * 0.5f) < 90f * s;
-                GUI.color = lookedAt ? VisorColor : VisorDim;
+                PlayerIdentity otherIdentity = other.GetComponent<PlayerIdentity>();
+                Color crewColour = otherIdentity != null ? otherIdentity.Colour : VisorColor;
+                crewColour.a = lookedAt ? 1f : 0.7f;
+                GUI.color = crewColour;
                 GUI.Label(new Rect(p.x - 80f * s, p.y - 22f * s, 160f * s, 18f * s), $"{CrewName(other)} · {distance:0} m", lookedAt ? visorStyle : visorSmallStyle);
             }
 
@@ -583,6 +588,51 @@ namespace SunkCost.Player
         // No clear camera pose exists (docs/CAMERA_WALL_CLEARANCE_IMPLEMENTATION_PLAN.md
         // section 4 step 6): an opaque cover instead of a view from inside a wall.
         // The travel fade, when up, draws in front of it anyway.
+        // The colour panel's wheel: the sixteen swatches round a ring, yours ringed;
+        // click one to become it (saved on this machine, asked of the server). Done
+        // or Esc closes. Drawn with the cursor free (SessionInputGate.PickerOpen).
+        private void DrawColourPicker()
+        {
+            float s = Screen.height / 1080f;
+            float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f, ring = 200f * s, swatch = 52f * s;
+            Color previous = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.55f);
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), whiteTexture);
+            GUI.color = Color.white;
+            GUI.Label(new Rect(cx - 200f * s, cy - ring - 90f * s, 400f * s, 30f * s), "Pick your colour", promptStyle);
+            PlayerIdentity identity = GetComponent<PlayerIdentity>();
+            int current = identity != null ? identity.ColourIndex : -1;
+            Event e = Event.current;
+            for (int i = 0; i < PlayerPalette.Count; i++)
+            {
+                Vector2 unit = PlayerPalette.WheelPosition(i);
+                Rect rect = new(cx + unit.x * ring - swatch * 0.5f, cy - unit.y * ring - swatch * 0.5f, swatch, swatch);
+                if (i == current)
+                {
+                    GUI.color = Color.white;
+                    GUI.DrawTexture(new Rect(rect.x - 5f * s, rect.y - 5f * s, rect.width + 10f * s, rect.height + 10f * s), whiteTexture);
+                }
+                GUI.color = PlayerPalette.Get(i);
+                GUI.DrawTexture(rect, whiteTexture);
+                if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
+                {
+                    identity?.RequestColour(i);
+                    e.Use();
+                }
+            }
+            GUI.color = identity != null ? identity.Colour : Color.gray;
+            GUI.DrawTexture(new Rect(cx - 40f * s, cy - 40f * s, 80f * s, 80f * s), whiteTexture);
+            GUI.color = Color.white;
+            if (GUI.Button(new Rect(cx - 60f * s, cy + ring + 50f * s, 120f * s, 32f * s), "Done")) SessionInputGate.ClosePicker();
+            GUI.color = previous;
+        }
+
+        // For the checks: the pick the mouse would make.
+        public void PickColourForChecks(int index)
+        {
+            GetComponent<PlayerIdentity>()?.RequestColour(index);
+        }
+
         private void DrawObstructionCover()
         {
             Color previous = GUI.color;

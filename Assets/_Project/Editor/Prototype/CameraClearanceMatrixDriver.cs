@@ -17,12 +17,18 @@ namespace SunkCost.Editor.Prototype
         private const string SavedNameKey = "SunkCost.CameraClearanceMatrixDriver.savedName";
         private const string NoSavedName = "(none)";
 
+        private const string SavedColourKey = "SunkCost.CameraClearanceMatrixDriver.savedColour";
+
         private static void RestoreName()
         {
             string saved = SessionState.GetString(SavedNameKey, NoSavedName);
             if (saved == NoSavedName) UnityEngine.PlayerPrefs.DeleteKey(SunkCost.Player.PlayerNamePrefs.Key);
             else SunkCost.Player.PlayerNamePrefs.Save(saved);
             SessionState.EraseString(SavedNameKey);
+            int colour = SessionState.GetInt(SavedColourKey, -1);
+            if (colour < 0) UnityEngine.PlayerPrefs.DeleteKey(SunkCost.Player.PlayerColourPrefs.Key);
+            else SunkCost.Player.PlayerColourPrefs.Save(colour);
+            SessionState.EraseInt(SavedColourKey);
         }
         private const string StageKey = "SunkCost.CameraClearanceMatrixDriver.stage";
         private const string JobKey = "SunkCost.CameraClearanceMatrixDriver.job";
@@ -117,6 +123,8 @@ namespace SunkCost.Editor.Prototype
                     // The matrix hosts as "Skipper"; the tester's own saved name comes back at the stop.
                     SessionState.SetString(SavedNameKey, SunkCost.Player.PlayerNamePrefs.HasSaved ? SunkCost.Player.PlayerNamePrefs.Load() : NoSavedName);
                     SunkCost.Player.PlayerNamePrefs.Save("Skipper");
+                    SessionState.SetInt(SavedColourKey, SunkCost.Player.PlayerColourPrefs.HasSaved ? SunkCost.Player.PlayerColourPrefs.Load() : -1);
+                    SunkCost.Player.PlayerColourPrefs.Save(2); // amber, so the rows know what to expect
                     ui.StartLocalHost();
                     waitUntil = EditorApplication.timeSinceStartup + 2.0;
                     SessionState.SetInt(StageKey, 2);
