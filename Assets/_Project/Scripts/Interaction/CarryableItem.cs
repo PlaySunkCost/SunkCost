@@ -72,7 +72,10 @@ namespace SunkCost.Interaction
         private Vector3 transitLocalPosition;
         private Quaternion transitLocalRotation;
 
-        public string DisplayName => string.IsNullOrEmpty(displayName) ? name : displayName;
+        public string DisplayName => BodyTag != null ? BodyTag.DisplayName : (string.IsNullOrEmpty(displayName) ? name : displayName);
+        // A dead player's body carries the player's name (PlayerBody on the same prefab).
+        private SunkCost.Player.PlayerBody bodyTag; private bool bodyTagLooked;
+        private SunkCost.Player.PlayerBody BodyTag { get { if (!bodyTagLooked) { bodyTag = GetComponent<SunkCost.Player.PlayerBody>(); bodyTagLooked = true; } return bodyTag; } }
         // A two-handed item never fits a slot, whatever the serialized flag says.
         public bool FitsInSlot => grip != CarryGrip.TwoHands && fitsInSlot;
         public CarryGrip Grip => grip;

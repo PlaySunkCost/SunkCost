@@ -1,4 +1,6 @@
+using FishNet.Connection;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using SunkCost.Interaction;
 using SunkCost.Net;
 using UnityEngine;
@@ -47,6 +49,9 @@ namespace SunkCost.Player
         private float grabBufferedUntil = -1f;
         private bool travelLocked;
         private Vector3 externalMotion;
+        // Dead (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 1): server-written; every
+        // peer hides the body and drops the capsule, the owner loses its commands.
+        private readonly SyncVar<bool> dead = new(false);
 
         // Motor state.
         private bool grounded;
@@ -90,6 +95,7 @@ namespace SunkCost.Player
         // Riding a departing ship: look works, walking and items do not (the rider
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
+        public bool IsDead => dead.Value;
         public bool IsGrounded => grounded;
         public bool IsCrouched => stanceCrouched;
         public float VerticalSpeed => verticalSpeed;
@@ -141,6 +147,7 @@ namespace SunkCost.Player
 
         private void Awake()
         {
+            dead.OnChange += OnDeadChanged;
             controller = GetComponent<CharacterController>();
             inventory = GetComponent<PlayerInventory>();
             stance = GetComponent<PlayerStance>();
@@ -193,6 +200,7 @@ namespace SunkCost.Player
 #if UNITY_EDITOR
             if (BypassInputGateForChecks && hasDevices) canPlay = true;
 #endif
+            if (dead.Value) canPlay = false; // the dead have no commands (they will watch: card 2)
             Vector2 moveInput = Vector2.zero;
             bool sprint = false;
             if (canPlay)
@@ -256,6 +264,9 @@ namespace SunkCost.Player
                 return;
 
             Keyboard keys = ActiveKeyboard;
+            // K kills, below only, in development builds and the editor (nothing
+            // else can kill yet; air and the monster will call the same death).
+            if (keys.kKey.wasPressedThisFrame && Debug.isDebugBuild) { RequestDebugDeath(); return; }
             if (keys.eKey.wasPressedThisFrame)
             {
                 grabConsumed = false;
@@ -502,6 +513,54 @@ namespace SunkCost.Player
         }
 
         public float Yaw => transform.eulerAngles.y;
+
+        // ---- death (card 1) --------------------------------------------------------------
+
+        public void RequestDebugDeath()
+        {
+            if (!IsOwner || !Debug.isDebugBuild || dead.Value) return;
+            ServerRequestDebugDeath();
+        }
+
+        [ServerRpc]
+        private void ServerRequestDebugDeath(NetworkConnection sender = null)
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            if (flow == null) return;
+            if (!flow.ServerKill(sender, out string why)) Debug.Log("[Death] refused for " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + ": " + why);
+        }
+
+        [Server]
+        public void ServerSetDead(bool value) => dead.Value = value;
+
+        // The server moves a dead player (to the ship, or up again at End day); the
+        // owner simulates itself, so it is the owner that stands there.
+        [TargetRpc]
+        public void TargetPlace(NetworkConnection target, Vector3 position, float yawDegrees)
+        {
+            TeleportLocal(position, yawDegrees);
+        }
+
+        private void OnDeadChanged(bool previous, bool next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return; // once per peer (the host sees both passes)
+            ApplyDead(next);
+        }
+
+        private void ApplyDead(bool value)
+        {
+            if (controller != null) controller.enabled = !value && !travelLocked;
+            if (bodyVisual != null)
+                foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
+                    renderer.enabled = !value && !IsOwner;
+            if (!value) return;
+            CurrentTarget = null;
+            CurrentButton = null;
+            CurrentCabinControl = CabinControl.None;
+            verticalSpeed = 0f;
+            grabBufferedUntil = -1f;
+            grabConsumed = true;
+        }
 
         // Held and stowed items have their colliders off, so only loose items can be
         // selected. Targeting checks eyes-to-surface distance and line of sight.

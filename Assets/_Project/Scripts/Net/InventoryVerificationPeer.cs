@@ -99,6 +99,7 @@ namespace SunkCost.Net
                 case "drop": player.Inventory.RequestDrop(); break;
                 case "throw": player.Inventory.RequestUse(command.aim); break;
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
+                case "die": player.RequestDebugDeath(); break;
                 case "spawn_light": return SpawnLightItems(Mathf.Clamp(command.slot, 1, 4));
                 // Server only (the monitor's request until the monitor card): the
                 // world name rides in the item field.
@@ -275,7 +276,7 @@ namespace SunkCost.Net
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
                 var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
                 SunkCost.Player.PlayerIdentity identity = player.GetComponent<SunkCost.Player.PlayerIdentity>();
-                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
+                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; dead={(pc != null && pc.IsDead)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {
