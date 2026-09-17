@@ -471,7 +471,7 @@ namespace SunkCost.World
                 // A disconnected player does not count as living: if they were the
                 // last one below, the dive is done. (Only a leaver from below: a refused
                 // joiner's disconnect must not touch a day in progress.)
-                if (wasBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
+                if (wasBelow) ServerSiteMayClose(); // the dive is done; a car on its way down for them comes back and the site closes
             }
         }
 

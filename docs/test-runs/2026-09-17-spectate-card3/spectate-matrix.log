@@ -1,4 +1,4 @@
-Spectate matrix started 17/09/2026 03:25:57
+Spectate matrix started 17/09/2026 04:58:16
 PASS editor is the host with a spawned player
 
 == D0 — K on deck does nothing
@@ -8,7 +8,7 @@ PASS controls back
 PASS D0 K on the deck is refused: alive
 
 == D1 — K below: the body, the scatter, the dead do not block
-PASS the deck cabin took the press
+PASS the deck cabin took the press (refusal: )
 PASS the ride down completed
 PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
 PASS the car is at the bottom
@@ -48,7 +48,7 @@ PASS D2 the seafloor body did not come up (lost with the site)
 == D3 — a guest dies below; the host carries the body up; End day revives the guest next to it
 PASS guest player spawned
 PASS G0 guest joined at sea
-PASS the deck cabin took the press
+PASS the deck cabin took the press (refusal: )
 PASS the ride down completed
 PASS down in the dive site: ride=Complete/Down/3 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
 PASS the car is at the bottom
@@ -88,7 +88,7 @@ PASS S0 guest B joined at sea
 PASS S0 guests A=1 B=2
 
 == S1 — guest A dies below with two living: it watches the nearest, the host reads ON AIR, left click cycles
-PASS the deck cabin took the press
+PASS the deck cabin took the press (refusal: )
 PASS the ride down completed
 PASS down in the dive site: ride=Complete/Down/5 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
 PASS the car is at the bottom
@@ -120,11 +120,11 @@ PASS S2 living B received none of A's frames (0)
 PASS S3 A watches B before the host leaves
 PASS the car took the press
 PASS the ride up completed
-PASS back on the deck: ride=Complete/Up/6 car=Sealing up=False carPos=(0.00, 0.00, 0.00) carDriven=True riders=[] below=[2] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=0.99 fade=0.00 refusal='' failure=''
+PASS back on the deck: ride=Complete/Up/6 car=AtTop up=True carPos=(0.00, 0.00, 0.00) carDriven=True riders=[] below=[2] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
 PASS S3 B still below: the dive goes on (below=1)
 PASS S3 the site stays loaded on the host
 PASS S3/T the host on deck sees the TV live on B (channel 2)
-PASS S3/T the TV picture carries B's view and visor (brightness deviation 0.149; Temp/spectate-tv-b.png)
+PASS S3/T the TV picture carries B's view and visor (brightness deviation 0.150; Temp/spectate-tv-b.png)
 PASS S3 A (dead, below, watching B) holds only the site
 PASS S3 A now watches the host on the deck
 PASS S3 A's client loaded the ship as well (dual world), its own world still active
@@ -154,7 +154,7 @@ PASS S4 nobody is on air
 PASS S4 day 2
 
 == T1 — B surfaces early: the deck TV shows the first diver below, E cycles, ON AIR counts the TV
-PASS the deck cabin took the press
+PASS the deck cabin took the press (refusal: )
 PASS the ride down completed
 PASS down in the dive site: ride=Complete/Down/8 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
 PASS the car is at the bottom
@@ -165,6 +165,13 @@ PASS T1 guest A is in the site
 PASS T1 B's car press was taken
 PASS T1 B's ride up completed
 PASS T1 the host and A stay below
+PASS T1 the car waits up while B stands in the deck cabin (AtTop)
+PASS T1 the cabin panel says: Step out — the car is needed below
+PASS T1 after the grace B was put out on the deck at (-3.0, 0.0, 5.0)
+PASS T1 the car seals to go back down (Sealing)
+PASS T1 B stepped in while the doors closed: they open again (AtTop)
+PASS T1 B is put out again after the grace
+PASS T1 the car goes down for the host and A (Descending)
 PASS T1 the TV's channel is the first diver below, the host (0)
 PASS T1 B, on the ship, holds the dive world for the TV
 PASS T1 the server tracks B watching the site
@@ -201,5 +208,27 @@ PASS T3 E on the dark TV is refused: NO SIGNAL — nobody below
 PASS T4 End day accepted: 
 PASS T4 A alive, no spectators, no channel
 PASS T4 nobody on air, day 3 (onAir=0 day=3)
+PASS T4 A's client reads itself alive with the capsule on
+
+== T5 — the diver below leaves while the car is on its way down for them: the car comes back and the site closes
+  · server view of A: owner=1 valid=True isController=False spawned=True scene=ShipAtSea; B: owner=2 valid=True
+  · A's move reply: id=763; moved to (1.00, 0.15, 2992.00) owner=True locked=False controller=True spawned=True scene=ShipAtSea
+PASS T5 the server sees A and B in the deck cabin (A (1.0, 0.2, -8.0) ShipAtSea, B (-1.0, 0.2, -8.0) ShipAtSea)
+PASS the deck cabin took the press (refusal: NO SIGNAL — nobody below)
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/11 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='NO SIGNAL — nobody below' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 3
+PASS T5 three below on day 3
+PASS T5 guest B is in the site
+PASS T5 the car press was taken
+PASS T5 the host and A rode up
+PASS T5 B alone below
+PASS T5 the cabin is clear: the car is on its way down for B (Descending)
+PASS T5 B left: nobody below, the dive is done
+PASS T5 the car came back up and the site closed (AtTop)
+PASS T5 cabin panel: Dive done — end the day at the monitor
+PASS T5 End day accepted: 
+PASS T5 payday after the third day
   · done
 MATRIX_PASS

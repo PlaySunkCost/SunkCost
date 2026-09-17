@@ -197,6 +197,10 @@ namespace SunkCost.Player
         private void Update()
         {
             BlendPresentation();
+            // The dead state's side effects are re-applied whenever the replicated
+            // value and the applied one disagree (a client whose object was moved
+            // between scenes or re-initialised can miss the change callback).
+            if (appliedDead != dead.Value) ApplyDead(dead.Value);
             if (!IsOwner)
             {
                 // A remote copy's camera carries the owner's replicated pitch for spectators.
@@ -564,6 +568,10 @@ namespace SunkCost.Player
             bool wasEnabled = controller.enabled;
             controller.enabled = false;
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yawDegrees, 0f));
+            // The capsule's physics pose takes the new spot before it is enabled again:
+            // a CharacterController enabled over a stale pose snapped a revived guest
+            // back to where it had been (17 September 2026).
+            Physics.SyncTransforms();
             controller.enabled = wasEnabled;
             clearance?.ResetView();
             verticalSpeed = 0f;
@@ -623,9 +631,16 @@ namespace SunkCost.Player
             ApplyDead(next);
         }
 
+        private bool appliedDead;
         private void ApplyDead(bool value)
         {
-            if (controller != null) controller.enabled = !value && !travelLocked;
+            appliedDead = value;
+            if (controller != null)
+            {
+                bool on = !value && !travelLocked;
+                if (on && !controller.enabled) Physics.SyncTransforms(); // see TeleportLocal: never enable the capsule over a stale pose
+                controller.enabled = on;
+            }
             if (bodyVisual != null)
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
                     renderer.enabled = !value && !IsOwner;

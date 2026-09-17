@@ -321,6 +321,15 @@ dead, the living never hear them. A living player being watched sees a red
 **ON AIR · N watching** mark. Spectating lasts until End day, which revives you as
 above.
 
+**Built 17 September 2026 (Dan, after the first three-player test — the car going
+back for a diver left below):** when riders come up and someone is still below, the
+car goes back for them — but **never with anyone inside the deck cabin**. It waits up
+while the cabin is occupied (panel: `Step out — the car is needed below`), puts
+whoever is still standing there out on the deck after a grace period
+(`carReturnGraceSeconds`, 10 s), and reopens if someone steps in while the doors
+close. If the diver below dies or leaves while the car is on its way down, the car
+comes straight back and the site closes as at the end of a dive.
+
 **Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
 screen on the deck (port rail, midships) shows **one diver at a time** from their
 eyes — whoever surfaced early watches the others. The channel is the first living

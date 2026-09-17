@@ -1,4 +1,34 @@
-# Spectating card 3 (the deck TV) — 17 September 2026 — MATRIX_PASS (176 rows)
+# Spectating card 3 (the deck TV) — 17 September 2026 — MATRIX_PASS (201 rows)
+
+Second pass the same night, after Dan's first three-player test: the car that goes
+back for a diver left below (rules below) and a revived guest's teleport. The
+table and notes of the first pass (176 rows) follow the new section.
+
+## The car going back for a diver left below (Dan's test, "think what can happen and deny it")
+
+| Section | Seen |
+|---|---|
+| T1 — the car waits | B rides up alone and stays in the deck cabin: the car **waits up** (`AtTop`), the panel says `Step out — the car is needed below`; after the 10 s grace B is **put out** on the deck at (-3, 0, 5) and the car seals; B steps back in while the doors close → **they open again** (`AtTop`); B is put out again after the grace; the car goes down for the host and A (`Descending`) |
+| T5 — the diver below leaves | day 3, three below; B steps out, the host and A ride up; the cabin clears → the car is on its way down for B (`Descending`); B **disconnects** → nobody below, dive done; the car **comes back up and the site closes** (`AtTop`, no car); panel `Dive done — end the day at the monitor`; End day → **payday** |
+
+Found on the way: a guest revived after a site close could not be teleported —
+its CharacterController had stayed disabled (the dead→alive change callback was
+missed on that client) and a teleport made with the capsule disabled snapped
+back when the capsule came on over its stale physics pose. Fixed twice over:
+the dead state's side effects are re-applied whenever the replicated value and
+the applied one disagree, and `TeleportLocal` syncs the physics pose before it
+re-enables the capsule (`Physics.SyncTransforms`). The last piece was the
+harness racing the network: the script moved A right after the *server* revived
+it, before A's client had received the revive, whose placement then landed on top
+of the move. T4 now waits until A's client reads itself alive with the capsule on
+(as D3 and S4 already did). Still open: A's client logs FishNet
+"Spawned NetworkObject was expected to exist but does not for Id 8" (the host's
+object) around the site close and the revive — a message to A references an
+object A no longer holds; harmless in every row so far, to be understood.
+
+---
+
+# First pass — MATRIX_PASS (176 rows)
 
 The plan: [docs/SPECTATING_IMPLEMENTATION_PLAN.md](../../SPECTATING_IMPLEMENTATION_PLAN.md), card 3.
 The job: `SpectateRuntimeChecks` (`CameraClearanceMatrixDriver.Start("spectate")`) —
