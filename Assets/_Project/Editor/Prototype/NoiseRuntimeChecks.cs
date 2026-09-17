@@ -265,10 +265,10 @@ namespace SunkCost.Editor.Prototype
             Check(ears.Heard.Where(e => e.Kind == NoiseKind.Sprint).All(e => Mathf.Approximately(e.Radius, settings.SprintRadius)), $"N3 at the sprint radius ({settings.SprintRadius} m)");
             Check(ears.Count(NoiseKind.Footstep) <= 2, "N3 the run's first strides at most read as walking");
             Check(feet.StepsPlayed - soundsBefore >= sprints - 2, $"N3 sprint steps were heard ({feet.StepsPlayed - soundsBefore} sounds for {sprints} events)");
-            int soundsBeforeJump = feet.JumpsPlayed, landingsBefore = feet.LandingsPlayed;
+            int landingsBefore = feet.LandingsPlayed, stepsBeforeJump = feet.StepsPlayed;
             Keys(Key.Space); yield return Wait(0.06f); Keys(); yield return Wait(1.2f);
-            Check(feet.JumpsPlayed == soundsBeforeJump + 1, $"N3 a jump was heard ({feet.JumpsPlayed})");
-            Check(feet.LandingsPlayed == landingsBefore + 1, $"N3 and the landing ({feet.LandingsPlayed})");
+            Check(feet.LandingsPlayed == landingsBefore + 1, $"N3 a jump makes one sound, the landing ({feet.LandingsPlayed})");
+            Check(feet.StepsPlayed == stepsBeforeJump, "N3 and no step in the air");
 
             Heading("N4 — crouching is silent");
             host.TeleportLocal(new Vector3(25f, floorY, -25f), 90f); yield return Wait(0.5f);

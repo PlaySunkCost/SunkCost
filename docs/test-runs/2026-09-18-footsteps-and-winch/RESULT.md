@@ -11,7 +11,7 @@ and a jump should sound.
 - `PlayerFootstepSounds` (on the player prefab, every peer): a footstep
   every stride of ground covered — the strides `NoiseSettings` gives the
   ocean's ears — pitched left/right, quicker and louder sprinting, none
-  crouched; a scuff on takeoff and a thud on landing (the owner from its
+  crouched; a thud on landing — a takeoff is silent (Dan, later the same day) — (the owner from its
   motor, a friend's copy from its height; landings only after real flight,
   never from the ground probe blinking on a teleport). The owner's own play at
   0.6 of a friend's. 3D at the feet.

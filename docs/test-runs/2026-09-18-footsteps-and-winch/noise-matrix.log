@@ -1,4 +1,4 @@
-Noise matrix started 18/09/2026 01:01:10
+Noise matrix started 18/09/2026 01:10:44
 PASS editor is the host with a spawned player
 PASS the player prefab carries PlayerNoise (run the noise setup)
 PASS the NoiseSystem knows it is on the server
@@ -42,8 +42,8 @@ PASS N3 10 sprint steps over 12.0 m
 PASS N3 at the sprint radius (15 m)
 PASS N3 the run's first strides at most read as walking
 PASS N3 sprint steps were heard (10 sounds for 10 events)
-PASS N3 a jump was heard (1)
-PASS N3 and the landing (1)
+PASS N3 a jump makes one sound, the landing (1)
+PASS N3 and no step in the air
 
 == N4 — crouching is silent
 PASS N4 crouched

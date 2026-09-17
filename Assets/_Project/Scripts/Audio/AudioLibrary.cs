@@ -36,13 +36,10 @@ namespace SunkCost.Audio
         [Header("Feet")]
         [Tooltip("A footstep on the seafloor; pitched a little differently left and right, higher sprinting.")]
         [SerializeField] private AudioClip footstep;
-        [Tooltip("The scuff of a takeoff.")]
-        [SerializeField] private AudioClip jump;
         [Tooltip("The thud of a landing.")]
         [SerializeField] private AudioClip land;
         [Range(0f, 1f)] [SerializeField] private float footstepVolume = 0.07f;   // "way lower" (Dan, 18 September 2026): a fifth of the first cut
         [Range(0f, 1f)] [SerializeField] private float sprintFootstepVolume = 0.11f;
-        [Range(0f, 1f)] [SerializeField] private float jumpVolume = 0.22f;
         [Range(0f, 1f)] [SerializeField] private float landVolume = 0.3f;
         [Tooltip("Your own steps, jumps and landings play at this fraction of a friend's (they are under your own ears).")]
         [Range(0f, 1f)] [SerializeField] private float ownFootstepScale = 0.6f;
@@ -56,11 +53,9 @@ namespace SunkCost.Audio
         public float WinchReachMetres => winchReachMetres;
         public float WinchVolumeOnShip => winchVolumeOnShip;
         public AudioClip Footstep => footstep != null ? footstep : PlaceholderSounds.Step;
-        public AudioClip Jump => jump != null ? jump : PlaceholderSounds.Jump;
         public AudioClip Land => land != null ? land : PlaceholderSounds.Land;
         public float FootstepVolume => footstepVolume;
         public float SprintFootstepVolume => sprintFootstepVolume;
-        public float JumpVolume => jumpVolume;
         public float LandVolume => landVolume;
         public float OwnFootstepScale => ownFootstepScale;
         public float DingVolume => dingVolume;
@@ -82,7 +77,7 @@ namespace SunkCost.Audio
     public static class PlaceholderSounds
     {
         private const int Rate = 48000;
-        private static AudioClip winch, ding, step, jump, land;
+        private static AudioClip winch, ding, step, land;
 
         public static AudioClip Winch
         {
@@ -116,16 +111,6 @@ namespace SunkCost.Audio
                 if (step != null) return step;
                 step = Burst("Placeholder footstep", 0.07f, 0.90f, 0.5f, 1);
                 return step;
-            }
-        }
-        // A takeoff: a shorter, brighter scuff.
-        public static AudioClip Jump
-        {
-            get
-            {
-                if (jump != null) return jump;
-                jump = Burst("Placeholder jump", 0.09f, 0.75f, 0.45f, 2);
-                return jump;
             }
         }
         // A landing: a heavier, longer thud.

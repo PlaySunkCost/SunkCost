@@ -8,7 +8,8 @@ namespace SunkCost.Audio
     // footsteps sound at all… add jump sound"): a step every stride of ground
     // covered — the same strides the server uses for the ocean's ears
     // (NoiseSettings), louder and quicker sprinting, none crouched — plus a
-    // scuff on takeoff and a thud on landing. Presentation on every peer from
+    // thud on landing (a takeoff makes no sound: Dan, 18 September 2026).
+    // Presentation on every peer from
     // the same transform: the owner from its own motor (grounded, vertical
     // speed), a friend's copy from what the NetworkTransform brings (its
     // height). 3D at the feet; the owner's own steps are quieter. Clips from
@@ -26,7 +27,6 @@ namespace SunkCost.Audio
 
         // For the checks.
         public int StepsPlayed { get; private set; }
-        public int JumpsPlayed { get; private set; }
         public int LandingsPlayed { get; private set; }
 
         private void Awake()
@@ -68,13 +68,13 @@ namespace SunkCost.Audio
             if (ownerView)
             {
                 // A landing only after real flight (not the ground probe blinking on a teleport or a step).
-                if (wasGrounded && !grounded) { airborneSince = Time.unscaledTime; if (controller.VerticalSpeed > 0.5f) Play(library.Jump, library.JumpVolume * ownScale, 1f, ref JumpsPlayedBacking); }
+                if (wasGrounded && !grounded) airborneSince = Time.unscaledTime; // a takeoff is silent; the landing is the sound
                 if (!wasGrounded && grounded && airborneSince >= 0f && Time.unscaledTime - airborneSince > 0.15f) Play(library.Land, library.LandVolume * ownScale, 0.95f, ref LandingsPlayedBacking);
                 if (grounded) airborneSince = -1f;
             }
             else
             {
-                if (airborneSince < 0f && rise > 0.05f) { airborneSince = Time.unscaledTime; Play(library.Jump, library.JumpVolume, 1f, ref JumpsPlayedBacking); }
+                if (airborneSince < 0f && rise > 0.05f) airborneSince = Time.unscaledTime;
                 else if (airborneSince >= 0f && grounded && Time.unscaledTime - airborneSince > 0.15f) { airborneSince = -1f; Play(library.Land, library.LandVolume, 0.95f, ref LandingsPlayedBacking); }
             }
             wasGrounded = grounded;
@@ -96,14 +96,14 @@ namespace SunkCost.Audio
             Play(library.Footstep, (sprinting ? library.SprintFootstepVolume : library.FootstepVolume) * ownScale, pitch, ref StepsPlayedBacking);
         }
 
-        private int StepsPlayedBacking, JumpsPlayedBacking, LandingsPlayedBacking;
+        private int StepsPlayedBacking, LandingsPlayedBacking;
         private void Play(AudioClip clip, float volume, float pitch, ref int counter)
         {
             if (clip == null) return;
             feet.pitch = pitch;
             feet.PlayOneShot(clip, volume);
             counter++;
-            StepsPlayed = StepsPlayedBacking; JumpsPlayed = JumpsPlayedBacking; LandingsPlayed = LandingsPlayedBacking;
+            StepsPlayed = StepsPlayedBacking; LandingsPlayed = LandingsPlayedBacking;
         }
     }
 }

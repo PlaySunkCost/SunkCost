@@ -22,10 +22,8 @@ MonoBehaviour:
   winchVolumeOnShip: 0.15
   dingVolume: 0.8
   footstep: {fileID: 0}
-  jump: {fileID: 0}
   land: {fileID: 0}
   footstepVolume: 0.07
   sprintFootstepVolume: 0.11
-  jumpVolume: 0.22
   landVolume: 0.3
   ownFootstepScale: 0.6
