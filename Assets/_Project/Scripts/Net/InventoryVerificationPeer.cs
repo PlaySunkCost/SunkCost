@@ -86,7 +86,7 @@ namespace SunkCost.Net
             {
                 case "move":
                     player.TeleportLocal(command.position, player.Yaw);
-                    break;
+                    return $"moved to {player.transform.position:F2} owner={player.IsOwner} locked={player.TravelLocked} controller={(player.Controller != null && player.Controller.enabled)} spawned={player.IsSpawned} scene={player.gameObject.scene.name}";
                 case "look":
                 {
                     Vector3 flat = new(command.aim.x, 0f, command.aim.z);
@@ -101,6 +101,11 @@ namespace SunkCost.Net
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
                 case "die": player.RequestDebugDeath(); break;
                 case "spectate_next": player.RequestNextSpectate(); break; // left click while dead (card 2)
+                case "tv_next": // E on the deck TV (card 3)
+                    var tvControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (tvControls == null) return "No ShipControls";
+                    tvControls.RequestTvNext();
+                    break;
                 case "spawn_light": return SpawnLightItems(Mathf.Clamp(command.slot, 1, 4));
                 // Server only (the monitor's request until the monitor card): the
                 // world name rides in the item field.
@@ -270,14 +275,23 @@ namespace SunkCost.Net
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {CarLine()}; {VisorLine()}\n";
+            var seaShip = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
+            var tv = seaShip != null ? seaShip.GetComponent<SunkCost.World.ShipTV>() : null;
+            string tvLine = tv == null ? "tv=none" : $"tv={tv.Channel}; tvLive={tv.Live}; tvCaption={tv.Caption}";
+            // What FishNet holds on this client: object ids with names — the peer's view of who is here.
+            var spawnedIds = new System.Collections.Generic.List<string>();
+            if (nm.ClientManager != null)
+                foreach (var pair in nm.ClientManager.Objects.Spawned.OrderBy(p => p.Key))
+                    spawnedIds.Add(pair.Key + ":" + (pair.Value != null ? pair.Value.name.Replace("(Clone)", "") : "null"));
+            tvLine += "; spawned=" + string.Join("+", spawnedIds);
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {tvLine}; {CarLine()}; {VisorLine()}\n";
             if (voice != null) text += voice.Diagnostics + "\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();
                 var hands = player.GetComponent<SunkCost.Player.PlayerHands>();
                 SunkCost.Player.PlayerIdentity identity = player.GetComponent<SunkCost.Player.PlayerIdentity>();
-                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; dead={(pc != null && pc.IsDead)}; spectating={(day == null ? -1 : day.SpectateTargetOf(player.OwnerId))}; watchers={(day == null ? 0 : day.WatchersOf(player.OwnerId))}; spectatorActive={(pc != null && pc.Spectator != null && pc.Spectator.Active)}; spectatorTarget={(pc == null || pc.Spectator == null || pc.Spectator.Target == null ? -1 : pc.Spectator.Target.OwnerId)}; camPos={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.position)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
+                text += $"player={player.OwnerId}; name={(identity == null ? "?" : identity.DisplayName)}; colour={(identity == null ? "?" : identity.ColourIndex.ToString())}; local={player.IsOwner}; scene={player.gameObject.scene.name}; position={player.transform.position}; slots={player.Slots}; held={(player.HeldItem == null ? "none" : player.HeldItem.name)}; massKg={player.CarriedMassKg:0.###}; speedFactor={player.SpeedFactor:0.####}; meterFill={player.MeterFill:0.####}; crouched={(pc != null && pc.IsCrouched)}; dead={(pc != null && pc.IsDead)}; ownerValid={player.Owner.IsValid}; isController={player.IsController}; controllerOn={(pc != null && pc.Controller != null && pc.Controller.enabled)}; spectating={(day == null ? -1 : day.SpectateTargetOf(player.OwnerId))}; watchers={(day == null ? 0 : day.WatchersOf(player.OwnerId))}; spectatorActive={(pc != null && pc.Spectator != null && pc.Spectator.Active)}; spectatorTarget={(pc == null || pc.Spectator == null || pc.Spectator.Target == null ? -1 : pc.Spectator.Target.OwnerId)}; camPos={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.position)}; height={(pc != null ? pc.Controller.height : 0f):0.##}; eye={(pc != null ? pc.EyeHeight : 0f):0.##}; hands={(hands == null || hands.HeldForHands == null ? "rest" : hands.HeldForHands.name)}; target={(pc == null || pc.CurrentTarget == null ? "none" : pc.CurrentTarget.name)}; obstructed={(pc != null && pc.ViewObstructed)}; camPitch={(pc == null || pc.PlayerCamera == null ? 0f : pc.PlayerCamera.transform.localEulerAngles.x):0.#}; camFwd={(pc == null || pc.PlayerCamera == null ? Vector3.zero : pc.PlayerCamera.transform.forward)}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {

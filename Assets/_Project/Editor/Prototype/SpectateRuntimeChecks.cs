@@ -238,7 +238,7 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.3f);
             int serial = Day.CabinRide.Serial;
             H.ClientRequestCabin();
-            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the deck cabin took the press");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the deck cabin took the press (refusal: " + Day.LastRefusal.Text + ")");
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the ride down completed");
             Check(Day.CabinRide.Stage == CabinRideStage.Complete && Host().gameObject.scene == WorldScenes.Scene(WorldId.Dive), "down in the dive site: " + H.RideStatus());
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 30f, () => "the car is at the bottom");
@@ -468,6 +468,13 @@ namespace SunkCost.Editor.Prototype
             yield return Surface();
             Check(Day.Below.Count == 1 && Day.IsBelow(idB) && Day.Phase == DayPhase.DiveInProgress, "S3 B still below: the dive goes on (below=" + Day.Below.Count + ")");
             Check(WorldSceneFlow.FindCar() != null, "S3 the site stays loaded on the host");
+            // The host on deck is a TV viewer: the channel is B (card 3); the host's
+            // own TV draws B's view and visor — saved for a look.
+            ShipTV hostTv = sea.GetComponent<ShipTV>();
+            yield return Expect(() => Day.TvChannel == idB && hostTv != null && hostTv.Live, 5f, () => "S3/T the host on deck sees the TV live on B (channel " + Day.TvChannel + ")");
+            yield return Wait(1f);
+            float tvContent = hostTv.SavePicture("Temp/spectate-tv-b.png");
+            Check(hostTv.Frame.Readout.On && tvContent > 0.03f, $"S3/T the TV picture carries B's view and visor (brightness deviation {tvContent:0.000}; Temp/spectate-tv-b.png)");
             yield return GuestEventually(r => Loaded(r, "DiveSite01") && !Loaded(r, "ShipAtSea") && GuestPlayerLine(r, idA).Contains("scene=DiveSite01"), 10f, "S3 A (dead, below, watching B) holds only the site");
             yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
             yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S3 A now watches the host on the deck");
@@ -506,8 +513,126 @@ namespace SunkCost.Editor.Prototype
             Check(hostHud.Visor.OnAirCount == 0 && Day.WatchersOf(idB) == 0, "S4 nobody is on air");
             Check(Day.Day == 2, "S4 day 2");
 
-            yield return Send("{\"id\":{id},\"action\":\"leave\"}");
+            // ---- card 3: the deck TV (docs/SPECTATING_IMPLEMENTATION_PLAN.md §6) ----
+            Heading("T1 — B surfaces early: the deck TV shows the first diver below, E cycles, ON AIR counts the TV");
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position + sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}", GuestDirB);
+            yield return Wait(0.5f);
+            yield return Descend(2);
+            Check(Day.Below.Count == 3, "T1 three below on day 2");
+            yield return GuestEventually(r => GuestPlayerLine(r, idB).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "T1 guest B is in the site", GuestDirB);
+            yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "T1 guest A is in the site");
+            car = WorldSceneFlow.FindCar();
+            doorway = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+            side = Vector3.Cross(Vector3.up, doorway);
+            // The host and A step out; B stays in the car and rides up alone.
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + doorway * 5f + side * 1.5f + Vector3.up * 0.05f) + "}");
+            host.TeleportLocal(car.transform.position + doorway * 4f - side * 0.5f, host.Yaw); yield return Wait(0.8f);
+            int tvSerial = Day.CabinRide.Serial;
+            yield return Send("{\"id\":{id},\"action\":\"car\"}", GuestDirB);
+            yield return Expect(() => Day.CabinRide.Serial > tvSerial, 5f, () => "T1 B's car press was taken");
+            yield return Expect(() => !Day.CabinRide.Active && Day.CabinRide.Serial > tvSerial, 70f, () => "T1 B's ride up completed");
+            Check(Day.Below.Count == 2 && !Day.IsBelow(idB) && Day.IsBelow(host.OwnerId) && Day.IsBelow(idA), "T1 the host and A stay below");
+            // The car is owed below, but B still stands in the deck cabin: it waits,
+            // says so, puts B out after the grace, and reopens if B steps back in
+            // while the doors close (Dan, 17 September 2026: never carried by accident).
+            yield return Wait(2f);
+            Check(Day.Elevator.State == ElevatorState.AtTop && sea.IsInDeckCabin(remoteB.transform.position), "T1 the car waits up while B stands in the deck cabin (" + Day.Elevator.State + ")");
+            yield return Expect(() => sea.DeckCabinPanel.text.StartsWith("Step out"), 3f, () => "T1 the cabin panel says: " + sea.DeckCabinPanel.text);
+            float grace = flow.Settings.CarReturnGraceSeconds;
+            yield return Expect(() => !sea.IsInDeckCabin(remoteB.transform.position) && sea.IsAboard(remoteB.transform.position), grace + 8f, () => "T1 after the grace B was put out on the deck at " + sea.ToShipLocal(remoteB.transform.position).ToString("F1"));
+            yield return Expect(() => Day.Elevator.State == ElevatorState.Sealing, 12f, () => "T1 the car seals to go back down (" + Day.Elevator.State + ")");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position + sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}", GuestDirB);
+            yield return Expect(() => Day.Elevator.State == ElevatorState.AtTop, 5f, () => "T1 B stepped in while the doors closed: they open again (" + Day.Elevator.State + ")");
+            yield return Expect(() => !sea.IsInDeckCabin(remoteB.transform.position), grace + 8f, () => "T1 B is put out again after the grace");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.Descending || Day.Elevator.State == ElevatorState.AtBottom, 15f, () => "T1 the car goes down for the host and A (" + Day.Elevator.State + ")");
+            yield return Expect(() => Day.TvChannel == host.OwnerId, 5f, () => "T1 the TV's channel is the first diver below, the host (" + Day.TvChannel + ")");
+            yield return GuestEventually(r => Loaded(r, "DiveSite01") && GuestPlayerLine(r, idB).Contains("scene=ShipAtSea"), 15f, "T1 B, on the ship, holds the dive world for the TV", GuestDirB);
+            Check(WorldSceneFlow.Instance.IsWatching(idB, out WorldId tvWorld) && tvWorld == WorldId.Dive, "T1 the server tracks B watching the site");
+            yield return GuestEventually(r => r.Contains("tvLive=True") && r.Contains("tvCaption=LIVE · " + NameOf(host) + ";"), 6f, "T1 B's TV is live: LIVE · " + NameOf(host), GuestDirB);
+            yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T1 the host's visor reads ON AIR · 1 watching — the TV (" + hostHud.Visor.OnAirCount + ")");
+            yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
+            yield return Expect(() => Day.TvChannel == idA, 3f, () => "T1 E on the TV: channel A (" + Day.TvChannel + ")");
+            yield return GuestEventually(r => r.Contains("tvCaption=LIVE · " + NameOf(remoteA) + ";"), 6f, "T1 B's TV says LIVE · " + NameOf(remoteA), GuestDirB);
+            yield return Expect(() => Day.WatchersOf(idA) == 1 && hostHud.Visor.OnAirCount == 0, 3f, () => "T1 A is on air, the host is not");
+            yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
+            yield return Expect(() => Day.TvChannel == host.OwnerId, 3f, () => "T1 E again wraps back to the host");
+
+            Heading("T2 — the channel diver's voice plays at the TV; a dead spectator adds to ON AIR; the dead are no channel");
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            uint bReceived0 = CounterOf(lastReply, "received");
+            uint hostSent0 = voice.SentFrames;
+            voice.StartLocalTestTone();
+            yield return Expect(() => voice.SentFrames > hostSent0 + 20, 8f, () => "T2 the host's tone is sending");
+            yield return GuestEventually(r => CounterOf(r, "received") > bReceived0 + 20 && r.Contains("route=3"), 8f, "T2 B on the deck receives the host's frames on the TV route", GuestDirB);
+            voice.SetMicrophone(false);
+            yield return Send("{\"id\":{id},\"action\":\"die\"}");
+            yield return Expect(() => Day.IsDead(idA) && Day.SpectateTargetOf(idA) == host.OwnerId, 5f, () => "T2 A died below and watches the host");
+            yield return Expect(() => hostHud.Visor.OnAirCount == 2, 3f, () => "T2 the host reads ON AIR · 2 watching — the TV and dead A (" + hostHud.Visor.OnAirCount + ")");
+            yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
+            yield return Wait(1f);
+            Check(Day.TvChannel == host.OwnerId, "T2 dead A is no channel: E keeps the host (" + Day.TvChannel + ")");
+
+            Heading("T3 — the last living diver surfaces: NO SIGNAL, the ship drops the dive world, E on the dark TV is refused");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "T3 the car came back down for the host (" + Day.Elevator.State + ")");
+            yield return Wait(1f);
+            yield return Surface();
+            yield return Expect(() => Day.Below.Count == 0 && Day.DiveDone, 5f, () => "T3 nobody below: dive done");
+            yield return Expect(() => WorldSceneFlow.FindCar() == null, 20f, () => "T3 the site unloaded");
+            yield return Expect(() => Day.TvChannel < 0, 3f, () => "T3 the TV has no channel");
+            yield return GuestEventually(r => r.Contains("tvLive=False") && r.Contains("tvCaption=NO SIGNAL") && !Loaded(r, "DiveSite01"), 20f, "T3 B's TV says NO SIGNAL and the dive world is gone from B", GuestDirB);
+            Check(!WorldSceneFlow.Instance.IsWatching(idB, out _), "T3 the server tracks no watch for B");
+            yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T3 the host is still watched by dead A only (" + hostHud.Visor.OnAirCount + ")");
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(-2.5f, 0.05f, -3f)), sea.FromShipYaw(-90f)); yield return Wait(0.3f);
+            H.ClientLookAtNamed(ShipParts.TvScreenName);
+            yield return Expect(() => host.CurrentTv != null, 3f, () => "T3 the dot is on the TV screen");
+            Check(H.PromptText().Contains("NO SIGNAL"), "T3 the prompt reads NO SIGNAL: " + H.PromptText());
+            int refusals = Day.LastRefusal.Serial;
+            host.GetComponent<ShipControls>().RequestTvNext();
+            yield return Expect(() => Day.LastRefusal.Serial > refusals && Day.LastRefusal.Text.Contains("NO SIGNAL"), 3f, () => "T3 E on the dark TV is refused: " + Day.LastRefusal.Text);
+
+            Heading("T4 — End day: everyone alive, nothing on air, day 3");
+            Check(flow.ServerEndDay(host.Owner, out string endWhy4), "T4 End day accepted: " + endWhy4);
+            yield return Expect(() => !Day.IsDead(idA) && Day.Spectate.Count == 0 && Day.TvChannel < 0, 5f, () => "T4 A alive, no spectators, no channel");
+            yield return Expect(() => hostHud.Visor.OnAirCount == 0 && Day.Day == 3, 2f, () => $"T4 nobody on air, day 3 (onAir={hostHud.Visor.OnAirCount} day={Day.Day})"); // the HUD reads the state a frame later
+            // A's own client must read itself alive (with the capsule back on) before
+            // anyone moves it: the revive's placement lands with the dead flag, and a
+            // move sent before it would be overwritten by it.
+            yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("dead=False") && GuestPlayerLine(r, idA).Contains("controllerOn=True"), 10f, "T4 A's client reads itself alive with the capsule on");
+
+            Heading("T5 — the diver below leaves while the car is on its way down for them: the car comes back and the site closes");
+            Say($"server view of A: owner={remoteA.OwnerId} valid={remoteA.Owner.IsValid} isController={remoteA.IsController} spawned={remoteA.IsSpawned} scene={remoteA.gameObject.scene.name}; B: owner={remoteB.OwnerId} valid={remoteB.Owner.IsValid}");
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position + sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}");
+            Say("A's move reply: " + lastReply.Split('\n')[0]); // a revived guest's teleport must stick (see HQPlayerController.TeleportLocal)
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor) + "}", GuestDirB);
+            yield return Wait(0.5f);
+            yield return Expect(() => sea.IsInDeckCabin(remoteA.transform.position) && sea.IsInDeckCabin(remoteB.transform.position), 6f,
+                () => $"T5 the server sees A and B in the deck cabin (A {sea.ToShipLocal(remoteA.transform.position):F1} {remoteA.gameObject.scene.name}, B {sea.ToShipLocal(remoteB.transform.position):F1} {remoteB.gameObject.scene.name})");
+            yield return Descend(3);
+            Check(Day.Below.Count == 3, "T5 three below on day 3");
+            yield return GuestEventually(r => GuestPlayerLine(r, idB).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "T5 guest B is in the site", GuestDirB);
+            car = WorldSceneFlow.FindCar();
+            doorway = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.BottomPosition + doorway * 5f + Vector3.up * 0.2f) + "}", GuestDirB);
+            H.MoveLocalIntoCar(); yield return Wait(0.8f);
+            int serial5 = Day.CabinRide.Serial;
+            H.ClientRequestCar();
+            yield return Expect(() => Day.CabinRide.Serial > serial5, 5f, () => "T5 the car press was taken");
+            yield return Expect(() => !Day.CabinRide.Active && Day.CabinRide.Serial > serial5, 70f, () => "T5 the host and A rode up");
+            Check(Day.Below.Count == 1 && Day.IsBelow(idB), "T5 B alone below");
+            host.TeleportLocal(sea.SpawnPoint(2).position, 0f);
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(sea.SpawnPoint(3).position + Vector3.up * 0.1f) + "}");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.Descending, grace + 15f, () => "T5 the cabin is clear: the car is on its way down for B (" + Day.Elevator.State + ")");
             yield return Send("{\"id\":{id},\"action\":\"leave\"}", GuestDirB);
+            yield return Expect(() => Day.Below.Count == 0 && Day.DiveDone, 10f, () => "T5 B left: nobody below, the dive is done");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.AtTop && WorldSceneFlow.FindCar() == null, 70f, () => "T5 the car came back up and the site closed (" + Day.Elevator.State + ")");
+            yield return Expect(() => sea.DeckCabinPanel.text.StartsWith("Dive done"), 3f, () => "T5 cabin panel: " + sea.DeckCabinPanel.text);
+            Check(flow.ServerEndDay(host.Owner, out string endWhy5), "T5 End day accepted: " + endWhy5);
+            yield return Expect(() => Day.Payday, 3f, () => "T5 payday after the third day");
+
+            yield return Send("{\"id\":{id},\"action\":\"leave\"}");
             Say("done");
         }
     }

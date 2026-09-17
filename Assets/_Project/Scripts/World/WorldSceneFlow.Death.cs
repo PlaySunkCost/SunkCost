@@ -51,12 +51,15 @@ namespace SunkCost.World
             return true;
         }
 
-        // Nobody living is below any more: the dive is done, the car comes home
-        // empty and the site goes, with the dead carried to the ship first. A ride in
-        // progress does this itself at its end (SurfaceRoutine).
-        private void ServerAfterDeath()
+        // Nobody living is below any more — the last one died or disconnected: the
+        // dive is done, the car comes home empty and the site goes, with the dead
+        // carried to the ship first. A ride in progress does this itself at its end
+        // (SurfaceRoutine).
+        private void ServerAfterDeath() => ServerSiteMayClose();
+
+        public void ServerSiteMayClose()
         {
-            if (dayState.Below.Count > 0 || riding) return;
+            if (dayState == null || dayState.Below.Count > 0 || riding || siteClosing) return;
             dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
             if (WorldScenes.IsLoaded(WorldId.Dive)) StartCoroutine(UnloadSiteWithDead());
         }
@@ -64,13 +67,13 @@ namespace SunkCost.World
         private IEnumerator UnloadSiteWithDead()
         {
             siteClosing = true; // no watch changes while objects are on the move (card 2)
-            if (dayState.Elevator.State == ElevatorState.AtBottom || dayState.Elevator.State == ElevatorState.Sealing)
-            {
-                if (dayState.Elevator.State == ElevatorState.AtBottom) ServerSetElevator(ElevatorState.Sealing, true);
+            // Wherever the car is, it ends up at the top: a car on its way down for a
+            // diver who is gone finishes the trip and comes straight back.
+            if (dayState.Elevator.State == ElevatorState.Descending)
+                yield return WaitForCar(ElevatorState.AtBottom, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
+            if (dayState.Elevator.State == ElevatorState.AtBottom) ServerSetElevator(ElevatorState.Sealing, true);
+            if (dayState.Elevator.State != ElevatorState.AtTop)
                 yield return WaitForCar(ElevatorState.AtTop, CarSealSeconds + CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
-            }
-            else if (dayState.Elevator.State != ElevatorState.AtTop)
-                yield return WaitForCar(ElevatorState.AtTop, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
             yield return ServerMoveDeadToShip();
             if (WorldScenes.IsLoaded(WorldId.Dive))
             {

@@ -90,7 +90,7 @@ namespace SunkCost.World
         private void Update()
         {
             if (dayState == null || networkManager == null) return;
-            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerSumBox(); ServerTickSpectators(); }
+            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerSumBox(); ServerTickSpectators(); }
             DriveCar();
             if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
@@ -381,6 +381,7 @@ namespace SunkCost.World
                 return dayState.LastRefusal.Text;
             if (dayState.Riding) return dayState.CabinRide.Direction == RideDirection.Down ? "Going down…" : "Coming up…";
             if (dayState.Payday) return "Payday — sail home";
+            if (dayState.Phase == DayPhase.DiveInProgress && dayState.Elevator.State == ElevatorState.AtTop && dayState.Below.Count > 0) return "Step out — the car is needed below";
             if (dayState.Phase == DayPhase.DiveInProgress) return DiveInProgressText();
             if (dayState.DiveDone) return "Dive done — end the day at the monitor";
             if (dayState.Elevator.State != ElevatorState.AtTop) return "Cabin below";
@@ -421,7 +422,11 @@ namespace SunkCost.World
             switch (phase.State)
             {
                 case ElevatorState.Sealing:
-                    if (elapsed >= CarSealSeconds) ServerSetElevator(phase.Upward ? ElevatorState.Ascending : ElevatorState.Descending, phase.Upward);
+                    if (elapsed < CarSealSeconds) break;
+                    // An empty car going back down: someone who stepped in while the
+                    // doors closed opens them again — it never leaves with anyone inside.
+                    if (!phase.Upward && !riding && CabinOccupied(ShipParts.InWorld(WorldId.Sea))) { ServerSetElevator(ElevatorState.AtTop, true); break; }
+                    ServerSetElevator(phase.Upward ? ElevatorState.Ascending : ElevatorState.Descending, phase.Upward);
                     break;
                 case ElevatorState.Descending:
                     if (elapsed >= CarTravelSeconds) ServerSetElevator(ElevatorState.AtBottom, false);
@@ -607,6 +612,7 @@ namespace SunkCost.World
             ServerBuildMoveList();
             Scene destination = WorldScenes.Scene(WorldId.Dive);
             var conns = ActiveCohort();
+            foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // a TV viewer drops the watched site first: the move is a plain load (card 3)
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
             EnsureHolderKeepAlive();
             networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()));
@@ -663,6 +669,7 @@ namespace SunkCost.World
                 ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
                 ServerBuildMoveList();
                 Scene destination = WorldScenes.Scene(WorldId.Sea);
+                foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // nobody living below watches the ship; a no-op kept symmetric with the ride down
                 foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
                 EnsureHolderKeepAlive();
                 networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
@@ -683,8 +690,78 @@ namespace SunkCost.World
             ServerCapturePlacements(CabinFrame.DeckCabin(ship));
             yield return WaitSeconds(Settings.CabinSealSeconds);
             EndRide(RideDirection.Up);
-            // Someone is still down there: the car goes back for them, empty.
-            if (othersBelow) ServerSetElevator(ElevatorState.Sealing, false);
+            // Someone is still down there: the car goes back for them, empty — once
+            // the riders have stepped out of the deck cabin, whose doors are shut
+            // while the car is away (Dan, 17 September 2026: it sealed them in).
+            // ServerTickCarReturn picks it up from here.
+        }
+
+        // The car never leaves with a living player in the deck cabin (Dan, 17
+        // September 2026: "what can happen, and how to deny it"). It waits up for
+        // the grace period; whoever is still inside then is put out on the deck
+        // (a server placement, nobody is ever carried by accident) and once the
+        // cabin reads clear it seals and goes down for those below. Someone who
+        // steps in while the doors close makes them open again (ServerTickElevator).
+        private bool carReturnPending;
+        private IEnumerator ServerReturnCarWhenClear(ShipParts ship)
+        {
+            if (carReturnPending) yield break;
+            carReturnPending = true;
+            try
+            {
+                float grace = Time.unscaledTime + Settings.CarReturnGraceSeconds;
+                while (CarReturnWanted() && Time.unscaledTime < grace && CabinOccupied(ship)) yield return null;
+                if (!CarReturnWanted()) yield break;
+                if (CabinOccupied(ship))
+                {
+                    ServerPutCabinOccupantsOut(ship);
+                    float settle = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
+                    while (CarReturnWanted() && Time.unscaledTime < settle && CabinOccupied(ship)) yield return null; // their replicated positions catch up
+                }
+                if (!CarReturnWanted() || CabinOccupied(ship)) yield break; // still someone in there: try again from the tick
+                ServerSetElevator(ElevatorState.Sealing, false);
+            }
+            finally { carReturnPending = false; }
+        }
+
+        // Divers below, no ride running, the car up and not sealed for a ride: it is owed below.
+        private bool CarReturnWanted() => dayState != null && dayState.Below.Count > 0 && !riding && !siteClosing && dayState.Elevator.State == ElevatorState.AtTop;
+
+        private bool CabinOccupied(ShipParts ship)
+        {
+            if (ship == null) return false;
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == ship.gameObject.scene && ship.IsInDeckCabin(player.transform.position)) return true;
+            }
+            return false;
+        }
+
+        // Everyone living still in the deck cabin is placed at a deck spawn point.
+        private void ServerPutCabinOccupantsOut(ShipParts ship)
+        {
+            int k = 0;
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player == null || player.gameObject.scene != ship.gameObject.scene || !ship.IsInDeckCabin(player.transform.position)) continue;
+                Transform point = ship.SpawnPoint(k++ % ShipParts.SpawnPointCount) ?? ship.SpawnPoint(0);
+                if (point == null) continue;
+                player.TargetPlace(conn, point.position, point.eulerAngles.y);
+                Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} put out of the deck cabin: the car is needed below");
+            }
+        }
+
+        // Every server tick while the car is up and owed below: keep the return
+        // going (a wait that gave up because someone kept stepping in starts over).
+        private void ServerTickCarReturn()
+        {
+            if (!CarReturnWanted() || carReturnPending) return;
+            ShipParts ship = ShipParts.InWorld(WorldId.Sea);
+            if (ship != null) StartCoroutine(ServerReturnCarWhenClear(ship));
         }
 
         // Everyone in the cohort who is not standing inside the sealed car leaves the

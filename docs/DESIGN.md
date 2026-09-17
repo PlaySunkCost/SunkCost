@@ -319,7 +319,27 @@ who dies or leaves is replaced by the nearest living one; nobody living left is
 their distances — **plus every dead player anywhere**; the dead talk only to the
 dead, the living never hear them. A living player being watched sees a red
 **ON AIR · N watching** mark. Spectating lasts until End day, which revives you as
-above. The TV is the next card (docs/SPECTATING_IMPLEMENTATION_PLAN.md).
+above.
+
+**Built 17 September 2026 (Dan, after the first three-player test — the car going
+back for a diver left below):** when riders come up and someone is still below, the
+car goes back for them — but **never with anyone inside the deck cabin**. It waits up
+while the cabin is occupied (panel: `Step out — the car is needed below`), puts
+whoever is still standing there out on the deck after a grace period
+(`carReturnGraceSeconds`, 10 s), and reopens if someone steps in while the doors
+close. If the diver below dies or leaves while the car is on its way down, the car
+comes straight back and the site closes as at the end of a dive.
+
+**Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
+screen on the deck (port rail, midships) shows **one diver at a time** from their
+eyes — whoever surfaced early watches the others. The channel is the first living
+diver below; **E on the screen is the next channel**, wrapping; only divers below
+are channels (a diver who surfaces or dies leaves them); nobody below → **NO
+SIGNAL**. The caption over the screen reads `LIVE · <name>`. The channel diver's
+voice — and the voices they can hear — play **from the TV**, as loud as the diver
+hears them, falling off with your distance to it. The TV counts on the diver's
+**ON AIR · N watching** mark. Game sounds flagged for broadcast (`BroadcastSound`)
+replay at the TV; none are flagged yet (the winch and the doors have no clips).
 
 ---
 
