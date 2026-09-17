@@ -51,6 +51,7 @@ namespace SunkCost.Noise
 
         void OnCollisionEnter(Collision collision)
         {
+            if (!NoiseSystem.IsServer) return; // a client's physics is a copy; the server's collision is the noise
             if (impactVelocityThreshold <= 0f) return;
             if (Time.time < nextAllowedTime) return;
 

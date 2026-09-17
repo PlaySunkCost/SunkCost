@@ -298,10 +298,27 @@ NoiseEvent(Vector3 position, float radius, NoiseKind kind, int sourceId = 0)
 - Local sound effects for immediate feedback are allowed; they do not emit a
   gameplay event or change a monster's state.
 - Server startup/shutdown must set/reset the bus's server guard and clean up
-  scene listeners. The current scaffold is not proof of network integration.
-- `SourceId` is intended as a network identity; the current emitter uses Unity
-  instance IDs. Map it to a stable network identity when integrating networking,
-  and do not compare instance IDs across machines.
+  scene listeners. **Wired 17 September 2026:** `WorldSceneFlow` sets
+  `NoiseSystem.IsServer` when the server starts and clears it and the listeners
+  when it stops. What emits, all server-side, nothing replicated: `PlayerNoise`
+  on the player prefab — a `Footstep` every `walkStepMetres` of ground a living
+  player covers in the dive world (radius `walkRadius`), a `Sprint` every
+  `sprintStepMetres` while the server judges the copy sprinting from its own
+  speed (radius `sprintRadius`), **nothing while the server-accepted stance is
+  crouched** (Dan: silent, not quieter), nothing on the ship; `ElevatorNoise`
+  on the day state — an `Elevator` event at the car when it starts moving and
+  every `elevatorEmitInterval` seconds while the replicated phase says it
+  moves (radius `elevatorRadius`, 60 m). Radii live in `NoiseSettings`
+  (Resources). `NoiseEmitter`'s collision path is guarded by `IsServer`.
+- The elevator's audible sounds (`ElevatorSounds`, every client, on the day
+  state) are local presentation read off the replicated phase: the winch at
+  the car for a player whose object is in the dive world, low through the deck
+  for one on the ship, the bell at the bottom for those below and at the top
+  for the deck and the riders. They emit no gameplay event. Clips come from
+  the `AudioLibrary` (Resources; generated placeholders until filled).
+- `SourceId` is a network identity: `PlayerNoise` reports the player's FishNet
+  `ObjectId`; a bare `NoiseEmitter` reports 0 ("the world"). Never compare
+  Unity instance IDs across machines.
 - Hearing uses the bus. This does not forbid navigation, collision queries, or
   a separately approved creature sense; new senses belong in the design first.
 

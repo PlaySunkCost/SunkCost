@@ -206,12 +206,15 @@ namespace SunkCost.World
                 currentWorld = WorldId.HQ;
                 transitioning = false;
                 ResetTrip();
+                SunkCost.Noise.NoiseSystem.IsServer = true; // the ocean's ears open with the server (section 3 of the contract)
                 SpawnDayState();
                 // Pre-warm HQ on the server so the host's own client join finds it loaded.
                 ServerLoad(null, LoadDataFor(WorldId.HQ, null), "server start: HQ pre-warmed");
             }
             else if (args.ConnectionState == LocalConnectionState.Stopped)
             {
+                SunkCost.Noise.NoiseSystem.IsServer = false;
+                SunkCost.Noise.NoiseSystem.Clear();
                 if (trip != null) { StopCoroutine(trip); trip = null; }
                 if (ride != null) { StopCoroutine(ride); ride = null; }
                 riding = false;
