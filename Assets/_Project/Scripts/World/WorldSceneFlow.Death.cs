@@ -53,6 +53,22 @@ namespace SunkCost.World
             return true;
         }
 
+        // A dead player's object still standing in the site (its ride to the ship
+        // has not happened yet): End day waits for it.
+        private bool ServerAnyDeadStillBelow()
+        {
+            if (dayState == null) return false;
+            Scene dive = WorldScenes.Scene(WorldId.Dive);
+            if (!dive.IsValid() || !dive.isLoaded) return false;
+            foreach (int id in dayState.Dead)
+            {
+                if (!networkManager.ServerManager.Clients.TryGetValue(id, out NetworkConnection conn) || !conn.IsActive) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == dive) return true;
+            }
+            return false;
+        }
+
         // Nobody living is below any more — the last one died or disconnected: the
         // dive is done, the car comes home empty and the site goes, with the dead
         // carried to the ship first. A ride in progress does this itself at its end
