@@ -88,6 +88,9 @@ namespace SunkCost.World
         private readonly SyncList<int> dead = new();
         // Who each dead player watches (card 2); WorldSceneFlow is its only writer.
         private readonly SyncList<SpectateEntry> spectate = new();
+        // The deck TV's channel (card 3): a living diver below, or -1 (NO SIGNAL);
+        // WorldSceneFlow is its only writer.
+        private readonly SyncVar<int> tvChannel = new(-1);
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -129,11 +132,13 @@ namespace SunkCost.World
             foreach (SpectateEntry e in spectate) if (e.Dead == clientId) return e.Target;
             return -1;
         }
-        // How many dead players watch this one (the TV adds its own in card 3).
+        public int TvChannel => tvChannel.Value;
+        // How many watch this player: the dead spectating it, plus the TV when it is the channel.
         public int WatchersOf(int clientId)
         {
-            int count = 0;
-            foreach (SpectateEntry e in spectate) if (e.Target == clientId && clientId >= 0) count++;
+            if (clientId < 0) return 0;
+            int count = tvChannel.Value == clientId ? 1 : 0;
+            foreach (SpectateEntry e in spectate) if (e.Target == clientId) count++;
             return count;
         }
         public bool IsRider(int clientId) => riders.Contains(clientId);
@@ -148,7 +153,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value}";
         private string SpectateText()
         {
             var parts = new List<string>();
@@ -412,6 +417,12 @@ namespace SunkCost.World
                 return;
             }
             spectate.Add(new SpectateEntry { Dead = deadId, Target = target });
+        }
+
+        [Server]
+        public void ServerSetTvChannel(int clientId)
+        {
+            if (tvChannel.Value != clientId) tvChannel.Value = clientId;
         }
 
         [Server]

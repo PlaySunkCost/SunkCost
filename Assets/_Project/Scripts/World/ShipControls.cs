@@ -57,6 +57,24 @@ namespace SunkCost.World
             if (!flow.ServerPay(sender, out string why)) day.ServerReportRefusal(why);
         }
 
+        // E on the deck TV's screen: the next channel (card 3).
+        public void RequestTvNext()
+        {
+            if (!IsOwner) return;
+            ServerRequestTvNext();
+        }
+
+        [ServerRpc]
+        private void ServerRequestTvNext(NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            ShipParts ship = ShipParts.InWorld(flow.CurrentWorld);
+            if (ship != null && !ship.IsAboard(transform.position)) { day.ServerReportRefusal("Not aboard: " + WorldSceneFlow.DisplayName(sender)); return; }
+            if (!flow.ServerTvNext(sender, out string why)) day.ServerReportRefusal(why);
+        }
+
         // E on the seafloor car's panel: bring everyone in the car up.
         public void RequestCar()
         {

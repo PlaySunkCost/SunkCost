@@ -319,7 +319,18 @@ who dies or leaves is replaced by the nearest living one; nobody living left is
 their distances — **plus every dead player anywhere**; the dead talk only to the
 dead, the living never hear them. A living player being watched sees a red
 **ON AIR · N watching** mark. Spectating lasts until End day, which revives you as
-above. The TV is the next card (docs/SPECTATING_IMPLEMENTATION_PLAN.md).
+above.
+
+**Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
+screen on the deck (port rail, midships) shows **one diver at a time** from their
+eyes — whoever surfaced early watches the others. The channel is the first living
+diver below; **E on the screen is the next channel**, wrapping; only divers below
+are channels (a diver who surfaces or dies leaves them); nobody below → **NO
+SIGNAL**. The caption over the screen reads `LIVE · <name>`. The channel diver's
+voice — and the voices they can hear — play **from the TV**, as loud as the diver
+hears them, falling off with your distance to it. The TV counts on the diver's
+**ON AIR · N watching** mark. Game sounds flagged for broadcast (`BroadcastSound`)
+replay at the TV; none are flagged yet (the winch and the doors have no clips).
 
 ---
 

@@ -607,6 +607,7 @@ namespace SunkCost.World
             ServerBuildMoveList();
             Scene destination = WorldScenes.Scene(WorldId.Dive);
             var conns = ActiveCohort();
+            foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // a TV viewer drops the watched site first: the move is a plain load (card 3)
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
             EnsureHolderKeepAlive();
             networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()));
@@ -663,6 +664,7 @@ namespace SunkCost.World
                 ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
                 ServerBuildMoveList();
                 Scene destination = WorldScenes.Scene(WorldId.Sea);
+                foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // nobody living below watches the ship; a no-op kept symmetric with the ride down
                 foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
                 EnsureHolderKeepAlive();
                 networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));

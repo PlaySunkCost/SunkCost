@@ -27,6 +27,13 @@ namespace SunkCost.World
         public const string StorageAreaName = "StorageArea";
         public const string StorageVolumeName = "StorageVolume";   // the room's inside: what the pay button sells
         public const string StorageReadoutName = "StorageReadout"; // TextMesh the StorageReadout writes ("$100 / $200")
+        // The deck TV (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 3): the screen
+        // quad ShipTV renders the channel diver's view onto (its collider is what E
+        // targets), the caption over it ("LIVE · name" / "NO SIGNAL") and where its
+        // sound plays from.
+        public const string TvScreenName = "TvScreen";
+        public const string TvCaptionName = "TvCaption";   // TextMesh ShipTV writes
+        public const string TvSpeakerName = "TvSpeaker";
         public const string SpawnPointPrefix = "SpawnPoint_";
         public const string BoardingPointName = "BoardingPoint";
         // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
@@ -42,6 +49,7 @@ namespace SunkCost.World
             AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorButtonEndDayName, MonitorStatusName, DeckCabinName,
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
             StorageAreaName, StorageVolumeName, StorageReadoutName, BoardingPointName,
+            TvScreenName, TvCaptionName, TvSpeakerName,
             SafeDeckVolumeName, GangwayPivotName, GangwayName, GangwayExclusionVolumeName, DepartureDirectionName,
             SpawnPointPrefix + "1", SpawnPointPrefix + "2", SpawnPointPrefix + "3", SpawnPointPrefix + "4"
         };
@@ -59,6 +67,9 @@ namespace SunkCost.World
         public Collider StorageVolume => Find(StorageVolumeName)?.GetComponent<Collider>();
         public TextMesh StorageReadout => Find(StorageReadoutName)?.GetComponent<TextMesh>();
         public Transform BoardingPoint => Find(BoardingPointName);
+        public Transform TvScreen => Find(TvScreenName);
+        public TextMesh TvCaption => Find(TvCaptionName)?.GetComponent<TextMesh>();
+        public Transform TvSpeaker => Find(TvSpeakerName);
         public Collider SafeDeckVolume => Find(SafeDeckVolumeName)?.GetComponent<Collider>();
         public Transform GangwayPivot => Find(GangwayPivotName);
         public Collider GangwayCollider => Find(GangwayName)?.GetComponent<Collider>();

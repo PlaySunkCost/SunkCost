@@ -44,8 +44,9 @@ namespace SunkCost.World
             ServerUpdateSpectators();
         }
 
-        // Every dead player: a valid target (else the nearest living, else none) and
-        // the world its client needs for it.
+        // Every dead player: a valid target (else the nearest living, else none); the
+        // TV: a valid channel (else the first living diver below, else none); then
+        // the world each client needs beyond its own.
         private void ServerUpdateSpectators()
         {
             if (dayState == null || networkManager == null || !networkManager.IsServerStarted) return;
@@ -53,13 +54,88 @@ namespace SunkCost.World
             {
                 if (!networkManager.ServerManager.Clients.TryGetValue(id, out NetworkConnection conn) || !conn.IsActive) continue;
                 int target = dayState.SpectateTargetOf(id);
-                if (!ServerIsWatchable(target))
-                {
-                    target = ServerNearestLiving(conn);
-                    dayState.ServerSetSpectateTarget(id, target);
-                }
-                ServerWatchFor(conn, target);
+                if (!ServerIsWatchable(target)) dayState.ServerSetSpectateTarget(id, ServerNearestLiving(conn));
             }
+            ServerValidateTvChannel();
+            if (riding || transitioning || siteClosing) return; // objects are on the move: keep what is loaded
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive) continue;
+                WorldId? want = ServerWantedWatch(conn);
+                if (want.HasValue) ServerWatch(conn, want.Value); else ServerUnwatch(conn);
+            }
+        }
+
+        // The world a client needs beyond the one its object stands in: a dead
+        // player's target's world, or the dive world for a living player on the
+        // ship while the TV has a channel (card 3). Never its own.
+        private WorldId? ServerWantedWatch(NetworkConnection conn)
+        {
+            HQPlayerController me = PlayerOf(conn);
+            if (me == null || !WorldScenes.TryParse(me.gameObject.scene.name, out WorldId mine)) return null;
+            if (dayState.IsDead(conn.ClientId))
+            {
+                int target = dayState.SpectateTargetOf(conn.ClientId);
+                HQPlayerController targetPlayer = target >= 0 && networkManager.ServerManager.Clients.TryGetValue(target, out NetworkConnection targetConn) ? PlayerOf(targetConn) : null;
+                if (targetPlayer != null && WorldScenes.TryParse(targetPlayer.gameObject.scene.name, out WorldId theirs) && theirs != mine) return theirs;
+                return null;
+            }
+            if (mine == WorldId.Sea && dayState.TvChannel >= 0) return WorldId.Dive;
+            return null;
+        }
+
+        // ---- the TV (card 3) -------------------------------------------------------
+
+        // The channel must be a living, connected diver below; else the first such,
+        // else none. And only while someone living stands on the ship to watch: a
+        // TV nobody sees has no channel, so ON AIR counts real watchers only.
+        private void ServerValidateTvChannel()
+        {
+            if (!ServerAnyViewerAboard()) { dayState.ServerSetTvChannel(-1); return; }
+            int channel = dayState.TvChannel;
+            if (channel >= 0 && ServerIsChannel(channel)) return;
+            dayState.ServerSetTvChannel(ServerFirstChannel());
+        }
+
+        private bool ServerAnyViewerAboard()
+        {
+            Scene sea = WorldScenes.Scene(WorldId.Sea);
+            if (!sea.IsValid() || !sea.isLoaded) return false;
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == sea) return true;
+            }
+            return false;
+        }
+
+        private bool ServerIsChannel(int id) => id >= 0 && dayState.IsBelow(id) && ServerIsWatchable(id);
+
+        private int ServerFirstChannel()
+        {
+            var below = new List<int>(dayState.Below);
+            below.Sort();
+            foreach (int id in below) if (ServerIsChannel(id)) return id;
+            return -1;
+        }
+
+        // E on the screen (ShipControls): the next living diver below by client id
+        // after the current channel, wrapping.
+        public bool ServerTvNext(NetworkConnection presser, out string why)
+        {
+            why = string.Empty;
+            if (dayState == null) { why = "No day state."; return false; }
+            if (presser != null && dayState.IsDead(presser.ClientId)) { why = "The dead have no hands"; return false; }
+            var channels = new List<int>();
+            foreach (int id in dayState.Below) if (ServerIsChannel(id)) channels.Add(id);
+            if (channels.Count == 0) { dayState.ServerSetTvChannel(-1); why = "NO SIGNAL — nobody below"; return false; }
+            channels.Sort();
+            int current = dayState.TvChannel;
+            int next = channels[0];
+            foreach (int id in channels) if (id > current) { next = id; break; }
+            dayState.ServerSetTvChannel(next);
+            return true;
         }
 
         private bool ServerIsWatchable(int id)
@@ -100,20 +176,9 @@ namespace SunkCost.World
             int next = living[0];
             foreach (int id in living) if (id > current) { next = id; break; }
             dayState.ServerSetSpectateTarget(conn.ClientId, next);
-            ServerWatchFor(conn, next);
-        }
-
-        // The world the watcher needs beyond its own: the target's, when different.
-        private void ServerWatchFor(NetworkConnection conn, int target)
-        {
-            if (riding || transitioning || siteClosing) return; // objects are on the move: keep what is loaded
-            HQPlayerController me = PlayerOf(conn);
-            if (me == null) return;
-            HQPlayerController targetPlayer = target >= 0 && networkManager.ServerManager.Clients.TryGetValue(target, out NetworkConnection targetConn) ? PlayerOf(targetConn) : null;
-            if (targetPlayer != null && targetPlayer.gameObject.scene != me.gameObject.scene && WorldScenes.TryParse(targetPlayer.gameObject.scene.name, out WorldId world))
-                ServerWatch(conn, world);
-            else
-                ServerUnwatch(conn);
+            if (riding || transitioning || siteClosing) return;
+            WorldId? want = ServerWantedWatch(conn);
+            if (want.HasValue) ServerWatch(conn, want.Value); else ServerUnwatch(conn);
         }
 
         // Load `world` on this connection as an observer: added to the scene first

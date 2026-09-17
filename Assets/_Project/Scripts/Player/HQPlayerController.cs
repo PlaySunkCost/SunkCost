@@ -95,6 +95,8 @@ namespace SunkCost.Player
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
+        // The deck TV's screen under the crosshair within reach (E = next channel, card 3).
+        public SunkCost.World.ShipTV CurrentTv { get; private set; }
         // The cabin control under the crosshair within reach: the deck cabin's
         // button on the ship or the seafloor car's panel (owner only).
         public CabinControl CurrentCabinControl { get; private set; }
@@ -223,6 +225,7 @@ namespace SunkCost.Player
                 CurrentButton = null;
                 CurrentColourPanel = null;
                 CurrentQuotaBoard = null;
+                CurrentTv = null;
                 CurrentCabinControl = CabinControl.None;
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
@@ -333,6 +336,12 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestPay();
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentTv != null)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship != null) ship.RequestTvNext();
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
             {
@@ -636,6 +645,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentColourPanel = null;
             CurrentQuotaBoard = null;
+            CurrentTv = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
@@ -649,6 +659,7 @@ namespace SunkCost.Player
             if (CurrentColourPanel != null) return;
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
             if (CurrentQuotaBoard != null) return;
+            if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) return; }
             if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }

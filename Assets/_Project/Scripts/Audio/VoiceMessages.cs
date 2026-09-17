@@ -7,10 +7,11 @@ namespace SunkCost.Audio
     // Where the receiver mixes a relayed frame (docs/SPECTATING_IMPLEMENTATION_PLAN.md
     // §2, protocol 3): Direct at the listener's own head as before; Spectate at the
     // head of the living player the (dead) listener watches; Dead between dead
-    // players, full gain, no place. The server writes it per recipient.
+    // players, full gain, no place; TV at the deck TV's speaker, as loud as the
+    // channel diver hears it. The server writes it per recipient.
     public static class VoiceRoute
     {
-        public const byte Direct = 0, Spectate = 1, Dead = 2;
+        public const byte Direct = 0, Spectate = 1, Dead = 2, TV = 3;
     }
 
     public struct VoiceRequest : IBroadcast { public uint Request; public bool Enabled; }
