@@ -30,6 +30,18 @@ namespace SunkCost.Player
         // The visible body, squashed to the crouch height (presentation only; the
         // root is never scaled).
         [SerializeField] private Transform bodyVisual;
+        // The head cut off the character model at spawn (PlayerHeadSplit, on this
+        // object): the owner hides only that and sees the rest of itself.
+        private PlayerHeadSplit headSplit;
+        private bool headSplitLooked;
+        public PlayerHeadSplit HeadSplit
+        {
+            get
+            {
+                if (!headSplitLooked) { headSplitLooked = true; headSplit = GetComponent<PlayerHeadSplit>(); if (headSplit != null && bodyVisual != null) headSplit.Apply(bodyVisual); }
+                return headSplit;
+            }
+        }
         [SerializeField] private PlayerMovementSettings movement;
         [SerializeField] private float walkSpeed = 4f;
         [SerializeField] private float sprintSpeed = 6f;
@@ -667,8 +679,11 @@ namespace SunkCost.Player
                 controller.enabled = on;
             }
             if (bodyVisual != null)
+            {
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
-                    renderer.enabled = !value && !IsOwner;
+                    renderer.enabled = !value && (!IsOwner || HeadSplit != null);
+                if (!value && IsOwner && HeadSplit != null) HeadSplit.SetHeadShown(false);
+            }
             if (!value) return;
             CurrentTarget = null;
             CurrentButton = null;
@@ -740,11 +755,16 @@ namespace SunkCost.Player
                 AudioListener listener = playerCamera.GetComponent<AudioListener>();
                 if (listener != null) listener.enabled = active;
             }
-            // The owner sees its arms and what they hold, not its own placeholder
-            // body (whose head sits right under the camera); friends see both.
+            // The owner sees its own body from the shoulders down, its arms and what
+            // they hold, but not its head (which sits right under the camera);
+            // friends see it all. Without a head split the owner sees no body at all.
             if (bodyVisual != null)
+            {
+                bool bodyForOwner = HeadSplit != null;
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
-                    renderer.enabled = !active;
+                    renderer.enabled = !active || bodyForOwner;
+                if (active && bodyForOwner) HeadSplit.SetHeadShown(false);
+            }
         }
     }
 }
