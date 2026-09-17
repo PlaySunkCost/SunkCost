@@ -43,6 +43,8 @@ namespace SunkCost.Player
         // slots, their depth — drawn from the spectator camera on their eyes.
         private SpectatorView spectator;
         private static readonly Color OnAirColor = new(1f, 0.25f, 0.2f, 0.98f);
+        private static readonly Color HeardColor = new(0.45f, 1f, 0.55f, 0.95f);
+        private SunkCost.Audio.ProximityVoice voice;
         private GUIStyle promptStyle;
         private GUIStyle numberStyle;
         private GUIStyle labelStyle;
@@ -263,6 +265,37 @@ namespace SunkCost.Player
             GUI.color = previous;
         }
 
+        // Who this listener hears and where from (Dan, 17 September 2026: "who
+        // sounds coming from, Player x / TV, top right"): one line per speaker under
+        // the ON AIR mark — "Idan" straight from them, "Idan · TV" through the deck
+        // TV, "Idan · via Dan" through the watched player's ears when dead, "Idan ·
+        // dead" from the dead to the dead. The listener's own, not the watched
+        // player's: drawn beside the visor, not through DrawVisor.
+        private void DrawHeard(VisorReadout r)
+        {
+            if (voice == null) voice = FindAnyObjectByType<SunkCost.Audio.ProximityVoice>();
+            if (voice == null || voice.Heard.Count == 0) return;
+            float s = Screen.height / 1080f;
+            Rect tr = r.On ? PlayerVisorMask.TopRightLabelRect(Screen.width, Screen.height) : new Rect(Screen.width - 260f * s, 20f * s, 240f * s, 18f * s);
+            float y = (r.On ? tr.y + 40f * s : tr.y) + (r.OnAirCount > 0 ? 22f * s : 0f);
+            Color previous = GUI.color;
+            foreach (SunkCost.Audio.ProximityVoice.HeardSpeaker speaker in voice.Heard)
+            {
+                string text = voice.PeerName(speaker.Id);
+                switch (speaker.Route)
+                {
+                    case SunkCost.Audio.VoiceRoute.TV: text += " · TV"; break;
+                    case SunkCost.Audio.VoiceRoute.Spectate: text += string.IsNullOrEmpty(r.SpectatingName) ? " · via them" : " · via " + r.SpectatingName; break;
+                    case SunkCost.Audio.VoiceRoute.Dead: text += " · dead"; break;
+                }
+                GUI.color = HeardColor;
+                GUI.DrawTexture(new Rect(tr.xMax - 12f * s, y + 5f * s, 8f * s, 8f * s), whiteTexture);
+                GUI.Label(new Rect(tr.x, y, tr.width - 16f * s, 18f * s), text, visorRightStyle);
+                y += 20f * s;
+            }
+            GUI.color = previous;
+        }
+
         // The visor is on exactly while the player stands in the dive world: that is
         // where the suit is on (section 3.1). No extra state.
         public bool VisorOn => inventory != null && inventory.IsOwner && gameObject.scene == WorldScenes.Scene(WorldId.Dive);
@@ -405,6 +438,7 @@ namespace SunkCost.Player
             bool maskOn = Visor.On && !faded;                    // the mask is on with the suit, car ride included
             bool readoutsOn = maskOn && !Who.TravelLocked;
             DrawVisor(own, ShownInventory, maskOn, readoutsOn, onAir: !faded);
+            if (!faded) DrawHeard(own.Readout);
             DrawAimingDot();
             DrawPrompt();
             if (controller != null && controller.IsDead && !faded) DrawSpectateLabels();

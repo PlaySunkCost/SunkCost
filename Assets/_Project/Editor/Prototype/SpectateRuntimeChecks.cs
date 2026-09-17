@@ -449,6 +449,10 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => voice.SentFrames > 20, 8f, () => "S2 the host's tone is sending (" + voice.SentFrames + ")");
             yield return GuestEventually(r => CounterOf(r, "received") > 20 && r.Contains("route=1"), 8f, "S2 dead A receives the host's frames on the Spectate route");
             yield return GuestEventually(r => CounterOf(r, "received") > 20 && r.Contains("route=0"), 8f, "S2 living B, nearby, receives them on the Direct route", GuestDirB);
+            // The "who am I hearing" indicator (top right): dead A lists the host via
+            // its target (Spectate), living B lists the host straight (Direct).
+            yield return GuestEventually(r => r.Contains("heard=" + host.OwnerId + ":1"), 6f, "S2 dead A's indicator: the host, via the watched player");
+            yield return GuestEventually(r => r.Contains("heard=" + host.OwnerId + ":0"), 6f, "S2 living B's indicator: the host, direct", GuestDirB);
             voice.SetMicrophone(false);
             yield return Wait(0.6f);
             uint hostReceived = voice.ReceivedFrames;
@@ -577,6 +581,7 @@ namespace SunkCost.Editor.Prototype
             voice.StartLocalTestTone();
             yield return Expect(() => voice.SentFrames > hostSent0 + 20, 8f, () => "T2 the host's tone is sending");
             yield return GuestEventually(r => CounterOf(r, "received") > bReceived0 + 20 && r.Contains("route=3"), 8f, "T2 B on the deck receives the host's frames on the TV route", GuestDirB);
+            yield return GuestEventually(r => r.Contains("heard=" + host.OwnerId + ":3"), 6f, "T2 B's indicator: the host, through the TV", GuestDirB);
             voice.SetMicrophone(false);
             yield return Send("{\"id\":{id},\"action\":\"die\"}");
             yield return Expect(() => Day.IsDead(idA) && Day.SpectateTargetOf(idA) == host.OwnerId, 5f, () => "T2 A died below and watches the host");

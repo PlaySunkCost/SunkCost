@@ -34,6 +34,10 @@
   at the TV's speaker: the gain the channel diver would hear it at, times the
   listener's distance to the TV). A living client discards `Spectate`/`Dead`
   frames and takes `TV` only on the ship; a dead client discards `Direct`/`TV`.
+  The "who is talking" indicator (17 September 2026, design §5) is local
+  presentation of the same byte: `ProximityVoice.Heard` lists each receiver
+  the mixer gave a gain above zero whose last decoded frame was louder than
+  `SpeechLevel`, with its route; nothing is sent for it.
 - Decoder reorder buffering starts at 60 ms; packet/capture queues are bounded,
   stale capture older than 200 ms is discarded, and a long receive gap silences
   output. Codec workers own their handles; stop joins workers before releasing
