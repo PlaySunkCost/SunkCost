@@ -81,6 +81,15 @@ namespace SunkCost.Net
                 JoinSteamLobby(lobbyId);
             else if (HasArgument(arguments, "-hq-auto-join-steam"))
                 Debug.LogWarning("-hq-auto-join-steam <hostSteamId> is no longer supported; use -hq-auto-join-steam-lobby <lobbyId>.");
+            else if (!Application.isEditor)
+            {
+                // A normal launch of a build: Steam up (quietly) so an invite lands
+                // while the game sits in the menu; a launch from an invite joins at
+                // once. Not in the editor: the matrices run Local, and Steam there is
+                // picked on purpose.
+                controller.WarmSteamForInvites();
+                if (TryGetArgumentValue(arguments, "+connect_lobby", out string invitedLobby)) controller.AcceptLaunchInvite(invitedLobby);
+            }
         }
 
         private void Update()

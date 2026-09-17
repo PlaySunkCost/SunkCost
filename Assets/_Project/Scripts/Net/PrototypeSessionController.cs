@@ -132,6 +132,33 @@ namespace SunkCost.Net
             return true;
         }
 
+        // At start-up, so a Steam invite reaches a game still sitting in the menu:
+        // the join-requested callback only exists once Steam is initialised, and it
+        // used to be initialised only when the player picked a Steam option — an
+        // invite accepted before that was dropped in silence (Dan and Idan, 17
+        // September 2026: "after a couple of times it worked"). Quiet on failure:
+        // the editor matrices and the Local builds run without Steam.
+        public void WarmSteamForInvites()
+        {
+            if (steam == null || steam.Initialized) return;
+            if (boundMode.HasValue && boundMode.Value != SessionMode.Steam) return;
+            if (!steam.TryInitialize(out _)) return;
+            if (lobby == null)
+            {
+                lobby = new SteamLobbyService();
+                lobby.MembersChanged += OnLobbyMembersChanged;
+                lobby.DataChanged += OnLobbyDataChanged;
+            }
+        }
+
+        // Steam launched the game from an invite ("+connect_lobby <id>" on the
+        // command line): the same path as an invite accepted while running.
+        public void AcceptLaunchInvite(string lobbyIdText)
+        {
+            if (!LobbyMetadata.TryParseLobbyId(lobbyIdText, out ulong id, out string error)) { message = error; return; }
+            OnInviteRequested(id);
+        }
+
         // ---- public operations ----------------------------------------------------
 
         public void StartHost()
@@ -226,6 +253,7 @@ namespace SunkCost.Net
                 message = "Transport is locked to Local for this run; restart the game to accept Steam invites.";
                 return;
             }
+            Debug.Log("[Steam] invite to lobby " + invitedLobbyId + " accepted; joining");
             JoinSteamLobby(invitedLobbyId);
         }
 
