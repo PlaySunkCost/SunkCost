@@ -61,6 +61,16 @@ namespace SunkCost.Player
         // value (a spectator's view stepped at 10 Hz / 2° — Dan, 17 September 2026).
         private const float PitchSendInterval = 0.05f, PitchSendThreshold = 1f, PitchSmoothSeconds = 0.08f;
         private float remotePitch;
+        // A remote copy's eyes as watchers use them (a dead spectator's camera, the
+        // deck TV): its position and yaw eased over EyeSmoothSeconds behind the
+        // NetworkTransform, so a packet that arrives late and the catch-up after it
+        // read as a slow and a quick turn of the head rather than a freeze and a
+        // snap (Dan and Idan over Steam, Build 78, 17 September 2026: "the picture
+        // steps"). A move over EyeSnapMetres in one frame is a teleport: no swoop.
+        private const float EyeSmoothSeconds = 0.1f, EyeSnapMetres = 3f;
+        private Vector3 eyePosition;
+        private float eyeYaw;
+        private bool eyesPrimed;
 
         // Motor state.
         private bool grounded;
@@ -111,6 +121,15 @@ namespace SunkCost.Player
         // has it; remote copies hold the replicated pitch on it).
         public Transform EyeAnchor => playerCamera != null ? playerCamera.transform : transform;
         public float LookPitch => IsOwner ? pitch : remotePitch;
+        // The one place a watcher's camera is placed from (docs/CONVENTIONS.md, one
+        // path): the owner's own eyes exactly, a remote copy's eased ones.
+        public void EyePose(out Vector3 position, out Quaternion rotation)
+        {
+            if (IsOwner || !eyesPrimed) { position = EyeAnchor.position; rotation = Quaternion.Euler(LookPitch, Yaw, 0f); return; }
+            position = eyePosition;
+            rotation = Quaternion.Euler(remotePitch, eyeYaw, 0f);
+        }
+        public float EyeYaw => IsOwner || !eyesPrimed ? Yaw : eyeYaw;
         // The owner's spectator view, created at OnStartClient (card 2).
         public SpectatorView Spectator { get; private set; }
         public float GrabAimRadius => grabAimRadius;
@@ -204,14 +223,7 @@ namespace SunkCost.Player
             // value and the applied one disagree (a client whose object was moved
             // between scenes or re-initialised can miss the change callback).
             if (appliedDead != dead.Value) ApplyDead(dead.Value);
-            if (!IsOwner)
-            {
-                // A remote copy's camera carries the owner's replicated pitch for
-                // spectators, eased so the 20 Hz steps read as a turn of the head.
-                remotePitch = Mathf.LerpAngle(remotePitch, lookPitch.Value, 1f - Mathf.Exp(-Time.deltaTime / PitchSmoothSeconds));
-                if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(remotePitch, 0f, 0f);
-                return;
-            }
+            if (!IsOwner) return; // the eyes ease in LateUpdate, after the NetworkTransform has moved
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
             bool hasDevices = ActiveKeyboard != null && Mouse.current != null;
@@ -660,6 +672,27 @@ namespace SunkCost.Player
 
         // Held and stowed items have their colliders off, so only loose items can be
         // selected. Targeting checks eyes-to-surface distance and line of sight.
+        // A remote copy's eyes for watchers, after the NetworkTransform's move this
+        // frame: the replicated pitch eased (the 20 Hz steps read as a turn of the
+        // head), the position and yaw eased behind the transform (see EyeSmoothSeconds).
+        private void LateUpdate()
+        {
+            if (IsOwner) return;
+            float dt = Time.deltaTime;
+            remotePitch = Mathf.LerpAngle(remotePitch, lookPitch.Value, 1f - Mathf.Exp(-dt / PitchSmoothSeconds));
+            if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(remotePitch, 0f, 0f);
+            Vector3 target = EyeAnchor.position;
+            float yaw = Yaw;
+            if (!eyesPrimed || (target - eyePosition).sqrMagnitude > EyeSnapMetres * EyeSnapMetres)
+            {
+                eyePosition = target; eyeYaw = yaw; eyesPrimed = true;
+                return;
+            }
+            float k = 1f - Mathf.Exp(-dt / EyeSmoothSeconds);
+            eyePosition = Vector3.Lerp(eyePosition, target, k);
+            eyeYaw = Mathf.LerpAngle(eyeYaw, yaw, k);
+        }
+
         private void UpdateTarget()
         {
             CurrentTarget = null;

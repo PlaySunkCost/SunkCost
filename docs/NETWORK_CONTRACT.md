@@ -260,6 +260,21 @@ separate clock: everything the player sees is interpolated or placed sub-tick,
 so frame rate never depends on the tick. (The prototype started at 30 Hz,
 FishNet's default, with physics at Unity's default 50.)
 
+**Interpolation buffer (17 September 2026):** the player prefab's
+`NetworkTransform` keeps FishNet's 2-tick (33 ms) buffer. Dan and Idan saw a
+spectator's view and the deck TV step over Steam (Build 78); the `smooth`
+matrix (`RemoteSmoothnessRuntimeChecks`: a guest build turning while its
+outgoing packets go through FishNet's latency simulator with ±40 ms jitter,
+3 % loss, 5 % reordering) reproduced it on the raw transform — about 5 % of
+frames frozen, catch-ups of 20 frames' worth in one frame — and a 6-tick
+buffer did not remove it (bursts still overflow FishNet's queue, which snaps),
+so the buffer stays. What watchers see is fixed in presentation instead: a
+remote copy's eyes (`HQPlayerController.EyePose`, the one place a spectator
+camera and the TV camera are placed from) ease over 100 ms behind the
+transform, turning a late packet and its catch-up into a slow and a quick turn
+of the head; on the same link the eased eyes measure 0 frozen frames and a
+worst catch-up under 2. Nothing replicated changes.
+
 ---
 
 ## 8. Noise

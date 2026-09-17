@@ -145,8 +145,8 @@ namespace SunkCost.World
             ViewerNear = local != null && Vector3.Distance(local.transform.position, SpeakerPosition) <= ViewerMetres;
             if (!ViewerNear || Time.frameCount % FrameStep != 0) return;
             MatchCamera(diver);
-            Transform eye = diver.EyeAnchor;
-            cam.transform.SetPositionAndRotation(eye.position, Quaternion.Euler(diver.LookPitch, diver.Yaw, 0f));
+            diver.EyePose(out Vector3 eye, out Quaternion look);
+            cam.transform.SetPositionAndRotation(eye, look);
             if (hud == null) hud = local.GetComponent<PlayerHudUI>();
             if (hud != null) hud.Compute(frame, diver, diver.Inventory, cam, watching: true);
             // The site's own fog and ambient for this one render (the active scene
