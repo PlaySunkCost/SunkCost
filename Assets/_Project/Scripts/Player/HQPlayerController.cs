@@ -57,7 +57,10 @@ namespace SunkCost.Player
         private readonly SyncVar<sbyte> lookPitch = new(0);
         private float sentPitch = float.NaN;
         private float nextPitchSendAt;
-        private const float PitchSendInterval = 0.1f, PitchSendThreshold = 2f;
+        // 20 Hz on a 1° change, one byte each; a remote copy eases toward the last
+        // value (a spectator's view stepped at 10 Hz / 2° — Dan, 17 September 2026).
+        private const float PitchSendInterval = 0.05f, PitchSendThreshold = 1f, PitchSmoothSeconds = 0.08f;
+        private float remotePitch;
 
         // Motor state.
         private bool grounded;
@@ -107,7 +110,7 @@ namespace SunkCost.Player
         // Where a spectator's eyes go: this player's camera transform (every peer
         // has it; remote copies hold the replicated pitch on it).
         public Transform EyeAnchor => playerCamera != null ? playerCamera.transform : transform;
-        public float LookPitch => IsOwner ? pitch : lookPitch.Value;
+        public float LookPitch => IsOwner ? pitch : remotePitch;
         // The owner's spectator view, created at OnStartClient (card 2).
         public SpectatorView Spectator { get; private set; }
         public float GrabAimRadius => grabAimRadius;
@@ -203,8 +206,10 @@ namespace SunkCost.Player
             if (appliedDead != dead.Value) ApplyDead(dead.Value);
             if (!IsOwner)
             {
-                // A remote copy's camera carries the owner's replicated pitch for spectators.
-                if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(lookPitch.Value, 0f, 0f);
+                // A remote copy's camera carries the owner's replicated pitch for
+                // spectators, eased so the 20 Hz steps read as a turn of the head.
+                remotePitch = Mathf.LerpAngle(remotePitch, lookPitch.Value, 1f - Mathf.Exp(-Time.deltaTime / PitchSmoothSeconds));
+                if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(remotePitch, 0f, 0f);
                 return;
             }
             // No keyboard or mouse (a headless peer): no commands, but the motor

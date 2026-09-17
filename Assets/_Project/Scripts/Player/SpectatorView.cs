@@ -1,5 +1,7 @@
 using SunkCost.World;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace SunkCost.Player
 {
@@ -44,6 +46,35 @@ namespace SunkCost.Player
         private void Awake()
         {
             controller = GetComponent<HQPlayerController>();
+        }
+
+        // The watched player may stand in the other world (a dead diver watching
+        // the deck): the owner's camera then renders with that world's fog and
+        // ambient (WorldLook) instead of the active scene's, for its own render only.
+        private WorldLook.Snapshot? swappedLook;
+        private void OnEnable()
+        {
+            RenderPipelineManager.beginCameraRendering += OnBeginCamera;
+            RenderPipelineManager.endCameraRendering += OnEndCamera;
+        }
+        private void OnDisable()
+        {
+            RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
+            RenderPipelineManager.endCameraRendering -= OnEndCamera;
+        }
+        private void OnBeginCamera(ScriptableRenderContext context, Camera rendering)
+        {
+            if (!Active || Target == null || rendering != cam) return;
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null) return;
+            WorldId world = day.IsBelow(Target.OwnerId) ? WorldId.Dive : day.World; // the physical world, never the copy's Unity scene
+            swappedLook = WorldLook.Begin(WorldScenes.Scene(world));
+        }
+        private void OnEndCamera(ScriptableRenderContext context, Camera rendering)
+        {
+            if (rendering != cam) return;
+            WorldLook.Restore(swappedLook);
+            swappedLook = null;
         }
 
         private void Update()

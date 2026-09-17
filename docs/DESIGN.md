@@ -341,6 +341,11 @@ voice — and the voices they can hear — play **from the TV**, as loud as the 
 hears them, falling off with your distance to it. The TV counts on the diver's
 **ON AIR · N watching** mark. Game sounds flagged for broadcast (`BroadcastSound`)
 replay at the TV; none are flagged yet (the winch and the doors have no clips).
+The picture is a second render of the site, kept cheap (Dan, 17 September 2026:
+"very laggy"): half resolution, every other frame, and only while someone stands
+within 30 m of the screen; it renders under the site's own fog and ambient
+(`WorldLook`, which every world scene carries), so the seafloor is as dark on the
+TV as it is for the diver — the same swap serves a dead diver's eyes on the deck.
 
 ---
 

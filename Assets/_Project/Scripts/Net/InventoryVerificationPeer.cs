@@ -277,7 +277,7 @@ namespace SunkCost.Net
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
             var seaShip = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
             var tv = seaShip != null ? seaShip.GetComponent<SunkCost.World.ShipTV>() : null;
-            string tvLine = tv == null ? "tv=none" : $"tv={tv.Channel}; tvLive={tv.Live}; tvCaption={tv.Caption}";
+            string tvLine = tv == null ? "tv=none" : $"tv={tv.Channel}; tvLive={tv.Live}; tvCaption={tv.Caption}; tvViewerNear={tv.ViewerNear}; tvRendered={tv.RenderedFrames}";
             // What FishNet holds on this client: object ids with names — the peer's view of who is here.
             var spawnedIds = new System.Collections.Generic.List<string>();
             if (nm.ClientManager != null)

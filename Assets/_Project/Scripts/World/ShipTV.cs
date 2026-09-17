@@ -1,6 +1,8 @@
 using System.IO;
 using SunkCost.Player;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace SunkCost.World
 {
@@ -16,25 +18,36 @@ namespace SunkCost.World
     // reads the channel and the diver's replicated pitch and yaw, decides
     // nothing. The diver's object is on this client because the server loads
     // the dive world for ship clients while a channel exists (WorldSceneFlow.Watch).
+    //
+    // The picture is a second render of the whole site, so it is kept cheap
+    // (Dan, 17 September 2026: "very laggy"): half the screen's resolution, every
+    // other frame, and only while the local player stands within ViewerMetres of
+    // the screen. It renders with the site's own fog and ambient (WorldLook) and
+    // the diver camera's post-processing, so the seafloor looks as dark on the
+    // TV as it does to the diver.
     [DefaultExecutionOrder(500)] // after the divers' NetworkTransforms have moved
     public sealed class ShipTV : MonoBehaviour
     {
+        public const float ViewerMetres = 30f;
+        public const int ResolutionDivisor = 2;
+        public const int FrameStep = 2; // every other frame
         private static readonly Color DarkScreen = new(0.02f, 0.03f, 0.04f);
 
         private ShipParts ship;
         private Renderer screen;
         private Material material;
         private TextMesh caption;
-        // The camera draws into `picture`; each frame the picture is copied to
-        // `shown` and the visor drawn over it, and the screen quad shows `shown`:
-        // the quad never sees a half-drawn frame. Both are screen-sized so the
-        // visor's screen-space layout and projections map one to one.
+        // The camera draws into `picture`; each rendered frame the picture is copied
+        // to `shown` and the visor drawn over it, and the screen quad shows `shown`:
+        // the quad never sees a half-drawn frame.
         private RenderTexture picture, shown;
         private Camera cam;
         private HQPlayerController diver;
+        private HQPlayerController cameraSource; // whose camera the TV camera was copied from
         private Transform speaker;
         private PlayerHudUI hud;
         private readonly PlayerHudUI.VisorFrame frame = new();
+        private bool renderedThisFrame;
 
         // What the screen shows this frame (for the checks and the peer snapshot).
         public int Channel { get; private set; } = -1;
@@ -43,6 +56,9 @@ namespace SunkCost.World
         public HQPlayerController Diver => diver;
         public Vector3 SpeakerPosition => speaker != null ? speaker.position : transform.position;
         public PlayerHudUI.VisorFrame Frame => frame;
+        // Someone stands close enough to see the screen: the picture is rendered.
+        public bool ViewerNear { get; private set; }
+        public int RenderedFrames { get; private set; }
 
         private void Awake()
         {
@@ -58,14 +74,14 @@ namespace SunkCost.World
             cam = go.AddComponent<Camera>();
             cam.fieldOfView = 70f;
             cam.nearClipPlane = 0.05f;
-            cam.enabled = false;
+            cam.enabled = false; // rendered by hand (LateUpdate), never by the loop
             EnsureTextures();
             ShowNoSignal();
         }
 
         private void EnsureTextures()
         {
-            int w = Mathf.Max(Screen.width, 2), h = Mathf.Max(Screen.height, 2);
+            int w = Mathf.Max(Screen.width / ResolutionDivisor, 2), h = Mathf.Max(Screen.height / ResolutionDivisor, 2);
             if (picture != null && picture.width == w && picture.height == h) return;
             ReleaseTextures();
             picture = new RenderTexture(w, h, 16) { name = "TvPicture" };
@@ -86,9 +102,34 @@ namespace SunkCost.World
             if (material != null) Destroy(material);
         }
 
+        // The TV camera sees what the diver's camera sees: its culling, clip
+        // planes, field of view and URP post-processing (the underwater grade is a
+        // volume the camera's post-processing picks up). Copied once per diver.
+        private void MatchCamera(HQPlayerController who)
+        {
+            Camera reference = who != null ? who.PlayerCamera : null;
+            if (reference == null || cameraSource == who) return;
+            cameraSource = who;
+            RenderTexture target = cam.targetTexture;
+            cam.CopyFrom(reference);
+            cam.targetTexture = target;
+            cam.enabled = false;
+            UniversalAdditionalCameraData referenceData = reference.GetUniversalAdditionalCameraData();
+            UniversalAdditionalCameraData data = cam.GetUniversalAdditionalCameraData();
+            data.renderType = CameraRenderType.Base;
+            data.renderPostProcessing = referenceData == null || referenceData.renderPostProcessing;
+            if (referenceData != null)
+            {
+                data.volumeLayerMask = referenceData.volumeLayerMask;
+                data.antialiasing = referenceData.antialiasing;
+            }
+            data.volumeTrigger = cam.transform; // the grade is a volume around the seafloor: judged where the TV camera stands
+        }
+
         private void LateUpdate()
         {
             EnsureTextures();
+            renderedThisFrame = false;
             CrewDayState day = CrewDayState.Instance;
             int channel = day != null ? day.TvChannel : -1;
             Channel = channel;
@@ -100,21 +141,36 @@ namespace SunkCost.World
                 else ShowLive(diver);
             }
             if (diver == null) return;
+            HQPlayerController local = WorldSceneFlow.LocalPlayer();
+            ViewerNear = local != null && Vector3.Distance(local.transform.position, SpeakerPosition) <= ViewerMetres;
+            if (!ViewerNear || Time.frameCount % FrameStep != 0) return;
+            MatchCamera(diver);
             Transform eye = diver.EyeAnchor;
             cam.transform.SetPositionAndRotation(eye.position, Quaternion.Euler(diver.LookPitch, diver.Yaw, 0f));
-            if (hud == null) { HQPlayerController local = WorldSceneFlow.LocalPlayer(); hud = local != null ? local.GetComponent<PlayerHudUI>() : null; }
+            if (hud == null) hud = local.GetComponent<PlayerHudUI>();
             if (hud != null) hud.Compute(frame, diver, diver.Inventory, cam, watching: true);
+            // The site's own fog and ambient for this one render (the active scene
+            // is the ship's), then the ship's back.
+            WorldLook.Snapshot? previous = WorldLook.Begin(WorldScenes.Scene(WorldId.Dive));
+            cam.Render();
+            WorldLook.Restore(previous);
+            renderedThisFrame = true;
+            RenderedFrames++;
         }
 
         // The visor over the picture, drawn into the shown texture by the local
-        // HUD's own drawing path (IMGUI draws into RenderTexture.active on repaint).
+        // HUD's own drawing path (IMGUI draws into RenderTexture.active on repaint),
+        // scaled from screen pixels to the picture's.
         private void OnGUI()
         {
-            if (diver == null || hud == null || shown == null || Event.current.type != EventType.Repaint) return;
+            if (!renderedThisFrame || diver == null || hud == null || shown == null || Event.current.type != EventType.Repaint) return;
             RenderTexture previous = RenderTexture.active;
+            Matrix4x4 matrix = GUI.matrix;
             Graphics.Blit(picture, shown);
             RenderTexture.active = shown;
+            GUI.matrix = Matrix4x4.Scale(new Vector3((float)shown.width / Screen.width, (float)shown.height / Screen.height, 1f));
             hud.DrawVisor(frame, diver.Inventory, maskOn: frame.Readout.On, readoutsOn: frame.Readout.On && !diver.TravelLocked, onAir: true);
+            GUI.matrix = matrix;
             RenderTexture.active = previous;
         }
 
@@ -131,7 +187,6 @@ namespace SunkCost.World
             Caption = "LIVE · " + (identity != null ? identity.DisplayName : PlayerIdentity.Fallback(who.OwnerId));
             if (caption != null) { caption.text = Caption; caption.color = new Color(1f, 0.35f, 0.3f); }
             if (material != null) { material.mainTexture = shown; material.color = Color.white; }
-            if (cam != null) cam.enabled = true;
         }
 
         private void ShowNoSignal()
@@ -139,11 +194,13 @@ namespace SunkCost.World
             Caption = "NO SIGNAL";
             if (caption != null) { caption.text = Caption; caption.color = new Color(0.7f, 0.7f, 0.7f); }
             if (material != null) { material.mainTexture = null; material.color = DarkScreen; }
-            if (cam != null) cam.enabled = false;
         }
 
         // For the checks: the shown picture as a PNG, and how much is in it (the
-        // standard deviation of its brightness: a dark or blank screen reads ~0).
+        // standard deviation of its brightness: a dark or blank screen reads ~0);
+        // LastMeanBrightness says how dark it is (the seafloor under its own fog
+        // reads well under the deck's daylight).
+        public float LastMeanBrightness { get; private set; }
         public float SavePicture(string path)
         {
             if (shown == null) return 0f;
@@ -162,6 +219,7 @@ namespace SunkCost.World
             }
             int n = (pixels.Length + 6) / 7;
             double mean = sum / n;
+            LastMeanBrightness = (float)mean;
             float deviation = (float)System.Math.Sqrt(System.Math.Max(0, sumSq / n - mean * mean));
             if (!string.IsNullOrEmpty(path))
             {
