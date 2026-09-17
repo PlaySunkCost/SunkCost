@@ -1,0 +1,213 @@
+2026-09-17T14:39:26.5784679Z generated-tone voice matrix
+PASS: sequence wrap/reorder/duplicates; proximity; bounded serializer; 100 Opus frames + PLC. Largest packet 93 bytes, decoded peak 0.105.
+PASS host starts muted
+Guest PID 16488; port 7770
+PASS separate authenticated client joined
+PASS guest answered 1
+id=1; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=0; output=0; status=Microphone OFF
+heard=
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS guest starts muted
+PASS guest answered 2
+id=2; requested voice_tone
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=18; received=14; relayed=0; rejected=0; mix=12; output=0; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=14; plc=0; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS client-to-host Opus decoding
+PASS guest answered 3
+id=3; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=43; received=39; relayed=0; rejected=0; mix=36; output=0; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=39; plc=0; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS host-to-client Opus decoding
+PASS host has no self-playback
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755054; sent=43; received=42; relayed=84; rejected=0; mix=3011; output=349; status=Generated test tone — microphone NOT captured
+voicePeer=1; epoch=5539331832108755053; muted=False; route=0; decoded=42; plc=0; level=0.057
+heard=1:0,
+PASS native selected output consumes nonzero samples
+PASS per-player mute discards received playback
+PASS unmute resumes live audio
+PASS guest answered 4
+id=4; moved to (-1.00, 0.00, -3.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=226; received=222; relayed=0; rejected=0; mix=208; output=284; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=222; plc=0; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(-1.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-1.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+distance request=2 gain=1.000 pan=0.707
+PASS full nearby gain
+PASS indicator lists the guest, direct, while heard
+PASS guest answered 5
+id=5; moved to (8.00, 0.00, -3.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=264; received=260; relayed=0; rejected=0; mix=243; output=359; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=260; plc=0; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(8.00, -0.79, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(8.00, 0.81, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+distance request=11 gain=0.482 pan=0.694
+PASS halfway smooth attenuation
+PASS guest answered 6
+id=6; moved to (17.00, 0.00, -3.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=301; received=298; relayed=0; rejected=0; mix=278; output=399; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=298; plc=0; level=0.057
+heard=
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(17.00, -0.79, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(17.00, 0.81, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+distance request=20 gain=0.000 pan=0.703
+PASS silence at/above 20m
+PASS guest answered 7
+id=7; moved to (21.00, 0.00, -3.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=338; received=319; relayed=0; rejected=0; mix=312; output=399; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=319; plc=0; level=0.057
+heard=
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(21.00, -0.79, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(21.00, 0.81, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+distance request=24 gain=0.000 pan=0.000
+PASS silence at/above 20m
+PASS indicator drops the guest out of range
+PASS no host relay outside margin
+PASS guest answered 8
+id=8; moved to (-1.00, 0.00, -3.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=477; received=334; relayed=0; rejected=0; mix=442; output=399; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755054; muted=False; route=0; decoded=334; plc=0; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(-1.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-1.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS returning into range resumes
+PASS voice volume zero
+PASS settings mute action stops outgoing frames
+PASS guest answered 9
+id=9; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=546; received=348; relayed=0; rejected=0; mix=504; output=399; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=0; muted=False; route=0; decoded=0; plc=0; level=0.000
+heard=
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(-1.00, 0.00, -3.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-1.00, 1.60, -3.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS reliable stop clears remote playback
+PASS guest answered 10
+id=10; moved to (3.00, 0.00, 34.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=True; test=False; tone=True; world=0; epoch=5539331832108755053; sent=619; received=410; relayed=0; rejected=0; mix=564; output=399; status=Generated test tone — microphone NOT captured
+voicePeer=0; epoch=5539331832108755056; muted=False; route=0; decoded=62; plc=2; level=0.057
+heard=0:0,
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-3.00, 0.00, 34.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, 34.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=HQPrototype; position=(3.00, 0.00, 34.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.00, 1.60, 34.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+item=Basketball(Clone); id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(0.00, 0.12, 0.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.62; grip=OneHand; launch=0; position=(-1.50, 0.12, 1.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(0.00, 0.35, -3.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 0.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(3.00, 0.20, 2.50); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(-3.00, 0.28, 0.00); velocity=(0.00, 0.00, 0.00)
+
+PASS sail begins
+mic=True; test=False; tone=True; world=-1; epoch=0; sent=557; received=425; relayed=892; rejected=3; mix=3575; output=670; status=Generated test tone — microphone NOT captured
+voicePeer=1; epoch=0; muted=False; route=0; decoded=0; plc=0; level=0.000
+heard=
+PASS travel preserves preference but stops stream
+PASS arrived at sea
+PASS voice resumes after fresh travel epoch
+mic=True; test=False; tone=True; world=1; epoch=5539331832108755059; sent=571; received=436; relayed=917; rejected=3; mix=3605; output=670; status=Generated test tone — microphone NOT captured
+voicePeer=1; epoch=5539331832108755060; muted=False; route=0; decoded=11; plc=0; level=0.057
+heard=1:0,
+PASS guest answered 11
+id=11; requested voice_off
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=1; payday=False; box=0; balance=0; world=Sea; fade=0; message=Connected to 127.0.0.1.; monitor=Day 1 of 3 — Site 01 — E on HQ to sail home; trip=Complete/1; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=False; tvRendered=0; spawned=0:CrewDayState+8:PrototypePlayer+9:PrototypePlayer; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=1; epoch=0; sent=680; received=472; relayed=0; rejected=0; mix=687; output=399; status=Microphone OFF
+voicePeer=0; epoch=0; muted=False; route=0; decoded=0; plc=0; level=0.000
+heard=
+player=0; name=Skipper; colour=2; local=False; scene=ShipAtSea; position=(-3.00, 0.00, 3005.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, 3005.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(0.71, 0.00, 0.71)
+player=1; name=Zahav; colour=3; local=True; scene=ShipAtSea; position=(3.00, 0.00, 3005.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.00, 1.60, 3005.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=0; camFwd=(-0.71, 0.00, 0.71)
+
+PASS disconnect cleanup
+PASS leave resets microphone
+PASS re-host succeeds
+PASS re-host starts muted
+MATRIX_PASS

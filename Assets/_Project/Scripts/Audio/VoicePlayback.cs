@@ -47,6 +47,11 @@ namespace SunkCost.Audio
         public int CushionMs => cushion / 48;
         public int Cushion { get => cushion; set => cushion = Math.Max(MinCushion, Math.Min(MaxCushion, value)); }
         public float Gain => source != null ? source.volume : 0;
+        // Loudness of the last decoded frame (RMS, 0..1), for the "who is talking"
+        // indicator: frames arrive whenever the speaker's microphone is on, so the
+        // level, not the arrival, says whether they are saying anything.
+        public float Level => level;
+        private float level;
         public float Pan => source != null ? source.panStereo : 0;
         public VoicePlayback(GameObject owner, AudioDeviceService devices)
         {
@@ -128,6 +133,8 @@ namespace SunkCost.Audio
                     int count = missing > 3 ? 0 : NativeAudioBridge.sc_decode(decoder, size == 0 ? null : packet, size, pcm);
                     if (count != 960) Array.Clear(pcm, 0, pcm.Length);
                     if (size == 0) Concealed++; else Decoded++;
+                    double square = 0; foreach (float sample in pcm) square += sample * sample;
+                    level = (float)Math.Sqrt(square / 960);
                     int w = write;
                     for (int i = 0; i < 960; i++) ring[unchecked(w + i) & (ring.Length - 1)] = pcm[i];
                     Volatile.Write(ref write, w + 960);

@@ -27,6 +27,7 @@ namespace SunkCost.Audio
             public float Volume = 1; public bool Muted;
             public float LastFrame;
             public byte Route; // how the last frame is to be mixed (VoiceRoute)
+            public float HeardUntil; // the indicator holds a speaker this long after their last loud frame
             public int Cushion = VoicePlayback.MinCushion; // the jitter buffer this player's link needed, kept across streams
         }
         public AudioDeviceService Devices { get; private set; }
@@ -43,6 +44,15 @@ namespace SunkCost.Audio
         public uint RejectedFrames { get; private set; }
         public VoiceSettings Settings { get; private set; }
         public IEnumerable<int> PeerIds => players.Keys;
+        // Who this listener hears right now, and by which route — for the
+        // indicator (Dan, 17 September 2026: "who sounds coming from, Player x /
+        // TV, top right"). A speaker is listed while their mixed gain is above zero
+        // and their decoded audio is louder than SpeechLevel, held HeardHoldSeconds
+        // past the last loud frame so words do not flicker. Rebuilt by Mix.
+        public struct HeardSpeaker { public int Id; public byte Route; public float Gain; }
+        public const float SpeechLevel = 0.01f, HeardHoldSeconds = 0.4f;
+        private readonly List<HeardSpeaker> heard = new();
+        public IReadOnlyList<HeardSpeaker> Heard => heard;
         public bool IsSelf(int id) => Connected && id == manager.ClientManager.Connection.ClientId;
         public string PeerName(int id) => players.TryGetValue(id, out var player) ? player.GetComponent<PlayerIdentity>()?.DisplayName ?? PlayerIdentity.Fallback(id) : PlayerIdentity.Fallback(id);
         private PrototypeSessionController session;
@@ -65,7 +75,9 @@ namespace SunkCost.Audio
             get
             {
                 string text = $"mic={MicrophoneEnabled}; test={TestingMicrophone}; tone={syntheticCapture}; world={world}; epoch={generation}; sent={SentFrames}; received={ReceivedFrames}; relayed={RelayedFrames}; rejected={RejectedFrames}; mix={Devices.MixCallbacks}; output={Devices.OutputCallbacks}; status={Status}";
-                foreach (var pair in receivers) text += $"\nvoicePeer={pair.Key}; epoch={pair.Value.Generation}; muted={pair.Value.Muted}; route={pair.Value.Route}; decoded={pair.Value.Playback?.Decoded ?? 0}; plc={pair.Value.Playback?.Concealed ?? 0}";
+                foreach (var pair in receivers) text += $"\nvoicePeer={pair.Key}; epoch={pair.Value.Generation}; muted={pair.Value.Muted}; route={pair.Value.Route}; decoded={pair.Value.Playback?.Decoded ?? 0}; plc={pair.Value.Playback?.Concealed ?? 0}; level={pair.Value.Playback?.Level ?? 0:0.000}";
+                text += "\nheard=";
+                foreach (HeardSpeaker speaker in heard) text += $"{speaker.Id}:{speaker.Route},";
                 return text;
             }
         }
@@ -208,6 +220,7 @@ namespace SunkCost.Audio
         {
             players.TryGetValue(localId, out var local);
             var day = CrewDayState.Instance;
+            heard.Clear();
             foreach (var pair in receivers)
             {
                 var receiver = pair.Value;
@@ -258,8 +271,12 @@ namespace SunkCost.Audio
                         }
                     }
                 }
-                receiver.Playback.SetMix(receiver.Muted ? 0 : gain * VoiceVolume * receiver.Volume, pan);
+                float mixed = receiver.Muted ? 0 : gain * VoiceVolume * receiver.Volume;
+                receiver.Playback.SetMix(mixed, pan);
+                if (mixed > 0.001f && receiver.Playback.Level >= SpeechLevel) receiver.HeardUntil = Time.unscaledTime + HeardHoldSeconds;
+                if (mixed > 0.001f && Time.unscaledTime < receiver.HeardUntil) heard.Add(new HeardSpeaker { Id = pair.Key, Route = receiver.Route, Gain = mixed });
             }
+            heard.Sort((a, b) => a.Id.CompareTo(b.Id));
             removed.Clear(); foreach (var pair in receivers) if (!players.ContainsKey(pair.Key) && Time.unscaledTime - pair.Value.LastFrame > 2) removed.Add(pair.Key);
             foreach (int id in removed) { receivers[id].Playback?.Dispose(); receivers.Remove(id); }
         }

@@ -129,13 +129,17 @@ namespace SunkCost.Editor.Prototype
                 if (distance == 2) Check(gain > .95f, "full nearby gain");
                 if (distance == 11) Check(gain > .35f && gain < .65f, "halfway smooth attenuation");
                 if (distance >= 20) Check(gain == 0, "silence at/above 20m");
+                // The indicator: the guest's tone is heard straight from them while in
+                // range, and drops off the list (after the hold) once out of range.
+                if (distance == 2) yield return Until(() => Voice.Heard.Any(h => h.Id == guestId && h.Route == VoiceRoute.Direct), 3, "indicator lists the guest, direct, while heard");
+                if (distance == 24) yield return Until(() => Voice.Heard.All(h => h.Id != guestId), 3, "indicator drops the guest out of range");
             }
             yield return Wait(1); uint relay = Voice.RelayedFrames; yield return Wait(1);
             Check(Voice.RelayedFrames == relay, "no host relay outside margin");
             Send("move", origin + Vector3.right * 2); yield return Answer(); yield return Until(() => Voice.PeerPlaybackGain(guestId) > .95f, 10, "returning into range resumes");
             Voice.SetVoiceVolume(0); yield return Wait(.2); Check(Voice.PeerPlaybackGain(guestId) == 0, "voice volume zero"); Voice.SetVoiceVolume(1);
             Voice.SetMicrophone(false); uint sent = Voice.SentFrames; yield return Wait(.7); Check(Voice.SentFrames == sent, "settings mute action stops outgoing frames");
-            Send("snapshot"); yield return Answer(); Check(Reply().Contains("epoch=0; muted=False; decoded=0"), "reliable stop clears remote playback");
+            Send("snapshot"); yield return Answer(); Check(System.Text.RegularExpressions.Regex.IsMatch(Reply(), @"epoch=0; muted=False; route=\d+; decoded=0;"), "reliable stop clears remote playback"); // the peer line gained route= (voice protocol 3) and level=
             Voice.StartLocalTestTone(); yield return Wait(1);
             // New main's day/payday rules stay authoritative; use the actual ship controls.
             var ship = ShipParts.InWorld(CrewDayState.Instance.World);
