@@ -127,6 +127,12 @@ namespace SunkCost.Player
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
+                if (target == null && inventory.HeldItem != null)
+                {
+                    // An air tank in hand: what left click does with it.
+                    AirTankItem tank = inventory.HeldItem.GetComponent<AirTankItem>();
+                    if (tank != null) return tank.IsEmpty ? "Empty air tank — left click to throw it" : $"Left click to breathe from the tank (+{Mathf.RoundToInt(tank.RefillFraction * 100f)}% air)";
+                }
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
                 if (!inventory.CanStoreOrHold(target)) return "Hands full";

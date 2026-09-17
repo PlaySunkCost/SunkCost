@@ -13,7 +13,7 @@ namespace SunkCost.Player
     // below (lost), and disappears at End day when its owner is revived next to
     // it on the ship. The CarryableItem on the same prefab does the carrying;
     // this only says whose body it is.
-    public sealed class PlayerBody : NetworkBehaviour
+    public sealed class PlayerBody : NetworkBehaviour, SunkCost.Interaction.IItemTag
     {
         public const string PrefabName = "PlayerBody";
 
@@ -22,6 +22,7 @@ namespace SunkCost.Player
 
         public int OwnerClientId => ownerClientId.Value;
         public string DisplayName => (string.IsNullOrEmpty(ownerName.Value) ? "Diver" : ownerName.Value) + "'s body";
+        public SunkCost.Interaction.ItemUseAction? UseActionOverride => null; // the prefab's own
 
         [Server]
         public void ServerSetOwner(int clientId, string name)

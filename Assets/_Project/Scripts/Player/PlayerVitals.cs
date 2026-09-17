@@ -154,6 +154,20 @@ namespace SunkCost.Player
             }
         }
 
+        // An air tank breathed from (AirTankItem): a fraction of the tank back, never
+        // past full, only while the suit is on. Returns what was actually added.
+        [Server]
+        public float ServerAddAir(float fraction)
+        {
+            if (!inDive || controller == null || controller.IsDead) return 0f;
+            float tank = Settings.EffectiveTankSeconds;
+            float before = Mathf.Max(0f, airSeconds);
+            airSeconds = Mathf.Min(tank, before + fraction * tank);
+            air.Value = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, tank)));
+            return airSeconds - before;
+        }
+        public bool ServerSuitOn => inDive;
+
         // The debug key (L; HQPlayerController) and the peer's air_down: a step off
         // the tank, below only. Development builds and the editor only.
         public void RequestDebugAirDown()

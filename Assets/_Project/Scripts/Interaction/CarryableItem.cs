@@ -72,10 +72,12 @@ namespace SunkCost.Interaction
         private Vector3 transitLocalPosition;
         private Quaternion transitLocalRotation;
 
-        public string DisplayName => BodyTag != null ? BodyTag.DisplayName : (string.IsNullOrEmpty(displayName) ? name : displayName);
-        // A dead player's body carries the player's name (PlayerBody on the same prefab).
-        private SunkCost.Player.PlayerBody bodyTag; private bool bodyTagLooked;
-        private SunkCost.Player.PlayerBody BodyTag { get { if (!bodyTagLooked) { bodyTag = GetComponent<SunkCost.Player.PlayerBody>(); bodyTagLooked = true; } return bodyTag; } }
+        public string DisplayName => Tag != null ? Tag.DisplayName : (string.IsNullOrEmpty(displayName) ? name : displayName);
+        // An item with a state of its own on the same prefab — a dead player's body
+        // (PlayerBody: the player's name), an air tank (AirTankItem: full or empty,
+        // breathe or throw) — supplies the name and the use action.
+        private IItemTag tag; private bool tagLooked;
+        private IItemTag Tag { get { if (!tagLooked) { tag = GetComponent<IItemTag>(); tagLooked = true; } return tag; } }
         // A two-handed item never fits a slot, whatever the serialized flag says.
         public bool FitsInSlot => grip != CarryGrip.TwoHands && fitsInSlot;
         public CarryGrip Grip => grip;
@@ -105,7 +107,7 @@ namespace SunkCost.Interaction
         public int ValueMin => valueMin;
         public int ValueMax => valueMax;
         public Texture2D Icon => icon;
-        public ItemUseAction UseAction => useAction;
+        public ItemUseAction UseAction => Tag != null && Tag.UseActionOverride.HasValue ? Tag.UseActionOverride.Value : useAction;
         public ItemState State => state.Value;
         public int TransitSerial => transitSerial;
         public bool InTransit => transitSerial != 0;

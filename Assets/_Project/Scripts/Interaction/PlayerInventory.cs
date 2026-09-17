@@ -144,9 +144,11 @@ namespace SunkCost.Interaction
         }
 
         // Left click: throw forward from chest height; looking down throws level.
+        // An air tank is breathed from instead (no pose to propose).
         public void RequestUse(Vector3 aimDirection)
         {
             if (!IsOwner || heldItem == null) return;
+            if (heldItem.UseAction == ItemUseAction.Breathe) { ServerRequestUse(Vector3.zero, Vector3.zero); return; }
             if (!TryProposeRelease(heldItem, drop: false, out Vector3 pose, out Vector3 direction)) { ShowRefusal(RefuseReason.NoRoom); return; }
             ServerRequestUse(pose, direction);
         }
@@ -309,7 +311,15 @@ namespace SunkCost.Interaction
             if (sender != Owner) return;
             if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
-            if (held == null || held.UseAction != ItemUseAction.Throw) return;
+            if (held == null) return;
+            if (held.UseAction == ItemUseAction.Breathe)
+            {
+                // The tank stays in the hand, full or empty; the server decides what it gives.
+                AirTankItem tank = held.GetComponent<AirTankItem>();
+                if (tank != null && !tank.ServerBreathe(sender, out string why)) Debug.Log("[Air] " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + " could not breathe from the tank: " + why);
+                return;
+            }
+            if (held.UseAction != ItemUseAction.Throw) return;
             if (!ServerAcceptsPose(held, pose)) { TargetRefuse(sender, (byte)RefuseReason.NoRoom); return; }
             if (held.ServerRelease(sender, pose, direction, true))
                 ServerCommitRelease(held);
