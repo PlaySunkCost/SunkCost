@@ -96,6 +96,11 @@ namespace SunkCost.Player
         // Walk/sprint multiplier from the server-owned carried mass; a crawl when
         // the weight meter is full. A future dash should scale by it as well.
         public float SpeedFactor => inventory != null ? inventory.SpeedFactor : 1f;
+        public float WalkSpeed => walkSpeed;
+        public float SprintSpeed => sprintSpeed;
+        // Air and health (PlayerVitals on the same prefab); null before the vitals setup ran.
+        public PlayerVitals Vitals => vitals != null ? vitals : vitals = GetComponent<PlayerVitals>();
+        private PlayerVitals vitals;
         public bool Overloaded => inventory != null && inventory.Overloaded;
         public float InteractReach => interactReach;
         public Vector3 EyePosition => playerCamera != null ? playerCamera.transform.position : transform.position + Vector3.up * 1.6f;
@@ -327,6 +332,9 @@ namespace SunkCost.Player
             // K kills, below only, in development builds and the editor (nothing
             // else can kill yet; air and the monster will call the same death).
             if (keys.kKey.wasPressedThisFrame && Debug.isDebugBuild) { RequestDebugDeath(); return; }
+            // L takes a step off the tank (Dan, 17 September 2026: "we need to test
+            // oxygen somehow"), below only, development builds and the editor.
+            if (keys.lKey.wasPressedThisFrame && Debug.isDebugBuild && Vitals != null) Vitals.RequestDebugAirDown();
             if (keys.eKey.wasPressedThisFrame)
             {
                 grabConsumed = false;

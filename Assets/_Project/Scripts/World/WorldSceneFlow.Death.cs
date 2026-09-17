@@ -23,8 +23,10 @@ namespace SunkCost.World
         // of the site's unload or their client would keep a stale copy.
         private readonly HashSet<int> deadWithSite = new();
 
-        // K below (HQPlayerController.RequestDebugDeath), later air and the monster.
-        public bool ServerKill(NetworkConnection conn, out string why)
+        // K below (HQPlayerController.RequestDebugDeath), an empty tank
+        // (PlayerVitals, cause "suffocated"), later the monster.
+        public bool ServerKill(NetworkConnection conn, out string why) => ServerKill(conn, out why, "killed");
+        public bool ServerKill(NetworkConnection conn, out string why, string cause)
         {
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
@@ -45,7 +47,7 @@ namespace SunkCost.World
             dayState.ServerPlayerDied(id);
             player.ServerSetDead(true);
             deadWithSite.Add(id);
-            Debug.Log($"[WorldSceneFlow] {name} died below at {at:F1}; body {(body != null ? body.name : "none")}; living below: {dayState.Below.Count}");
+            Debug.Log($"[WorldSceneFlow] {name} {cause} below at {at:F1}; body {(body != null ? body.name : "none")}; living below: {dayState.Below.Count}");
             ServerUpdateSpectators(); // the nearest living player, now (card 2)
             ServerAfterDeath();
             return true;
@@ -170,6 +172,7 @@ namespace SunkCost.World
                 else if (points.Count > 0) { Transform p = points[k++ % points.Count]; at = p.position; yaw = p.eulerAngles.y; }
                 else at = player.transform.position;
                 player.ServerSetDead(false);
+                if (player.Vitals != null) player.Vitals.ServerRevive(); // a new life: full tank, full health
                 player.TargetPlace(conn, at, yaw);
                 Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} revived at {at:F1}{(body != null ? " next to the body" : string.Empty)}");
             }

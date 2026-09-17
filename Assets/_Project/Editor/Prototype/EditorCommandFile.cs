@@ -10,7 +10,7 @@ namespace SunkCost.Editor.Prototype
     // through two editor restarts): a text file dropped in Temp is read, deleted
     // and run on the editor's main thread; the outcome goes to a reply file.
     //
-    //   Temp/editor-command.txt        one line: build-guest | matrix <job> | stop | refresh
+    //   Temp/editor-command.txt        one line: build-guest | matrix <job> | stop | refresh | run <Type.Method>
     //   Temp/editor-command.reply.txt  "ok <command>" or "error <command>: <message>"
     //
     // Editor only, polled twice a second, the same entry points the menu items and
@@ -22,6 +22,7 @@ namespace SunkCost.Editor.Prototype
         private const string CommandPath = "Temp/editor-command.txt";
         private const string ReplyPath = "Temp/editor-command.reply.txt";
         private static double nextPoll;
+        private static string lastResult;
 
         static EditorCommandFile()
         {
@@ -40,7 +41,8 @@ namespace SunkCost.Editor.Prototype
             try
             {
                 Run(command);
-                File.WriteAllText(ReplyPath, "ok " + command + "\n");
+                File.WriteAllText(ReplyPath, "ok " + command + (lastResult != null ? ": " + lastResult : string.Empty) + "\n");
+                lastResult = null;
             }
             catch (Exception e)
             {
@@ -68,8 +70,31 @@ namespace SunkCost.Editor.Prototype
                 case "refresh":
                     AssetDatabase.Refresh();
                     break;
+                case "run":
+                {
+                    // A public static parameterless method by full name, e.g.
+                    // run SunkCost.Editor.Prototype.PlayerVitalsSetup.Apply
+                    if (parts.Length < 2) throw new ArgumentException("run <Namespace.Type.Method>");
+                    string full = parts[1].Trim();
+                    int dot = full.LastIndexOf('.');
+                    if (dot <= 0) throw new ArgumentException("run <Namespace.Type.Method>");
+                    string typeName = full.Substring(0, dot), methodName = full.Substring(dot + 1);
+                    Type type = null;
+                    foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        type = assembly.GetType(typeName);
+                        if (type != null) break;
+                    }
+                    if (type == null) throw new ArgumentException("No type " + typeName);
+                    System.Reflection.MethodInfo method = type.GetMethod(methodName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, Type.EmptyTypes, null);
+                    if (method == null) throw new ArgumentException("No public static " + methodName + "() on " + typeName);
+                    object result = method.Invoke(null, null);
+                    lastResult = result?.ToString();
+                    if (result != null) Debug.Log("[EditorCommandFile] " + full + ": " + result);
+                    break;
+                }
                 default:
-                    throw new ArgumentException("Unknown command '" + parts[0] + "' (build-guest | matrix <job> | stop | refresh)");
+                    throw new ArgumentException("Unknown command '" + parts[0] + "' (build-guest | matrix <job> | stop | refresh | run <Type.Method>)");
             }
         }
     }

@@ -1749,6 +1749,7 @@ GameObject:
   - component: {fileID: 7867210717290791062}
   - component: {fileID: 5977058300289628473}
   - component: {fileID: 5498563322511694477}
+  - component: {fileID: 3425967163994532828}
   m_Layer: 9
   m_Name: PrototypePlayer
   m_TagString: Untagged
@@ -2073,6 +2074,22 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 364150461512337757}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &3425967163994532828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6590348707289834132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d71a4d5be14a2864f880310f42fa8f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Player.PlayerVitals
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 364150461512337757}
+  _networkObjectCache: {fileID: 0}
+  settings: {fileID: 11400000, guid: f4eb1bcdee05d0a47a6f407cb1d7e26a, type: 2}
 --- !u!1 &6745529598594192403
 GameObject:
   m_ObjectHideFlags: 0

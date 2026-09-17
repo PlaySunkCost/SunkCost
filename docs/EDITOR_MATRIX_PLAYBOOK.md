@@ -9,6 +9,9 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   (`spectate` = death and dead spectating, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`,
   guest dirs `Temp/spectate-guest` and `Temp/spectate-guest-b` — the S rows run two guest builds;
   `Send`/`GuestEventually` take the directory as their last argument;
+  `air` = the tank and health, `AirRuntimeChecks`, log `Temp/air-matrix.log`, the host alone
+  (drain at 1× and 1.5× sprinting on the virtual keyboard, L, suffocation to death, revive)
+  then one guest in `Temp/air-guest` (replication, the ride up on an empty tank) — about 5 minutes;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator
@@ -20,8 +23,10 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   in Play Mode** with the failing state live — inspect it before stopping.
 - **When the Unity MCP bridge cannot run commands** (every `RunCommand` answers
   "No logs available", 17 September 2026, through two editor restarts): write one
-  line to `Temp/editor-command.txt` — `build-guest`, `matrix <job>`, `stop` or
-  `refresh` — and read `Temp/editor-command.reply.txt` (`EditorCommandFile`, polled
+  line to `Temp/editor-command.txt` — `build-guest`, `matrix <job>`, `stop`,
+  `refresh` or `run <Namespace.Type.Method>` (a public static parameterless method,
+  e.g. `run SunkCost.Editor.Prototype.PlayerVitalsSetup.Apply`; its return value
+  comes back in the reply) — and read `Temp/editor-command.reply.txt` (`EditorCommandFile`, polled
   twice a second on the editor's main thread). `refresh` after editing scripts
   (the editor only recompiles on focus), then wait for the assemblies.
 - **Scene traffic is logged**: `[Scenes] server loads <scenes> for [ids] moving <id:name…> — <why>`
