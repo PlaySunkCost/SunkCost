@@ -70,6 +70,7 @@ namespace SunkCost.Player
         {
             public bool On;
             public float AirFraction, HealthFraction;
+            public bool AirLow, AirEmpty, HealthLow; // the visor blinks the bar and says AIR LOW (PlayerVitals thresholds)
             public float DepthMeters;
             public float HeadingDeg;
             public bool HomeShown;
@@ -347,8 +348,14 @@ namespace SunkCost.Player
             Vector3 eye = camera != null ? camera.transform.position : who.EyePosition;
             Vector3 forward = camera != null ? camera.transform.forward : who.transform.forward;
             UnityEngine.SceneManagement.Scene world = watching ? WorldScenes.Scene(WorldId.Dive) : gameObject.scene;
-            r.AirFraction = 1f;    // the Air card supplies the number; the bar's place is decided here
-            r.HealthFraction = 1f; // no damage exists yet
+            // Air and health from the player's vitals (server-written; a spectator and
+            // the TV read the watched player's through this same path).
+            PlayerVitals vitals = who.Vitals;
+            r.AirFraction = vitals != null ? vitals.AirFraction : 1f;
+            r.HealthFraction = vitals != null ? vitals.HealthFraction : 1f;
+            r.AirLow = vitals != null && vitals.AirLow;
+            r.AirEmpty = vitals != null && vitals.AirEmpty;
+            r.HealthLow = vitals != null && vitals.HealthLow;
             r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : who.Yaw, 360f);
 
             // HOME: the tube's doorway at the seafloor, hidden while inside the car.
@@ -513,8 +520,14 @@ namespace SunkCost.Player
             Rect vitals = PlayerVisorMask.VitalsRect(w, h);
             float left = vitals.x, barRow = 30f * s, row = 26f * s, barWidth = 200f * s, barHeight = 11f * s;
             float top = vitals.y;
-            DrawBar(left, top, barWidth, barHeight, "O2", Visor.AirFraction, s);
-            DrawBar(left, top + barRow, barWidth, barHeight, "HP", Visor.HealthFraction, s);
+            DrawBar(left, top, barWidth, barHeight, "O2", Visor.AirFraction, s, Visor.AirLow, Visor.AirEmpty);
+            DrawBar(left, top + barRow, barWidth, barHeight, "HP", Visor.HealthFraction, s, Visor.HealthLow, false);
+            if (Visor.AirLow && Blink())
+            {
+                // AIR LOW beside the O2 bar, blinking with it; "NO AIR" once the tank is dry.
+                GUI.color = new Color(1f, 0.35f, 0.3f, 0.95f);
+                GUI.Label(new Rect(left + 56f * s + barWidth + 70f * s, top - 2f * s, 120f * s, 22f * s), Visor.AirEmpty ? "NO AIR" : "AIR LOW", visorStyle);
+            }
             float textTop = top + barRow * 2f;
             GUI.color = VisorText;
             GUI.Label(new Rect(left, textTop, 70f * s, row), "DEPTH", visorSmallLeftStyle);
@@ -673,17 +686,22 @@ namespace SunkCost.Player
             return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(other.OwnerId);
         }
 
-        private void DrawBar(float x, float y, float width, float height, string label, float fraction, float s)
+        // Twice a second, on for 60 % of it: the low-air and low-health blink.
+        private static bool Blink() => Mathf.Repeat(Time.unscaledTime, 0.5f) < 0.3f;
+
+        // A vitals bar: red and blinking when low; the track itself red when empty.
+        private void DrawBar(float x, float y, float width, float height, string label, float fraction, float s, bool low, bool empty)
         {
             GUI.color = VisorText;
             GUI.Label(new Rect(x, y - 2f * s, 60f * s, 22f * s), label, visorStyle);
             float barX = x + 56f * s, barY = y + 4f * s;
-            GUI.color = new Color(0.1f, 0.35f, 0.4f, 0.35f);
+            GUI.color = empty && Blink() ? new Color(0.8f, 0.15f, 0.1f, 0.6f) : new Color(0.1f, 0.35f, 0.4f, 0.35f);
             GUI.DrawTexture(new Rect(barX, barY, width, height), whiteTexture);
             float fill = PlayerVisorMath.FillWidthPx(fraction, width);
-            GUI.color = fraction < 0.25f ? new Color(1f, 0.35f, 0.3f, 0.95f) : VisorColor;
+            bool red = low || fraction < 0.25f;
+            GUI.color = red ? new Color(1f, 0.35f, 0.3f, low && !Blink() ? 0.45f : 0.95f) : VisorColor;
             if (fill > 0f) GUI.DrawTexture(new Rect(barX, barY, fill, height), whiteTexture);
-            GUI.color = VisorText;
+            GUI.color = red ? new Color(1f, 0.35f, 0.3f, 0.95f) : VisorText;
             GUI.Label(new Rect(barX + width + 12f * s, y - 2f * s, 60f * s, 22f * s), $"{Mathf.RoundToInt(fraction * 100f)}%", visorStyle);
         }
 

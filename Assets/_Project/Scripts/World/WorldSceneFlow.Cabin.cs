@@ -617,7 +617,12 @@ namespace SunkCost.World
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
             ServerPlaceCabinCargo(CabinFrame.Car(car)); // the deck cabin's floor cargo, now on the car's floor
-            foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, true);
+            foreach (NetworkConnection conn in ActiveCohort())
+            {
+                dayState.ServerSetBelow(conn.ClientId, true);
+                HQPlayerController diver = PlayerOf(conn);
+                if (diver != null && diver.Vitals != null) diver.Vitals.ServerBeginDive(); // the suit is on: the tank counts from here
+            }
             if (!dayState.ServerBeginDay(out string dayWhy)) Debug.LogWarning("[WorldSceneFlow] The day did not begin: " + dayWhy);
             ServerUnload(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true), "ride down: the riders leave the ship");
 
@@ -641,6 +646,7 @@ namespace SunkCost.World
             ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
 
             SetRide(CabinRideStage.Sealing, RideDirection.Up, CarSealSeconds);
+            foreach (NetworkConnection conn in ActiveCohort()) { HQPlayerController diver = PlayerOf(conn); if (diver != null && diver.Vitals != null) diver.Vitals.ServerSetRidingReprieve(true); } // the tank still counts in the car; health floors at 1 until the deck
             ServerSetElevator(ElevatorState.Sealing, true);
             yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
             // The doors are shut and the car is climbing: whoever pressed the button
@@ -648,6 +654,12 @@ namespace SunkCost.World
             // stay below (the car comes back for them) instead of being moved to the
             // deck cabin from the seafloor (Dan, 15 September 2026).
             ServerDropRidersOutside(car);
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (cohort.Contains(conn.ClientId)) continue;
+                HQPlayerController left = PlayerOf(conn);
+                if (left != null && left.Vitals != null) left.Vitals.ServerSetRidingReprieve(false); // stepped out: the tank counts for real again
+            }
             SetRide(CabinRideStage.Riding, RideDirection.Up, CarTravelSeconds);
             yield return WaitForCar(ElevatorState.AtTop, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
 
@@ -673,7 +685,12 @@ namespace SunkCost.World
                 while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
                 if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
                 ServerPlaceCabinCargo(CabinFrame.DeckCabin(ship)); // the car's floor cargo, now on the deck cabin's floor
-                foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
+                foreach (NetworkConnection conn in ActiveCohort())
+                {
+                    dayState.ServerSetBelow(conn.ClientId, false);
+                    HQPlayerController diver = PlayerOf(conn);
+                    if (diver != null && diver.Vitals != null) diver.Vitals.ServerEndDive(); // the suit comes off: a new tank waits on deck
+                }
             }
             bool othersBelow = dayState.Below.Count > 0;
             if (!othersBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle); // the last living one up: the dive is done

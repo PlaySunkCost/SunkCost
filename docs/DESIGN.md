@@ -66,7 +66,9 @@ an air-restoring item; there are no refill stations or passive refills.
 button. The doors seal, the screen fades to "Putting on suit…" (about 3 s) — that
 fade is the scene change — and you fade back in inside the cabin at the top of
 the shaft, suit on, seeing whoever has already appeared. When the last of you is
-there the cabin descends and the air starts counting. Then the cabin floods:
+there the cabin descends and the air starts counting (built 17 September 2026:
+from the moment your object stands in the dive world, i.e. the landing at the top
+of the shaft, until you are back on the deck). Then the cabin floods:
 within about four seconds the water is over your head, and the rest of the 15 s
 ride is spent submerged, watching the shaft go by. The bottom door opens only
 when the cabin is full. You can walk around inside the cabin the whole way.
@@ -252,8 +254,9 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Camera | First person with a visible body. |
 | Movement | Walking only, no swimming. In-world reason still open. |
 | Suits | Identical for everyone, cosmetic skins purchasable. Each player has a distinct lamp colour — that's how you identify a shape in the dark. |
-| Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. Air starts counting when the suit fade ends in the descending cabin (section 1). During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. |
-| Air drain | Faster when sprinting, carrying weight, or damaged. Greed literally costs you air. |
+| Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. **Built 17 September 2026 (Dan):** the tank counts for as long as the suit is on — the whole time the player's object stands in the dive world, from the ride down's landing to the deck, the sealed car going up included ("even above water") — and is a new, full tank on the ship. **5 minutes** for the prototype site (a serialized number, `PlayerVitalsSettings`); the design target stays 12–15 for a real site. At **0 air, health goes at 8 a second** (about twelve seconds from empty to dead — between Minecraft's 10 s and a first thought of 20), and at 0 health the ordinary death (body, scatter, spectating). The visor's O2 bar is live: red and blinking with **AIR LOW** under 20 %, **NO AIR** on empty. **L** in a development build takes 5 % off the tank, below only, so the clock can be tested. |
+| Air drain | Faster when sprinting (**1.5×**, built 17 September 2026) or damaged (leaks, later). **Carried weight does not cost air** (Dan, 17 September 2026 — reversed from the earlier "greed literally costs you air"). |
+| Health | **Built 17 September 2026 (Dan):** 100 points, shown live on the visor's HP bar (red and blinking under 25 %). Lost health stays lost for the dive — no regeneration, healing is items only and none exists yet — and is full again at the next ride down; a revive at End day is a new life. **Inside the sealed car going up the tank still counts but health floors at 1** (the car saved you, barely): dying mid-ride, a body inside a moving car across a scene move, is not a path that exists. Decided for now. |
 | Damage | Attacks can open a leak. Patch it with an item or a teammate. No regeneration — healing is items only. |
 | Lethality | Depends on the monster, your current health, and your oxygen level. Low air makes you fragile, so a bad dive accelerates. |
 | Carrying | 4 inventory slots plus one hand. Large objects are two-handed: held low in front with both hands, never stowed, big enough to block part of the view. Every item weighs something; carried weight (hands and slots) fills a grey meter and slows you in a straight line down to 35 %; a full meter turns red and you crawl at 10 % until you drop something — everything else still works. Holding a two-handed object you can still store small items into free slots. Nothing is ever refused for weight. Weight also burns air (not yet implemented). |
