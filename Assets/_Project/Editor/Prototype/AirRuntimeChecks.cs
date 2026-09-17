@@ -334,8 +334,18 @@ namespace SunkCost.Editor.Prototype
             host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
             yield return Expect(() => tank2.GetComponent<AirTankItem>().IsEmpty, 3f, () => "K2 the second tank empties");
             Check(vitals.AirFraction == 1f, $"K2 the tank is full and no fuller ({100f * vitals.AirFraction:0}%)");
+
+            Heading("K3 — a breath with the air already full is refused: the tank is kept");
+            tank2.GetComponent<AirTankItem>().ServerRefillForChecks();
+            yield return Expect(() => !tank2.GetComponent<AirTankItem>().IsEmpty, 2f, () => "K3 the tank in hand is full again (checks only)");
+            yield return null;
+            Check(hud.PromptText.Contains("keep it"), "K3 the prompt says the air is full: " + hud.PromptText);
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Wait(0.8f);
+            Check(!tank2.GetComponent<AirTankItem>().IsEmpty && vitals.AirFraction == 1f, $"K3 left click at full air: the tank stays full ({100f * vitals.AirFraction:0}%)");
+            Check(host.Inventory.Refusal.Contains("air is full"), "K3 the refusal reads: " + host.Inventory.Refusal);
             host.Inventory.RequestDrop();
-            yield return Expect(() => tank2.HolderClientId != host.OwnerId, 3f, () => "K2 dropped");
+            yield return Expect(() => tank2.HolderClientId != host.OwnerId, 3f, () => "K3 dropped");
 
             Heading("A4 — an empty tank costs health, then the ordinary death");
             int presses = 0;

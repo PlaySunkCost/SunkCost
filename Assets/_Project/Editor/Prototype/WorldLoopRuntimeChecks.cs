@@ -428,6 +428,31 @@ namespace SunkCost.Editor.Prototype
                 r.Split('\n').Count(l => l.StartsWith("item=")) == HQPrototypeLootSetup.SceneItemCount + 2,
                 8f, "S13 guest back at HQ only, both players in HQ, sees the fresh fixture plus the two balls that travelled");
 
+            // S14: a passenger who leaves during the pull-away drops what they held; it
+            // crosses as cargo with the ship (code check, 18 September 2026: between
+            // the move list and the load such a drop was unloaded with the old world).
+            Vector3 nearBall = hqShip.FromShipLocal(hqShip.ToShipLocal(deckBall.transform.position) + new Vector3(0.9f, 0f, 0f));
+            Command(GuestDir, "{\"id\":{id},\"action\":\"move\",\"position\":{\"x\":" + nearBall.x + ",\"y\":" + nearBall.y + ",\"z\":" + nearBall.z + "}}");
+            yield return AwaitReply(GuestDir);
+            Vector3 toBall = deckBall.transform.position - nearBall;
+            Command(GuestDir, "{\"id\":{id},\"action\":\"look\",\"aim\":{\"x\":" + toBall.x + ",\"y\":" + toBall.y + ",\"z\":" + toBall.z + "}}");
+            yield return AwaitReply(GuestDir);
+            Command(GuestDir, "{\"id\":{id},\"action\":\"grab\",\"item\":\"#" + deckBall.ObjectId + "\"}");
+            yield return AwaitReply(GuestDir);
+            yield return WaitUntil(() => deckBall.State == ItemState.Held && deckBall.HolderClientId == guestPlayer.OwnerId, 5f, "S14 the guest holds the deck ball");
+            H.ClientMoveLocalPlayerTo(deckSpot); yield return null;
+            sail = H.ClientRequestSail("Sea");
+            yield return WaitUntil(() => Phase() == "Sailing" || Phase() == "AtSea", 5f, "S14 sail accepted: " + sail);
+            yield return WaitUntil(() => Stage() == DepartureStage.PullingAway, 8f, "S14 the ship pulls away");
+            Command(GuestDir, "{\"id\":{id},\"action\":\"leave\"}");
+            yield return WaitUntil(() => UnityEngine.Object.FindObjectsByType<HQPlayerController>().Length == 1, 20f, "S14 the guest is gone mid-trip");
+            yield return WaitUntil(() => deckBall != null && deckBall.IsSpawned && deckBall.State == ItemState.Free, 5f, "S14 the leaver's ball is loose on the moving deck");
+            yield return WaitUntil(() => Phase() == "AtSea" && !WorldSceneFlow.Instance.Transitioning, 40f, "S14 the ship arrives at sea without the leaver");
+            seaShip = ShipParts.InWorld(WorldId.Sea);
+            Check(deckBall != null && deckBall.IsSpawned && deckBall.gameObject.scene.name == WorldScenes.SeaName && seaShip != null && seaShip.IsAboard(deckBall.transform.position),
+                "S14 the leaver's ball crossed as cargo and lies aboard at sea (" + (deckBall == null || !deckBall.IsSpawned ? "gone" : deckBall.gameObject.scene.name + " " + seaShip.ToShipLocal(deckBall.transform.position).ToString("F1")) + ")");
+            guest.Kill(); guest = null;
+
             // S15: host leaves; every world scene is gone; re-host; fresh HQ.
             H.ClientRequestDrop(); yield return null;
             UnityEngine.Object.FindAnyObjectByType<PrototypeSessionUI>().LeaveSession();
@@ -435,7 +460,7 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.HQName) && !LoadedOnHost(WorldScenes.SeaName), 10f, "world scenes unloaded after leave");
             Check(SceneManager.GetActiveScene().name == WorldScenes.SessionName, "S15 back on Session");
             Check(CrewDayState.Instance == null, "S15 day state gone");
-            guest.Kill(); guest = null; // its connection is already gone with the host
+            guest?.Kill(); guest = null; // its connection is already gone with the host
             // The UDP port is released a moment after the server stops; Tugboat fails
             // to bind if the host is restarted immediately, so retry a few times.
             bool hosted = false;

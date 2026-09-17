@@ -148,7 +148,12 @@ namespace SunkCost.Interaction
         public void RequestUse(Vector3 aimDirection)
         {
             if (!IsOwner || heldItem == null) return;
-            if (heldItem.UseAction == ItemUseAction.Breathe) { ServerRequestUse(Vector3.zero, Vector3.zero); return; }
+            if (heldItem.UseAction == ItemUseAction.Breathe)
+            {
+                if (player != null && player.Vitals != null && player.Vitals.AirFraction >= 1f) { ShowRefusal(RefuseReason.AirFull); return; }
+                ServerRequestUse(Vector3.zero, Vector3.zero);
+                return;
+            }
             if (!TryProposeRelease(heldItem, drop: false, out Vector3 pose, out Vector3 direction)) { ShowRefusal(RefuseReason.NoRoom); return; }
             ServerRequestUse(pose, direction);
         }
@@ -215,10 +220,26 @@ namespace SunkCost.Interaction
             return true;
         }
 
+        // A request that crossed the wire as its sender died (a grab as the air ran
+        // out) must not land: a hidden body holding an item nobody could take
+        // (code check, 18 September 2026). Silent — the dead have no prompt.
+        private bool ServerDead() => player != null && player.IsDead;
+
+        // The item this connection holds, if any — for another item's decision
+        // (a cancelled release must not become a second thing in the same hands).
+        [Server]
+        public static CarryableItem ServerHeldBy(int clientId)
+        {
+            foreach (CarryableItem item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None))
+                if (item.IsSpawned && item.State == ItemState.Held && item.HolderClientId == clientId)
+                    return item;
+            return null;
+        }
+
         [ServerRpc]
         private void ServerRequestGrab(NetworkObject target, NetworkConnection sender = null)
         {
-            if (sender != Owner) return;
+            if (sender != Owner || ServerDead()) return;
             if (ServerTravelling(sender)) return;
             CarryableItem item = target == null ? null : target.GetComponent<CarryableItem>();
             if (item == null || !item.IsSpawned) { TargetRefuse(sender, (byte)RefuseReason.NoSuchItem); return; }
@@ -259,7 +280,7 @@ namespace SunkCost.Interaction
         [ServerRpc]
         private void ServerRequestEquip(int slot, NetworkConnection sender = null)
         {
-            if (sender != Owner || slot < 0 || slot >= InventorySlots.Count) return;
+            if (sender != Owner || slot < 0 || slot >= InventorySlots.Count || ServerDead()) return;
             if (ServerTravelling(sender)) return;
             InventorySlots current = slots.Value;
             int id = current.Get(slot);
@@ -296,7 +317,7 @@ namespace SunkCost.Interaction
         [ServerRpc]
         private void ServerRequestDrop(Vector3 pose, NetworkConnection sender = null)
         {
-            if (sender != Owner) return;
+            if (sender != Owner || ServerDead()) return;
             if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null) return;
@@ -308,13 +329,16 @@ namespace SunkCost.Interaction
         [ServerRpc]
         private void ServerRequestUse(Vector3 pose, Vector3 direction, NetworkConnection sender = null)
         {
-            if (sender != Owner) return;
+            if (sender != Owner || ServerDead()) return;
             if (ServerTravelling(sender)) return;
             CarryableItem held = ServerFindHeld();
             if (held == null) return;
             if (held.UseAction == ItemUseAction.Breathe)
             {
-                // The tank stays in the hand, full or empty; the server decides what it gives.
+                // The tank stays in the hand, full or empty; the server decides what it
+                // gives. With the air already full a breath would only empty the tank
+                // (code check, 18 September 2026): refused, the tank stays full.
+                if (player != null && player.Vitals != null && player.Vitals.AirFraction >= 1f) { TargetRefuse(sender, (byte)RefuseReason.AirFull); return; }
                 AirTankItem tank = held.GetComponent<AirTankItem>();
                 if (tank != null && !tank.ServerBreathe(sender, out string why)) Debug.Log("[Air] " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + " could not breathe from the tank: " + why);
                 return;

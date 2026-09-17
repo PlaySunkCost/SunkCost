@@ -70,10 +70,17 @@ namespace SunkCost.Interaction
             PlayerVitals vitals = player != null ? player.Vitals : null;
             if (vitals == null) { why = "no vitals on the holder"; return false; }
             if (!vitals.ServerSuitOn) { why = "the suit is off"; return false; }
+            if (vitals.AirFraction >= 1f) { why = "the air is already full"; return false; } // the tank is kept (PlayerInventory refuses first)
             float added = vitals.ServerAddAir(refillFraction);
             empty.Value = true;
             Debug.Log($"[Air] {SunkCost.World.WorldSceneFlow.DisplayName(holder)} breathed {added:0}s from a tank; air now {vitals.AirFraction:P0}");
             return true;
         }
+
+#if UNITY_EDITOR
+        // Editor checks only: a used tank made full again for the next row.
+        [Server]
+        public void ServerRefillForChecks() => empty.Value = false;
+#endif
     }
 }

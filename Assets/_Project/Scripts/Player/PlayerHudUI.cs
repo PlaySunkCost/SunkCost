@@ -131,7 +131,12 @@ namespace SunkCost.Player
                 {
                     // An air tank in hand: what left click does with it.
                     AirTankItem tank = inventory.HeldItem.GetComponent<AirTankItem>();
-                    if (tank != null) return tank.IsEmpty ? "Empty air tank — left click to throw it" : $"Left click to breathe from the tank (+{Mathf.RoundToInt(tank.RefillFraction * 100f)}% air)";
+                    if (tank != null)
+                    {
+                        if (tank.IsEmpty) return "Empty air tank — left click to throw it";
+                        if (controller.Vitals != null && controller.Vitals.AirFraction >= 1f) return "Full air tank — your air is full, keep it for later";
+                        return $"Left click to breathe from the tank (+{Mathf.RoundToInt(tank.RefillFraction * 100f)}% air)";
+                    }
                 }
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;

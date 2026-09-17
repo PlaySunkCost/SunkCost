@@ -613,6 +613,7 @@ namespace SunkCost.World
             var conns = ActiveCohort();
             foreach (NetworkConnection conn in conns) ServerDropWatchBefore(conn, WorldId.Dive); // a TV viewer keeps the site it watches: the load lands it there (card 3)
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+            moveListClosed = true;
             ServerLoad(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()), "ride down: the riders and cargo");
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
@@ -681,6 +682,7 @@ namespace SunkCost.World
                 Scene destination = WorldScenes.Scene(WorldId.Sea);
                 foreach (NetworkConnection conn in conns) ServerDropWatchBefore(conn, WorldId.Sea); // nobody living below watches the ship; a no-op kept symmetric with the ride down
                 foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+                moveListClosed = true;
                 ServerLoad(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()), "ride up: the riders and cargo");
                 while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
                 if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
