@@ -616,6 +616,9 @@ namespace SunkCost.Editor.Prototype
             // anyone moves it: the revive's placement lands with the dead flag, and a
             // move sent before it would be overwritten by it.
             yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("dead=False") && GuestPlayerLine(r, idA).Contains("controllerOn=True"), 10f, "T4 A's client reads itself alive with the capsule on");
+            // A was carried up while watching the ship (T3): the move must not cost it
+            // the other players' objects (it did — "expected to exist but does not").
+            yield return GuestEventually(r => GuestPlayerLine(r, host.OwnerId).Length > 0 && GuestPlayerLine(r, idB).Length > 0, 5f, "T4 A's client still has the host and B (nothing lost in the move up)");
 
             Heading("T5 — the diver below leaves while the car is on its way down for them: the car comes back and the site closes");
             Say($"server view of A: owner={remoteA.OwnerId} valid={remoteA.Owner.IsValid} isController={remoteA.IsController} spawned={remoteA.IsSpawned} scene={remoteA.gameObject.scene.name}; B: owner={remoteB.OwnerId} valid={remoteB.Owner.IsValid}");

@@ -24,6 +24,11 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   `refresh` — and read `Temp/editor-command.reply.txt` (`EditorCommandFile`, polled
   twice a second on the editor's main thread). `refresh` after editing scripts
   (the editor only recompiles on focus), then wait for the assemblies.
+- **Scene traffic is logged**: `[Scenes] server loads <scenes> for [ids] moving <id:name…> — <why>`
+  on the host, `[Scenes] client loads/unloads …` in each guest's `player.log`. A moved
+  object a guest cannot resolve prints as `?`, right after FishNet's "expected to exist
+  but does not" — that pair found the watch/move bug of 17 September 2026 in one run.
+  Grep the guest logs for `expected to exist|already found` after any run that moves players.
 - **Stop only with `CameraClearanceMatrixDriver.StopCleanly()`** (Leave first,
   then exit Play Mode); a bare stop leaks UDP 7770 until Unity restarts.
 - Never start a job or a builder while someone is playing; never edit scripts

@@ -598,8 +598,7 @@ namespace SunkCost.World
             deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
             if (!WorldScenes.IsLoaded(WorldId.Dive))
             {
-                EnsureHolderKeepAlive();
-                networkManager.SceneManager.LoadConnectionScenes(LoadDataFor(WorldId.Dive, null));
+                ServerLoad(null, LoadDataFor(WorldId.Dive, null), "ride down: a fresh site");
                 while (!WorldScenes.IsLoaded(WorldId.Dive) && Time.unscaledTime < deadline) yield return null;
             }
             cachedCar = null;
@@ -612,16 +611,15 @@ namespace SunkCost.World
             ServerBuildMoveList();
             Scene destination = WorldScenes.Scene(WorldId.Dive);
             var conns = ActiveCohort();
-            foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // a TV viewer drops the watched site first: the move is a plain load (card 3)
+            foreach (NetworkConnection conn in conns) ServerDropWatchBefore(conn, WorldId.Dive); // a TV viewer keeps the site it watches: the load lands it there (card 3)
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
-            EnsureHolderKeepAlive();
-            networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()));
+            ServerLoad(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()), "ride down: the riders and cargo");
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
             ServerPlaceCabinCargo(CabinFrame.Car(car)); // the deck cabin's floor cargo, now on the car's floor
             foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, true);
             if (!dayState.ServerBeginDay(out string dayWhy)) Debug.LogWarning("[WorldSceneFlow] The day did not begin: " + dayWhy);
-            networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true));
+            ServerUnload(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Sea, keepOnServer: true), "ride down: the riders leave the ship");
 
             // Eyes open inside the car at the top; then the ride itself.
             SetRide(CabinRideStage.Arriving, RideDirection.Down, Settings.SuitFadeSeconds);
@@ -669,10 +667,9 @@ namespace SunkCost.World
                 ServerFreezeCabinCargo(CabinFrame.Car(car), p => InsideCarForCargo(car, p));
                 ServerBuildMoveList();
                 Scene destination = WorldScenes.Scene(WorldId.Sea);
-                foreach (NetworkConnection conn in conns) ServerUnwatch(conn); // nobody living below watches the ship; a no-op kept symmetric with the ride down
+                foreach (NetworkConnection conn in conns) ServerDropWatchBefore(conn, WorldId.Sea); // nobody living below watches the ship; a no-op kept symmetric with the ride down
                 foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
-                EnsureHolderKeepAlive();
-                networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()));
+                ServerLoad(conns.ToArray(), LoadDataFor(WorldId.Sea, moved.ToArray()), "ride up: the riders and cargo");
                 while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
                 if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the deck cabin");
                 ServerPlaceCabinCargo(CabinFrame.DeckCabin(ship)); // the car's floor cargo, now on the deck cabin's floor
@@ -683,7 +680,7 @@ namespace SunkCost.World
             // The dead in the site ride to the ship first, hidden; their clients join the unload.
             if (!othersBelow) yield return ServerMoveDeadToShip();
             NetworkConnection[] unloaders = SiteUnloaders(ActiveCohort(), closing: !othersBelow);
-            if (conns.Count > 0 || unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
+            if (conns.Count > 0 || unloaders.Length > 0) ServerUnload(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow), othersBelow ? "ride up: the riders leave the site" : "ride up: the site closes");
             if (!othersBelow) cachedCar = null;
 
             SetRide(CabinRideStage.Arriving, RideDirection.Up, Settings.CabinSealSeconds);

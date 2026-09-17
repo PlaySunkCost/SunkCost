@@ -194,9 +194,25 @@ namespace SunkCost.World
             if (!scene.IsValid() || !scene.isLoaded) return;
             watching[conn.ClientId] = world;
             networkManager.SceneManager.AddConnectionToScene(conn, scene);
-            EnsureHolderKeepAlive();
-            networkManager.SceneManager.LoadConnectionScenes(new[] { conn }, WatchDataFor(world));
+            ServerLoad(new[] { conn }, WatchDataFor(world), DisplayName(conn) + " watches");
             Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} watches {WorldScenes.Name(world)}");
+        }
+
+        // Before a load that moves this connection's object into `destination`:
+        // a watcher of that very world keeps it — the load lands the object in the
+        // scene the client already holds and sets its active scene — and only a
+        // watcher of another world drops it. Unloading the destination and loading
+        // it again in the same tick (what card 2 did) crossed FishNet's observer
+        // rebuild: the client got a second spawn of every object in the scene
+        // ("already found in spawned"), then the unload's despawn took them away
+        // for good, and the next ride read them as "expected to exist but does
+        // not" — the other players were invisible to a revived spectator
+        // (17 September 2026, the spectate matrix's guest A).
+        private void ServerDropWatchBefore(NetworkConnection conn, WorldId destination)
+        {
+            if (!watching.TryGetValue(conn.ClientId, out WorldId world)) return;
+            if (world == destination) { watching.Remove(conn.ClientId); Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} keeps {WorldScenes.Name(world)}: its object is moving there"); return; }
+            ServerUnwatch(conn);
         }
 
         // Drop the watched world from this connection, unless its own object
@@ -209,7 +225,7 @@ namespace SunkCost.World
             HQPlayerController me = PlayerOf(conn);
             if (me != null && me.gameObject.scene == WorldScenes.Scene(world)) return;
             if (!WorldScenes.IsLoaded(world)) return;
-            networkManager.SceneManager.UnloadConnectionScenes(new[] { conn }, UnloadDataFor(world, keepOnServer: true));
+            ServerUnload(new[] { conn }, UnloadDataFor(world, keepOnServer: true), DisplayName(conn) + " stops watching");
             Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} stops watching {WorldScenes.Name(world)}");
         }
 
