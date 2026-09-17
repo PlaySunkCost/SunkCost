@@ -1,0 +1,85 @@
+Noise matrix started 18/09/2026 00:31:37
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerNoise (run the noise setup)
+PASS the NoiseSystem knows it is on the server
+  · walk 0.75 m / 6 m, sprint 1.1 m / 15 m, elevator 60 m every 1 s; winch placeholder, ding placeholder
+PASS the elevator's sounds are attached on the client
+PASS the player prefab carries PlayerFootstepSounds (run the noise setup)
+
+== N0 — on the deck nothing is heard
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS N0 walking on the deck emits nothing (the suit is off)
+
+== N1 — the ride down: the winch through the deck, then at the car; the bell at the bottom
+PASS the deck cabin took the press (refusal: )
+PASS the car is descending
+PASS N1 the winch plays while the car descends (at car True, on ship False)
+PASS N1 low for the rider inside the car (0.12 = 0.12)
+PASS the ride down completed
+PASS the car is at the bottom
+PASS N1 the winch stops when the car stops
+PASS N1 the bell rang at the car when the doors opened below (1)
+PASS N1 the descending car was heard by the ocean (18 Elevator events)
+PASS N1 at the elevator radius (60 m)
+
+== N2 — walking below: a footstep every stride at the walk radius
+  · N2 walked 8.0 m: 10 footsteps (expected about 10), 0 sprints
+PASS N2 10 footsteps over 8.0 m
+PASS N2 none of them a sprint
+PASS N2 at the walk radius (6 m)
+PASS N2 at the diver's feet
+PASS N2 and the steps were heard: 10 footstep sounds for 10 noise events
+
+== N3 — sprinting: fewer, louder steps
+  · N3 sprinted 12.0 m: 10 sprint steps, 1 footsteps
+PASS N3 10 sprint steps over 12.0 m
+PASS N3 at the sprint radius (15 m)
+PASS N3 the run's first strides at most read as walking
+PASS N3 sprint steps were heard (10 sounds for 10 events)
+PASS N3 a jump was heard (1)
+PASS N3 and the landing (1)
+
+== N4 — crouching is silent
+PASS N4 crouched
+PASS N4 crouch-walked 4.0 m
+PASS N4 not a sound (0 events)
+PASS N4 and no footstep sound either (0)
+PASS N4 standing again
+
+== N5 — the ride up: the winch at the car, Elevator events, the bell on the deck
+PASS the car took the press
+PASS the car is ascending
+PASS N5 the winch plays at the car for the rider
+PASS N5 low inside the car (0.12)
+PASS N5 not through the deck: the rider is below
+PASS the ride up completed
+PASS back on the deck
+PASS N5 the ascending car was heard by the ocean (18 Elevator events)
+PASS N5 the winch stopped at the top
+PASS N5 the bell rang when the car opened at the top (deck 1, car 1)
+
+== N6 — a guest on the deck hears the winch low while the host rides down, and the bell when the car returns
+PASS the guest's copy is here
+PASS N6 the guest joined at sea; the winch is quiet
+PASS N6 End day for a second dive: 
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS the car is at the bottom
+PASS N6 the guest's car press was taken (refusal: )
+PASS N6 the guest's car is climbing
+PASS N6 the host, left below, hears the departing car at full (1.00)
+PASS N6 the guest's ride up completed
+PASS N6 the guest is on the deck; the winch is quiet
+PASS N6 the car comes back down for the host
+PASS N6 the guest on the deck hears the returning car through the deck, low, not at the car
+PASS N6 the car is back at the bottom
+PASS N6 the winch stops for the guest when the car stops
+PASS the car took the press
+PASS the host's car is ascending
+PASS N6 the guest hears the host's car climbing, low
+PASS the host's ride up completed
+PASS N6 the bell rang on the deck for the guest when the car opened at the top
+  · done
+MATRIX_PASS

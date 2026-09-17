@@ -20,14 +20,39 @@ namespace SunkCost.Audio
         [Tooltip("The bell when the car arrives and the doors open — the movie elevator's ding.")]
         [SerializeField] private AudioClip elevatorDing;
         [Range(0f, 1f)] [SerializeField] private float winchVolumeAtCar = 1f;
+        [Tooltip("The winch for the riders inside the car — mostly for those left below, so low in here (Dan, 18 September 2026).")]
+        [Range(0f, 1f)] [SerializeField] private float winchVolumeInCar = 0.12f;
         [Tooltip("The winch as heard on the ship, through the deck (Dan: 'low').")]
         [Range(0f, 1f)] [SerializeField] private float winchVolumeOnShip = 0.15f;
         [Range(0f, 1f)] [SerializeField] private float dingVolume = 0.8f;
 
+        [Header("Feet")]
+        [Tooltip("A footstep on the seafloor; pitched a little differently left and right, higher sprinting.")]
+        [SerializeField] private AudioClip footstep;
+        [Tooltip("The scuff of a takeoff.")]
+        [SerializeField] private AudioClip jump;
+        [Tooltip("The thud of a landing.")]
+        [SerializeField] private AudioClip land;
+        [Range(0f, 1f)] [SerializeField] private float footstepVolume = 0.35f;
+        [Range(0f, 1f)] [SerializeField] private float sprintFootstepVolume = 0.55f;
+        [Range(0f, 1f)] [SerializeField] private float jumpVolume = 0.45f;
+        [Range(0f, 1f)] [SerializeField] private float landVolume = 0.6f;
+        [Tooltip("Your own steps, jumps and landings play at this fraction of a friend's (they are under your own ears).")]
+        [Range(0f, 1f)] [SerializeField] private float ownFootstepScale = 0.6f;
+
         public AudioClip ElevatorWinch => elevatorWinch != null ? elevatorWinch : PlaceholderSounds.Winch;
         public AudioClip ElevatorDing => elevatorDing != null ? elevatorDing : PlaceholderSounds.Ding;
         public float WinchVolumeAtCar => winchVolumeAtCar;
+        public float WinchVolumeInCar => winchVolumeInCar;
         public float WinchVolumeOnShip => winchVolumeOnShip;
+        public AudioClip Footstep => footstep != null ? footstep : PlaceholderSounds.Step;
+        public AudioClip Jump => jump != null ? jump : PlaceholderSounds.Jump;
+        public AudioClip Land => land != null ? land : PlaceholderSounds.Land;
+        public float FootstepVolume => footstepVolume;
+        public float SprintFootstepVolume => sprintFootstepVolume;
+        public float JumpVolume => jumpVolume;
+        public float LandVolume => landVolume;
+        public float OwnFootstepScale => ownFootstepScale;
         public float DingVolume => dingVolume;
         public bool WinchIsPlaceholder => elevatorWinch == null;
         public bool DingIsPlaceholder => elevatorDing == null;
@@ -47,7 +72,7 @@ namespace SunkCost.Audio
     public static class PlaceholderSounds
     {
         private const int Rate = 48000;
-        private static AudioClip winch, ding;
+        private static AudioClip winch, ding, step, jump, land;
 
         public static AudioClip Winch
         {
@@ -71,6 +96,55 @@ namespace SunkCost.Audio
                 winch.SetData(data, 0);
                 return winch;
             }
+        }
+
+        // A footstep: a 70 ms burst of low-passed noise with a soft attack — a boot on silt.
+        public static AudioClip Step
+        {
+            get
+            {
+                if (step != null) return step;
+                step = Burst("Placeholder footstep", 0.07f, 0.90f, 0.5f, 1);
+                return step;
+            }
+        }
+        // A takeoff: a shorter, brighter scuff.
+        public static AudioClip Jump
+        {
+            get
+            {
+                if (jump != null) return jump;
+                jump = Burst("Placeholder jump", 0.09f, 0.75f, 0.45f, 2);
+                return jump;
+            }
+        }
+        // A landing: a heavier, longer thud.
+        public static AudioClip Land
+        {
+            get
+            {
+                if (land != null) return land;
+                land = Burst("Placeholder landing", 0.16f, 0.95f, 0.7f, 3);
+                return land;
+            }
+        }
+        // Low-passed noise (filter 0..1: higher = duller) with an attack and a decay.
+        private static AudioClip Burst(string name, float seconds, float filter, float gain, int seed)
+        {
+            int n = (int)(Rate * seconds);
+            var data = new float[n];
+            System.Random random = new(seed);
+            float low = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                float t = i / (float)n;
+                low = low * filter + (float)(random.NextDouble() * 2 - 1) * (1f - filter);
+                float envelope = Mathf.Min(1f, t * 25f) * Mathf.Exp(-t * 6f);
+                data[i] = Mathf.Clamp(low * 4f * envelope * gain, -1f, 1f);
+            }
+            AudioClip clip = AudioClip.Create(name, n, 1, Rate, false);
+            clip.SetData(data, 0);
+            return clip;
         }
 
         public static AudioClip Ding

@@ -24,6 +24,7 @@ namespace SunkCost.Audio
 
         // For the checks.
         public bool WinchPlayingAtCar => carWinch != null && carWinch.isPlaying;
+        public float CarWinchVolume => carWinch != null ? carWinch.volume : 0f;
         public bool WinchPlayingOnShip => shipWinch != null && shipWinch.isPlaying;
         public int DingsAtCar { get; private set; }
         public int DingsOnShip { get; private set; }
@@ -73,7 +74,12 @@ namespace SunkCost.Audio
             if (ship != null && ship.DeckCabin != null) shipBell.transform.position = shipWinch.transform.position = ship.DeckCabin.position + Vector3.up * 1.5f;
 
             bool moving = state == ElevatorState.Ascending || state == ElevatorState.Descending;
-            // The winch: at the car for the divers, through the deck for the ship.
+            // The winch: at the car for the divers, through the deck for the ship. A
+            // rider inside the car hears it low — the sound is for those left below,
+            // watching the car go (Dan, 18 September 2026: "too much noise in the elevator").
+            bool riding = local != null && day.Riding && day.IsRider(local.OwnerId);
+            AudioLibrary library = AudioLibrary.Get();
+            carWinch.volume = riding ? library.WinchVolumeInCar : library.WinchVolumeAtCar;
             Toggle(carWinch, moving && below && car != null);
             Toggle(shipWinch, moving && onShip);
 
