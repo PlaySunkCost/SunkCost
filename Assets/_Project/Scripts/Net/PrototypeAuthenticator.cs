@@ -210,7 +210,13 @@ namespace SunkCost.Net
             }
             PrototypeBuildIdentity local = PrototypeBuildIdentity.Current;
             AdmissionRejection compat = local == null ? AdmissionRejection.Internal : local.Compare(response.Project, response.Protocol, response.Build);
-            if (compat != AdmissionRejection.None) { Finish(connection, false, compat, entry.Nonce); return; }
+            if (compat != AdmissionRejection.None)
+            {
+                // Said out loud on the host: a stale local guest build used to be refused in silence (16 September 2026).
+                Debug.LogWarning($"[Admission] refused client {connection.ClientId}: {compat} — guest {response.Project}/protocol {response.Protocol}/build {response.Build} vs host {local?.project}/protocol {local?.protocol}/build {local?.revision}");
+                Finish(connection, false, compat, entry.Nonce);
+                return;
+            }
             if (!string.Equals(response.Session, server.Session, StringComparison.Ordinal)) { Finish(connection, false, AdmissionRejection.WrongSession, entry.Nonce); return; }
             if (response.LobbyId != server.LobbyId) { Finish(connection, false, AdmissionRejection.WrongLobby, entry.Nonce); return; }
 
@@ -276,6 +282,7 @@ namespace SunkCost.Net
         private void Finish(NetworkConnection connection, bool accepted, AdmissionRejection reason, uint nonce)
         {
             pending.Remove(connection.ClientId);
+            if (!accepted) Debug.LogWarning($"[Admission] client {connection.ClientId} refused: {reason} ({AdmissionRejectionText.ToMessage(reason)})");
             var result = new AdmissionResult
             {
                 Session = server?.Session ?? string.Empty,
@@ -376,6 +383,7 @@ namespace SunkCost.Net
             ClientResultReceived = true;
             ClientAccepted = result.Accepted;
             LastClientRejection = result.Accepted ? AdmissionRejection.None : result.Reason;
+            if (!result.Accepted) Debug.LogWarning($"[Admission] refused by the host: {result.Reason} ({AdmissionRejectionText.ToMessage(result.Reason)}); this build: {PrototypeBuildIdentity.Current?.revision} protocol {PrototypeBuildIdentity.Current?.protocol}");
             OnClientAdmission?.Invoke(result.Accepted, LastClientRejection);
         }
 

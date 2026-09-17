@@ -221,7 +221,7 @@ namespace SunkCost.Interaction
             CarryableItem item = target == null ? null : target.GetComponent<CarryableItem>();
             if (item == null || !item.IsSpawned) { TargetRefuse(sender, (byte)RefuseReason.NoSuchItem); return; }
             if (!item.CanGrabFromWorld) { TargetRefuse(sender, (byte)RefuseReason.NotFree); return; }
-            if (!ServerInReach(item)) { TargetRefuse(sender, (byte)RefuseReason.TooFar); return; }
+            if (!ServerSameWorld(item) || !ServerInReach(item)) { TargetRefuse(sender, (byte)RefuseReason.TooFar); return; }
 
             CarryableItem held = ServerFindHeld();
             InventorySlots current = slots.Value;
@@ -414,6 +414,16 @@ namespace SunkCost.Interaction
         }
 
         [Server]
+        // The item stands in the player's world (or in a scene that is no world at
+        // all: server spawns land in the session scene). The worlds share one
+        // physics space, so reach alone would let a modified client take an item
+        // from the other world's ship or seafloor (full run, 16 September 2026).
+        private bool ServerSameWorld(CarryableItem item)
+        {
+            UnityEngine.SceneManagement.Scene scene = item.gameObject.scene;
+            return scene == player.gameObject.scene || !SunkCost.World.WorldScenes.TryParse(scene.name, out _);
+        }
+
         private bool ServerInReach(CarryableItem item)
         {
             Vector3 eye = player.EyePosition;

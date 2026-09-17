@@ -264,15 +264,15 @@ namespace SunkCost.Editor.Prototype
             // The guest presses from ashore: only its own absence is reported.
             Command(GuestDir, "{\"id\":{id},\"action\":\"monitor\",\"item\":\"Sea\"}");
             yield return AwaitReply(GuestDir);
-            yield return WaitUntil(() => H.MonitorText().StartsWith("Not aboard: Player " + guestClient), 5f, "host monitor shows the guest's refusal");
-            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: Player " + guestClient), 5f, "S2 guest's monitor shows the same refusal");
+            yield return WaitUntil(() => H.MonitorText().StartsWith("Not aboard: " + WorldSceneFlow.DisplayName(guestClient)), 5f, "host monitor shows the guest's refusal");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: " + WorldSceneFlow.DisplayName(guestClient)), 5f, "S2 guest's monitor shows the same refusal");
             Vector3 deckSpot = hqShip.FromShipLocal(new Vector3(-2f, 0f, 2f));
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
             // The host presses from the deck while the guest is ashore.
             H.ClientRequestSail("Sea");
-            yield return WaitUntil(() => H.MonitorText() == "Not aboard: Player " + guestClient, 5f, "host monitor names only the guest");
+            yield return WaitUntil(() => H.MonitorText() == "Not aboard: " + WorldSceneFlow.DisplayName(guestClient), 5f, "host monitor names only the guest");
             File.AppendAllText(Log, "PASS S2 refused, names only the guest: " + H.MonitorText() + "\n");
-            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: Player " + guestClient), 5f, "S2 guest's monitor names only itself");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: " + WorldSceneFlow.DisplayName(guestClient)), 5f, "S2 guest's monitor names only itself");
             Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName), "S2 nothing moved");
             yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ"), 6f, "refusal cleared after refusalDisplaySeconds");
             string refusal;
@@ -285,7 +285,7 @@ namespace SunkCost.Editor.Prototype
             Check(hqShip.IsOnGangway(rampSpot) && !hqShip.IsSafelyAboard(rampSpot), "D3 the ramp spot is on the gangway and not safely aboard");
             H.ClientMoveLocalPlayerTo(rampSpot); yield return null; yield return null; yield return null;
             refusal = H.ServerSail("Sea");
-            Check(refusal == "refused: Not aboard: Player " + HostPlayer().OwnerId, "D3 a passenger on the gangway is named: " + refusal);
+            Check(refusal == "refused: Not aboard: " + WorldSceneFlow.DisplayName(HostPlayer().OwnerId), "D3 a passenger on the gangway is named: " + refusal);
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
             CarryableItem rampBall = H.Item("Basketball (3)");
             rampBall.ServerDropAt(hqShip.FromShipLocal(new Vector3(0f, 0.3f, -ShipStubBuilder.DeckLength / 2f - 2f)));

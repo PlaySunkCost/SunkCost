@@ -83,6 +83,11 @@ the server is not itself a client owner. Ownership changes are server decisions.
   the server validates reach, line of sight and inventory eligibility, then
   transfers it to the accepted catcher (or stows it directly if their hand is busy
   and a slot is free). Competing catches are serialized by the server.
+  **Same world (17 September 2026):** the server also refuses a grab of an item
+  that does not stand in the requester's world scene (or in the session scene,
+  where server spawns land) — the worlds share one physics space, so reach and
+  line of sight alone would let a modified client take an item from the other
+  world's ship or seafloor.
 - **Stowed** items are still spawned, server-owned, hidden, non-colliding and
   kinematic. Only their carrier may equip them. Inventory slots are server-written.
   When the target has no slot (four occupied slots, or a **two-handed** item,

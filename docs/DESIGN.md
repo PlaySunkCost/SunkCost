@@ -39,7 +39,8 @@ is missing. No wheel, no lever. From HQ, choosing a site sails to sea; at sea,
 choosing another site keeps the ship at sea with a new destination; choosing HQ
 sails home. The monitor doubles as the TV surfaced players watch divers on. A
 storage room holds everything you've hauled up, as physical objects. A readout of
-what you have against what you owe. **No shop.** The glass elevator cabin stands
+what you have against what you owe. A low sill across its doorway keeps a dropped
+coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
 **Sailing** (decided 15 September 2026). The gangway belongs to the ship: down

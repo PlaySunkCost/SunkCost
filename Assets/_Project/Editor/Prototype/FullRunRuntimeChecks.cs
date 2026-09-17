@@ -171,7 +171,7 @@ namespace SunkCost.Editor.Prototype
             // same name from an earlier dive (they are re-spawned with the site).
             CarryableItem coin = null;
             foreach (CarryableItem candidate in CarryableItem.Spawned)
-                if (candidate != null && candidate.name == coinName && candidate.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) { coin = candidate; break; }
+                if (candidate != null && (candidate.name == coinName || candidate.name.StartsWith(coinName + " (day ")) && candidate.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) { coin = candidate; break; }
             Check(coin != null && coin.CanGrabFromWorld, coinName + " lies on the seafloor");
             HQPlayerController host = Host();
             ElevatorController car = WorldSceneFlow.FindCar();

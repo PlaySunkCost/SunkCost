@@ -261,7 +261,14 @@ namespace SunkCost.World
         }
 
         public static string DisplayName(NetworkConnection conn) => conn == null ? "?" : DisplayName(conn.ClientId);
-        public static string DisplayName(int clientId) => "Player " + clientId;
+        // The player's chosen name (PlayerIdentity) wherever a refusal or a roster
+        // names someone; "Player N" only for a connection without a player yet.
+        public static string DisplayName(int clientId)
+        {
+            foreach (PlayerIdentity identity in FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude))
+                if (identity.IsSpawned && identity.OwnerId == clientId && !string.IsNullOrEmpty(identity.DisplayName)) return identity.DisplayName;
+            return "Player " + clientId;
+        }
 
         // Every player of every active connection stands on the deck proper, in the
         // current world. A player still spawning counts as missing.
@@ -440,7 +447,7 @@ namespace SunkCost.World
         private string Missing(HashSet<int> seen)
         {
             var late = new List<string>();
-            foreach (int id in cohort) if (!seen.Contains(id)) late.Add("Player " + id);
+            foreach (int id in cohort) if (!seen.Contains(id)) late.Add(DisplayName(id));
             return string.Join(", ", late);
         }
 
