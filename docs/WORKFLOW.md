@@ -136,6 +136,16 @@ exactly that and refuses any other difference from the pushed commit. The
 Library cache is saved only after a successful build. Documentation-only pushes
 do not build.
 
+**A build that fails with `Build failed with exit code 137` and a bare `Killed`
+line about 2.5 minutes in is the runner, not the code**: the hosted runner runs
+out of memory at the editor's third assembly reload (4 of 6 builds on 16–17
+September 2026; `error CS` never appears in those logs). The workflow therefore
+gives the build two attempts in the same job; a second attempt has always
+passed. A real compile error fails both attempts, fast, and shows `error CS` in
+the log. If both attempts keep dying, run the workflow by hand once
+(Actions → Windows build → Run workflow); as a last resort delete the
+`Library-Windows-*` caches (Actions → Caches) for a cold build.
+
 This needs a one-time Unity license secret, since headless Unity requires
 activation. GameCI's `unity-request-activation-file` action is retired; get the
 license locally instead (https://game.ci/docs/github/activation):
