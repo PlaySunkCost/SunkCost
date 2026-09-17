@@ -35,7 +35,12 @@ namespace SunkCost.Player
             if (camera == null) return false;
             Vector3 v = camera.WorldToScreenPoint(world);
             if (v.z <= 0f) return false;
-            gui = new Vector2(v.x, Screen.height - v.y);
+            // In screen units whatever the camera renders into: a camera on a
+            // smaller texture (the deck TV) reports its own pixels, and the visor's
+            // layout is in screen pixels (scaled onto the texture by a GUI matrix).
+            float sx = camera.pixelWidth > 0 ? (float)Screen.width / camera.pixelWidth : 1f;
+            float sy = camera.pixelHeight > 0 ? (float)Screen.height / camera.pixelHeight : 1f;
+            gui = new Vector2(v.x * sx, Screen.height - v.y * sy);
             return true;
         }
 

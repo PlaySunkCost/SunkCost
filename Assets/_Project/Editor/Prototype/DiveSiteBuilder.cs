@@ -92,6 +92,7 @@ namespace SunkCost.Sites
             CreateDiveLoot(anchorBottom.position, doorwayBearingDeg, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
+            WorldLookSetup.WriteIntoOpenScene(scene); // the site's fog and ambient, for a camera showing it from another world
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
                 throw new InvalidOperationException("Unity could not save " + ScenePath);

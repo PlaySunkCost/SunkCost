@@ -64,6 +64,7 @@ namespace SunkCost.Editor.Prototype
             CreateLight();
             CreateLootFixture(ballPrefab);
             CreateDock(shipPrefab, plankMaterial);
+            WorldLookSetup.WriteIntoOpenScene(scene);
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
                 throw new InvalidOperationException("Unity could not save " + ScenePath);
             SessionSceneBuilder.WriteBuildList();

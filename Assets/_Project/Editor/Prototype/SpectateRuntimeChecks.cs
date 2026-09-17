@@ -473,8 +473,19 @@ namespace SunkCost.Editor.Prototype
             ShipTV hostTv = sea.GetComponent<ShipTV>();
             yield return Expect(() => Day.TvChannel == idB && hostTv != null && hostTv.Live, 5f, () => "S3/T the host on deck sees the TV live on B (channel " + Day.TvChannel + ")");
             yield return Wait(1f);
+            Check(hostTv.ViewerNear && hostTv.RenderedFrames > 0, $"S3/T the host stands near the TV, which rendered ({hostTv.RenderedFrames} frames)");
             float tvContent = hostTv.SavePicture("Temp/spectate-tv-b.png");
             Check(hostTv.Frame.Readout.On && tvContent > 0.03f, $"S3/T the TV picture carries B's view and visor (brightness deviation {tvContent:0.000}; Temp/spectate-tv-b.png)");
+            Check(hostTv.LastMeanBrightness < 0.35f, $"S3/T the seafloor on the TV is dark, under the site's own fog (mean brightness {hostTv.LastMeanBrightness:0.000})");
+            Check(WorldLook.InScene(WorldScenes.Scene(WorldId.Dive)) != null && WorldLook.InScene(WorldScenes.Scene(WorldId.Sea)) != null, "S3/T both loaded worlds carry a WorldLook");
+            // The TV is a second render: half resolution, every other frame, nobody near → nothing.
+            int before = hostTv.RenderedFrames;
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(40f, 0.05f, 0f)), 0f);
+            yield return Wait(0.5f);
+            Check(!hostTv.ViewerNear && hostTv.RenderedFrames == before, $"S3/T 40 m off the ship the TV stops rendering ({hostTv.RenderedFrames - before} frames)");
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(0f, 0.05f, -8f)), 0f);
+            yield return Wait(0.5f);
+            Check(hostTv.ViewerNear && hostTv.RenderedFrames > before, "S3/T back on deck the TV renders again");
             yield return GuestEventually(r => Loaded(r, "DiveSite01") && !Loaded(r, "ShipAtSea") && GuestPlayerLine(r, idA).Contains("scene=DiveSite01"), 10f, "S3 A (dead, below, watching B) holds only the site");
             yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
             yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId, 3f, () => "S3 A now watches the host on the deck");

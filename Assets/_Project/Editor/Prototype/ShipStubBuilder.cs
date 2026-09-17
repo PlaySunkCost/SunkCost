@@ -252,6 +252,7 @@ namespace SunkCost.Editor.Prototype
 
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             ship.transform.SetPositionAndRotation(origin, Quaternion.identity);
+            WorldLookSetup.WriteIntoOpenScene(scene);
 
             if (!EditorSceneManager.SaveScene(scene, WorldScenes.SeaPath))
                 throw new InvalidOperationException("Unity could not save " + WorldScenes.SeaPath);
