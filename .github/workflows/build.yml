@@ -50,7 +50,14 @@ jobs:
           restore-keys: |
             Library-Windows-
 
+      # The hosted runner sometimes kills the editor out of memory about 2.5 min
+      # in, at its third assembly reload ("Killed", exit code 137, no compile
+      # error in the log — 4 of 6 builds on 16-17 September 2026). Nothing in the
+      # project; a second attempt on the same checkout has always passed. So the
+      # build gets two attempts; a real compile error fails both, quickly.
       - name: Build
+        id: build
+        continue-on-error: true
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -61,6 +68,19 @@ jobs:
           targetPlatform: StandaloneWindows64
           buildMethod: SunkCost.Editor.Prototype.HQPrototypeBuild.BuildWindowsCI
           allowDirtyBuild: true # Unity rewrites Packages/*.json at import; BuildWindowsCI checks the rest
+
+      - name: Build (second attempt after a runner kill)
+        if: steps.build.outcome == 'failure'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneWindows64
+          buildMethod: SunkCost.Editor.Prototype.HQPrototypeBuild.BuildWindowsCI
+          allowDirtyBuild: true
 
       - name: Show what Unity changed in the checkout
         if: always()
