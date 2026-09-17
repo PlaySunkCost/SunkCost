@@ -15,9 +15,9 @@ namespace SunkCost.Audio
     public sealed class AudioLibrary : ScriptableObject
     {
         [Header("Elevator")]
-        [Tooltip("The winch: loops, heard only in the car's last seconds before it arrives (Dan, 18 September 2026) — from very far below, low through the deck, lower still inside the car.")]
+        [Tooltip("The winch: loops, heard for the seconds the car is near you (Dan, 18 September 2026) — quiet from very far below, low through the deck, low inside the car the whole way.")]
         [SerializeField] private AudioClip elevatorWinch;
-        [Tooltip("Seconds before the car arrives during which the winch is heard (going down: before the bottom; going up: before the top).")]
+        [Tooltip("Seconds the winch is heard while the car is near your end: the last ones as it arrives at you, the first ones as it leaves you.")]
         [SerializeField] private float winchSecondsBeforeArrival = 5f;
         [Tooltip("The winch fades in and out over this long so it never clicks.")]
         [SerializeField] private float winchFadeSeconds = 0.5f;
