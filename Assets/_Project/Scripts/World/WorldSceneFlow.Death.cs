@@ -78,8 +78,7 @@ namespace SunkCost.World
             if (WorldScenes.IsLoaded(WorldId.Dive))
             {
                 NetworkConnection[] unloaders = SiteUnloaders(new List<NetworkConnection>(), closing: true);
-                if (unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: false));
-                else networkManager.SceneManager.UnloadConnectionScenes(UnloadDataFor(WorldId.Dive, keepOnServer: false));
+                ServerUnload(unloaders.Length > 0 ? unloaders : null, UnloadDataFor(WorldId.Dive, keepOnServer: false), "site closes with the dead");
                 cachedCar = null;
                 ServerSetElevator(ElevatorState.AtTop, true);
             }
@@ -103,12 +102,11 @@ namespace SunkCost.World
                 var moved = new List<NetworkObject> { player.NetworkObject };
                 PlayerInventory inventory = player.Inventory;
                 if (inventory != null) inventory.ServerCollectCarried(moved); // nothing normally; the slots scattered at death
-                // A client watching the ship from below drops it first, so the move is
-                // the plain load-with-moved-objects of card 1 (card 2).
-                ServerUnwatch(conn);
+                // A client watching the ship from below keeps it: the load lands its
+                // object there (ServerDropWatchBefore).
+                ServerDropWatchBefore(conn, WorldId.Sea);
                 networkManager.SceneManager.AddConnectionToScene(conn, sea);
-                EnsureHolderKeepAlive();
-                networkManager.SceneManager.LoadConnectionScenes(new[] { conn }, LoadDataFor(WorldId.Sea, moved.ToArray()));
+                ServerLoad(new[] { conn }, LoadDataFor(WorldId.Sea, moved.ToArray()), "the dead " + DisplayName(conn) + " to the ship");
                 moving.Add(conn);
             }
             if (moving.Count == 0) yield break;

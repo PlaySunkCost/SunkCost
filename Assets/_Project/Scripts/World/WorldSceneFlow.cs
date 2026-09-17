@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
@@ -84,6 +85,8 @@ namespace SunkCost.World
             networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
             networkManager.SceneManager.OnLoadEnd += OnLoadEnd;
             networkManager.SceneManager.OnUnloadStart += OnUnloadStart;
+            networkManager.SceneManager.OnLoadStart += LogLoadStart;
+            networkManager.SceneManager.OnUnloadStart += LogUnloadStart;
             networkManager.ServerManager.RegisterBroadcast<DepartureAckBroadcast>(OnDepartureAck);
             networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
             CrewDayState.InstanceChanged += OnDayStateInstance;
@@ -100,6 +103,8 @@ namespace SunkCost.World
             networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
             networkManager.SceneManager.OnLoadEnd -= OnLoadEnd;
             networkManager.SceneManager.OnUnloadStart -= OnUnloadStart;
+            networkManager.SceneManager.OnLoadStart -= LogLoadStart;
+            networkManager.SceneManager.OnUnloadStart -= LogUnloadStart;
             networkManager.ServerManager.UnregisterBroadcast<DepartureAckBroadcast>(OnDepartureAck);
             networkManager.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
         }
@@ -124,6 +129,45 @@ namespace SunkCost.World
             if (!holder.IsValid()) holder = UnitySceneManager.CreateScene(HolderSceneName);
             if (holderKeepAlive == null) holderKeepAlive = new GameObject(HolderKeepAliveName);
             if (holderKeepAlive.scene != holder) UnitySceneManager.MoveGameObjectToScene(holderKeepAlive, holder);
+        }
+
+        // ---- scene traffic log ----------------------------------------------------
+
+        // One line per scene load or unload, on the server as it is sent and on
+        // every client as it is processed, with the connections and the moved
+        // objects by id and name: the record a desync hunt needs (docs/WORKFLOW.md,
+        // "For a desync, record each machine's observed state, object identity...").
+        // A moved object the client cannot resolve reads as "?" here and FishNet
+        // warns "Spawned NetworkObject was expected to exist" just before.
+        private static string Ids(IEnumerable<NetworkConnection> conns) => conns == null ? "-" : string.Join("+", conns.Select(c => c == null ? "?" : c.ClientId.ToString()));
+        private static string Nobs(NetworkObject[] nobs)
+        {
+            if (nobs == null || nobs.Length == 0) return "nothing";
+            return string.Join(", ", nobs.Select(n => n == null ? "?" : n.ObjectId + ":" + n.name));
+        }
+        private static string Scenes(SceneLookupData[] lookups) => lookups == null ? "-" : string.Join("+", lookups.Select(l => l is null ? "?" : l.Name));
+        private void ServerLoad(NetworkConnection[] conns, SceneLoadData data, string why)
+        {
+            EnsureHolderKeepAlive();
+            Debug.Log($"[Scenes] server loads {Scenes(data.SceneLookupDatas)} for [{Ids(conns)}] moving {Nobs(data.MovedNetworkObjects)} — {why}");
+            if (conns == null) networkManager.SceneManager.LoadConnectionScenes(data);
+            else networkManager.SceneManager.LoadConnectionScenes(conns, data);
+        }
+        private void ServerUnload(NetworkConnection[] conns, SceneUnloadData data, string why)
+        {
+            Debug.Log($"[Scenes] server unloads {Scenes(data.SceneLookupDatas)} for [{Ids(conns)}] — {why}");
+            if (conns == null) networkManager.SceneManager.UnloadConnectionScenes(data);
+            else networkManager.SceneManager.UnloadConnectionScenes(conns, data);
+        }
+        private void LogLoadStart(SceneLoadStartEventArgs args)
+        {
+            if (args.QueueData == null || args.QueueData.SceneLoadData == null || args.QueueData.AsServer) return;
+            Debug.Log($"[Scenes] client loads {Scenes(args.QueueData.SceneLoadData.SceneLookupDatas)} moving {Nobs(args.QueueData.SceneLoadData.MovedNetworkObjects)}");
+        }
+        private void LogUnloadStart(SceneUnloadStartEventArgs args)
+        {
+            if (args.QueueData == null || args.QueueData.SceneUnloadData == null || args.QueueData.AsServer) return;
+            Debug.Log($"[Scenes] client unloads {Scenes(args.QueueData.SceneUnloadData.SceneLookupDatas)}");
         }
 
         // ---- load data ------------------------------------------------------------
@@ -164,8 +208,7 @@ namespace SunkCost.World
                 ResetTrip();
                 SpawnDayState();
                 // Pre-warm HQ on the server so the host's own client join finds it loaded.
-                EnsureHolderKeepAlive();
-                networkManager.SceneManager.LoadConnectionScenes(LoadDataFor(WorldId.HQ, null));
+                ServerLoad(null, LoadDataFor(WorldId.HQ, null), "server start: HQ pre-warmed");
             }
             else if (args.ConnectionState == LocalConnectionState.Stopped)
             {
@@ -366,8 +409,7 @@ namespace SunkCost.World
             deadline = Time.unscaledTime + Settings.ArrivalTimeoutSeconds;
             if (!WorldScenes.IsLoaded(to))
             {
-                EnsureHolderKeepAlive();
-                networkManager.SceneManager.LoadConnectionScenes(LoadDataFor(to, null));
+                ServerLoad(null, LoadDataFor(to, null), "sail: destination not loaded yet");
                 while (!WorldScenes.IsLoaded(to) && Time.unscaledTime < deadline) yield return null;
             }
             ShipParts toShip = ShipParts.InWorld(to);
@@ -383,8 +425,7 @@ namespace SunkCost.World
             // added to the destination before the one load (see the scene-flow card).
             var conns = ActiveCohort();
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
-            EnsureHolderKeepAlive();
-            networkManager.SceneManager.LoadConnectionScenes(conns.ToArray(), LoadDataFor(to, moved.ToArray()));
+            ServerLoad(conns.ToArray(), LoadDataFor(to, moved.ToArray()), "sail: the crew and cargo cross");
             while (!WorldScenes.IsLoaded(to) && Time.unscaledTime < deadline) yield return null;
 
             // 9. Cargo at its saved spots on the destination ship, then the arrival gate.
@@ -395,7 +436,7 @@ namespace SunkCost.World
             // Fade in; at HQ the gangway comes down before anyone may walk.
             float arriving = Settings.DepartureFadeSeconds + (to == WorldId.HQ ? Settings.GangwayLowerSeconds : 0f);
             SetStage(DepartureStage.Arriving, from, to, arriving);
-            networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(from, keepOnServer: false));
+            ServerUnload(ActiveCohort().ToArray(), UnloadDataFor(from, keepOnServer: false), "sail: the world left behind");
             yield return WaitSeconds(arriving);
             foreach (CarryableItem item in cargo) if (item != null && item.IsSpawned) item.ServerEndDeckTransit();
             cargo.Clear();
