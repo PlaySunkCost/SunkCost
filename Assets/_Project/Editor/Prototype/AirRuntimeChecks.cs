@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SunkCost.Diving;
+using SunkCost.Interaction;
 using SunkCost.Player;
 using SunkCost.World;
 using UnityEditor;
@@ -170,6 +171,36 @@ namespace SunkCost.Editor.Prototype
             return m.Success ? float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : float.NaN;
         }
         private static HQPlayerController GuestCopy() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
+        private static CarryableItem SiteItem(string name)
+        {
+            foreach (CarryableItem c in CarryableItem.Spawned)
+                if (c != null && (c.name == name || c.name.StartsWith(name + " (day ")) && c.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) return c;
+            return null;
+        }
+        // Stand near an item on the seafloor, aim at it until the dot lands, grab it.
+        private static IEnumerator GrabItem(CarryableItem item)
+        {
+            HQPlayerController host = Host();
+            ElevatorController car = WorldSceneFlow.FindCar();
+            Vector3 fromCar = item.transform.position - car.transform.position; fromCar.y = 0f;
+            Vector3 toward = fromCar.normalized, side = Vector3.Cross(Vector3.up, toward);
+            foreach (Vector3 offset in new[] { -toward * 1.1f, toward * 1.1f, side * 1.1f, -side * 1.1f })
+            {
+                Vector3 stand = item.transform.position + offset; stand.y = car.BottomPosition.y + 0.15f;
+                host.TeleportLocal(stand, host.Yaw); yield return null; yield return null;
+                float deadline = Time.unscaledTime + 3f; int tries = 0;
+                while (Time.unscaledTime < deadline && host.CurrentTarget != item)
+                {
+                    if (tries++ % 30 == 0) host.TeleportLocal(stand, host.Yaw);
+                    H.ClientLookAtItem(item.name);
+                    yield return null;
+                }
+                if (host.CurrentTarget == item) break;
+            }
+            Check(host.CurrentTarget == item, "the dot is on " + item.DisplayName);
+            host.Inventory.RequestGrab(item);
+            yield return Expect(() => item.HolderClientId == host.OwnerId && item.State == ItemState.Held, 3f, () => item.DisplayName + " grabbed (" + item.State + ")");
+        }
 
         private static IEnumerator Descend(int day)
         {
@@ -209,6 +240,8 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController.BypassInputGateForChecks = true;
             SunkCost.Net.SessionInputGate.OpenMenu();
             Keys(); yield return null;
+
+            PlayerHudUI hud = host.GetComponent<PlayerHudUI>();
 
             Heading("A0 — on the ship the suit is off: a full tank that does not count");
             H.MoveLocalIntoDeckCabin("HQ"); yield return Wait(0.3f);
@@ -256,11 +289,46 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(dropped - 2f * settings.DebugAirStepFraction) < 0.02f, $"A3 two presses of L took {100f * dropped:0.0}% (target {200f * settings.DebugAirStepFraction:0}%)");
             Check(vitals.AirLow == vitals.AirFraction < settings.LowAirFraction, "A3 the low-air flag follows the threshold");
 
+            Heading("K1 — an air tank on the site: half a tank back, then it is an empty one");
+            CarryableItem tank = SiteItem("Air tank 1");
+            Check(tank != null, "K1 Air tank 1 lies on the seafloor");
+            AirTankItem tankItem = tank.GetComponent<AirTankItem>();
+            Check(tankItem != null && !tankItem.IsEmpty && tank.DisplayName == AirTankItem.FullName && tank.UseAction == ItemUseAction.Breathe && !tank.HasValue, $"K1 it is a {tank.DisplayName}: breathe on use, worth nothing");
+            yield return GrabItem(tank);
+            yield return null;
+            Check(hud.PromptText.Contains("breathe"), "K1 in hand, the prompt says what left click does: " + hud.PromptText);
+            while (vitals.AirFraction > 0.30f) yield return Press(Key.L, 0.03f);
+            float airLow = vitals.AirFraction;
+            Say($"K1 air down to {100f * airLow:0}% before breathing");
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Expect(() => tankItem.IsEmpty, 3f, () => "K1 the tank empties on left click");
+            Check(Mathf.Abs(vitals.AirFraction - (airLow + 0.5f)) < 0.02f, $"K1 half a tank back: {100f * airLow:0}% → {100f * vitals.AirFraction:0}%");
+            Check(tank.DisplayName == AirTankItem.EmptyName && tank.UseAction == ItemUseAction.Throw, $"K1 now a {tank.DisplayName}: throw on use");
+            Check(tank.GetComponent<Renderer>().sharedMaterial.name.Contains("Empty"), "K1 it turned grey: " + tank.GetComponent<Renderer>().sharedMaterial.name);
+            Check(tank.HolderClientId == host.OwnerId && tank.State == ItemState.Held, "K1 still in the hand");
+            yield return null;
+            Check(hud.PromptText.Contains("throw"), "K1 the prompt now says throw: " + hud.PromptText);
+            float airAfterFirst = vitals.AirFraction;
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Expect(() => tank.HolderClientId != host.OwnerId, 3f, () => "K1 left click again throws the empty tank (" + tank.State + ")");
+            yield return Wait(0.5f);
+            Check(Mathf.Abs(vitals.AirFraction - airAfterFirst) < 0.02f, "K1 the empty tank gave no air");
+
+            Heading("K2 — a second tank never fills past full");
+            CarryableItem tank2 = SiteItem("Air tank 2");
+            Check(tank2 != null && !tank2.GetComponent<AirTankItem>().IsEmpty, "K2 Air tank 2 lies full on the seafloor");
+            yield return GrabItem(tank2);
+            Say($"K2 air {100f * vitals.AirFraction:0}% before breathing");
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Expect(() => tank2.GetComponent<AirTankItem>().IsEmpty, 3f, () => "K2 the second tank empties");
+            Check(vitals.AirFraction == 1f, $"K2 the tank is full and no fuller ({100f * vitals.AirFraction:0}%)");
+            host.Inventory.RequestDrop();
+            yield return Expect(() => tank2.HolderClientId != host.OwnerId, 3f, () => "K2 dropped");
+
             Heading("A4 — an empty tank costs health, then the ordinary death");
             int presses = 0;
             while (vitals.AirFraction > 0f && presses < 40) { yield return Press(Key.L, 0.03f); presses++; }
             Check(vitals.AirFraction == 0f && vitals.AirEmpty, $"A4 the tank is empty after {presses} presses");
-            PlayerHudUI hud = host.GetComponent<PlayerHudUI>();
             yield return null;
             Check(hud.Visor.AirEmpty && hud.Visor.AirLow, "A4 the visor reads NO AIR");
             int healthBefore = vitals.Health; t0 = Time.unscaledTime;
@@ -296,6 +364,8 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => remoteVitals.AirFraction < 1f, 5f, () => $"G1 the guest's tank counts on the server ({remoteVitals.AirFraction:0.###})");
             yield return GuestEventually(r => { float a = Field(GuestPlayerLine(r, guestId), "air"); return a < 1f && Mathf.Abs(a - remoteVitals.AirFraction) < 0.02f; }, 6f, "G1 the guest reads its own air within 2 % of the server's");
             yield return GuestEventually(r => Mathf.Abs(Field(GuestPlayerLine(r, host.OwnerId), "air") - vitals.AirFraction) < 0.02f, 6f, "G1 the guest reads the host's air within 2 %");
+            // The emptied tanks from K1/K2 lie below with their new name on every peer.
+            yield return GuestEventually(r => r.Contains("display=" + AirTankItem.EmptyName), 6f, "G1 the guest reads the thrown tank as an " + AirTankItem.EmptyName);
 
             Heading("G2 — a ride up on an empty tank: health floors at 1 in the car, a new tank on deck");
             car = WorldSceneFlow.FindCar();

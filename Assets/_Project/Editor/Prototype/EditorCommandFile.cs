@@ -88,7 +88,9 @@ namespace SunkCost.Editor.Prototype
                     if (type == null) throw new ArgumentException("No type " + typeName);
                     System.Reflection.MethodInfo method = type.GetMethod(methodName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, Type.EmptyTypes, null);
                     if (method == null) throw new ArgumentException("No public static " + methodName + "() on " + typeName);
-                    object result = method.Invoke(null, null);
+                    object result;
+                    try { result = method.Invoke(null, null); }
+                    catch (System.Reflection.TargetInvocationException e) when (e.InnerException != null) { throw e.InnerException; } // the method's own error, not the reflection wrapper
                     lastResult = result?.ToString();
                     if (result != null) Debug.Log("[EditorCommandFile] " + full + ": " + result);
                     break;

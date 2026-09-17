@@ -16,6 +16,7 @@ namespace SunkCost.Interaction
     public enum ItemUseAction : byte
     {
         None = 0,
-        Throw = 1
+        Throw = 1,
+        Breathe = 2 // an air tank: left click refills the holder's tank (AirTankItem)
     }
 }

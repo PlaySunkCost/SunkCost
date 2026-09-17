@@ -39,7 +39,9 @@ namespace SunkCost.Sites
                 if (entry.Prefab == null) { errors.Add("Dive loot entry " + entry.Name + " has no prefab."); continue; }
                 var item = entry.Prefab.GetComponent<SunkCost.Interaction.CarryableItem>();
                 if (item == null) { errors.Add("Dive loot entry " + entry.Name + " is not a CarryableItem."); continue; }
-                if (!item.HasValue || item.ValueMin <= 0 || item.ValueMin > item.ValueMax) errors.Add("Dive loot entry " + entry.Name + " needs a value range 0 < min <= max.");
+                bool airTank = entry.Prefab.GetComponent<SunkCost.Interaction.AirTankItem>() != null; // worth nothing by design
+                if (!airTank && (!item.HasValue || item.ValueMin <= 0 || item.ValueMin > item.ValueMax)) errors.Add("Dive loot entry " + entry.Name + " needs a value range 0 < min <= max.");
+                if (airTank && item.HasValue) errors.Add("Dive loot entry " + entry.Name + " is an air tank and must be worth nothing.");
                 var nob = entry.Prefab.GetComponent<NetworkObject>();
                 if (nob == null) errors.Add("Dive loot entry " + entry.Name + " has no NetworkObject.");
                 else if (collection != null && !SunkCost.Editor.Prototype.HQPrototypeLootSetup.IsRegistered(collection, nob)) errors.Add("Dive loot prefab " + entry.Prefab.name + " is not in the spawnable prefab collection (run Apply dive loot setup).");
