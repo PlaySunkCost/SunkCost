@@ -123,6 +123,9 @@ are kept. The same zip is also attached to the workflow run itself (Actions →
 the run → **Artifacts** at the bottom; needs a GitHub login, kept 90 days), so
 every build stays downloadable after its release has been pruned. A build can
 also be started by hand from the Actions tab (**Windows build → Run workflow**).
+The release is a draft until its zip is on it (the upload is retried five
+times), so a release you can see always has a zip; if a run still fails at
+"Publish the release", **Re-run failed jobs** finishes the same draft.
 
 `.github/workflows/build.yml` does this on a GitHub-hosted `ubuntu-latest`
 runner through `game-ci/unity-builder`, which cross-builds Windows from a
