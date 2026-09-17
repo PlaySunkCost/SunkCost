@@ -31,6 +31,19 @@ namespace SunkCost.Net
         private NetworkManager networkManager;
         private TransportManager transportManager;
         private Transport localTransport;
+        private ushort localPort = 7770; // the port a Local host actually bound (see HostFlow)
+        public ushort LocalPort => localPort;
+
+        // The first free UDP port at or after `preferred` (within twenty), else `preferred`.
+        public static ushort FreeUdpPort(ushort preferred)
+        {
+            for (ushort port = preferred; port < preferred + 20; port++)
+            {
+                try { using var probe = new System.Net.Sockets.UdpClient(port); return port; }
+                catch (System.Net.Sockets.SocketException) { }
+            }
+            return preferred;
+        }
         private GameObject steamTransportPrefab;
         private Camera previewCamera;
         private LobbySessionSettings settings = new();
@@ -310,6 +323,15 @@ namespace SunkCost.Net
             }
 
             if (!BindTransport(mode, out string bindError)) { Fail(op, bindError); yield break; }
+            // A Local host takes the first free UDP port from the configured one: a
+            // second build on this PC, or an editor still holding 7770 from a stopped
+            // Play Mode, must not stop the game from hosting (Dan, 18 September 2026).
+            if (mode == SessionMode.Local && localTransport is FishNet.Transporting.Tugboat.Tugboat tugboat)
+            {
+                ushort wanted = tugboat.GetPort(), free = FreeUdpPort(wanted);
+                if (free != wanted) { Debug.LogWarning($"[Session] UDP {wanted} is taken; hosting on {free} instead."); tugboat.SetPort(free); }
+                localPort = free;
+            }
             ConfigureServerAdmission(mode);
 
             state = SessionState.StartingServer;
@@ -340,7 +362,7 @@ namespace SunkCost.Net
             auth.SetAcceptingGuests(true);
             EnterRoom(mode == SessionMode.Steam
                 ? "Hosting over Steam. Invite friends or share the lobby ID."
-                : "Hosting locally/LAN on UDP port 7770.");
+                : $"Hosting locally/LAN on UDP port {localPort}.");
         }
 
         private IEnumerator GuestFlow(int op, SessionMode mode, string localAddress, ulong targetLobby)

@@ -40,8 +40,11 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   object a guest cannot resolve prints as `?`, right after FishNet's "expected to exist
   but does not" — that pair found the watch/move bug of 17 September 2026 in one run.
   Grep the guest logs for `expected to exist|already found` after any run that moves players.
-- **Stop only with `CameraClearanceMatrixDriver.StopCleanly()`** (Leave first,
-  then exit Play Mode); a bare stop leaks UDP 7770 until Unity restarts.
+- **Stop with `CameraClearanceMatrixDriver.StopCleanly()`** (Leave first, then exit
+  Play Mode). Since 18 September 2026 a bare Stop is safe too: `PlayModeSessionGuard`
+  leaves the session as Play Mode exits, so the editor releases its UDP port; and a
+  Local host whose port is taken hosts on the next free one and says so
+  ("Hosting locally/LAN on UDP port 7771").
 - Never start a job or a builder while someone is playing; never edit scripts
   during their Play Mode (Unity recompiles into the running session).
 - Wait for `Library/ScriptAssemblies/Assembly-CSharp*.dll` to be newer than the
