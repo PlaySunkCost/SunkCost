@@ -79,15 +79,7 @@ namespace SunkCost.Editor.Prototype
             return true;
         }
 
-        private static ushort FreeUdpPort(ushort preferred)
-        {
-            for (ushort port = preferred; port < preferred + 20; port++)
-            {
-                try { using var probe = new System.Net.Sockets.UdpClient(port); return port; }
-                catch (System.Net.Sockets.SocketException) { }
-            }
-            return preferred;
-        }
+        private static ushort FreeUdpPort(ushort preferred) => SunkCost.Net.PrototypeSessionController.FreeUdpPort(preferred);
 
         private static void Tick()
         {

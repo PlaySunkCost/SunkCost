@@ -10,7 +10,7 @@ namespace SunkCost.Editor.Prototype
     // through two editor restarts): a text file dropped in Temp is read, deleted
     // and run on the editor's main thread; the outcome goes to a reply file.
     //
-    //   Temp/editor-command.txt        one line: build-guest | matrix <job> | stop | refresh | run <Type.Method>
+    //   Temp/editor-command.txt        one line: build-guest | matrix <job> | stop | exit-play | refresh | run <Type.Method>
     //   Temp/editor-command.reply.txt  "ok <command>" or "error <command>: <message>"
     //
     // Editor only, polled twice a second, the same entry points the menu items and
@@ -66,6 +66,10 @@ namespace SunkCost.Editor.Prototype
                     break;
                 case "stop":
                     CameraClearanceMatrixDriver.StopCleanly();
+                    break;
+                case "exit-play":
+                    // A bare Stop, as the tester presses it: PlayModeSessionGuard must leave first.
+                    EditorApplication.ExitPlaymode();
                     break;
                 case "refresh":
                     AssetDatabase.Refresh();
