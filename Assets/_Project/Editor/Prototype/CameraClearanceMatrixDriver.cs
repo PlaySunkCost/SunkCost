@@ -146,6 +146,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "smooth") RemoteSmoothnessRuntimeChecks.RunAsHost();
                         else if (job == "air") AirRuntimeChecks.RunAsHost();
                         else if (job == "noise") NoiseRuntimeChecks.RunAsHost();
+                        else if (job == "figure") FigureRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }

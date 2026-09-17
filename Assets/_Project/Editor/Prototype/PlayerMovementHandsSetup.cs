@@ -27,7 +27,10 @@ namespace SunkCost.Editor.Prototype
         // scaled to the 1.8 m capsule its head swallows the camera. The arms hang
         // from an anchor below the eyes, so on friends' screens they meet the item
         // above the small figure; the visible-body card owns the real proportions.
-        public const float CharacterModelScale = 1.0f;
+        // The character model (Dor's GenericCharacter, 1.21 m in its file) scaled to
+        // the 1.8 m capsule, so a friend is diver-sized and the owner's eyes sit in
+        // its head (Dan, 17 September 2026: the first-person body uses Dor's model).
+        public const float CharacterModelScale = 1.49f;
         public static readonly Vector3 TorsoLocalPosition = new(0f, -0.45f, 0f);
 
         [MenuItem("Sunk Cost/Prototype/Apply movement and hands setup")]
@@ -42,6 +45,9 @@ namespace SunkCost.Editor.Prototype
             PlayerMovementSettings settings = EnsureSettings(changes);
             Material gloves = HQPrototypeBuilder.GetOrCreateMaterial(GloveMaterialPath, new Color(0.85f, 0.72f, 0.25f));
             changes.AddRange(PatchPlayerPrefab(settings, gloves));
+            // The head split (first-person body): the owner sees itself below the neck.
+            string split = PlayerHeadSplitSetup.Apply();
+            if (!split.StartsWith("Head split already")) changes.Add(split);
             changes.AddRange(PatchCarryablePrefabs());
             AssetDatabase.SaveAssets();
             return changes.Count == 0 ? "Movement and hands already set up" : "Movement and hands: " + string.Join("; ", changes);

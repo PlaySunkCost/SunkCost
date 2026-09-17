@@ -1,0 +1,32 @@
+Figure matrix started 17/09/2026 23:11:13
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerHeadSplit and the model was cut (run the head split setup)
+
+== F1 — the cut, and what the owner sees of itself
+PASS F1 the body is Dor's CharacterModel
+PASS F1 the head is its own mesh (1728 triangles)
+PASS F1 the body kept the rest (9536 triangles)
+PASS F1 the head is the cut mesh and both eyes (3 renderers)
+PASS F1 the owner does not see its own head
+PASS F1 the owner sees its own body
+  · F1 model 1.49× scale; body bounds top 1.77 m, head top 1.77 m over the feet
+PASS F1 the model stands capsule-tall (1.8 m)
+
+== F2 — looking down at yourself
+PASS F2 the body is in the owner's view when looking down
+  · screenshot Temp/figure-own-body.png
+
+== F3 — crouched
+PASS F3 crouched
+PASS F3 the model folds with the crouch (scale y 0.83)
+  · screenshot Temp/figure-own-crouch.png
+PASS F3 standing again
+
+== F4 — a friend: head, body and colour, as the host sees them
+PASS the guest's copy is here
+PASS F4 the host sees the guest's head
+PASS F4 and its body
+PASS F4 the guest's badge wears a colour: RGBA(0.950, 0.950, 0.200, 1.000)
+  · screenshot Temp/figure-friend.png
+  · done
+MATRIX_PASS
