@@ -1018,7 +1018,7 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.3f);
             H.ClientRequestCabin();
-            yield return WaitUntil(() => Day.LastRefusal.Text == "Dive in progress \u2014 1 below: Player " + guestId, 3f, "G2/Y7 host refused mid-day, the guest named: " + Day.LastRefusal.Text);
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Dive in progress \u2014 1 below: " + WorldSceneFlow.DisplayName(guestId), 3f, "G2/Y7 host refused mid-day, the guest named: " + Day.LastRefusal.Text);
             Check(Day.Phase == DayPhase.DiveInProgress && Day.Day == 3, "Y7 the day is still in progress while the guest is below");
             host.TeleportLocal(sea.BoardingPoint != null ? sea.BoardingPoint.position : sea.SpawnPoint(0).position, host.Yaw); // out of the housing: nobody stands where the car arrives
             yield return Wait(0.3f);
@@ -1045,6 +1045,9 @@ namespace SunkCost.Editor.Prototype
             // Y8: the third day is over: payday. The monitor offers only HQ, the deck
             // button refuses, the guest reads the same.
             Check(Day.DiveDone && Day.Day == 3 && !Day.Payday && Day.Phase == DayPhase.AtSea, $"Y8 the third dive is done (day={Day.Day} diveDone={Day.DiveDone})");
+            // Home only at the start of a day (Dan, 17 September 2026): with the dive done, HQ waits for End day.
+            string doneSail = H.ServerSail("HQ");
+            Check(doneSail == "refused: Dive done — End day first", "Y8 sailing home with the dive done is refused until End day: " + doneSail);
             H.ClientRequestEndDay();
             yield return WaitUntil(() => Day.Payday && Day.Day == 3, 3f, "Y8 End day after the third dive is payday");
             Check(Day.Phase == DayPhase.AtSea, $"Y8 payday at sea (phase={Day.Phase})");
@@ -1104,8 +1107,9 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestPay();
             yield return WaitUntil(() => Day.LastPay.Serial == 1, 3f, "Z3 the pay was processed");
             PayReport pay = Day.LastPay;
-            Check(pay.Paid && !pay.Lost && pay.Sales == coinValue && pay.Quota == coinValue && pay.Balance == 0, $"Z3 sold ${pay.Sales}, quota ${pay.Quota}, paid={pay.Paid}, balance ${pay.Balance}");
-            Check(Day.Day == 0 && !Day.Payday && Day.Balance == 0, $"Z3 a new cycle after paying (day={Day.Day} payday={Day.Payday} balance={Day.Balance})");
+            // Every dollar handed over is the crew's (Dan, 17 September 2026): the quota is met, nothing is charged.
+            Check(pay.Paid && !pay.Lost && pay.Sales == coinValue && pay.Quota == coinValue && pay.Had == coinValue && pay.Balance == coinValue, $"Z3 sold ${pay.Sales}, quota ${pay.Quota}, paid={pay.Paid}, balance ${pay.Balance} (nothing charged)");
+            Check(Day.Day == 0 && !Day.Payday && Day.Balance == coinValue && Day.CycleSales == 0, $"Z3 a new cycle after paying (day={Day.Day} payday={Day.Payday} balance={Day.Balance} handed={Day.CycleSales})");
             yield return WaitUntil(() => H.Item("Coin 3") == null || !H.Item("Coin 3").IsSpawned, 2f, "Z3 the sold coin is gone");
             yield return WaitUntil(() => Day.BoxValue == 0, 2f, "Z3 the box is empty");
             Check(H.QuotaBoardText().StartsWith($"PAID ${coinValue}"), "Z3 the board says PAID: " + H.QuotaBoardText().Replace("\n", " | "));
@@ -1122,13 +1126,13 @@ namespace SunkCost.Editor.Prototype
             WorldLoopSettings.QuotaOverrideForTests = 99999;
             Day.ServerForceCycleForChecks(2, false);
             PayReport shortPay = Day.ServerPay(sales: 40, quota: 99999);
-            Check(shortPay.Short && !shortPay.Paid && !shortPay.Lost && shortPay.Balance == 40 && Day.Balance == 40 && Day.Day == 2 && !Day.Payday, $"Z5 short before payday banks the box and keeps the day (balance ${Day.Balance}, day {Day.Day})");
+            Check(shortPay.Short && !shortPay.Paid && !shortPay.Lost && shortPay.Had == 40 && shortPay.Balance == coinValue + 40 && Day.Balance == coinValue + 40 && Day.CycleSales == 40 && Day.Day == 2 && !Day.Payday, $"Z5 short before payday banks the box and keeps the day (balance ${Day.Balance}, handed ${Day.CycleSales}, day {Day.Day})");
             yield return null;
             Check(H.QuotaBoardText().StartsWith("SHORT BY $99959"), "Z5 the board says SHORT BY: " + H.QuotaBoardText().Replace("\n", " | "));
             Check(Day.ServerCanSail(WorldId.Sea, out string shortWhy), "Z5 the ship may sail out again to try for the rest: " + shortWhy);
             Day.ServerForceCycleForChecks(3, true);
             PayReport lost = Day.ServerPay(sales: 0, quota: 99999);
-            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && lost.Balance == 0 && Day.Balance == 0 && Day.Day == 0 && !Day.Payday, $"Z5 short at payday is GAME LOST and a reset (had ${lost.Had}, balance ${Day.Balance})");
+            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && lost.Balance == 0 && Day.Balance == 0 && Day.CycleSales == 0 && Day.Day == 0 && !Day.Payday, $"Z5 short at payday is GAME LOST and a reset (had ${lost.Had}, balance ${Day.Balance})");
             yield return null;
             Check(H.QuotaBoardText().StartsWith("GAME LOST"), "Z5 the board says GAME LOST: " + H.QuotaBoardText().Replace("\n", " | "));
             WorldLoopSettings.QuotaOverrideForTests = null;
