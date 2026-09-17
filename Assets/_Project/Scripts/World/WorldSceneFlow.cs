@@ -677,6 +677,7 @@ namespace SunkCost.World
             // pass; placing twice would take the ship-relative offset of an already
             // placed player. Only the client pass places.
             if (args.QueueData.AsServer) return;
+            if (ClientPlaceDeadOnDeck(args)) return; // a dead player's object just arrived on the ship (card 1)
             if (dayState.CabinRide.Stage == CabinRideStage.Loading) { OnRideLoadEnd(args); return; }
             ShipDepartureState state = dayState.Departure;
             if (state.Stage != DepartureStage.Loading) return;

@@ -141,6 +141,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "hands") PlayerMovementHandsRuntimeChecks.RunAsHost();
                         else if (job == "loop") WorldLoopRuntimeChecks.RunAsHost();
                         else if (job == "fullrun") FullRunRuntimeChecks.RunAsHost();
+                        else if (job == "spectate") SpectateRuntimeChecks.RunAsHost();
                         else if (job == "voice") VoiceRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");

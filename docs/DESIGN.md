@@ -299,6 +299,17 @@ this small scope during playtests.
 cargo. Recovering a friend's gear costs you the carry and the elevator's absence, not
 your own exit.
 
+**Built 17 September 2026 (Dan, the first spectating card):** nothing kills yet
+except a debug key — **K, underwater only**, development builds and the editor.
+Dying drops the body where you stood (`<name>'s body`: two-handed, 60 kg, lost
+with the site if left below, cargo like anything else if carried to the car),
+scatters the four slots and the hands, hides you, and takes you out of every
+living count: the dead never block the deck button, the car's return or End day.
+When the last living diver is up the dead are carried to the ship unseen; **End
+day revives them on the deck** with the base kit — next to their body if it came
+up (the body disappears). Spectating while dead and the TV are the next cards
+(docs/SPECTATING_IMPLEMENTATION_PLAN.md).
+
 ---
 
 ## 5. Interface

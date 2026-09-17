@@ -188,6 +188,17 @@ namespace SunkCost.Player
             return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
         }
 
+        // Dead (card 1): a plain caption until the spectator view (card 2) takes over.
+        private void DrawDeadCaption()
+        {
+            Color previous = GUI.color;
+            GUI.color = new Color(1f, 0.35f, 0.35f, 1f);
+            GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 30f), "YOU ARE DEAD", visorStyle);
+            GUI.color = new Color(0.9f, 0.9f, 0.9f, 0.9f);
+            GUI.Label(new Rect(0f, Screen.height * 0.42f + 30f, Screen.width, 20f), "the crew can bring your body up — you are back at End day", visorTinyStyle);
+            GUI.color = previous;
+        }
+
         // The visor is on exactly while the player stands in the dive world: that is
         // where the suit is on (section 3.1). No extra state.
         public bool VisorOn => inventory != null && inventory.IsOwner && gameObject.scene == WorldScenes.Scene(WorldId.Dive);
@@ -251,7 +262,7 @@ namespace SunkCost.Player
             if (Time.unscaledTime - othersCachedAt > 0.5f) { othersCache = FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude); othersCachedAt = Time.unscaledTime; }
             foreach (HQPlayerController other in othersCache)
             {
-                if (other == null || other == controller || other.gameObject.scene != gameObject.scene) continue;
+                if (other == null || other == controller || other.gameObject.scene != gameObject.scene || other.IsDead) continue;
                 Vector3 head = other.transform.position + Vector3.up * 1.85f;
                 float distance = Vector3.Distance(eye, head);
                 if (distance > CrewTagRangeMeters || !PlayerVisorMath.InView(camera, head)) continue;
@@ -298,6 +309,7 @@ namespace SunkCost.Player
             if (readoutsOn) DrawVisorGlass();
             DrawAimingDot();
             DrawPrompt();
+            if (controller != null && controller.IsDead) DrawDeadCaption();
             DrawSlots();
             DrawWeightMeter();
         }

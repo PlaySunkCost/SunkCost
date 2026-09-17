@@ -74,6 +74,9 @@ namespace SunkCost.World
         private readonly SyncList<int> riders = new();
         private readonly SyncList<RiderPlacement> placements = new();
         private readonly SyncList<int> below = new();
+        // Dead this day (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 1): never
+        // below, never a rider, never waited for; revived at End day.
+        private readonly SyncList<int> dead = new();
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -106,6 +109,8 @@ namespace SunkCost.World
         public IReadOnlyList<int> Riders => riders;
         public IReadOnlyList<RiderPlacement> Placements => placements;
         public IReadOnlyList<int> Below => below;
+        public IReadOnlyList<int> Dead => dead;
+        public bool IsDead(int clientId) => dead.Contains(clientId);
         public bool IsRider(int clientId) => riders.Contains(clientId);
         public bool IsBelow(int clientId) => below.Contains(clientId);
         public bool TryGetPlacement(int clientId, out RiderPlacement placement)
@@ -118,7 +123,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}]";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}]";
 
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
@@ -360,7 +365,22 @@ namespace SunkCost.World
             riders.Remove(clientId);
             for (int i = placements.Count - 1; i >= 0; i--) if (placements[i].ClientId == clientId) placements.RemoveAt(i);
             below.Remove(clientId);
+            dead.Remove(clientId);
         }
+
+        // A player died: out of the living lists, into the dead. Living now means
+        // alive and connected for every check that used Below.
+        [Server]
+        public void ServerPlayerDied(int clientId)
+        {
+            if (!dead.Contains(clientId)) dead.Add(clientId);
+            below.Remove(clientId);
+            riders.Remove(clientId);
+            for (int i = placements.Count - 1; i >= 0; i--) if (placements[i].ClientId == clientId) placements.RemoveAt(i);
+        }
+
+        [Server]
+        public void ServerRevive(int clientId) => dead.Remove(clientId);
 
         public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || cabinRide.Value.Active;
         public bool RefusesJoinsForTravel => Travelling;

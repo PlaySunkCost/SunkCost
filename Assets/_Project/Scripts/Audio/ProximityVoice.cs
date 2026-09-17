@@ -166,6 +166,7 @@ namespace SunkCost.Audio
             if (!players.TryGetValue(id, out var player) || !player.gameObject.activeInHierarchy) return -1;
             var day = CrewDayState.Instance;
             if (day == null || day.Travelling || (day.Riding && day.IsRider(id))) return -1;
+            if (day.IsDead(id)) return -1; // the dead are routed by spectate state (card 2), never by world
             if (!WorldScenes.TryParse(player.gameObject.scene.name, out var result)) return -1;
             if (day.IsBelow(id) != (result == WorldId.Dive)) return -1;
             if (result != WorldId.Dive && result != day.World) return -1;

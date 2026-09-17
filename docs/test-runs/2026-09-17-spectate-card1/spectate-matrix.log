@@ -1,0 +1,82 @@
+Spectate matrix started 17/09/2026 02:20:16
+PASS editor is the host with a spawned player
+
+== D0 — K on deck does nothing
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS D0 K on the deck is refused: alive
+
+== D1 — K below: the body, the scatter, the dead do not block
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS D1 Coin 3 lies on the seafloor
+PASS the dot is on Coin
+PASS Coin grabbed (Held)
+PASS D1 K below: the host is dead
+PASS D1 the dead are not below
+PASS D1 the held coin scattered (Free)
+PASS D1 the coin lies near the body (0.6 m)
+PASS D1 a body was spawned for the host
+PASS D1 the body is a loose two-handed carryable
+PASS D1 it is named after its owner: Skipper's body
+PASS D1 the body lies where the host died (0.3 m)
+PASS D1 the dead host's capsule is off
+PASS D1 nobody living below: the dive is done (phase=AtSea diveDone=True)
+PASS D1 prompt while dead: prompt='Press E to grab Skipper's body (two hands)'; target=PlayerBody (0)
+PASS D1 the site unloaded with the dead carried out
+PASS D1 the dead host's object is on the ship: ShipAtSea
+PASS D1 parked aboard at (-3.0, 0.0, 5.0)
+PASS D1 the deck cabin reads the car as up
+PASS D1 cabin panel: Dive done — end the day at the monitor
+PASS D1 still dead and hidden on the ship
+
+== D2 — End day revives on the deck
+PASS D2 End day accepted: 
+PASS D2 the host is alive again
+PASS D2 standing on the deck with the capsule on: (-3.0, 0.0, 5.0)
+PASS D2 base kit: nothing carried
+PASS D2 day 2
+PASS D2 the seafloor body did not come up (lost with the site)
+
+== D3 — a guest dies below; the host carries the body up; End day revives the guest next to it
+PASS guest player spawned
+PASS G0 guest joined at sea
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/3 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS D3 both below
+PASS D3 the guest is in the site
+PASS D3 the guest died below
+PASS D3 only the living host is below
+PASS D3 the dive goes on for the living
+PASS D3 the guest reads dead=True
+PASS D3 the guest's body lies where it fell
+PASS D3 the dead guest's copy is hidden on the host
+PASS the dot is on Mate bof the's body
+PASS Mate bof the's body grabbed (Held)
+PASS D3 the host carries the body in both hands
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/4 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
+PASS D3 the last living diver is up: dive done
+PASS D3 the site unloaded
+PASS D3 the dead guest's object was carried to the ship
+PASS D3 the guest reads itself dead on the ship
+PASS D3 the body came up in the host's hands
+PASS D3 the body is set down on the deck at (-3.0, 0.0, 1.0) yaw 0
+PASS D3 the body rests aboard at (-3.0, 0.2, 1.7)
+PASS D3 End day accepted: 
+PASS D3 the guest is revived
+PASS D3 the brought-up body is gone
+PASS D3 the guest reads itself alive on the ship
+PASS D3 the guest stands next to where its body lay (0.8 m)
+PASS D3 the guest's copy is visible again
+PASS D3 day 3
+  · done
+MATRIX_PASS

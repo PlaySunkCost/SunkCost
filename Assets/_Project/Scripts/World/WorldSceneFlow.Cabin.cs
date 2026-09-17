@@ -124,6 +124,7 @@ namespace SunkCost.World
             if (dayState.Below.Count > 0) { why = DiveInProgressText(); return false; }
             if (!dayState.ServerEndDay(Settings.DaysPerCycle, out why)) return false;
             Debug.Log($"[WorldSceneFlow] Day ended by {DisplayName(sender)}: day {dayState.Day}{(dayState.Payday ? " PAYDAY" : string.Empty)}");
+            ServerReviveAll(); // the dead stand up on the deck (card 1)
             return true;
         }
 
@@ -482,7 +483,7 @@ namespace SunkCost.World
             var missing = new List<string>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
-                if (!conn.IsActive || !conn.IsAuthenticated) continue;
+                if (!conn.IsActive || !conn.IsAuthenticated || dayState.IsDead(conn.ClientId)) continue; // the dead are not waited for
                 HQPlayerController player = PlayerOf(conn);
                 if (player == null || player.gameObject.scene != WorldScenes.Scene(WorldId.Sea) || !ship.IsInDeckCabin(player.transform.position)) missing.Add(DisplayName(conn));
             }
@@ -497,7 +498,7 @@ namespace SunkCost.World
             var riders = new List<int>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
-                if (!conn.IsActive) continue;
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
                 if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) riders.Add(conn.ClientId);
             }
@@ -671,8 +672,11 @@ namespace SunkCost.World
                 foreach (NetworkConnection conn in ActiveCohort()) dayState.ServerSetBelow(conn.ClientId, false);
             }
             bool othersBelow = dayState.Below.Count > 0;
-            if (!othersBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle); // the last one up ends the day
-            if (conns.Count > 0) networkManager.SceneManager.UnloadConnectionScenes(ActiveCohort().ToArray(), UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
+            if (!othersBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle); // the last living one up: the dive is done
+            // The dead in the site ride to the ship first, hidden; their clients join the unload.
+            if (!othersBelow) yield return ServerMoveDeadToShip();
+            NetworkConnection[] unloaders = SiteUnloaders(ActiveCohort());
+            if (conns.Count > 0 || unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: othersBelow));
             if (!othersBelow) cachedCar = null;
 
             SetRide(CabinRideStage.Arriving, RideDirection.Up, Settings.CabinSealSeconds);
