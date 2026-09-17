@@ -36,6 +36,12 @@ namespace SunkCost.Editor.Prototype
         private static int guestCommand = 1100;
         private static string lastReply = string.Empty;
         private static Keyboard keyboard;
+        // The editor loses focus whenever the tester types elsewhere; by default the
+        // Input System then drops the virtual keyboard's events too ("walked 0.0 m").
+        // Ignore focus for the run, as the hands matrix does.
+        private static InputSettings.EditorInputBehaviorInPlayMode savedInputBehavior;
+        private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
+        private static bool inputBehaviorChanged;
         public static string Status { get; private set; } = "Not run";
 
         private static CrewDayState Day => CrewDayState.Instance;
@@ -86,6 +92,7 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
+            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; InputSystem.settings.backgroundBehavior = savedBackgroundBehavior; inputBehaviorChanged = false; }
             EditorApplication.update -= Tick;
         }
 
@@ -235,6 +242,11 @@ namespace SunkCost.Editor.Prototype
             PlayerVitalsSettings settings = vitals.Settings;
             Say($"tank {settings.TankSeconds}s, sprint ×{settings.SprintDrainMultiplier}, suffocation {settings.SuffocationDamagePerSecond}/s, max health {settings.MaxHealth}");
             WorldSceneFlow flow = WorldSceneFlow.Instance;
+            savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
+            savedBackgroundBehavior = InputSystem.settings.backgroundBehavior;
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            inputBehaviorChanged = true;
             keyboard = InputSystem.AddDevice<Keyboard>("AirCheckKeyboard");
             HQPlayerController.KeyboardForChecks = keyboard;
             HQPlayerController.BypassInputGateForChecks = true;

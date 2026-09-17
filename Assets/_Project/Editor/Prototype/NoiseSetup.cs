@@ -37,7 +37,10 @@ namespace SunkCost.Editor.Prototype
             try
             {
                 if (root.GetComponent<HQPlayerController>() == null) throw new System.InvalidOperationException("Player prefab needs HQPlayerController first.");
-                if (root.GetComponent<PlayerNoise>() == null) { root.AddComponent<PlayerNoise>(); changes.Add("PlayerNoise added"); PrefabUtility.SaveAsPrefabAsset(root, HQPrototypeBuilder.PlayerPrefabPath); }
+                bool changed = false;
+                if (root.GetComponent<PlayerNoise>() == null) { root.AddComponent<PlayerNoise>(); changes.Add("PlayerNoise added"); changed = true; }
+                if (root.GetComponent<SunkCost.Audio.PlayerFootstepSounds>() == null) { root.AddComponent<SunkCost.Audio.PlayerFootstepSounds>(); changes.Add("PlayerFootstepSounds added"); changed = true; }
+                if (changed) PrefabUtility.SaveAsPrefabAsset(root, HQPrototypeBuilder.PlayerPrefabPath);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();

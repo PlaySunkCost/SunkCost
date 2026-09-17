@@ -37,6 +37,12 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator steps;
         private static readonly Stack<IEnumerator> stack = new();
         private static Keyboard keyboard;
+        // The editor loses focus whenever the tester types elsewhere; by default the
+        // Input System then drops the virtual keyboard's events too ("walked 0.0 m").
+        // Ignore focus for the run, as the hands matrix does.
+        private static InputSettings.EditorInputBehaviorInPlayMode savedInputBehavior;
+        private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
+        private static bool inputBehaviorChanged;
         private static readonly Ears ears = new();
         public static string Status { get; private set; } = "Not run";
 
@@ -92,6 +98,7 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
+            if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; InputSystem.settings.backgroundBehavior = savedBackgroundBehavior; inputBehaviorChanged = false; }
             steps = null;
             stack.Clear();
             EditorApplication.update -= Tick;
@@ -178,12 +185,19 @@ namespace SunkCost.Editor.Prototype
             AudioLibrary library = AudioLibrary.Get();
             Say($"walk {settings.WalkStepMetres} m / {settings.WalkRadius} m, sprint {settings.SprintStepMetres} m / {settings.SprintRadius} m, elevator {settings.ElevatorRadius} m every {settings.ElevatorEmitInterval} s; winch {(library.WinchIsPlaceholder ? "placeholder" : library.ElevatorWinch.name)}, ding {(library.DingIsPlaceholder ? "placeholder" : library.ElevatorDing.name)}");
             NoiseSystem.Register(ears);
+            savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
+            savedBackgroundBehavior = InputSystem.settings.backgroundBehavior;
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            inputBehaviorChanged = true;
             keyboard = InputSystem.AddDevice<Keyboard>("NoiseCheckKeyboard");
             HQPlayerController.KeyboardForChecks = keyboard;
             HQPlayerController.BypassInputGateForChecks = true;
             SunkCost.Net.SessionInputGate.OpenMenu();
             Keys(); yield return null;
             Check(ElevatorSounds.Instance != null, "the elevator's sounds are attached on the client");
+            PlayerFootstepSounds feet = host.GetComponent<PlayerFootstepSounds>();
+            Check(feet != null, "the player prefab carries PlayerFootstepSounds (run the noise setup)");
 
             Heading("N0 — on the deck nothing is heard");
             H.MoveLocalIntoDeckCabin("HQ"); yield return Wait(0.3f);
@@ -204,8 +218,8 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the deck cabin took the press (refusal: " + Day.LastRefusal.Text + ")");
             yield return Expect(() => Day.Elevator.State == ElevatorState.Descending, 40f, () => "the car is descending");
             yield return Wait(0.5f);
-            bool winchDuringDescent = ElevatorSounds.Instance.WinchPlayingAtCar || ElevatorSounds.Instance.WinchPlayingOnShip;
-            Check(winchDuringDescent, $"N1 the winch plays while the car descends (at car {ElevatorSounds.Instance.WinchPlayingAtCar}, on ship {ElevatorSounds.Instance.WinchPlayingOnShip})");
+            Say($"N1 descending: {ElevatorSounds.Instance.SecondsToArrival:0.0} s to the bottom");
+            Check(ElevatorSounds.Instance.WinchPlayingAtCar && Mathf.Abs(ElevatorSounds.Instance.CarWinchVolume - library.WinchVolumeInCar) < 0.01f, $"N1 the rider is with the car: the winch low the whole way ({ElevatorSounds.Instance.CarWinchVolume:0.00} = {library.WinchVolumeInCar:0.00})");
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the ride down completed");
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 30f, () => "the car is at the bottom");
             yield return Wait(0.5f);
@@ -221,6 +235,7 @@ namespace SunkCost.Editor.Prototype
             float floorY = car.BottomPosition.y + 0.15f;
             host.TeleportLocal(new Vector3(25f, floorY, -25f), 90f); yield return Wait(0.5f);
             ears.Heard.Clear();
+            int soundsBefore = feet.StepsPlayed;
             Vector3 start = host.transform.position;
             Keys(Key.W); yield return Wait(2f); Keys(); yield return Wait(0.2f);
             float walked = Vector3.ProjectOnPlane(host.transform.position - start, Vector3.up).magnitude;
@@ -231,10 +246,12 @@ namespace SunkCost.Editor.Prototype
             Check(ears.Count(NoiseKind.Sprint) == 0, "N2 none of them a sprint");
             Check(ears.Heard.Where(e => e.Kind == NoiseKind.Footstep).All(e => Mathf.Approximately(e.Radius, settings.WalkRadius)), $"N2 at the walk radius ({settings.WalkRadius} m)");
             Check(ears.Heard.All(e => Vector3.Distance(e.Position, host.transform.position) < walked + 1f), "N2 at the diver's feet");
+            int heard = feet.StepsPlayed - soundsBefore;
+            Check(heard >= steps - 2 && heard <= steps + 2, $"N2 and the steps were heard: {heard} footstep sounds for {steps} noise events");
 
             Heading("N3 — sprinting: fewer, louder steps");
             host.TeleportLocal(new Vector3(25f, floorY, -25f), 90f); yield return Wait(0.5f);
-            ears.Heard.Clear(); start = host.transform.position;
+            ears.Heard.Clear(); start = host.transform.position; soundsBefore = feet.StepsPlayed;
             Keys(Key.W, Key.LeftShift); yield return Wait(2f); Keys(); yield return Wait(0.2f);
             walked = Vector3.ProjectOnPlane(host.transform.position - start, Vector3.up).magnitude;
             int sprints = ears.Count(NoiseKind.Sprint);
@@ -242,16 +259,23 @@ namespace SunkCost.Editor.Prototype
             Check(sprints >= Mathf.FloorToInt(walked / settings.SprintStepMetres) - 2 && sprints > 3, $"N3 {sprints} sprint steps over {walked:0.0} m");
             Check(ears.Heard.Where(e => e.Kind == NoiseKind.Sprint).All(e => Mathf.Approximately(e.Radius, settings.SprintRadius)), $"N3 at the sprint radius ({settings.SprintRadius} m)");
             Check(ears.Count(NoiseKind.Footstep) <= 2, "N3 the run's first strides at most read as walking");
+            Check(feet.StepsPlayed - soundsBefore >= sprints - 2, $"N3 sprint steps were heard ({feet.StepsPlayed - soundsBefore} sounds for {sprints} events)");
+            int landingsBefore = feet.LandingsPlayed, stepsBeforeJump = feet.StepsPlayed;
+            Keys(Key.Space); yield return Wait(0.06f); Keys(); yield return Wait(1.2f);
+            Check(feet.LandingsPlayed == landingsBefore + 1, $"N3 a jump makes one sound, the landing ({feet.LandingsPlayed})");
+            Check(feet.StepsPlayed == stepsBeforeJump, "N3 and no step in the air");
 
             Heading("N4 — crouching is silent");
             host.TeleportLocal(new Vector3(25f, floorY, -25f), 90f); yield return Wait(0.5f);
             Keys(Key.LeftCtrl); yield return Wait(0.5f);
             Check(host.IsCrouched, "N4 crouched");
+            int stepsBeforeCrouch = feet.StepsPlayed;
             ears.Heard.Clear(); start = host.transform.position;
             Keys(Key.LeftCtrl, Key.W); yield return Wait(2f); Keys(Key.LeftCtrl); yield return Wait(0.2f);
             walked = Vector3.ProjectOnPlane(host.transform.position - start, Vector3.up).magnitude;
             Check(walked > 1f, $"N4 crouch-walked {walked:0.0} m");
             Check(ears.Heard.Count == 0, $"N4 not a sound ({ears.Heard.Count} events)");
+            Check(feet.StepsPlayed == stepsBeforeCrouch, $"N4 and no footstep sound either ({feet.StepsPlayed - stepsBeforeCrouch})");
             Keys(); yield return Wait(0.5f);
             Check(!host.IsCrouched, "N4 standing again");
 
@@ -264,7 +288,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the car took the press");
             yield return Expect(() => Day.Elevator.State == ElevatorState.Ascending, 20f, () => "the car is ascending");
             yield return Wait(0.5f);
-            Check(ElevatorSounds.Instance.WinchPlayingAtCar, "N5 the winch plays at the car for the rider");
+            Check(ElevatorSounds.Instance.WinchPlayingAtCar && Mathf.Abs(ElevatorSounds.Instance.CarWinchVolume - library.WinchVolumeInCar) < 0.01f, $"N5 the rider hears the winch low the whole way up ({ElevatorSounds.Instance.CarWinchVolume:0.00})");
             Check(!ElevatorSounds.Instance.WinchPlayingOnShip, "N5 not through the deck: the rider is below");
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the ride up completed");
             Check(host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), "back on the deck");
@@ -301,12 +325,22 @@ namespace SunkCost.Editor.Prototype
             serial = Day.CabinRide.Serial;
             yield return Send("{\"id\":{id},\"action\":\"car\"}");
             yield return Expect(() => Day.CabinRide.Serial > serial, 4f, () => "N6 the guest's car press was taken (refusal: " + Day.LastRefusal.Text + ")");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.Ascending, 20f, () => "N6 the guest's car is climbing");
+            yield return Wait(1f);
+            Check(ElevatorSounds.Instance.WinchPlayingAtCar, $"N6 the host, left below, hears the car leaving it ({ElevatorSounds.Instance.SecondsSinceDeparture:0.0} s after departure)");
+            Check(Mathf.Abs(ElevatorSounds.Instance.CarWinchVolume - library.WinchVolumeAtCar) < 0.01f && Mathf.Approximately(ElevatorSounds.Instance.CarWinchReach, library.WinchReachMetres), $"N6 quiet ({ElevatorSounds.Instance.CarWinchVolume:0.00}) but carrying {ElevatorSounds.Instance.CarWinchReach:0} m — heard from very far");
+            yield return Expect(() => !ElevatorSounds.Instance.WinchPlayingAtCar, library.WinchSecondsBeforeArrival + 2f, () => $"N6 and it fades out once the car is {library.WinchSecondsBeforeArrival:0} s gone ({ElevatorSounds.Instance.SecondsSinceDeparture:0.0} s)");
+            yield return Expect(() => Day.Elevator.State == ElevatorState.AtTop, 40f, () => "N6 the guest's car reached the top");
+            Check(!ElevatorSounds.Instance.WinchPlayingAtCar, "N6 silent below as it arrived far above");
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "N6 the guest's ride up completed");
             yield return GuestEventually(r => r.Contains("scene=ShipAtSea") && r.Contains("winchOnShip=False"), 15f, "N6 the guest is on the deck; the winch is quiet");
             yield return Expect(() => Day.Elevator.State == ElevatorState.Descending, 40f, () => "N6 the car comes back down for the host");
-            yield return GuestEventually(r => r.Contains("winchOnShip=True") && r.Contains("winchAtCar=False"), 6f, "N6 the guest on the deck hears the returning car through the deck, low, not at the car");
+            yield return GuestEventually(r => r.Contains("winchOnShip=True") && r.Contains("winchAtCar=False"), 4f, "N6 the guest on the deck hears the car leaving the deck, low, not at the car");
+            yield return Wait(library.WinchSecondsBeforeArrival + 1.5f);
+            yield return GuestEventually(r => r.Contains("winchOnShip=False"), 4f, "N6 and no more once it is gone below");
+            yield return Expect(() => ElevatorSounds.Instance.WinchPlayingAtCar, 40f, () => "N6 the host below hears it arriving in its last seconds");
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 40f, () => "N6 the car is back at the bottom");
-            yield return GuestEventually(r => r.Contains("winchOnShip=False"), 6f, "N6 the winch stops for the guest when the car stops");
+            yield return GuestEventually(r => r.Contains("winchOnShip=False"), 6f, "N6 quiet on the deck");
             yield return Send("{\"id\":{id},\"action\":\"snapshot\"}");
             int guestDings = (int)Field(lastReply, "dingsOnShip");
             H.MoveLocalIntoCar(); yield return Wait(0.4f);
@@ -314,7 +348,7 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestCar();
             yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the car took the press");
             yield return Expect(() => Day.Elevator.State == ElevatorState.Ascending, 20f, () => "the host's car is ascending");
-            yield return GuestEventually(r => r.Contains("winchOnShip=True"), 6f, "N6 the guest hears the host's car climbing, low");
+            yield return GuestEventually(r => r.Contains("winchOnShip=True"), 40f, "N6 the guest hears the host's car arriving at the deck in its last seconds, low");
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the host's ride up completed");
             yield return GuestEventually(r => (int)Field(r, "dingsOnShip") > guestDings, 6f, "N6 the bell rang on the deck for the guest when the car opened at the top");
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");

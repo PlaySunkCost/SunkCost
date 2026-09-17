@@ -15,19 +15,49 @@ namespace SunkCost.Audio
     public sealed class AudioLibrary : ScriptableObject
     {
         [Header("Elevator")]
-        [Tooltip("The winch while the car moves: loops. Loud at the car, low through the deck on the ship.")]
+        [Tooltip("The winch: loops, heard for the seconds the car is near you (Dan, 18 September 2026) — quiet from very far below, low through the deck, low inside the car the whole way.")]
         [SerializeField] private AudioClip elevatorWinch;
+        [Tooltip("Seconds the winch is heard while the car is near your end: the last ones as it arrives at you, the first ones as it leaves you.")]
+        [SerializeField] private float winchSecondsBeforeArrival = 5f;
+        [Tooltip("The winch fades in and out over this long so it never clicks.")]
+        [SerializeField] private float winchFadeSeconds = 0.5f;
+        [Tooltip("How far the winch at the car carries, metres — the whole site: 'hear it from very far' (Dan).")]
+        [SerializeField] private float winchReachMetres = 250f;
         [Tooltip("The bell when the car arrives and the doors open — the movie elevator's ding.")]
         [SerializeField] private AudioClip elevatorDing;
-        [Range(0f, 1f)] [SerializeField] private float winchVolumeAtCar = 1f;
+        [Tooltip("At the car, for a diver on the site: quiet — 'hear from far', not loud (Dan, 18 September 2026).")]
+        [Range(0f, 1f)] [SerializeField] private float winchVolumeAtCar = 0.35f;
+        [Tooltip("The winch for the riders inside the car — mostly for those left below, so half again lower in here (Dan, 18 September 2026).")]
+        [Range(0f, 1f)] [SerializeField] private float winchVolumeInCar = 0.06f;
         [Tooltip("The winch as heard on the ship, through the deck (Dan: 'low').")]
         [Range(0f, 1f)] [SerializeField] private float winchVolumeOnShip = 0.15f;
         [Range(0f, 1f)] [SerializeField] private float dingVolume = 0.8f;
 
+        [Header("Feet")]
+        [Tooltip("A footstep on the seafloor; pitched a little differently left and right, higher sprinting.")]
+        [SerializeField] private AudioClip footstep;
+        [Tooltip("The thud of a landing.")]
+        [SerializeField] private AudioClip land;
+        [Range(0f, 1f)] [SerializeField] private float footstepVolume = 0.07f;   // "way lower" (Dan, 18 September 2026): a fifth of the first cut
+        [Range(0f, 1f)] [SerializeField] private float sprintFootstepVolume = 0.11f;
+        [Range(0f, 1f)] [SerializeField] private float landVolume = 0.3f;
+        [Tooltip("Your own steps, jumps and landings play at this fraction of a friend's (they are under your own ears).")]
+        [Range(0f, 1f)] [SerializeField] private float ownFootstepScale = 0.6f;
+
         public AudioClip ElevatorWinch => elevatorWinch != null ? elevatorWinch : PlaceholderSounds.Winch;
         public AudioClip ElevatorDing => elevatorDing != null ? elevatorDing : PlaceholderSounds.Ding;
         public float WinchVolumeAtCar => winchVolumeAtCar;
+        public float WinchVolumeInCar => winchVolumeInCar;
+        public float WinchSecondsBeforeArrival => winchSecondsBeforeArrival;
+        public float WinchFadeSeconds => winchFadeSeconds;
+        public float WinchReachMetres => winchReachMetres;
         public float WinchVolumeOnShip => winchVolumeOnShip;
+        public AudioClip Footstep => footstep != null ? footstep : PlaceholderSounds.Step;
+        public AudioClip Land => land != null ? land : PlaceholderSounds.Land;
+        public float FootstepVolume => footstepVolume;
+        public float SprintFootstepVolume => sprintFootstepVolume;
+        public float LandVolume => landVolume;
+        public float OwnFootstepScale => ownFootstepScale;
         public float DingVolume => dingVolume;
         public bool WinchIsPlaceholder => elevatorWinch == null;
         public bool DingIsPlaceholder => elevatorDing == null;
@@ -47,7 +77,7 @@ namespace SunkCost.Audio
     public static class PlaceholderSounds
     {
         private const int Rate = 48000;
-        private static AudioClip winch, ding;
+        private static AudioClip winch, ding, step, land;
 
         public static AudioClip Winch
         {
@@ -71,6 +101,45 @@ namespace SunkCost.Audio
                 winch.SetData(data, 0);
                 return winch;
             }
+        }
+
+        // A footstep: a 70 ms burst of low-passed noise with a soft attack — a boot on silt.
+        public static AudioClip Step
+        {
+            get
+            {
+                if (step != null) return step;
+                step = Burst("Placeholder footstep", 0.07f, 0.90f, 0.5f, 1);
+                return step;
+            }
+        }
+        // A landing: a heavier, longer thud.
+        public static AudioClip Land
+        {
+            get
+            {
+                if (land != null) return land;
+                land = Burst("Placeholder landing", 0.16f, 0.95f, 0.7f, 3);
+                return land;
+            }
+        }
+        // Low-passed noise (filter 0..1: higher = duller) with an attack and a decay.
+        private static AudioClip Burst(string name, float seconds, float filter, float gain, int seed)
+        {
+            int n = (int)(Rate * seconds);
+            var data = new float[n];
+            System.Random random = new(seed);
+            float low = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                float t = i / (float)n;
+                low = low * filter + (float)(random.NextDouble() * 2 - 1) * (1f - filter);
+                float envelope = Mathf.Min(1f, t * 25f) * Mathf.Exp(-t * 6f);
+                data[i] = Mathf.Clamp(low * 4f * envelope * gain, -1f, 1f);
+            }
+            AudioClip clip = AudioClip.Create(name, n, 1, Rate, false);
+            clip.SetData(data, 0);
+            return clip;
         }
 
         public static AudioClip Ding

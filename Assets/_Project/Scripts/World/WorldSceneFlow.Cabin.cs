@@ -75,7 +75,7 @@ namespace SunkCost.World
         // Seconds since a tick, read every frame: whole ticks plus the time into the
         // current one, so a car or a door driven from it glides instead of stepping
         // once per tick (Dan, 15 September 2026: "everything jumps in place").
-        private float ElapsedSince(uint startTick)
+        public float ElapsedSince(uint startTick)
         {
             if (networkManager == null || networkManager.TimeManager == null) return 0f;
             FishNet.Managing.Timing.TimeManager time = networkManager.TimeManager;
