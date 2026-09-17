@@ -212,6 +212,20 @@ namespace SunkCost.World
             InstanceChanged?.Invoke(this);
         }
 
+        // The elevator's noise (server) and sounds (every client) ride on this
+        // object: both read the replicated phase, neither replicates anything.
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            if (GetComponent<SunkCost.Noise.ElevatorNoise>() == null) gameObject.AddComponent<SunkCost.Noise.ElevatorNoise>();
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (GetComponent<SunkCost.Audio.ElevatorSounds>() == null) gameObject.AddComponent<SunkCost.Audio.ElevatorSounds>();
+        }
+
         public override void OnStopNetwork()
         {
             if (Instance == this)

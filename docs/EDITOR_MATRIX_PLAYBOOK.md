@@ -12,6 +12,9 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   `air` = the tank and health, `AirRuntimeChecks`, log `Temp/air-matrix.log`, the host alone
   (drain at 1× and 1.5× sprinting on the virtual keyboard, L, suffocation to death, revive)
   then one guest in `Temp/air-guest` (replication, the ride up on an empty tank) — about 5 minutes;
+  `noise` = footsteps, the elevator's noise and sounds, `NoiseRuntimeChecks`, log `Temp/noise-matrix.log`,
+  the host alone with a listener on the NoiseSystem (walk/sprint/crouch on the virtual keyboard, two rides)
+  then one guest in `Temp/noise-guest` on the deck (the winch low, the bell) — about 4 minutes;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator
