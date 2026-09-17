@@ -149,16 +149,37 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      # Done with `gh` in three steps so a flaky upload (Builds 89 and 91 failed
+      # in softprops/action-gh-release with "Error uploading" / "Error creating
+      # asset temp dir", leaving a draft without a zip) is retried, and the
+      # release only stops being a draft once the zip is on it. Re-running the
+      # failed job finds its own draft and finishes it.
       - name: Publish the release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          target_commitish: ${{ github.sha }}
-          name: "Build ${{ github.run_number }} · ${{ steps.info.outputs.title }}"
-          body: ${{ steps.info.outputs.body }}
-          files: ${{ steps.info.outputs.zip }}
-          make_latest: true
-          fail_on_unmatched_files: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: build-${{ github.run_number }}
+          TITLE: "Build ${{ github.run_number }} · ${{ steps.info.outputs.title }}"
+          BODY: ${{ steps.info.outputs.body }}
+          ZIP: ${{ steps.info.outputs.zip }}
+        run: |
+          printf '%s\n' "$BODY" > release-body.md
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG exists (a previous attempt); finishing it."
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft \
+              --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-body.md
+          fi
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$TAG" "$ZIP" --repo "$GITHUB_REPOSITORY" --clobber; then
+              break
+            fi
+            [ "$attempt" -lt 5 ] || { echo "The zip would not upload after five attempts."; exit 1; }
+            echo "Upload attempt $attempt failed; retrying in $((attempt * 15)) s."
+            sleep $((attempt * 15))
+          done
+          # The asset must really be there before the release goes public.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -qx "$ZIP"
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
 
       - name: Keep only the ten newest releases
         env:
