@@ -46,6 +46,8 @@ namespace SunkCost.Net
         private void Update()
         {
             if (string.IsNullOrEmpty(directory)) return;
+            Turn();
+            Jitter();
             var nm = InstanceFinder.NetworkManager;
             // Answers as soon as the Local transport is bound, connected or not: a
             // joiner refused at admission reports the refusal through its snapshot.
@@ -69,8 +71,30 @@ namespace SunkCost.Net
             catch (Exception exception) { Debug.LogError("Inventory verification: " + exception.Message); }
         }
 
+        private long simBaseLatency, simJitter;
+        private void Jitter()
+        {
+            if (simJitter <= 0) return;
+            var nm = InstanceFinder.NetworkManager;
+            var simulator = nm != null ? nm.TransportManager.LatencySimulator : null;
+            if (simulator == null || !simulator.GetEnabled()) return;
+            simulator.SetLatency(System.Math.Max(1, simBaseLatency + (long)UnityEngine.Random.Range(-simJitter, simJitter + 1)));
+        }
+
+        private float turnYawSpeed, turnPitchSwing, turnUntil = -1f, turnStarted;
+        private void Turn()
+        {
+            if (turnUntil < 0f) return;
+            if (Time.unscaledTime >= turnUntil) { turnUntil = -1f; return; }
+            var player = FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
+            if (player == null) return;
+            player.transform.Rotate(0f, turnYawSpeed * Time.unscaledDeltaTime, 0f, Space.World);
+            player.SetPitchForChecks(turnPitchSwing * Mathf.Sin((Time.unscaledTime - turnStarted) * 2f));
+        }
+
         private string Execute(Command command)
         {
+            var nmForSim = InstanceFinder.NetworkManager;
             var player = FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
             // Spawned copies keep the prefab's "(Clone)" suffix on a client and the
             // host's per-instance names never replicate: "#<objectId>" is exact.
@@ -150,6 +174,30 @@ namespace SunkCost.Net
                     break;
                 }
                 case "colour": player.GetComponent<SunkCost.Player.PlayerIdentity>()?.RequestColour(command.slot); break;
+                // Keeps turning: yaw at aim.x degrees a second while the pitch swings
+                // ±aim.y degrees, for position.x seconds (0 stops). A watcher on another
+                // machine measures how smoothly this arrives (RemoteSmoothnessRuntimeChecks).
+                case "turn":
+                    turnYawSpeed = command.aim.x; turnPitchSwing = command.aim.y;
+                    turnUntil = command.position.x > 0f ? Time.unscaledTime + command.position.x : -1f;
+                    turnStarted = Time.unscaledTime;
+                    break;
+                // FishNet's latency simulator on this peer's outgoing packets (development
+                // builds only, like this whole peer): position = (latency ms, packet loss
+                // 0..1, out-of-order 0..1), aim.x = jitter ms (the latency is re-rolled
+                // ±jitter every frame; the simulator releases packets in order, so a slow
+                // packet holds the quick ones behind it and they arrive in a burst — a
+                // relay's jitter); slot 0 switches it off.
+                case "netsim":
+                {
+                    var simulator = nmForSim.TransportManager.LatencySimulator;
+                    simBaseLatency = (long)command.position.x; simJitter = (long)command.aim.x;
+                    simulator.SetLatency(simBaseLatency);
+                    simulator.SetPacketLoss(command.position.y);
+                    simulator.SetOutOfOrder(command.position.z);
+                    simulator.SetEnabled(command.slot != 0);
+                    return $"netsim enabled={simulator.GetEnabled()} latency={simulator.GetLatency()}±{simJitter} loss={simulator.GetPacketLost()} outOfOrder={simulator.GetOutOfOrder()}";
+                }
                 case "frames_reset":
                     SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
                     break;

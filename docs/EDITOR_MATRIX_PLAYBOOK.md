@@ -5,15 +5,25 @@ What the cabin, world-loop, hands and full-run matrices taught on 16 September
 Read this before writing a new `*RuntimeChecks.cs` row or job.
 
 ## Running
-- Jobs: `CameraClearanceMatrixDriver.Start("camera" | "cabin" | "hands" | "loop" | "fullrun" | "spectate")`
+- Jobs: `CameraClearanceMatrixDriver.Start("camera" | "cabin" | "hands" | "loop" | "fullrun" | "spectate" | "smooth")`
   (`spectate` = death and dead spectating, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`,
   guest dirs `Temp/spectate-guest` and `Temp/spectate-guest-b` — the S rows run two guest builds;
-  `Send`/`GuestEventually` take the directory as their last argument)
+  `Send`/`GuestEventually` take the directory as their last argument;
+  `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
+  log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
+  `turn` command, then again with its outgoing packets through FishNet's latency simulator
+  via the peer's `netsim` command — about a minute)
   from an editor command; it enters Play Mode, hosts, waits for the local player
   and hands over to the checks. Logs: `Temp/deck-cabin-matrix.log`,
   `Temp/world-loop-matrix.log`, `Temp/movement-hands-matrix.log`, `Temp/full-run.log`.
   The last line is `MATRIX_PASS` or `FAIL: <row>`; on a FAIL the editor **stays
   in Play Mode** with the failing state live — inspect it before stopping.
+- **When the Unity MCP bridge cannot run commands** (every `RunCommand` answers
+  "No logs available", 17 September 2026, through two editor restarts): write one
+  line to `Temp/editor-command.txt` — `build-guest`, `matrix <job>`, `stop` or
+  `refresh` — and read `Temp/editor-command.reply.txt` (`EditorCommandFile`, polled
+  twice a second on the editor's main thread). `refresh` after editing scripts
+  (the editor only recompiles on focus), then wait for the assemblies.
 - **Stop only with `CameraClearanceMatrixDriver.StopCleanly()`** (Leave first,
   then exit Play Mode); a bare stop leaks UDP 7770 until Unity restarts.
 - Never start a job or a builder while someone is playing; never edit scripts

@@ -106,8 +106,8 @@ namespace SunkCost.Player
             if (!Active || cam == null) return;
             if (Target != null)
             {
-                Transform eye = Target.EyeAnchor;
-                cam.transform.SetPositionAndRotation(eye.position, Quaternion.Euler(Target.LookPitch, Target.Yaw, 0f));
+                Target.EyePose(out Vector3 eye, out Quaternion look);
+                cam.transform.SetPositionAndRotation(eye, look);
             }
             else
             {
