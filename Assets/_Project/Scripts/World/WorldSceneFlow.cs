@@ -131,6 +131,9 @@ namespace SunkCost.World
             if (holderKeepAlive.scene != holder) UnitySceneManager.MoveGameObjectToScene(holderKeepAlive, holder);
         }
 
+        // The synchronized clock, for presentation that reads a replicated tick (ElevatorSounds).
+        public FishNet.Managing.Timing.TimeManager NetworkManagerTime => networkManager != null ? networkManager.TimeManager : null;
+
         // ---- scene traffic log ----------------------------------------------------
 
         // One line per scene load or unload, on the server as it is sent and on

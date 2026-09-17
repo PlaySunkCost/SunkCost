@@ -13,7 +13,19 @@ MonoBehaviour:
   m_Name: AudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Audio.AudioLibrary
   elevatorWinch: {fileID: 0}
+  winchSecondsBeforeArrival: 5
+  winchFadeSeconds: 0.5
+  winchReachMetres: 250
   elevatorDing: {fileID: 0}
-  winchVolumeAtCar: 1
+  winchVolumeAtCar: 0.35
+  winchVolumeInCar: 0.06
   winchVolumeOnShip: 0.15
   dingVolume: 0.8
+  footstep: {fileID: 0}
+  jump: {fileID: 0}
+  land: {fileID: 0}
+  footstepVolume: 0.07
+  sprintFootstepVolume: 0.11
+  jumpVolume: 0.22
+  landVolume: 0.3
+  ownFootstepScale: 0.6

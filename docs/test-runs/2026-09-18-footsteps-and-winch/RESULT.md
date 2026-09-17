@@ -19,12 +19,25 @@ and a jump should sound.
   step scale; generated placeholders (low-passed noise bursts of three
   lengths). Drop a .wav in the slot to replace.
 
+## Tuned after Dan played (same day)
+Steps "way lower": walk 0.07, sprint 0.11 (a fifth of the first cut), jump
+0.22, landing 0.3. The winch only in the **last 5 seconds before the car
+arrives** — bottom going down, top going up — faded in over 0.5 s, read from
+the replicated phase's start tick and duration; quiet (0.35) but carrying
+250 m ("hear it from very far") for the divers left below; 0.06 inside the
+car; low through the deck. The library asset was recreated with the new
+defaults. The noise and air jobs now ignore editor focus like the hands job
+(the run Dan's typing interrupted walked 0.0 m).
+
 ## Run
-`noise` — MATRIX_PASS ([noise-matrix.log](noise-matrix.log)): the rider in
-the descending and ascending car hears the winch at 0.12; walking 8 m = 10
-footstep sounds for 10 noise events; sprinting 10 for 10; a jump and its
-landing heard once each; 4 m crouch-walked = no footstep sound; with a
-guest riding up alone, the host left below hears the departing car at 1.00,
-the guest on the deck low.
+`noise` — MATRIX_PASS ([noise-matrix.log](noise-matrix.log)): silent for
+the first 11.8 s of the 16.8 s descent, the winch from 5.0 s to go at 0.06
+for the rider, the bell at the bottom; walking 8 m = 10 footstep sounds for
+10 noise events; sprinting 10 for 10; a jump and its landing heard once
+each; 4 m crouch-walked = no footstep sound; the ride up silent leaving the
+bottom, the winch from 5.0 s to go; with a guest riding up alone, the host
+left below hears it in the last seconds at 0.35 carrying 250 m, the guest on
+the deck hears the returning car low in its last seconds and the host's
+climb, and the bell when the car opens at the top.
 
 Not exercised: the sound of the placeholders on a speaker.

@@ -5,10 +5,12 @@ using UnityEngine;
 
 namespace SunkCost.Audio
 {
-    // What the elevator sounds like (Dan, 17 September 2026): the winch while the
-    // car moves — at the car, loud, for the divers below; through the deck, low,
-    // for the players on the ship — and a bell when it arrives and the doors
-    // open, below at the car and on the deck at the cabin. Local presentation on
+    // What the elevator sounds like (Dan, 17–18 September 2026): the winch in the
+    // car's last seconds before it arrives — going down, before the bottom; going
+    // up, before the top — quiet but carrying across the whole site for the
+    // divers below, low through the deck for the ship, lower still inside the car
+    // (the sound is for those left below) — and a bell when it arrives and the
+    // doors open, below at the car and on the deck at the cabin. Local presentation on
     // every peer, read off the replicated elevator phase (CrewDayState.Elevator);
     // attached to the day state when the client starts. Which version plays
     // follows where the local player's object stands (its physical world), not
@@ -25,6 +27,9 @@ namespace SunkCost.Audio
         // For the checks.
         public bool WinchPlayingAtCar => carWinch != null && carWinch.isPlaying;
         public float CarWinchVolume => carWinch != null ? carWinch.volume : 0f;
+        public float CarWinchReach => carWinch != null ? carWinch.maxDistance : 0f;
+        // Seconds until the moving car arrives, from the replicated phase; 0 when it rests.
+        public float SecondsToArrival { get; private set; }
         public bool WinchPlayingOnShip => shipWinch != null && shipWinch.isPlaying;
         public int DingsAtCar { get; private set; }
         public int DingsOnShip { get; private set; }
@@ -34,6 +39,7 @@ namespace SunkCost.Audio
             Instance = this;
             AudioLibrary library = AudioLibrary.Get();
             carWinch = Make("Winch at the car", library.ElevatorWinch, true, spatial: true, library.WinchVolumeAtCar);
+            carWinch.maxDistance = library.WinchReachMetres; // the whole site: heard from very far, quietly
             shipWinch = Make("Winch through the deck", library.ElevatorWinch, true, spatial: false, library.WinchVolumeOnShip);
             carBell = Make("Bell at the car", library.ElevatorDing, false, spatial: true, library.DingVolume);
             shipBell = Make("Bell on the deck", library.ElevatorDing, false, spatial: false, library.DingVolume);
@@ -74,14 +80,22 @@ namespace SunkCost.Audio
             if (ship != null && ship.DeckCabin != null) shipBell.transform.position = shipWinch.transform.position = ship.DeckCabin.position + Vector3.up * 1.5f;
 
             bool moving = state == ElevatorState.Ascending || state == ElevatorState.Descending;
-            // The winch: at the car for the divers, through the deck for the ship. A
-            // rider inside the car hears it low — the sound is for those left below,
-            // watching the car go (Dan, 18 September 2026: "too much noise in the elevator").
-            bool riding = local != null && day.Riding && day.IsRider(local.OwnerId);
+            // The winch only in the last seconds before the car arrives (Dan, 18
+            // September 2026: "5 seconds before arriving, down and up"), faded in and
+            // out; at the car for the divers, through the deck for the ship, lower
+            // inside the car for the riders (the sound is for those left below).
             AudioLibrary library = AudioLibrary.Get();
-            carWinch.volume = riding ? library.WinchVolumeInCar : library.WinchVolumeAtCar;
-            Toggle(carWinch, moving && below && car != null);
-            Toggle(shipWinch, moving && onShip);
+            ElevatorPhase phase = day.Elevator;
+            float duration = WorldSceneFlow.Instance != null && moving ? (float)WorldSceneFlow.Instance.NetworkManagerTime.TicksToTime(phase.DurationTicks) : 0f;
+            float elapsed = WorldSceneFlow.Instance != null && moving ? WorldSceneFlow.Instance.ElapsedSince(phase.StartTick) : 0f;
+            SecondsToArrival = moving ? Mathf.Max(0f, duration - elapsed) : 0f;
+            bool arriving = moving && SecondsToArrival <= library.WinchSecondsBeforeArrival;
+            float fade = library.WinchFadeSeconds <= 0f ? 1f : Mathf.Clamp01((library.WinchSecondsBeforeArrival - SecondsToArrival) / library.WinchFadeSeconds);
+            bool riding = local != null && day.Riding && day.IsRider(local.OwnerId);
+            carWinch.volume = (riding ? library.WinchVolumeInCar : library.WinchVolumeAtCar) * fade;
+            shipWinch.volume = library.WinchVolumeOnShip * fade;
+            Toggle(carWinch, arriving && below && car != null);
+            Toggle(shipWinch, arriving && onShip);
 
             if (!primed) { lastState = state; primed = true; return; }
             if (state != lastState)
