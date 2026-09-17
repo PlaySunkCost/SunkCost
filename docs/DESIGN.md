@@ -307,8 +307,39 @@ scatters the four slots and the hands, hides you, and takes you out of every
 living count: the dead never block the deck button, the car's return or End day.
 When the last living diver is up the dead are carried to the ship unseen; **End
 day revives them on the deck** with the base kit — next to their body if it came
-up (the body disappears). Spectating while dead and the TV are the next cards
-(docs/SPECTATING_IMPLEMENTATION_PLAN.md).
+up (the body disappears).
+
+**Built 17 September 2026 (Dan, the second spectating card — dead spectating):**
+you keep your own camera for about a second (you see yourself fall), a short fade,
+then you are on the **nearest living player's eyes** — their screen exactly, visor
+and all, with `SPECTATING <name>` at the top and `left click — next player` at the
+bottom. **Left click** cycles the living players, below or above water; a target
+who dies or leaves is replaced by the nearest living one; nobody living left is
+**NO SIGNAL** over your body. You hear what your target hears — every voice at
+their distances — **plus every dead player anywhere**; the dead talk only to the
+dead, the living never hear them. A living player being watched sees a red
+**ON AIR · N watching** mark. Spectating lasts until End day, which revives you as
+above.
+
+**Built 17 September 2026 (Dan, after the first three-player test — the car going
+back for a diver left below):** when riders come up and someone is still below, the
+car goes back for them — but **never with anyone inside the deck cabin**. It waits up
+while the cabin is occupied (panel: `Step out — the car is needed below`), puts
+whoever is still standing there out on the deck after a grace period
+(`carReturnGraceSeconds`, 10 s), and reopens if someone steps in while the doors
+close. If the diver below dies or leaves while the car is on its way down, the car
+comes straight back and the site closes as at the end of a dive.
+
+**Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
+screen on the deck (port rail, midships) shows **one diver at a time** from their
+eyes — whoever surfaced early watches the others. The channel is the first living
+diver below; **E on the screen is the next channel**, wrapping; only divers below
+are channels (a diver who surfaces or dies leaves them); nobody below → **NO
+SIGNAL**. The caption over the screen reads `LIVE · <name>`. The channel diver's
+voice — and the voices they can hear — play **from the TV**, as loud as the diver
+hears them, falling off with your distance to it. The TV counts on the diver's
+**ON AIR · N watching** mark. Game sounds flagged for broadcast (`BroadcastSound`)
+replay at the TV; none are flagged yet (the winch and the doors have no clips).
 
 ---
 

@@ -105,6 +105,7 @@ namespace SunkCost.Editor.Prototype
                 DeckCabinBuilder.Build(root.transform, new Vector3(0f, 0f, -8f), deck, rail, glass, button);
 
                 BuildStorageRoom(root.transform, rail, tape);
+                BuildTv(root.transform, rail, screen);
 
                 Vector3[] spawns = { new(-3f, 0f, 5f), new(3f, 0f, 5f), new(-3f, 0f, 1f), new(3f, 0f, 1f) };
                 for (int i = 0; i < spawns.Length; i++)
@@ -158,6 +159,45 @@ namespace SunkCost.Editor.Prototype
             mesh.alignment = TextAlignment.Center;
             mesh.color = new Color(0.95f, 0.85f, 0.4f);
             root.gameObject.AddComponent<StorageReadout>();
+        }
+
+        // The deck TV (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 3): a 2 m × 1.2 m
+        // screen against the port rail, midships, facing the deck — a quad ShipTV
+        // renders the channel diver's view onto, in a frame on a post, the caption
+        // over it and the speaker point on it. E on the screen is the next channel.
+        private static void BuildTv(Transform root, Material frame, Material screenMaterial)
+        {
+            const float x = -4.55f, y = 1.7f, z = -3f;
+            Block("TvPost", root, new Vector3(x - 0.1f, 0.5f, z), new Vector3(0.12f, 1.0f, 0.12f), frame);
+            Block("TvFrame", root, new Vector3(x - 0.08f, y, z), new Vector3(0.1f, 1.4f, 2.2f), frame);
+            // A quad is seen from its -Z side; turned so that side faces +X (the deck).
+            GameObject screen = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            screen.name = ShipParts.TvScreenName;
+            screen.transform.SetParent(root, false);
+            screen.transform.localPosition = new Vector3(x, y, z);
+            screen.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
+            screen.transform.localScale = new Vector3(2f, 1.2f, 1f);
+            screen.GetComponent<Renderer>().sharedMaterial = screenMaterial;
+            Object.DestroyImmediate(screen.GetComponent<MeshCollider>());
+            BoxCollider box = screen.AddComponent<BoxCollider>(); // what E targets; a quad's own collider has no thickness
+            box.size = new Vector3(1f, 1f, 0.05f);
+            // The caption over the screen, read by someone on the deck looking toward
+            // port (along -X): a TextMesh reads along its +Z, so it is turned the same way.
+            GameObject caption = new(ShipParts.TvCaptionName, typeof(TextMesh));
+            caption.transform.SetParent(root, false);
+            caption.transform.localPosition = new Vector3(x + 0.02f, y + 0.78f, z);
+            caption.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
+            TextMesh mesh = caption.GetComponent<TextMesh>();
+            mesh.text = "NO SIGNAL";
+            mesh.characterSize = 0.05f;
+            mesh.fontSize = 48;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
+            mesh.color = new Color(1f, 0.35f, 0.3f);
+            GameObject speaker = new(ShipParts.TvSpeakerName);
+            speaker.transform.SetParent(root, false);
+            speaker.transform.localPosition = new Vector3(x + 0.05f, y, z);
+            root.gameObject.AddComponent<ShipTV>();
         }
 
         public static void CreateOrUpdateSeaScene()

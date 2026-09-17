@@ -46,36 +46,44 @@ namespace SunkCost.World
             player.ServerSetDead(true);
             deadWithSite.Add(id);
             Debug.Log($"[WorldSceneFlow] {name} died below at {at:F1}; body {(body != null ? body.name : "none")}; living below: {dayState.Below.Count}");
+            ServerUpdateSpectators(); // the nearest living player, now (card 2)
             ServerAfterDeath();
             return true;
         }
 
-        // Nobody living is below any more: the dive is done, the car comes home
-        // empty and the site goes, with the dead carried to the ship first. A ride in
-        // progress does this itself at its end (SurfaceRoutine).
-        private void ServerAfterDeath()
+        // Nobody living is below any more — the last one died or disconnected: the
+        // dive is done, the car comes home empty and the site goes, with the dead
+        // carried to the ship first. A ride in progress does this itself at its end
+        // (SurfaceRoutine).
+        private void ServerAfterDeath() => ServerSiteMayClose();
+
+        public void ServerSiteMayClose()
         {
-            if (dayState.Below.Count > 0 || riding) return;
+            if (dayState == null || dayState.Below.Count > 0 || riding || siteClosing) return;
             dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
             if (WorldScenes.IsLoaded(WorldId.Dive)) StartCoroutine(UnloadSiteWithDead());
         }
 
         private IEnumerator UnloadSiteWithDead()
         {
-            if (dayState.Elevator.State == ElevatorState.AtBottom || dayState.Elevator.State == ElevatorState.Sealing)
-            {
-                if (dayState.Elevator.State == ElevatorState.AtBottom) ServerSetElevator(ElevatorState.Sealing, true);
+            siteClosing = true; // no watch changes while objects are on the move (card 2)
+            // Wherever the car is, it ends up at the top: a car on its way down for a
+            // diver who is gone finishes the trip and comes straight back.
+            if (dayState.Elevator.State == ElevatorState.Descending)
+                yield return WaitForCar(ElevatorState.AtBottom, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
+            if (dayState.Elevator.State == ElevatorState.AtBottom) ServerSetElevator(ElevatorState.Sealing, true);
+            if (dayState.Elevator.State != ElevatorState.AtTop)
                 yield return WaitForCar(ElevatorState.AtTop, CarSealSeconds + CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
-            }
-            else if (dayState.Elevator.State != ElevatorState.AtTop)
-                yield return WaitForCar(ElevatorState.AtTop, CarTravelSeconds + Settings.ArrivalTimeoutSeconds);
             yield return ServerMoveDeadToShip();
-            if (!WorldScenes.IsLoaded(WorldId.Dive)) yield break;
-            NetworkConnection[] unloaders = SiteUnloaders(new List<NetworkConnection>());
-            if (unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: false));
-            else networkManager.SceneManager.UnloadConnectionScenes(UnloadDataFor(WorldId.Dive, keepOnServer: false));
-            cachedCar = null;
-            ServerSetElevator(ElevatorState.AtTop, true);
+            if (WorldScenes.IsLoaded(WorldId.Dive))
+            {
+                NetworkConnection[] unloaders = SiteUnloaders(new List<NetworkConnection>(), closing: true);
+                if (unloaders.Length > 0) networkManager.SceneManager.UnloadConnectionScenes(unloaders, UnloadDataFor(WorldId.Dive, keepOnServer: false));
+                else networkManager.SceneManager.UnloadConnectionScenes(UnloadDataFor(WorldId.Dive, keepOnServer: false));
+                cachedCar = null;
+                ServerSetElevator(ElevatorState.AtTop, true);
+            }
+            siteClosing = false;
         }
 
         // Every dead player whose object still stands in the site moves to the ship,
@@ -95,6 +103,9 @@ namespace SunkCost.World
                 var moved = new List<NetworkObject> { player.NetworkObject };
                 PlayerInventory inventory = player.Inventory;
                 if (inventory != null) inventory.ServerCollectCarried(moved); // nothing normally; the slots scattered at death
+                // A client watching the ship from below drops it first, so the move is
+                // the plain load-with-moved-objects of card 1 (card 2).
+                ServerUnwatch(conn);
                 networkManager.SceneManager.AddConnectionToScene(conn, sea);
                 EnsureHolderKeepAlive();
                 networkManager.SceneManager.LoadConnectionScenes(new[] { conn }, LoadDataFor(WorldId.Sea, moved.ToArray()));
@@ -115,17 +126,23 @@ namespace SunkCost.World
             }
         }
 
-        // The connections a site unload must include: the riders' cohort plus every
-        // dead player whose client still holds the site.
-        private NetworkConnection[] SiteUnloaders(List<NetworkConnection> cohortConns)
+        // The connections a site unload must include: the riders' cohort and, when
+        // the site closes for good, every dead player whose client still holds it
+        // (their objects were moved to the ship first) and every client watching
+        // it from the ship (card 2). While living divers remain below the site
+        // stays, and so do the dead in it and its watchers.
+        private NetworkConnection[] SiteUnloaders(List<NetworkConnection> cohortConns, bool closing)
         {
             var set = new List<NetworkConnection>(cohortConns);
+            if (!closing) return set.ToArray();
             foreach (int id in new List<int>(deadWithSite))
             {
                 if (!networkManager.ServerManager.Clients.TryGetValue(id, out NetworkConnection conn) || !conn.IsActive) { deadWithSite.Remove(id); continue; }
                 if (!set.Contains(conn)) set.Add(conn);
                 deadWithSite.Remove(id);
             }
+            foreach (NetworkConnection conn in TakeWatchersOf(WorldId.Dive))
+                if (!set.Contains(conn)) set.Add(conn);
             return set.ToArray();
         }
 
@@ -142,6 +159,7 @@ namespace SunkCost.World
                 dayState.ServerRevive(id);
                 deadWithSite.Remove(id);
                 if (!networkManager.ServerManager.Clients.TryGetValue(id, out NetworkConnection conn) || !conn.IsActive) continue;
+                ServerUnwatch(conn); // whatever they watched from the deck goes (card 2)
                 HQPlayerController player = PlayerOf(conn);
                 if (player == null) continue;
                 Vector3 at; float yaw = 180f;

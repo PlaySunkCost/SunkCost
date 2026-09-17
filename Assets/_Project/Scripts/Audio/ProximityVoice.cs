@@ -26,6 +26,7 @@ namespace SunkCost.Audio
             public ulong Generation; public VoicePlayback Playback;
             public float Volume = 1; public bool Muted;
             public float LastFrame;
+            public byte Route; // how the last frame is to be mixed (VoiceRoute)
             public int Cushion = VoicePlayback.MinCushion; // the jitter buffer this player's link needed, kept across streams
         }
         public AudioDeviceService Devices { get; private set; }
@@ -64,7 +65,7 @@ namespace SunkCost.Audio
             get
             {
                 string text = $"mic={MicrophoneEnabled}; test={TestingMicrophone}; tone={syntheticCapture}; world={world}; epoch={generation}; sent={SentFrames}; received={ReceivedFrames}; relayed={RelayedFrames}; rejected={RejectedFrames}; mix={Devices.MixCallbacks}; output={Devices.OutputCallbacks}; status={Status}";
-                foreach (var pair in receivers) text += $"\nvoicePeer={pair.Key}; epoch={pair.Value.Generation}; muted={pair.Value.Muted}; decoded={pair.Value.Playback?.Decoded ?? 0}; plc={pair.Value.Playback?.Concealed ?? 0}";
+                foreach (var pair in receivers) text += $"\nvoicePeer={pair.Key}; epoch={pair.Value.Generation}; muted={pair.Value.Muted}; route={pair.Value.Route}; decoded={pair.Value.Playback?.Decoded ?? 0}; plc={pair.Value.Playback?.Concealed ?? 0}";
                 return text;
             }
         }
@@ -159,35 +160,103 @@ namespace SunkCost.Audio
             if (MicrophoneEnabled && generation != 0 && (capture == null || !capture.Running)) SetMicrophone(false);
             Mix(localId);
         }
-        // Physical player identity/scene only: a spectator camera never decides membership.
-        // Current prototype has no death state. Future death implementation must add a cohort here.
+        // The dead's "world": they talk only to each other and hear by spectate
+        // state (docs/SPECTATING_IMPLEMENTATION_PLAN.md §2), never by scene.
+        public const int DeadWorld = 100;
+        // Physical player identity/scene only: a spectator camera or a watched
+        // scene never decides membership.
         private int WorldOf(int id)
         {
             if (!players.TryGetValue(id, out var player) || !player.gameObject.activeInHierarchy) return -1;
             var day = CrewDayState.Instance;
             if (day == null || day.Travelling || (day.Riding && day.IsRider(id))) return -1;
-            if (day.IsDead(id)) return -1; // the dead are routed by spectate state (card 2), never by world
+            if (day.IsDead(id)) return DeadWorld;
             if (!WorldScenes.TryParse(player.gameObject.scene.name, out var result)) return -1;
             if (day.IsBelow(id) != (result == WorldId.Dive)) return -1;
             if (result != WorldId.Dive && result != day.World) return -1;
             return (int)result;
         }
+        // A living speaker's frame reaches a dead listener when the listener watches
+        // the speaker, or watches someone in the speaker's proximity set.
+        private bool DeadListenerHears(int listener, int speaker, int speakerWorld)
+        {
+            var day = CrewDayState.Instance;
+            if (day == null) return false;
+            return WatchedHears(day.SpectateTargetOf(listener), speaker, speakerWorld);
+        }
+        // The deck TV carries a diver's frame to the ship when the channel diver is
+        // the speaker or in the speaker's proximity set (card 3).
+        private bool TvHears(int speaker, int speakerWorld)
+        {
+            var day = CrewDayState.Instance;
+            return day != null && speakerWorld == (int)WorldId.Dive && WatchedHears(day.TvChannel, speaker, speakerWorld);
+        }
+        private bool WatchedHears(int watched, int speaker, int speakerWorld)
+        {
+            if (watched < 0) return false;
+            if (watched == speaker) return true;
+            return WorldOf(watched) == speakerWorld && players.TryGetValue(watched, out var target) && players.TryGetValue(speaker, out var talker)
+                && Vector3.Distance(talker.transform.position, target.transform.position) <= Settings.SilentMetres + Settings.RelayMarginMetres;
+        }
+        // The TV's speaker on this peer's ship, when it has one.
+        private static ShipTV LocalTv()
+        {
+            var ship = ShipParts.InWorld(WorldId.Sea);
+            return ship != null ? ship.GetComponent<ShipTV>() : null;
+        }
         private void Mix(int localId)
         {
             players.TryGetValue(localId, out var local);
+            var day = CrewDayState.Instance;
             foreach (var pair in receivers)
             {
                 var receiver = pair.Value;
                 if (receiver.Playback == null) continue;
                 float gain = 0, pan = 0;
-                if (local != null && players.TryGetValue(pair.Key, out var remote) && world >= 0 && WorldOf(pair.Key) == world && Time.unscaledTime - receiver.LastFrame < .25f)
+                if (local != null && players.TryGetValue(pair.Key, out var remote) && world >= 0 && Time.unscaledTime - receiver.LastFrame < .25f)
                 {
-                    Vector3 delta = HeadPosition(remote) - HeadPosition(local);
-                    gain = Settings.Gain(delta.magnitude);
-                    // Yaw from the local player's head; never another diver's spectator camera.
-                    var head = local.GetComponentInChildren<Camera>(true);
-                    Vector3 right = head != null ? head.transform.right : local.transform.right;
-                    pan = Vector3.Dot(right, delta.normalized);
+                    if (receiver.Route == VoiceRoute.Dead)
+                    {
+                        if (world == DeadWorld && WorldOf(pair.Key) == DeadWorld) gain = 1; // dead to dead: full, placeless
+                    }
+                    else if (receiver.Route == VoiceRoute.TV)
+                    {
+                        // At the TV's speaker, as loud as the channel diver hears the
+                        // speaker, falling off with the listener's distance to the TV.
+                        ShipTV tv = world == (int)WorldId.Sea ? LocalTv() : null;
+                        int channel = day != null ? day.TvChannel : -1;
+                        if (tv != null && tv.Live && channel >= 0 && players.TryGetValue(channel, out var diver))
+                        {
+                            float atDiver = channel == pair.Key ? 1 : Settings.Gain(Vector3.Distance(HeadPosition(remote), HeadPosition(diver)));
+                            Vector3 delta = tv.SpeakerPosition - HeadPosition(local);
+                            gain = atDiver * Settings.Gain(delta.magnitude);
+                            var head = local.GetComponentInChildren<Camera>(true);
+                            Vector3 right = head != null ? head.transform.right : local.transform.right;
+                            pan = Vector3.Dot(right, delta.normalized);
+                        }
+                    }
+                    else
+                    {
+                        // The ear: the listener's own head, or — dead, watching — the
+                        // watched player's head, where the spectator camera is.
+                        HQPlayerController ear = null;
+                        if (receiver.Route == VoiceRoute.Spectate)
+                        {
+                            int target = world == DeadWorld && day != null ? day.SpectateTargetOf(localId) : -1;
+                            if (target >= 0) players.TryGetValue(target, out ear);
+                        }
+                        else if (world != DeadWorld && WorldOf(pair.Key) == world) ear = local;
+                        if (ear != null)
+                        {
+                            Vector3 delta = HeadPosition(remote) - HeadPosition(ear);
+                            gain = Settings.Gain(delta.magnitude);
+                            // Yaw from the local camera: the listener's own head, or the
+                            // spectator camera sitting on the watched player's eyes.
+                            var head = local.GetComponentInChildren<Camera>(true);
+                            Vector3 right = head != null ? head.transform.right : ear.transform.right;
+                            pan = Vector3.Dot(right, delta.normalized);
+                        }
+                    }
                 }
                 receiver.Playback.SetMix(receiver.Muted ? 0 : gain * VoiceVolume * receiver.Volume, pan);
             }
@@ -262,10 +331,33 @@ namespace SunkCost.Audio
             float now = Time.unscaledTime; sender.Tokens = Mathf.Min(10, sender.Tokens + (now - sender.Updated) * 60); sender.Updated = now;
             if (sender.Tokens < 1 || !sender.Sequence.Accept(frame.Sequence)) { RejectedFrames++; return; }
             sender.Tokens--; frame.Speaker = id;
+            bool speakerDead = sender.World == DeadWorld;
             foreach (var other in manager.ServerManager.Clients.Values)
             {
-                if (other.ClientId == id || !other.IsAuthenticated || WorldOf(other.ClientId) != sender.World) continue;
-                if (Vector3.Distance(players[id].transform.position, players[other.ClientId].transform.position) > Settings.SilentMetres + Settings.RelayMarginMetres) continue;
+                if (other.ClientId == id || !other.IsAuthenticated) continue;
+                int otherWorld = WorldOf(other.ClientId);
+                if (speakerDead)
+                {
+                    // The dead talk only to the dead, anywhere; the living never get these frames.
+                    if (otherWorld != DeadWorld) continue;
+                    frame.Route = VoiceRoute.Dead;
+                }
+                else if (otherWorld == sender.World)
+                {
+                    if (Vector3.Distance(players[id].transform.position, players[other.ClientId].transform.position) > Settings.SilentMetres + Settings.RelayMarginMetres) continue;
+                    frame.Route = VoiceRoute.Direct;
+                }
+                else if (otherWorld == DeadWorld)
+                {
+                    if (!DeadListenerHears(other.ClientId, id, sender.World)) continue;
+                    frame.Route = VoiceRoute.Spectate;
+                }
+                else if (otherWorld == (int)WorldId.Sea)
+                {
+                    if (!TvHears(id, sender.World)) continue; // a diver, carried to the deck by the TV
+                    frame.Route = VoiceRoute.TV;
+                }
+                else continue;
                 manager.ServerManager.Broadcast(other, frame, true, Channel.Unreliable); RelayedFrames++;
             }
         }
@@ -293,8 +385,18 @@ namespace SunkCost.Audio
         }
         private void ClientFrame(VoiceFrame frame, Channel channel)
         {
-            if (channel != Channel.Unreliable || !Connected || frame.Speaker == manager.ClientManager.Connection.ClientId || world < 0 || WorldOf(frame.Speaker) != world || !Devices.Available || !receivers.TryGetValue(frame.Speaker, out var receiver) || receiver.Generation == 0 || receiver.Generation != frame.Generation || receiver.Muted) return;
+            if (channel != Channel.Unreliable || !Connected || frame.Speaker == manager.ClientManager.Connection.ClientId || world < 0 || !Devices.Available || !receivers.TryGetValue(frame.Speaker, out var receiver) || receiver.Generation == 0 || receiver.Generation != frame.Generation || receiver.Muted) return;
+            // A living listener takes its own world's direct frames and, on the ship, the
+            // TV's; a dead one only spectate and dead frames.
+            bool accepted = frame.Route switch
+            {
+                VoiceRoute.Direct => world != DeadWorld && WorldOf(frame.Speaker) == world,
+                VoiceRoute.TV => world == (int)WorldId.Sea,
+                _ => world == DeadWorld
+            };
+            if (!accepted) return;
             if (receiver.Playback == null) { receiver.Playback = new VoicePlayback(gameObject, Devices); receiver.Playback.Cushion = receiver.Cushion; }
+            receiver.Route = frame.Route;
             receiver.Playback.Enqueue(frame.Sequence, frame.Payload); receiver.LastFrame = Time.unscaledTime; ReceivedFrames++;
         }
         public void SetVoiceVolume(float value) { VoiceVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }

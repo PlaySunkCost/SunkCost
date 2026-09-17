@@ -62,6 +62,27 @@ Work inside your area freely. Crossing into someone else's means a conversation 
 — not a permission slip, just a heads-up so two people don't solve the same thing
 differently on the same afternoon.
 
+## One path for anything shown or used twice (Dan, 17 September 2026)
+
+Most of what the game looks like will change — the visor, its bars, the panels,
+the sounds. So anything that can appear in more than one place is **built once and
+fed data**, never copied:
+
+- The visor is drawn by one method (`PlayerHudUI.DrawVisor`) from one state object
+  (`PlayerHudUI.VisorFrame`, filled by `PlayerHudUI.Compute` for *any* player from
+  *any* camera). The owner's own screen, a dead player's spectator view and the deck
+  TV's picture all go through it. Change the visor's look there and it changes in
+  all three; do not draw a "TV version" or a "spectator version" of anything.
+- The same for readouts and panels: the storage readout, the HQ board, the cabin
+  panel each have one writer that formats the text; another surface that needs the
+  same words calls that writer.
+- Game sounds a second place must play (the deck TV) are flagged where they are
+  (`BroadcastSound`), not re-triggered by hand elsewhere.
+- Rule of thumb before adding a screen, a panel or an effect: *whose data is this
+  and where else could it show?* If the answer is "somewhere else too", write the
+  data-in, pixels-out function first and call it from both places. A copy that
+  drifts is a bug we will only find in a playtest.
+
 ## Pull requests
 
 - Gameplay tweaks: merge your own, no ceremony.

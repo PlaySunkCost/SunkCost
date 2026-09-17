@@ -6,7 +6,9 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
 
 ## Running
 - Jobs: `CameraClearanceMatrixDriver.Start("camera" | "cabin" | "hands" | "loop" | "fullrun" | "spectate")`
-  (`spectate` = death minimum, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`, guest dir `Temp/spectate-guest`)
+  (`spectate` = death and dead spectating, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`,
+  guest dirs `Temp/spectate-guest` and `Temp/spectate-guest-b` — the S rows run two guest builds;
+  `Send`/`GuestEventually` take the directory as their last argument)
   from an editor command; it enters Play Mode, hosts, waits for the local player
   and hands over to the checks. Logs: `Temp/deck-cabin-matrix.log`,
   `Temp/world-loop-matrix.log`, `Temp/movement-hands-matrix.log`, `Temp/full-run.log`.

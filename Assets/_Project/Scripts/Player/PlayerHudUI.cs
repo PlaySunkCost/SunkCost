@@ -39,6 +39,10 @@ namespace SunkCost.Player
         private HQPlayerController controller;
         private PlayerInventory inventory;
         private PlayerSubmersion submersion;
+        // Dead (card 2): the visor is the watched player's — their world, their
+        // slots, their depth — drawn from the spectator camera on their eyes.
+        private SpectatorView spectator;
+        private static readonly Color OnAirColor = new(1f, 0.25f, 0.2f, 0.98f);
         private GUIStyle promptStyle;
         private GUIStyle numberStyle;
         private GUIStyle labelStyle;
@@ -77,11 +81,29 @@ namespace SunkCost.Player
             public string DayText;             // "DAY 2/3" in the top-left corner (Dan, 16 September 2026)
             public string MoneyText;           // "BOX $100/$200 · ON ME $45" under it (Dan, 16 September 2026)
             public int OnMeValue;              // what the player carries, hands and slots
+            public string SpectatingName;      // the watched player's name while dead; "" otherwise (card 2)
+            public bool NoSignal;              // dead with nobody living to watch
+            public int OnAirCount;             // how many dead watch this player (0 = no ON AIR mark)
         }
-        public VisorReadout Visor { get; private set; }
+        public VisorReadout Visor => own.Readout;
 
-        private readonly List<CarryableItem> bracketed = new();
-        private readonly List<(HQPlayerController player, Vector3 head, float distance)> crew = new();
+        // One screen's visor: the readout and the world things it draws, computed
+        // for any player from any camera (Compute) and drawn by the one drawing
+        // path (DrawVisor). The owner's HUD keeps its own; the deck TV asks the
+        // local HUD to fill and draw another for the channel diver; a spectator's
+        // screen is the owner's frame computed for the watched player. So a change
+        // to the visor's look is one edit here, and it shows everywhere.
+        public sealed class VisorFrame
+        {
+            public VisorReadout Readout;
+            public readonly List<CarryableItem> Bracketed = new();
+            public readonly List<(HQPlayerController player, Vector3 head, float distance)> Crew = new();
+            public CarryableItem Target;   // the item under the dot, or null
+            public Vector3 HomeWorld;
+            public Camera Camera;          // the eyes it was computed from
+        }
+
+        private readonly VisorFrame own = new();
         private static readonly Collider[] NearColliders = new Collider[128];
         private HQPlayerController[] othersCache = System.Array.Empty<HQPlayerController>();
         private float othersCachedAt = -1f;
@@ -92,7 +114,7 @@ namespace SunkCost.Player
             get
             {
                 if (inventory == null || controller == null) return string.Empty;
-                if (controller.TravelLocked) return string.Empty;
+                if (controller.TravelLocked || controller.IsDead) return string.Empty;
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 CarryableItem target = controller.CurrentTarget;
@@ -100,6 +122,7 @@ namespace SunkCost.Player
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
+                if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null || !target.CanGrabFromWorld) return string.Empty;
                 string name = target.Grip == CarryGrip.TwoHands ? $"{target.DisplayName} (two hands)" : target.DisplayName;
@@ -152,8 +175,8 @@ namespace SunkCost.Player
             return day.Payday ? "PAYDAY" : $"DAY {day.Day}/{days}";
         }
 
-        // The worth of what this player carries: the held item and the four slots.
-        private int OnMeValue()
+        // The worth of what a player carries: the held item and the four slots.
+        private static int OnMeValue(PlayerInventory inventory)
         {
             if (inventory == null) return 0;
             // An equipped item is in a slot and in the hands at once: count it once.
@@ -179,6 +202,14 @@ namespace SunkCost.Player
             return $"BOX ${day.BoxValue}/${quota}  ·  ON ME ${onMe}";
         }
 
+        // The deck TV: E is the next channel; nobody below is NO SIGNAL (card 3).
+        private static string TvPrompt()
+        {
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null || day.TvChannel < 0) return "NO SIGNAL " + "—" + " nobody below";
+            return "Press E " + "—" + " next channel";
+        }
+
         private string PayPrompt()
         {
             CrewDayState day = CrewDayState.Instance;
@@ -188,14 +219,47 @@ namespace SunkCost.Player
             return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
         }
 
-        // Dead (card 1): a plain caption until the spectator view (card 2) takes over.
-        private void DrawDeadCaption()
+        // Dead, watching (card 2): the watched player's name up top and the one
+        // command at the bottom; nobody living left: NO SIGNAL over the body.
+        private void DrawSpectateLabels()
         {
+            float s = Screen.height / 1080f;
             Color previous = GUI.color;
-            GUI.color = new Color(1f, 0.35f, 0.35f, 1f);
-            GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 30f), "YOU ARE DEAD", visorStyle);
-            GUI.color = new Color(0.9f, 0.9f, 0.9f, 0.9f);
-            GUI.Label(new Rect(0f, Screen.height * 0.42f + 30f, Screen.width, 20f), "the crew can bring your body up — you are back at End day", visorTinyStyle);
+            if (Visor.NoSignal)
+            {
+                GUI.color = new Color(1f, 0.35f, 0.35f, 1f);
+                GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 30f * s), "NO SIGNAL", tagStyle);
+                GUI.color = new Color(0.9f, 0.9f, 0.9f, 0.9f);
+                GUI.Label(new Rect(0f, Screen.height * 0.42f + 34f * s, Screen.width, 20f * s), "you are dead — nobody living to watch — back at End day", visorSmallStyle);
+            }
+            else if (!string.IsNullOrEmpty(Visor.SpectatingName))
+            {
+                GUI.color = new Color(0f, 0f, 0f, 0.45f);
+                GUI.DrawTexture(new Rect(Screen.width * 0.5f - 170f * s, 18f * s, 340f * s, 34f * s), whiteTexture);
+                GUI.color = Color.white;
+                GUI.Label(new Rect(0f, 20f * s, Screen.width, 30f * s), "SPECTATING  " + Visor.SpectatingName.ToUpperInvariant(), tagStyle);
+                GUI.color = new Color(0.9f, 0.9f, 0.9f, 0.75f);
+                GUI.Label(new Rect(0f, Screen.height - 26f * s, Screen.width, 20f * s), "left click — next player", visorSmallStyle);
+            }
+            else
+            {
+                GUI.color = new Color(1f, 0.35f, 0.35f, 1f);
+                GUI.Label(new Rect(0f, Screen.height * 0.42f, Screen.width, 30f * s), "YOU ARE DEAD", tagStyle);
+            }
+            GUI.color = previous;
+        }
+
+        // Being watched (card 2): a red mark, top-right, with the count. On the
+        // visor it sits under the mode line; on deck, in the corner.
+        private void DrawOnAir(VisorReadout r)
+        {
+            float s = Screen.height / 1080f;
+            Rect tr = r.On ? PlayerVisorMask.TopRightLabelRect(Screen.width, Screen.height) : new Rect(Screen.width - 260f * s, 20f * s, 240f * s, 18f * s);
+            float y = r.On ? tr.y + 40f * s : tr.y;
+            Color previous = GUI.color;
+            GUI.color = OnAirColor;
+            GUI.DrawTexture(new Rect(tr.xMax - 12f * s, y + 5f * s, 8f * s, 8f * s), whiteTexture);
+            GUI.Label(new Rect(tr.x, y, tr.width - 16f * s, 18f * s), $"ON AIR · {r.OnAirCount} watching", visorRightStyle);
             GUI.color = previous;
         }
 
@@ -203,84 +267,120 @@ namespace SunkCost.Player
         // where the suit is on (section 3.1). No extra state.
         public bool VisorOn => inventory != null && inventory.IsOwner && gameObject.scene == WorldScenes.Scene(WorldId.Dive);
 
+        // Whose screen this is: the owner's, or — dead and watching — the target's.
+        private HQPlayerController Who => spectator != null && spectator.Active && spectator.Target != null ? spectator.Target : controller;
+        private PlayerInventory ShownInventory => Who == controller ? inventory : Who.Inventory;
+
         private void Update()
         {
             if (inventory == null || !inventory.IsOwner) return;
+            if (spectator == null) spectator = controller.Spectator;
+            HQPlayerController who = Who;
+            bool watching = who != controller;
+            Compute(own, who, ShownInventory, controller.PlayerCamera, watching);
+            // The owner's own screen state, on top of whoever's visor it shows.
+            VisorReadout r = own.Readout;
+            r.SpectatingName = watching ? spectator.TargetName : string.Empty;
+            r.NoSignal = controller.IsDead && spectator != null && spectator.Active && spectator.Target == null;
+            own.Readout = r;
+        }
+
+        // The visor of `who` as seen from `camera`: the owner's own eyes, the
+        // spectator camera on the watched player's eyes, or the TV camera on the
+        // channel diver's. `watching` = `who` is not this HUD's owner: its world is
+        // then the replicated day state's Below (a remote copy's Unity scene on a
+        // client is not its world — a client instantiates spawns into its active
+        // scene) and its target is found from the camera, as its owner would.
+        public void Compute(VisorFrame frame, HQPlayerController who, PlayerInventory inv, Camera camera, bool watching)
+        {
+            CrewDayState day = CrewDayState.Instance;
+            bool targetBelow = watching && day != null && day.IsBelow(who.OwnerId);
             VisorReadout r = default;
-            r.On = VisorOn;
+            r.On = watching ? targetBelow : VisorOn;
             r.TargetTag = string.Empty;
             r.DayText = DayText();
-            r.OnMeValue = OnMeValue();
+            r.OnMeValue = OnMeValue(inv);
             r.MoneyText = MoneyText(r.OnMeValue);
             r.TargetValue = -1;
             r.NearestCrewDistance = float.PositiveInfinity;
-            bracketed.Clear();
-            crew.Clear();
-            if (!r.On) { Visor = r; return; }
+            r.SpectatingName = string.Empty;
+            r.OnAirCount = !who.IsDead && day != null ? day.WatchersOf(who.OwnerId) : 0;
+            frame.Camera = camera;
+            frame.Bracketed.Clear();
+            frame.Crew.Clear();
+            frame.Target = null;
+            if (!r.On) { frame.Readout = r; return; }
 
-            Camera camera = controller.PlayerCamera;
-            Vector3 eye = controller.EyePosition;
+            Vector3 eye = camera != null ? camera.transform.position : who.EyePosition;
+            Vector3 forward = camera != null ? camera.transform.forward : who.transform.forward;
+            UnityEngine.SceneManagement.Scene world = watching ? WorldScenes.Scene(WorldId.Dive) : gameObject.scene;
             r.AirFraction = 1f;    // the Air card supplies the number; the bar's place is decided here
             r.HealthFraction = 1f; // no damage exists yet
-            r.DepthMeters = submersion != null ? submersion.DepthMeters : 0f;
-            r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : controller.Yaw, 360f);
+            r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : who.Yaw, 360f);
 
             // HOME: the tube's doorway at the seafloor, hidden while inside the car.
             SunkCost.Diving.ElevatorController car = WorldSceneFlow.FindCar();
+            // Depth: the owner's own submersion; through someone else's eyes, the
+            // spectator camera's height under the site's sea level.
+            if (watching) r.DepthMeters = car != null && SunkCost.Diving.ElevatorMath.IsBelowSurface(car.SeaLevelY, eye.y) ? car.SeaLevelY - eye.y : 0f;
+            else r.DepthMeters = submersion != null ? submersion.DepthMeters : 0f;
             if (car != null)
             {
                 Vector3 doorway = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
                 Vector3 home = car.BottomPosition + doorway * HomeDoorwayMeters;
-                bool inside = car.IsInsideCar(transform.position + Vector3.up * 0.5f);
+                bool inside = car.IsInsideCar(who.transform.position + Vector3.up * 0.5f);
                 r.HomeShown = !inside;
                 r.HomeDistance = Vector3.Distance(new Vector3(eye.x, 0f, eye.z), new Vector3(home.x, 0f, home.z));
                 r.HomeScreenAngleDeg = PlayerVisorMath.ScreenAngleDeg(eye, r.HeadingDeg, home);
-                homeWorld = home;
+                frame.HomeWorld = home;
             }
 
             // Items in view within reach of the visor: brackets; the dot's item: the tag.
+            List<CarryableItem> bracketed = frame.Bracketed;
             int count = Physics.OverlapSphereNonAlloc(eye, ItemBracketRangeMeters, NearColliders, ~0, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 CarryableItem item = NearColliders[i].GetComponentInParent<CarryableItem>();
                 if (item == null || !item.IsSpawned || !item.CanGrabFromWorld || bracketed.Contains(item)) continue;
-                if (!InThisWorld(item.gameObject.scene)) continue;
+                if (!InWorld(item.gameObject.scene, world)) continue;
                 if (!PlayerVisorMath.InView(camera, NearColliders[i].bounds.center)) continue;
                 bracketed.Add(item);
             }
             bracketed.Sort((a, b) => Vector3.Distance(eye, a.transform.position).CompareTo(Vector3.Distance(eye, b.transform.position)));
             if (bracketed.Count > MaxBrackets) bracketed.RemoveRange(MaxBrackets, bracketed.Count - MaxBrackets);
             r.BracketCount = bracketed.Count;
-            CarryableItem target = controller.CurrentTarget;
+            // The owner's own target is the controller's; through someone else's
+            // eyes it is found the same way from the same spot.
+            CarryableItem target = watching ? InteractionTargeting.Find(eye, forward, who.transform, who.InteractReach, who.GrabAimRadius) : controller.CurrentTarget;
             if (target != null && target.CanGrabFromWorld)
             {
                 r.TargetTag = TagFor(target);
                 r.TargetValue = target.HasValue ? target.Value : -1;
+                frame.Target = target;
             }
 
-            // Crew: every other diver in this world, in view, within range.
+            // Crew: every other living diver in this world, in view, within range.
             if (Time.unscaledTime - othersCachedAt > 0.5f) { othersCache = FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude); othersCachedAt = Time.unscaledTime; }
             foreach (HQPlayerController other in othersCache)
             {
-                if (other == null || other == controller || other.gameObject.scene != gameObject.scene || other.IsDead) continue;
+                if (other == null || other == who || other.IsDead) continue;
+                if (watching ? !day.IsBelow(other.OwnerId) : other.gameObject.scene != world) continue;
                 Vector3 head = other.transform.position + Vector3.up * 1.85f;
                 float distance = Vector3.Distance(eye, head);
                 if (distance > CrewTagRangeMeters || !PlayerVisorMath.InView(camera, head)) continue;
-                crew.Add((other, head, distance));
+                frame.Crew.Add((other, head, distance));
                 r.NearestCrewDistance = Mathf.Min(r.NearestCrewDistance, distance);
             }
-            r.CrewTagCount = crew.Count;
-            Visor = r;
+            r.CrewTagCount = frame.Crew.Count;
+            frame.Readout = r;
         }
 
-        private Vector3 homeWorld;
-
-        // An item is in this world when it sits in the player's world scene, or in
-        // a scene that is no world at all (a client instantiates the server's spawns
-        // into the session scene); an item in another world scene is not.
-        private bool InThisWorld(UnityEngine.SceneManagement.Scene scene)
+        // An item is in a world when it sits in that world's scene, or in a scene
+        // that is no world at all (a client instantiates the server's spawns into
+        // the session scene); an item in another world scene is not.
+        private static bool InWorld(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.Scene world)
         {
-            return scene == gameObject.scene || !WorldScenes.TryParse(scene.name, out _);
+            return scene == world || !WorldScenes.TryParse(scene.name, out _);
         }
 
         // "Coin · $48"; "$…" until the roll has landed on this peer; a plain name for
@@ -299,19 +399,29 @@ namespace SunkCost.Player
             if (inventory == null || !inventory.IsOwner || SessionInputGate.MenuOpen)
                 return;
             EnsureStyles();
-            if (controller != null && controller.ViewObstructed) { DrawObstructionCover(); return; }
+            if (controller != null && controller.ViewObstructed && !controller.IsDead) { DrawObstructionCover(); return; }
             if (SessionInputGate.PickerOpen) { DrawColourPicker(); return; }
             bool faded = ScreenFade.Instance != null && !ScreenFade.Instance.IsClear;
             bool maskOn = Visor.On && !faded;                    // the mask is on with the suit, car ride included
-            bool readoutsOn = maskOn && !controller.TravelLocked;
-            if (readoutsOn) DrawVisorWorld();
-            if (maskOn) DrawMask();
-            if (readoutsOn) DrawVisorGlass();
+            bool readoutsOn = maskOn && !Who.TravelLocked;
+            DrawVisor(own, ShownInventory, maskOn, readoutsOn, onAir: !faded);
             DrawAimingDot();
             DrawPrompt();
-            if (controller != null && controller.IsDead) DrawDeadCaption();
-            DrawSlots();
-            DrawWeightMeter();
+            if (controller != null && controller.IsDead && !faded) DrawSpectateLabels();
+        }
+
+        // The one drawing path for a visor frame: the world marks through the
+        // glass, the mask, the readouts on the glass, the slots and the weight
+        // meter, the ON AIR mark. The owner's screen, a spectator's screen and
+        // the deck TV all come through here.
+        public void DrawVisor(VisorFrame frame, PlayerInventory inv, bool maskOn, bool readoutsOn, bool onAir)
+        {
+            EnsureStyles();
+            if (readoutsOn) DrawVisorWorld(frame);
+            if (maskOn) DrawMask();
+            if (readoutsOn) DrawVisorGlass(frame.Readout);
+            if (frame.Readout.OnAirCount > 0 && onAir) DrawOnAir(frame.Readout);
+            if (inv != null) { DrawSlots(inv, frame.Readout.On); DrawWeightMeter(inv, frame.Readout.On); }
         }
 
         private void OnDestroy()
@@ -344,7 +454,7 @@ namespace SunkCost.Player
         // housing let into the top edge with the heading under it, status labels
         // in the top corners, AIR / HP / DEPTH / PRESS bottom-left, the reticle
         // around the dot (PlayerVisorMask places them).
-        private void DrawVisorGlass()
+        private void DrawVisorGlass(VisorReadout Visor)
         {
             float s = Screen.height / 1080f;
             Color previous = GUI.color;
@@ -476,12 +586,14 @@ namespace SunkCost.Player
 
         // Through the glass: the HOME marker on the doorway, crew tags, item brackets
         // and the tag — projected from the world, so the frame may hide them.
-        private void DrawVisorWorld()
+        private void DrawVisorWorld(VisorFrame frame)
         {
             float s = Screen.height / 1080f;
             Color previous = GUI.color;
+            VisorReadout Visor = frame.Readout;
+            Camera camera = frame.Camera;
 
-            if (Visor.HomeShown && PlayerVisorMath.TryProject(controller.PlayerCamera, homeWorld + Vector3.up * 2.2f, out Vector2 hp) && PlayerVisorMath.InView(controller.PlayerCamera, homeWorld))
+            if (Visor.HomeShown && PlayerVisorMath.TryProject(camera, frame.HomeWorld + Vector3.up * 2.2f, out Vector2 hp) && PlayerVisorMath.InView(camera, frame.HomeWorld))
             {
                 GUI.color = GoldColor;
                 GUI.DrawTexture(new Rect(hp.x - 4f * s, hp.y - 4f * s, 8f * s, 8f * s), whiteTexture);
@@ -489,9 +601,9 @@ namespace SunkCost.Player
             }
 
             // Crew tags over heads; brighter when under the dot.
-            foreach ((HQPlayerController other, Vector3 head, float distance) in crew)
+            foreach ((HQPlayerController other, Vector3 head, float distance) in frame.Crew)
             {
-                if (!PlayerVisorMath.TryProject(controller.PlayerCamera, head, out Vector2 p)) continue;
+                if (!PlayerVisorMath.TryProject(camera, head, out Vector2 p)) continue;
                 bool lookedAt = Mathf.Abs(p.x - Screen.width * 0.5f) < 60f * s && Mathf.Abs(p.y - Screen.height * 0.5f) < 90f * s;
                 PlayerIdentity otherIdentity = other.GetComponent<PlayerIdentity>();
                 Color crewColour = otherIdentity != null ? otherIdentity.Colour : VisorColor;
@@ -501,11 +613,11 @@ namespace SunkCost.Player
             }
 
             // Item brackets; the dot's item in gold with its tag.
-            CarryableItem target = controller.CurrentTarget;
-            foreach (CarryableItem item in bracketed)
+            CarryableItem target = frame.Target;
+            foreach (CarryableItem item in frame.Bracketed)
             {
                 Collider collider = item.PrimaryCollider;
-                if (collider == null || !PlayerVisorMath.TryBracket(controller.PlayerCamera, collider.bounds, 6f * s, out Rect rect)) continue;
+                if (collider == null || !PlayerVisorMath.TryBracket(camera, collider.bounds, 6f * s, out Rect rect)) continue;
                 bool isTarget = item == target;
                 GUI.color = isTarget ? GoldColor : VisorDim;
                 DrawBrackets(rect, Mathf.Clamp(rect.width * 0.25f, 6f * s, 14f * s), 2f);
@@ -556,11 +668,11 @@ namespace SunkCost.Player
 
         // A plain grey bar under the slots: mass / capacity from the server's carried
         // mass. Full is a real state: the bar turns red and the player crawls.
-        private void DrawWeightMeter()
+        private void DrawWeightMeter(PlayerInventory inventory, bool visorOn)
         {
             float totalWidth = InventorySlots.Count * SlotSize + (InventorySlots.Count - 1) * SlotGap;
             float left = (Screen.width - totalWidth) * 0.5f;
-            float top = SlotsTop(totalWidth) + SlotSize + MeterGap;
+            float top = SlotsTop(totalWidth, visorOn) + SlotSize + MeterGap;
             bool overloaded = inventory.Overloaded;
             float fill = overloaded ? 1f : inventory.MeterFill;
             float fillWidth = fill <= 0f ? 0f : Mathf.Clamp(Mathf.Round(fill * totalWidth), 1f, totalWidth);
@@ -578,16 +690,16 @@ namespace SunkCost.Player
             {
                 // Above the slot row (and its "In hand" line): the bottom margin is too
                 // small for a line under the bar.
-                float slotsTop = SlotsTop(totalWidth);
+                float slotsTop = SlotsTop(totalWidth, visorOn);
                 GUI.Label(new Rect(left - 40f, slotsTop - 48f, totalWidth + 80f, 22f), "Too heavy — drop something", promptStyle);
             }
         }
 
         // The slot row's top: along the bottom on the ship; on the glass just above
         // the mask's nose bridge in the dive.
-        private float SlotsTop(float totalWidth)
+        private float SlotsTop(float totalWidth, bool visorOn)
         {
-            if (!Visor.On) return Screen.height - SlotBottomMargin - SlotSize;
+            if (!visorOn) return Screen.height - SlotBottomMargin - SlotSize;
             return PlayerVisorMask.SlotRowRect(Screen.width, Screen.height, totalWidth, SlotSize + MeterGap + MeterHeight).y;
         }
 
@@ -599,11 +711,11 @@ namespace SunkCost.Player
             GUI.Label(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.5f + 28f, width, 28f), text, promptStyle);
         }
 
-        private void DrawSlots()
+        private void DrawSlots(PlayerInventory inventory, bool visorOn)
         {
             float totalWidth = InventorySlots.Count * SlotSize + (InventorySlots.Count - 1) * SlotGap;
             float left = (Screen.width - totalWidth) * 0.5f;
-            float top = SlotsTop(totalWidth);
+            float top = SlotsTop(totalWidth, visorOn);
             int heldSlot = inventory.HeldSlot;
 
             if (inventory.HoldingOverflow)
@@ -616,7 +728,7 @@ namespace SunkCost.Player
                 bool held = i == heldSlot;
 
                 Color previous = GUI.color;
-                if (Visor.On)
+                if (visorOn)
                 {
                     // The visor's slots: dark panel, thin cyan border, bracket corners; gold when in hand.
                     GUI.color = held ? GoldColor : VisorDim;
@@ -642,7 +754,7 @@ namespace SunkCost.Player
                     else
                         GUI.Label(new Rect(rect.x, rect.y + rect.height * 0.5f - 10f, rect.width, 20f), item.DisplayName, labelStyle);
                 }
-                GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, 20f, 18f), (i + 1).ToString(), Visor.On ? visorNumberStyle : numberStyle);
+                GUI.Label(new Rect(rect.x + 6f, rect.y + 4f, 20f, 18f), (i + 1).ToString(), visorOn ? visorNumberStyle : numberStyle);
             }
         }
 
@@ -709,7 +821,7 @@ namespace SunkCost.Player
 
         private void DrawAimingDot()
         {
-            if (!SessionInputGate.CanPlay || controller.TravelLocked) return;
+            if (!SessionInputGate.CanPlay || Who.TravelLocked || Visor.NoSignal) return;
             if (ScreenFade.Instance != null && !ScreenFade.Instance.IsClear) return;
             PlayerMovementSettings settings = controller.Movement;
             float scale = Screen.height / 1080f;
@@ -717,9 +829,11 @@ namespace SunkCost.Player
             float outline = Mathf.Round(settings.DotOutlinePx * scale);
             float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f;
             bool usable = false;
-            CarryableItem target = controller.CurrentTarget;
-            if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
+            CarryableItem target = own.Target;
+            if (controller.IsDead) usable = false;
+            else if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
             else if (controller.CurrentButton != null) usable = CrewDayState.Instance != null && !CrewDayState.Instance.Travelling && !CrewDayState.Instance.Sailing;
+            else if (controller.CurrentTv != null) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             Color previous = GUI.color;
             if (outline > 0f)

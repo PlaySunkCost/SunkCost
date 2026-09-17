@@ -463,6 +463,7 @@ namespace SunkCost.World
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             cohort.Remove(conn.ClientId);
             prepared.Remove(conn.ClientId); black.Remove(conn.ClientId); arrived.Remove(conn.ClientId);
+            watching.Remove(conn.ClientId);
             if (dayState != null && networkManager.IsServerStarted)
             {
                 bool wasBelow = dayState.IsBelow(conn.ClientId);
@@ -470,7 +471,7 @@ namespace SunkCost.World
                 // A disconnected player does not count as living: if they were the
                 // last one below, the dive is done. (Only a leaver from below: a refused
                 // joiner's disconnect must not touch a day in progress.)
-                if (wasBelow) dayState.ServerEndDayIfDone(Settings.DaysPerCycle);
+                if (wasBelow) ServerSiteMayClose(); // the dive is done; a car on its way down for them comes back and the site closes
             }
         }
 

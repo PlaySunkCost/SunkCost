@@ -52,6 +52,12 @@ namespace SunkCost.Player
         // Dead (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 1): server-written; every
         // peer hides the body and drops the capsule, the owner loses its commands.
         private readonly SyncVar<bool> dead = new(false);
+        // The owner's look pitch for spectators (card 2): server-written from the
+        // owner's [ServerRpc] at most 10×/s when it moved by 2°; yaw is the root.
+        private readonly SyncVar<sbyte> lookPitch = new(0);
+        private float sentPitch = float.NaN;
+        private float nextPitchSendAt;
+        private const float PitchSendInterval = 0.1f, PitchSendThreshold = 2f;
 
         // Motor state.
         private bool grounded;
@@ -89,6 +95,8 @@ namespace SunkCost.Player
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
+        // The deck TV's screen under the crosshair within reach (E = next channel, card 3).
+        public SunkCost.World.ShipTV CurrentTv { get; private set; }
         // The cabin control under the crosshair within reach: the deck cabin's
         // button on the ship or the seafloor car's panel (owner only).
         public CabinControl CurrentCabinControl { get; private set; }
@@ -96,6 +104,13 @@ namespace SunkCost.Player
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
         public bool IsDead => dead.Value;
+        // Where a spectator's eyes go: this player's camera transform (every peer
+        // has it; remote copies hold the replicated pitch on it).
+        public Transform EyeAnchor => playerCamera != null ? playerCamera.transform : transform;
+        public float LookPitch => IsOwner ? pitch : lookPitch.Value;
+        // The owner's spectator view, created at OnStartClient (card 2).
+        public SpectatorView Spectator { get; private set; }
+        public float GrabAimRadius => grabAimRadius;
         public bool IsGrounded => grounded;
         public bool IsCrouched => stanceCrouched;
         public float VerticalSpeed => verticalSpeed;
@@ -166,6 +181,7 @@ namespace SunkCost.Player
         {
             base.OnStartClient();
             SetLocalPresentation(IsOwner);
+            if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
             // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
             PlayerIdentity identity = GetComponent<PlayerIdentity>();
             if (identity != null)
@@ -181,7 +197,16 @@ namespace SunkCost.Player
         private void Update()
         {
             BlendPresentation();
-            if (!IsOwner) return;
+            // The dead state's side effects are re-applied whenever the replicated
+            // value and the applied one disagree (a client whose object was moved
+            // between scenes or re-initialised can miss the change callback).
+            if (appliedDead != dead.Value) ApplyDead(dead.Value);
+            if (!IsOwner)
+            {
+                // A remote copy's camera carries the owner's replicated pitch for spectators.
+                if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(lookPitch.Value, 0f, 0f);
+                return;
+            }
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
             bool hasDevices = ActiveKeyboard != null && Mouse.current != null;
@@ -194,13 +219,31 @@ namespace SunkCost.Player
                 else SessionInputGate.OpenMenu();
             }
 
+            // Dead (card 2): no look, move, items or targets; the one command is
+            // left click, the next living player to watch. The spectator view owns
+            // the camera, so the clearance solver stays out of it too.
+            if (dead.Value)
+            {
+                if (hasDevices && SessionInputGate.CanPlay && !SessionInputGate.ClickSuppressedThisFrame && Mouse.current.leftButton.wasPressedThisFrame) RequestNextSpectate();
+                CurrentTarget = null;
+                CurrentButton = null;
+                CurrentColourPanel = null;
+                CurrentQuotaBoard = null;
+                CurrentTv = null;
+                CurrentCabinControl = CabinControl.None;
+                grabBufferedUntil = -1f;
+                grabConsumed = true;
+                jumpBufferedUntil = float.NegativeInfinity;
+                return;
+            }
+            SendPitchIfDue();
+
             // Menu open, Steam overlay up, or window unfocused: no look, move or
             // item input. Gravity keeps running below; only commands stop.
             bool canPlay = hasDevices && SessionInputGate.CanPlay && Cursor.lockState == CursorLockMode.Locked;
 #if UNITY_EDITOR
             if (BypassInputGateForChecks && hasDevices) canPlay = true;
 #endif
-            if (dead.Value) canPlay = false; // the dead have no commands (they will watch: card 2)
             Vector2 moveInput = Vector2.zero;
             bool sprint = false;
             if (canPlay)
@@ -298,6 +341,12 @@ namespace SunkCost.Player
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestPay();
             }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentTv != null)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship != null) ship.RequestTvNext();
+            }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
             {
                 grabConsumed = true;
@@ -322,6 +371,22 @@ namespace SunkCost.Player
             transform.Rotate(0f, delta.x, 0f);
             pitch = Mathf.Clamp(pitch - delta.y, -80f, 80f);
             playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
+
+        // The owner tells the server its pitch when it moved enough, at most 10×/s.
+        private void SendPitchIfDue()
+        {
+            if (!IsSpawned || Time.unscaledTime < nextPitchSendAt) return;
+            if (!float.IsNaN(sentPitch) && Mathf.Abs(pitch - sentPitch) < PitchSendThreshold) return;
+            sentPitch = pitch;
+            nextPitchSendAt = Time.unscaledTime + PitchSendInterval;
+            ServerSetLookPitch((sbyte)Mathf.RoundToInt(Mathf.Clamp(pitch, -80f, 80f)));
+        }
+
+        [ServerRpc]
+        private void ServerSetLookPitch(sbyte value)
+        {
+            lookPitch.Value = (sbyte)Mathf.Clamp(value, -80, 80);
         }
 
         // ---- motor ------------------------------------------------------------------
@@ -503,6 +568,10 @@ namespace SunkCost.Player
             bool wasEnabled = controller.enabled;
             controller.enabled = false;
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yawDegrees, 0f));
+            // The capsule's physics pose takes the new spot before it is enabled again:
+            // a CharacterController enabled over a stale pose snapped a revived guest
+            // back to where it had been (17 September 2026).
+            Physics.SyncTransforms();
             controller.enabled = wasEnabled;
             clearance?.ResetView();
             verticalSpeed = 0f;
@@ -533,6 +602,21 @@ namespace SunkCost.Player
         [Server]
         public void ServerSetDead(bool value) => dead.Value = value;
 
+        // Left click while dead: the next living player (card 2). The server
+        // cycles; the client only asks.
+        public void RequestNextSpectate()
+        {
+            if (!IsOwner || !dead.Value) return;
+            ServerRequestNextSpectate();
+        }
+
+        [ServerRpc]
+        private void ServerRequestNextSpectate(NetworkConnection sender = null)
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            if (flow != null) flow.ServerSpectateNext(sender);
+        }
+
         // The server moves a dead player (to the ship, or up again at End day); the
         // owner simulates itself, so it is the owner that stands there.
         [TargetRpc]
@@ -547,9 +631,16 @@ namespace SunkCost.Player
             ApplyDead(next);
         }
 
+        private bool appliedDead;
         private void ApplyDead(bool value)
         {
-            if (controller != null) controller.enabled = !value && !travelLocked;
+            appliedDead = value;
+            if (controller != null)
+            {
+                bool on = !value && !travelLocked;
+                if (on && !controller.enabled) Physics.SyncTransforms(); // see TeleportLocal: never enable the capsule over a stale pose
+                controller.enabled = on;
+            }
             if (bodyVisual != null)
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
                     renderer.enabled = !value && !IsOwner;
@@ -569,6 +660,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentColourPanel = null;
             CurrentQuotaBoard = null;
+            CurrentTv = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
@@ -582,6 +674,7 @@ namespace SunkCost.Player
             if (CurrentColourPanel != null) return;
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
             if (CurrentQuotaBoard != null) return;
+            if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) return; }
             if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }
