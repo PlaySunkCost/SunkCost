@@ -120,16 +120,25 @@ is **payday**: the monitor says so and offers only HQ, the deck cabin refuses
 ("Payday — sail home"); choosing HQ earlier is allowed (an early "go home").
 **The quota is paid at a button (Dan, 16 September 2026):** the board on the
 HQ wall — look, E — sells everything in the ship's storage room into the crew
-balance and charges the quota out of it. Paid: a new cycle, the next dive is
-day 1, what is left carries over. Short **before payday**: not a loss — the
-box is banked into the balance, the board says "SHORT BY $n — sail out and
-dive again", and the crew sails out on the same day count to earn the rest
-(Dan: "not a loss instantly"). Short **at payday**: **GAME LOST** — day 0,
-balance $0, a new run (nothing else happens yet). On payday the docked ship will not sail
-out again until the quota is paid ("Pay the quota first"); before payday the
-crew may pay early or sail out again on the same day count — days are spent
-only by dives, never by sailing. With no dive taken the board says "Nothing to
-pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
+balance. **Every dollar handed over is the crew's (Dan, 17 September 2026):**
+nothing is charged out of the balance — the quota is the bar the cycle's
+hand-over must clear, not a fee; $510 handed over for a $500 quota leaves the
+crew with $510, spendable and shown ("PAID $500 — handed over $510 — every
+dollar yours · balance $510"). Only what was handed over *this cycle* counts
+toward the quota; money from earlier cycles stays yours and pays no later
+quota. Paid: a new cycle, the next dive is day 1. Short **before payday**: not
+a loss — the box is banked into the balance and counts toward the cycle, the
+board says "SHORT BY $n — sail out and dive again", and the crew sails out on
+the same day count to earn the rest (Dan: "not a loss instantly"). Short **at
+payday**: **GAME LOST** — day 0, balance $0, a new run (nothing else happens
+yet). On payday the docked ship will not sail out again until the quota is
+paid ("Pay the quota first"); before payday the crew may pay early or sail
+out again on the same day count — days are spent only by dives, never by
+sailing. **Home only at the start of a day (Dan, 17 September 2026):** once
+today's dive has happened the monitor refuses HQ ("Dive done — End day
+first") until the crew ends the day; a day nobody has dived on yet — day 1
+fresh from HQ included — may sail home. With no dive taken the board says
+"Nothing to pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
 $500 for the prototype). **Built 16
 September 2026 (Dan):** the day counter lives on the crew's day state — day 1
 on arrival from HQ, the day in progress from the moment the riders stand in

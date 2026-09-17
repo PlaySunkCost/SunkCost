@@ -345,6 +345,11 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.BoxValue == box1, 3f, $"box value ${Day.BoxValue} = ${box1}");
             yield return Expect(() => Readout(sea) == $"STORAGE | ${box1} / $500 | balance $0", 3f, "box readout: " + Readout(sea));
             ShotFrom("box-after-dive1", sea.FromShipLocal(new Vector3(0.2f, 1.7f, -12.5f)), sea.FromShipLocal(new Vector3(1.8f, 1.5f, -12.5f)));
+            // Home only at the start of a day (Dan, 17 September 2026): with today's
+            // dive done the monitor refuses HQ until the day is ended.
+            H.ClientMoveLocalPlayerTo(sea.SpawnPoint(0).position); yield return Wait(0.3f);
+            H.ClientRequestSail("HQ");
+            yield return ExpectRefusal("Dive done — End day first", "sailing home after a dive is refused until End day");
             yield return EndDay("Day 2 of 3");
             Check(Day.Day == 2 && !Day.DiveDone, "day 2, no dive yet");
 
@@ -363,7 +368,7 @@ namespace SunkCost.Editor.Prototype
             if (paidEarly)
             {
                 Say("the first haul covered the quota by itself: PAID early, cycle over");
-                Check(Day.Day == 0 && Day.Balance == box1 - Quota, $"paid: day 0, balance ${Day.Balance}");
+                Check(Day.Day == 0 && Day.Balance == box1, $"paid: day 0, balance ${Day.Balance} (every dollar handed over is the crew's)");
             }
             else
             {
@@ -451,7 +456,7 @@ namespace SunkCost.Editor.Prototype
             int had = balanceBefore + boxTotal;
             if (had >= Quota)
             {
-                Check(Day.LastPay.Paid && Day.LastPay.Sales == boxTotal && Day.Balance == had - Quota && Day.Day == 0 && !Day.Payday, $"PAID: sold ${boxTotal}, balance ${Day.Balance}, day 0");
+                Check(Day.LastPay.Paid && Day.LastPay.Sales == boxTotal && Day.LastPay.Had == had && Day.Balance == had && Day.Day == 0 && !Day.Payday, $"PAID: sold ${boxTotal}, handed over ${had} this cycle, balance ${Day.Balance} (nothing charged), day 0");
                 Check(H.QuotaBoardText().StartsWith("PAID $500"), "board: " + Board());
             }
             else
@@ -468,7 +473,7 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestPay();
             yield return ExpectRefusal("Nothing to pay yet — dive first", "paying twice is refused");
 
-            Heading("Cycle 2 — one dive, pay early from the balance");
+            Heading("Cycle 2 — one dive, pay early; money from cycle 1 is the crew's and pays no quota");
             int balance2 = Day.Balance;
             yield return SailTo("Sea", WorldId.Sea);
             sea = ShipParts.InWorld(WorldId.Sea);
@@ -490,9 +495,9 @@ namespace SunkCost.Editor.Prototype
             yield return ExpectRefusal("Nobody has dived today", "End day twice is refused");
             yield return SailTo("HQ", WorldId.HQ);
             yield return Pay(Day.LastPay.Serial);
-            int had2 = balance2 + box4;
-            if (had2 >= Quota) Check(Day.LastPay.Paid && Day.Balance == had2 - Quota && Day.Day == 0, $"cycle 2 PAID early from the balance: ${had2} → ${Day.Balance}");
-            else Check(Day.LastPay.Short && Day.Balance == had2 && Day.Day == 2, $"cycle 2 SHORT by ${Quota - had2}, banked");
+            Check(Day.LastPay.Had == box4 && Day.Balance == balance2 + box4, $"cycle 2 judged on this cycle's ${box4} only; balance ${balance2} + ${box4} = ${Day.Balance}");
+            if (box4 >= Quota) Check(Day.LastPay.Paid && Day.Day == 0, $"cycle 2 PAID early: ${box4} handed over");
+            else Check(Day.LastPay.Short && Day.Day == 2, $"cycle 2 SHORT by ${Quota - box4}, banked");
             Check(deckCoin != null && deckCoin.IsSpawned, "the deck coin survived two sails and two sales");
             yield return Shot("end");
             Say("done");

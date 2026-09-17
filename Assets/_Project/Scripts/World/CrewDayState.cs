@@ -16,14 +16,14 @@ namespace SunkCost.World
     }
 
     // What the last press of the pay button did (Dan, 16 September 2026): the
-    // box sold for Sales, the quota charged or missed. Shown by the HQ board.
+    // box sold for Sales, the quota met or missed. Shown by the HQ board.
     public struct PayReport
     {
         public int Serial;
         public int Sales;
         public int Quota;
-        public int Had;     // balance + sales, before the charge
-        public int Balance; // after the charge
+        public int Had;     // handed over this cycle, this sale included — what the quota is judged on
+        public int Balance; // the crew's money after the sale: every dollar handed over is theirs (Dan, 17 September 2026)
         public bool Paid;
         public bool Short;  // short before payday: the box is banked, the day count goes on
         public bool Lost;   // short at payday: the run is over, everything reset
@@ -56,10 +56,16 @@ namespace SunkCost.World
         // the crew ends the day at the monitor (Dan, 16 September 2026: "the crew
         // ends the day — but remember they can go down only once").
         private readonly SyncVar<bool> diveDone = new(false);
-        // The crew's money (Dan, 16 September 2026): the pay button at HQ sells
-        // the storage room into it and charges the quota out of it; what is
-        // left carries over. Server-written; the HQ board and the box read it.
+        // The crew's money (Dan, 16 September 2026; 17 September: "the players get
+        // money for every dollar they give — 510 for a 500 quota is $510"): the pay
+        // button at HQ sells the storage room into it and nothing is charged out of
+        // it; the quota is a bar the cycle's hand-over must clear, not a fee. Server-
+        // written; the HQ board, the box readout and the visor read it.
         private readonly SyncVar<int> balance = new(0);
+        // What the crew has handed over in this cycle (a short sale before payday
+        // is banked and counts); zero once the quota is paid or the run is lost.
+        // Money already theirs from earlier cycles never pays a later quota.
+        private readonly SyncVar<int> cycleSales = new(0);
         private readonly SyncVar<PayReport> lastPay = new(new PayReport { Serial = 0 });
         private float lastPayAt = float.NegativeInfinity;
         // What the storage room holds, summed by the server (the only peer that
@@ -104,6 +110,7 @@ namespace SunkCost.World
         // and at HQ the ship stays docked until the quota is paid.
         public bool Payday => payday.Value;
         public int Balance => balance.Value;
+        public int CycleSales => cycleSales.Value;
         public int BoxValue => boxValue.Value;
         public PayReport LastPay => lastPay.Value;
         // Local time the last pay report arrived on this peer.
@@ -153,7 +160,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value}";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value}";
         private string SpectateText()
         {
             var parts = new List<string>();
@@ -231,6 +238,10 @@ namespace SunkCost.World
             if (phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome) { why = "Already sailing."; return false; }
             if (phase.Value == DayPhase.DiveInProgress) { why = "Dive in progress."; return false; }
             if (payday.Value && to != WorldId.HQ) { why = world.Value == WorldId.HQ ? "Pay the quota first" : "Payday — only HQ"; return false; }
+            // Home only at the start of a day (Dan, 17 September 2026): once today's
+            // dive has happened the crew ends the day at the monitor first. A day
+            // nobody has dived on yet (day 1 fresh from HQ included) may sail home.
+            if (to == WorldId.HQ && diveDone.Value) { why = "Dive done — End day first"; return false; }
             if (to == world.Value) { why = "Already there."; return false; }
             why = string.Empty;
             return true;
@@ -267,20 +278,24 @@ namespace SunkCost.World
         }
 
         // The pay button (WorldSceneFlow.ServerPay decides whether it may be
-        // pressed): the box's worth joins the balance, the quota comes out of it.
-        // Paid: the cycle is over, the next dive is day 1. Short: the run is lost
-        // and everything starts from nothing (Dan: "say game lost, start from the
-        // start"; walking the plank is a later card).
+        // pressed): the box's worth joins the balance — all of it, nothing is
+        // charged (Dan, 17 September 2026) — and the cycle's hand-over is judged
+        // against the quota. Paid: the cycle is over, the next dive is day 1.
+        // Short at payday: the run is lost and everything starts from nothing
+        // (Dan: "say game lost, start from the start"; walking the plank is a
+        // later card).
         [Server]
         public PayReport ServerPay(int sales, int quota)
         {
-            int total = balance.Value + Mathf.Max(0, sales);
-            bool paid = total >= quota;
+            int sold = Mathf.Max(0, sales);
+            int handed = cycleSales.Value + sold;
+            bool paid = handed >= quota;
             bool lost = !paid && payday.Value; // short with no dives left
-            if (paid) { balance.Value = total - quota; day.Value = 0; payday.Value = false; diveDone.Value = false; }
-            else if (lost) { balance.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
-            else balance.Value = total; // short, days left: the box is banked, dive again (Dan: "not a loss instantly")
-            var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = Mathf.Max(0, sales), Quota = quota, Had = total, Balance = balance.Value, Paid = paid, Short = !paid && !lost, Lost = lost };
+            balance.Value += sold;
+            if (paid) { cycleSales.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
+            else if (lost) { balance.Value = 0; cycleSales.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
+            else cycleSales.Value = handed; // short, days left: the box is banked, dive again (Dan: "not a loss instantly")
+            var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = sold, Quota = quota, Had = handed, Balance = balance.Value, Paid = paid, Short = !paid && !lost, Lost = lost };
             lastPay.Value = report;
             return report;
         }
