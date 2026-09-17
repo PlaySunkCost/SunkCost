@@ -212,7 +212,7 @@ namespace SunkCost.Editor.Prototype
         private static CarryableItem SiteItem(string name)
         {
             foreach (CarryableItem c in CarryableItem.Spawned)
-                if (c != null && c.name == name && c.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) return c;
+                if (c != null && (c.name == name || c.name.StartsWith(name + " (day ")) && c.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) return c;
             return null;
         }
         // The placeholder body (Body, CharacterModel) is hidden; the owner's

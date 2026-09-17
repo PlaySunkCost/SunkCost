@@ -917,7 +917,7 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.3f);
             H.ClientRequestCabin();
-            yield return WaitUntil(() => Day.LastRefusal.Text == "Waiting for: Player " + guestId, 3f, "Y6 the deck button waits for the guest by name: " + Day.LastRefusal.Text);
+            yield return WaitUntil(() => Day.LastRefusal.Text == "Waiting for: " + WorldSceneFlow.DisplayName(guestId), 3f, "Y6 the deck button waits for the guest by name: " + Day.LastRefusal.Text);
             Check(!Day.Riding && Day.Phase == DayPhase.AtSea, "Y6 no ride started without everyone aboard");
 
             // G1: both in the cabin; the host presses; both ride down.

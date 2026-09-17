@@ -119,9 +119,14 @@ namespace SunkCost.Editor.Prototype
                 boarding.transform.SetParent(root.transform, false);
                 boarding.transform.localPosition = new Vector3(0f, 0f, -DeckLength / 2f);
 
-                return PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
             finally { Object.DestroyImmediate(root); }
+            // The cabin's glass and the car's own glass are part of the ship: a
+            // regenerated prefab used to lose them until someone remembered
+            // DeckCabinRideSetup (the "ship regeneration trap", 16 September 2026).
+            foreach (string change in DeckCabinRideSetup.PatchShipPrefabGlass()) Debug.Log("Ship stub: " + change);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
         }
 
         // The storage room (Dan, 16 September 2026: "a small box, like a small
@@ -143,6 +148,11 @@ namespace SunkCost.Editor.Prototype
             float side = (d - door) / 2f;            // the port wall's two pieces either side of the doorway
             Block("StorageWallPortStern", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz - d / 2f + side / 2f), new Vector3(t, h, side), wall);
             Block("StorageWallPortBow", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz + d / 2f - side / 2f), new Vector3(t, h, side), wall);
+            // A low sill across the doorway: a dropped coin is a cylinder and rolled
+            // out of the room (full run, 16 September 2026); a player steps over it
+            // (standing step offset 0.25 m).
+            const float sill = 0.12f;
+            Block("StorageSill", root, new Vector3(cx - w / 2f + t / 2f, sill / 2f, cz), new Vector3(t + 0.06f, sill, door), tape);
             // The inside, reaching under the deck: a flat item's pivot lies a few
             // centimetres up, right at a floor-level bottom (Dan: "an item stays after the sell").
             Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, h / 2f - 0.25f, cz), new Vector3(w - 2f * t, h + 0.5f - t, d - 2f * t));

@@ -62,6 +62,12 @@ namespace SunkCost.Interaction
                 if (entry.Prefab == null) { Debug.LogWarning(name + ": fixture entry " + entry.Name + " has no prefab."); continue; }
                 GameObject instance = Instantiate(entry.Prefab, entry.Position, Quaternion.identity);
                 instance.name = string.IsNullOrEmpty(entry.Name) ? entry.Prefab.name : entry.Name;
+                // The site spawns the same "Coin 6" every day: in a world scene the
+                // day goes into the name, so one dive's coin is told from the last
+                // one's (lying on the deck) in F3 and the logs (full run, 16 September
+                // 2026). Server-side names only; clients see the prefab name.
+                SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+                if (day != null && day.Day > 0 && SunkCost.World.WorldScenes.TryParse(gameObject.scene.name, out _)) instance.name += " (day " + day.Day + ")";
                 CarryableItem item = instance.GetComponent<CarryableItem>();
                 if (item != null) item.SetResetPositionBeforeSpawn(entry.Position);
                 NetworkObject nob = instance.GetComponent<NetworkObject>();

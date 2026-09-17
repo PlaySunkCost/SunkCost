@@ -20,7 +20,8 @@ namespace SunkCost.Editor.Prototype
         // The scene has several identical balls; "Basketball" is the original one.
         public static CarryableItem Item(string name = "Basketball")
         {
-            return Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == name);
+            // "Coin 3" also matches the server's day-stamped "Coin 3 (day 2)".
+            return Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == name || i.name.StartsWith(name + " (day "));
         }
 
         // Grants the ball to the first connected client that is not the local host

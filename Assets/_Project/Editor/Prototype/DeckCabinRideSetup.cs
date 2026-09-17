@@ -89,7 +89,7 @@ namespace SunkCost.Editor.Prototype
         // The deck cabin is the same glass car as the seafloor's (Dan, 15 September
         // 2026: "they should look the same"): its shell and roof take the car's
         // transparent glass instead of the opaque stub material. In place, GUIDs kept.
-        private static IEnumerable<string> PatchShipPrefabGlass()
+        internal static IEnumerable<string> PatchShipPrefabGlass()
         {
             var changes = new List<string>();
             Material glass = DiveSiteBuilder.GetOrCreateGlassMaterial();
