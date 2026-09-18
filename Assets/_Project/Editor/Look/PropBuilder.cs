@@ -240,6 +240,42 @@ namespace SunkCost.Editor.Look
             light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = length * 1.2f; light.intensity = 6f; light.color = new Color(1f, 0.6f, 0.26f); light.shadows = LightShadows.None;
         });
 
+        // A string of lights, `length` m along X between two posts' tops, sagging
+        // in the middle, a small lamp every metre or so.
+        public static GameObject LightString(float length) => Prefab($"LightString{F(length)}", root =>
+        {
+            int segments = Mathf.Max(6, Mathf.RoundToInt(length / 1.5f));
+            float sag = length * 0.08f;
+            Vector3 prev = new(-length / 2f, 0f, 0f);
+            for (int i = 1; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                Vector3 p = new(-length / 2f + t * length, -sag * 4f * t * (1f - t), 0f);
+                Vector3 mid = (prev + p) / 2f; Vector3 d = p - prev;
+                Part(root, "Cable", MeshKit.Cylinder(0.025f, d.magnitude, 6), LookMaterials.Ink(), mid - d / 2f, Quaternion.FromToRotation(Vector3.up, d.normalized));
+                if (i < segments) Part(root, "Bulb", MeshKit.Box(new Vector3(0.16f, 0.2f, 0.16f), 0.2f), LookMaterials.LampOrange(), p);
+                prev = p;
+            }
+            Light light = new GameObject("Light").AddComponent<Light>();
+            light.transform.SetParent(root.transform, false);
+            light.transform.localPosition = new Vector3(0f, -sag - 0.5f, 0f);
+            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = length * 0.9f; light.intensity = 5f; light.color = new Color(1f, 0.6f, 0.26f); light.shadows = LightShadows.None;
+        });
+
+        // A tool board for a booth wall: a panel with hanging shapes in a row.
+        public static GameObject ToolBoard() => Prefab("ToolBoard", root =>
+        {
+            Part(root, "Board", MeshKit.Box(new Vector3(2.4f, 1.4f, 0.08f)), LookMaterials.PanelDark(), Vector3.zero);
+            Material[] tints = { LookMaterials.Ink(), LookMaterials.CrateYellow(), LookMaterials.Ink(), LookMaterials.Fender(), LookMaterials.CrateGrey() };
+            for (int i = 0; i < 5; i++)
+            {
+                float x = -0.9f + i * 0.45f;
+                Part(root, "Hook", MeshKit.Box(new Vector3(0.06f, 0.06f, 0.14f)), LookMaterials.Ink(), new Vector3(x, 1.15f, 0.08f));
+                Part(root, "Tool", MeshKit.Box(new Vector3(0.12f, 0.7f, 0.06f)), tints[i], new Vector3(x, 0.4f, 0.1f));
+                Part(root, "Tool Head", MeshKit.Box(new Vector3(0.28f, 0.16f, 0.08f)), tints[i], new Vector3(x, 1.0f, 0.1f));
+            }
+        });
+
         // A salvage crane: a fat mast, a boom out along +Z with a hook on a cable, a
         // winch drum at the foot, hazard bands.
         public static GameObject Crane() => Prefab("Crane", root =>
@@ -342,6 +378,12 @@ namespace SunkCost.Editor.Look
             GameObject sign = Place(root, SignBoard(w * 0.72f, 1.1f), new Vector3(0f, height - 1.15f, depth / 2f + 0.47f));
             sign.name = "Sign";
             Place(root, Screen(), new Vector3(w / 2f - wall - 0.9f, 2.0f, -depth / 2f + wall + 0.8f), Quaternion.identity).name = "Screen";
+            Place(root, Shelf(3.2f), new Vector3(-w / 2f + wall + 0.36f, 0.16f, 0.4f), Quaternion.Euler(0f, 90f, 0f)).name = "Side Shelf";
+            Place(root, ToolBoard(), new Vector3(w / 2f - wall - 0.05f, 2.2f, 0.6f), Quaternion.Euler(0f, -90f, 0f)).name = "Tool Board";
+            Place(root, SmallCrate("Grey"), new Vector3(-w / 2f + 1.6f, 1.36f, depth / 2f - 1.8f), Quaternion.Euler(0f, 12f, 0f)).name = "Counter Crate";
+            Place(root, SmallCrate("Yellow"), new Vector3(w / 2f - 1.5f, 1.36f, depth / 2f - 1.9f), Quaternion.Euler(0f, -20f, 0f)).name = "Counter Crate";
+            Part(root, "Counter Lamp", MeshKit.Box(new Vector3(0.2f, 0.3f, 0.2f)), LookMaterials.LampWarm(), new Vector3(0f, 1.36f, depth / 2f - 2.1f));
+            Part(root, "Counter Lamp Hood", MeshKit.Box(new Vector3(0.3f, 0.06f, 0.3f)), LookMaterials.Ink(), new Vector3(0f, 1.66f, depth / 2f - 2.1f));
             // Colliders: the walls, the counter and the floor.
             Box(root, new Vector3(0f, height / 2f, -depth / 2f + wall / 2f), new Vector3(w, height, wall));
             Box(root, new Vector3(-w / 2f + wall / 2f, height / 2f, 0f), new Vector3(wall, height, depth));

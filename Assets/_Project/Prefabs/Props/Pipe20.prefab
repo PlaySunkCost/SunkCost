@@ -121,10 +121,10 @@ Transform:
   m_Children:
   - {fileID: 7145866086321849641}
   - {fileID: 3826172754636704674}
-  - {fileID: 621071864656676217}
+  - {fileID: 4547962008455862888}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5408955274545615883
+--- !u!1 &4676018030396708067
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -132,9 +132,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 621071864656676217}
-  - component: {fileID: 5206227554328370543}
-  - component: {fileID: 44558133089186309}
+  - component: {fileID: 4547962008455862888}
+  - component: {fileID: 6419652836293844720}
+  - component: {fileID: 4254520566104502906}
   m_Layer: 0
   m_Name: Bracket
   m_TagString: Untagged
@@ -142,13 +142,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &621071864656676217
+--- !u!4 &4547962008455862888
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5408955274545615883}
+  m_GameObject: {fileID: 4676018030396708067}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 9.6, y: 0, z: 0}
@@ -157,21 +157,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6293968468482091164}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5206227554328370543
+--- !u!33 &6419652836293844720
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5408955274545615883}
+  m_GameObject: {fileID: 4676018030396708067}
   m_Mesh: {fileID: 4300000, guid: cdbdd3f0d002c3e4dae242bf89377735, type: 2}
---- !u!23 &44558133089186309
+--- !u!23 &4254520566104502906
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5408955274545615883}
+  m_GameObject: {fileID: 4676018030396708067}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

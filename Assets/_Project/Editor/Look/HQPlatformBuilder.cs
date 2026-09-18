@@ -188,6 +188,12 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, lamp, new Vector3(CrewMark.x - 7f, 0f, CrewMark.z - 5.5f), Quaternion.Euler(0f, 45f, 0f)).name = "Deck Lamp";
             PropBuilder.Place(root, lamp, new Vector3(CrewMark.x + 7f, 0f, CrewMark.z + 5.5f), Quaternion.Euler(0f, -135f, 0f)).name = "Deck Lamp";
             PropBuilder.Place(root, lamp, new Vector3(2f, 0f, 9f), Quaternion.Euler(0f, 180f, 0f)).name = "Deck Lamp";
+            // Strings of lights between the court's lamps and over the crew's mark.
+            GameObject courtString = PropBuilder.LightString(Court.width + 3f);
+            PropBuilder.Place(root, courtString, new Vector3(Court.x + Court.width / 2f, 4.0f, Court.y - 1.5f)).name = "Light String";
+            PropBuilder.Place(root, courtString, new Vector3(Court.x + Court.width / 2f, 4.0f, Court.yMax + 1.5f)).name = "Light String";
+            GameObject crewString = PropBuilder.LightString(17.8f); // between the two deck lamps
+            PropBuilder.Place(root, crewString, new Vector3(CrewMark.x, 4.0f, CrewMark.z), Quaternion.Euler(0f, -38f, 0f)).name = "Light String";
         }
 
         // ---- the booths -----------------------------------------------------------------
@@ -232,14 +238,14 @@ namespace SunkCost.Editor.Look
             intake.name = "Intake";
             Sign(intake.transform.Find("Sign").gameObject, "intake", "intake.sub");
             QuotaBoard(root, new Vector3(IntakeBoothCentre.x, 1.85f, BoothZ - 1.0f));
-            GameObject quotas = PropBuilder.Place(root, PropBuilder.SignBoard(9.4f, 3.6f), new Vector3(IntakeBoothCentre.x - 0.6f, 5.75f, BoothZ - 2.6f), facingSouth);
+            GameObject quotas = PropBuilder.Place(root, PropBuilder.SignBoard(9.4f, 3.6f), new Vector3(IntakeBoothCentre.x - 0.6f, 7.0f, BoothZ - 2.6f), facingSouth);
             quotas.name = "Quotas Display";
             Sign(quotas, "quota.title", null);
-            GameObject side = PropBuilder.Place(root, PropBuilder.SignBoard(3.4f, 3.6f), new Vector3(IntakeBoothCentre.x + 6.0f, 5.75f, BoothZ - 2.6f), facingSouth);
+            GameObject side = PropBuilder.Place(root, PropBuilder.SignBoard(3.4f, 3.6f), new Vector3(IntakeBoothCentre.x + 6.0f, 7.0f, BoothZ - 2.6f), facingSouth);
             side.name = "Quotas Side";
             Sign(side, "quota.side", null);
             foreach (float x in new[] { -4.6f, 3.4f, 4.6f, 7.4f })
-                Part(root, "Display Post", MeshKit.Box(new Vector3(0.25f, 1.1f, 0.25f)), LookMaterials.Ink(), new Vector3(IntakeBoothCentre.x + x, 5.5f, BoothZ - 2.6f));
+                Part(root, "Display Post", MeshKit.Box(new Vector3(0.25f, 1.6f, 0.25f)), LookMaterials.Ink(), new Vector3(IntakeBoothCentre.x + x, 5.5f, BoothZ - 2.6f));
 
             GameObject checkin = PropBuilder.Place(root, PropBuilder.Booth(8f), CheckinBoothCentre, facingSouth);
             checkin.name = "Check In";
