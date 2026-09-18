@@ -19,7 +19,14 @@
   default. The receiver fades to zero at 20 m. No local self-playback.
 - Scene membership and CrewDayState Below/rider state decide eligibility;
   cameras never grant cross-world access. Sailing, a rider in transit, unknown
-  scenes and contradictory membership deny delivery. Travel invalidates the
+  scenes and contradictory membership deny delivery. **On the server and for a
+  peer's own object** the Unity scene is that membership; **a remote copy on a
+  client** is judged from the replicated day state alone (`IsBelow` → the dive
+  world, else the ship's world; 18 September 2026) — a client instantiates
+  spawns into its active scene and only a load it is part of moves them, so
+  after a split surfacing a copy sat in `Session` and its speaker was muted on
+  that client until the next shared load. The server's relay decisions were
+  never affected; the client-side filter now agrees with them. Travel invalidates the
   stream and creates a fresh generation after arrival while retaining the user's
   requested mic state. Join/rejoin/re-host always reset that state to OFF.
 - Death exists (17 September 2026): `ProximityVoice.WorldOf` puts the dead in a

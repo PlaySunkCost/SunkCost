@@ -535,6 +535,28 @@ namespace SunkCost.Editor.Prototype
             Check(!WorldSceneFlow.Instance.IsWatching(idA, out _), "S3 the server tracks no watch for A after the move");
             yield return Expect(() => Day.SpectateTargetOf(idA) == host.OwnerId || Day.SpectateTargetOf(idA) == idB, 3f, () => "S3 A still watches a living player (" + Day.SpectateTargetOf(idA) + ")");
 
+            Heading("S3v — voice after a split surfacing: B, up later than the host, still hears the host on the deck");
+            // The host rode up alone; B followed later in its own load. On B the
+            // host's copy respawned into whatever scene was active and was moved to
+            // Session when the site unloaded — a copy's scene is no guide to its
+            // world (code check, 18 September 2026): the day state is.
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            Say("B's view of the host's copy: " + GuestPlayerLine(lastReply, host.OwnerId));
+            uint bReceivedSplit = CounterOf(lastReply, "received");
+            host.TeleportLocal(remoteB.transform.position + remoteB.transform.right * 1.5f, host.Yaw); yield return Wait(0.5f);
+            Check(Vector3.Distance(host.transform.position, remoteB.transform.position) < 3f, "S3v the host stands next to B on the deck");
+            uint hostSentSplit = voice.SentFrames;
+            voice.StartLocalTestTone();
+            yield return Expect(() => voice.SentFrames > hostSentSplit + 20, 8f, () => "S3v the host's tone is sending");
+            yield return GuestEventually(r => CounterOf(r, "received") > bReceivedSplit + 20 && r.Contains("route=0"), 8f, "S3v B receives the host's frames on the Direct route", GuestDirB);
+            yield return GuestEventually(r => r.Contains("heard=" + host.OwnerId + ":0"), 6f, "S3v B's indicator lists the host, direct", GuestDirB);
+            voice.SetMicrophone(false);
+            uint hostReceivedSplit = voice.ReceivedFrames;
+            yield return Send("{\"id\":{id},\"action\":\"voice_tone\"}", GuestDirB);
+            yield return GuestEventually(r => CounterOf(r, "sent") > 20, 8f, "S3v B's tone is sending", GuestDirB);
+            yield return Expect(() => voice.ReceivedFrames > hostReceivedSplit + 20, 8f, () => "S3v the host receives B's frames (" + (voice.ReceivedFrames - hostReceivedSplit) + ")");
+            yield return Send("{\"id\":{id},\"action\":\"voice_off\"}", GuestDirB);
+
             Heading("S4 — End day: A revives, watches nobody, nobody is on air");
             Check(flow.ServerEndDay(host.Owner, out string endWhy3), "S4 End day accepted: " + endWhy3);
             yield return Expect(() => !Day.IsDead(idA) && Day.SpectateTargetOf(idA) < 0 && Day.Spectate.Count == 0, 5f, () => "S4 A is alive and the spectate list is empty");
