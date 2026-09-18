@@ -69,6 +69,12 @@ namespace SunkCost.Editor.Look
         private static void Deck(GameObject root)
         {
             Part(root, "Deck", MeshKit.Box(new Vector3(DeckW, DeckThick, DeckD)), LookMaterials.DeckTile(), new Vector3(0f, -DeckThick, 0f), withCollider: true);
+            // The warm inner floor (the picture's centre is tan under the lamps), a hazard band round it.
+            Part(root, "Inner Floor", MeshKit.Box(new Vector3(50f, 0.012f, 24f)), LookMaterials.DeckTileWarm(), new Vector3(0f, -0.006f, -1f)); // its top 6 mm proud; the court paint sits above it
+            Part(root, "Inner Band S", MeshKit.Box(new Vector3(50.6f, 0.014f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0f, -13.15f));
+            Part(root, "Inner Band N", MeshKit.Box(new Vector3(50.6f, 0.014f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0f, 11.15f));
+            Part(root, "Inner Band W", MeshKit.Box(new Vector3(0.3f, 0.014f, 24.6f)), LookMaterials.Hazard(), new Vector3(-25.15f, 0f, -1f));
+            Part(root, "Inner Band E", MeshKit.Box(new Vector3(0.3f, 0.014f, 24.6f)), LookMaterials.Hazard(), new Vector3(25.15f, 0f, -1f));
             // The rim: a hazard band on top, a thick ink girder under it all round.
             Part(root, "Edge S", MeshKit.Box(new Vector3(DeckW, 0.02f, 0.5f)), LookMaterials.Hazard(), new Vector3(0f, 0f, -DeckD / 2f + 0.25f));
             Part(root, "Edge W", MeshKit.Box(new Vector3(0.5f, 0.02f, DeckD)), LookMaterials.Hazard(), new Vector3(-DeckW / 2f + 0.25f, 0f, 0f));
@@ -250,7 +256,7 @@ namespace SunkCost.Editor.Look
             Sign(checkin.transform.Find("Sign").gameObject, "checkin", "checkin.sub");
             ColourPanel(root, new Vector3(CheckinBoothCentre.x, 1.85f, BoothZ - 1.0f));
 
-            GameObject pickup = PropBuilder.Place(root, PropBuilder.Booth(8f), PickupBoothCentre, facingSouth);
+            GameObject pickup = PropBuilder.Place(root, PropBuilder.Booth(8f, counter: false), PickupBoothCentre, facingSouth); // walk in and take what landed (Dan, 18 September 2026)
             pickup.name = "Pickup";
             Sign(pickup.transform.Find("Sign").gameObject, "pickup", "pickup.sub");
             PickupTower(root);
@@ -263,8 +269,16 @@ namespace SunkCost.Editor.Look
             foreach (Vector3 c in new[] { OfficeBoothCentre, CheckinBoothCentre, PickupBoothCentre })
                 PropBuilder.Place(root, lampRow6, new Vector3(c.x, 3.7f, BoothZ - 3.35f)).name = "Fascia Lamps";
             GameObject rail = PropBuilder.Rail();
-            for (float x = -21f; x < 22f; x += 2f)
+            for (float x = -21f; x < 26f; x += 2f)
                 if (x < -18f || x > -14f) PropBuilder.Place(root, rail, new Vector3(x, 5.5f, BoothZ - 3.3f)).name = "Roof Rail";
+            PropBuilder.Place(root, rail, new Vector3(PickupBoothCentre.x + 2.2f, PickupFloorY, 11.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Landing Rail W"; // nobody falls off the landing (Dan)
+            GameObject roofLamp = PropBuilder.RailLamp();
+            for (float x = -22f; x < 27f; x += 4f)
+                if (x < -18f || x > -14f) PropBuilder.Place(root, roofLamp, new Vector3(x, 5.5f, BoothZ - 3.3f)).name = "Roof Lamp";
+            foreach (float x in new[] { -3.2f, 3.2f })
+                foreach (float z in new[] { -2.8f, 2.8f })
+                    PropBuilder.Place(root, roofLamp, new Vector3(PickupBoothCentre.x + x, PickupFloorY + 3.4f + 0.5f + 6.5f + 0.5f, BoothZ + z)).name = "Tower Lamp";
+            PropBuilder.Place(root, rail, new Vector3(PickupBoothCentre.x - 3.8f, 5.5f, BoothZ - 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Roof Rail W";
             PropBuilder.Place(root, PropBuilder.Crane(), new Vector3(CrewMark.x + 9.5f, 0f, CrewMark.z - 2f), Quaternion.Euler(0f, -120f, 0f)).name = "Crane";
             PropBuilder.Place(root, PropBuilder.BottleCage(), new Vector3(CheckinBoothCentre.x + 3f, 0f, 10.4f), Quaternion.Euler(0f, 8f, 0f)).name = "Bottle Cage";
             PropBuilder.Place(root, PropBuilder.BottleCage(), new Vector3(-27.5f, 0f, -2f), Quaternion.Euler(0f, 90f, 0f)).name = "Bottle Cage";
@@ -455,7 +469,7 @@ namespace SunkCost.Editor.Look
         private static void CourtAndHoops(GameObject root)
         {
             Vector3 c = new(Court.x + Court.width / 2f, 0f, Court.y + Court.height / 2f);
-            Part(root, "Court Paint", MeshKit.Box(new Vector3(Court.width, 0.012f, Court.height)), LookMaterials.CourtPaint(), new Vector3(c.x, 0f, c.z));
+            Part(root, "Court Paint", MeshKit.Box(new Vector3(Court.width, 0.012f, Court.height)), LookMaterials.CourtPaint(), new Vector3(c.x, 0.012f, c.z));
             Line(root, new Vector3(c.x, 0f, Court.y + 0.07f), Court.width, 0.14f);
             Line(root, new Vector3(c.x, 0f, Court.yMax - 0.07f), Court.width, 0.14f);
             Line(root, new Vector3(Court.x + 0.07f, 0f, c.z), 0.14f, Court.height);
@@ -470,31 +484,25 @@ namespace SunkCost.Editor.Look
             }
             GameObject ring = new("Centre Circle");
             ring.transform.SetParent(root.transform);
-            ring.transform.position = new Vector3(c.x, 0.008f, c.z);
+            ring.transform.position = new Vector3(c.x, 0.03f, c.z);
             ring.AddComponent<MeshFilter>().sharedMesh = MeshKit.Ring(1.8f, 0.14f, 32, 6);
             ring.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.DeckMarking();
             GameObject hoop = PropBuilder.Hoop();
             PropBuilder.Place(root, hoop, new Vector3(Court.x + 0.6f, 0f, c.z), Quaternion.Euler(0f, 90f, 0f)).name = "Hoop W";
             PropBuilder.Place(root, hoop, new Vector3(Court.xMax - 0.6f, 0f, c.z), Quaternion.Euler(0f, -90f, 0f)).name = "Hoop E";
-            GameObject courtSign = PropBuilder.Place(root, PropBuilder.DeckMarking(6f, 1.6f), new Vector3(c.x, 0.014f, Court.yMax + 1.2f));
+            GameObject courtSign = PropBuilder.Place(root, PropBuilder.SignBoard(4f, 1.0f), new Vector3(c.x, 3.3f, Court.yMax + 0.2f), Quaternion.Euler(0f, 180f, 0f)); // over the court's north line, read from the court
             courtSign.name = "Court Sign";
             Sign(courtSign, "court", null);
+            foreach (float x in new[] { -1.8f, 1.8f })
+                Part(root, "Court Sign Post", MeshKit.Box(new Vector3(0.14f, 3.3f, 0.14f)), LookMaterials.Ink(), new Vector3(c.x + x, 0f, Court.yMax + 0.2f));
         }
 
         private static void Line(GameObject root, Vector3 at, float w, float d) =>
-            Part(root, "Line", MeshKit.Box(new Vector3(w, 0.014f, d)), LookMaterials.DeckMarking(), new Vector3(at.x, 0.006f, at.z));
+            Part(root, "Line", MeshKit.Box(new Vector3(w, 0.014f, d)), LookMaterials.DeckMarking(), new Vector3(at.x, 0.02f, at.z));
 
         private static void Markings(GameObject root)
         {
-            GameObject crew = PropBuilder.Place(root, PropBuilder.DeckMarking(12f, 8f), new Vector3(CrewMark.x, 0.014f, CrewMark.z));
-            crew.name = "Crew Here";
-            Sign(crew, "crew.here", null);
-            GameObject ship = PropBuilder.Place(root, PropBuilder.DeckMarking(7f, 2.2f), new Vector3(-25f, 0.014f, GangwayLanding.z), Quaternion.Euler(0f, -90f, 0f)); // read walking west
-            ship.name = "Ship This Way";
-            Sign(ship, "ship.this.way", null);
-            GameObject plank = PropBuilder.Place(root, PropBuilder.DeckMarking(5f, 1.6f), new Vector3(26.5f, 0.014f, PlankBase.z), Quaternion.Euler(0f, 90f, 0f)); // read walking east
-            plank.name = "Plank Marking";
-            Sign(plank, "plank", null);
+            // No writing on the deck (Dan, 18 September 2026): the signs on boards say it all.
             GameObject shipSign = PropBuilder.Place(root, PropBuilder.SignBoard(3.8f, 1.1f), new Vector3(-DeckW / 2f + 0.6f, 1.4f, GangwayLanding.z + 3.4f), Quaternion.Euler(0f, 90f, 0f));
             shipSign.name = "Ship Sign";
             Sign(shipSign, "ship.this.way", null);
@@ -546,7 +554,7 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, cYellow, new Vector3(CheckinBoothCentre.x + 0.5f, roof, BoothZ + 0.2f)).name = "Container";
             PropBuilder.Place(root, cRed, new Vector3(CheckinBoothCentre.x + 0.5f, roof + 2.6f, BoothZ + 0.2f), Quaternion.Euler(0f, 4f, 0f)).name = "Container";
             PropBuilder.Place(root, cGrey, new Vector3(22f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
-            PropBuilder.Place(root, cGreen, new Vector3(-6f, 0f, 8.5f), Quaternion.Euler(0f, 2f, 0f)).name = "Container";
+            PropBuilder.Place(root, cGreen, new Vector3(-26.5f, 0f, 9.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Container"; // by the west rail, off the shop fronts
             // Tanks and a long pipe run across the roofs, dishes, and the rim's glow strip.
             foreach (float x in new[] { UpgradesBoothCentre.x + 3.2f, CheckinBoothCentre.x - 2.4f })
             {
@@ -686,9 +694,9 @@ namespace SunkCost.Editor.Look
             RenderSettings.skybox = SkyboxMaterial();
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.46f, 0.54f, 0.78f);
-            RenderSettings.ambientEquatorColor = new Color(0.44f, 0.34f, 0.32f);
-            RenderSettings.ambientGroundColor = new Color(0.14f, 0.15f, 0.22f);
+            RenderSettings.ambientSkyColor = new Color(0.50f, 0.56f, 0.80f);
+            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.40f, 0.34f);
+            RenderSettings.ambientGroundColor = new Color(0.18f, 0.17f, 0.22f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.07f, 0.11f, 0.24f);
@@ -745,7 +753,7 @@ namespace SunkCost.Editor.Look
             tonemapping.mode.overrideState = true; tonemapping.mode.value = TonemappingMode.ACES;
             if (!profile.TryGet(out ColorAdjustments colour)) colour = profile.Add<ColorAdjustments>(true);
             colour.active = true;
-            colour.postExposure.overrideState = true; colour.postExposure.value = 0.8f;
+            colour.postExposure.overrideState = true; colour.postExposure.value = 0.9f;
             colour.contrast.overrideState = true; colour.contrast.value = 10f;
             colour.saturation.overrideState = true; colour.saturation.value = 22f;
             if (!profile.TryGet(out Vignette vignette)) vignette = profile.Add<Vignette>(true);

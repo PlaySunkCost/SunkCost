@@ -38,19 +38,22 @@ namespace SunkCost.Editor.Look
         // ---- the sets -----------------------------------------------------------------
 
         // Deck tiles: 2 m bevelled plates, two tones in a checker, a little noise
-        // and a dark seam. One tile = 4 m (two plates).
-        public static Set DeckTile() => Build("DeckTile", 11, (x, y, p) =>
+        // and a dark seam. One tile = 4 m (two plates). Navy for the rim, tan for
+        // the inner floor (the picture's centre is warm under the lamps).
+        public static Set DeckTile() => DeckTileSet("DeckTile", 11, Navy, NavyLight, NavyDark);
+        public static Set DeckTileWarm() => DeckTileSet("DeckTileWarm", 15, new Color(0.60f, 0.50f, 0.38f), new Color(0.70f, 0.60f, 0.47f), new Color(0.40f, 0.32f, 0.24f));
+        private static Set DeckTileSet(string name, int seed, Color tone, Color toneLight, Color dark) => Build(name, seed, (x, y, p) =>
         {
             const float pitch = 256f;
             float bevel = Bevel(x, y, pitch, 14f);        // 1 at the plate's middle, 0 at its edge
             float seam = 1f - Mathf.Clamp01(bevel * 4f);   // the gap between plates
             int cx = Mathf.FloorToInt(x / pitch), cy = Mathf.FloorToInt(y / pitch);
             bool alt = ((cx + cy) & 1) == 0;
-            float noise = Fbm(x, y, 5f, 3, 12) * 0.5f + 0.5f;
-            float scuff = Mathf.Clamp01((Fbm(x + 40, y + 900, 3f, 3, 13) - 0.32f) * 2.5f);
-            Color c = Color.Lerp(alt ? Navy : NavyLight, alt ? NavyLight : Navy, noise * 0.35f);
-            c = Color.Lerp(c, NavyDark, scuff * 0.35f);
-            c = Color.Lerp(c, NavyDark * 0.7f, seam);
+            float noise = Fbm(x, y, 5f, 3, seed + 1) * 0.5f + 0.5f;
+            float scuff = Mathf.Clamp01((Fbm(x + 40, y + 900, 3f, 3, seed + 2) - 0.32f) * 2.5f);
+            Color c = Color.Lerp(alt ? tone : toneLight, alt ? toneLight : tone, noise * 0.35f);
+            c = Color.Lerp(c, dark, scuff * 0.35f);
+            c = Color.Lerp(c, dark * 0.7f, seam);
             c = Color.Lerp(c, c * 1.12f, Mathf.Clamp01((bevel - 0.7f) * 3f) * 0.25f); // the plate's crown catches light
             p.Albedo = c;
             p.Height = bevel * 1.2f;
@@ -151,10 +154,10 @@ namespace SunkCost.Editor.Look
         // lighter blue — the picture's water. One tile = 24 m.
         public static Set BlockWater() => Build("BlockWater", 81, (x, y, p) =>
         {
-            const float cell = 512f / 24f; // 1 m cells
+            const float cell = 512f / 40f; // 0.6 m cells: the picture's pixel sea
             float qx = Mathf.Floor(x / cell) * cell + cell / 2f, qy = Mathf.Floor(y / cell) * cell + cell / 2f;
-            float n = Fbm(qx, qy, 7f, 3, 82) + Fbm(qx + 900, qy + 300, 14f, 2, 83) * 0.5f;
-            float level = n > 0.15f ? 2f : n > 0.0f ? 1f : 0f;
+            float n = Fbm(qx, qy, 8f, 3, 82) + Fbm(qx + 900, qy + 300, 16f, 2, 83) * 0.5f;
+            float level = n > 0.14f ? 2f : n > -0.02f ? 1f : 0f;
             Color deep = new(0.05f, 0.16f, 0.40f), mid = new(0.09f, 0.25f, 0.52f), light = new(0.20f, 0.40f, 0.68f);
             p.Albedo = level == 2f ? light : level == 1f ? mid : deep;
             p.Height = level * 0.15f;
@@ -186,7 +189,7 @@ namespace SunkCost.Editor.Look
 
         public static void GenerateAll()
         {
-            DeckTile(); Panel(); RustPanel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
+            DeckTile(); DeckTileWarm(); Panel(); RustPanel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
         }
 
         // ---- the machinery ------------------------------------------------------------

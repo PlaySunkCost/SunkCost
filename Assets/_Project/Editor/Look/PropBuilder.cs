@@ -358,7 +358,8 @@ namespace SunkCost.Editor.Look
         // a counter across the front 1.8 m in, two orange strips under the roof,
         // the sign above the opening. What the rules need inside (stands, the
         // board) is the platform builder's.
-        public static GameObject Booth(float w) => Prefab($"Booth{F(w)}", root =>
+        public static GameObject Booth(float w) => Booth(w, true);
+        public static GameObject Booth(float w, bool counter) => Prefab($"Booth{F(w)}{(counter ? "" : "Open")}", root =>
         {
             const float depth = 6f, height = 5f, wall = 0.4f;
             Part(root, "Floor", MeshKit.Box(new Vector3(w, 0.16f, depth)), LookMaterials.DeckTile(), Vector3.zero);
@@ -368,9 +369,13 @@ namespace SunkCost.Editor.Look
             Part(root, "Roof", MeshKit.Box(new Vector3(w + 0.8f, 0.5f, depth + 0.8f)), LookMaterials.PanelDark(), new Vector3(0f, height, 0f));
             Part(root, "Roof Lip", MeshKit.Box(new Vector3(w + 0.8f, 0.25f, 0.1f)), LookMaterials.Hazard(), new Vector3(0f, height + 0.5f, depth / 2f + 0.35f));
             Part(root, "Fascia", MeshKit.Box(new Vector3(w + 0.8f, 1.2f, 0.2f)), LookMaterials.PanelDark(), new Vector3(0f, height - 1.2f, depth / 2f + 0.3f));
-            Part(root, "Counter", MeshKit.Box(new Vector3(w - 2f * wall, 1.1f, 0.9f)), LookMaterials.PanelDark(), new Vector3(0f, 0.16f, depth / 2f - 1.8f));
-            Part(root, "Counter Top", MeshKit.Box(new Vector3(w - 2f * wall, 0.1f, 1.0f)), LookMaterials.Ink(), new Vector3(0f, 1.26f, depth / 2f - 1.8f));
-            Part(root, "Counter Stripe", MeshKit.Box(new Vector3(w - 2f * wall, 0.28f, 0.03f)), LookMaterials.Hazard(), new Vector3(0f, 0.3f, depth / 2f - 1.34f));
+            if (counter)
+            {
+                Part(root, "Counter", MeshKit.Box(new Vector3(w - 2f * wall, 1.1f, 0.9f)), LookMaterials.PanelDark(), new Vector3(0f, 0.16f, depth / 2f - 1.8f));
+                Part(root, "Counter Top", MeshKit.Box(new Vector3(w - 2f * wall, 0.1f, 1.0f)), LookMaterials.Ink(), new Vector3(0f, 1.26f, depth / 2f - 1.8f));
+                Part(root, "Counter Stripe", MeshKit.Box(new Vector3(w - 2f * wall, 0.28f, 0.03f)), LookMaterials.Hazard(), new Vector3(0f, 0.3f, depth / 2f - 1.34f));
+            }
+            else Part(root, "Threshold", MeshKit.Box(new Vector3(w - 2f * wall, 0.02f, 0.4f)), LookMaterials.Hazard(), new Vector3(0f, 0.16f, depth / 2f - 0.3f));
             Place(root, Shelf(w - 2f * wall - 0.3f), new Vector3(0f, 0.16f, -depth / 2f + wall + 0.36f)).name = "Shelf";
             Place(root, LightStrip(Mathf.Round(w / 2f) - 1f), new Vector3(-w / 4f, height - 0.02f, depth / 2f - 0.5f)).name = "Strip";
             Place(root, LightStrip(Mathf.Round(w / 2f) - 1f), new Vector3(w / 4f, height - 0.02f, depth / 2f - 0.5f)).name = "Strip";
@@ -380,16 +385,19 @@ namespace SunkCost.Editor.Look
             Place(root, Screen(), new Vector3(w / 2f - wall - 0.9f, 2.0f, -depth / 2f + wall + 0.8f), Quaternion.identity).name = "Screen";
             Place(root, Shelf(3.2f), new Vector3(-w / 2f + wall + 0.36f, 0.16f, 0.4f), Quaternion.Euler(0f, 90f, 0f)).name = "Side Shelf";
             Place(root, ToolBoard(), new Vector3(w / 2f - wall - 0.05f, 2.2f, 0.6f), Quaternion.Euler(0f, -90f, 0f)).name = "Tool Board";
-            Place(root, SmallCrate("Grey"), new Vector3(-w / 2f + 1.6f, 1.36f, depth / 2f - 1.8f), Quaternion.Euler(0f, 12f, 0f)).name = "Counter Crate";
-            Place(root, SmallCrate("Yellow"), new Vector3(w / 2f - 1.5f, 1.36f, depth / 2f - 1.9f), Quaternion.Euler(0f, -20f, 0f)).name = "Counter Crate";
-            Part(root, "Counter Lamp", MeshKit.Box(new Vector3(0.2f, 0.3f, 0.2f)), LookMaterials.LampWarm(), new Vector3(0f, 1.36f, depth / 2f - 2.1f));
-            Part(root, "Counter Lamp Hood", MeshKit.Box(new Vector3(0.3f, 0.06f, 0.3f)), LookMaterials.Ink(), new Vector3(0f, 1.66f, depth / 2f - 2.1f));
+            if (counter)
+            {
+                Place(root, SmallCrate("Grey"), new Vector3(-w / 2f + 1.6f, 1.36f, depth / 2f - 1.8f), Quaternion.Euler(0f, 12f, 0f)).name = "Counter Crate";
+                Place(root, SmallCrate("Yellow"), new Vector3(w / 2f - 1.5f, 1.36f, depth / 2f - 1.9f), Quaternion.Euler(0f, -20f, 0f)).name = "Counter Crate";
+                Part(root, "Counter Lamp", MeshKit.Box(new Vector3(0.2f, 0.3f, 0.2f)), LookMaterials.LampWarm(), new Vector3(0f, 1.36f, depth / 2f - 2.1f));
+                Part(root, "Counter Lamp Hood", MeshKit.Box(new Vector3(0.3f, 0.06f, 0.3f)), LookMaterials.Ink(), new Vector3(0f, 1.66f, depth / 2f - 2.1f));
+            }
             // Colliders: the walls, the counter and the floor.
             Box(root, new Vector3(0f, height / 2f, -depth / 2f + wall / 2f), new Vector3(w, height, wall));
             Box(root, new Vector3(-w / 2f + wall / 2f, height / 2f, 0f), new Vector3(wall, height, depth));
             Box(root, new Vector3(w / 2f - wall / 2f, height / 2f, 0f), new Vector3(wall, height, depth));
             Box(root, new Vector3(0f, 0.08f, 0f), new Vector3(w, 0.16f, depth));
-            Box(root, new Vector3(0f, 0.7f, depth / 2f - 1.8f), new Vector3(w - 2f * wall, 1.2f, 1.0f));
+            if (counter) Box(root, new Vector3(0f, 0.7f, depth / 2f - 1.8f), new Vector3(w - 2f * wall, 1.2f, 1.0f));
             Box(root, new Vector3(0f, height + 0.25f, 0f), new Vector3(w + 0.8f, 0.5f, depth + 0.8f));
         });
 

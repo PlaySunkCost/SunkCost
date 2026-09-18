@@ -15,6 +15,7 @@ namespace SunkCost.Editor.Look
         public const string Folder = "Assets/_Project/Art/HQ/Materials";
 
         public static Material DeckTile() => Lit("DeckTile", ProceduralTextures.DeckTile(), 4f, Color.white);
+        public static Material DeckTileWarm() => Lit("DeckTileWarm", ProceduralTextures.DeckTileWarm(), 4f, Color.white); // the picture's warm inner floor
         public static Material Panel() => Lit("Panel", ProceduralTextures.Panel(), 3f, Color.white);
         public static Material PanelDark() => Lit("PanelDark", ProceduralTextures.Panel(), 3f, new Color(0.62f, 0.64f, 0.70f));
         public static Material RustPanel() => Lit("RustPanel", ProceduralTextures.RustPanel(), 3f, Color.white);
