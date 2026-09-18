@@ -77,11 +77,14 @@ namespace SunkCost.Editor.Look
         {
             Part(root, "Deck", MeshKit.Box(new Vector3(DeckW, DeckThick, DeckD)), LookMaterials.DeckTile(), new Vector3(0f, -DeckThick, 0f), withCollider: true);
             // The warm inner floor (the picture's centre is tan under the lamps), a hazard band round it.
-            Part(root, "Inner Floor", MeshKit.Box(new Vector3(50f, 0.012f, 24f)), LookMaterials.DeckTileWarm(), new Vector3(0f, -0.006f, -1f)); // its top 6 mm proud; the court paint sits above it
-            Part(root, "Inner Band S", MeshKit.Box(new Vector3(50.6f, 0.014f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0f, -13.15f));
-            Part(root, "Inner Band N", MeshKit.Box(new Vector3(50.6f, 0.014f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0f, 11.15f));
-            Part(root, "Inner Band W", MeshKit.Box(new Vector3(0.3f, 0.014f, 24.6f)), LookMaterials.Hazard(), new Vector3(-25.15f, 0f, -1f));
-            Part(root, "Inner Band E", MeshKit.Box(new Vector3(0.3f, 0.014f, 24.6f)), LookMaterials.Hazard(), new Vector3(25.15f, 0f, -1f));
+            // Floor layers, each well clear of the one under it: coplanar faces flicker
+            // at a distance (Dan, 19 September 2026). The deck's top is 0; the inner
+            // floor's top 0.02; its bands' 0.045; the court's paint 0.05; lines 0.07.
+            Part(root, "Inner Floor", MeshKit.Box(new Vector3(50f, 0.03f, 24f)), LookMaterials.DeckTileWarm(), new Vector3(0f, -0.01f, -1f));
+            Part(root, "Inner Band S", MeshKit.Box(new Vector3(50.6f, 0.025f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0.02f, -13.15f));
+            Part(root, "Inner Band N", MeshKit.Box(new Vector3(50.6f, 0.025f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, 0.02f, 11.15f));
+            Part(root, "Inner Band W", MeshKit.Box(new Vector3(0.3f, 0.025f, 24.6f)), LookMaterials.Hazard(), new Vector3(-25.15f, 0.02f, -1f));
+            Part(root, "Inner Band E", MeshKit.Box(new Vector3(0.3f, 0.025f, 24.6f)), LookMaterials.Hazard(), new Vector3(25.15f, 0.02f, -1f));
             // The rim: a hazard band on top, a thick ink girder under it all round.
             Part(root, "Edge S", MeshKit.Box(new Vector3(DeckW, 0.02f, 0.5f)), LookMaterials.Hazard(), new Vector3(0f, 0f, -DeckD / 2f + 0.25f));
             Part(root, "Edge W", MeshKit.Box(new Vector3(0.5f, 0.02f, DeckD)), LookMaterials.Hazard(), new Vector3(-DeckW / 2f + 0.25f, 0f, 0f));
@@ -490,7 +493,7 @@ namespace SunkCost.Editor.Look
         private static void CourtAndHoops(GameObject root)
         {
             Vector3 c = new(Court.x + Court.width / 2f, 0f, Court.y + Court.height / 2f);
-            Part(root, "Court Paint", MeshKit.Box(new Vector3(Court.width, 0.012f, Court.height)), LookMaterials.CourtPaint(), new Vector3(c.x, 0.012f, c.z));
+            Part(root, "Court Paint", MeshKit.Box(new Vector3(Court.width, 0.03f, Court.height)), LookMaterials.CourtPaint(), new Vector3(c.x, 0.02f, c.z));
             Line(root, new Vector3(c.x, 0f, Court.y + 0.07f), Court.width, 0.14f);
             Line(root, new Vector3(c.x, 0f, Court.yMax - 0.07f), Court.width, 0.14f);
             Line(root, new Vector3(Court.x + 0.07f, 0f, c.z), 0.14f, Court.height);
@@ -505,7 +508,7 @@ namespace SunkCost.Editor.Look
             }
             GameObject ring = new("Centre Circle");
             ring.transform.SetParent(root.transform);
-            ring.transform.position = new Vector3(c.x, 0.03f, c.z);
+            ring.transform.position = new Vector3(c.x, 0.07f, c.z);
             ring.AddComponent<MeshFilter>().sharedMesh = MeshKit.Ring(1.8f, 0.14f, 32, 6);
             ring.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.DeckMarking();
             GameObject hoop = PropBuilder.Hoop();
@@ -528,13 +531,13 @@ namespace SunkCost.Editor.Look
             const float t = 0.16f;
             foreach (float s in new[] { -1f, 1f })
             {
-                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(w, 0.012f, t)), LookMaterials.Hazard(), new Vector3(centre.x, 0.02f, centre.z + s * (d / 2f - t / 2f)));
-                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(t, 0.012f, d)), LookMaterials.Hazard(), new Vector3(centre.x + s * (w / 2f - t / 2f), 0.02f, centre.z));
+                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(w, 0.02f, t)), LookMaterials.Hazard(), new Vector3(centre.x, 0.05f, centre.z + s * (d / 2f - t / 2f)));
+                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(t, 0.02f, d)), LookMaterials.Hazard(), new Vector3(centre.x + s * (w / 2f - t / 2f), 0.05f, centre.z));
             }
         }
 
         private static void Line(GameObject root, Vector3 at, float w, float d) =>
-            Part(root, "Line", MeshKit.Box(new Vector3(w, 0.014f, d)), LookMaterials.DeckMarking(), new Vector3(at.x, 0.02f, at.z));
+            Part(root, "Line", MeshKit.Box(new Vector3(w, 0.02f, d)), LookMaterials.DeckMarking(), new Vector3(at.x, 0.06f, at.z));
 
         private static void Markings(GameObject root)
         {
@@ -556,11 +559,11 @@ namespace SunkCost.Editor.Look
             // drains and manholes flush with the plates, cable runs, a generator, pallets,
             // rope, tyres, toolboxes, and a hazard frame round the crane's foot.
             foreach (Vector3 at in new[] { new Vector3(-14f, 0f, 6f), new Vector3(10f, 0f, 6.2f), new Vector3(0f, 0f, -12f), new Vector3(22f, 0f, -8.8f), new Vector3(-8f, 0f, -13f) })
-                PropBuilder.Place(root, PropBuilder.Drain(), at + new Vector3(0f, 0.006f, 0f)).name = "Drain";
+                PropBuilder.Place(root, PropBuilder.Drain(), at + new Vector3(0f, 0.04f, 0f)).name = "Drain";
             foreach (Vector3 at in new[] { new Vector3(4f, 0f, 5.6f), new Vector3(-22f, 0f, -13f), new Vector3(8f, 0f, -13.5f) })
-                PropBuilder.Place(root, PropBuilder.Manhole(), at + new Vector3(0f, 0.006f, 0f)).name = "Manhole";
-            PropBuilder.Place(root, PropBuilder.CableTray(14f), new Vector3(10f, 0.006f, 7.6f)).name = "Floor Cable Run";
-            PropBuilder.Place(root, PropBuilder.CableTray(10f), new Vector3(-16f, 0.006f, 4.2f)).name = "Floor Cable Run";
+                PropBuilder.Place(root, PropBuilder.Manhole(), at + new Vector3(0f, 0.04f, 0f)).name = "Manhole";
+            PropBuilder.Place(root, PropBuilder.CableTray(14f), new Vector3(10f, 0.04f, 7.6f)).name = "Floor Cable Run";
+            PropBuilder.Place(root, PropBuilder.CableTray(10f), new Vector3(-16f, 0.04f, 4.2f)).name = "Floor Cable Run";
             PropBuilder.Place(root, PropBuilder.Generator(), new Vector3(-14f, 0f, -15.2f), Quaternion.Euler(0f, 10f, 0f)).name = "Generator";
             PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(-12.3f, 0f, -14.6f), Quaternion.Euler(0f, 35f, 0f)).name = "Toolbox";
             PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(-3.2f, 0f, 8.3f), Quaternion.Euler(0f, -70f, 0f)).name = "Toolbox";

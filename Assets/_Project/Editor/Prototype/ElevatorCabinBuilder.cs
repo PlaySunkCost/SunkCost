@@ -58,7 +58,7 @@ namespace SunkCost.Sites
             try
             {
                 RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
-                RoundCabinGeometry.CreateFramePosts(root.transform, carRadius, interiorHeight, frame, BakedDoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
+                // No frame posts: the car is clean, clear glass like the tube (Dan, 19 September 2026).
                 float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
 
                 // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
@@ -76,7 +76,7 @@ namespace SunkCost.Sites
                 // instance after PrefabUtility.InstantiatePrefab, the same way it always has.
                 root.AddComponent<ElevatorController>();
 
-                CreateElevatorDoor(root.transform, interiorRadius, interiorHeight, frame, BakedDoorwayBearingDeg, doorwayHalfAngleDeg);
+                CreateElevatorDoor(root.transform, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, doorwayHalfAngleDeg); // glass leaves: clean, clear (Dan, 19 September 2026)
 
                 // The prefab is regenerated whole on every site rebuild, so the later
                 // cards' additions are part of the build, not patches that a rebuild

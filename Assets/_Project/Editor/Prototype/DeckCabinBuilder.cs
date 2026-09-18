@@ -56,15 +56,15 @@ namespace SunkCost.Editor.Prototype
             cabin.transform.localPosition = localPosition;
 
             RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Floor", DiameterMeters, FloorThicknessMeters, floor, FloorThicknessMeters / 2f);
-            RoundCabinGeometry.CreateFramePosts(cabin.transform, carRadius, InteriorHeightMeters, frame, DoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
+            // No frame posts: the tube is clean, clear glass (Dan, 19 September 2026).
             float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
             // The button: red, its word on it, facing into the cabin (every button in the game, Dan, 19 September 2026).
             Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
             SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
             RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);
 
-            Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters);
-            Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
+            Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters); // glass leaves: no dark slabs beside the doorway
+            Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
             // Fully open, permanently: the same rotation ElevatorDoor would reach at rest,
             // set once here since nothing sweeps a static cabin's doors yet.
             doorRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);

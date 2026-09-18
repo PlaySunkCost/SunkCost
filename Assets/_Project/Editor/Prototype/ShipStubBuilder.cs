@@ -28,7 +28,8 @@ namespace SunkCost.Editor.Prototype
         public const float TowerHeight = 6f;    // deck to roof: the HQ's bridge lands on the roof
         public const float TowerWidth = 8f, TowerDepth = 6f;
         public const float VolumeHeight = 9f;   // the aboard and safe-deck volumes reach over the tower's roof
-        public const float WellRadius = 3.3f, WellDepth = 0.6f, PedestalRadius = 2.55f; // the gap round the elevator: a stumble, a jump out
+        public const float WellRadius = 3.3f, PedestalRadius = 2.55f; // the gap round the elevator: a shaft open to the sea (Dan, 19 September 2026)
+        public const float WellDepth = DeckThickness + HullDepth; // down to the water
         public const float RingRadius = 3.6f;   // the round rail about it
         public static readonly Vector3 StairFoot = new(-6f, 0f, -11f); // where the ship's stair meets the deck: the boarding point
         public const string RoofGateName = "Roof Gate";
@@ -389,7 +390,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(half - 0.1f, roof, back + 0.1f)).name = "Roof Lamp";
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(-2.1f, roof, back + 0.1f)).name = "Roof Lamp";
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(2.1f, roof, back + 0.1f)).name = "Roof Lamp";
-            Visual("Roof Gap Stripe", root, new Vector3(0f, roof + 0.005f, back + 0.3f), Quaternion.identity, new Vector3(4f, 0.01f, 0.5f), SunkCost.Editor.Look.LookMaterials.Hazard());
+            Visual("Roof Gap Stripe", root, new Vector3(0f, roof + 0.02f, back + 0.3f), Quaternion.identity, new Vector3(4f, 0.02f, 0.5f), SunkCost.Editor.Look.LookMaterials.Hazard());
             // The gate across the gap: rails on at sea (a 6 m drop otherwise), off at the
             // HQ mooring where the bridge meets it (HQPlatformBuilder.Dock turns it off).
             GameObject gate = new(RoofGateName);
@@ -481,11 +482,11 @@ namespace SunkCost.Editor.Prototype
             {
                 float a = i * 45f + 22.5f;
                 Vector3 mid = pad + new Vector3(Mathf.Cos(a * Mathf.Deg2Rad), 0f, Mathf.Sin(a * Mathf.Deg2Rad)) * 2.9f;
-                Skin(look, "Helipad Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.4f, 0.012f, 0.16f)), trim, mid + new Vector3(0f, 0.011f, 0f), Quaternion.Euler(0f, -a + 90f, 0f)); // X along the tangent
+                Skin(look, "Helipad Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.4f, 0.012f, 0.16f)), trim, mid + new Vector3(0f, 0.03f, 0f), Quaternion.Euler(0f, -a + 90f, 0f)); // X along the tangent
             }
             GameObject h = new("Helipad H");
             h.transform.SetParent(look.transform, false);
-            h.transform.localPosition = pad + new Vector3(0f, 0.03f, 0f);
+            h.transform.localPosition = pad + new Vector3(0f, 0.05f, 0f);
             h.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             SunkCost.Editor.Look.PropBuilder.Text(h, "H", Vector3.zero, 2.6f, new Color(0.95f, 0.72f, 0.18f), TextAnchor.MiddleCenter).GetComponent<TextMesh>().text = "H";
             // The crane at the bow, port, its boom out over the side; the winch drum by it.
@@ -541,7 +542,7 @@ namespace SunkCost.Editor.Prototype
             // The rim: the square's corners plated up to the round hole, walkable.
             GameObject rim = new("Well Rim");
             rim.transform.SetParent(root, false);
-            rim.transform.localPosition = new Vector3(0f, 0.005f, 0f);
+            rim.transform.localPosition = new Vector3(0f, 0.01f, 0f); // level with the plates' top
             Mesh annulus = SquareAnnulus(WellRadius, WellRadius, 40);
             rim.AddComponent<MeshFilter>().sharedMesh = annulus;
             rim.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.DeckTileWarm();
@@ -551,18 +552,12 @@ namespace SunkCost.Editor.Prototype
             rimUnder.transform.localPosition = new Vector3(0f, -DeckThickness, 0f);
             rimUnder.AddComponent<MeshFilter>().sharedMesh = annulus;
             rimUnder.AddComponent<MeshRenderer>().sharedMaterial = plate;
-            // The well: floor, wall (24 panels, each a wall the physics knows), the pedestal the tube stands on.
-            GameObject floor = new("Well Floor");
-            floor.transform.SetParent(root, false);
-            floor.transform.localPosition = new Vector3(0f, -WellDepth - 0.1f, 0f);
-            Mesh floorMesh = SunkCost.Editor.Look.MeshKit.Cylinder(WellRadius + 0.05f, 0.1f, 32);
-            floor.AddComponent<MeshFilter>().sharedMesh = floorMesh;
-            floor.AddComponent<MeshRenderer>().sharedMaterial = dark;
-            floor.AddComponent<MeshCollider>().sharedMesh = floorMesh;
+            // The well: no floor — a shaft down to the sea; its wall a round band the
+            // physics knows as a ring of unseen boxes; the pedestal the tube stands on.
             GameObject wellWall = new("Well Wall");
             wellWall.transform.SetParent(root, false);
             wellWall.transform.localPosition = new Vector3(0f, -WellDepth, 0f);
-            wellWall.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(WellRadius + 0.04f, WellDepth, 0.08f, 0f, 360f, 48);
+            wellWall.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(WellRadius + 0.04f, WellDepth, 0.08f, 0f, 360f, 64);
             wellWall.AddComponent<MeshRenderer>().sharedMaterial = ink;
             for (int i = 0; i < 24; i++) // the wall the physics knows: a ring of unseen boxes
             {
@@ -579,15 +574,25 @@ namespace SunkCost.Editor.Prototype
             pedestal.AddComponent<MeshRenderer>().sharedMaterial = ink;
             pedestal.AddComponent<MeshCollider>().sharedMesh = pedestalMesh;
             Visual("Pedestal Band", root, new Vector3(0f, -0.14f, 0f), Quaternion.identity, new Vector3(PedestalRadius * 2f + 0.04f, 0.12f, PedestalRadius * 2f + 0.04f), SunkCost.Editor.Look.LookMaterials.Hazard(), cylinder: true);
-            // The grate across the well at the door (the doorway looks to +z).
-            Block("Well Grate", root, new Vector3(0f, -0.03f, (PedestalRadius + WellRadius) / 2f), new Vector3(2.2f, 0.06f, WellRadius - PedestalRadius + 0.3f), dark);
+            for (float ry = -2f; ry > -WellDepth; ry -= 2f) // rings down the shaft, so its depth reads
+                Visual("Pedestal Ring", root, new Vector3(0f, ry, 0f), Quaternion.identity, new Vector3(PedestalRadius * 2f + 0.06f, 0.16f, PedestalRadius * 2f + 0.06f), dark, cylinder: true);
+            // The grate across the well at the door (the doorway looks to +z), a short
+            // rail either side of it: no hopping off the grate into the shaft.
+            float grateZ = (PedestalRadius + WellRadius) / 2f, grateD = WellRadius - PedestalRadius + 0.3f;
+            Block("Well Grate", root, new Vector3(0f, -0.03f, grateZ), new Vector3(2.2f, 0.06f, grateD), dark);
             for (int i = 0; i < 5; i++)
-                Visual("Grate Slat", root, new Vector3(-0.8f + i * 0.4f, 0.005f, (PedestalRadius + WellRadius) / 2f), Quaternion.identity, new Vector3(0.05f, 0.02f, WellRadius - PedestalRadius + 0.2f), ink);
-            // A lamp in the well: warm light up the tube's foot.
-            Light lamp = new GameObject("Well Light").AddComponent<Light>();
-            lamp.transform.SetParent(root, false);
-            lamp.transform.localPosition = new Vector3(0f, -0.2f, -WellRadius + 0.4f);
-            lamp.lightmapBakeType = LightmapBakeType.Realtime; lamp.type = LightType.Point; lamp.range = 5f; lamp.intensity = 2.5f; lamp.color = new Color(1f, 0.7f, 0.4f); lamp.shadows = LightShadows.None;
+                Visual("Grate Slat", root, new Vector3(-0.8f + i * 0.4f, 0.02f, grateZ), Quaternion.identity, new Vector3(0.05f, 0.02f, grateD - 0.1f), ink);
+            GameObject shortRail = SunkCost.Editor.Look.PropBuilder.RailShort();
+            foreach (float x in new[] { -1.15f, 1.15f })
+                SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, shortRail, new Vector3(x, 0f, grateZ), Quaternion.Euler(0f, 90f, 0f)).name = "Grate Rail";
+            // A lamp low in the shaft: the water lit at its foot, the depth reads.
+            foreach (float ly in new[] { -WellDepth + 1.2f })
+            {
+                Light lamp = new GameObject("Well Light").AddComponent<Light>();
+                lamp.transform.SetParent(root, false);
+                lamp.transform.localPosition = new Vector3(0f, ly, -WellRadius + 0.4f);
+                lamp.lightmapBakeType = LightmapBakeType.Realtime; lamp.type = LightType.Point; lamp.range = 6f; lamp.intensity = 2.5f; lamp.color = new Color(1f, 0.7f, 0.4f); lamp.shadows = LightShadows.None;
+            }
         }
 
         // A flat square of half-width `half` with a round hole of `inner` radius, its
@@ -668,11 +673,11 @@ namespace SunkCost.Editor.Prototype
         // A yellow line rectangle painted on the deck, `w` by `d`, about `centre`.
         private static void DeckLine(GameObject look, Vector3 centre, float w, float d, Material paint)
         {
-            const float t = 0.14f;
+            const float t = 0.14f, lift = 0.03f; // well clear of the plates' top: coplanar faces flicker (Dan, 19 September 2026)
             foreach (float s in new[] { -1f, 1f })
             {
-                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(w, 0.012f, t)), paint, centre + new Vector3(0f, 0.011f, s * (d / 2f - t / 2f)), Quaternion.identity);
-                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(t, 0.012f, d)), paint, centre + new Vector3(s * (w / 2f - t / 2f), 0.011f, 0f), Quaternion.identity);
+                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(w, 0.012f, t)), paint, centre + new Vector3(0f, lift, s * (d / 2f - t / 2f)), Quaternion.identity);
+                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(t, 0.012f, d)), paint, centre + new Vector3(s * (w / 2f - t / 2f), lift, 0f), Quaternion.identity);
             }
         }
 
