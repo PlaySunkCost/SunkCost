@@ -119,6 +119,8 @@ namespace SunkCost.Player
             {
                 if (inventory == null || controller == null) return string.Empty;
                 if (controller.TravelLocked || controller.IsDead) return string.Empty;
+                string plank = PlankPrompt();
+                if (plank != null) return plank;
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 if (controller.Upgrades != null && !string.IsNullOrEmpty(controller.Upgrades.Refusal)) return controller.Upgrades.Refusal;
@@ -705,6 +707,20 @@ namespace SunkCost.Player
         {
             PlayerIdentity identity = other.GetComponent<PlayerIdentity>();
             return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(other.OwnerId);
+        }
+
+        // The plank (18 September 2026): the jumper is told to jump and how long it
+        // has; the others who is on the board.
+        private string PlankPrompt()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null || day.Phase != SunkCost.World.DayPhase.Plank) return null;
+            SunkCost.World.PlankState plank = day.Plank;
+            if (!plank.Active || plank.Jumper < 0) return "THE RUN IS OVER";
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            float left = flow != null ? Mathf.Max(0f, flow.Settings.PlankTurnSeconds - flow.ElapsedSince(plank.TurnStartTick)) : 0f;
+            if (plank.Jumper == controller.OwnerId) return $"WALK THE PLANK — jump when you are ready · {left:0} s";
+            return $"THE RUN IS OVER — {SunkCost.World.WorldSceneFlow.DisplayName(plank.Jumper)} walks the plank";
         }
 
         // The shop stand under the dot: the item, its price, the pot; "owned" for an

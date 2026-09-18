@@ -1135,9 +1135,15 @@ namespace SunkCost.Editor.Prototype
             Check(Day.ServerCanSail(WorldId.Sea, out string shortWhy), "Z5 the ship may sail out again to try for the rest: " + shortWhy);
             Day.ServerForceCycleForChecks(3, true);
             PayReport lost = Day.ServerPay(sales: 0, quota: 99999);
-            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && lost.Balance == 0 && Day.Balance == 0 && Day.CycleSales == 0 && Day.Day == 0 && !Day.Payday, $"Z5 short at payday is GAME LOST and a reset (had ${lost.Had}, balance ${Day.Balance})");
+            // Short at payday: the run is over — the phase goes to Plank (the walk is
+            // WorldSceneFlow's, the plank matrix; here the day state's API alone) and
+            // the reset comes after it.
+            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && Day.Phase == DayPhase.Plank && Day.Balance == coinValue + 40, $"Z5 short at payday: the run is over, the plank phase (had ${lost.Had}, balance ${Day.Balance} until the reset)");
             yield return null;
-            Check(H.QuotaBoardText().StartsWith("GAME LOST"), "Z5 the board says GAME LOST: " + H.QuotaBoardText().Replace("\n", " | "));
+            Check(H.QuotaBoardText().StartsWith("THE RUN IS OVER"), "Z5 the board says THE RUN IS OVER: " + H.QuotaBoardText().Replace("\n", " | "));
+            Check(!Day.ServerCanSail(WorldId.Sea, out string overWhy) && overWhy == "The run is over", "Z5 no sailing once the run is over: " + overWhy);
+            Day.ServerResetRun();
+            Check(Day.Phase == DayPhase.AtHQ && Day.Balance == 0 && Day.CycleSales == 0 && Day.Day == 0 && !Day.Payday && Day.RunDays == 0, $"Z5 the reset: day 0, $0, phase {Day.Phase}");
             WorldLoopSettings.QuotaOverrideForTests = null;
             SunkCost.Net.SessionInputGate.Resume();
         }
