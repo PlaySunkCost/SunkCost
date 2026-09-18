@@ -49,5 +49,17 @@ namespace SunkCost.Editor.Prototype
             AssetDatabase.SaveAssets();
             return changes.Count == 0 ? "Shop already set up" : "Shop: " + string.Join("; ", changes);
         }
+
+        // Play-testing: $500 in the pot on the running host (Sunk Cost/Prototype menu
+        // or the command file's `run`), so the shop can be tried without a payday.
+        [MenuItem("Sunk Cost/Prototype/Give the crew $500 (Play Mode, host)")]
+        public static string GiveCrewMoney()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null || !day.IsServerStarted) return "Host a session first.";
+            day.ServerSetBalanceForChecks(day.Balance + 500);
+            Debug.Log("[Shop] +$500 for testing; pot $" + day.Balance);
+            return "pot $" + day.Balance;
+        }
     }
 }

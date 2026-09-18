@@ -330,6 +330,7 @@ namespace SunkCost.Editor.Prototype
             GameObject text = new("Label", typeof(TextMesh));
             text.transform.SetParent(stand.transform, false);
             text.transform.localPosition = new Vector3(0f, 1.0f, 0f);
+            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // a TextMesh reads along its +Z: turned away from the viewer (Dan: "text is opposite again")
             TextMesh mesh = text.GetComponent<TextMesh>();
             mesh.characterSize = 0.04f;
             mesh.fontSize = 48;
