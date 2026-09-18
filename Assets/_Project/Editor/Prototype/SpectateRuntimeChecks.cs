@@ -333,6 +333,11 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => sea.DeckCabinPanel.text.StartsWith("Dive done"), 3f, () => "D1 cabin panel: " + sea.DeckCabinPanel.text);
             Check(host.IsDead && RenderersOff(host), "D1 still dead and hidden on the ship");
 
+            // A hand-made press from the dead (E is off while dead): refused, the day untouched.
+            int deadPress = Day.LastRefusal.Serial;
+            host.GetComponent<ShipControls>().RequestEndDay(); yield return Wait(0.5f);
+            Check(Day.LastRefusal.Serial > deadPress && Day.LastRefusal.Text == "The dead press nothing" && Day.Day == 1 && host.IsDead, "D1 a dead player's End day press is refused: " + Day.LastRefusal.Text);
+
             Heading("D2 — End day revives on the deck");
             Check(flow.ServerEndDay(host.Owner, out string endWhy), "D2 End day accepted: " + endWhy);
             yield return Expect(() => !host.IsDead && Day.Dead.Count == 0, 5f, () => "D2 the host is alive again");
