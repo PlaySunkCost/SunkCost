@@ -54,10 +54,10 @@ namespace SunkCost.Editor.Look
         // light — the picture's rim lights, every few metres.
         public static GameObject RailLamp() => Prefab("RailLamp", root =>
         {
-            Part(root, "Post", MeshKit.Box(new Vector3(0.2f, 1.35f, 0.2f)), LookMaterials.Ink(), Vector3.zero);
-            Part(root, "Cap", MeshKit.Box(new Vector3(0.34f, 0.06f, 0.34f)), LookMaterials.Ink(), new Vector3(0f, 1.35f, 0f));
-            Part(root, "Lamp", MeshKit.Box(new Vector3(0.3f, 0.3f, 0.3f)), LookMaterials.LampOrange(), new Vector3(0f, 1.41f, 0f));
-            Part(root, "Hood", MeshKit.Box(new Vector3(0.38f, 0.06f, 0.38f)), LookMaterials.Ink(), new Vector3(0f, 1.71f, 0f));
+            Part(root, "Post", MeshKit.Box(new Vector3(0.22f, 1.35f, 0.22f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Cap", MeshKit.Box(new Vector3(0.5f, 0.08f, 0.5f)), LookMaterials.Ink(), new Vector3(0f, 1.35f, 0f));
+            Part(root, "Lamp", MeshKit.Box(new Vector3(0.44f, 0.44f, 0.44f)), LookMaterials.LampOrange(), new Vector3(0f, 1.43f, 0f));
+            Part(root, "Hood", MeshKit.Box(new Vector3(0.54f, 0.08f, 0.54f)), LookMaterials.Ink(), new Vector3(0f, 1.87f, 0f));
             Light light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root.transform, false);
             light.transform.localPosition = new Vector3(0f, 1.5f, 0f);

@@ -73,16 +73,38 @@ namespace SunkCost.Editor.Look
             Part(root, "Edge S", MeshKit.Box(new Vector3(DeckW, 0.02f, 0.5f)), LookMaterials.Hazard(), new Vector3(0f, 0f, -DeckD / 2f + 0.25f));
             Part(root, "Edge W", MeshKit.Box(new Vector3(0.5f, 0.02f, DeckD)), LookMaterials.Hazard(), new Vector3(-DeckW / 2f + 0.25f, 0f, 0f));
             Part(root, "Edge E", MeshKit.Box(new Vector3(0.5f, 0.02f, DeckD)), LookMaterials.Hazard(), new Vector3(DeckW / 2f - 0.25f, 0f, 0f));
-            Part(root, "Girder S", MeshKit.Box(new Vector3(DeckW + 0.4f, 1.6f, 0.6f)), LookMaterials.Panel(), new Vector3(0f, -DeckThick - 1.6f, -DeckD / 2f + 0.1f));
-            Part(root, "Girder N", MeshKit.Box(new Vector3(DeckW + 0.4f, 1.6f, 0.6f)), LookMaterials.Panel(), new Vector3(0f, -DeckThick - 1.6f, DeckD / 2f - 0.1f));
-            Part(root, "Girder W", MeshKit.Box(new Vector3(0.6f, 1.6f, DeckD)), LookMaterials.Panel(), new Vector3(-DeckW / 2f + 0.1f, -DeckThick - 1.6f, 0f));
-            Part(root, "Girder E", MeshKit.Box(new Vector3(0.6f, 1.6f, DeckD)), LookMaterials.Panel(), new Vector3(DeckW / 2f - 0.1f, -DeckThick - 1.6f, 0f));
+            Part(root, "Girder S", MeshKit.Box(new Vector3(DeckW + 0.4f, 1.6f, 0.6f)), LookMaterials.RustPanel(), new Vector3(0f, -DeckThick - 1.6f, -DeckD / 2f + 0.1f));
+            Part(root, "Girder N", MeshKit.Box(new Vector3(DeckW + 0.4f, 1.6f, 0.6f)), LookMaterials.RustPanel(), new Vector3(0f, -DeckThick - 1.6f, DeckD / 2f - 0.1f));
+            Part(root, "Girder W", MeshKit.Box(new Vector3(0.6f, 1.6f, DeckD)), LookMaterials.RustPanel(), new Vector3(-DeckW / 2f + 0.1f, -DeckThick - 1.6f, 0f));
+            Part(root, "Girder E", MeshKit.Box(new Vector3(0.6f, 1.6f, DeckD)), LookMaterials.RustPanel(), new Vector3(DeckW / 2f - 0.1f, -DeckThick - 1.6f, 0f));
             Part(root, "Girder Band S", MeshKit.Box(new Vector3(DeckW + 0.4f, 0.3f, 0.62f)), LookMaterials.Hazard(), new Vector3(0f, -DeckThick - 0.3f, -DeckD / 2f + 0.1f));
             foreach (float z in new[] { -12f, 0f, 12f })
                 Part(root, "Beam", MeshKit.Box(new Vector3(DeckW, 1.0f, 0.6f)), LookMaterials.PanelDark(), new Vector3(0f, -DeckThick - 1.0f, z));
             foreach (float x in new[] { -24f, 0f, 24f })
                 Part(root, "Beam", MeshKit.Box(new Vector3(0.6f, 1.0f, DeckD)), LookMaterials.PanelDark(), new Vector3(x, -DeckThick - 1.0f, 0f));
-            GameObject number = PropBuilder.Place(root, PropBuilder.SignBoard(5f, 2.4f), new Vector3(0f, -DeckThick - 4.2f, -DeckD / 2f - 0.05f), Quaternion.Euler(0f, 180f, 0f));
+            // A catwalk under the rim on the south and the east, railed and lit: the
+            // picture's lower walkway.
+            float walkY = -DeckThick - 2.6f;
+            Part(root, "Catwalk S", MeshKit.Box(new Vector3(DeckW + 3.2f, 0.3f, 1.6f)), LookMaterials.DeckTile(), new Vector3(0f, walkY, -DeckD / 2f - 1.1f), withCollider: true);
+            Part(root, "Catwalk E", MeshKit.Box(new Vector3(1.6f, 0.3f, DeckD + 3.2f)), LookMaterials.DeckTile(), new Vector3(DeckW / 2f + 1.1f, walkY, 0f), withCollider: true);
+            Part(root, "Catwalk Lip S", MeshKit.Box(new Vector3(DeckW + 3.2f, 0.02f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, walkY + 0.3f, -DeckD / 2f - 1.75f));
+            Part(root, "Catwalk Lip E", MeshKit.Box(new Vector3(0.3f, 0.02f, DeckD + 3.2f)), LookMaterials.Hazard(), new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, 0f));
+            GameObject rail = PropBuilder.Rail(), lamp = PropBuilder.RailLamp();
+            for (float x = -DeckW / 2f - 0.6f; x < DeckW / 2f + 1.6f; x += 2f)
+            {
+                PropBuilder.Place(root, rail, new Vector3(x, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Rail";
+                if (((int)((x + DeckW / 2f) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(x - 1f, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Lamp";
+            }
+            for (float z = -DeckD / 2f - 0.6f; z < DeckD / 2f + 1.6f; z += 2f)
+            {
+                PropBuilder.Place(root, rail, new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, z), Quaternion.Euler(0f, 90f, 0f)).name = "Catwalk Rail";
+                if (((int)((z + DeckD / 2f) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, z - 1f)).name = "Catwalk Lamp";
+            }
+            for (float x = -24f; x <= 24f; x += 12f)
+                Part(root, "Catwalk Strut", MeshKit.Box(new Vector3(0.3f, 2.6f, 0.3f)), LookMaterials.RustSteel(), new Vector3(x, walkY, -DeckD / 2f - 1.6f));
+            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(-DeckW / 2f + 2f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
+            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(DeckW / 2f - 3f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
+            GameObject number = PropBuilder.Place(root, PropBuilder.SignBoard(5f, 2.4f), new Vector3(0f, -DeckThick - 6.0f, -DeckD / 2f - 0.05f), Quaternion.Euler(0f, 180f, 0f));
             number.name = "HQ Number";
             Sign(number, "hq.number", "hq.number.sub");
             Part(root, "Seabed", MeshKit.Box(new Vector3(600f, 1f, 600f)), LookMaterials.Seabed(), new Vector3(0f, SeabedY - 1f, 0f), withCollider: true);
@@ -179,7 +201,7 @@ namespace SunkCost.Editor.Look
             GameObject office = PropBuilder.Place(root, PropBuilder.Booth(8f), OfficeBoothCentre, facingSouth);
             office.name = "Office";
             Sign(office.transform.Find("Sign").gameObject, "office", "office.sub");
-            Part(root, "Office Upper", MeshKit.Box(new Vector3(8.8f, 4.2f, 6.8f)), LookMaterials.Panel(), new Vector3(OfficeBoothCentre.x, 5.5f, BoothZ), withCollider: true);
+            Part(root, "Office Upper", MeshKit.Box(new Vector3(8.8f, 4.2f, 6.8f)), LookMaterials.RustPanel(), new Vector3(OfficeBoothCentre.x, 5.5f, BoothZ), withCollider: true);
             Part(root, "Office Roof", MeshKit.Box(new Vector3(9.4f, 0.5f, 7.4f)), LookMaterials.PanelDark(), new Vector3(OfficeBoothCentre.x, 9.7f, BoothZ), withCollider: true);
             Part(root, "Office Roof Lip", MeshKit.Box(new Vector3(9.4f, 0.25f, 0.1f)), LookMaterials.Hazard(), new Vector3(OfficeBoothCentre.x, 10.2f, BoothZ - 3.65f));
             GameObject company = PropBuilder.Place(root, PropBuilder.SignBoard(7.6f, 2.8f), new Vector3(OfficeBoothCentre.x, 6.2f, BoothZ - 3.48f), facingSouth);
@@ -274,7 +296,8 @@ namespace SunkCost.Editor.Look
             disc.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.Hazard();
             // Two more storeys above, windows glowing, the beacon and an antenna on top.
             float top = y + h + 0.5f;
-            Part(root, "Tower Upper", MeshKit.Box(new Vector3(w + 0.8f, 6.5f, d + 0.8f)), LookMaterials.Panel(), new Vector3(x, top, BoothZ), withCollider: true);
+            Part(root, "Tower Upper", MeshKit.Box(new Vector3(w + 0.8f, 6.5f, d + 0.8f)), LookMaterials.RustPanel(), new Vector3(x, top, BoothZ), withCollider: true);
+            Part(root, "Tower Band", MeshKit.Box(new Vector3(w + 0.9f, 0.6f, d + 0.9f)), LookMaterials.Panel(), new Vector3(x, top + 3.0f, BoothZ));
             foreach (float wy in new[] { top + 1.6f, top + 4.4f })
             {
                 Part(root, "Tower Window", MeshKit.Box(new Vector3(w - 1f, 1.0f, 0.06f)), LookMaterials.WindowGlow(), new Vector3(x, wy, BoothZ - d / 2f - 0.43f));
@@ -582,6 +605,15 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(dock, PropBuilder.LampPost(), new Vector3(PontoonCentre.x + PontoonW / 2f - 0.8f, PontoonY, PontoonCentre.z + PontoonD / 2f - 0.8f), Quaternion.Euler(0f, -135f, 0f)).name = "Pontoon Lamp";
             PropBuilder.Place(dock, PropBuilder.LampPost(), new Vector3(PontoonCentre.x + PontoonW / 2f - 0.8f, PontoonY, PontoonCentre.z - PontoonD / 2f + 0.8f), Quaternion.Euler(0f, -45f, 0f)).name = "Pontoon Lamp";
             PropBuilder.Place(dock, PropBuilder.Barrel("Red"), new Vector3(PontoonCentre.x + 2f, PontoonY, PontoonCentre.z + 3.6f)).name = "Barrel";
+            // Tyres hung along the pontoon's mooring side.
+            for (float z = -3.5f; z <= 3.5f; z += 1.75f)
+            {
+                GameObject tyre = new("Tyre");
+                tyre.transform.SetParent(dock.transform);
+                tyre.transform.SetPositionAndRotation(new Vector3(PontoonCentre.x - PontoonW / 2f - 0.15f, PontoonY - 0.6f, PontoonCentre.z + z), Quaternion.Euler(0f, 0f, 90f));
+                tyre.AddComponent<MeshFilter>().sharedMesh = MeshKit.Ring(0.42f, 0.24f, 16, 8);
+                tyre.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.Ink();
+            }
             PropBuilder.Place(dock, PropBuilder.Crate("Grey"), new Vector3(PontoonCentre.x + 3.2f, PontoonY, PontoonCentre.z - 3.4f), Quaternion.Euler(0f, 12f, 0f)).name = "Crate";
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
             ship.transform.SetParent(dock.transform, true);
@@ -634,13 +666,13 @@ namespace SunkCost.Editor.Look
             fillGo.transform.SetParent(sky.transform);
             fillGo.transform.rotation = Quaternion.Euler(70f, 30f, 0f);
             Light fill = fillGo.GetComponent<Light>();
-            fill.type = LightType.Directional; fill.color = new Color(0.45f, 0.58f, 0.95f); fill.intensity = 0.28f; fill.shadows = LightShadows.Soft; fill.shadowStrength = 0.6f;
+            fill.type = LightType.Directional; fill.color = new Color(0.55f, 0.66f, 0.98f); fill.intensity = 0.55f; fill.shadows = LightShadows.Soft; fill.shadowStrength = 0.45f;
             RenderSettings.skybox = SkyboxMaterial();
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.22f, 0.30f, 0.56f);
-            RenderSettings.ambientEquatorColor = new Color(0.26f, 0.20f, 0.24f);
-            RenderSettings.ambientGroundColor = new Color(0.05f, 0.06f, 0.10f);
+            RenderSettings.ambientSkyColor = new Color(0.46f, 0.54f, 0.78f);
+            RenderSettings.ambientEquatorColor = new Color(0.44f, 0.34f, 0.32f);
+            RenderSettings.ambientGroundColor = new Color(0.14f, 0.15f, 0.22f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.07f, 0.11f, 0.24f);
@@ -689,20 +721,19 @@ namespace SunkCost.Editor.Look
             }
             if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
             bloom.active = true;
-            bloom.threshold.overrideState = true; bloom.threshold.value = 0.75f;
-            bloom.intensity.overrideState = true; bloom.intensity.value = 1.3f;
-            bloom.scatter.overrideState = true; bloom.scatter.value = 0.72f;
+            bloom.threshold.overrideState = true; bloom.threshold.value = 1.1f;
+            bloom.intensity.overrideState = true; bloom.intensity.value = 0.35f;
+            bloom.scatter.overrideState = true; bloom.scatter.value = 0.6f;
             if (!profile.TryGet(out Tonemapping tonemapping)) tonemapping = profile.Add<Tonemapping>(true);
             tonemapping.active = true;
             tonemapping.mode.overrideState = true; tonemapping.mode.value = TonemappingMode.ACES;
             if (!profile.TryGet(out ColorAdjustments colour)) colour = profile.Add<ColorAdjustments>(true);
             colour.active = true;
-            colour.postExposure.overrideState = true; colour.postExposure.value = 0.75f;
-            colour.contrast.overrideState = true; colour.contrast.value = 12f;
-            colour.saturation.overrideState = true; colour.saturation.value = 18f;
+            colour.postExposure.overrideState = true; colour.postExposure.value = 0.8f;
+            colour.contrast.overrideState = true; colour.contrast.value = 10f;
+            colour.saturation.overrideState = true; colour.saturation.value = 22f;
             if (!profile.TryGet(out Vignette vignette)) vignette = profile.Add<Vignette>(true);
-            vignette.active = true;
-            vignette.intensity.overrideState = true; vignette.intensity.value = 0.22f;
+            vignette.active = false; // crisp, like the picture
             EditorUtility.SetDirty(profile);
             return profile;
         }

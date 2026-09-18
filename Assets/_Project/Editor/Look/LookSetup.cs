@@ -62,6 +62,22 @@ namespace SunkCost.Editor.Look
             SerializedProperty limit = serialized.FindProperty("m_AdditionalLightsPerObjectLimit");
             if (limit != null && limit.intValue < 8) { limit.intValue = 8; changed = true; }
             if (changed) { serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(asset); AssetDatabase.SaveAssets(); }
+            // The occlusion feature on the PC renderer: the contact shadows that give
+            // the picture its depth. Stronger and wider than the default.
+            foreach (UnityEngine.Object sub in AssetDatabase.LoadAllAssetsAtPath("Assets/Settings/PC_Renderer.asset"))
+            {
+                if (sub == null || sub.GetType().Name != "ScreenSpaceAmbientOcclusion") continue;
+                var ao = new SerializedObject(sub);
+                SerializedProperty settings = ao.FindProperty("m_Settings");
+                if (settings == null) continue;
+                bool aoChanged = false;
+                SerializedProperty intensity = settings.FindPropertyRelative("Intensity"), radius = settings.FindPropertyRelative("Radius"), quality = settings.FindPropertyRelative("Samples"), light = settings.FindPropertyRelative("DirectLightingStrength");
+                if (intensity != null && !Mathf.Approximately(intensity.floatValue, 1.3f)) { intensity.floatValue = 1.3f; aoChanged = true; }
+                if (radius != null && !Mathf.Approximately(radius.floatValue, 0.6f)) { radius.floatValue = 0.6f; aoChanged = true; }
+                if (quality != null && quality.intValue < 2) { quality.intValue = 2; aoChanged = true; }
+                if (light != null && !Mathf.Approximately(light.floatValue, 0.4f)) { light.floatValue = 0.4f; aoChanged = true; }
+                if (aoChanged) { ao.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(sub); AssetDatabase.SaveAssets(); changed = true; }
+            }
             return changed;
         }
 

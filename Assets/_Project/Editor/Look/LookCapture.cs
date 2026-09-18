@@ -19,6 +19,7 @@ namespace SunkCost.Editor.Look
             try
             {
             Shoot("overview", new Vector3(58f, 34f, -62f), new Vector3(0f, 0f, 4f), 55f);
+            Shoot("iso", new Vector3(52f, 62f, -82f), new Vector3(-2f, 2f, 2f), 34f); // the reference angle: high, from the south-east, a long lens
             Shoot("booths", new Vector3(2f, 1.7f, -4f), new Vector3(0f, 2.6f, 14f), 70f);
             Shoot("court", new Vector3(-6f, 1.7f, -14f), new Vector3(-16f, 1.6f, -3f), 75f);
             Shoot("crew-mark", new Vector3(16f, 1.7f, -14f), new Vector3(8f, 1.2f, 8f), 75f);

@@ -27,9 +27,9 @@ namespace SunkCost.Editor.Look
         }
 
         // The picture's palette.
-        public static readonly Color Navy = new(0.16f, 0.20f, 0.30f);
-        public static readonly Color NavyLight = new(0.21f, 0.26f, 0.37f);
-        public static readonly Color NavyDark = new(0.10f, 0.13f, 0.21f);
+        public static readonly Color Navy = new(0.19f, 0.23f, 0.33f);
+        public static readonly Color NavyLight = new(0.25f, 0.30f, 0.41f);
+        public static readonly Color NavyDark = new(0.11f, 0.14f, 0.22f);
         public static readonly Color Rust = new(0.66f, 0.30f, 0.12f);
         public static readonly Color RustDark = new(0.42f, 0.18f, 0.08f);
         public static readonly Color HazardYellow = new(0.95f, 0.70f, 0.10f);
@@ -54,28 +54,31 @@ namespace SunkCost.Editor.Look
             c = Color.Lerp(c, c * 1.12f, Mathf.Clamp01((bevel - 0.7f) * 3f) * 0.25f); // the plate's crown catches light
             p.Albedo = c;
             p.Height = bevel * 1.2f;
-            p.Metallic = 0.25f;
-            p.Smoothness = 0.35f - scuff * 0.15f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.14f - scuff * 0.05f;
         });
 
-        // Wall panels: 3 m bevelled plates in navy, a rust seam where they meet,
-        // a bolt in each corner. One tile = 3 m.
-        public static Set Panel() => Build("Panel", 21, (x, y, p) =>
+        // Wall panels: 3 m bevelled plates, a darker seam where they meet, a bolt
+        // in each corner; navy for the walls, rust for the structure (the picture's
+        // girders, tower and legs are orange). One tile = 3 m.
+        public static Set Panel() => PanelSet("Panel", 21, Navy, NavyLight, NavyDark, Rust);
+        public static Set RustPanel() => PanelSet("RustPanel", 25, Rust, new Color(0.78f, 0.38f, 0.16f), RustDark, NavyDark);
+        private static Set PanelSet(string name, int seed, Color body, Color light, Color dark, Color seamTint) => Build(name, seed, (x, y, p) =>
         {
             const float pitch = 512f;
             float bevel = Bevel(x, y, pitch, 18f);
             float seam = 1f - Mathf.Clamp01(bevel * 3f);
             float bolt = Rivets(x, y, pitch, 34f, 9f);
-            float noise = Fbm(x, y, 4f, 3, 22) * 0.5f + 0.5f;
-            float rustLine = Mathf.Clamp01((seam - 0.3f) * 1.6f) * Mathf.Clamp01((Fbm(x + 300, y, 6f, 2, 23) + 0.55f));
-            Color c = Color.Lerp(Navy, NavyLight, noise * 0.3f);
-            c = Color.Lerp(c, NavyDark, seam * 0.8f);
-            c = Color.Lerp(c, Rust, rustLine * 0.85f);
-            c = Color.Lerp(c, NavyLight * 1.1f, bolt * 0.7f);
+            float noise = Fbm(x, y, 4f, 3, seed + 1) * 0.5f + 0.5f;
+            float seamLine = Mathf.Clamp01((seam - 0.3f) * 1.6f) * Mathf.Clamp01((Fbm(x + 300, y, 6f, 2, seed + 2) + 0.55f));
+            Color c = Color.Lerp(body, light, noise * 0.3f);
+            c = Color.Lerp(c, dark, seam * 0.8f);
+            c = Color.Lerp(c, seamTint, seamLine * 0.6f);
+            c = Color.Lerp(c, light * 1.1f, bolt * 0.7f);
             p.Albedo = c;
             p.Height = bevel * 1.0f + bolt * 0.8f;
-            p.Metallic = 0.3f;
-            p.Smoothness = 0.4f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.12f;
         });
 
         // Rust steel for the legs and piles: orange rust with darker bands every
@@ -90,8 +93,8 @@ namespace SunkCost.Editor.Look
             c = Color.Lerp(c, NavyDark, band * 0.85f);
             p.Albedo = c;
             p.Height = -band * 0.6f + body * 0.15f;
-            p.Metallic = 0.2f;
-            p.Smoothness = 0.25f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.1f;
         });
 
         // Hazard stripes: crisp yellow and ink diagonals. One tile = 1 m.
@@ -104,8 +107,8 @@ namespace SunkCost.Editor.Look
             c = Color.Lerp(c, c * 0.75f, wear * 0.5f);
             p.Albedo = c;
             p.Height = 0f;
-            p.Metallic = 0.2f;
-            p.Smoothness = 0.45f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.15f;
         });
 
         // Crate side: a bevelled panel with an inset field and a stencil band; the
@@ -124,8 +127,8 @@ namespace SunkCost.Editor.Look
             c = Color.Lerp(c, c * 0.5f, 1f - Mathf.Clamp01(bevel * 5f));
             p.Albedo = c;
             p.Height = bevel * 0.8f - field * 0.5f;
-            p.Metallic = 0.15f;
-            p.Smoothness = 0.35f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.12f;
         });
 
         // Container side: vertical corrugation; the material's colour tints it. One tile = 1 m.
@@ -140,8 +143,8 @@ namespace SunkCost.Editor.Look
             c = Color.Lerp(c, c * 0.6f, wear * 0.4f);
             p.Albedo = c;
             p.Height = rib * 0.8f;
-            p.Metallic = 0.3f;
-            p.Smoothness = 0.4f;
+            p.Metallic = 0f;
+            p.Smoothness = 0.12f;
         });
 
         // The sea: blocky patches — a quantised noise on 1 m cells, deep and
@@ -156,7 +159,7 @@ namespace SunkCost.Editor.Look
             p.Albedo = level == 2f ? light : level == 1f ? mid : deep;
             p.Height = level * 0.15f;
             p.Metallic = 0f;
-            p.Smoothness = 0.55f;
+            p.Smoothness = 0.2f;
         });
 
         // The company's mark for the flag and the office: a pale skull with three
@@ -183,7 +186,7 @@ namespace SunkCost.Editor.Look
 
         public static void GenerateAll()
         {
-            DeckTile(); Panel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
+            DeckTile(); Panel(); RustPanel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
         }
 
         // ---- the machinery ------------------------------------------------------------

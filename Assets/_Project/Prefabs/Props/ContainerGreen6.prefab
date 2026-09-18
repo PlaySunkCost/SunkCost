@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2734193858117601901
+--- !u!1 &1941010343635136198
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5268220770701884099}
-  - component: {fileID: 6857282141617481900}
-  - component: {fileID: 1539332502191222155}
+  - component: {fileID: 1692274210483952637}
+  - component: {fileID: 5632972954571480339}
+  - component: {fileID: 4919310059371557289}
   m_Layer: 0
   m_Name: Frame
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5268220770701884099
+--- !u!4 &1692274210483952637
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2734193858117601901}
+  m_GameObject: {fileID: 1941010343635136198}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2.9, y: 0, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1081889840046938469}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6857282141617481900
+--- !u!33 &5632972954571480339
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2734193858117601901}
+  m_GameObject: {fileID: 1941010343635136198}
   m_Mesh: {fileID: 4300000, guid: 21b05ebe767e8e84da83aa8d7e135042, type: 2}
---- !u!23 &1539332502191222155
+--- !u!23 &4919310059371557289
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2734193858117601901}
+  m_GameObject: {fileID: 1941010343635136198}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -482,7 +482,7 @@ Transform:
   m_Children:
   - {fileID: 3945127273803961132}
   - {fileID: 4839324040230291664}
-  - {fileID: 5268220770701884099}
+  - {fileID: 1692274210483952637}
   - {fileID: 4176868693221875432}
   - {fileID: 1194194679878191706}
   - {fileID: 2945852044506070051}

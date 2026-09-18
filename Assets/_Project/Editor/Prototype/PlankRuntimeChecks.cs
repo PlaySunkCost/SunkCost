@@ -301,7 +301,7 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
             Check(ball.State == ItemState.Held && ball.HolderClientId == host.OwnerId && host.Upgrades.Has(PlayerUpgrade.LargeTank), "P0 the host holds a ball and owns the large tank");
             Day.ServerForceCycleForChecks(3, true); // payday, nothing in the box, $0
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return Wait(0.3f);
+            H.ClientMoveLocalPlayerToBoard(); yield return Wait(0.3f);
             int paySerial = Day.LastPay.Serial;
             Check(flow.ServerPay(host.Owner, out string payWhy), "P0 the pay press is taken: " + payWhy);
             yield return Expect(() => Day.LastPay.Serial > paySerial && Day.LastPay.Lost, 3f, () => "P0 short at payday: the run is lost");
@@ -359,7 +359,7 @@ namespace SunkCost.Editor.Prototype
             int guestId = remote.OwnerId;
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=HQ"), 20f, "G1 guest joined at HQ");
             Day.ServerForceCycleForChecks(3, true);
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return Wait(0.3f);
+            H.ClientMoveLocalPlayerToBoard(); yield return Wait(0.3f);
             paySerial = Day.LastPay.Serial;
             Check(flow.ServerPay(host.Owner, out string payWhy2), "G1 the pay press is taken: " + payWhy2);
             yield return Expect(() => Day.LastPay.Serial > paySerial && Day.LastPay.Lost && Day.Phase == DayPhase.Plank, 3f, () => "G1 lost again: the plank");

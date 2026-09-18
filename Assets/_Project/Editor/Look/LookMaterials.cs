@@ -17,6 +17,7 @@ namespace SunkCost.Editor.Look
         public static Material DeckTile() => Lit("DeckTile", ProceduralTextures.DeckTile(), 4f, Color.white);
         public static Material Panel() => Lit("Panel", ProceduralTextures.Panel(), 3f, Color.white);
         public static Material PanelDark() => Lit("PanelDark", ProceduralTextures.Panel(), 3f, new Color(0.62f, 0.64f, 0.70f));
+        public static Material RustPanel() => Lit("RustPanel", ProceduralTextures.RustPanel(), 3f, Color.white);
         public static Material RustSteel() => Lit("RustSteel", ProceduralTextures.RustSteel(), 2f, Color.white);
         public static Material Hazard() => Lit("Hazard", ProceduralTextures.Hazard(), 1f, Color.white);
         public static Material CrateGrey() => Lit("CrateGrey", ProceduralTextures.Crate(), 1.4f, new Color(0.42f, 0.45f, 0.50f));
@@ -30,9 +31,9 @@ namespace SunkCost.Editor.Look
         public static Material ContainerYellow() => Lit("ContainerYellow", ProceduralTextures.Container(), 1f, new Color(0.90f, 0.62f, 0.12f));
         public static Material BarrelRed() => Lit("BarrelRed", ProceduralTextures.Container(), 0.8f, new Color(0.76f, 0.16f, 0.12f));
         public static Material BarrelRust() => Lit("BarrelRust", ProceduralTextures.RustSteel(), 1f, Color.white);
-        public static Material Ink() => Flat("Ink", ProceduralTextures.Ink, 0.3f, 0.35f);
-        public static Material Fender() => Flat("Fender", new Color(0.85f, 0.16f, 0.12f), 0.05f, 0.5f);
-        public static Material FenderBand() => Flat("FenderBand", new Color(0.92f, 0.92f, 0.92f), 0.05f, 0.5f);
+        public static Material Ink() => Flat("Ink", ProceduralTextures.Ink, 0f, 0.15f);
+        public static Material Fender() => Flat("Fender", new Color(0.85f, 0.16f, 0.12f), 0f, 0.15f);
+        public static Material FenderBand() => Flat("FenderBand", new Color(0.92f, 0.92f, 0.92f), 0f, 0.15f);
 
         // The glow: the lamps and the sign frames carry the night. HDR, so the
         // bloom volume picks them up; the base stays dim so an unlit one reads as glass.
@@ -43,11 +44,11 @@ namespace SunkCost.Editor.Look
         public static Material BeaconRed() => Emissive("BeaconRed", new Color(1.0f, 0.15f, 0.10f), 4f);
         public static Material BeaconWhite() => Emissive("BeaconWhite", new Color(1.0f, 0.95f, 0.85f), 3f);
         public static Material ScreenTeal() => Emissive("ScreenTeal", new Color(0.25f, 0.92f, 0.82f), 1.4f);
-        public static Material SignBoard() => Flat("SignBoard", new Color(0.06f, 0.06f, 0.08f), 0.2f, 0.3f);
+        public static Material SignBoard() => Flat("SignBoard", new Color(0.06f, 0.06f, 0.08f), 0f, 0.2f);
         public static Material DeckMarking() => Flat("DeckMarking", new Color(0.82f, 0.80f, 0.74f), 0.0f, 0.2f);
-        public static Material CourtPaint() => Flat("CourtPaint", new Color(0.70f, 0.32f, 0.18f), 0.0f, 0.3f);
-        public static Material Backboard() => Flat("Backboard", new Color(0.85f, 0.87f, 0.90f), 0.1f, 0.5f);
-        public static Material HoopOrange() => Flat("HoopOrange", new Color(0.95f, 0.45f, 0.10f), 0.5f, 0.6f);
+        public static Material CourtPaint() => Flat("CourtPaint", new Color(0.72f, 0.34f, 0.20f), 0.0f, 0.12f);
+        public static Material Backboard() => Flat("Backboard", new Color(0.85f, 0.87f, 0.90f), 0f, 0.2f);
+        public static Material HoopOrange() => Flat("HoopOrange", new Color(0.95f, 0.45f, 0.10f), 0f, 0.2f);
         public static Material Net() => Flat("Net", new Color(0.9f, 0.9f, 0.9f), 0f, 0.1f);
         public static Material Flag() => Flat("Flag", new Color(0.06f, 0.06f, 0.08f), 0f, 0.2f);
         public static Material Seabed() => Flat("Seabed", new Color(0.04f, 0.10f, 0.20f), 0f, 0.1f);
@@ -98,15 +99,15 @@ namespace SunkCost.Editor.Look
             m.SetColor("_BaseColor", Color.white);
             m.SetTexture("_BaseMap", set.Albedo);
             m.SetTexture("_BumpMap", set.Normal);
-            m.SetFloat("_BumpScale", 0.5f);
+            m.SetFloat("_BumpScale", 0.25f);
             m.SetTextureScale("_BaseMap", new Vector2(1f / 24f, 1f / 24f));
             m.EnableKeyword("_NORMALMAP");
             m.SetTexture("_MetallicGlossMap", null);
             m.DisableKeyword("_METALLICSPECGLOSSMAP");
             m.SetFloat("_Metallic", 0.0f);
-            m.SetFloat("_Smoothness", 0.6f);
+            m.SetFloat("_Smoothness", 0.25f);
             m.SetTexture("_EmissionMap", set.Albedo);
-            m.SetColor("_EmissionColor", new Color(0.55f, 0.6f, 0.7f));
+            m.SetColor("_EmissionColor", new Color(0.45f, 0.5f, 0.6f));
             m.EnableKeyword("_EMISSION");
             m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             Opaque(m);
@@ -122,7 +123,7 @@ namespace SunkCost.Editor.Look
             m.SetColor("_BaseColor", tint);
             m.SetTexture("_BaseMap", set.Albedo);
             m.SetTexture("_BumpMap", set.Normal);
-            m.SetFloat("_BumpScale", 1f);
+            m.SetFloat("_BumpScale", 0.45f); // a hint of the bevel, not a relief: the picture is flat
             m.EnableKeyword("_NORMALMAP");
             m.SetTexture("_MetallicGlossMap", set.Mask);
             m.EnableKeyword("_METALLICSPECGLOSSMAP");
@@ -164,7 +165,7 @@ namespace SunkCost.Editor.Look
 
         private static Material Emissive(string name, Color color, float intensity)
         {
-            Material m = Flat(name, color * 0.3f, 0f, 0.6f);
+            Material m = Flat(name, color * 0.3f, 0f, 0.2f);
             m.SetColor("_EmissionColor", color * intensity);
             m.EnableKeyword("_EMISSION");
             m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
