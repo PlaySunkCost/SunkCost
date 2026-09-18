@@ -73,9 +73,10 @@ namespace SunkCost.Sites
             if (settings.DoorSealSeconds <= 0f)
                 throw new InvalidOperationException("DiveSiteSettings.DoorSealSeconds must be positive.");
 
-            Material floorMaterial = LoadMaterial("HQFloor.mat");
-            Material wallMaterial = LoadMaterial("HQWall.mat");
-            Material accentMaterial = LoadMaterial("BallOrange.mat");
+            // The site in the platform's kit (Dan, 19 September 2026: "scene 3 to match everything").
+            Material floorMaterial = SunkCost.Editor.Look.LookMaterials.Seabed();
+            Material wallMaterial = SunkCost.Editor.Look.LookMaterials.PanelDark();
+            Material accentMaterial = SunkCost.Editor.Look.LookMaterials.Trim();
             Material glassMaterial = GetOrCreateGlassMaterial();
 
             int deepLayer = GetOrCreateLayer(DeepLayerName);
@@ -88,7 +89,7 @@ namespace SunkCost.Sites
             CreateSurfaceLight(deepLayer, settings);
             Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
             ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings, out float doorwayBearingDeg);
-            CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, glassMaterial, wallMaterial, deepLayer, settings);
+            CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, glassMaterial, SunkCost.Editor.Look.LookMaterials.Ink(), deepLayer, settings); // the ribs and the gate in the kit's ink (Dan, 19 September 2026)
             CreateDiveLoot(anchorBottom.position, doorwayBearingDeg, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
@@ -291,8 +292,8 @@ namespace SunkCost.Sites
             gate.transform.SetParent(root.transform, false);
             gate.transform.position = anchorBottom.position;
             float leafRadius = settings.TubeRadiusMeters - 0.03f;
-            Transform leafRight = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Right", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: true, 3, 0.1f);
-            Transform leafLeft = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Left", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: false, 3, 0.1f);
+            Transform leafRight = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Right", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, 3, 0.1f);
+            Transform leafLeft = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Left", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, 3, 0.1f);
             float bearingRad = doorwayBearingDeg * Mathf.Deg2Rad;
             Vector3 doorwayDirection = new Vector3(Mathf.Cos(bearingRad), 0f, Mathf.Sin(bearingRad));
             GameObject gateCollider = new("Gate Collider", typeof(BoxCollider));

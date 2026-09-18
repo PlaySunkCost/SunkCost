@@ -35,6 +35,15 @@ namespace SunkCost.Editor.Look
             return sb.ToString();
         }
 
+        // The dive site's tube and car as they stand, the site scene being open.
+        public static string ShootSite()
+        {
+            Directory.CreateDirectory(Folder);
+            Shoot("site-bottom", new Vector3(7f, -43.3f, 5f), new Vector3(0f, -43.5f, 0f), 60f); // the seafloor station: the gate and the car
+            Shoot("site-tube", new Vector3(12f, -30f, 0f), new Vector3(0f, -36f, 0f), 60f); // the tube from the side
+            return Folder;
+        }
+
         public static string ShootAll()
         {
             Directory.CreateDirectory(Folder);

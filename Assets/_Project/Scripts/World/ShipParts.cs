@@ -20,6 +20,8 @@ namespace SunkCost.World
         public const string DeckCabinVolumeName = "DeckCabinVolume";
         public const string DeckCabinDoorLName = "DeckCabinDoorL";
         public const string DeckCabinDoorRName = "DeckCabinDoorR";
+        public const string DeckCabinHousingDoorLName = "DeckCabinHousingDoorL"; // the tube's own leaves at the top: shut while the car is away (optional parts)
+        public const string DeckCabinHousingDoorRName = "DeckCabinHousingDoorR";
         public const string DeckCabinButtonName = "DeckCabinButton";
         public const string DeckCabinPanelName = "DeckCabinPanel";
         public const string DeckCabinCarGlassName = "DeckCabinCarGlass"; // the car's own glass, shown while the car is up (optional part)
@@ -59,6 +61,8 @@ namespace SunkCost.World
         public Collider DeckCabinVolume => Find(DeckCabinVolumeName)?.GetComponent<Collider>();
         public Transform DeckCabinDoorL => Find(DeckCabinDoorLName);
         public Transform DeckCabinDoorR => Find(DeckCabinDoorRName);
+        public Transform DeckCabinHousingDoorL => Find(DeckCabinHousingDoorLName);
+        public Transform DeckCabinHousingDoorR => Find(DeckCabinHousingDoorRName);
         public Transform DeckCabinButton => Find(DeckCabinButtonName);
         public TextMesh DeckCabinPanel => Find(DeckCabinPanelName)?.GetComponent<TextMesh>();
         public Transform DeckCabinCarGlass => Find(DeckCabinCarGlassName);

@@ -68,6 +68,13 @@ namespace SunkCost.Editor.Prototype
             // set once here since nothing sweeps a static cabin's doors yet.
             doorRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
             doorLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
+            // The tube's own leaves, just inside its glass: open with the car's while it
+            // is up, shut while it is away (WorldSceneFlow.PresentDeckCabin), like the
+            // gate at the seafloor. Parked open here.
+            Transform housingRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorRName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, 0.05f);
+            Transform housingLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorLName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, 0.05f);
+            housingRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
+            housingLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
 
             CreateDoorCollider(cabin.transform, interiorRadius, doorwayHalfAngleDeg);
 
