@@ -401,18 +401,9 @@ namespace SunkCost.Editor.Look
             thing.transform.localPosition = new Vector3(0f, 1.14f + shapeScale.y * 0.5f + 0.02f, 0f);
             thing.transform.localScale = shapeScale;
             thing.GetComponent<Renderer>().sharedMaterial = shapeMaterial;
-            GameObject text = new("Label", typeof(TextMesh));
-            text.transform.SetParent(stand.transform, false);
-            text.transform.localPosition = new Vector3(0f, 2.2f, 0f);
-            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            TextMesh mesh = text.GetComponent<TextMesh>();
-            mesh.characterSize = 0.05f;
-            mesh.fontSize = 48;
-            mesh.fontStyle = FontStyle.Bold;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(1f, 0.82f, 0.50f);
-            text.AddComponent<DepthText>().Configure(LookMaterials.DepthText());
+            // The price on a plate over the stand (no floating text, Dan, 19 September 2026).
+            TextMesh mesh = PropBuilder.SignPlate(stand, "Label Plate", "Label", new Vector3(0f, 2.2f, 0f), Quaternion.identity, 1.4f, 0.5f, 0.16f, new Color(1f, 0.82f, 0.50f));
+            Part(stand, "Label Post", MeshKit.Box(new Vector3(0.06f, 0.5f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, 1.5f, 0f));
             stand.AddComponent<SunkCost.Shop.ShopDisplay>().Configure(itemId, mesh, delivery);
         }
 

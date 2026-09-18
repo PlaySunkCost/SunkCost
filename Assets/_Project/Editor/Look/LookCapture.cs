@@ -18,12 +18,20 @@ namespace SunkCost.Editor.Look
         {
             var ship = GameObject.Find("Ship");
             if (ship == null) return "no ship";
-            Vector3 probe = ship.transform.TransformPoint(new Vector3(0f, -0.2f, -2.9f));
-            var sb = new System.Text.StringBuilder("well probe at " + probe + ": ");
-            foreach (Renderer r in ship.GetComponentsInChildren<Renderer>(true))
-                if (r.bounds.Contains(probe)) sb.Append(r.name).Append('/').Append(r.transform.parent != null ? r.transform.parent.name : "-").Append("; ");
-            foreach (Collider c in ship.GetComponentsInChildren<Collider>(true))
-                if (c.bounds.Contains(probe)) sb.Append("collider ").Append(c.name).Append("; ");
+            var sb = new System.Text.StringBuilder();
+            Transform rimT = ship.transform.Find("Well Rim");
+            if (rimT != null) { var mf = rimT.GetComponent<MeshFilter>(); var mr = rimT.GetComponent<MeshRenderer>(); sb.Append("rim: mesh=").Append(mf != null && mf.sharedMesh != null ? mf.sharedMesh.name + " v" + mf.sharedMesh.vertexCount : "none").Append(" mat=").Append(mr != null && mr.sharedMaterial != null ? mr.sharedMaterial.name : "none").Append(" enabled=").Append(mr != null && mr.enabled).Append(" bounds=").Append(mr != null ? mr.bounds.ToString() : "-").Append(" | "); }
+            else sb.Append("no Well Rim | ");
+            foreach (float y in new[] { 0.02f, -0.3f, -0.6f, -1.5f, -3f, -5f, -7f })
+            {
+                Vector3 probe = ship.transform.TransformPoint(new Vector3(3.0f, y, 3.0f));
+                sb.Append("y=").Append(y).Append(": ");
+                foreach (Renderer r in ship.GetComponentsInChildren<Renderer>(true))
+                    if (r.bounds.Contains(probe)) sb.Append(r.name).Append('/').Append(r.transform.parent != null ? r.transform.parent.name : "-").Append("; ");
+                foreach (Collider c in ship.GetComponentsInChildren<Collider>(true))
+                    if (c.bounds.Contains(probe)) sb.Append("collider ").Append(c.name).Append("; ");
+                sb.Append(" | ");
+            }
             return sb.ToString();
         }
 
@@ -43,7 +51,8 @@ namespace SunkCost.Editor.Look
             Shoot("deck", new Vector3(-44f, -4.4f, -50f), new Vector3(-44f, -4f, -20f), 75f);
             Shoot("console", new Vector3(-43f, -4.4f, -24f), new Vector3(-44f, -4.4f, -20.5f), 60f); // on the deck, at the tower's foot
             Shoot("well", new Vector3(-40f, -4.2f, -30f), new Vector3(-44f, -6.2f, -35f), 65f); // the elevator's well and its rail
-            Shoot("well-down", new Vector3(-44f, -4.3f, -32.15f), new Vector3(-44f, -14f, -33.15f), 70f); // over the rail, down the shaft // looking down the shaft from the rail
+            Shoot("well-down", new Vector3(-44f, 60f, -36.06f), new Vector3(-44f, -12f, -36.05f), 9f); // straight down the shaft from high up: near-parallel rays
+            Shoot("well-inside", new Vector3(-44f, -6.4f, -32.9f), new Vector3(-40f, -6.4f, -32.9f), 80f); // from inside the gap, sideways // looking down the shaft from the rail
             Shoot("hq-north", new Vector3(-10f, 8f, -6f), new Vector3(8f, 4f, 18f), 60f); // the roofs' back rail
             Shoot("cabin-button", new Vector3(-44.6f, -4.4f, -35.6f), new Vector3(-41.7f, -4.9f, -36.7f), 55f); // inside the deck cabin, the button on its wall
             Shoot("ship", new Vector3(-70f, 6f, -80f), new Vector3(-44f, -4f, -34f), 60f);

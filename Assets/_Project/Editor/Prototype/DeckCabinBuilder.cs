@@ -38,7 +38,6 @@ namespace SunkCost.Editor.Prototype
         private const float DoorThicknessMeters = 0.1f;
         private const int DoorLeafPanelCount = 8; // smooth enough to read as round (Dan, 19 September 2026)
         public const float FloorThicknessMeters = 0.1f;
-        private const float LabelCharacterSize = 0.05f;
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the
         // direction the crew boards from and the ship departs toward, matching the stub's
@@ -113,21 +112,11 @@ namespace SunkCost.Editor.Prototype
             float angleRad = DoorwayBearingDeg * Mathf.Deg2Rad;
             Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
 
-            GameObject go = new(ShipParts.DeckCabinPanelName, typeof(TextMesh));
-            go.transform.SetParent(cabinTransform, false);
-            go.transform.localPosition = direction * (interiorRadius + 0.3f) + new Vector3(0f, PanelChestHeightMeters + 0.5f, 0f);
-            // A TextMesh reads correctly to a viewer looking along +Z; this plate sits on the
-            // bow side of the doorway, read by someone approaching from further along the bow
-            // (+Z) looking back toward -Z, so it needs the same 180-degree turn ShipStubBuilder's
-            // Label(..., facingBow: true) already used for this exact part.
-            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            TextMesh mesh = go.GetComponent<TextMesh>();
-            mesh.text = string.Empty;
-            mesh.characterSize = LabelCharacterSize;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(0.9f, 0.95f, 1f);
+            // On a plate over the doorway, read by someone approaching from the bow (+Z)
+            // looking back toward -Z: the plate's +Z faces them (no floating text, Dan,
+            // 19 September 2026).
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, direction * (interiorRadius + 0.2f) + new Vector3(0f, InteriorHeightMeters - 0.5f, 0f), Quaternion.identity, 2.0f, 0.5f, 0.16f, new Color(0.9f, 0.95f, 1f));
+            mesh.text = string.Empty; // the plate's own size and colour; the flow writes the words
         }
     }
 }

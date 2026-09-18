@@ -28,9 +28,9 @@ namespace SunkCost.Editor.Prototype
         public const float TowerHeight = 6f;    // deck to roof: the HQ's bridge lands on the roof
         public const float TowerWidth = 8f, TowerDepth = 6f;
         public const float VolumeHeight = 9f;   // the aboard and safe-deck volumes reach over the tower's roof
-        public const float WellRadius = 3.3f, PedestalRadius = 2.55f; // the gap round the elevator: a shaft open to the sea (Dan, 19 September 2026)
+        public const float WellRadius = 3.7f, PedestalRadius = 2.55f; // the gap round the elevator: a shaft open to the sea (Dan, 19 September 2026), wide enough to read as one
         public const float WellDepth = DeckThickness + HullDepth; // down to the water
-        public const float RingRadius = 3.6f;   // the round rail about it
+        public const float RingRadius = 4.0f;   // the round rail about it
         public static readonly Vector3 StairFoot = new(-6f, 0f, -11f); // where the ship's stair meets the deck: the boarding point
         public const string RoofGateName = "Roof Gate";
 
@@ -163,18 +163,9 @@ namespace SunkCost.Editor.Prototype
             // The inside, reaching under the deck: a flat item's pivot lies a few
             // centimetres up, right at a floor-level bottom (Dan: "an item stays after the sell").
             Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, h / 2f - 0.25f, cz), new Vector3(w - 2f * t, h + 0.5f - t, d - 2f * t));
-            // The readout on the outside of the port wall, over the doorway, facing port.
-            GameObject go = new(ShipParts.StorageReadoutName, typeof(TextMesh));
-            go.transform.SetParent(root, false);
-            go.transform.localPosition = new Vector3(cx - w / 2f - 0.02f, h + 0.35f, cz);
-            go.transform.localRotation = Quaternion.Euler(0f, 90f, 0f); // text faces -x (port)
-            TextMesh mesh = go.GetComponent<TextMesh>();
+            // The readout on a plate on the port wall over the doorway, read from the deck's centre line.
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Storage Sign", ShipParts.StorageReadoutName, new Vector3(cx - w / 2f - 0.06f, h + 0.45f, cz), Quaternion.Euler(0f, -90f, 0f), 1.8f, 0.7f, 0.18f, new Color(0.95f, 0.85f, 0.4f));
             mesh.text = "STORAGE\n$0 / $0";
-            mesh.characterSize = 0.05f;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(0.95f, 0.85f, 0.4f);
             root.gameObject.AddComponent<StorageReadout>();
         }
 
@@ -200,17 +191,8 @@ namespace SunkCost.Editor.Prototype
             box.size = new Vector3(1f, 1f, 0.05f);
             // The caption over the screen, read by someone on the deck looking toward
             // port (along -X): a TextMesh reads along its +Z, so it is turned the same way.
-            GameObject caption = new(ShipParts.TvCaptionName, typeof(TextMesh));
-            caption.transform.SetParent(root, false);
-            caption.transform.localPosition = new Vector3(x + 0.02f, y + 0.78f, z);
-            caption.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
-            TextMesh mesh = caption.GetComponent<TextMesh>();
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Tv Caption Sign", ShipParts.TvCaptionName, new Vector3(x - 0.02f, y + 0.9f, z), Quaternion.Euler(0f, 90f, 0f), 2.2f, 0.4f, 0.16f, new Color(1f, 0.35f, 0.3f));
             mesh.text = "NO SIGNAL";
-            mesh.characterSize = 0.05f;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(1f, 0.35f, 0.3f);
             GameObject speaker = new(ShipParts.TvSpeakerName);
             speaker.transform.SetParent(root, false);
             speaker.transform.localPosition = new Vector3(x + 0.05f, y, z);
@@ -278,11 +260,14 @@ namespace SunkCost.Editor.Prototype
             Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
             Material trim = SunkCost.Editor.Look.LookMaterials.Trim();
             float y = -DeckThickness - HullDepth / 2f;
-            Visual("Hull", root, new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(DeckWidth, HullDepth, DeckLength), plate);
-            Visual("Hull Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.4f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.06f, 1.0f, DeckLength + 0.06f), band);
-            Visual("Hull Rub Rail", root, new Vector3(0f, -DeckThickness - 0.55f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.3f, 0.36f, DeckLength + 0.3f), ink);
-            Visual("Hull Trim", root, new Vector3(0f, -0.22f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.16f, DeckLength + 0.04f), trim);
-            Visual("Hull Trim Low", root, new Vector3(0f, -DeckThickness - 1.0f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.1f, DeckLength + 0.04f), trim);
+            // The hull and every band round it are hollow frames — four pieces each round
+            // the elevator's well, so the shaft is open all the way to the water (a solid
+            // box would floor it at every band; Dan, 19 September 2026: "still not open").
+            HullFrame("Hull", root, y, HullDepth, DeckWidth, DeckLength, DeckWidth / 2f - WellRadius, plate);
+            HullFrame("Hull Band", root, -DeckThickness - HullDepth + 1.4f, 1.0f, DeckWidth + 0.06f, DeckLength + 0.06f, 0.4f, band);
+            HullFrame("Hull Rub Rail", root, -DeckThickness - 0.55f, 0.36f, DeckWidth + 0.3f, DeckLength + 0.3f, 0.4f, ink);
+            HullFrame("Hull Trim", root, -0.22f, 0.16f, DeckWidth + 0.04f, DeckLength + 0.04f, 0.3f, trim);
+            HullFrame("Hull Trim Low", root, -DeckThickness - 1.0f, 0.1f, DeckWidth + 0.04f, DeckLength + 0.04f, 0.3f, trim);
             // The company's name on both sides, the year on the stern.
             foreach (float side in new[] { -1f, 1f })
             {
@@ -312,6 +297,17 @@ namespace SunkCost.Editor.Prototype
                 tyre.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Ring(0.45f, 0.26f, 16, 8);
                 tyre.AddComponent<MeshRenderer>().sharedMaterial = ink;
             }
+        }
+
+        // A hollow rectangular frame `w` by `d` of `height`, its four sides `rim` deep,
+        // centred on the ship at `y`: the hull's slabs with the well left open.
+        private static void HullFrame(string name, Transform root, float y, float height, float w, float d, float rim, Material material)
+        {
+            float hw = w / 2f, hd = d / 2f;
+            Visual(name + " N", root, new Vector3(0f, y, hd - rim / 2f), Quaternion.identity, new Vector3(w, height, rim), material);
+            Visual(name + " S", root, new Vector3(0f, y, -hd + rim / 2f), Quaternion.identity, new Vector3(w, height, rim), material);
+            Visual(name + " W", root, new Vector3(-hw + rim / 2f, y, 0f), Quaternion.identity, new Vector3(rim, height, d - rim * 2f), material);
+            Visual(name + " E", root, new Vector3(hw - rim / 2f, y, 0f), Quaternion.identity, new Vector3(rim, height, d - rim * 2f), material);
         }
 
         // The bridge tower at the stern: two storeys, the top one glazed, the roof a
@@ -543,7 +539,7 @@ namespace SunkCost.Editor.Prototype
             GameObject rim = new("Well Rim");
             rim.transform.SetParent(root, false);
             rim.transform.localPosition = new Vector3(0f, 0.01f, 0f); // level with the plates' top
-            Mesh annulus = SquareAnnulus(WellRadius, WellRadius, 40);
+            Mesh annulus = SunkCost.Editor.Look.MeshKit.SquareAnnulus(WellRadius, WellRadius, 40); // a cached asset: a mesh made on the fly is lost when the prefab is saved
             rim.AddComponent<MeshFilter>().sharedMesh = annulus;
             rim.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.DeckTileWarm();
             rim.AddComponent<MeshCollider>().sharedMesh = annulus;
@@ -574,7 +570,13 @@ namespace SunkCost.Editor.Prototype
             pedestal.AddComponent<MeshRenderer>().sharedMaterial = ink;
             pedestal.AddComponent<MeshCollider>().sharedMesh = pedestalMesh;
             Visual("Pedestal Band", root, new Vector3(0f, -0.14f, 0f), Quaternion.identity, new Vector3(PedestalRadius * 2f + 0.04f, 0.12f, PedestalRadius * 2f + 0.04f), SunkCost.Editor.Look.LookMaterials.Hazard(), cylinder: true);
-            for (float ry = -2f; ry > -WellDepth; ry -= 2f) // rings down the shaft, so its depth reads
+            // The rim of the hole marked, and the shaft's wall stepped in under the deck so the edge reads as an edge.
+            GameObject rimBand = new("Well Rim Band");
+            rimBand.transform.SetParent(root, false);
+            rimBand.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+            rimBand.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(WellRadius + 0.02f, 0.3f, 0.06f, 0f, 360f, 64);
+            rimBand.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.Hazard();
+            for (float ry = -1f; ry > -WellDepth; ry -= 1.5f) // rings down the shaft, so its depth reads
                 Visual("Pedestal Ring", root, new Vector3(0f, ry, 0f), Quaternion.identity, new Vector3(PedestalRadius * 2f + 0.06f, 0.16f, PedestalRadius * 2f + 0.06f), dark, cylinder: true);
             // The grate across the well at the door (the doorway looks to +z), a short
             // rail either side of it: no hopping off the grate into the shaft.
@@ -593,31 +595,6 @@ namespace SunkCost.Editor.Prototype
                 lamp.transform.localPosition = new Vector3(0f, ly, -WellRadius + 0.4f);
                 lamp.lightmapBakeType = LightmapBakeType.Realtime; lamp.type = LightType.Point; lamp.range = 6f; lamp.intensity = 2.5f; lamp.color = new Color(1f, 0.7f, 0.4f); lamp.shadows = LightShadows.None;
             }
-        }
-
-        // A flat square of half-width `half` with a round hole of `inner` radius, its
-        // normal up, UVs in metres (the kit's materials tile by the metre).
-        private static Mesh SquareAnnulus(float inner, float half, int segments)
-        {
-            var v = new System.Collections.Generic.List<Vector3>(); var uv = new System.Collections.Generic.List<Vector2>(); var t = new System.Collections.Generic.List<int>();
-            for (int i = 0; i <= segments; i++)
-            {
-                float a = i / (float)segments * Mathf.PI * 2f;
-                Vector3 dir = new(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                float reach = half / Mathf.Max(Mathf.Abs(dir.x), Mathf.Abs(dir.z));
-                Vector3 pin = dir * inner, pout = dir * reach;
-                v.Add(pin); uv.Add(new Vector2(pin.x, pin.z));
-                v.Add(pout); uv.Add(new Vector2(pout.x, pout.z));
-            }
-            for (int i = 0; i < segments; i++)
-            {
-                int a = i * 2, b = i * 2 + 2;
-                t.Add(a); t.Add(b); t.Add(b + 1);
-                t.Add(a); t.Add(b + 1); t.Add(a + 1);
-            }
-            Mesh m = new() { name = "WellRim" };
-            m.SetVertices(v); m.SetUVs(0, uv); m.SetTriangles(t, 0); m.RecalculateNormals(); m.RecalculateBounds();
-            return m;
         }
 
         // A round railing of radius `r` about the origin — truly round (Dan, 19
@@ -746,6 +723,7 @@ namespace SunkCost.Editor.Prototype
             mesh.anchor = TextAnchor.MiddleCenter;
             mesh.alignment = TextAlignment.Center;
             mesh.color = new Color(0.9f, 0.95f, 1f);
+            go.AddComponent<SunkCost.Look.DepthText>().Configure(SunkCost.Editor.Look.LookMaterials.DepthText()); // never through a wall
         }
     }
 }

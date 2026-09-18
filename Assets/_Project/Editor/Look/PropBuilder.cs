@@ -463,6 +463,26 @@ namespace SunkCost.Editor.Look
             col.center = new Vector3(0f, height / 2f, 0f); col.size = new Vector3(length, height, 0.12f);
         });
 
+        // ---- plates ---------------------------------------------------------------------
+
+        // A small sign plate for a label the game writes at runtime (a readout, a
+        // caption, a status, a price): the ink plate with its glowing frame, and one
+        // depth-tested TextMesh on its face — no text floats or shows through walls
+        // (Dan, 19 September 2026). The plate's local +Z faces the reader; the text
+        // object is named `textName` so the rules find it as before.
+        public static TextMesh SignPlate(GameObject parent, string name, string textName, Vector3 localPosition, Quaternion localRotation, float w, float h, float lineHeight, Color colour)
+        {
+            GameObject root = new(name);
+            root.transform.SetParent(parent.transform, false);
+            root.transform.localPosition = localPosition;
+            root.transform.localRotation = localRotation;
+            Part(root, "Plate", MeshKit.Box(new Vector3(w, h, 0.1f), h / 2f), LookMaterials.SignBoard(), Vector3.zero);
+            Part(root, "Frame Top", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), LookMaterials.SignGlow(), new Vector3(0f, h / 2f - 0.04f, 0.05f));
+            Part(root, "Frame Bottom", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), LookMaterials.SignGlow(), new Vector3(0f, -h / 2f + 0.04f, 0.05f));
+            GameObject text = Text(root, textName, new Vector3(0f, 0f, 0.06f), lineHeight, colour, TextAnchor.MiddleCenter);
+            return text.GetComponent<TextMesh>();
+        }
+
         // ---- buttons --------------------------------------------------------------------
 
         // Every button in the game (Dan, 19 September 2026: "a red button with the

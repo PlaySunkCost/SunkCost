@@ -61,6 +61,35 @@ namespace SunkCost.Editor.Look
             return Cached(name, () => BuildBand(radius, height, thick, fromDeg, toDeg, segments));
         }
 
+        // A flat square of half-width `half` with a round hole of `inner` radius, its
+        // normal up, UVs in metres: the deck's rim round the ship's elevator well.
+        public static Mesh SquareAnnulus(float inner, float half, int segments = 40)
+        {
+            string name = $"SqAnnulus_{F(inner)}x{F(half)}";
+            return Cached(name, () =>
+            {
+                var v = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+                for (int i = 0; i <= segments; i++)
+                {
+                    float a = i / (float)segments * Mathf.PI * 2f;
+                    Vector3 dir = new(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    float reach = half / Mathf.Max(Mathf.Abs(dir.x), Mathf.Abs(dir.z));
+                    Vector3 pin = dir * inner, pout = dir * reach;
+                    v.Add(pin); uv.Add(new Vector2(pin.x, pin.z));
+                    v.Add(pout); uv.Add(new Vector2(pout.x, pout.z));
+                }
+                for (int i = 0; i < segments; i++)
+                {
+                    int a = i * 2, b = i * 2 + 2;
+                    t.Add(a); t.Add(b); t.Add(b + 1); // clockwise seen from above: the face looks up
+                    t.Add(a); t.Add(b + 1); t.Add(a + 1);
+                }
+                Mesh m = new();
+                m.SetVertices(v); m.SetUVs(0, uv); m.SetTriangles(t, 0); m.RecalculateNormals(); m.RecalculateBounds();
+                return m;
+            });
+        }
+
         private static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture).Replace('.', '_');
 
         private static Mesh Cached(string name, System.Func<Mesh> build)
