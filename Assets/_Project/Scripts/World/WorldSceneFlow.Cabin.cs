@@ -122,6 +122,10 @@ namespace SunkCost.World
             if (riding) { why = "Cabin in use"; return false; }
             if (currentWorld != WorldId.Sea) { why = "Not at sea"; return false; }
             if (dayState.Below.Count > 0) { why = DiveInProgressText(); return false; }
+            // The dead ride to the ship after the last diver is gone (UnloadSiteWithDead,
+            // up to a car's trip); a revive before that would stand them at deck
+            // coordinates inside the site (code check, 18 September 2026).
+            if (siteClosing || ServerAnyDeadStillBelow()) { why = "Bringing up the dead"; return false; }
             if (!dayState.ServerEndDay(Settings.DaysPerCycle, out why)) return false;
             Debug.Log($"[WorldSceneFlow] Day ended by {DisplayName(sender)}: day {dayState.Day}{(dayState.Payday ? " PAYDAY" : string.Empty)}");
             ServerReviveAll(); // the dead stand up on the deck (card 1)
@@ -524,7 +528,10 @@ namespace SunkCost.World
             var riders = new List<int>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
-                if (!conn.IsActive) continue;
+                // The living only: a hidden body that died inside the car stays in the
+                // site and rides to the ship with the dead when it closes, never as a
+                // rider (its client would not send Arrived and would be kicked).
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
                 if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(player.transform.position)) riders.Add(conn.ClientId);
             }
@@ -574,6 +581,10 @@ namespace SunkCost.World
             ResetTrip();
             riding = false;
             ride = null;
+            // A leaver's "nobody living below" check is skipped while riding
+            // (ServerSiteMayClose): it runs here instead, or a ride whose divers all
+            // dropped would leave the day in progress for good.
+            ServerSiteMayClose();
         }
 
         // Down (plan section 5.3, no day begun).
@@ -616,6 +627,15 @@ namespace SunkCost.World
             ServerLoad(conns.ToArray(), LoadDataFor(WorldId.Dive, moved.ToArray()), "ride down: the riders and cargo");
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Cabin ride: never arrived in the car");
+            if (ActiveCohort().Count == 0)
+            {
+                // Every rider dropped on the way: no day begins for nobody. The
+                // site goes (with the cabin's cargo — nobody is left to own it).
+                Debug.LogWarning("[WorldSceneFlow] Ride down: every rider left before the car; no day begins.");
+                yield return CancelRide(RideDirection.Down, "Nobody aboard");
+                ServerSiteMayClose();
+                yield break;
+            }
             ServerPlaceCabinCargo(CabinFrame.Car(car)); // the deck cabin's floor cargo, now on the car's floor
             foreach (NetworkConnection conn in ActiveCohort())
             {

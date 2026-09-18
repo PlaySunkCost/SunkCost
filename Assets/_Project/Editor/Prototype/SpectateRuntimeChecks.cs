@@ -315,6 +315,9 @@ namespace SunkCost.Editor.Prototype
             Check(Vector3.Distance(body.transform.position, deathSpot) < 1.5f, $"D1 the body lies where the host died ({Vector3.Distance(body.transform.position, deathSpot):0.0} m)");
             Check(!host.Controller.enabled, "D1 the dead host's capsule is off");
             yield return Expect(() => Day.Phase == DayPhase.AtSea && Day.DiveDone, 5f, () => $"D1 nobody living below: the dive is done (phase={Day.Phase} diveDone={Day.DiveDone})");
+            // The dead host's object is still in the site while the car comes home:
+            // End day now would revive it at deck coordinates inside the site.
+            Check(!flow.ServerEndDay(host.Owner, out string earlyWhy) && earlyWhy == "Bringing up the dead", "D1 End day while the site closes is refused: " + earlyWhy);
             PlayerHudUI hostHud = host.GetComponent<PlayerHudUI>();
             yield return Expect(() => host.Spectator != null && host.Spectator.Active && host.Spectator.Target == null, 4f, () => "D1 nobody living to watch: the spectator view is on with no target (after the second of own camera)");
             yield return Expect(() => hostHud.Visor.NoSignal && Day.SpectateTargetOf(host.OwnerId) < 0, 2f, () => "D1 the screen says NO SIGNAL"); // the HUD reads the view a frame later
@@ -509,11 +512,18 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "S3 the car came back down for B (" + Day.Elevator.State + ")");
             yield return Wait(1f);
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * 0.15f) + "}", GuestDirB);
+            // Dead A's hidden object stands inside the car too (it died there, say):
+            // the ride takes the living only; A rides to the ship with the dead when
+            // the site closes and is never kicked as a rider that "never arrived".
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.right * 0.4f + Vector3.up * 0.15f) + "}");
             yield return Wait(0.5f);
+            Check(car.IsInsideCar(remoteA.transform.position), "S3 dead A's object stands inside the car with B");
             int rideSerial = Day.CabinRide.Serial;
             yield return Send("{\"id\":{id},\"action\":\"car\"}", GuestDirB);
             yield return Expect(() => Day.CabinRide.Serial > rideSerial, 5f, () => "S3 B's car press was taken");
+            Check(Day.IsRider(idB) && !Day.IsRider(idA), "S3 B rides, dead A is no rider (riders " + string.Join(",", Day.Riders) + ")");
             yield return Expect(() => !Day.CabinRide.Active && Day.CabinRide.Serial > rideSerial, 70f, () => "S3 B's ride up completed");
+            Check(OtherIds().Count == 2, "S3 A is still connected (not kicked as a rider that never arrived)");
             yield return Expect(() => Day.Below.Count == 0 && Day.DiveDone, 5f, () => "S3 nobody below: dive done");
             yield return Expect(() => WorldSceneFlow.FindCar() == null, 20f, () => "S3 the site unloaded");
             yield return Expect(() => remoteA != null && remoteA.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 10f, () => "S3 A's object was carried to the ship");
@@ -651,6 +661,10 @@ namespace SunkCost.Editor.Prototype
             Check(flow.ServerEndDay(host.Owner, out string endWhy5), "T5 End day accepted: " + endWhy5);
             yield return Expect(() => Day.Payday, 3f, () => "T5 payday after the third day");
 
+            // No row for "every rider of a ride down drops mid-ride" (code check, 18
+            // September 2026): a ride down needs every living player in the cabin and
+            // the host cannot drop, so it is unreachable in play; EndRide's
+            // ServerSiteMayClose is a guard for it all the same.
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");
             Say("done");
         }
