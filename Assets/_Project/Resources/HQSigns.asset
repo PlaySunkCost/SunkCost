@@ -87,3 +87,13 @@ MonoBehaviour:
     Text: 'GOOD HAULS
 
       TODAY :)'
+  - Key: button.site01
+    Text: SITE 01
+  - Key: button.hq
+    Text: HQ
+  - Key: button.endday
+    Text: END DAY
+  - Key: button.descend
+    Text: DESCEND
+  - Key: button.surface
+    Text: SURFACE

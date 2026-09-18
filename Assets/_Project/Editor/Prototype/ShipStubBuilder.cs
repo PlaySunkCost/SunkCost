@@ -353,13 +353,13 @@ namespace SunkCost.Editor.Prototype
             Visual("Monitor Console Stripe", root, new Vector3(0f, 0.16f, mz + 0.16f), Quaternion.identity, new Vector3(1.8f, 0.26f, 0.02f), trim);
             GameObject monitor = Block(ShipParts.MonitorName, root, new Vector3(0f, 1.6f, mz), new Vector3(1.6f, 1f, 0.1f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
             monitor.AddComponent<ShipMonitor>();
-            Block(ShipParts.MonitorButtonSite01Name, root, new Vector3(-0.55f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+            // Three red buttons with their words on them, in a row under the screen (Dan, 19 September 2026).
+            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonSite01Name, new Vector3(-0.55f, 1.12f, mz + 0.05f), Quaternion.identity, "button.site01", 0.5f)
                 .AddComponent<MonitorButton>().Configure(WorldId.Sea, "Site 01");
-            Block(ShipParts.MonitorButtonHQName, root, new Vector3(0f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonHQName, new Vector3(0f, 1.12f, mz + 0.05f), Quaternion.identity, "button.hq", 0.5f)
                 .AddComponent<MonitorButton>().Configure(WorldId.HQ, "HQ");
-            Block(ShipParts.MonitorButtonEndDayName, root, new Vector3(0.55f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonEndDayName, new Vector3(0.55f, 1.12f, mz + 0.05f), Quaternion.identity, "button.endday", 0.5f)
                 .AddComponent<MonitorButton>().ConfigureEndDay("End day");
-            Label("MonitorLabel", root, new Vector3(0f, 2.3f, mz + 0.07f), "SITE 01      HQ      END DAY", 0.03f, facingBow: true); // a sibling: the monitor's scale must not stretch it
             Label(ShipParts.MonitorStatusName, root, new Vector3(0f, 1.85f, mz + 0.07f), string.Empty, 0.035f, facingBow: true);
             // The roof: rails all round with the gap aft for the HQ's bridge, lamps on the corners.
             float half = TowerWidth / 2f, back = -DeckLength / 2f;

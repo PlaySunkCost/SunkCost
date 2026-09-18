@@ -61,7 +61,9 @@ namespace SunkCost.Sites
                 RoundCabinGeometry.CreateFramePosts(root.transform, carRadius, interiorHeight, frame, BakedDoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
                 float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
 
-                GameObject panel = RoundCabinGeometry.CreateWallPanel(root.transform, "Control Panel", interiorRadius, panelAngleDeg, PanelWidthMeters, PanelHeightMeters, PanelThicknessMeters, PanelChestHeightMeters, panelAccent);
+                // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
+                Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
+                GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
                 panel.AddComponent<ElevatorControlPanel>();
                 // Cube's default BoxCollider is exactly what the interactor's raycast needs to
                 // hit, and it visually stands out from the frame posts via the accent material.

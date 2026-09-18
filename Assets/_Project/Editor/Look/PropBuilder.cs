@@ -452,6 +452,31 @@ namespace SunkCost.Editor.Look
             col.center = new Vector3(0f, height / 2f, 0f); col.size = new Vector3(length, height, 0.12f);
         });
 
+        // ---- buttons --------------------------------------------------------------------
+
+        // Every button in the game (Dan, 19 September 2026: "a red button with the
+        // text on it" — never a label beside a button): an ink bezel, a fat red cap
+        // proud of it, the words on the cap from HQSigns by `textKey`. The root
+        // carries the collider the crosshair finds and keeps the name the rules look
+        // for; its local +Z faces the person pressing it. `width` m across.
+        public static GameObject PushButton(GameObject parent, string name, Vector3 localPosition, Quaternion localRotation, string textKey, float width = 0.6f)
+        {
+            GameObject root = new(name);
+            root.transform.SetParent(parent.transform, false);
+            root.transform.localPosition = localPosition;
+            root.transform.localRotation = localRotation;
+            Part(root, "Bezel", MeshKit.Box(new Vector3(width, 0.4f, 0.06f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Cap", MeshKit.Box(new Vector3(width - 0.12f, 0.28f, 0.1f)), LookMaterials.ButtonRed(), new Vector3(0f, 0.06f, 0.03f));
+            Part(root, "Cap Edge", MeshKit.Box(new Vector3(width - 0.08f, 0.32f, 0.02f)), LookMaterials.Ink(), new Vector3(0f, 0.04f, -0.01f));
+            GameObject text = Text(root, "Text", new Vector3(0f, 0.2f, 0.085f), 0.14f, Color.white, TextAnchor.MiddleCenter);
+            SignText sign = text.AddComponent<SignText>();
+            sign.Fit(width - 0.14f, 0.22f);
+            sign.Configure(textKey);
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.2f, 0.02f); col.size = new Vector3(width, 0.4f, 0.12f);
+            return root;
+        }
+
         // ---- signs ----------------------------------------------------------------------
 
         // A sign board `w` by `h` m: an ink plate with a thick glowing frame, the

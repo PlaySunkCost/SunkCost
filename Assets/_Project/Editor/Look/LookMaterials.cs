@@ -21,6 +21,7 @@ namespace SunkCost.Editor.Look
         public static Material RustPanel() => Lit("RustPanel", ProceduralTextures.RustPanel(), 3f, Color.white);
         public static Material RustSteel() => Lit("RustSteel", ProceduralTextures.RustSteel(), 2f, Color.white);
         public static Material Hazard() => Lit("Hazard", ProceduralTextures.Hazard(), 1f, Color.white);
+        public static Material ButtonRed() => Flat("ButtonRed", new Color(0.85f, 0.12f, 0.10f), 0f, 0.45f); // every button in the game (Dan, 19 September 2026)
         public static Material Trim() => Flat("Trim", new Color(0.95f, 0.72f, 0.18f), 0f, 0.3f); // the picture's plain yellow lines
         public static Material CrateGrey() => Lit("CrateGrey", ProceduralTextures.Crate(), 1.4f, new Color(0.42f, 0.45f, 0.50f));
         public static Material CrateRed() => Lit("CrateRed", ProceduralTextures.Crate(), 1.4f, new Color(0.80f, 0.20f, 0.14f));

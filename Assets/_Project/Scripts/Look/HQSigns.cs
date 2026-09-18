@@ -81,6 +81,11 @@ namespace SunkCost.Look
             { "ship.bridge", "01 » BRIDGE" },
             { "ship.bridge.label", "CAPTAIN / NAVIGATION" },
             { "ship.screen", "GOOD HAULS\nTODAY :)" },
+            { "button.site01", "SITE 01" },
+            { "button.hq", "HQ" },
+            { "button.endday", "END DAY" },
+            { "button.descend", "DESCEND" },
+            { "button.surface", "SURFACE" },
         };
 
         private static HQSigns loaded;
