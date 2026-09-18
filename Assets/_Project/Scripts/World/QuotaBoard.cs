@@ -45,7 +45,14 @@ namespace SunkCost.World
                 // quota is the bar the cycle's hand-over cleared, not a charge.
                 if (pay.Paid) return $"PAID ${pay.Quota}\nhanded over ${pay.Had} — every dollar yours · balance ${pay.Balance}\nnext dive is day 1";
                 if (pay.Short) return $"SHORT BY ${pay.Quota - pay.Had}\nsold ${pay.Sales}, handed over ${pay.Had} · balance ${pay.Balance}\nsail out and dive again";
-                return $"GAME LOST\nquota ${pay.Quota} missed (handed over ${pay.Had})\nnew run: day 1, $0";
+                return $"THE RUN IS OVER\nquota ${pay.Quota} missed (handed over ${pay.Had})\nwalk the plank";
+            }
+            // The plank (18 September 2026): the board keeps saying so until the fresh run.
+            if (day.Phase == DayPhase.Plank)
+            {
+                PlankState plank = day.Plank;
+                string who = plank.Active && plank.Jumper >= 0 ? WorldSceneFlow.DisplayName(plank.Jumper) + " walks the plank" : "the last one is in the water";
+                return $"THE RUN IS OVER\n{who}\nthen everything from nothing";
             }
             if (Time.unscaledTime - day.LastRefusalAt < settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(day.LastRefusal.Text))
                 return day.LastRefusal.Text;

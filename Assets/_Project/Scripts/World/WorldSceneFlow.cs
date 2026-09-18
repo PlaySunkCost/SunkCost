@@ -627,9 +627,9 @@ namespace SunkCost.World
 
         private void OnDayStateInstance(CrewDayState state)
         {
-            if (dayState != null) { dayState.DepartureChanged -= OnDepartureChanged; dayState.CabinRideChanged -= OnCabinRideChanged; }
+            if (dayState != null) { dayState.DepartureChanged -= OnDepartureChanged; dayState.CabinRideChanged -= OnCabinRideChanged; dayState.RunOverChanged -= OnRunOverChanged; dayState.PhaseChanged -= OnPhaseChangedForPlank; }
             dayState = state;
-            if (dayState != null) { dayState.DepartureChanged += OnDepartureChanged; dayState.CabinRideChanged += OnCabinRideChanged; }
+            if (dayState != null) { dayState.DepartureChanged += OnDepartureChanged; dayState.CabinRideChanged += OnCabinRideChanged; dayState.RunOverChanged += OnRunOverChanged; dayState.PhaseChanged += OnPhaseChangedForPlank; }
         }
 
         // Each stage on this peer, once (the host's client pass; a pure client's

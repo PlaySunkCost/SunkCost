@@ -90,7 +90,7 @@ namespace SunkCost.World
         private void Update()
         {
             if (dayState == null || networkManager == null) return;
-            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerSumBox(); ServerTickSpectators(); }
+            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerSumBox(); ServerTickSpectators(); ServerTickPlank(); }
             DriveCar();
             if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
@@ -150,7 +150,8 @@ namespace SunkCost.World
             int sales = ServerSellStorage(ship);
             PayReport report = dayState.ServerPay(sales, Settings.QuotaPerCycle);
             dayState.ServerSetBoxValue(0);
-            Debug.Log($"[WorldSceneFlow] Pay: sold ${report.Sales}, quota ${report.Quota}, had ${report.Had} — {(report.Paid ? "paid, balance $" + report.Balance : "GAME LOST")} (pressed by {DisplayName(sender)})");
+            Debug.Log($"[WorldSceneFlow] Pay: sold ${report.Sales}, quota ${report.Quota}, had ${report.Had} — {(report.Paid ? "paid, balance $" + report.Balance : report.Lost ? "THE RUN IS OVER" : "short")} (pressed by {DisplayName(sender)})");
+            if (report.Lost) ServerBeginPlank(); // the walk, then a fresh run (WorldSceneFlow.Plank)
             return true;
         }
 

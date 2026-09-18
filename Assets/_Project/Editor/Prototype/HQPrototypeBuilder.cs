@@ -487,6 +487,29 @@ namespace SunkCost.Editor.Prototype
             // The gangway tip rests on the pier: stern at pier end + gangway length - the overlap.
             float sternZ = pierStart + PierLength - PierOverlap + ShipStubBuilder.GangwayLength;
             ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, sternZ) - boardingLocal, Quaternion.identity);
+            CreatePlank(dock.transform, plankMaterial, pierStart);
+        }
+
+        // The plank (docs/DESIGN.md §8 "Failure"; Dan, 18 September 2026): a board off
+        // the pier's east side over the water, with a seabed under it so a jumper
+        // lands in the water rather than falling forever. Base and End are markers
+        // (HQPlank) the server places from; the art pass can move the lot.
+        internal static void CreatePlank(Transform dock, Material plankMaterial, float pierStart)
+        {
+            GameObject root = new(SunkCost.World.HQPlank.RootName);
+            root.transform.SetParent(dock);
+            float pierEdgeX = (PlankWidth + 2f) / 2f;
+            float z = pierStart + PierLength / 2f;
+            CreateBlock("Board", new Vector3(pierEdgeX + 1.5f, -0.02f, z), new Vector3(3.2f, 0.08f, 0.7f), plankMaterial, root.transform);
+            Material seabed = GetOrCreateMaterial(MaterialPath + "/PlankSeabed.mat", new Color(0.08f, 0.1f, 0.12f));
+            CreateBlock("Seabed", new Vector3(pierEdgeX + 3f, -3.25f, z), new Vector3(10f, 0.5f, 10f), seabed, root.transform);
+            GameObject baseAt = new("Plank Base");
+            baseAt.transform.SetParent(root.transform);
+            baseAt.transform.SetPositionAndRotation(new Vector3(pierEdgeX + 0.4f, 0.05f, z), Quaternion.Euler(0f, 90f, 0f)); // facing +x, out over the water
+            GameObject endAt = new("Plank End");
+            endAt.transform.SetParent(root.transform);
+            endAt.transform.SetPositionAndRotation(new Vector3(pierEdgeX + 3.0f, 0.05f, z), Quaternion.Euler(0f, 90f, 0f));
+            root.AddComponent<SunkCost.World.HQPlank>().Configure(baseAt.transform, endAt.transform, -1f);
         }
 
         internal static Type FindType(string fullName)

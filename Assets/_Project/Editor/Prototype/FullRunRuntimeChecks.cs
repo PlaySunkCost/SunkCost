@@ -461,8 +461,11 @@ namespace SunkCost.Editor.Prototype
             }
             else
             {
-                Check(Day.LastPay.Lost && Day.Balance == 0 && Day.Day == 0 && !Day.Payday, $"GAME LOST: had ${had} of ${Quota}");
-                Check(H.QuotaBoardText().StartsWith("GAME LOST"), "board: " + Board());
+                // The run is over: the plank first (the host alone, pushed after its turn), then the reset.
+                Check(Day.LastPay.Lost && Day.Phase == DayPhase.Plank, $"THE RUN IS OVER: had ${had} of ${Quota}; the plank");
+                Check(H.QuotaBoardText().StartsWith("THE RUN IS OVER"), "board: " + Board());
+                yield return Expect(() => Day.Phase == DayPhase.AtHQ && Day.Balance == 0 && Day.Day == 0 && !Day.Payday, 40f, "after the plank: a fresh run, day 0, $0");
+                yield return Expect(() => ScreenFade.Instance == null || ScreenFade.Instance.IsClear, 5f, "the card faded");
             }
             yield return Expect(() => Day.BoxValue == 0, 3f, "box empty");
             Check(deckCoin != null && deckCoin.IsSpawned, "the deck coin was not sold");

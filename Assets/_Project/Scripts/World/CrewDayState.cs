@@ -32,6 +32,23 @@ namespace SunkCost.World
     // Who a dead player watches (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 2):
     // server-written, one entry per dead player; Target is a living client id or
     // -1 when nobody living is left. Watcher counts are derived from the list.
+    // The plank (18 September 2026): who is on the board now and since when.
+    public struct PlankState
+    {
+        public bool Active;
+        public int Jumper;        // client id on the board, -1 between turns
+        public uint TurnStartTick; // the jumper's turn began (server tick)
+        public int Serial;
+    }
+
+    // The card at the end of a lost run: "the game is over — N days — M minutes".
+    public struct RunOverReport
+    {
+        public int Serial;
+        public int Days;    // dive days begun this run, across cycles
+        public int Minutes; // wall time from the run's start
+    }
+
     public struct SpectateEntry
     {
         public int Dead;
@@ -97,6 +114,12 @@ namespace SunkCost.World
         // The deck TV's channel (card 3): a living diver below, or -1 (NO SIGNAL);
         // WorldSceneFlow is its only writer.
         private readonly SyncVar<int> tvChannel = new(-1);
+        // The plank and the run's end (18 September 2026); WorldSceneFlow is the writer.
+        private readonly SyncVar<PlankState> plank = new(new PlankState { Active = false, Jumper = -1 });
+        private readonly SyncList<int> jumped = new();
+        private readonly SyncVar<RunOverReport> runOver = new(new RunOverReport { Serial = 0 });
+        private readonly SyncVar<int> runDays = new(0);   // dive days begun this run (the card counts them)
+        private float runStartTime;                        // server: when this run began
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -140,6 +163,13 @@ namespace SunkCost.World
             return -1;
         }
         public int TvChannel => tvChannel.Value;
+        public PlankState Plank => plank.Value;
+        public IReadOnlyList<int> Jumped => jumped;
+        public bool HasJumped(int clientId) => jumped.Contains(clientId);
+        public RunOverReport RunOver => runOver.Value;
+        public int RunDays => runDays.Value;
+        public float RunSeconds => Time.unscaledTime - runStartTime; // server view
+        public event Action<RunOverReport> RunOverChanged;
         // How many watch this player: the dead spectating it, plus the TV when it is the channel.
         public int WatchersOf(int clientId)
         {
@@ -160,7 +190,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value}";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value} plank={(plank.Value.Active ? plank.Value.Jumper.ToString() : "off")} jumped=[{string.Join(",", jumped)}] runDays={runDays.Value}";
         private string SpectateText()
         {
             var parts = new List<string>();
@@ -177,6 +207,7 @@ namespace SunkCost.World
             phase.OnChange += OnPhaseChanged;
             lastRefusal.OnChange += OnRefusalChanged;
             lastPay.OnChange += OnPayChanged;
+            runOver.OnChange += OnRunOverChanged;
             departure.OnChange += OnDepartureChanged;
             cabinRide.OnChange += OnCabinRideChanged;
         }
@@ -206,6 +237,12 @@ namespace SunkCost.World
             if (next.Serial != 0 && !InitialSync(asServer)) lastPayAt = Time.unscaledTime;
         }
 
+        private void OnRunOverChanged(RunOverReport previous, RunOverReport next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (next.Serial != 0 && !InitialSync(asServer)) RunOverChanged?.Invoke(next);
+        }
+
         private void OnRefusalChanged(Refusal previous, Refusal next, bool asServer)
         {
             if (IsServerStarted && !asServer) return;
@@ -224,6 +261,7 @@ namespace SunkCost.World
         public override void OnStartServer()
         {
             base.OnStartServer();
+            runStartTime = Time.unscaledTime;
             if (GetComponent<SunkCost.Noise.ElevatorNoise>() == null) gameObject.AddComponent<SunkCost.Noise.ElevatorNoise>();
         }
 
@@ -257,6 +295,7 @@ namespace SunkCost.World
         public bool ServerCanSail(WorldId to, out string why)
         {
             if (to == WorldId.Dive) { why = "The ship does not sail to the seafloor."; return false; }
+            if (phase.Value == DayPhase.Plank) { why = "The run is over"; return false; }
             if (phase.Value == DayPhase.Sailing || phase.Value == DayPhase.SailingHome) { why = "Already sailing."; return false; }
             if (phase.Value == DayPhase.DiveInProgress) { why = "Dive in progress."; return false; }
             if (payday.Value && to != WorldId.HQ) { why = world.Value == WorldId.HQ ? "Pay the quota first" : "Payday — only HQ"; return false; }
@@ -315,7 +354,7 @@ namespace SunkCost.World
             bool lost = !paid && payday.Value; // short with no dives left
             balance.Value += sold;
             if (paid) { cycleSales.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
-            else if (lost) { balance.Value = 0; cycleSales.Value = 0; day.Value = 0; payday.Value = false; diveDone.Value = false; }
+            else if (lost) { cycleSales.Value = handed; phase.Value = DayPhase.Plank; } // the plank (WorldSceneFlow.ServerBeginPlank), then ServerResetRun
             else cycleSales.Value = handed; // short, days left: the box is banked, dive again (Dan: "not a loss instantly")
             var report = new PayReport { Serial = lastPay.Value.Serial + 1, Sales = sold, Quota = quota, Had = handed, Balance = balance.Value, Paid = paid, Short = !paid && !lost, Lost = lost };
             lastPay.Value = report;
@@ -345,8 +384,43 @@ namespace SunkCost.World
             if (phase.Value != DayPhase.AtSea) { why = "Not at sea (" + phase.Value + ")."; return false; }
             if (payday.Value) { why = "Payday — sail home"; return false; }
             phase.Value = DayPhase.DiveInProgress;
+            runDays.Value = runDays.Value + 1;
             why = string.Empty;
             return true;
+        }
+
+        // ---- the plank and the fresh run (18 September 2026) ----------------------------
+
+        [Server]
+        public void ServerSetPlank(PlankState next) => plank.Value = next;
+
+        [Server]
+        public void ServerMarkJumped(int clientId)
+        {
+            if (!jumped.Contains(clientId)) jumped.Add(clientId);
+        }
+
+        [Server]
+        public void ServerSetRunOver(int days, int minutes)
+        {
+            runOver.Value = new RunOverReport { Serial = runOver.Value.Serial + 1, Days = days, Minutes = minutes };
+        }
+
+        // Everything from nothing (Dan: "start from the start"): day 0, $0, no cycle,
+        // the run clock restarted, back at the dock. Players are the flow's to reset.
+        [Server]
+        public void ServerResetRun()
+        {
+            balance.Value = 0;
+            cycleSales.Value = 0;
+            day.Value = 0;
+            payday.Value = false;
+            diveDone.Value = false;
+            runDays.Value = 0;
+            runStartTime = Time.unscaledTime;
+            jumped.Clear();
+            plank.Value = new PlankState { Active = false, Jumper = -1, Serial = plank.Value.Serial + 1 };
+            phase.Value = DayPhase.AtHQ;
         }
 
         // When nobody living is below the dive is done: the phase returns to at-sea
@@ -501,7 +575,7 @@ namespace SunkCost.World
             ServerClearSpectate(clientId);
         }
 
-        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || cabinRide.Value.Active;
+        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || phase.Value == DayPhase.Plank || cabinRide.Value.Active;
         public bool RefusesJoinsForTravel => Travelling;
     }
 }
