@@ -442,12 +442,13 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   `Black` (screen fully black), `Arrived` (placed on the destination ship); the
   server ignores anything from outside the trip's cohort or with another serial.
 - Order on the server: refuse unless every active connection's player stands on
-  the deck proper (`SafeDeckVolume`; the HQ's bridge, stairs and stair foot
-  are the base, not the ship — the ship has no gangway since 18 September
-  2026; the refusal names who is not) and no join is pending; `Preparing` and wait for
+  the deck proper (`SafeDeckVolume`, 9 m tall so the bridge tower's roof and
+  stair count; the HQ's bridge and its landing are the base, not the ship —
+  the ship has no gangway since 18 September 2026; the refusal names who is
+  not) and no join is pending; `Preparing` and wait for
   every `Prepared` (`prepareTimeoutSeconds`, else cancel) and `syncFlushTicks`;
-  re-check aboard (a player who stepped off onto the stairs before the lock
-  cancels the trip, nobody is teleported aboard); freeze loose deck cargo
+  re-check aboard (a player who stepped off onto the HQ's landing before the
+  lock cancels the trip, nobody is teleported aboard); freeze loose deck cargo
   (Free and Released items in `AboardVolume`, position and rotation, kinematic,
   server-followed) and close the root move list (players, Held, Stowed, cargo);
   `RaisingGangway` (casting off: the ship still), `PullingAway` (the server drags the cargo with the moving

@@ -32,14 +32,14 @@ namespace SunkCost.Editor.Look
         // The way to the ship belongs to the HQ (Dan, 18 September 2026: "the bridge
         // connected to the HQ, like in the photo, then a staircase from the bridge
         // to the ship; the ship clean"): a railed bridge west off the rim at deck
-        // level, a landing, one short flight south down to the stern of the moored
-        // ship — a big ship, its deck nearly at the platform's (Dan, 19 September
-        // 2026: "walking straight a bit and then a small stairs to get to the ship").
-        public const float ShipDeckY = -2.5f;        // the ship's deck level at the mooring, 9.5 m over the water
+        // level, a landing, and the roof of the ship's bridge tower right behind it —
+        // no stair on the HQ at all (Dan, 19 September 2026: "the stairs near the
+        // tower lead to the top of the tower, connected through a bridge to the
+        // HQ"); the ship's own stair comes down from the roof to its deck.
+        public const float ShipDeckY = -SunkCost.Editor.Prototype.ShipStubBuilder.TowerHeight; // the tower's roof at the platform's level
         public static readonly Vector3 GangwayLanding = new(-32f, 0f, -12f); // where the bridge leaves the rim
         public static readonly Vector3 BridgeEnd = new(-44f, 0f, -12f);      // the landing at the bridge's end; the stairs go south from it
-        public const float StairRun = 4f, StairW = 3f, LandingW = 4f;
-        public static readonly Vector3 StairFoot = new(BridgeEnd.x, ShipDeckY, BridgeEnd.z - LandingW / 2f - StairRun - LandingW / 2f); // (-44, -2.5, -20)
+        public const float LandingW = 4f;
         public static readonly Rect Court = new(-24f, -10f, 20f, 12f);   // x, z, w, d
         public static readonly Vector3 CrewMark = new(10f, 0f, -3f);
         public const string PlatformRootName = "Platform";
@@ -677,40 +677,17 @@ namespace SunkCost.Editor.Look
             GameObject shipSign = PropBuilder.Place(dock, PropBuilder.SignBoard(4f, 1.0f), new Vector3(bridgeX0 - 1.2f, 2.6f, BridgeEnd.z), Quaternion.Euler(0f, 90f, 0f));
             shipSign.name = "Ship Sign";
             Sign(shipSign, "ship.this.way", null);
-            // One short flight south from the landing to the foot landing over the stern
-            // of the moored ship; both landings on piles to the seabed.
-            GameObject stairs = PropBuilder.Place(dock, PropBuilder.Stairs(-ShipDeckY, StairRun, StairW), new Vector3(BridgeEnd.x, ShipDeckY, StairFoot.z + LandingW / 2f), Quaternion.identity);
-            stairs.name = "Ship Stairs";
-            Landing(dock, "Stair Foot", StairFoot, openSouth: true, openNorth: true);
-            Part(dock, "Foot Lip", MeshKit.Box(new Vector3(LandingW, 0.02f, 0.4f)), LookMaterials.Hazard(), new Vector3(StairFoot.x, StairFoot.y, StairFoot.z - LandingW / 2f + 0.2f));
-            foreach (float z in new[] { BridgeEnd.z, StairFoot.z })
-                foreach (float x in new[] { BridgeEnd.x - LandingW / 2f + 0.4f, BridgeEnd.x + LandingW / 2f - 0.4f })
-                    Part(dock, "Pile", MeshKit.Cylinder(0.4f, (z == StairFoot.z ? ShipDeckY : 0f) - SeabedY - DeckThick, 12), LookMaterials.RustSteel(), new Vector3(x, SeabedY, z));
-            // The ship, moored with its stern under the stair's foot, bow to the south
-            // (the way out), nothing on it touching the HQ.
+            Part(dock, "Landing Lip", MeshKit.Box(new Vector3(LandingW, 0.02f, 0.4f)), LookMaterials.Hazard(), new Vector3(BridgeEnd.x, 0f, BridgeEnd.z - LandingW / 2f + 0.2f));
+            foreach (float x in new[] { BridgeEnd.x - LandingW / 2f + 0.4f, BridgeEnd.x + LandingW / 2f - 0.4f })
+                Part(dock, "Pile", MeshKit.Cylinder(0.4f, -SeabedY - DeckThick, 12), LookMaterials.RustSteel(), new Vector3(x, SeabedY, BridgeEnd.z));
+            // The ship, moored stern-on under the landing: its tower's roof is level with
+            // the landing and its rail's gap faces it; bow to the south (the way out);
+            // nothing on it touching the HQ.
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
             ship.transform.SetParent(dock.transform, true);
-            ShipParts parts = ship.GetComponent<ShipParts>();
-            Transform boarding = parts != null ? parts.BoardingPoint : null;
-            float sternZ = boarding != null ? boarding.localPosition.z : -SunkCost.Editor.Prototype.ShipStubBuilder.DeckLength / 2f;
-            float sternWorldZ = StairFoot.z - LandingW / 2f - 0.05f; // the stern against the foot landing's edge, the decks level
-            ship.transform.SetPositionAndRotation(new Vector3(StairFoot.x, ShipDeckY, sternWorldZ + sternZ), Quaternion.Euler(0f, 180f, 0f)); // yaw 180: the stern (local -z) toward the stairs, the bow south
-        }
-
-        // A 4 x 4 landing on the way down: the plate, its girder, rails on the closed
-        // sides, a lamp on a corner.
-        private static void Landing(GameObject dock, string name, Vector3 at, bool openSouth, bool openNorth)
-        {
-            GameObject rail = PropBuilder.Rail();
-            Part(dock, name, MeshKit.Box(new Vector3(LandingW, DeckThick, LandingW)), LookMaterials.DeckTile(), new Vector3(at.x, at.y - DeckThick, at.z), withCollider: true);
-            Part(dock, name + " Girder", MeshKit.Box(new Vector3(LandingW + 0.2f, 1.0f, LandingW + 0.2f)), LookMaterials.RustSteel(), new Vector3(at.x, at.y - DeckThick - 1.0f, at.z));
-            foreach (float side in new[] { -1f, 1f })
-                foreach (float dz in new[] { -1f, 1f })
-                    PropBuilder.Place(dock, rail, new Vector3(at.x + side * (LandingW / 2f - 0.1f), at.y, at.z + dz), Quaternion.Euler(0f, 90f, 0f)).name = name + " Rail";
-            if (!openNorth) foreach (float dx in new[] { -1f, 1f }) PropBuilder.Place(dock, rail, new Vector3(at.x + dx, at.y, at.z + LandingW / 2f - 0.1f)).name = name + " Rail";
-            if (!openSouth) foreach (float dx in new[] { -1f, 1f }) PropBuilder.Place(dock, rail, new Vector3(at.x + dx, at.y, at.z - LandingW / 2f + 0.1f)).name = name + " Rail";
-            PropBuilder.Place(dock, PropBuilder.RailLamp(), new Vector3(at.x - LandingW / 2f + 0.1f, at.y, at.z + LandingW / 2f - 0.1f)).name = name + " Lamp";
-            PropBuilder.Place(dock, PropBuilder.RailLamp(), new Vector3(at.x + LandingW / 2f - 0.1f, at.y, at.z - LandingW / 2f + 0.1f)).name = name + " Lamp";
+            float sternZ = -SunkCost.Editor.Prototype.ShipStubBuilder.DeckLength / 2f;
+            float sternWorldZ = BridgeEnd.z - LandingW / 2f - 0.05f; // the tower's aft face against the landing's edge
+            ship.transform.SetPositionAndRotation(new Vector3(BridgeEnd.x, ShipDeckY, sternWorldZ + sternZ), Quaternion.Euler(0f, 180f, 0f)); // yaw 180: the stern (local -z) toward the landing, the bow south
         }
 
         private static void Plank(GameObject root)

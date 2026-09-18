@@ -679,7 +679,7 @@ namespace SunkCost.Editor.Look
             return go;
         }
 
-        private static GameObject Text(GameObject root, string name, Vector3 localPosition, float lineHeight, Color color, TextAnchor anchor)
+        public static GameObject Text(GameObject root, string name, Vector3 localPosition, float lineHeight, Color color, TextAnchor anchor)
         {
             GameObject go = new(name, typeof(TextMesh));
             go.transform.SetParent(root.transform, false);

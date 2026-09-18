@@ -24,8 +24,10 @@ namespace SunkCost.Editor.Look
             Shoot("court", new Vector3(-6f, 1.7f, -14f), new Vector3(-16f, 1.6f, -3f), 75f);
             Shoot("crew-mark", new Vector3(16f, 1.7f, -14f), new Vector3(8f, 1.2f, 8f), 75f);
             Shoot("bridge", new Vector3(-24f, 1.7f, -8f), new Vector3(-44f, 0.5f, -13f), 70f);
-            Shoot("stairs", new Vector3(-39f, -0.9f, -32f), new Vector3(-44f, 0.5f, -14f), 70f);
-            Shoot("ship", new Vector3(-62f, 4f, -70f), new Vector3(-44f, -4f, -30f), 60f);
+            Shoot("tower", new Vector3(-40f, -4.4f, -34f), new Vector3(-44f, -1f, -16f), 70f);
+            Shoot("deck", new Vector3(-44f, -4.4f, -50f), new Vector3(-44f, -4f, -20f), 75f);
+            Shoot("console", new Vector3(-43f, -4.4f, -24f), new Vector3(-44f, -4.4f, -20.5f), 60f); // on the deck, at the tower's foot
+            Shoot("ship", new Vector3(-70f, 6f, -80f), new Vector3(-44f, -4f, -34f), 60f);
             Shoot("plank", new Vector3(24f, 1.7f, -10f), new Vector3(32f, 0.2f, -16f), 70f);
             Shoot("pickup", new Vector3(22f, 6.6f, 6f), new Vector3(25f, 6.5f, 15f), 75f);
             Shoot("from-sea", new Vector3(10f, 2f, -70f), new Vector3(0f, 3f, 0f), 60f);

@@ -18,11 +18,17 @@ namespace SunkCost.Editor.Prototype
     {
         public const string PrefabPath = "Assets/_Project/Prefabs/World/Ship.prefab";
         public const string SettingsPath = "Assets/_Project/Settings/Prototype/WorldLoopSettings.asset";
-        public const float DeckLength = 30f;
-        public const float DeckWidth = 10f;
+        // A big ship (Dan's picture, 19 September 2026): a blunt barge, the bridge
+        // tower at the stern whose roof is the way aboard — the HQ's bridge meets
+        // it level, the ship's own stair comes down beside the tower.
+        public const float DeckLength = 44f;
+        public const float DeckWidth = 16f;
         public const float DeckThickness = 0.5f;
-        public const float HullDepth = 10.5f;   // under the deck to a metre into the water at the HQ mooring (a big ship, Dan, 19 September 2026)
-        public const float BowLength = 5f;      // the foredeck past the bow rail, under the wheelhouse; the prow is beyond it
+        public const float HullDepth = 7.0f;    // under the deck to a metre into the water at the HQ mooring
+        public const float TowerHeight = 6f;    // deck to roof: the HQ's bridge lands on the roof
+        public const float TowerWidth = 8f, TowerDepth = 6f;
+        public const float VolumeHeight = 9f;   // the aboard and safe-deck volumes reach over the tower's roof
+        public static readonly Vector3 StairFoot = new(-6f, 0f, -11f); // where the ship's stair meets the deck: the boarding point
 
         [MenuItem("Sunk Cost/Prototype/Create or Update ship stub")]
         public static void CreateOrUpdateFromMenu()
@@ -60,56 +66,41 @@ namespace SunkCost.Editor.Prototype
             try
             {
                 root.AddComponent<ShipParts>();
-                // Deck top at y = 0 so the HQ plank and the HQ floor meet it flush.
-                Block("Deck", root.transform, new Vector3(0f, -DeckThickness / 2f, 0f), new Vector3(DeckWidth, DeckThickness, DeckLength), SunkCost.Editor.Look.LookMaterials.RustPanel());
+                // Deck top at y = 0; the tower's roof at TowerHeight is where the HQ's bridge lands.
+                Block("Deck", root.transform, new Vector3(0f, -DeckThickness / 2f, 0f), new Vector3(DeckWidth, DeckThickness, DeckLength), SunkCost.Editor.Look.LookMaterials.Panel());
                 BuildHull(root.transform);
                 // The rails are the walls the physics needs; what you see of them is the
                 // look kit's railing placed along them (BuildLook), so these are unseen.
                 Unseen(Block("RailPort", root.transform, new Vector3(-DeckWidth / 2f + 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail));
                 Unseen(Block("RailStarboard", root.transform, new Vector3(DeckWidth / 2f - 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail));
                 Unseen(Block("RailBow", root.transform, new Vector3(0f, 0.5f, DeckLength / 2f - 0.1f), new Vector3(DeckWidth, 1f, 0.2f), rail));
-                // The stern rail leaves the boarding gap open: BoardingPoint is where the HQ's stair meets the deck.
-                Unseen(Block("RailSternPort", root.transform, new Vector3(-3f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(4f, 1f, 0.2f), rail));
-                Unseen(Block("RailSternStarboard", root.transform, new Vector3(3f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(4f, 1f, 0.2f), rail));
+                // The stern rail either side of the tower.
+                float sideW = (DeckWidth - TowerWidth) / 2f;
+                Unseen(Block("RailSternPort", root.transform, new Vector3(-TowerWidth / 2f - sideW / 2f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(sideW, 1f, 0.2f), rail));
+                Unseen(Block("RailSternStarboard", root.transform, new Vector3(TowerWidth / 2f + sideW / 2f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(sideW, 1f, 0.2f), rail));
+                BuildTower(root.transform, button);
                 BuildLook(root.transform);
 
-                Trigger(ShipParts.AboardVolumeName, root.transform, new Vector3(0f, 2f, 0f), new Vector3(DeckWidth + 2f, 4f, DeckLength + 2f));
-                // The deck proper: where a passenger must stand for the ship to move.
-                Trigger(ShipParts.SafeDeckVolumeName, root.transform, new Vector3(0f, 2f, 0f), new Vector3(DeckWidth - 0.4f, 4f, DeckLength - 0.4f));
+                Trigger(ShipParts.AboardVolumeName, root.transform, new Vector3(0f, VolumeHeight / 2f, 0f), new Vector3(DeckWidth + 2f, VolumeHeight, DeckLength + 2f));
+                // The deck proper (and the tower's roof over it): where a passenger must stand for the ship to move.
+                Trigger(ShipParts.SafeDeckVolumeName, root.transform, new Vector3(0f, VolumeHeight / 2f, 0f), new Vector3(DeckWidth - 0.4f, VolumeHeight, DeckLength - 0.4f));
                 // The straight way out: the bow direction, away from the dock at the stern.
                 GameObject direction = new(ShipParts.DepartureDirectionName);
                 direction.transform.SetParent(root.transform, false);
                 direction.transform.localRotation = Quaternion.identity;
-                // No gangway on the ship (Dan, 18 September 2026): the HQ's own bridge and
-                // stair come down to the stern; the ship carries nothing that reaches the base.
+                // No gangway on the ship (Dan, 18 September 2026): the HQ's own bridge meets
+                // the tower's roof; the ship carries nothing that reaches the base.
                 root.AddComponent<ShipDepartureVisual>();
-
-                // The monitor on its console at the bow, the wheelhouse behind it.
-                Visual("Monitor Frame", root.transform, new Vector3(0f, 1.6f, DeckLength / 2f - 1.44f), Quaternion.identity, new Vector3(1.8f, 1.2f, 0.1f), SunkCost.Editor.Look.LookMaterials.Ink());
-                Visual("Monitor Console", root.transform, new Vector3(0f, 0.5f, DeckLength / 2f - 1.4f), Quaternion.identity, new Vector3(1.8f, 1.0f, 0.5f), SunkCost.Editor.Look.LookMaterials.PanelDark());
-                Visual("Monitor Console Stripe", root.transform, new Vector3(0f, 0.16f, DeckLength / 2f - 1.66f), Quaternion.identity, new Vector3(1.8f, 0.26f, 0.02f), SunkCost.Editor.Look.LookMaterials.Hazard());
-                GameObject monitor = Block(ShipParts.MonitorName, root.transform, new Vector3(0f, 1.6f, DeckLength / 2f - 1.5f), new Vector3(1.6f, 1f, 0.1f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
-                monitor.AddComponent<ShipMonitor>();
-                Block(ShipParts.MonitorButtonSite01Name, root.transform, new Vector3(-0.55f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button)
-                    .AddComponent<MonitorButton>().Configure(WorldId.Sea, "Site 01");
-                Block(ShipParts.MonitorButtonHQName, root.transform, new Vector3(0f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button)
-                    .AddComponent<MonitorButton>().Configure(WorldId.HQ, "HQ");
-                Block(ShipParts.MonitorButtonEndDayName, root.transform, new Vector3(0.55f, 1.5f, DeckLength / 2f - 1.58f), new Vector3(0.45f, 0.3f, 0.08f), button)
-                    .AddComponent<MonitorButton>().ConfigureEndDay("End day");
-                Label("MonitorLabel", monitor.transform, new Vector3(0f, 0.72f, 0f), "SITE 01      HQ      END DAY", 0.05f, facingBow: false);
-                // The status line sits in front of the screen face (a sibling, so the
-                // monitor's scale does not stretch the glyphs).
-                Label(ShipParts.MonitorStatusName, root.transform, new Vector3(0f, 1.85f, DeckLength / 2f - 1.57f), string.Empty, 0.035f, facingBow: false);
 
                 // The deck cabin is the same glass elevator as DiveSite01's car, docked
                 // (docs/DESIGN.md: "the glass elevator") — built from the shared round-cabin
                 // geometry rather than a plain box, visual shell only (see DeckCabinBuilder).
-                DeckCabinBuilder.Build(root.transform, new Vector3(0f, 0f, -8f), deck, rail, glass, button);
+                DeckCabinBuilder.Build(root.transform, Vector3.zero, deck, rail, glass, button); // dead centre, like the picture
 
                 BuildStorageRoom(root.transform, SunkCost.Editor.Look.LookMaterials.PanelDark(), tape);
                 BuildTv(root.transform, SunkCost.Editor.Look.LookMaterials.Ink(), screen);
 
-                Vector3[] spawns = { new(-3f, 0f, 5f), new(3f, 0f, 5f), new(-3f, 0f, 1f), new(3f, 0f, 1f) };
+                Vector3[] spawns = { new(-3.5f, 0f, 7f), new(3.5f, 0f, 7f), new(-3.5f, 0f, 10f), new(3.5f, 0f, 10f) };
                 for (int i = 0; i < spawns.Length; i++)
                 {
                     GameObject point = new(ShipParts.SpawnPointPrefix + (i + 1));
@@ -117,9 +108,10 @@ namespace SunkCost.Editor.Prototype
                     point.transform.localPosition = spawns[i];
                     point.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // face the cabin
                 }
+                // The boarding point: the foot of the ship's own stair, on the deck (Unstuck puts you there).
                 GameObject boarding = new(ShipParts.BoardingPointName);
                 boarding.transform.SetParent(root.transform, false);
-                boarding.transform.localPosition = new Vector3(0f, 0f, -DeckLength / 2f);
+                boarding.transform.localPosition = StairFoot;
 
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
@@ -179,7 +171,7 @@ namespace SunkCost.Editor.Prototype
         // over it and the speaker point on it. E on the screen is the next channel.
         private static void BuildTv(Transform root, Material frame, Material screenMaterial)
         {
-            const float x = -4.55f, y = 1.7f, z = -3f;
+            const float x = -DeckWidth / 2f + 0.45f, y = 1.7f, z = -3f;
             Block("TvPost", root, new Vector3(x - 0.1f, 0.5f, z), new Vector3(0.12f, 1.0f, 0.12f), frame);
             Block("TvFrame", root, new Vector3(x - 0.08f, y, z), new Vector3(0.1f, 1.4f, 2.2f), frame);
             // A quad is seen from its -Z side; turned so that side faces +X (the deck).
@@ -261,64 +253,181 @@ namespace SunkCost.Editor.Prototype
             AssetDatabase.SaveAssets();
         }
 
-        // The hull under the deck: rust plate sides, a navy band at the waterline, a
-        // pointed bow. Visual only — no colliders, so the deck cabin's car passes
-        // through it on the way down and nothing under the deck is walkable.
+        // The hull under the deck (the picture's barge): charcoal plate, the yellow
+        // trim along the deck's edge, an ink band at the waterline, the company's name
+        // painted big on both sides, the year on the stern, red fenders hung along the
+        // sides, tyres on the stern. Visual only — no colliders, so the deck cabin's
+        // car passes through it on the way down and nothing under the deck is walkable.
         private static void BuildHull(Transform root)
         {
-            Material plate = SunkCost.Editor.Look.LookMaterials.RustPanel();
+            Material plate = SunkCost.Editor.Look.LookMaterials.Panel();
             Material band = SunkCost.Editor.Look.LookMaterials.PanelDark();
             Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
-            Material hazard = SunkCost.Editor.Look.LookMaterials.Hazard();
+            Material trim = SunkCost.Editor.Look.LookMaterials.Trim();
             float y = -DeckThickness - HullDepth / 2f;
-            float length = DeckLength + BowLength, cz = BowLength / 2f, prowZ = DeckLength / 2f + BowLength;
-            Visual("Hull", root, new Vector3(0f, y, cz), Quaternion.identity, new Vector3(DeckWidth, HullDepth, length), plate);
-            Visual("Hull Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.6f, cz), Quaternion.identity, new Vector3(DeckWidth + 0.06f, 1.2f, length + 0.06f), band);
-            Visual("Hull Stripe", root, new Vector3(0f, -3.4f, cz), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.5f, length + 0.04f), ink);
-            Visual("Hull Rub Rail", root, new Vector3(0f, -DeckThickness - 0.6f, cz), Quaternion.identity, new Vector3(DeckWidth + 0.3f, 0.4f, length + 0.3f), ink);
-            Visual("Hull Hazard", root, new Vector3(0f, -0.28f, cz), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.3f, length + 0.04f), hazard);
-            // The foredeck past the bow rail, then the prow: a square turned 45 degrees.
-            Visual("Foredeck", root, new Vector3(0f, -DeckThickness / 2f, DeckLength / 2f + BowLength / 2f), Quaternion.identity, new Vector3(DeckWidth, DeckThickness, BowLength), plate);
-            float side = DeckWidth / Mathf.Sqrt(2f);
-            Quaternion turn = Quaternion.Euler(0f, 45f, 0f);
-            Visual("Bow", root, new Vector3(0f, y, prowZ), turn, new Vector3(side, HullDepth, side), plate);
-            Visual("Bow Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.6f, prowZ), turn, new Vector3(side + 0.04f, 1.2f, side + 0.04f), band);
-            Visual("Bow Stripe", root, new Vector3(0f, -3.4f, prowZ), turn, new Vector3(side + 0.03f, 0.5f, side + 0.03f), ink);
-            Visual("Bow Rub Rail", root, new Vector3(0f, -DeckThickness - 0.6f, prowZ), turn, new Vector3(side + 0.2f, 0.4f, side + 0.2f), ink);
-            Visual("Bow Hazard", root, new Vector3(0f, -0.28f, prowZ), turn, new Vector3(side + 0.03f, 0.3f, side + 0.03f), hazard);
-            Visual("Bow Deck", root, new Vector3(0f, -DeckThickness / 2f, prowZ), turn, new Vector3(side, DeckThickness, side), plate);
-            // Tyres on the stern, where the HQ's stair foot meets it.
-            foreach (float x in new[] { -3.2f, 0f, 3.2f })
+            Visual("Hull", root, new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(DeckWidth, HullDepth, DeckLength), plate);
+            Visual("Hull Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.4f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.06f, 1.0f, DeckLength + 0.06f), band);
+            Visual("Hull Rub Rail", root, new Vector3(0f, -DeckThickness - 0.55f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.3f, 0.36f, DeckLength + 0.3f), ink);
+            Visual("Hull Trim", root, new Vector3(0f, -0.22f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.16f, DeckLength + 0.04f), trim);
+            Visual("Hull Trim Low", root, new Vector3(0f, -DeckThickness - 1.0f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.04f, 0.1f, DeckLength + 0.04f), trim);
+            // The company's name on both sides, the year on the stern.
+            foreach (float side in new[] { -1f, 1f })
+            {
+                GameObject face = new("Hull Name");
+                face.transform.SetParent(root, false);
+                face.transform.localPosition = new Vector3(side * (DeckWidth / 2f + 0.03f), -2.6f, 0f);
+                face.transform.localRotation = Quaternion.Euler(0f, side * 90f, 0f);
+                SunkCost.Editor.Look.PropBuilder.Text(face, "Name", new Vector3(0f, 0.9f, 0f), 1.7f, new Color(0.82f, 0.84f, 0.88f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("company");
+                SunkCost.Editor.Look.PropBuilder.Text(face, "Sub", new Vector3(0f, -0.5f, 0f), 0.9f, new Color(0.82f, 0.84f, 0.88f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.name.sub");
+            }
+            GameObject stern = new("Hull Year");
+            stern.transform.SetParent(root, false);
+            stern.transform.localPosition = new Vector3(3f, -3.2f, -DeckLength / 2f - 0.03f);
+            stern.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            SunkCost.Editor.Look.PropBuilder.Text(stern, "Year", Vector3.zero, 1.2f, new Color(0.82f, 0.84f, 0.88f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.year");
+            // Fenders along the sides, tyres on the stern.
+            GameObject fender = SunkCost.Editor.Look.PropBuilder.Fender();
+            foreach (float side in new[] { -1f, 1f })
+                foreach (float z in new[] { -17f, -8f, 8f, 17f })
+                    SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, fender, new Vector3(side * (DeckWidth / 2f + 0.65f), -3.0f, z)).name = "Fender";
+            foreach (float x in new[] { -6f, 6f })
             {
                 GameObject tyre = new("Tyre");
                 tyre.transform.SetParent(root, false);
-                tyre.transform.localPosition = new Vector3(x, -1.4f, -DeckLength / 2f - 0.12f);
+                tyre.transform.localPosition = new Vector3(x, -1.6f, -DeckLength / 2f - 0.12f);
                 tyre.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 tyre.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Ring(0.45f, 0.26f, 16, 8);
                 tyre.AddComponent<MeshRenderer>().sharedMaterial = ink;
             }
         }
 
-        // The look of the deck (the platform's kit, so the two read as one place):
-        // deck plates over the deck, railings with lamps along the rails, the
-        // wheelhouse on the foredeck with its mast and funnel, cargo on the deck
-        // out of the boarding path, the company's name on the hull. Nothing here
-        // is a marker the rules read; the cargo has the kit's colliders.
-        private static void BuildLook(Transform root)
+        // The bridge tower at the stern: two storeys, the top one glazed, the roof a
+        // railed deck the HQ's bridge lands on (a gap in its aft rail), the ship's own
+        // stair down its port side to the deck. The sailing monitor is the console on
+        // its forward face, with the BRIDGE door and the crew's screen beside it. The
+        // roof carries the radar, the mast, the funnels and the beacons, forward of
+        // the walk from the gap to the stair.
+        private static void BuildTower(Transform root, Material button)
         {
-            Material deckTile = SunkCost.Editor.Look.LookMaterials.DeckTile();
-            Material hazard = SunkCost.Editor.Look.LookMaterials.Hazard();
-            Material plate = SunkCost.Editor.Look.LookMaterials.RustPanel();
+            Material plate = SunkCost.Editor.Look.LookMaterials.Panel();
             Material dark = SunkCost.Editor.Look.LookMaterials.PanelDark();
             Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
             Material glow = SunkCost.Editor.Look.LookMaterials.WindowGlow();
+            Material trim = SunkCost.Editor.Look.LookMaterials.Trim();
             Material steel = SunkCost.Editor.Look.LookMaterials.RustSteel();
+            GameObject rail = SunkCost.Editor.Look.PropBuilder.Rail(), lamp = SunkCost.Editor.Look.PropBuilder.RailLamp();
+            float cz = -DeckLength / 2f + TowerDepth / 2f;   // the tower's centre
+            float front = -DeckLength / 2f + TowerDepth;     // its forward face
+            float roof = TowerHeight;
+            GameObject tower = Block("Tower", root, new Vector3(0f, roof / 2f, cz), new Vector3(TowerWidth, roof, TowerDepth), plate); // walls and roof: one collider
+            Visual("Tower Base Trim", root, new Vector3(0f, 0.12f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.04f, 0.24f, TowerDepth + 0.04f), trim);
+            Visual("Tower Floor Line", root, new Vector3(0f, 3.0f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.04f, 0.16f, TowerDepth + 0.04f), ink);
+            Visual("Tower Roof Edge", root, new Vector3(0f, roof - 0.1f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.1f, 0.2f, TowerDepth + 0.1f), ink);
+            // The glazed top storey: the captain's windows on the forward face and both sides.
+            Visual("Bridge Windows", root, new Vector3(0f, 4.4f, front + 0.03f), Quaternion.identity, new Vector3(TowerWidth - 1.2f, 1.5f, 0.06f), glow);
+            foreach (float side in new[] { -1f, 1f })
+                Visual("Bridge Windows Side", root, new Vector3(side * (TowerWidth / 2f + 0.03f), 4.4f, cz), Quaternion.identity, new Vector3(0.06f, 1.5f, TowerDepth - 1.4f), glow);
+            Visual("Bridge Label", root, new Vector3(0f, 5.5f, front + 0.02f), Quaternion.identity, new Vector3(3.6f, 0.5f, 0.04f), ink);
+            GameObject label = new("Bridge Label Text");
+            label.transform.SetParent(root, false);
+            label.transform.localPosition = new Vector3(0f, 5.5f, front + 0.05f);
+            SunkCost.Editor.Look.PropBuilder.Text(label, "Text", Vector3.zero, 0.34f, new Color(0.82f, 0.84f, 0.88f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.bridge.label");
+            // The door with its lit strip and the BRIDGE sign, on the forward face, port of the console.
+            Visual("Bridge Door", root, new Vector3(-2.9f, 1.15f, front + 0.04f), Quaternion.identity, new Vector3(1.1f, 2.3f, 0.08f), ink);
+            Visual("Bridge Door Light", root, new Vector3(-2.9f, 2.5f, front + 0.06f), Quaternion.identity, new Vector3(1.0f, 0.1f, 0.06f), SunkCost.Editor.Look.LookMaterials.LampWarm());
+            GameObject doorSign = SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.SignBoard(1.6f, 0.5f), new Vector3(-2.9f, 2.7f, front + 0.02f));
+            doorSign.name = "Bridge Sign";
+            foreach (SunkCost.Look.SignText text in doorSign.GetComponentsInChildren<SunkCost.Look.SignText>(true))
+                text.Configure(text.name == "Sub" ? string.Empty : "ship.bridge");
+            // The crew's screen, starboard of the console.
+            Visual("Crew Screen Frame", root, new Vector3(2.8f, 2.6f, front + 0.04f), Quaternion.identity, new Vector3(2.4f, 1.5f, 0.08f), ink);
+            Visual("Crew Screen", root, new Vector3(2.8f, 2.6f, front + 0.09f), Quaternion.identity, new Vector3(2.2f, 1.3f, 0.02f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
+            GameObject screenText = new("Crew Screen Text");
+            screenText.transform.SetParent(root, false);
+            screenText.transform.localPosition = new Vector3(2.8f, 2.6f, front + 0.11f);
+            SunkCost.Editor.Look.PropBuilder.Text(screenText, "Text", Vector3.zero, 0.3f, new Color(0.05f, 0.14f, 0.22f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.screen");
+            // The sailing monitor: the console at the tower's foot, the buttons on it.
+            float mz = front + 0.5f;
+            Visual("Monitor Frame", root, new Vector3(0f, 1.6f, mz - 0.06f), Quaternion.identity, new Vector3(1.8f, 1.2f, 0.1f), ink);
+            Visual("Monitor Console", root, new Vector3(0f, 0.5f, mz - 0.1f), Quaternion.identity, new Vector3(1.8f, 1.0f, 0.5f), dark);
+            Visual("Monitor Console Stripe", root, new Vector3(0f, 0.16f, mz + 0.16f), Quaternion.identity, new Vector3(1.8f, 0.26f, 0.02f), trim);
+            GameObject monitor = Block(ShipParts.MonitorName, root, new Vector3(0f, 1.6f, mz), new Vector3(1.6f, 1f, 0.1f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
+            monitor.AddComponent<ShipMonitor>();
+            Block(ShipParts.MonitorButtonSite01Name, root, new Vector3(-0.55f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+                .AddComponent<MonitorButton>().Configure(WorldId.Sea, "Site 01");
+            Block(ShipParts.MonitorButtonHQName, root, new Vector3(0f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+                .AddComponent<MonitorButton>().Configure(WorldId.HQ, "HQ");
+            Block(ShipParts.MonitorButtonEndDayName, root, new Vector3(0.55f, 1.5f, mz + 0.08f), new Vector3(0.45f, 0.3f, 0.08f), button)
+                .AddComponent<MonitorButton>().ConfigureEndDay("End day");
+            Label("MonitorLabel", root, new Vector3(0f, 2.3f, mz + 0.07f), "SITE 01      HQ      END DAY", 0.03f, facingBow: true); // a sibling: the monitor's scale must not stretch it
+            Label(ShipParts.MonitorStatusName, root, new Vector3(0f, 1.85f, mz + 0.07f), string.Empty, 0.035f, facingBow: true);
+            // The roof: rails all round with the gap aft for the HQ's bridge, lamps on the corners.
+            float half = TowerWidth / 2f, back = -DeckLength / 2f;
+            for (float x = -half + 1f; x < half; x += 2f)
+            {
+                SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(x, roof, front - 0.1f)).name = "Roof Rail";
+                if (Mathf.Abs(x) > 2.5f) SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(x, roof, back + 0.1f)).name = "Roof Rail";
+            }
+            for (float z = back + 1f; z < front; z += 2f)
+                foreach (float side in new[] { -1f, 1f })
+                    if (!(side < 0f && z < back + 3.5f)) // the port aft corner opens onto the stair's platform
+                        SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(side * (half - 0.1f), roof, z), Quaternion.Euler(0f, 90f, 0f)).name = "Roof Rail";
+            foreach (float x in new[] { -half + 0.1f, half - 0.1f })
+                SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(x, roof, front - 0.1f)).name = "Roof Lamp";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(half - 0.1f, roof, back + 0.1f)).name = "Roof Lamp";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(-2.1f, roof, back + 0.1f)).name = "Roof Lamp";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(2.1f, roof, back + 0.1f)).name = "Roof Lamp";
+            Visual("Roof Gap Stripe", root, new Vector3(0f, roof + 0.005f, back + 0.3f), Quaternion.identity, new Vector3(4f, 0.01f, 0.5f), SunkCost.Editor.Look.LookMaterials.Hazard());
+            // The roof's furniture, forward: the radar on its mast, the antenna, two funnels, the beacons.
+            Visual("Radar Mast", root, new Vector3(0f, roof + 0.9f, front - 1.4f), Quaternion.identity, new Vector3(0.24f, 1.8f, 0.24f), ink);
+            GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            dome.name = "Radar Dome";
+            dome.transform.SetParent(root, false);
+            dome.transform.localPosition = new Vector3(0f, roof + 2.3f, front - 1.4f);
+            dome.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+            dome.GetComponent<Renderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.FenderBand();
+            Object.DestroyImmediate(dome.GetComponent<Collider>());
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.Antenna(), new Vector3(2.4f, roof, front - 1.2f)).name = "Antenna";
+            foreach (float x in new[] { -2.9f, 2.9f })
+            {
+                Visual("Funnel", root, new Vector3(x, roof + 1.1f, front - 0.9f), Quaternion.identity, new Vector3(1.0f, 2.2f, 1.0f), steel);
+                Visual("Funnel Band", root, new Vector3(x, roof + 1.8f, front - 0.9f), Quaternion.identity, new Vector3(1.04f, 0.3f, 1.04f), trim);
+                Visual("Funnel Cap", root, new Vector3(x, roof + 2.3f, front - 0.9f), Quaternion.identity, new Vector3(1.1f, 0.2f, 1.1f), ink);
+            }
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(half - 0.6f, roof, back + 0.6f)).name = "Beacon";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(-half + 0.6f, roof, front - 0.6f)).name = "Beacon";
+            // The stair down the tower's port side: a platform off the roof's port aft
+            // corner, one straight flight forward down to the deck, railed.
+            float px = -half - 1.5f; // the platform's centre, 3 m wide beside the tower
+            Block("Stair Platform", root, new Vector3(px, roof - 0.15f, back + 1.5f), new Vector3(3f, 0.3f, 3f), dark);
+            Visual("Stair Platform Trim", root, new Vector3(px, roof - 0.28f, back + 1.5f), Quaternion.identity, new Vector3(3.04f, 0.1f, 3.04f), trim);
+            foreach (float z in new[] { back + 0.5f, back + 2.5f }) Block("Stair Platform Post", root, new Vector3(px - 1.3f, roof / 2f, z), new Vector3(0.2f, roof, 0.2f), ink);
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(px - 1.4f, roof, back + 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Platform Rail";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(px, roof, back + 0.1f)).name = "Platform Rail";
+            SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(px - 1.4f, roof, back + 0.1f)).name = "Platform Lamp";
+            float run = StairFoot.z - (back + 3f); // from the platform's forward edge down to the foot
+            GameObject stairs = SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.Stairs(roof, run, 2.6f), new Vector3(px, 0f, StairFoot.z), Quaternion.Euler(0f, 180f, 0f));
+            stairs.name = "Tower Stairs"; // pivot at the foot, rising aft to the platform
+        }
+
+        // The look of the deck (the platform's kit, so the two read as one place):
+        // deck plates, the yellow deck lines of the picture, railings with lamps along
+        // the rails, the round rail and grate about the elevator, the helipad, the
+        // crane and winch at the bow, cargo along the sides out of the paths. Nothing
+        // here is a marker the rules read; the cargo has the kit's colliders.
+        private static void BuildLook(Transform root)
+        {
+            Material deckTile = SunkCost.Editor.Look.LookMaterials.DeckTileWarm();
+            Material trim = SunkCost.Editor.Look.LookMaterials.Trim();
+            Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
+            Material dark = SunkCost.Editor.Look.LookMaterials.PanelDark();
             GameObject look = new("Look");
             look.transform.SetParent(root, false);
-            // Deck plates over the deck, the boarding path striped from the stern gap to the cabin.
-            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(DeckWidth, 0.01f, DeckLength)), deckTile, new Vector3(0f, 0f, 0f), Quaternion.identity);
-            foreach (float x in new[] { -1.1f, 1.1f })
-                Skin(look, "Boarding Stripe", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.2f, 0.012f, 4f)), hazard, new Vector3(x, 0f, -DeckLength / 2f + 2f), Quaternion.identity);
+            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(DeckWidth, 0.01f, DeckLength)), deckTile, Vector3.zero, Quaternion.identity);
+            // Yellow lines: the square about the elevator, the walk from the stair's foot to it and on to the console.
+            DeckLine(look, new Vector3(0f, 0f, 0f), 9f, 9f, trim);
+            DeckLine(look, new Vector3(StairFoot.x, 0f, -7.5f), 2.6f, 7f, trim);
+            DeckLine(look, new Vector3(0f, 0f, -DeckLength / 2f + TowerDepth + 2.5f), 3.4f, 4f, trim);
             // Railings along the rails, a lamp every 4 m, staggered port and starboard.
             GameObject rail = SunkCost.Editor.Look.PropBuilder.Rail(), lamp = SunkCost.Editor.Look.PropBuilder.RailLamp();
             float rx = DeckWidth / 2f - 0.1f, rz = DeckLength / 2f - 0.1f;
@@ -328,56 +437,90 @@ namespace SunkCost.Editor.Prototype
             for (float z = -DeckLength / 2f + 2f; z < DeckLength / 2f; z += 4f)
             {
                 SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(-rx, 0f, z)).name = "Rail Lamp";
-                SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(rx, 0f, z + 2f)).name = "Rail Lamp";
+                if (z + 2f < DeckLength / 2f) SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(rx, 0f, z + 2f)).name = "Rail Lamp";
             }
-            foreach (float x in new[] { -4f, -2f, 0f, 2f, 4f })
+            for (float x = -DeckWidth / 2f + 1f; x < DeckWidth / 2f; x += 2f)
                 SunkCost.Editor.Look.PropBuilder.Place(look, rail, new Vector3(x, 0f, rz)).name = "Rail";
-            foreach (float x in new[] { -4f, -2f, 2f, 4f })
-                SunkCost.Editor.Look.PropBuilder.Place(look, rail, new Vector3(x, 0f, -rz)).name = "Rail";
+            foreach (float side in new[] { -1f, 1f })
+                for (float x = TowerWidth / 2f + 1f; x < DeckWidth / 2f; x += 2f)
+                    SunkCost.Editor.Look.PropBuilder.Place(look, rail, new Vector3(side * x, 0f, -rz)).name = "Rail";
             foreach (float x in new[] { -rx, rx })
                 foreach (float z in new[] { -rz, rz })
                     SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(x, 0f, z)).name = "Rail Lamp";
-            // The wheelhouse on the foredeck: rust plate, lit windows all round, the
-            // door aft, an ink roof with the beacon mast, the antenna, the funnel and a lamp.
-            float hz = DeckLength / 2f + 0.2f + 1.8f; // its centre
-            Skin(look, "Wheelhouse", SunkCost.Editor.Look.MeshKit.Box(new Vector3(8f, 2.9f, 3.6f)), plate, new Vector3(0f, 0f, hz), Quaternion.identity);
-            Skin(look, "Wheelhouse Base", SunkCost.Editor.Look.MeshKit.Box(new Vector3(8.04f, 0.26f, 3.64f)), hazard, new Vector3(0f, 0f, hz), Quaternion.identity);
-            Skin(look, "Windows Aft", SunkCost.Editor.Look.MeshKit.Box(new Vector3(5.2f, 0.8f, 0.06f)), glow, new Vector3(0.9f, 1.7f, hz - 1.83f), Quaternion.identity);
-            Skin(look, "Windows Fore", SunkCost.Editor.Look.MeshKit.Box(new Vector3(6.6f, 0.8f, 0.06f)), glow, new Vector3(0f, 1.7f, hz + 1.83f), Quaternion.identity);
-            foreach (float x in new[] { -4.03f, 4.03f })
-                Skin(look, "Windows Side", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.06f, 0.8f, 2.4f)), glow, new Vector3(x, 1.7f, hz), Quaternion.identity);
-            Skin(look, "Door", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.9f, 2.0f, 0.06f)), ink, new Vector3(-2.8f, 0.13f, hz - 1.83f), Quaternion.identity);
-            Skin(look, "Door Light", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.3f, 0.2f, 0.2f)), SunkCost.Editor.Look.LookMaterials.LampWarm(), new Vector3(-2.8f, 2.3f, hz - 1.9f), Quaternion.identity);
-            Skin(look, "Roof", SunkCost.Editor.Look.MeshKit.Box(new Vector3(8.4f, 0.16f, 4.0f)), ink, new Vector3(0f, 2.9f, hz), Quaternion.identity);
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(0.8f, 3.06f, hz + 0.6f)).name = "Beacon";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Antenna(), new Vector3(3.0f, 3.06f, hz - 0.8f)).name = "Antenna";
-            Skin(look, "Funnel", SunkCost.Editor.Look.MeshKit.Cylinder(0.55f, 2.4f, 14), steel, new Vector3(-2.4f, 3.06f, hz + 0.4f), Quaternion.identity);
-            Skin(look, "Funnel Cap", SunkCost.Editor.Look.MeshKit.Cylinder(0.6f, 0.3f, 14), ink, new Vector3(-2.4f, 5.3f, hz + 0.4f), Quaternion.identity);
-            Skin(look, "Funnel Band", SunkCost.Editor.Look.MeshKit.Cylinder(0.58f, 0.4f, 14), hazard, new Vector3(-2.4f, 4.3f, hz + 0.4f), Quaternion.identity);
-            SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(-3.6f, 3.06f, hz - 1.5f)).name = "Roof Lamp";
-            SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(3.6f, 3.06f, hz - 1.5f)).name = "Roof Lamp";
-            // Cargo: a container along the port side forward, crates starboard forward,
-            // barrels port aft; the spawn points, the cabin, the TV and the path stay clear.
-            GameObject container = SunkCost.Editor.Look.PropBuilder.Container("Grey", 6f);
-            SunkCost.Editor.Look.PropBuilder.Place(look, container, new Vector3(-3.2f, 0f, 9.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Red"), new Vector3(3.6f, 0f, 11.6f)).name = "Crate";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Green"), new Vector3(3.6f, 0f, 9.9f), Quaternion.Euler(0f, 8f, 0f)).name = "Crate";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Yellow"), new Vector3(3.6f, 1.2f, 11.6f), Quaternion.Euler(0f, -12f, 0f)).name = "Crate";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.SmallCrate("Grey"), new Vector3(2.4f, 0f, 12.8f), Quaternion.Euler(0f, 20f, 0f)).name = "Small Crate";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Red"), new Vector3(-4.1f, 0f, -12.4f)).name = "Barrel";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Rust"), new Vector3(-3.3f, 0f, -13.2f)).name = "Barrel";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Red"), new Vector3(-4.1f, 0f, -11.5f)).name = "Barrel";
-            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Vent(), new Vector3(3.6f, 0f, -7f), Quaternion.Euler(0f, -90f, 0f)).name = "Vent";
-            foreach (float x in new[] { -4.3f, 4.3f })
-                foreach (float z in new[] { -14.0f, 14.0f })
-                    SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Bollard(), new Vector3(x, 0f, z)).name = "Bollard";
-            // The company's name on both sides of the hull.
-            foreach (float side in new[] { -1f, 1f })
+            // The round rail about the elevator with its gap at the door (the door looks
+            // to the bow), the grate ring at its foot, four lamps.
+            const float ringR = 3.6f;
+            for (int i = 0; i < 12; i++)
             {
-                GameObject sign = SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.SignBoard(6f, 1.2f), new Vector3(side * (DeckWidth / 2f + 0.08f), -2.4f, -4f), Quaternion.Euler(0f, side * 90f, 0f));
-                sign.name = "Hull Sign";
-                foreach (SunkCost.Look.SignText text in sign.GetComponentsInChildren<SunkCost.Look.SignText>(true))
-                    text.Configure(text.name == "Sub" ? "motto" : "company");
+                float a = i * 30f + 15f;
+                if (a > 60f && a < 120f) continue; // the gap toward +z: the doorway's bearing is 90 degrees
+                float rad = a * Mathf.Deg2Rad;
+                Vector3 at = new(Mathf.Cos(rad) * ringR, 0f, Mathf.Sin(rad) * ringR);
+                SunkCost.Editor.Look.PropBuilder.Place(look, rail, at, Quaternion.Euler(0f, a + 90f, 0f)).name = "Ring Rail";
+            }
+            foreach (float a in new[] { 45f, 135f, 225f, 315f })
+                SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * ringR, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * ringR)).name = "Ring Lamp";
+            GameObject grate = new("Grate Ring");
+            grate.transform.SetParent(look.transform, false);
+            grate.transform.localPosition = new Vector3(0f, 0.012f, 0f);
+            grate.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Ring(3.05f, 0.9f, 32, 4);
+            grate.AddComponent<MeshRenderer>().sharedMaterial = dark;
+            grate.transform.localScale = new Vector3(1f, 0.04f, 1f);
+            // The helipad, starboard aft: an octagon of yellow line with the H.
+            Vector3 pad = new(4.4f, 0f, -6.2f);
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i * 45f + 22.5f;
+                Vector3 mid = pad + new Vector3(Mathf.Cos(a * Mathf.Deg2Rad), 0f, Mathf.Sin(a * Mathf.Deg2Rad)) * 2.9f;
+                Skin(look, "Helipad Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.4f, 0.012f, 0.16f)), trim, mid + new Vector3(0f, 0.011f, 0f), Quaternion.Euler(0f, a + 90f, 0f));
+            }
+            GameObject h = new("Helipad H");
+            h.transform.SetParent(look.transform, false);
+            h.transform.localPosition = pad + new Vector3(0f, 0.03f, 0f);
+            h.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            SunkCost.Editor.Look.PropBuilder.Text(h, "H", Vector3.zero, 2.6f, new Color(0.95f, 0.72f, 0.18f), TextAnchor.MiddleCenter).GetComponent<TextMesh>().text = "H";
+            // The crane at the bow, port, its boom out over the side; the winch drum by it.
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crane(), new Vector3(-5.2f, 0f, 17f), Quaternion.Euler(0f, -90f, 0f)).name = "Crane";
+            Skin(look, "Winch Drum", SunkCost.Editor.Look.MeshKit.Cylinder(0.7f, 1.6f, 14), ink, new Vector3(-1.8f, 0.7f, 18.4f), Quaternion.Euler(0f, 0f, 90f));
+            Skin(look, "Winch Frame", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.0f, 0.3f, 1.2f)), dark, new Vector3(-1.0f, 0f, 18.4f), Quaternion.identity);
+            // Cargo along the sides, clear of the spawns, the cabin's ring, the TV, the
+            // stair, the storage room and the helipad.
+            GameObject container = SunkCost.Editor.Look.PropBuilder.Container("Grey", 6f);
+            SunkCost.Editor.Look.PropBuilder.Place(look, container, new Vector3(6.2f, 0f, 11f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Container("Red", 4f), new Vector3(-6.2f, 0f, 8f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Red"), new Vector3(6.4f, 0f, 3f)).name = "Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Green"), new Vector3(6.4f, 0f, 1.4f), Quaternion.Euler(0f, 8f, 0f)).name = "Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Yellow"), new Vector3(6.4f, 1.2f, 3f), Quaternion.Euler(0f, -12f, 0f)).name = "Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Grey"), new Vector3(-6.4f, 0f, 2f), Quaternion.Euler(0f, 20f, 0f)).name = "Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crate("Navy"), new Vector3(-6.4f, 0f, -6f), Quaternion.Euler(0f, -15f, 0f)).name = "Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.SmallCrate("Grey"), new Vector3(5.2f, 0f, 16.5f), Quaternion.Euler(0f, 20f, 0f)).name = "Small Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.SmallCrate("Red"), new Vector3(3.4f, 0f, 19f), Quaternion.Euler(0f, -30f, 0f)).name = "Small Crate";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Red"), new Vector3(6.6f, 0f, -16f)).name = "Barrel";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Rust"), new Vector3(5.8f, 0f, -16.8f)).name = "Barrel";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Barrel("Red"), new Vector3(6.6f, 0f, -17.6f)).name = "Barrel";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Vent(), new Vector3(6.4f, 0f, 7f), Quaternion.Euler(0f, -90f, 0f)).name = "Vent";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.RopeCoil(), new Vector3(-6.6f, 0f, 14f)).name = "Rope";
+            SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.BottleCage(), new Vector3(6.6f, 0f, -2.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Bottle Cage";
+            foreach (float x in new[] { -7.2f, 7.2f })
+                foreach (float z in new[] { -DeckLength / 2f + 0.8f, DeckLength / 2f - 0.8f })
+                    SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Bollard(), new Vector3(x, 0f, z)).name = "Bollard";
+            foreach (float x in new[] { -7.3f, 7.3f })
+                SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(x, 0f, DeckLength / 2f - 0.7f)).name = "Beacon";
+            // The motto on the storage room's bow wall.
+            GameObject motto = SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.SignBoard(2.4f, 1.4f), new Vector3(3.2f, 0.5f, -10.9f));
+            motto.name = "Motto";
+            foreach (SunkCost.Look.SignText text in motto.GetComponentsInChildren<SunkCost.Look.SignText>(true))
+                text.Configure(text.name == "Sub" ? string.Empty : "quota.side");
+        }
+
+        // A yellow line rectangle painted on the deck, `w` by `d`, about `centre`.
+        private static void DeckLine(GameObject look, Vector3 centre, float w, float d, Material paint)
+        {
+            const float t = 0.14f;
+            foreach (float s in new[] { -1f, 1f })
+            {
+                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(w, 0.012f, t)), paint, centre + new Vector3(0f, 0.011f, s * (d / 2f - t / 2f)), Quaternion.identity);
+                Skin(look, "Deck Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(t, 0.012f, d)), paint, centre + new Vector3(s * (w / 2f - t / 2f), 0.011f, 0f), Quaternion.identity);
             }
         }
 

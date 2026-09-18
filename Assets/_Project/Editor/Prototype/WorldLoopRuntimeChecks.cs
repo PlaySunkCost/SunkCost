@@ -281,15 +281,15 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ"), 6f, "refusal cleared after refusalDisplaySeconds");
             string refusal;
 
-            // D3: the HQ's stair foot over the stern is not the deck. Host on the stair, guest on the deck.
+            // D3: the HQ's landing behind the tower's roof is not the ship. Host on the landing, guest on the deck.
             Vector3 guestDeckEarly = hqShip.FromShipLocal(new Vector3(2.5f, 0f, 4f));
             Command(GuestDir, "{\"id\":{id},\"action\":\"move\",\"position\":{\"x\":" + guestDeckEarly.x + ",\"y\":" + guestDeckEarly.y + ",\"z\":" + guestDeckEarly.z + "}}");
             yield return AwaitReply(GuestDir);
-            Vector3 stairSpot = hqShip.FromShipLocal(new Vector3(0f, 0f, -ShipStubBuilder.DeckLength / 2f - 1.5f));
-            Check(!hqShip.IsSafelyAboard(stairSpot), "D3 the stair foot is not safely aboard");
+            Vector3 stairSpot = hqShip.FromShipLocal(new Vector3(0f, ShipStubBuilder.TowerHeight, -ShipStubBuilder.DeckLength / 2f - 1.5f));
+            Check(!hqShip.IsSafelyAboard(stairSpot), "D3 the HQ's landing is not safely aboard");
             H.ClientMoveLocalPlayerTo(stairSpot); yield return null; yield return null; yield return null;
             refusal = H.ServerSail("Sea");
-            Check(refusal == "refused: Not aboard: " + WorldSceneFlow.DisplayName(HostPlayer().OwnerId), "D3 a passenger on the stair is named: " + refusal);
+            Check(refusal == "refused: Not aboard: " + WorldSceneFlow.DisplayName(HostPlayer().OwnerId), "D3 a passenger on the landing is named: " + refusal);
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
             Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName), "D3 nothing moved: " + H.ShipStatus("HQ"));
 

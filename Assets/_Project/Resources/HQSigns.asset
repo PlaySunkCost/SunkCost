@@ -75,3 +75,15 @@ MonoBehaviour:
     Text: CREW COURT
   - Key: office.sub
     Text: THE COMPANY IS IN
+  - Key: ship.name.sub
+    Text: '- SALVAGE -'
+  - Key: ship.year
+    Text: 2300
+  - Key: ship.bridge
+    Text: "01 \xBB BRIDGE"
+  - Key: ship.bridge.label
+    Text: CAPTAIN / NAVIGATION
+  - Key: ship.screen
+    Text: 'GOOD HAULS
+
+      TODAY :)'

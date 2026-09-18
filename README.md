@@ -149,8 +149,8 @@ naming who is still ashore, otherwise. What you hold or stowed and anything
 lying on the deck sails with you and is at the same spot on the new deck; the
 base resets when the crew comes back. The monitor that chooses the destination
 is the screen at the bow: look at the **Site 01** or **HQ** button and press
-**E**. Everyone must be on the deck itself — the HQ's stairs and their foot do
-not count. Then everyone is held where they stand (look around, no walking or
+**E**. Everyone must be on the ship — the HQ's bridge and its landing do not
+count (the tower's roof and the ship's stair do). Then everyone is held where they stand (look around, no walking or
 items), the ship casts off, pulls away for about four seconds, the screen
 fades, and you fade back in on the stopped ship; at HQ a moment of making fast
 passes before you can move. The

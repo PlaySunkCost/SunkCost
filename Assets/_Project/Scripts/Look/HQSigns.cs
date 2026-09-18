@@ -76,6 +76,11 @@ namespace SunkCost.Look
             { "hq.number.sub", "HQ" },
             { "tower.motto", "GOOD CREWS\nBAD SEAS\nGREAT FINDS" },
             { "court", "CREW COURT" },
+            { "ship.name.sub", "- SALVAGE -" },
+            { "ship.year", "2300" },
+            { "ship.bridge", "01 » BRIDGE" },
+            { "ship.bridge.label", "CAPTAIN / NAVIGATION" },
+            { "ship.screen", "GOOD HAULS\nTODAY :)" },
         };
 
         private static HQSigns loaded;
