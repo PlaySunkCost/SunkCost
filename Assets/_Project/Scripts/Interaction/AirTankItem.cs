@@ -9,8 +9,9 @@ namespace SunkCost.Interaction
     // A small air tank lying on the site (docs/DESIGN.md §3, "Air-restoring
     // items"; Dan, 17 September 2026): pick it up, left click, and half a tank
     // comes back — 50 → 100, 0 → 50, 70 → 100, never past full — and it is an
-    // "Empty air tank" from then on: worth nothing, left click throws it, so
-    // the usual thing is to breathe and toss it. "Full air tank" until then.
+    // "Empty air tank" from then on: worth nothing, left click does nothing, Q
+    // drops it (Dan, 18 September 2026: no throw for an empty one). "Full air
+    // tank" until then, breathed from underwater only — head below the surface.
     // Server-owned: the server checks the holder, refills its PlayerVitals and
     // flips `empty` (a SyncVar); every peer reads it for the name, the use
     // action (IItemTag) and the look (the empty material).
@@ -22,6 +23,8 @@ namespace SunkCost.Interaction
         [SerializeField] private float refillFraction = 0.5f;
         [Tooltip("The look once used; the prefab's own material is the full look.")]
         [SerializeField] private Material emptyMaterial;
+        [Tooltip("The inventory icon once used (the prefab's own icon is the full one).")]
+        [SerializeField] private Texture2D emptyIcon;
         [SerializeField] private Renderer[] tinted;
 
         private readonly SyncVar<bool> empty = new(false);
@@ -30,7 +33,8 @@ namespace SunkCost.Interaction
         public bool IsEmpty => empty.Value;
         public float RefillFraction => refillFraction;
         public string DisplayName => empty.Value ? EmptyName : FullName;
-        public ItemUseAction? UseActionOverride => empty.Value ? ItemUseAction.Throw : ItemUseAction.Breathe;
+        public ItemUseAction? UseActionOverride => empty.Value ? ItemUseAction.None : ItemUseAction.Breathe;
+        public Texture2D IconOverride => empty.Value ? emptyIcon : null;
 
         private void Awake()
         {
@@ -70,6 +74,8 @@ namespace SunkCost.Interaction
             PlayerVitals vitals = player != null ? player.Vitals : null;
             if (vitals == null) { why = "no vitals on the holder"; return false; }
             if (!vitals.ServerSuitOn) { why = "the suit is off"; return false; }
+            PlayerSubmersion submersion = player.GetComponent<PlayerSubmersion>();
+            if (submersion == null || !submersion.IsSubmerged) { why = "not underwater"; return false; } // head below the surface (PlayerInventory refuses first)
             if (vitals.AirFraction >= 1f) { why = "the air is already full"; return false; } // the tank is kept (PlayerInventory refuses first)
             float added = vitals.ServerAddAir(refillFraction);
             empty.Value = true;

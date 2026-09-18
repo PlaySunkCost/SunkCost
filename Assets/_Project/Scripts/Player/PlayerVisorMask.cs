@@ -97,8 +97,9 @@ namespace SunkCost.Player
             float s = height / 1080f;
             float left = SideRimPx(width) + 0.085f * height;   // room for the badge on the left
             float bottom = height - BottomRimPx(height) - 0.045f * height;
-            float rows = 2f * 30f * s + 2f * 26f * s;
-            return new Rect(left, bottom - rows, (60f + 200f + 12f + 60f) * s, rows);
+            float t = s * SunkCost.Player.PlayerHudUI.VisorTextScale;
+            float rows = 2f * 30f * t + 3f * 26f * t; // O2, HP, the marks row, DEPTH, PRESS
+            return new Rect(left, bottom - rows, (60f + 200f + 12f + 60f) * t, rows);
         }
 
         // The compass strip: in the housing let into the top edge (on the frame).

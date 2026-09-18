@@ -304,11 +304,26 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => BoughtTank() != null, 3f, () => "S2 an air tank was spawned");
             CarryableItem bought = BoughtTank();
             yield return Wait(1.2f);
+            // From the chute in the ceiling (Dan, 18 September 2026) down onto the landing mark, somewhere on it.
             Vector3 spot = tankStand.DeliveryPoint.transform.position;
-            Check(Vector3.Distance(new Vector3(bought.transform.position.x, 0f, bought.transform.position.z), new Vector3(spot.x, 0f, spot.z)) < 1.2f && bought.transform.position.y < 0.6f,
-                $"S2 it lies at the delivery spot ({Vector3.Distance(bought.transform.position, spot):0.00} m off, y={bought.transform.position.y:0.00})");
+            float off = Vector3.Distance(new Vector3(bought.transform.position.x, 0f, bought.transform.position.z), new Vector3(spot.x, 0f, spot.z));
+            Check(spot.y > 2.5f && off < 1.2f && bought.transform.position.y < 0.6f, $"S2 it fell from the chute (y={spot.y:0.0}) onto the floor under it ({off:0.00} m off the mark, y={bought.transform.position.y:0.00})");
             Check(bought.CanGrabFromWorld && bought.HolderClientId < 0 && bought.gameObject.scene == WorldScenes.Scene(WorldId.HQ), "S2 loose in the HQ scene, grabbable (" + bought.State + ")");
             Check(bought.DisplayName == AirTankItem.FullName && bought.UseAction == ItemUseAction.Breathe, "S2 it is a " + bought.DisplayName);
+            // Breathing is for underwater (Dan, 18 September 2026): in hand at HQ the
+            // prompt says so and a left click is refused.
+            host.TeleportLocal(bought.transform.position + Vector3.right * 1.0f, host.Yaw); yield return Wait(0.3f);
+            H.ClientLookAtNamed(bought.name); yield return null;
+            yield return Expect(() => host.CurrentTarget == bought, 3f, () => "S2 the dot is on the bought tank");
+            host.Inventory.RequestGrab(bought);
+            yield return Expect(() => bought.HolderClientId == host.OwnerId, 3f, () => "S2 picked up");
+            yield return null;
+            Check(hud.PromptText.Contains("underwater"), "S2 in hand on land the prompt says: " + hud.PromptText);
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Wait(0.5f);
+            Check(!bought.GetComponent<AirTankItem>().IsEmpty && host.Inventory.Refusal.Contains("underwater"), "S2 a breath on land is refused: " + host.Inventory.Refusal);
+            host.Inventory.RequestDrop();
+            yield return Expect(() => bought.HolderClientId < 0, 3f, () => "S2 dropped again");
             Check(Day.Balance == 500 - airTank.Price, $"S2 the pot paid ${airTank.Price}: ${Day.Balance} left");
 
             Heading("S3 — the large tank: an upgrade on the buyer, one only");

@@ -708,6 +708,27 @@ namespace SunkCost.Editor.Prototype
 
             Check(!host.GetComponent<PlayerHudUI>().Visor.On, "V1 the visor is off on the ship");
 
+            // R1b: press the cabin button and step out at once (Dan, 18 September 2026:
+            // "it teleports you back in"): the doors close with everyone free, the
+            // leaver crosses the doorway, the doors turn around and open again, then
+            // close; alone, nobody is aboard when they shut and the ride is cancelled.
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Wait(0.2f);
+            int outSerial = Day.CabinRide.Serial;
+            H.ClientRequestCabin();
+            yield return WaitUntil(() => Day.CabinRide.Serial > outSerial && Day.CabinRide.Stage == CabinRideStage.Sealing, 3f, "R1b the ride starts with the doors closing");
+            Check(!host.TravelLocked && !WorldSceneFlow.RidersLockedDuring(Day.CabinRide), "R1b free to move while the doors close");
+            yield return Wait(0.3f);
+            float closingAt = flow.DeckCabinOpenFraction();
+            Vector3 cabinDoorway = sea.DeckCabin.TransformDirection(Quaternion.Euler(0f, CabinFrame.DeckCabinDoorwayYaw, 0f) * Vector3.forward);
+            host.TeleportLocal(sea.DeckCabin.position + cabinDoorway * 3f + Vector3.up * 0.05f, host.Yaw); // out through the doorway, onto the deck
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Sealing && Day.CabinRide.DoorOpening, 2f, "R1b the crossing turns the doors around");
+            yield return WaitUntil(() => flow.DeckCabinOpenFraction() > closingAt, 2f, "R1b the doors open again at door speed");
+            Check(!host.TravelLocked && !sea.IsInDeckCabin(host.transform.position), "R1b the leaver was not put back inside");
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Cancelled, flow.Settings.CabinSealSeconds * 3f + 3f, "R1b alone and outside when the doors shut: the ride is cancelled");
+            Check(Day.LastRefusal.Text == "Nobody aboard", "R1b the refusal: " + Day.LastRefusal.Text);
+            yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 4f, "R1b the doors open again for the next try");
+
             // R2: down. Sealing closes the deck doors, the suit fade, the car at the top, the descent, doors open at the bottom.
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.2f);
@@ -836,7 +857,12 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestCar();
             yield return WaitUntil(() => Day.CabinRide.Serial > leaverSerial && Day.CabinRide.Stage == CabinRideStage.Sealing, 8f, "R3b up ride sealing");
             host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); // out through the closing doors
-            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Riding, 5f, "R3b the car climbs");
+            // Crossing the closing doors turns them around (Dan, 18 September 2026: no
+            // more being trapped in the tube): the car is back at AtBottom with the
+            // doors opening, then seals again, then climbs without the leaver.
+            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.AtBottom, 3f, "R3b the crossing opens the car's doors again");
+            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.Sealing, 6f, "R3b the doors seal again once open");
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Riding, 8f, "R3b the car climbs");
             yield return WaitUntil(() => !Day.IsRider(host.OwnerId) && Day.Riders.Count == 0, 2f, "R3b the leaver is no longer a rider once the doors shut");
             Check(Day.IsBelow(host.OwnerId), "R3b the leaver is still listed below");
             yield return WaitUntil(() => !Day.CabinRide.Active, 40f, "R3b the empty ride completed");
@@ -1135,9 +1161,15 @@ namespace SunkCost.Editor.Prototype
             Check(Day.ServerCanSail(WorldId.Sea, out string shortWhy), "Z5 the ship may sail out again to try for the rest: " + shortWhy);
             Day.ServerForceCycleForChecks(3, true);
             PayReport lost = Day.ServerPay(sales: 0, quota: 99999);
-            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && lost.Balance == 0 && Day.Balance == 0 && Day.CycleSales == 0 && Day.Day == 0 && !Day.Payday, $"Z5 short at payday is GAME LOST and a reset (had ${lost.Had}, balance ${Day.Balance})");
+            // Short at payday: the run is over — the phase goes to Plank (the walk is
+            // WorldSceneFlow's, the plank matrix; here the day state's API alone) and
+            // the reset comes after it.
+            Check(lost.Lost && !lost.Paid && !lost.Short && lost.Had == 40 && Day.Phase == DayPhase.Plank && Day.Balance == coinValue + 40, $"Z5 short at payday: the run is over, the plank phase (had ${lost.Had}, balance ${Day.Balance} until the reset)");
             yield return null;
-            Check(H.QuotaBoardText().StartsWith("GAME LOST"), "Z5 the board says GAME LOST: " + H.QuotaBoardText().Replace("\n", " | "));
+            Check(H.QuotaBoardText().StartsWith("THE RUN IS OVER"), "Z5 the board says THE RUN IS OVER: " + H.QuotaBoardText().Replace("\n", " | "));
+            Check(!Day.ServerCanSail(WorldId.Sea, out string overWhy) && overWhy == "The run is over", "Z5 no sailing once the run is over: " + overWhy);
+            Day.ServerResetRun();
+            Check(Day.Phase == DayPhase.AtHQ && Day.Balance == 0 && Day.CycleSales == 0 && Day.Day == 0 && !Day.Payday && Day.RunDays == 0, $"Z5 the reset: day 0, $0, phase {Day.Phase}");
             WorldLoopSettings.QuotaOverrideForTests = null;
             SunkCost.Net.SessionInputGate.Resume();
         }

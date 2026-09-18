@@ -104,7 +104,35 @@ namespace SunkCost.Editor.Prototype
 
         // Three-quarter view from 30 degrees above, framed on the renderer bounds,
         // through the scriptable pipeline so URP materials render correctly.
-        private static Texture2D RenderPreview(GameObject prefab, Framing framing)
+        // A second icon for a prefab in another look (the empty air tank): the same
+        // render with a material swapped onto its renderers. Returns the asset.
+        public static Texture2D GenerateVariant(string prefabPath, string iconName, Material material)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Exit Play Mode before generating icons.");
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null) return null;
+            if (!AssetDatabase.IsValidFolder(IconFolder))
+            {
+                string parent = Path.GetDirectoryName(IconFolder).Replace(Path.DirectorySeparatorChar, '/');
+                AssetDatabase.CreateFolder(parent, Path.GetFileName(IconFolder));
+            }
+            string pngPath = IconFolder + "/" + iconName + ".png";
+            Texture2D rendered = RenderPreview(prefab, FramingFor(prefab), instance => { foreach (Renderer r in instance.GetComponentsInChildren<Renderer>(true)) r.sharedMaterial = material; });
+            if (rendered == null) return null;
+            File.WriteAllBytes(pngPath, rendered.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(rendered);
+            AssetDatabase.ImportAsset(pngPath, ImportAssetOptions.ForceSynchronousImport);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(pngPath);
+            bool importChanged = false;
+            if (importer.textureType != TextureImporterType.Default) { importer.textureType = TextureImporterType.Default; importChanged = true; }
+            if (!importer.alphaIsTransparency) { importer.alphaIsTransparency = true; importChanged = true; }
+            if (importer.mipmapEnabled) { importer.mipmapEnabled = false; importChanged = true; }
+            if (importer.maxTextureSize != Size) { importer.maxTextureSize = Size; importChanged = true; }
+            if (importChanged) importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(pngPath);
+        }
+
+        private static Texture2D RenderPreview(GameObject prefab, Framing framing, Action<GameObject> prepare = null)
         {
             var preview = new PreviewRenderUtility();
             try
@@ -120,6 +148,7 @@ namespace SunkCost.Editor.Prototype
                 preview.ambientColor = new Color(0.3f, 0.3f, 0.3f);
 
                 GameObject instance = UnityEngine.Object.Instantiate(prefab);
+                prepare?.Invoke(instance);
                 preview.AddSingleGO(instance);
                 Bounds bounds = RendererBounds(instance);
                 float radius = Mathf.Max(framing.RadiusMeters > 0f ? framing.RadiusMeters : bounds.extents.magnitude, 0.05f);

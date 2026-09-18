@@ -8,6 +8,7 @@ namespace SunkCost.World
         Sailing = 1,
         AtSea = 2,
         DiveInProgress = 3,
-        SailingHome = 4
+        SailingHome = 4,
+        Plank = 5       // the run is lost: the crew walks the plank at HQ, then a fresh run (18 September 2026)
     }
 }

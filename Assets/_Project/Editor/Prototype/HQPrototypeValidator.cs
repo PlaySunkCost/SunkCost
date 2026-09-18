@@ -35,6 +35,10 @@ namespace SunkCost.Editor.Prototype
             CheckLootFixture(scene, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
             if (!HasRoot(scene, HQPrototypeBuilder.ShopRoomName)) errors.Add("Shop Room is missing (18 September 2026).");
+            var planks = new System.Collections.Generic.List<SunkCost.World.HQPlank>();
+            foreach (GameObject root in scene.GetRootGameObjects()) planks.AddRange(root.GetComponentsInChildren<SunkCost.World.HQPlank>(true));
+            if (planks.Count != 1) errors.Add("HQ needs exactly one plank (HQPlank; found " + planks.Count + ").");
+            else if (planks[0].Base == null || planks[0].End == null) errors.Add("The plank needs its Base and End markers.");
             var stands = new System.Collections.Generic.List<SunkCost.Shop.ShopDisplay>();
             foreach (GameObject root in scene.GetRootGameObjects()) stands.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDisplay>(true));
             var catalog = AssetDatabase.LoadAssetAtPath<SunkCost.Shop.ShopCatalog>(ShopSetup.CatalogPath);

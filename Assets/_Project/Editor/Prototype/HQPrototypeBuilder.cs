@@ -277,7 +277,7 @@ namespace SunkCost.Editor.Prototype
         public const string ShopRoomName = "Shop Room";
         public const float ShopRoomWidth = 6f, ShopRoomDepth = 6f; // x span outside the west wall, z span centred on the doorway
         public static readonly Vector3 ShopShelfCentre = new(-6f - ShopRoomWidth + 0.5f, 1.05f, 0f); // the stands stand here, along the far wall
-        public static readonly Vector3 ShopDeliverySpot = new(-6f - ShopRoomWidth + 1.8f, 0.05f, 0f);
+        public static readonly Vector3 ShopDeliverySpot = new(-6f - ShopRoomWidth + 1.8f, 0.05f, 0f); // the landing mark on the floor; the chute is above it
         internal static void CreateShopRoom(Material floor, Material wall)
         {
             GameObject room = new(ShopRoomName);
@@ -291,15 +291,24 @@ namespace SunkCost.Editor.Prototype
             light.transform.SetParent(room.transform);
             light.transform.position = new Vector3(cx, 3.2f, 0f);
             Light l = light.GetComponent<Light>(); l.type = LightType.Point; l.range = 9f; l.intensity = 1.2f;
-            // The delivery spot: a pale disc on the floor in front of the shelves.
-            GameObject delivery = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            delivery.name = SunkCost.Shop.ShopDeliveryPoint.DefaultName;
-            delivery.transform.SetParent(room.transform);
-            delivery.transform.position = ShopDeliverySpot;
-            delivery.transform.localScale = new Vector3(1.2f, 0.02f, 1.2f);
-            Object.DestroyImmediate(delivery.GetComponent<Collider>());
-            delivery.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopDelivery.mat", new Color(0.75f, 0.7f, 0.5f));
-            SunkCost.Shop.ShopDeliveryPoint point = delivery.AddComponent<SunkCost.Shop.ShopDeliveryPoint>();
+            // The landing mark: a pale disc on the floor in front of the shelves; the
+            // chute above it in the ceiling is where a bought item drops from (Dan,
+            // 18 September 2026), landing somewhere on the disc.
+            GameObject landing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            landing.name = "Shop Landing";
+            landing.transform.SetParent(room.transform);
+            landing.transform.position = ShopDeliverySpot;
+            landing.transform.localScale = new Vector3(1.4f, 0.02f, 1.4f);
+            Object.DestroyImmediate(landing.GetComponent<Collider>());
+            landing.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopDelivery.mat", new Color(0.75f, 0.7f, 0.5f));
+            GameObject chute = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chute.name = SunkCost.Shop.ShopDeliveryPoint.DefaultName;
+            chute.transform.SetParent(room.transform);
+            chute.transform.position = new Vector3(ShopDeliverySpot.x, 3.2f, ShopDeliverySpot.z); // its mouth just under the ceiling
+            chute.transform.localScale = new Vector3(0.9f, 0.6f, 0.9f);
+            Object.DestroyImmediate(chute.GetComponent<Collider>()); // an item spawns inside it and falls out
+            chute.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopChute.mat", new Color(0.2f, 0.22f, 0.24f));
+            SunkCost.Shop.ShopDeliveryPoint point = chute.AddComponent<SunkCost.Shop.ShopDeliveryPoint>();
             // Three stands along the far wall: a plinth, a greybox shape of the thing, a label.
             Material plinthMaterial = GetOrCreateMaterial(MaterialPath + "/ShopPlinth.mat", new Color(0.25f, 0.27f, 0.3f));
             Material tankMaterial = GetOrCreateMaterial(DiveLootSetup.AirTankFullMaterialPath, new Color(0.95f, 0.75f, 0.12f)); // the tank prefab's own look
@@ -330,6 +339,7 @@ namespace SunkCost.Editor.Prototype
             GameObject text = new("Label", typeof(TextMesh));
             text.transform.SetParent(stand.transform, false);
             text.transform.localPosition = new Vector3(0f, 1.0f, 0f);
+            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // a TextMesh reads along its +Z: turned away from the viewer (Dan: "text is opposite again")
             TextMesh mesh = text.GetComponent<TextMesh>();
             mesh.characterSize = 0.04f;
             mesh.fontSize = 48;
@@ -486,6 +496,29 @@ namespace SunkCost.Editor.Prototype
             // The gangway tip rests on the pier: stern at pier end + gangway length - the overlap.
             float sternZ = pierStart + PierLength - PierOverlap + ShipStubBuilder.GangwayLength;
             ship.transform.SetPositionAndRotation(new Vector3(0f, 0f, sternZ) - boardingLocal, Quaternion.identity);
+            CreatePlank(dock.transform, plankMaterial, pierStart);
+        }
+
+        // The plank (docs/DESIGN.md §8 "Failure"; Dan, 18 September 2026): a board off
+        // the pier's east side over the water, with a seabed under it so a jumper
+        // lands in the water rather than falling forever. Base and End are markers
+        // (HQPlank) the server places from; the art pass can move the lot.
+        internal static void CreatePlank(Transform dock, Material plankMaterial, float pierStart)
+        {
+            GameObject root = new(SunkCost.World.HQPlank.RootName);
+            root.transform.SetParent(dock);
+            float pierEdgeX = (PlankWidth + 2f) / 2f;
+            float z = pierStart + PierLength / 2f;
+            CreateBlock("Board", new Vector3(pierEdgeX + 1.5f, -0.02f, z), new Vector3(3.2f, 0.08f, 0.7f), plankMaterial, root.transform);
+            Material seabed = GetOrCreateMaterial(MaterialPath + "/PlankSeabed.mat", new Color(0.08f, 0.1f, 0.12f));
+            CreateBlock("Seabed", new Vector3(pierEdgeX + 3f, -3.25f, z), new Vector3(10f, 0.5f, 10f), seabed, root.transform);
+            GameObject baseAt = new("Plank Base");
+            baseAt.transform.SetParent(root.transform);
+            baseAt.transform.SetPositionAndRotation(new Vector3(pierEdgeX + 0.4f, 0.05f, z), Quaternion.Euler(0f, 90f, 0f)); // facing +x, out over the water
+            GameObject endAt = new("Plank End");
+            endAt.transform.SetParent(root.transform);
+            endAt.transform.SetPositionAndRotation(new Vector3(pierEdgeX + 3.0f, 0.05f, z), Quaternion.Euler(0f, 90f, 0f));
+            root.AddComponent<SunkCost.World.HQPlank>().Configure(baseAt.transform, endAt.transform, -1f);
         }
 
         internal static Type FindType(string fullName)

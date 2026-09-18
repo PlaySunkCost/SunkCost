@@ -27,6 +27,7 @@ namespace SunkCost.World
             if (buyer == null) { why = "No player."; return false; }
             if (buyer.IsDead || dayState.IsDead(conn.ClientId)) { why = "The dead buy nothing"; return false; }
             if (transitioning || dayState.Travelling) { why = "Ship travelling"; return false; }
+            if (dayState.Phase == DayPhase.Plank) { why = "The run is over"; return false; }
             Scene hq = WorldScenes.Scene(WorldId.HQ);
             if (currentWorld != WorldId.HQ || !hq.IsValid() || !hq.isLoaded || buyer.gameObject.scene != hq) { why = "The shop is at HQ"; return false; }
             ShopCatalog catalog = ShopCatalog.Resolve();

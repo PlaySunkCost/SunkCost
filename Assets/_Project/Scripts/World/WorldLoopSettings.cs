@@ -29,6 +29,10 @@ namespace SunkCost.World
         [SerializeField] private float payReportSeconds = 8f;
         [Tooltip("Fallback if the parent switch pops on Steam: riders stand still for the ride.")]
         [SerializeField] private bool lockRidersDuringRide;
+        [Tooltip("The plank (a lost run): seconds each jumper gets on the board before being pushed.")]
+        [SerializeField] private float plankTurnSeconds = 10f;
+        [Tooltip("Seconds the 'game is over' card holds before the fresh run.")]
+        [SerializeField] private float runOverCardSeconds = 6f;
 
         [Header("Ship departure (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md)")]
         [Tooltip("Seconds the gangway takes to lift before the ship moves.")]
@@ -65,6 +69,8 @@ namespace SunkCost.World
         public static int? QuotaOverrideForTests;
         public int QuotaPerCycle => QuotaOverrideForTests ?? quotaPerCycle;
         public float PayReportSeconds => payReportSeconds;
+        public float PlankTurnSeconds => plankTurnSeconds;
+        public float RunOverCardSeconds => runOverCardSeconds;
         public bool LockRidersDuringRide => lockRidersDuringRide;
         public float GangwayRaiseSeconds => gangwayRaiseSeconds;
         public float DepartureSeconds => departureSeconds;

@@ -195,6 +195,10 @@ namespace SunkCost.Editor.Prototype
                     throw new InvalidOperationException("Could not copy the basketball prefab to " + AirTankPrefabPath);
                 created = true;
             }
+            // The empty icon is rendered before the prefab is opened for editing.
+            string emptyIconPath = ItemIconGenerator.IconFolder + "/" + AirTankPrefabName + "Empty.png";
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(emptyIconPath) == null && ItemIconGenerator.GenerateVariant(AirTankPrefabPath, AirTankPrefabName + "Empty", emptyMaterial) != null)
+                changes.Add("empty tank icon rendered");
             var local = new List<string>();
             GameObject root = PrefabUtility.LoadPrefabContents(AirTankPrefabPath);
             try
@@ -249,6 +253,14 @@ namespace SunkCost.Editor.Prototype
                     if (empty.objectReferenceValue != emptyMaterial) { empty.objectReferenceValue = emptyMaterial; local.Add("empty material"); }
                     SerializedProperty tinted = serialized.FindProperty("tinted");
                     if (tinted.arraySize != 1 || tinted.GetArrayElementAtIndex(0).objectReferenceValue != renderer) { tinted.arraySize = 1; tinted.GetArrayElementAtIndex(0).objectReferenceValue = renderer; local.Add("tinted"); }
+                    // The empty tank's own inventory icon (Dan, 18 September 2026: the two
+                    // looked the same in the slots): the prefab rendered in the empty look.
+                    SerializedProperty emptyIcon = serialized.FindProperty("emptyIcon");
+                    if (emptyIcon.objectReferenceValue == null)
+                    {
+                        Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(ItemIconGenerator.IconFolder + "/" + AirTankPrefabName + "Empty.png");
+                        if (icon != null) { emptyIcon.objectReferenceValue = icon; local.Add("empty icon"); }
+                    }
                     serialized.ApplyModifiedPropertiesWithoutUndo();
                 }
                 if (created || local.Count > 0) PrefabUtility.SaveAsPrefabAsset(root, AirTankPrefabPath);
