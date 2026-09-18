@@ -28,7 +28,10 @@ namespace SunkCost.Editor.Prototype
         public const float TowerHeight = 6f;    // deck to roof: the HQ's bridge lands on the roof
         public const float TowerWidth = 8f, TowerDepth = 6f;
         public const float VolumeHeight = 9f;   // the aboard and safe-deck volumes reach over the tower's roof
+        public const float WellRadius = 3.3f, WellDepth = 0.6f, PedestalRadius = 2.55f; // the gap round the elevator: a stumble, a jump out
+        public const float RingRadius = 3.6f;   // the round rail about it
         public static readonly Vector3 StairFoot = new(-6f, 0f, -11f); // where the ship's stair meets the deck: the boarding point
+        public const string RoofGateName = "Roof Gate";
 
         [MenuItem("Sunk Cost/Prototype/Create or Update ship stub")]
         public static void CreateOrUpdateFromMenu()
@@ -67,7 +70,9 @@ namespace SunkCost.Editor.Prototype
             {
                 root.AddComponent<ShipParts>();
                 // Deck top at y = 0; the tower's roof at TowerHeight is where the HQ's bridge lands.
-                Block("Deck", root.transform, new Vector3(0f, -DeckThickness / 2f, 0f), new Vector3(DeckWidth, DeckThickness, DeckLength), SunkCost.Editor.Look.LookMaterials.Panel());
+                // The deck is four blocks round the elevator's well (BuildWell) — a hole a
+                // primitive cannot have.
+                BuildDeck(root.transform);
                 BuildHull(root.transform);
                 // The rails are the walls the physics needs; what you see of them is the
                 // look kit's railing placed along them (BuildLook), so these are unseen.
@@ -81,9 +86,9 @@ namespace SunkCost.Editor.Prototype
                 BuildTower(root.transform, button);
                 BuildLook(root.transform);
 
-                Trigger(ShipParts.AboardVolumeName, root.transform, new Vector3(0f, VolumeHeight / 2f, 0f), new Vector3(DeckWidth + 2f, VolumeHeight, DeckLength + 2f));
-                // The deck proper (and the tower's roof over it): where a passenger must stand for the ship to move.
-                Trigger(ShipParts.SafeDeckVolumeName, root.transform, new Vector3(0f, VolumeHeight / 2f, 0f), new Vector3(DeckWidth - 0.4f, VolumeHeight, DeckLength - 0.4f));
+                Trigger(ShipParts.AboardVolumeName, root.transform, new Vector3(0f, (VolumeHeight - 1f) / 2f, 0f), new Vector3(DeckWidth + 2f, VolumeHeight + 1f, DeckLength + 2f));
+                // The deck proper (the tower's roof over it, the well under it): where a passenger must stand for the ship to move.
+                Trigger(ShipParts.SafeDeckVolumeName, root.transform, new Vector3(0f, (VolumeHeight - 1f) / 2f, 0f), new Vector3(DeckWidth - 0.4f, VolumeHeight + 1f, DeckLength - 0.4f));
                 // The straight way out: the bow direction, away from the dock at the stern.
                 GameObject direction = new(ShipParts.DepartureDirectionName);
                 direction.transform.SetParent(root.transform, false);
@@ -95,7 +100,14 @@ namespace SunkCost.Editor.Prototype
                 // The deck cabin is the same glass elevator as DiveSite01's car, docked
                 // (docs/DESIGN.md: "the glass elevator") — built from the shared round-cabin
                 // geometry rather than a plain box, visual shell only (see DeckCabinBuilder).
-                DeckCabinBuilder.Build(root.transform, Vector3.zero, deck, rail, glass, button); // dead centre, like the picture
+                // The tube (Dan's picture, 19 September 2026): teal glass in an ink frame, a
+                // dark cap ring with a glowing band and the beacon on top, a hazard band at
+                // the foot, lit inside. The same glass as the car and the shaft, tinted.
+                glass.SetColor("_BaseColor", new Color(0.55f, 0.85f, 0.9f, 0.35f));
+                if (glass.HasProperty("_Color")) glass.SetColor("_Color", new Color(0.55f, 0.85f, 0.9f, 0.35f));
+                EditorUtility.SetDirty(glass);
+                GameObject cabin = DeckCabinBuilder.Build(root.transform, Vector3.zero, SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, button); // dead centre, like the picture
+                DressCabin(cabin.transform);
 
                 BuildStorageRoom(root.transform, SunkCost.Editor.Look.LookMaterials.PanelDark(), tape);
                 BuildTv(root.transform, SunkCost.Editor.Look.LookMaterials.Ink(), screen);
@@ -378,6 +390,12 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(-2.1f, roof, back + 0.1f)).name = "Roof Lamp";
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, lamp, new Vector3(2.1f, roof, back + 0.1f)).name = "Roof Lamp";
             Visual("Roof Gap Stripe", root, new Vector3(0f, roof + 0.005f, back + 0.3f), Quaternion.identity, new Vector3(4f, 0.01f, 0.5f), SunkCost.Editor.Look.LookMaterials.Hazard());
+            // The gate across the gap: rails on at sea (a 6 m drop otherwise), off at the
+            // HQ mooring where the bridge meets it (HQPlatformBuilder.Dock turns it off).
+            GameObject gate = new(RoofGateName);
+            gate.transform.SetParent(root, false);
+            foreach (float x in new[] { -1f, 1f })
+                SunkCost.Editor.Look.PropBuilder.Place(gate, rail, new Vector3(x, roof, back + 0.1f)).name = "Gate Rail";
             // The roof's furniture, forward: the radar on its mast, the antenna, two funnels, the beacons.
             Visual("Radar Mast", root, new Vector3(0f, roof + 0.9f, front - 1.4f), Quaternion.identity, new Vector3(0.24f, 1.8f, 0.24f), ink);
             GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -423,7 +441,12 @@ namespace SunkCost.Editor.Prototype
             Material dark = SunkCost.Editor.Look.LookMaterials.PanelDark();
             GameObject look = new("Look");
             look.transform.SetParent(root, false);
-            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(DeckWidth, 0.01f, DeckLength)), deckTile, Vector3.zero, Quaternion.identity);
+            // Deck plates in four pieces round the well (the well's rim is plated by BuildDeck).
+            float wellHalf = WellRadius, nz = (wellHalf + DeckLength / 2f) / 2f, nd = DeckLength / 2f - wellHalf, sx = (wellHalf + DeckWidth / 2f) / 2f, sw = DeckWidth / 2f - wellHalf;
+            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(DeckWidth, 0.01f, nd)), deckTile, new Vector3(0f, 0f, nz), Quaternion.identity);
+            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(DeckWidth, 0.01f, nd)), deckTile, new Vector3(0f, 0f, -nz), Quaternion.identity);
+            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(sw, 0.01f, wellHalf * 2f)), deckTile, new Vector3(-sx, 0f, 0f), Quaternion.identity);
+            Skin(look, "Deck Plates", SunkCost.Editor.Look.MeshKit.Box(new Vector3(sw, 0.01f, wellHalf * 2f)), deckTile, new Vector3(sx, 0f, 0f), Quaternion.identity);
             // Yellow lines: the square about the elevator, the walk from the stair's foot to it and on to the console.
             DeckLine(look, new Vector3(0f, 0f, 0f), 9f, 9f, trim);
             DeckLine(look, new Vector3(StairFoot.x, 0f, -7.5f), 2.6f, 7f, trim);
@@ -447,32 +470,18 @@ namespace SunkCost.Editor.Prototype
             foreach (float x in new[] { -rx, rx })
                 foreach (float z in new[] { -rz, rz })
                     SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(x, 0f, z)).name = "Rail Lamp";
-            // The round rail about the elevator with its gap at the door (the door looks
-            // to the bow), the grate ring at its foot, four lamps.
-            const float ringR = 3.6f;
-            for (int i = 0; i < 12; i++)
-            {
-                float a = i * 30f + 15f;
-                if (a > 60f && a < 120f) continue; // the gap toward +z: the doorway's bearing is 90 degrees
-                float rad = a * Mathf.Deg2Rad;
-                Vector3 at = new(Mathf.Cos(rad) * ringR, 0f, Mathf.Sin(rad) * ringR);
-                SunkCost.Editor.Look.PropBuilder.Place(look, rail, at, Quaternion.Euler(0f, a + 90f, 0f)).name = "Ring Rail";
-            }
+            // The round rail about the elevator's well, a gap at the door's side (the door
+            // looks to the bow) where the grate crosses the well; four lamps on it.
+            RoundRail(look, RingRadius, 90f, 24f);
             foreach (float a in new[] { 45f, 135f, 225f, 315f })
-                SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * ringR, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * ringR)).name = "Ring Lamp";
-            GameObject grate = new("Grate Ring");
-            grate.transform.SetParent(look.transform, false);
-            grate.transform.localPosition = new Vector3(0f, 0.012f, 0f);
-            grate.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Ring(3.05f, 0.9f, 32, 4);
-            grate.AddComponent<MeshRenderer>().sharedMaterial = dark;
-            grate.transform.localScale = new Vector3(1f, 0.04f, 1f);
+                SunkCost.Editor.Look.PropBuilder.Place(look, lamp, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * RingRadius, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * RingRadius)).name = "Ring Lamp";
             // The helipad, starboard aft: an octagon of yellow line with the H.
             Vector3 pad = new(4.4f, 0f, -6.2f);
             for (int i = 0; i < 8; i++)
             {
                 float a = i * 45f + 22.5f;
                 Vector3 mid = pad + new Vector3(Mathf.Cos(a * Mathf.Deg2Rad), 0f, Mathf.Sin(a * Mathf.Deg2Rad)) * 2.9f;
-                Skin(look, "Helipad Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.4f, 0.012f, 0.16f)), trim, mid + new Vector3(0f, 0.011f, 0f), Quaternion.Euler(0f, a + 90f, 0f));
+                Skin(look, "Helipad Line", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.4f, 0.012f, 0.16f)), trim, mid + new Vector3(0f, 0.011f, 0f), Quaternion.Euler(0f, -a + 90f, 0f)); // X along the tangent
             }
             GameObject h = new("Helipad H");
             h.transform.SetParent(look.transform, false);
@@ -513,6 +522,139 @@ namespace SunkCost.Editor.Prototype
                 text.Configure(text.name == "Sub" ? string.Empty : "quota.side");
         }
 
+        // The deck: four blocks round a square hole, and in the hole the well — a round
+        // gap 0.6 m deep about the elevator's pedestal (Dan, 19 September 2026: "a small
+        // gap that players could fall to", the rail round it so they don't). Its rim
+        // is a plated square-with-a-round-hole mesh; its floor, wall and pedestal have
+        // colliders, so a fall is a stumble and a jump out.
+        private static void BuildDeck(Transform root)
+        {
+            Material plate = SunkCost.Editor.Look.LookMaterials.Panel();
+            Material dark = SunkCost.Editor.Look.LookMaterials.PanelDark();
+            Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
+            float h = WellRadius, y = -DeckThickness / 2f;
+            float nz = (h + DeckLength / 2f) / 2f, nd = DeckLength / 2f - h, sx = (h + DeckWidth / 2f) / 2f, sw = DeckWidth / 2f - h;
+            Block("Deck N", root, new Vector3(0f, y, nz), new Vector3(DeckWidth, DeckThickness, nd), plate);
+            Block("Deck S", root, new Vector3(0f, y, -nz), new Vector3(DeckWidth, DeckThickness, nd), plate);
+            Block("Deck W", root, new Vector3(-sx, y, 0f), new Vector3(sw, DeckThickness, h * 2f), plate);
+            Block("Deck E", root, new Vector3(sx, y, 0f), new Vector3(sw, DeckThickness, h * 2f), plate);
+            // The rim: the square's corners plated up to the round hole, walkable.
+            GameObject rim = new("Well Rim");
+            rim.transform.SetParent(root, false);
+            rim.transform.localPosition = new Vector3(0f, 0.005f, 0f);
+            Mesh annulus = SquareAnnulus(WellRadius, WellRadius, 40);
+            rim.AddComponent<MeshFilter>().sharedMesh = annulus;
+            rim.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.DeckTileWarm();
+            rim.AddComponent<MeshCollider>().sharedMesh = annulus;
+            GameObject rimUnder = new("Well Rim Under"); // the square's corners are open under the rim: fill them
+            rimUnder.transform.SetParent(root, false);
+            rimUnder.transform.localPosition = new Vector3(0f, -DeckThickness, 0f);
+            rimUnder.AddComponent<MeshFilter>().sharedMesh = annulus;
+            rimUnder.AddComponent<MeshRenderer>().sharedMaterial = plate;
+            // The well: floor, wall (24 panels, each a wall the physics knows), the pedestal the tube stands on.
+            GameObject floor = new("Well Floor");
+            floor.transform.SetParent(root, false);
+            floor.transform.localPosition = new Vector3(0f, -WellDepth - 0.1f, 0f);
+            Mesh floorMesh = SunkCost.Editor.Look.MeshKit.Cylinder(WellRadius + 0.05f, 0.1f, 32);
+            floor.AddComponent<MeshFilter>().sharedMesh = floorMesh;
+            floor.AddComponent<MeshRenderer>().sharedMaterial = dark;
+            floor.AddComponent<MeshCollider>().sharedMesh = floorMesh;
+            for (int i = 0; i < 24; i++)
+            {
+                float a = i * 15f, rad = a * Mathf.Deg2Rad;
+                GameObject wall = Block("Well Wall", root, new Vector3(Mathf.Cos(rad) * (WellRadius + 0.02f), -WellDepth / 2f, Mathf.Sin(rad) * (WellRadius + 0.02f)), new Vector3(0.08f, WellDepth, 0.9f), ink);
+                wall.transform.localRotation = Quaternion.Euler(0f, -a, 0f);
+            }
+            GameObject pedestal = new("Pedestal");
+            pedestal.transform.SetParent(root, false);
+            pedestal.transform.localPosition = new Vector3(0f, -WellDepth, 0f);
+            Mesh pedestalMesh = SunkCost.Editor.Look.MeshKit.Cylinder(PedestalRadius, WellDepth, 32);
+            pedestal.AddComponent<MeshFilter>().sharedMesh = pedestalMesh;
+            pedestal.AddComponent<MeshRenderer>().sharedMaterial = ink;
+            pedestal.AddComponent<MeshCollider>().sharedMesh = pedestalMesh;
+            Visual("Pedestal Band", root, new Vector3(0f, -0.14f, 0f), Quaternion.identity, new Vector3(PedestalRadius * 2f + 0.04f, 0.12f, PedestalRadius * 2f + 0.04f), SunkCost.Editor.Look.LookMaterials.Hazard(), cylinder: true);
+            // The grate across the well at the door (the doorway looks to +z).
+            Block("Well Grate", root, new Vector3(0f, -0.03f, (PedestalRadius + WellRadius) / 2f), new Vector3(2.2f, 0.06f, WellRadius - PedestalRadius + 0.3f), dark);
+            for (int i = 0; i < 5; i++)
+                Visual("Grate Slat", root, new Vector3(-0.8f + i * 0.4f, 0.005f, (PedestalRadius + WellRadius) / 2f), Quaternion.identity, new Vector3(0.05f, 0.02f, WellRadius - PedestalRadius + 0.2f), ink);
+            // A lamp in the well: warm light up the tube's foot.
+            Light lamp = new GameObject("Well Light").AddComponent<Light>();
+            lamp.transform.SetParent(root, false);
+            lamp.transform.localPosition = new Vector3(0f, -0.2f, -WellRadius + 0.4f);
+            lamp.lightmapBakeType = LightmapBakeType.Realtime; lamp.type = LightType.Point; lamp.range = 5f; lamp.intensity = 2.5f; lamp.color = new Color(1f, 0.7f, 0.4f); lamp.shadows = LightShadows.None;
+        }
+
+        // A flat square of half-width `half` with a round hole of `inner` radius, its
+        // normal up, UVs in metres (the kit's materials tile by the metre).
+        private static Mesh SquareAnnulus(float inner, float half, int segments)
+        {
+            var v = new System.Collections.Generic.List<Vector3>(); var uv = new System.Collections.Generic.List<Vector2>(); var t = new System.Collections.Generic.List<int>();
+            for (int i = 0; i <= segments; i++)
+            {
+                float a = i / (float)segments * Mathf.PI * 2f;
+                Vector3 dir = new(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                float reach = half / Mathf.Max(Mathf.Abs(dir.x), Mathf.Abs(dir.z));
+                Vector3 pin = dir * inner, pout = dir * reach;
+                v.Add(pin); uv.Add(new Vector2(pin.x, pin.z));
+                v.Add(pout); uv.Add(new Vector2(pout.x, pout.z));
+            }
+            for (int i = 0; i < segments; i++)
+            {
+                int a = i * 2, b = i * 2 + 2;
+                t.Add(a); t.Add(b); t.Add(b + 1);
+                t.Add(a); t.Add(b + 1); t.Add(a + 1);
+            }
+            Mesh m = new() { name = "WellRim" };
+            m.SetVertices(v); m.SetUVs(0, uv); m.SetTriangles(t, 0); m.RecalculateNormals(); m.RecalculateBounds();
+            return m;
+        }
+
+        // A round railing of radius `r` about the origin, posts every 22.5 degrees,
+        // a gap of `gapHalfDeg` either side of `gapCentreDeg`; every piece a wall the
+        // physics knows.
+        private static void RoundRail(GameObject look, float r, float gapCentreDeg, float gapHalfDeg)
+        {
+            Material ink = SunkCost.Editor.Look.LookMaterials.Ink(), hazard = SunkCost.Editor.Look.LookMaterials.Hazard();
+            const int posts = 16;
+            float step = 360f / posts;
+            bool inGap(float deg) => Mathf.Abs(Mathf.DeltaAngle(deg, gapCentreDeg)) < gapHalfDeg;
+            for (int i = 0; i < posts; i++)
+            {
+                float a = i * step, mid = a + step / 2f;
+                if (Mathf.Abs(Mathf.DeltaAngle(a, gapCentreDeg)) >= gapHalfDeg - step / 2f) // the posts either side of the gap stay
+                    Skin(look, "Ring Post", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.18f, 1.2f, 0.18f)), ink, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * r), Quaternion.Euler(0f, -a, 0f));
+                if (inGap(mid)) continue;
+                float chord = 2f * r * Mathf.Sin(step / 2f * Mathf.Deg2Rad);
+                Vector3 at = new(Mathf.Cos(mid * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(mid * Mathf.Deg2Rad) * r);
+                Quaternion rot = Quaternion.Euler(0f, -mid + 90f, 0f); // the piece's X runs along the tangent
+                GameObject piece = new("Ring Rail");
+                piece.transform.SetParent(look.transform, false);
+                piece.transform.localPosition = at; piece.transform.localRotation = rot;
+                Skin(piece, "Top Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.16f, 0.16f)), ink, new Vector3(0f, 1.08f, 0f), Quaternion.identity);
+                Skin(piece, "Mid Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.08f, 0.08f)), ink, new Vector3(0f, 0.6f, 0f), Quaternion.identity);
+                Skin(piece, "Kick Plate", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.28f, 0.06f)), hazard, Vector3.zero, Quaternion.identity);
+                BoxCollider col = piece.AddComponent<BoxCollider>();
+                col.center = new Vector3(0f, 0.62f, 0f); col.size = new Vector3(chord + 0.1f, 1.24f, 0.2f);
+            }
+        }
+
+        // The tube's dressing over the shared round cabin: the cap ring with its glow
+        // band and beacon, the frame's foot band, a light inside.
+        private static void DressCabin(Transform cabin)
+        {
+            Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
+            const float top = 3.5f, radius = 2.5f; // DeckCabinBuilder's interior height and the car's radius
+            Visual("Cap Ring", cabin, new Vector3(0f, top, 0f), Quaternion.identity, new Vector3(radius * 2f + 0.5f, 0.36f, radius * 2f + 0.5f), ink, cylinder: true);
+            Visual("Cap Glow", cabin, new Vector3(0f, top + 0.36f, 0f), Quaternion.identity, new Vector3(radius * 2f + 0.3f, 0.1f, radius * 2f + 0.3f), SunkCost.Editor.Look.LookMaterials.LampWarm(), cylinder: true);
+            Visual("Cap Top", cabin, new Vector3(0f, top + 0.46f, 0f), Quaternion.identity, new Vector3(radius * 2f - 0.2f, 0.3f, radius * 2f - 0.2f), ink, cylinder: true);
+            SunkCost.Editor.Look.PropBuilder.Place(cabin.gameObject, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(0f, top + 0.76f, 0f)).name = "Tube Beacon";
+            Visual("Foot Band", cabin, new Vector3(0f, 0.1f, 0f), Quaternion.identity, new Vector3(radius * 2f + 0.16f, 0.2f, radius * 2f + 0.16f), SunkCost.Editor.Look.LookMaterials.Hazard(), cylinder: true);
+            Light inside = new GameObject("Tube Light").AddComponent<Light>();
+            inside.transform.SetParent(cabin, false);
+            inside.transform.localPosition = new Vector3(0f, top - 0.4f, 0f);
+            inside.lightmapBakeType = LightmapBakeType.Realtime; inside.type = LightType.Point; inside.range = 8f; inside.intensity = 8f; inside.color = new Color(0.75f, 0.95f, 1f); inside.shadows = LightShadows.None;
+        }
+
         // A yellow line rectangle painted on the deck, `w` by `d`, about `centre`.
         private static void DeckLine(GameObject look, Vector3 centre, float w, float d, Material paint)
         {
@@ -541,10 +683,15 @@ namespace SunkCost.Editor.Prototype
             Object.DestroyImmediate(block.GetComponent<MeshFilter>());
         }
 
-        private static void Visual(string name, Transform parent, Vector3 localPosition, Quaternion localRotation, Vector3 scale, Material material)
+        private static void Visual(string name, Transform parent, Vector3 localPosition, Quaternion localRotation, Vector3 scale, Material material, bool cylinder = false)
         {
-            GameObject block = Block(name, parent, localPosition, scale, material);
+            GameObject block = cylinder ? GameObject.CreatePrimitive(PrimitiveType.Cylinder) : GameObject.CreatePrimitive(PrimitiveType.Cube);
+            block.name = name;
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
             block.transform.localRotation = localRotation;
+            block.transform.localScale = cylinder ? new Vector3(scale.x, scale.y / 2f, scale.z) : scale; // a primitive cylinder is 2 units tall
+            block.GetComponent<Renderer>().sharedMaterial = material;
             Object.DestroyImmediate(block.GetComponent<Collider>());
         }
 

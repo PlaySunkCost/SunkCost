@@ -27,6 +27,8 @@ namespace SunkCost.Editor.Look
             Shoot("tower", new Vector3(-40f, -4.4f, -34f), new Vector3(-44f, -1f, -16f), 70f);
             Shoot("deck", new Vector3(-44f, -4.4f, -50f), new Vector3(-44f, -4f, -20f), 75f);
             Shoot("console", new Vector3(-43f, -4.4f, -24f), new Vector3(-44f, -4.4f, -20.5f), 60f); // on the deck, at the tower's foot
+            Shoot("well", new Vector3(-40f, -4.2f, -30f), new Vector3(-44f, -6.2f, -35f), 65f); // the elevator's well and its rail
+            Shoot("hq-north", new Vector3(-10f, 8f, -6f), new Vector3(8f, 4f, 18f), 60f); // the roofs' back rail
             Shoot("cabin-button", new Vector3(-44.6f, -4.4f, -35.6f), new Vector3(-41.7f, -4.9f, -36.7f), 55f); // inside the deck cabin, the button on its wall
             Shoot("ship", new Vector3(-70f, 6f, -80f), new Vector3(-44f, -4f, -34f), 60f);
             Shoot("plank", new Vector3(24f, 1.7f, -10f), new Vector3(32f, 0.2f, -16f), 70f);

@@ -231,7 +231,7 @@ namespace SunkCost.Sites
         // anything beyond a smoke test.
         private static ElevatorController CreateElevator(Vector3 topAnchorPosition, Vector3 bottomAnchorPosition, Vector3 playerSpawnPosition, Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings, out float doorwayBearingDegOut)
         {
-            GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(floor, frame, glass, panelAccent, settings);
+            GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, panelAccent, settings); // the tube's look (Dan, 19 September 2026)
 
             // The doorway must face the spawn the dev player actually uses, not a fixed
             // bearing — otherwise moving the spawn silently strands the door on the wrong

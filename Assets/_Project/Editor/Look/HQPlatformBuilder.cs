@@ -160,18 +160,23 @@ namespace SunkCost.Editor.Look
                 PropBuilder.Place(root, rail, new Vector3(x, 0f, -DeckD / 2f + 0.15f)).name = "Rail S";
                 PropBuilder.Place(root, lamp, new Vector3(x - 1f, 0f, -DeckD / 2f + 0.15f)).name = "Rail Lamp";
             }
-            for (float z = -DeckD / 2f + 1f; z < DeckD / 2f - 6f; z += 2f)
+            // Rails everywhere (Dan, 19 September 2026: nobody falls off the HQ): the
+            // whole west and east rims, the only gaps the bridge and the plank's board.
+            for (float z = -DeckD / 2f + 1f; z < DeckD / 2f; z += 2f)
             {
-                if (z > -14.5f && z < -9.5f) continue;
+                if (z > -14.5f && z < -9.5f) continue; // the bridge
                 PropBuilder.Place(root, rail, new Vector3(-DeckW / 2f + 0.15f, 0f, z), Quaternion.Euler(0f, 90f, 0f)).name = "Rail W";
-                PropBuilder.Place(root, lamp, new Vector3(-DeckW / 2f + 0.15f, 0f, z - 1f)).name = "Rail Lamp";
+                if (z < DeckD / 2f - 6f) PropBuilder.Place(root, lamp, new Vector3(-DeckW / 2f + 0.15f, 0f, z - 1f)).name = "Rail Lamp";
             }
-            for (float z = -DeckD / 2f + 1f; z < DeckD / 2f - 6f; z += 2f)
+            for (float z = -DeckD / 2f + 1f; z < DeckD / 2f; z += 2f)
             {
-                if (z < -13.5f) continue;
+                if (z < -13.5f) continue; // the plank's gap, closed below to the board's width
                 PropBuilder.Place(root, rail, new Vector3(DeckW / 2f - 0.15f, 0f, z), Quaternion.Euler(0f, 90f, 0f)).name = "Rail E";
-                PropBuilder.Place(root, lamp, new Vector3(DeckW / 2f - 0.15f, 0f, z - 1f)).name = "Rail Lamp";
+                if (z < DeckD / 2f - 6f) PropBuilder.Place(root, lamp, new Vector3(DeckW / 2f - 0.15f, 0f, z - 1f)).name = "Rail Lamp";
             }
+            GameObject shortRail = PropBuilder.RailShort();
+            PropBuilder.Place(root, shortRail, new Vector3(DeckW / 2f - 0.15f, 0f, PlankBase.z - 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Rail E Plank";
+            PropBuilder.Place(root, shortRail, new Vector3(DeckW / 2f - 0.15f, 0f, PlankBase.z + 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Rail E Plank";
             // The rim's cable trays under the rails and the ladders down two legs.
             foreach (float x in new[] { -20f, 0f, 20f })
                 PropBuilder.Place(root, PropBuilder.CableTray(18f), new Vector3(x, -0.4f, -DeckD / 2f - 0.3f)).name = "Cable Tray";
@@ -284,7 +289,9 @@ namespace SunkCost.Editor.Look
                 PropBuilder.Place(root, lampRow6, new Vector3(c.x, 3.7f, BoothZ - 3.35f)).name = "Fascia Lamps";
             GameObject rail = PropBuilder.Rail();
             for (float x = -21f; x < 26f; x += 2f)
-                if (x < -18f || x > -14f) PropBuilder.Place(root, rail, new Vector3(x, 5.5f, BoothZ - 3.3f)).name = "Roof Rail";
+                PropBuilder.Place(root, rail, new Vector3(x, 5.5f, BoothZ - 3.3f)).name = "Roof Rail";
+            for (float x = -21f; x < 21f; x += 2f) // the roofs' back edge, over the sea (Dan: nobody falls off the HQ)
+                PropBuilder.Place(root, rail, new Vector3(x, 5.5f, DeckD / 2f - 0.15f)).name = "Roof Rail Back";
             PropBuilder.Place(root, rail, new Vector3(PickupBoothCentre.x + 2.2f, PickupFloorY, 11.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Landing Rail W"; // nobody falls off the landing (Dan)
             GameObject roofLamp = PropBuilder.RailLamp();
             for (float x = -22f; x < 27f; x += 4f)
@@ -597,7 +604,7 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, cYellow, new Vector3(CheckinBoothCentre.x + 0.5f, roof, BoothZ + 0.2f)).name = "Container";
             PropBuilder.Place(root, cRed, new Vector3(CheckinBoothCentre.x + 0.5f, roof + 2.6f, BoothZ + 0.2f), Quaternion.Euler(0f, 4f, 0f)).name = "Container";
             PropBuilder.Place(root, cGrey, new Vector3(22f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
-            PropBuilder.Place(root, cGreen, new Vector3(-26.5f, 0f, 9.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Container"; // by the west rail, off the shop fronts
+            PropBuilder.Place(root, cGreen, new Vector3(26.5f, 0f, 0.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Container"; // by the east rail, off every shop front (Dan, 19 September 2026)
             // Tanks and a long pipe run across the roofs, dishes, and the rim's glow strip.
             foreach (float x in new[] { UpgradesBoothCentre.x + 3.2f, CheckinBoothCentre.x - 2.4f })
             {
@@ -688,6 +695,8 @@ namespace SunkCost.Editor.Look
             float sternZ = -SunkCost.Editor.Prototype.ShipStubBuilder.DeckLength / 2f;
             float sternWorldZ = BridgeEnd.z - LandingW / 2f - 0.05f; // the tower's aft face against the landing's edge
             ship.transform.SetPositionAndRotation(new Vector3(BridgeEnd.x, ShipDeckY, sternWorldZ + sternZ), Quaternion.Euler(0f, 180f, 0f)); // yaw 180: the stern (local -z) toward the landing, the bow south
+            Transform gate = ship.transform.Find(SunkCost.Editor.Prototype.ShipStubBuilder.RoofGateName);
+            if (gate != null) gate.gameObject.SetActive(false); // moored: the bridge meets the gap; at sea the gate stays up
         }
 
         private static void Plank(GameObject root)

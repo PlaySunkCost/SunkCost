@@ -50,6 +50,17 @@ namespace SunkCost.Editor.Look
             col.center = new Vector3(0f, 0.62f, 0f); col.size = new Vector3(2f, 1.24f, 0.2f);
         });
 
+        // A one-metre piece of the same railing, for closing the odd gap.
+        public static GameObject RailShort() => Prefab("Rail1m", root =>
+        {
+            foreach (float x in new[] { -0.4f, 0.4f }) Part(root, "Post", MeshKit.Box(new Vector3(0.18f, 1.2f, 0.18f)), LookMaterials.Ink(), new Vector3(x, 0f, 0f));
+            Part(root, "Top Rail", MeshKit.Box(new Vector3(1f, 0.16f, 0.16f)), LookMaterials.Ink(), new Vector3(0f, 1.08f, 0f));
+            Part(root, "Mid Rail", MeshKit.Box(new Vector3(1f, 0.08f, 0.08f)), LookMaterials.Ink(), new Vector3(0f, 0.6f, 0f));
+            Part(root, "Kick Plate", MeshKit.Box(new Vector3(1f, 0.28f, 0.06f)), LookMaterials.Hazard(), Vector3.zero);
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.62f, 0f); col.size = new Vector3(1f, 1.24f, 0.2f);
+        });
+
         // A rail lamp: a fat post with a glowing orange cube on top and a warm
         // light — the picture's rim lights, every few metres.
         public static GameObject RailLamp() => Prefab("RailLamp", root =>
