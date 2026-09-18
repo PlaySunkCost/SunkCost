@@ -208,7 +208,7 @@ namespace SunkCost.Editor.Look
             GameObject longString = PropBuilder.LightString(span.magnitude);
             PropBuilder.Place(root, longString, (towerW + towerE) / 2f + new Vector3(0f, 8.6f, 0f), Quaternion.Euler(0f, -Mathf.Atan2(span.z, span.x) * Mathf.Rad2Deg, 0f)).name = "Light String";
             // A string from the court's north-east lamp to a pole by the booths.
-            Vector3 poleAt = new(14f, 0f, 9.2f), lampAt = new(Court.xMax + 1.5f, 0f, Court.yMax + 1.5f);
+            Vector3 poleAt = new(14f, 0f, 6.4f), lampAt = new(Court.xMax + 1.5f, 0f, Court.yMax + 1.5f);
             PropBuilder.Place(root, PropBuilder.StringPole(), poleAt).name = "String Pole";
             Vector3 run = poleAt - lampAt;
             PropBuilder.Place(root, PropBuilder.LightString(run.magnitude), (poleAt + lampAt) / 2f + new Vector3(0f, 4.0f, 0f), Quaternion.Euler(0f, -Mathf.Atan2(run.z, run.x) * Mathf.Rad2Deg, 0f)).name = "Light String";
@@ -294,7 +294,7 @@ namespace SunkCost.Editor.Look
                     PropBuilder.Place(root, roofLamp, new Vector3(PickupBoothCentre.x + x, PickupFloorY + 3.4f + 0.5f + 6.5f + 0.5f, BoothZ + z)).name = "Tower Lamp";
             PropBuilder.Place(root, rail, new Vector3(PickupBoothCentre.x - 3.8f, 5.5f, BoothZ - 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Roof Rail W";
             PropBuilder.Place(root, PropBuilder.Crane(), new Vector3(CrewMark.x + 9.5f, 0f, CrewMark.z - 2f), Quaternion.Euler(0f, -120f, 0f)).name = "Crane";
-            PropBuilder.Place(root, PropBuilder.BottleCage(), new Vector3(CheckinBoothCentre.x + 3f, 0f, 10.4f), Quaternion.Euler(0f, 8f, 0f)).name = "Bottle Cage";
+            PropBuilder.Place(root, PropBuilder.BottleCage(), new Vector3(13f, 0f, -16.2f), Quaternion.Euler(0f, 8f, 0f)).name = "Bottle Cage";
             PropBuilder.Place(root, PropBuilder.BottleCage(), new Vector3(-27.5f, 0f, -2f), Quaternion.Euler(0f, 90f, 0f)).name = "Bottle Cage";
             SunkCost.Shop.ShopDeliveryPoint chute = Chute(root);
             Material plinth = LookMaterials.PanelDark();
@@ -550,20 +550,20 @@ namespace SunkCost.Editor.Look
             // rope, tyres, toolboxes, and a hazard frame round the crane's foot.
             foreach (Vector3 at in new[] { new Vector3(-14f, 0f, 6f), new Vector3(10f, 0f, 6.2f), new Vector3(0f, 0f, -12f), new Vector3(22f, 0f, -8.8f), new Vector3(-8f, 0f, -13f) })
                 PropBuilder.Place(root, PropBuilder.Drain(), at + new Vector3(0f, 0.006f, 0f)).name = "Drain";
-            foreach (Vector3 at in new[] { new Vector3(4f, 0f, 5.6f), new Vector3(-22f, 0f, -13f), new Vector3(14f, 0f, 11.4f) })
+            foreach (Vector3 at in new[] { new Vector3(4f, 0f, 5.6f), new Vector3(-22f, 0f, -13f), new Vector3(8f, 0f, -13.5f) })
                 PropBuilder.Place(root, PropBuilder.Manhole(), at + new Vector3(0f, 0.006f, 0f)).name = "Manhole";
             PropBuilder.Place(root, PropBuilder.CableTray(14f), new Vector3(10f, 0.006f, 7.6f)).name = "Floor Cable Run";
             PropBuilder.Place(root, PropBuilder.CableTray(10f), new Vector3(-16f, 0.006f, 4.2f)).name = "Floor Cable Run";
-            PropBuilder.Place(root, PropBuilder.Generator(), new Vector3(24f, 0f, 6f), Quaternion.Euler(0f, -20f, 0f)).name = "Generator";
-            PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(25.3f, 0f, 4.4f), Quaternion.Euler(0f, 35f, 0f)).name = "Toolbox";
+            PropBuilder.Place(root, PropBuilder.Generator(), new Vector3(-14f, 0f, -15.2f), Quaternion.Euler(0f, 10f, 0f)).name = "Generator";
+            PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(-12.3f, 0f, -14.6f), Quaternion.Euler(0f, 35f, 0f)).name = "Toolbox";
             PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(-3.2f, 0f, 8.3f), Quaternion.Euler(0f, -70f, 0f)).name = "Toolbox";
             PropBuilder.Place(root, PropBuilder.Pallet(), new Vector3(-8f, 0f, 7f), Quaternion.Euler(0f, 15f, 0f)).name = "Pallet";
-            PropBuilder.Place(root, PropBuilder.Pallet(), new Vector3(18f, 0f, 8.5f), Quaternion.Euler(0f, -30f, 0f)).name = "Pallet";
+            PropBuilder.Place(root, PropBuilder.Pallet(), new Vector3(25.8f, 0f, -6.5f), Quaternion.Euler(0f, -30f, 0f)).name = "Pallet";
             foreach (Vector3 at in new[] { new Vector3(-20f, 0f, 6.5f), new Vector3(16f, 0f, -12.5f), new Vector3(2f, 0f, -12.8f) })
                 PropBuilder.Place(root, PropBuilder.RopeCoil(), at, Quaternion.Euler(0f, at.x * 7f, 0f)).name = "Rope";
             PropBuilder.Place(root, PropBuilder.TyreStack(), new Vector3(-3.6f, 0f, 6.6f)).name = "Tyres";
             HazardFrame(root, new Vector3(CrewMark.x + 9.5f, 0f, CrewMark.z - 2f), 3.6f, 3.6f);
-            HazardFrame(root, new Vector3(24f, 0f, 6f), 3.2f, 2.4f);
+            HazardFrame(root, new Vector3(-14f, 0f, -15.2f), 3.2f, 2.4f);
             // South rim, west end: a stack and barrels by the gangway sign.
             C(grey, -27.6f, 0f, -15.6f); C(red, -26.1f, 0f, -15.7f, 6f); C(green, -26.9f, 1.2f, -15.65f, -4f); C(navy, -24.6f, 0f, -15.8f, 3f);
             B(barrelRed, -22.5f, 0f, -16.2f); B(barrelRust, -21.7f, 0f, -16.0f); B(barrelRed, -22.1f, 0f, -15.3f);
@@ -579,10 +579,7 @@ namespace SunkCost.Editor.Look
             // West rim, north of the gangway.
             C(grey, -28.5f, 0f, -6f, 90f); C(yellow, -28.5f, 0f, -4.5f, 90f); C(navy, -28.5f, 1.2f, -5.25f, 88f); C(red, -28.5f, 0f, 2f, 90f);
             B(barrelRust, -28.6f, 0f, 5.5f); B(barrelRed, -28.6f, 0f, 6.4f);
-            // In front of the booths: goods waiting, barrels by the counters.
-            C(green, UpgradesBoothCentre.x + 4.2f, 0f, 10.4f, 10f); C(grey, GearBoothCentre.x - 4.4f, 0f, 10.6f, -12f); C(red, GearBoothCentre.x - 4.4f, 1.2f, 10.6f, -6f);
-            B(barrelRed, IntakeBoothCentre.x + 4.6f, 0f, 10.8f); B(barrelRust, IntakeBoothCentre.x + 5.4f, 0f, 10.6f);
-            C(navy, CheckinBoothCentre.x - 3.5f, 0f, 10.5f, 4f); C(yellow, PickupBoothCentre.x - 3.5f, 0f, 10.4f, 14f);
+            // Nothing in front of the booths: it blocks them (Dan, 19 September 2026).
             // In the pickup room.
             C(grey, PickupBoothCentre.x - 2.8f, PickupFloorY + 0.16f, BoothZ + 1.4f, 15f); C(red, PickupBoothCentre.x - 1.3f, PickupFloorY + 0.16f, BoothZ + 1.7f, -10f);
             GameObject sGrey = PropBuilder.SmallCrate("Grey"), sRed = PropBuilder.SmallCrate("Red"), sYellow = PropBuilder.SmallCrate("Yellow"), sNavy = PropBuilder.SmallCrate("Navy");
