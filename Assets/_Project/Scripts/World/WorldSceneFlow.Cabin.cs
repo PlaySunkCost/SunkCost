@@ -236,7 +236,7 @@ namespace SunkCost.World
         public static bool RidersLockedDuring(CabinRideState state)
         {
             if (!state.Active) return false;
-            if (state.Direction == RideDirection.Down) return state.Stage != CabinRideStage.Riding;
+            if (state.Direction == RideDirection.Down) return state.Stage != CabinRideStage.Riding && state.Stage != CabinRideStage.Sealing; // free while the doors close (18 September 2026)
             return state.Stage == CabinRideStage.Preparing || state.Stage >= CabinRideStage.Loading;
         }
 
@@ -366,7 +366,12 @@ namespace SunkCost.World
             {
                 float t = ElapsedSince(state.StageStartTick);
                 if (state.Direction == RideDirection.Down)
-                    return state.Stage == CabinRideStage.Preparing ? 1f : state.Stage == CabinRideStage.Sealing ? 1f - Mathf.Clamp01(t / seal) : 0f;
+                {
+                    // Sealing first (the doors, at door speed, turned around by a crossing),
+                    // then Preparing with the doors shut, then the fade.
+                    if (state.Stage == CabinRideStage.Sealing) return state.DoorOpening ? Mathf.Min(1f, state.DoorFrom + t / seal) : Mathf.Max(0f, state.DoorFrom - t / seal);
+                    return 0f;
+                }
                 return state.Stage == CabinRideStage.Arriving ? Mathf.Clamp01(t / seal) : 0f;
             }
             ElevatorPhase car = dayState.Elevator;
@@ -441,6 +446,111 @@ namespace SunkCost.World
                     break;
             }
         }
+
+        // The doors turn around for anyone crossing or touching them (Dan, 18
+        // September 2026: "if someone touches the door or walks through it, the
+        // door reopens fully and starts to close again") — at door speed both
+        // ways. Capped: a crew cannot hold the doors open for ever.
+        private const float SealCapSeconds = 20f;
+
+        // The deck cabin (the ride down): the doors as CabinRideState carries them.
+        private IEnumerator ServerSealDeckCabin(ShipParts ship)
+        {
+            float seal = Mathf.Max(Settings.CabinSealSeconds, 0.0001f);
+            SetRideSeal(1f, opening: false);
+            var wasInside = new Dictionary<int, bool>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values) { HQPlayerController p = PlayerOf(conn); if (p != null) wasInside[conn.ClientId] = ship.IsInDeckCabin(p.transform.position); }
+            float cap = Time.unscaledTime + SealCapSeconds;
+            while (Time.unscaledTime < cap)
+            {
+                CabinRideState state = dayState.CabinRide;
+                float open = DeckCabinOpenFraction();
+                if (state.DoorOpening)
+                {
+                    if (open >= 0.999f) { SetRideSeal(1f, opening: false); foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = ship.IsInDeckCabin(p.transform.position); } }
+                }
+                else
+                {
+                    if (open <= 0.001f) yield break; // shut
+                    string who = ServerDoorwayCrossed(ship.DeckCabinDoorCollider, p => ship.IsInDeckCabin(p), wasInside);
+                    if (who != null) { Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: {who} at the closing doors — they open again"); SetRideSeal(open, opening: true); }
+                }
+                yield return null;
+            }
+        }
+
+        private void SetRideSeal(float from, bool opening)
+        {
+            dayState.ServerSetCabinRide(new CabinRideState
+            {
+                Serial = serial,
+                Stage = CabinRideStage.Sealing,
+                Direction = RideDirection.Down,
+                StageStartTick = networkManager.TimeManager.Tick,
+                StageDurationTicks = networkManager.TimeManager.TimeToTicks(Settings.CabinSealSeconds),
+                DoorFrom = from,
+                DoorOpening = opening
+            });
+        }
+
+        // The car (the ride up): its doors are the elevator phase's; a crossing
+        // puts the car back to AtBottom (the doors open again from where they
+        // were, ElevatorDoor) and it seals again once they are open.
+        private IEnumerator ServerSealCar(ElevatorController car)
+        {
+            var wasInside = new Dictionary<int, bool>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values) { HQPlayerController p = PlayerOf(conn); if (p != null) wasInside[conn.ClientId] = car.IsInsideCar(p.transform.position); }
+            float cap = Time.unscaledTime + SealCapSeconds, resealAt = -1f;
+            while (Time.unscaledTime < cap)
+            {
+                ElevatorState state = dayState.Elevator.State;
+                if (state == ElevatorState.Ascending) yield break;
+                if (state == ElevatorState.Sealing)
+                {
+                    string who = ServerDoorwayCrossed(null, p => car.IsInsideCar(p), wasInside);
+                    if (who != null)
+                    {
+                        Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: {who} crossed the car's closing doors — they open again");
+                        ServerSetElevator(ElevatorState.AtBottom, true);
+                        resealAt = Time.unscaledTime + CarSealSeconds;
+                    }
+                }
+                else if (state == ElevatorState.AtBottom && resealAt > 0f && Time.unscaledTime >= resealAt)
+                {
+                    foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = car.IsInsideCar(p.transform.position); }
+                    ServerSetElevator(ElevatorState.Sealing, true);
+                    resealAt = -1f;
+                }
+                yield return null;
+            }
+            // Capped: whatever the doors are doing, the tick takes the car up once they seal.
+            yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
+        }
+
+        // Who crossed the doorway (their inside/outside changed) or touches its
+        // collider, among the living. Null when nobody did.
+        private string ServerDoorwayCrossed(Collider doorway, System.Func<Vector3, bool> inside, Dictionary<int, bool> wasInside)
+        {
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player == null) continue;
+                Vector3 at = player.transform.position;
+                bool now = inside(at);
+                if (wasInside.TryGetValue(conn.ClientId, out bool before) && before != now) { wasInside[conn.ClientId] = now; return DisplayName(conn) + " (crossed)"; }
+                wasInside[conn.ClientId] = now;
+                if (doorway != null && doorway.enabled)
+                {
+                    Vector3 chest = at + Vector3.up * 0.9f;
+                    float reach = (player.Controller != null ? player.Controller.radius : 0.35f) + 0.15f;
+                    if ((doorway.ClosestPoint(chest) - chest).sqrMagnitude < reach * reach) return DisplayName(conn) + " (touched)";
+                }
+            }
+            return null;
+        }
+
+        private HQPlayerController PlayerOf(int clientId) => networkManager.ServerManager.Clients.TryGetValue(clientId, out NetworkConnection conn) ? PlayerOf(conn) : null;
 
         private IEnumerator WaitForCar(ElevatorState state, float timeoutSeconds)
         {
@@ -591,14 +701,37 @@ namespace SunkCost.World
         // Down (plan section 5.3, no day begun).
         private IEnumerator DiveRoutine(List<int> riders, ShipParts ship)
         {
-            yield return BeginRide(riders, RideDirection.Down);
+            // The doors first, with everyone free (Dan, 18 September 2026: pressing
+            // the button and stepping out fast teleported you back in): whoever
+            // crosses the doorway or touches the closing doors turns them around;
+            // once they are shut, whoever stands inside rides and is locked for the
+            // acks and the placements.
+            riding = true;
+            serial++;
+            ResetTrip();
+            lastFailure = string.Empty;
+            foreach (int id in riders) cohort.Add(id);
+            dayState.ServerSetRiders(riders);
+            yield return ServerSealDeckCabin(ship);
+            var inside = new List<int>();
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) inside.Add(conn.ClientId);
+            }
+            if (inside.Count == 0) { yield return CancelRide(RideDirection.Down, "Nobody aboard"); yield break; }
+            cohort.Clear();
+            foreach (int id in inside) cohort.Add(id);
+            dayState.ServerSetRiders(inside);
+            Debug.Log("Cabin ride " + serial + ": doors shut with " + string.Join(",", inside) + " inside");
+            SetRide(CabinRideStage.Preparing, RideDirection.Down, Settings.PrepareTimeoutSeconds);
+            float prepareBy = Time.unscaledTime + Settings.PrepareTimeoutSeconds;
+            while (Time.unscaledTime < prepareBy && !AllAcked(prepared)) yield return null;
             if (!AllAcked(prepared)) { yield return CancelRide(RideDirection.Down, "Not ready: " + Missing(prepared)); yield break; }
             yield return WaitTicks(Settings.SyncFlushTicks);
             ServerCapturePlacements(CabinFrame.DeckCabin(ship));
             ServerFreezeCabinCargo(CabinFrame.DeckCabin(ship), p => ship.IsInDeckCabin(p));
-
-            SetRide(CabinRideStage.Sealing, RideDirection.Down, Settings.CabinSealSeconds);
-            yield return WaitSeconds(Settings.CabinSealSeconds);
 
             SetRide(CabinRideStage.FadingOut, RideDirection.Down, Settings.SuitFadeSeconds);
             float deadline = Time.unscaledTime + Settings.SuitFadeSeconds + Settings.ArrivalTimeoutSeconds;
@@ -670,7 +803,7 @@ namespace SunkCost.World
             SetRide(CabinRideStage.Sealing, RideDirection.Up, CarSealSeconds);
             foreach (NetworkConnection conn in ActiveCohort()) { HQPlayerController diver = PlayerOf(conn); if (diver != null && diver.Vitals != null) diver.Vitals.ServerSetRidingReprieve(true); } // the tank still counts in the car; health floors at 1 until the deck
             ServerSetElevator(ElevatorState.Sealing, true);
-            yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
+            yield return ServerSealCar(car);
             // The doors are shut and the car is climbing: whoever pressed the button
             // and then stepped out while the doors were closing is not aboard. They
             // stay below (the car comes back for them) instead of being moved to the

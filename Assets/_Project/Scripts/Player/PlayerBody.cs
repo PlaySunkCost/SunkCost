@@ -23,6 +23,7 @@ namespace SunkCost.Player
         public int OwnerClientId => ownerClientId.Value;
         public string DisplayName => (string.IsNullOrEmpty(ownerName.Value) ? "Diver" : ownerName.Value) + "'s body";
         public SunkCost.Interaction.ItemUseAction? UseActionOverride => null; // the prefab's own
+        public Texture2D IconOverride => null;
 
         [Server]
         public void ServerSetOwner(int clientId, string name)

@@ -34,6 +34,12 @@ namespace SunkCost.World
         public RideDirection Direction;
         public uint StageStartTick;
         public uint StageDurationTicks;
+        // The deck cabin's doors while Sealing (18 September 2026): they move at
+        // door speed from DoorFrom toward open (DoorOpening) or shut, from
+        // StageStartTick — a crossing or a touch while they close turns them
+        // around, fully open, and they close again; riders are fixed only once shut.
+        public float DoorFrom;
+        public bool DoorOpening;
         public bool Active => Stage != CabinRideStage.Idle && Stage != CabinRideStage.Complete && Stage != CabinRideStage.Cancelled;
         public WorldId FromWorld => Direction == RideDirection.Down ? WorldId.Sea : WorldId.Dive;
         public WorldId ToWorld => Direction == RideDirection.Down ? WorldId.Dive : WorldId.Sea;

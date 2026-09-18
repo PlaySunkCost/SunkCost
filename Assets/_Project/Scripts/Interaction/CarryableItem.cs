@@ -106,7 +106,7 @@ namespace SunkCost.Interaction
         public int Value => value.Value;
         public int ValueMin => valueMin;
         public int ValueMax => valueMax;
-        public Texture2D Icon => icon;
+        public Texture2D Icon => Tag != null && Tag.IconOverride != null ? Tag.IconOverride : icon;
         public ItemUseAction UseAction => Tag != null && Tag.UseActionOverride.HasValue ? Tag.UseActionOverride.Value : useAction;
         public ItemState State => state.Value;
         public int TransitSerial => transitSerial;
