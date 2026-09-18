@@ -321,6 +321,137 @@ namespace SunkCost.Editor.Look
             col.center = new Vector3(0f, 0.8f, 0f); col.size = new Vector3(1.44f, 1.66f, 0.84f);
         });
 
+        // ---- the floor's clutter (Dan, 19 September 2026: "it could look better") ----------
+
+        // A drain grate flush with the floor: an ink frame with slats.
+        public static GameObject Drain() => Prefab("Drain", root =>
+        {
+            Part(root, "Frame", MeshKit.Box(new Vector3(0.9f, 0.02f, 0.9f)), LookMaterials.Ink(), Vector3.zero);
+            for (int i = 0; i < 6; i++) Part(root, "Slat", MeshKit.Box(new Vector3(0.7f, 0.025f, 0.05f)), LookMaterials.PanelDark(), new Vector3(0f, 0f, -0.3f + i * 0.12f));
+        });
+
+        // A manhole cover: a round ink plate with a rust ring.
+        public static GameObject Manhole() => Prefab("Manhole", root =>
+        {
+            Part(root, "Cover", MeshKit.Cylinder(0.42f, 0.025f, 20), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Ring", MeshKit.Ring(0.42f, 0.05f, 24, 6), LookMaterials.RustSteel(), new Vector3(0f, 0.02f, 0f));
+        });
+
+        // A coil of rope: three rings stacked.
+        public static GameObject RopeCoil() => Prefab("RopeCoil", root =>
+        {
+            for (int i = 0; i < 3; i++)
+                Part(root, "Coil", MeshKit.Ring(0.42f - i * 0.03f, 0.13f, 20, 8), LookMaterials.CrateYellow(), new Vector3(0f, 0.07f + i * 0.1f, 0f), Quaternion.Euler(0f, i * 25f, 0f));
+        });
+
+        // A pallet with sacks on it.
+        public static GameObject Pallet() => Prefab("Pallet", root =>
+        {
+            for (int i = 0; i < 5; i++) Part(root, "Slat", MeshKit.Box(new Vector3(1.2f, 0.04f, 0.16f)), LookMaterials.BarrelRust(), new Vector3(0f, 0.1f, -0.42f + i * 0.21f));
+            foreach (float x in new[] { -0.5f, 0f, 0.5f }) Part(root, "Bearer", MeshKit.Box(new Vector3(0.1f, 0.1f, 1.0f)), LookMaterials.BarrelRust(), new Vector3(x, 0f, 0f));
+            Part(root, "Sack", MeshKit.Box(new Vector3(0.5f, 0.3f, 0.8f)), LookMaterials.CrateGrey(), new Vector3(-0.28f, 0.14f, 0f), Quaternion.Euler(0f, 4f, 0f));
+            Part(root, "Sack", MeshKit.Box(new Vector3(0.5f, 0.3f, 0.8f)), LookMaterials.CrateGrey(), new Vector3(0.28f, 0.14f, 0f), Quaternion.Euler(0f, -6f, 0f));
+            Part(root, "Sack", MeshKit.Box(new Vector3(0.5f, 0.3f, 0.8f)), LookMaterials.CrateGrey(), new Vector3(0f, 0.44f, 0f), Quaternion.Euler(0f, 90f, 0f));
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.37f, 0f); col.size = new Vector3(1.2f, 0.74f, 1.0f);
+        });
+
+        // A generator set: a dark box with a hazard band, an exhaust and a running light.
+        public static GameObject Generator() => Prefab("Generator", root =>
+        {
+            Part(root, "Body", MeshKit.Box(new Vector3(1.8f, 1.2f, 1.0f)), LookMaterials.PanelDark(), Vector3.zero);
+            Part(root, "Band", MeshKit.Box(new Vector3(1.84f, 0.24f, 1.04f)), LookMaterials.Hazard(), new Vector3(0f, 0.1f, 0f));
+            Part(root, "Frame", MeshKit.Box(new Vector3(1.9f, 0.08f, 1.1f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Lid", MeshKit.Box(new Vector3(1.9f, 0.08f, 1.1f)), LookMaterials.Ink(), new Vector3(0f, 1.2f, 0f));
+            for (int i = 0; i < 5; i++) Part(root, "Vent Slat", MeshKit.Box(new Vector3(0.6f, 0.05f, 0.04f)), LookMaterials.Ink(), new Vector3(-0.4f, 0.45f + i * 0.12f, 0.51f));
+            Part(root, "Exhaust", MeshKit.Cylinder(0.08f, 0.9f, 8), LookMaterials.RustSteel(), new Vector3(0.7f, 1.2f, -0.3f));
+            Part(root, "Exhaust Cap", MeshKit.Cylinder(0.11f, 0.06f, 8), LookMaterials.Ink(), new Vector3(0.7f, 2.1f, -0.3f));
+            Part(root, "Running Light", MeshKit.Box(new Vector3(0.12f, 0.12f, 0.04f)), LookMaterials.BeaconRed(), new Vector3(0.6f, 0.95f, 0.51f));
+            Part(root, "Panel", MeshKit.Box(new Vector3(0.4f, 0.3f, 0.03f)), LookMaterials.ScreenTeal(), new Vector3(0.3f, 0.7f, 0.51f));
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 0.64f, 0f); col.size = new Vector3(1.9f, 1.28f, 1.1f);
+        });
+
+        // A toolbox: a red box with an ink handle.
+        public static GameObject Toolbox() => Prefab("Toolbox", root =>
+        {
+            Part(root, "Box", MeshKit.Box(new Vector3(0.7f, 0.32f, 0.36f)), LookMaterials.CrateRed(), Vector3.zero);
+            Part(root, "Lid Line", MeshKit.Box(new Vector3(0.72f, 0.03f, 0.38f)), LookMaterials.Ink(), new Vector3(0f, 0.2f, 0f));
+            Part(root, "Handle", MeshKit.Box(new Vector3(0.3f, 0.05f, 0.05f)), LookMaterials.Ink(), new Vector3(0f, 0.36f, 0f));
+            foreach (float x in new[] { -0.13f, 0.13f }) Part(root, "Handle Post", MeshKit.Box(new Vector3(0.04f, 0.08f, 0.04f)), LookMaterials.Ink(), new Vector3(x, 0.3f, 0f));
+        });
+
+        // A stack of tyres.
+        public static GameObject TyreStack() => Prefab("TyreStack", root =>
+        {
+            for (int i = 0; i < 3; i++) Part(root, "Tyre", MeshKit.Ring(0.42f, 0.26f, 18, 8), LookMaterials.Ink(), new Vector3(0f, 0.13f + i * 0.26f, 0f), Quaternion.Euler(0f, i * 30f, 0f));
+            CapsuleCollider col = root.AddComponent<CapsuleCollider>();
+            col.radius = 0.55f; col.height = 0.8f; col.center = new Vector3(0f, 0.4f, 0f);
+        });
+
+        // A pole a string of lights hangs from: an ink mast with a base and a cap.
+        public static GameObject StringPole() => Prefab("StringPole", root =>
+        {
+            Part(root, "Post", MeshKit.Box(new Vector3(0.2f, 4.2f, 0.2f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Base", MeshKit.Box(new Vector3(0.5f, 0.16f, 0.5f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Band", MeshKit.Box(new Vector3(0.22f, 0.4f, 0.22f)), LookMaterials.Hazard(), new Vector3(0f, 0.16f, 0f));
+            Part(root, "Cap", MeshKit.Box(new Vector3(0.3f, 0.08f, 0.3f)), LookMaterials.Ink(), new Vector3(0f, 4.2f, 0f));
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, 2.1f, 0f); col.size = new Vector3(0.5f, 4.2f, 0.5f);
+        });
+
+        // A flood tower: a lattice mast with three flood lamps on top, two of them
+        // real spot lights, aimed down over the deck (a night harbour's light).
+        public static GameObject FloodTower() => Prefab("FloodTower", root =>
+        {
+            const float h = 9f;
+            foreach (float x in new[] { -0.35f, 0.35f }) foreach (float z in new[] { -0.35f, 0.35f })
+                Part(root, "Post", MeshKit.Box(new Vector3(0.1f, h, 0.1f)), LookMaterials.Ink(), new Vector3(x, 0f, z));
+            for (float y = 1.2f; y < h; y += 1.5f)
+            {
+                Part(root, "Rung", MeshKit.Box(new Vector3(0.8f, 0.06f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, y, -0.35f));
+                Part(root, "Rung", MeshKit.Box(new Vector3(0.8f, 0.06f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, y, 0.35f));
+                Part(root, "Rung", MeshKit.Box(new Vector3(0.06f, 0.06f, 0.8f)), LookMaterials.Ink(), new Vector3(-0.35f, y, 0f));
+                Part(root, "Rung", MeshKit.Box(new Vector3(0.06f, 0.06f, 0.8f)), LookMaterials.Ink(), new Vector3(0.35f, y, 0f));
+                Part(root, "Brace", MeshKit.Box(new Vector3(0.05f, 1.66f, 0.05f)), LookMaterials.Ink(), new Vector3(0f, y - 0.75f, -0.36f), Quaternion.Euler(0f, 0f, 27f));
+                Part(root, "Brace", MeshKit.Box(new Vector3(0.05f, 1.66f, 0.05f)), LookMaterials.Ink(), new Vector3(0f, y - 0.75f, 0.36f), Quaternion.Euler(0f, 0f, -27f));
+            }
+            Part(root, "Base", MeshKit.Box(new Vector3(1.2f, 0.2f, 1.2f)), LookMaterials.Ink(), Vector3.zero);
+            Part(root, "Base Band", MeshKit.Box(new Vector3(1.24f, 0.3f, 1.24f)), LookMaterials.Hazard(), new Vector3(0f, 0.2f, 0f));
+            Part(root, "Platform", MeshKit.Box(new Vector3(1.8f, 0.1f, 1.1f)), LookMaterials.Ink(), new Vector3(0f, h, 0f));
+            Part(root, "Platform Rail", MeshKit.Box(new Vector3(1.8f, 0.06f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, h + 0.9f, -0.55f));
+            foreach (float x in new[] { -0.87f, 0.87f }) Part(root, "Rail Post", MeshKit.Box(new Vector3(0.06f, 0.9f, 0.06f)), LookMaterials.Ink(), new Vector3(x, h + 0.1f, -0.55f));
+            foreach (float x in new[] { -0.6f, 0f, 0.6f })
+            {
+                Part(root, "Head", MeshKit.Box(new Vector3(0.5f, 0.4f, 0.3f)), LookMaterials.Ink(), new Vector3(x, h + 0.3f, 0.35f), Quaternion.Euler(-40f, 0f, 0f));
+                Part(root, "Face", MeshKit.Box(new Vector3(0.44f, 0.34f, 0.04f)), LookMaterials.LampWarm(), new Vector3(x, h + 0.3f, 0.35f + 0.16f), Quaternion.Euler(-40f, 0f, 0f));
+            }
+            foreach (float x in new[] { -0.5f, 0.5f })
+            {
+                Light light = new GameObject("Flood").AddComponent<Light>();
+                light.transform.SetParent(root.transform, false);
+                light.transform.localPosition = new Vector3(x, h + 0.4f, 0.6f);
+                light.transform.localRotation = Quaternion.Euler(50f, x < 0f ? -12f : 12f, 0f);
+                light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Spot; light.spotAngle = 75f; light.innerSpotAngle = 40f;
+                light.range = 45f; light.intensity = 28f; light.color = new Color(1f, 0.8f, 0.55f); light.shadows = LightShadows.None;
+            }
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, h / 2f, 0f); col.size = new Vector3(0.9f, h, 0.9f);
+        });
+
+        // A chain-link fence `length` m along X, `height` m tall: posts, a top rail,
+        // the mesh between (a ball bounces off it; the sides are open).
+        public static GameObject Fence(float length, float height) => Prefab($"Fence{F(length)}x{F(height)}", root =>
+        {
+            for (float x = -length / 2f; x <= length / 2f + 0.01f; x += 2f)
+                Part(root, "Post", MeshKit.Box(new Vector3(0.1f, height, 0.1f)), LookMaterials.Ink(), new Vector3(x, 0f, 0f));
+            Part(root, "Top Rail", MeshKit.Box(new Vector3(length + 0.1f, 0.07f, 0.07f)), LookMaterials.Ink(), new Vector3(0f, height - 0.07f, 0f));
+            Part(root, "Bottom Rail", MeshKit.Box(new Vector3(length + 0.1f, 0.06f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, 0.06f, 0f));
+            Part(root, "Mesh", MeshKit.Box(new Vector3(length, height - 0.12f, 0.01f)), LookMaterials.ChainLink(), new Vector3(0f, 0.08f, 0f));
+            BoxCollider col = root.AddComponent<BoxCollider>();
+            col.center = new Vector3(0f, height / 2f, 0f); col.size = new Vector3(length, height, 0.12f);
+        });
+
         // ---- signs ----------------------------------------------------------------------
 
         // A sign board `w` by `h` m: an ink plate with a thick glowing frame, the

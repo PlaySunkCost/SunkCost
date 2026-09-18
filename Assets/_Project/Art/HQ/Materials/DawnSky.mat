@@ -31,6 +31,7 @@ Material:
     - _GlowHeight: 0.14
     - _GlowWidth: 0.3
     - _HorizonSharpness: 2.2
+    - _Stars: 0.8
     - _SunDisk: 2
     - _SunSize: 0.04
     - _SunSizeConvergence: 5

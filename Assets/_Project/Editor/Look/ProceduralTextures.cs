@@ -51,14 +51,22 @@ namespace SunkCost.Editor.Look
             bool alt = ((cx + cy) & 1) == 0;
             float noise = Fbm(x, y, 5f, 3, seed + 1) * 0.5f + 0.5f;
             float scuff = Mathf.Clamp01((Fbm(x + 40, y + 900, 3f, 3, seed + 2) - 0.32f) * 2.5f);
+            float rivet = Rivets(x, y, pitch, 22f, 7f);                                   // a bolt in each plate corner
+            float streak = Mathf.Clamp01((Fbm(x * 0.35f + 300, y * 3f + 40, 4f, 2, seed + 3) - 0.25f) * 2f) * 0.5f; // wear along the plates
+            float grime = 1f - Mathf.Clamp01(bevel * 1.6f);                                // dirt gathers by the seams
+            int plateHash = (cx * 73856093) ^ (cy * 19349663);
+            float odd = ((plateHash >> 8) & 15) < 2 ? 1f : 0f;                            // the odd plate replaced, darker
             Color c = Color.Lerp(alt ? tone : toneLight, alt ? toneLight : tone, noise * 0.35f);
-            c = Color.Lerp(c, dark, scuff * 0.35f);
+            c = Color.Lerp(c, dark, odd * 0.35f);
+            c = Color.Lerp(c, dark, scuff * 0.35f + streak * 0.18f);
+            c = Color.Lerp(c, dark * 0.85f, grime * 0.35f);
             c = Color.Lerp(c, dark * 0.7f, seam);
+            c = Color.Lerp(c, dark * 0.5f, rivet * 0.7f);
             c = Color.Lerp(c, c * 1.12f, Mathf.Clamp01((bevel - 0.7f) * 3f) * 0.25f); // the plate's crown catches light
             p.Albedo = c;
-            p.Height = bevel * 1.2f;
+            p.Height = bevel * 1.2f + rivet * 0.5f;
             p.Metallic = 0f;
-            p.Smoothness = 0.14f - scuff * 0.05f;
+            p.Smoothness = 0.14f - scuff * 0.05f + rivet * 0.2f;
         });
 
         // Wall panels: 3 m bevelled plates, a darker seam where they meet, a bolt
@@ -187,9 +195,21 @@ namespace SunkCost.Editor.Look
             p.Height = 0f; p.Metallic = 0f; p.Smoothness = 0.2f;
         });
 
+        // Chain-link fencing: a diamond mesh of wire, transparent between (alpha).
+        // One tile = 0.5 m.
+        public static Set ChainLink() => Build("ChainLink", 95, (x, y, p) =>
+        {
+            const float pitch = 64f; // 8 diamonds across the tile
+            float a = Mathf.Repeat(x + y, pitch) / pitch, b = Mathf.Repeat(x - y, pitch) / pitch;
+            float wireA = Mathf.Clamp01(1f - Mathf.Min(a, 1f - a) / 0.09f), wireB = Mathf.Clamp01(1f - Mathf.Min(b, 1f - b) / 0.09f);
+            float wire = Mathf.Max(wireA, wireB);
+            p.Albedo = new Color(0.30f, 0.31f, 0.34f, wire);
+            p.Height = 0f; p.Metallic = 0.4f; p.Smoothness = 0.35f;
+        });
+
         public static void GenerateAll()
         {
-            DeckTile(); DeckTileWarm(); Panel(); RustPanel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
+            DeckTile(); DeckTileWarm(); Panel(); RustPanel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull(); ChainLink();
         }
 
         // ---- the machinery ------------------------------------------------------------

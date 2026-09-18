@@ -14,6 +14,7 @@ Shader "Sunk Cost/Sky Gradient"
         _GlowHeight ("Glow height", Range(0.01, 0.5)) = 0.12
         _HorizonSharpness ("Horizon sharpness", Range(0.5, 8)) = 2.5
         _Ground ("Below the horizon", Color) = (0.05, 0.08, 0.18, 1)
+        _Stars ("Stars", Range(0, 2)) = 0.8
     }
     SubShader
     {
@@ -25,7 +26,8 @@ Shader "Sunk Cost/Sky Gradient"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
-            fixed4 _Zenith, _Horizon, _Glow, _Ground; float4 _GlowDirection; float _GlowWidth, _GlowHeight, _HorizonSharpness;
+            fixed4 _Zenith, _Horizon, _Glow, _Ground; float4 _GlowDirection; float _GlowWidth, _GlowHeight, _HorizonSharpness, _Stars;
+            float hash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             struct appdata { float4 vertex : POSITION; };
             struct v2f { float4 pos : SV_POSITION; float3 dir : TEXCOORD0; };
             v2f vert (appdata v) { v2f o; o.pos = UnityObjectToClipPos(v.vertex); o.dir = v.vertex.xyz; return o; }
@@ -40,6 +42,14 @@ Shader "Sunk Cost/Sky Gradient"
                 float lobe = pow(along, 1.0 / _GlowWidth);
                 float low = saturate(1.0 - abs(d.y) / _GlowHeight);
                 sky = lerp(sky, _Glow, lobe * low * low * 0.9);
+                // Stars: one per cell of a grid over the direction, a few of them lit,
+                // fading out toward the horizon and into the dawn glow.
+                float2 cell = floor(d.xz / max(d.y, 0.05) * 18.0 + 100.0);
+                float2 inCell = frac(d.xz / max(d.y, 0.05) * 18.0 + 100.0) - 0.5;
+                float seed = hash(cell);
+                float star = saturate(1.0 - length(inCell - (float2(hash(cell + 7.0), hash(cell + 13.0)) - 0.5) * 0.6) / 0.08);
+                star *= step(0.93, seed) * (0.5 + seed) * saturate(up * 3.0) * (1.0 - lobe * low) * _Stars;
+                sky.rgb += star;
                 fixed4 ground = lerp(_Ground, _Horizon, saturate(1.0 + d.y * 12.0));
                 return d.y >= 0 ? sky : ground;
             }

@@ -198,6 +198,20 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, courtString, new Vector3(Court.x + Court.width / 2f, 4.0f, Court.yMax + 1.5f)).name = "Light String";
             GameObject crewString = PropBuilder.LightString(17.8f); // between the two deck lamps
             PropBuilder.Place(root, crewString, new Vector3(CrewMark.x, 4.0f, CrewMark.z), Quaternion.Euler(0f, -38f, 0f)).name = "Light String";
+            // Two flood towers on the south rim, and the long string of lights slung
+            // between their tops right across the deck (Dan, 19 September 2026: "better").
+            GameObject tower = PropBuilder.FloodTower();
+            Vector3 towerW = new(-27.2f, 0f, -8.6f), towerE = new(27.2f, 0f, -11.5f);
+            PropBuilder.Place(root, tower, towerW, Quaternion.Euler(0f, 30f, 0f)).name = "Flood Tower W";
+            PropBuilder.Place(root, tower, towerE, Quaternion.Euler(0f, -30f, 0f)).name = "Flood Tower E";
+            Vector3 span = towerE - towerW;
+            GameObject longString = PropBuilder.LightString(span.magnitude);
+            PropBuilder.Place(root, longString, (towerW + towerE) / 2f + new Vector3(0f, 8.6f, 0f), Quaternion.Euler(0f, -Mathf.Atan2(span.z, span.x) * Mathf.Rad2Deg, 0f)).name = "Light String";
+            // A string from the court's north-east lamp to a pole by the booths.
+            Vector3 poleAt = new(14f, 0f, 9.2f), lampAt = new(Court.xMax + 1.5f, 0f, Court.yMax + 1.5f);
+            PropBuilder.Place(root, PropBuilder.StringPole(), poleAt).name = "String Pole";
+            Vector3 run = poleAt - lampAt;
+            PropBuilder.Place(root, PropBuilder.LightString(run.magnitude), (poleAt + lampAt) / 2f + new Vector3(0f, 4.0f, 0f), Quaternion.Euler(0f, -Mathf.Atan2(run.z, run.x) * Mathf.Rad2Deg, 0f)).name = "Light String";
         }
 
         // ---- the booths -----------------------------------------------------------------
@@ -495,6 +509,21 @@ namespace SunkCost.Editor.Look
             Sign(courtSign, "court", null);
             foreach (float x in new[] { -1.8f, 1.8f })
                 Part(root, "Court Sign Post", MeshKit.Box(new Vector3(0.14f, 3.3f, 0.14f)), LookMaterials.Ink(), new Vector3(c.x + x, 0f, Court.yMax + 0.2f));
+            // Chain-link behind each hoop: the ball stays on the court.
+            GameObject fence = PropBuilder.Fence(Court.height + 2f, 3.2f);
+            PropBuilder.Place(root, fence, new Vector3(Court.x - 2.6f, 0f, c.z), Quaternion.Euler(0f, 90f, 0f)).name = "Court Fence W";
+            PropBuilder.Place(root, fence, new Vector3(Court.xMax + 2.6f, 0f, c.z), Quaternion.Euler(0f, 90f, 0f)).name = "Court Fence E";
+        }
+
+        // A hazard-striped frame painted on the floor round something that matters.
+        private static void HazardFrame(GameObject root, Vector3 centre, float w, float d)
+        {
+            const float t = 0.16f;
+            foreach (float s in new[] { -1f, 1f })
+            {
+                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(w, 0.012f, t)), LookMaterials.Hazard(), new Vector3(centre.x, 0.02f, centre.z + s * (d / 2f - t / 2f)));
+                Part(root, "Hazard Frame", MeshKit.Box(new Vector3(t, 0.012f, d)), LookMaterials.Hazard(), new Vector3(centre.x + s * (w / 2f - t / 2f), 0.02f, centre.z));
+            }
         }
 
         private static void Line(GameObject root, Vector3 at, float w, float d) =>
@@ -516,6 +545,25 @@ namespace SunkCost.Editor.Look
             GameObject barrelRed = PropBuilder.Barrel("Red"), barrelRust = PropBuilder.Barrel("Rust");
             void C(GameObject prefab, float x, float y, float z, float yaw = 0f) => PropBuilder.Place(root, prefab, new Vector3(x, y, z), Quaternion.Euler(0f, yaw, 0f)).name = "Crate";
             void B(GameObject prefab, float x, float y, float z) => PropBuilder.Place(root, prefab, new Vector3(x, y, z)).name = "Barrel";
+            // The floor's own clutter (Dan, 19 September 2026: "it could look better"):
+            // drains and manholes flush with the plates, cable runs, a generator, pallets,
+            // rope, tyres, toolboxes, and a hazard frame round the crane's foot.
+            foreach (Vector3 at in new[] { new Vector3(-14f, 0f, 6f), new Vector3(10f, 0f, 6.2f), new Vector3(0f, 0f, -12f), new Vector3(22f, 0f, -8.8f), new Vector3(-8f, 0f, -13f) })
+                PropBuilder.Place(root, PropBuilder.Drain(), at + new Vector3(0f, 0.006f, 0f)).name = "Drain";
+            foreach (Vector3 at in new[] { new Vector3(4f, 0f, 5.6f), new Vector3(-22f, 0f, -13f), new Vector3(14f, 0f, 11.4f) })
+                PropBuilder.Place(root, PropBuilder.Manhole(), at + new Vector3(0f, 0.006f, 0f)).name = "Manhole";
+            PropBuilder.Place(root, PropBuilder.CableTray(14f), new Vector3(10f, 0.006f, 7.6f)).name = "Floor Cable Run";
+            PropBuilder.Place(root, PropBuilder.CableTray(10f), new Vector3(-16f, 0.006f, 4.2f)).name = "Floor Cable Run";
+            PropBuilder.Place(root, PropBuilder.Generator(), new Vector3(24f, 0f, 6f), Quaternion.Euler(0f, -20f, 0f)).name = "Generator";
+            PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(25.3f, 0f, 4.4f), Quaternion.Euler(0f, 35f, 0f)).name = "Toolbox";
+            PropBuilder.Place(root, PropBuilder.Toolbox(), new Vector3(-3.2f, 0f, 8.3f), Quaternion.Euler(0f, -70f, 0f)).name = "Toolbox";
+            PropBuilder.Place(root, PropBuilder.Pallet(), new Vector3(-8f, 0f, 7f), Quaternion.Euler(0f, 15f, 0f)).name = "Pallet";
+            PropBuilder.Place(root, PropBuilder.Pallet(), new Vector3(18f, 0f, 8.5f), Quaternion.Euler(0f, -30f, 0f)).name = "Pallet";
+            foreach (Vector3 at in new[] { new Vector3(-20f, 0f, 6.5f), new Vector3(16f, 0f, -12.5f), new Vector3(2f, 0f, -12.8f) })
+                PropBuilder.Place(root, PropBuilder.RopeCoil(), at, Quaternion.Euler(0f, at.x * 7f, 0f)).name = "Rope";
+            PropBuilder.Place(root, PropBuilder.TyreStack(), new Vector3(-3.6f, 0f, 6.6f)).name = "Tyres";
+            HazardFrame(root, new Vector3(CrewMark.x + 9.5f, 0f, CrewMark.z - 2f), 3.6f, 3.6f);
+            HazardFrame(root, new Vector3(24f, 0f, 6f), 3.2f, 2.4f);
             // South rim, west end: a stack and barrels by the gangway sign.
             C(grey, -27.6f, 0f, -15.6f); C(red, -26.1f, 0f, -15.7f, 6f); C(green, -26.9f, 1.2f, -15.65f, -4f); C(navy, -24.6f, 0f, -15.8f, 3f);
             B(barrelRed, -22.5f, 0f, -16.2f); B(barrelRust, -21.7f, 0f, -16.0f); B(barrelRed, -22.1f, 0f, -15.3f);
@@ -764,7 +812,7 @@ namespace SunkCost.Editor.Look
             }
             if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
             bloom.active = true;
-            bloom.threshold.overrideState = true; bloom.threshold.value = 1.1f;
+            bloom.threshold.overrideState = true; bloom.threshold.value = 1.0f;
             bloom.intensity.overrideState = true; bloom.intensity.value = 0.35f;
             bloom.scatter.overrideState = true; bloom.scatter.value = 0.6f;
             if (!profile.TryGet(out Tonemapping tonemapping)) tonemapping = profile.Add<Tonemapping>(true);

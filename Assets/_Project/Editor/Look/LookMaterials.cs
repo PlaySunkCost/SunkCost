@@ -54,6 +54,19 @@ namespace SunkCost.Editor.Look
         public static Material Flag() => Flat("Flag", new Color(0.06f, 0.06f, 0.08f), 0f, 0.2f);
         public static Material Seabed() => Flat("Seabed", new Color(0.04f, 0.10f, 0.20f), 0f, 0.1f);
 
+        // Chain-link fencing: the wire's tile cut out, seen from both sides.
+        public static Material ChainLink()
+        {
+            Material m = Lit("ChainLink", ProceduralTextures.ChainLink(), 0.5f, Color.white);
+            m.SetFloat("_AlphaClip", 1f);
+            m.SetFloat("_Cutoff", 0.5f);
+            m.EnableKeyword("_ALPHATEST_ON");
+            m.SetFloat("_Cull", (float)CullMode.Off);
+            m.renderQueue = (int)RenderQueue.AlphaTest;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
         // The company's mark: a cutout over the skull texture.
         public static Material Skull()
         {
