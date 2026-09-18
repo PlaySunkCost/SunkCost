@@ -21,6 +21,7 @@ namespace SunkCost.Editor.Prototype
         public const float DeckLength = 30f;
         public const float DeckWidth = 10f;
         public const float DeckThickness = 0.5f;
+        public const float HullDepth = 10.5f;   // under the deck to a metre into the water at the HQ mooring (a big ship, Dan, 19 September 2026)
 
         [MenuItem("Sunk Cost/Prototype/Create or Update ship stub")]
         public static void CreateOrUpdateFromMenu()
@@ -60,6 +61,7 @@ namespace SunkCost.Editor.Prototype
                 root.AddComponent<ShipParts>();
                 // Deck top at y = 0 so the HQ plank and the HQ floor meet it flush.
                 Block("Deck", root.transform, new Vector3(0f, -DeckThickness / 2f, 0f), new Vector3(DeckWidth, DeckThickness, DeckLength), deck);
+                BuildHull(root.transform);
                 Block("RailPort", root.transform, new Vector3(-DeckWidth / 2f + 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail);
                 Block("RailStarboard", root.transform, new Vector3(DeckWidth / 2f - 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail);
                 Block("RailBow", root.transform, new Vector3(0f, 0.5f, DeckLength / 2f - 0.1f), new Vector3(DeckWidth, 1f, 0.2f), rail);
@@ -249,6 +251,32 @@ namespace SunkCost.Editor.Prototype
             if (!EditorSceneManager.SaveScene(scene, WorldScenes.SeaPath))
                 throw new InvalidOperationException("Unity could not save " + WorldScenes.SeaPath);
             AssetDatabase.SaveAssets();
+        }
+
+        // The hull under the deck: rust plate sides, a navy band at the waterline, a
+        // pointed bow. Visual only — no colliders, so the deck cabin's car passes
+        // through it on the way down and nothing under the deck is walkable.
+        private static void BuildHull(Transform root)
+        {
+            Material plate = SunkCost.Editor.Look.LookMaterials.RustPanel();
+            Material band = SunkCost.Editor.Look.LookMaterials.PanelDark();
+            Material ink = SunkCost.Editor.Look.LookMaterials.Ink();
+            float y = -DeckThickness - HullDepth / 2f;
+            Visual("Hull", root, new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(DeckWidth, HullDepth, DeckLength), plate);
+            Visual("Hull Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.6f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.06f, 1.2f, DeckLength + 0.06f), band);
+            Visual("Hull Rub Rail", root, new Vector3(0f, -DeckThickness - 0.6f, 0f), Quaternion.identity, new Vector3(DeckWidth + 0.3f, 0.4f, DeckLength + 0.3f), ink);
+            // The bow: a square prow turned 45 degrees at the forward end.
+            float side = DeckWidth / Mathf.Sqrt(2f);
+            Visual("Bow", root, new Vector3(0f, y, DeckLength / 2f), Quaternion.Euler(0f, 45f, 0f), new Vector3(side, HullDepth, side), plate);
+            Visual("Bow Band", root, new Vector3(0f, -DeckThickness - HullDepth + 1.6f, DeckLength / 2f), Quaternion.Euler(0f, 45f, 0f), new Vector3(side + 0.04f, 1.2f, side + 0.04f), band);
+            Visual("Bow Deck", root, new Vector3(0f, -DeckThickness / 2f, DeckLength / 2f), Quaternion.Euler(0f, 45f, 0f), new Vector3(side, DeckThickness, side), plate);
+        }
+
+        private static void Visual(string name, Transform parent, Vector3 localPosition, Quaternion localRotation, Vector3 scale, Material material)
+        {
+            GameObject block = Block(name, parent, localPosition, scale, material);
+            block.transform.localRotation = localRotation;
+            Object.DestroyImmediate(block.GetComponent<Collider>());
         }
 
         internal static GameObject Block(string name, Transform parent, Vector3 localPosition, Vector3 scale, Material material)
