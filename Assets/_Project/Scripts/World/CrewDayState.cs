@@ -193,16 +193,23 @@ namespace SunkCost.World
             DepartureChanged?.Invoke(previous, next);
         }
 
+        // FishNet also raises OnChange for a joiner's initial values (in the frame of
+        // OnStartClient): those are old news, not a refusal or a sale happening now,
+        // and would show on the joiner's monitors for a few seconds (code check,
+        // 18 September 2026).
+        private int clientStartFrame = -1;
+        private bool InitialSync(bool asServer) => !asServer && clientStartFrame == Time.frameCount;
+
         private void OnPayChanged(PayReport previous, PayReport next, bool asServer)
         {
             if (IsServerStarted && !asServer) return;
-            if (next.Serial != 0) lastPayAt = Time.unscaledTime;
+            if (next.Serial != 0 && !InitialSync(asServer)) lastPayAt = Time.unscaledTime;
         }
 
         private void OnRefusalChanged(Refusal previous, Refusal next, bool asServer)
         {
             if (IsServerStarted && !asServer) return;
-            if (next.Serial != 0) lastRefusalAt = Time.unscaledTime;
+            if (next.Serial != 0 && !InitialSync(asServer)) lastRefusalAt = Time.unscaledTime;
         }
 
         public override void OnStartNetwork()
@@ -223,6 +230,7 @@ namespace SunkCost.World
         public override void OnStartClient()
         {
             base.OnStartClient();
+            clientStartFrame = Time.frameCount;
             if (GetComponent<SunkCost.Audio.ElevatorSounds>() == null) gameObject.AddComponent<SunkCost.Audio.ElevatorSounds>();
         }
 

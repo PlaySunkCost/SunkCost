@@ -719,7 +719,8 @@ namespace SunkCost.Editor.Prototype
             Check(hud != null && hud.Visor.On, "V1 the visor is on in the dive");
             Check(Mathf.Abs(hud.Visor.DepthMeters - (Submersion() != null ? Submersion().DepthMeters : -1f)) < 0.1f, $"V2 the visor's depth is the submersion's ({hud.Visor.DepthMeters:0.0} m)");
             Check(Mathf.Abs(Mathf.DeltaAngle(hud.Visor.HeadingDeg, host.PlayerCamera.transform.eulerAngles.y)) < 1f, $"V2 the visor's heading is the camera's ({hud.Visor.HeadingDeg:0}°)");
-            Check(hud.Visor.AirFraction >= 0.999f && hud.Visor.HealthFraction >= 0.999f, "V2 air and health read full (nothing drains them yet)");
+            // The suit is on from the top of the ride down (the oxygen card, 17 September 2026): the tank counts, health is full.
+            Check(hud.Visor.AirFraction > 0.9f && hud.Visor.AirFraction <= 1f && hud.Visor.HealthFraction >= 0.999f, $"V2 the tank counts in the car ({100f * hud.Visor.AirFraction:0}%), health full");
             Check(!hud.Visor.HomeShown, "V3 HOME is hidden inside the car");
             Check(hud.Visor.MoneyText == "BOX $0/$500  ·  ON ME $0" && hud.Visor.OnMeValue == 0, "M1 the visor's money line reads an empty box against the quota and nothing on me: " + hud.Visor.MoneyText);
             Check(Day.Elevator.State == ElevatorState.AtBottom, "R2 car at the bottom");
@@ -782,7 +783,9 @@ namespace SunkCost.Editor.Prototype
             var coins = new List<CarryableItem>();
             foreach (CarryableItem item in UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude))
                 if (item.HasValue && item.gameObject.scene == WorldScenes.Scene(WorldId.Dive)) coins.Add(item);
-            Check(coins.Count >= DiveLootSetup.Placements.Length, $"V4 {coins.Count} coins spawned on the seafloor (placements: {DiveLootSetup.Placements.Length})");
+            int coinPlacements = 0;
+            foreach (DiveLootSetup.Placement placement in DiveLootSetup.Placements) if (placement.Coin != DiveLootSetup.AirTankPrefabName) coinPlacements++; // the air tanks among them are worth nothing
+            Check(coins.Count >= coinPlacements, $"V4 {coins.Count} coins spawned on the seafloor (coin placements: {coinPlacements})");
             int badValues = 0;
             foreach (CarryableItem coin in coins) if (coin.Value < coin.ValueMin || coin.Value > coin.ValueMax) badValues++;
             Check(badValues == 0, "V4 every coin's value lies in its range");
