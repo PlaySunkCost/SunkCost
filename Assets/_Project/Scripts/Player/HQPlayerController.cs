@@ -631,6 +631,7 @@ namespace SunkCost.Player
         [ServerRpc]
         private void ServerRequestDebugDeath(NetworkConnection sender = null)
         {
+            if (!Debug.isDebugBuild) return; // development builds and the editor, like ServerRequestDebugAirDown
             SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
             if (flow == null) return;
             if (!flow.ServerKill(sender, out string why)) Debug.Log("[Death] refused for " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + ": " + why);

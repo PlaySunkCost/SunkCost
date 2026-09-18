@@ -97,6 +97,11 @@ namespace SunkCost.World
             locked = false;
             anchor = default;
             controller?.SetTravelLock(false);
+            // The copies were placed from the server's captured spot while locked; the
+            // owner's own last goal was consumed meanwhile and an unchanged pose is
+            // not resent, so the copies would keep the captured spot until the owner
+            // walked (code check, 18 September 2026): one fresh goal, a teleport.
+            if (IsOwner) GetComponent<FishNet.Component.Transforming.NetworkTransform>()?.Teleport();
         }
 
         // Follow the anchor after whatever moved it this frame (ShipDepartureVisual,

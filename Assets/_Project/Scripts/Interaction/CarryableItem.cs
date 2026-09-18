@@ -209,6 +209,11 @@ namespace SunkCost.Interaction
         public override void OnOwnershipClient(NetworkConnection previousOwner)
         {
             base.OnOwnershipClient(previousOwner);
+            // The server's teleport flag for an equip from a slot is not sent once
+            // the client owns the transform: the owner's first write carries one
+            // instead, when the item comes from far (a stowed item parks where it
+            // was stowed, another world even; code check, 18 September 2026).
+            if (IsOwner && state.Value == ItemState.Held) teleportOnNextWrite = true;
             ApplyRole();
             SyncLocalHeldState();
             TryApplyPendingRelease();
@@ -243,8 +248,12 @@ namespace SunkCost.Interaction
                 return;
             if (holder == null) ResolveHolder();
             if (holder == null || !TryGetHoldPose(holder, out Vector3 position, out Quaternion rotation)) return;
+            bool far = teleportOnNextWrite && (transform.position - position).sqrMagnitude > 1f;
+            teleportOnNextWrite = false;
             transform.SetPositionAndRotation(position, rotation);
+            if (far) networkTransform?.Teleport();
         }
+        private bool teleportOnNextWrite;
 
         // A loose item on the car's floor rides with the car (Dan, 16 September
         // 2026: "items on the elevator floor should stay on it, even if the
@@ -357,7 +366,7 @@ namespace SunkCost.Interaction
                 if (restTime >= 0.5f || releaseTime >= releaseHandoffTimeout)
                 {
                     restRequested = true;
-                    ServerRequestRest(motionVersion.Value);
+                    ServerRequestRest(motionVersion.Value, body.linearVelocity, body.angularVelocity);
                 }
             }
 
@@ -646,8 +655,12 @@ namespace SunkCost.Interaction
             resetPosition = position;
         }
 
+        // The writer's motion crosses with the handoff (contract section 2, step 5):
+        // at a true rest it is nothing; at the 4 s timeout a ball still rolling kept
+        // rolling on the server instead of stopping dead (code check, 18 September
+        // 2026). Bounded: no faster than a throw, no wilder than a fast spin.
         [ServerRpc]
-        private void ServerRequestRest(uint version, NetworkConnection sender = null)
+        private void ServerRequestRest(uint version, Vector3 velocity, Vector3 angular, NetworkConnection sender = null)
         {
             if (version != motionVersion.Value || state.Value != ItemState.Released || sender == null || sender.ClientId != holderClientId.Value)
                 return;
@@ -655,7 +668,14 @@ namespace SunkCost.Interaction
             holderClientId.Value = -1;
             RemoveOwnership();
             ApplyRole();
+            if (body != null && !body.isKinematic && IsFinite(velocity) && IsFinite(angular))
+            {
+                body.linearVelocity = Vector3.ClampMagnitude(velocity, LaunchSpeed);
+                body.angularVelocity = Vector3.ClampMagnitude(angular, 20f);
+            }
         }
+
+        private static bool IsFinite(Vector3 v) => float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
 
         [TargetRpc]
         private void TargetApplyRelease(NetworkConnection connection, Vector3 pose, Vector3 direction, bool throwIt, uint version)
