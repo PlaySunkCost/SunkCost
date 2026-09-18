@@ -104,8 +104,8 @@ namespace SunkCost.Editor.Prototype
                 // The tube (Dan's picture, 19 September 2026): teal glass in an ink frame, a
                 // dark cap ring with a glowing band and the beacon on top, a hazard band at
                 // the foot, lit inside. The same glass as the car and the shaft, tinted.
-                glass.SetColor("_BaseColor", new Color(0.55f, 0.85f, 0.9f, 0.35f));
-                if (glass.HasProperty("_Color")) glass.SetColor("_Color", new Color(0.55f, 0.85f, 0.9f, 0.35f));
+                glass.SetColor("_BaseColor", new Color(0.6f, 0.88f, 0.92f, 0.18f)); // clear: two layers (car and tube) must still read as glass from inside (Dan, 19 September 2026)
+                if (glass.HasProperty("_Color")) glass.SetColor("_Color", new Color(0.6f, 0.88f, 0.92f, 0.18f));
                 EditorUtility.SetDirty(glass);
                 GameObject cabin = DeckCabinBuilder.Build(root.transform, Vector3.zero, SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, button); // dead centre, like the picture
                 DressCabin(cabin.transform);
@@ -332,6 +332,12 @@ namespace SunkCost.Editor.Prototype
             Visual("Tower Base Trim", root, new Vector3(0f, 0.12f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.04f, 0.24f, TowerDepth + 0.04f), trim);
             Visual("Tower Floor Line", root, new Vector3(0f, 3.0f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.04f, 0.16f, TowerDepth + 0.04f), ink);
             Visual("Tower Roof Edge", root, new Vector3(0f, roof - 0.1f, cz), Quaternion.identity, new Vector3(TowerWidth + 0.1f, 0.2f, TowerDepth + 0.1f), ink);
+            // The roof plated like the deck (a scaled cube smears its texture; Dan, 19 September 2026: "this platform is bugged").
+            GameObject roofSkin = new("Tower Roof Plates");
+            roofSkin.transform.SetParent(root, false);
+            roofSkin.transform.localPosition = new Vector3(0f, roof, cz);
+            roofSkin.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Box(new Vector3(TowerWidth, 0.01f, TowerDepth));
+            roofSkin.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.DeckTile();
             // The glazed top storey: the captain's windows on the forward face and both sides.
             Visual("Bridge Windows", root, new Vector3(0f, 4.4f, front + 0.03f), Quaternion.identity, new Vector3(TowerWidth - 1.2f, 1.5f, 0.06f), glow);
             foreach (float side in new[] { -1f, 1f })
@@ -416,6 +422,11 @@ namespace SunkCost.Editor.Prototype
             float px = -half - 1.5f; // the platform's centre, 3 m wide beside the tower
             Block("Stair Platform", root, new Vector3(px, roof - 0.15f, back + 1.5f), new Vector3(3f, 0.3f, 3f), dark);
             Visual("Stair Platform Trim", root, new Vector3(px, roof - 0.28f, back + 1.5f), Quaternion.identity, new Vector3(3.04f, 0.1f, 3.04f), trim);
+            GameObject platformSkin = new("Stair Platform Plates");
+            platformSkin.transform.SetParent(root, false);
+            platformSkin.transform.localPosition = new Vector3(px, roof, back + 1.5f);
+            platformSkin.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Box(new Vector3(3f, 0.01f, 3f));
+            platformSkin.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.DeckTile();
             foreach (float z in new[] { back + 0.5f, back + 2.5f }) Block("Stair Platform Post", root, new Vector3(px - 1.3f, roof / 2f, z), new Vector3(0.2f, roof, 0.2f), ink);
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(px - 1.4f, roof, back + 1.5f), Quaternion.Euler(0f, 90f, 0f)).name = "Platform Rail";
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, rail, new Vector3(px, roof, back + 0.1f)).name = "Platform Rail";

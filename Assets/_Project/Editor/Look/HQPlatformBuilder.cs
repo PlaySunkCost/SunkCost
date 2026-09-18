@@ -735,6 +735,7 @@ namespace SunkCost.Editor.Look
             fillGo.transform.rotation = Quaternion.Euler(70f, 30f, 0f);
             Light fill = fillGo.GetComponent<Light>();
             fill.type = LightType.Directional; fill.color = new Color(0.55f, 0.66f, 0.98f); fill.intensity = 0.55f; fill.shadows = LightShadows.Soft; fill.shadowStrength = 0.45f;
+            fill.shadowNormalBias = 1.0f; fill.shadowBias = 0.08f; // no acne on the big flat roofs
             RenderSettings.skybox = SkyboxMaterial();
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;

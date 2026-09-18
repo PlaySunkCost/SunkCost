@@ -66,6 +66,12 @@ namespace SunkCost.Editor.Look
             // 2026, Unity 6000.6.0f1): off. A few thousand renderers draw fine without it.
             SerializedProperty drawer = serialized.FindProperty("m_GPUResidentDrawerMode");
             if (drawer != null && drawer.intValue != 0) { drawer.intValue = 0; changed = true; }
+            // Shadows sharp enough for a flat roof at dawn: a 4096 map over 40 m in four
+            // cascades (a sawtooth shadow edge crossed the tower's roof, Dan, 19 September 2026).
+            SerializedProperty shadowMap = serialized.FindProperty("m_MainLightShadowmapResolution");
+            if (shadowMap != null && shadowMap.intValue < 4096) { shadowMap.intValue = 4096; changed = true; }
+            SerializedProperty shadowDistance = serialized.FindProperty("m_ShadowDistance");
+            if (shadowDistance != null && Mathf.Abs(shadowDistance.floatValue - 40f) > 0.01f) { shadowDistance.floatValue = 40f; changed = true; }
             if (changed) { serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(asset); AssetDatabase.SaveAssets(); }
             // The occlusion feature on the PC renderer: the contact shadows that give
             // the picture its depth. Stronger and wider than the default.
