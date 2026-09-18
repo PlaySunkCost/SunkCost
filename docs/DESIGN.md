@@ -453,6 +453,7 @@ TV as it is for the diver — the same swap serves a dead diver's eyes on the de
 | Personal debt per player | A visible per-player debt alongside the crew quota would make the title mechanically true. |
 | Title | "Sunk Cost" vs "Black Tide". Search Steam and a trademark register first. |
 | Loot breakage | Deferred. |
+| Remote players jitter on moving floors | **Mission for later (Dan, 18 September 2026, Steam session with Idan):** other players "jump" while riding the elevator and while the ship is moving — the remote copy's replicated position fights the moving floor (the copy is placed from network snapshots in world space while the car/ship carries the frame; `ShipDepartureRider.PlaceRemoteCopy` pins riders only for a locked ride). Fix direction: replicate riders relative to the moving frame (car/ship local space) for the whole ride, or ease the copy in frame space. Everything else in that session worked. |
 
 ---
 
