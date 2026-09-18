@@ -559,11 +559,17 @@ namespace SunkCost.Editor.Prototype
             floor.AddComponent<MeshFilter>().sharedMesh = floorMesh;
             floor.AddComponent<MeshRenderer>().sharedMaterial = dark;
             floor.AddComponent<MeshCollider>().sharedMesh = floorMesh;
-            for (int i = 0; i < 24; i++)
+            GameObject wellWall = new("Well Wall");
+            wellWall.transform.SetParent(root, false);
+            wellWall.transform.localPosition = new Vector3(0f, -WellDepth, 0f);
+            wellWall.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(WellRadius + 0.04f, WellDepth, 0.08f, 0f, 360f, 48);
+            wellWall.AddComponent<MeshRenderer>().sharedMaterial = ink;
+            for (int i = 0; i < 24; i++) // the wall the physics knows: a ring of unseen boxes
             {
                 float a = i * 15f, rad = a * Mathf.Deg2Rad;
-                GameObject wall = Block("Well Wall", root, new Vector3(Mathf.Cos(rad) * (WellRadius + 0.02f), -WellDepth / 2f, Mathf.Sin(rad) * (WellRadius + 0.02f)), new Vector3(0.08f, WellDepth, 0.9f), ink);
+                GameObject wall = Block("Well Wall Collider", root, new Vector3(Mathf.Cos(rad) * (WellRadius + 0.04f), -WellDepth / 2f, Mathf.Sin(rad) * (WellRadius + 0.04f)), new Vector3(0.08f, WellDepth, 0.9f), ink);
                 wall.transform.localRotation = Quaternion.Euler(0f, -a, 0f);
+                Unseen(wall);
             }
             GameObject pedestal = new("Pedestal");
             pedestal.transform.SetParent(root, false);
@@ -609,32 +615,36 @@ namespace SunkCost.Editor.Prototype
             return m;
         }
 
-        // A round railing of radius `r` about the origin, posts every 22.5 degrees,
-        // a gap of `gapHalfDeg` either side of `gapCentreDeg`; every piece a wall the
-        // physics knows.
+        // A round railing of radius `r` about the origin — truly round (Dan, 19
+        // September 2026: "not a lot of blocks that look round"): the top and mid
+        // rails are one arc each, the kick plate one curved band, posts every 22.5
+        // degrees; a gap of `gapHalfDeg` either side of `gapCentreDeg`. The physics
+        // gets a chain of unseen box colliders along the curve.
         private static void RoundRail(GameObject look, float r, float gapCentreDeg, float gapHalfDeg)
         {
             Material ink = SunkCost.Editor.Look.LookMaterials.Ink(), hazard = SunkCost.Editor.Look.LookMaterials.Hazard();
             const int posts = 16;
             float step = 360f / posts;
-            bool inGap(float deg) => Mathf.Abs(Mathf.DeltaAngle(deg, gapCentreDeg)) < gapHalfDeg;
+            float fromDeg = gapCentreDeg + gapHalfDeg, toDeg = gapCentreDeg - gapHalfDeg + 360f;
+            int segments = Mathf.CeilToInt((toDeg - fromDeg) / 6f);
+            Skin(look, "Ring Top Rail", SunkCost.Editor.Look.MeshKit.Arc(r, 0.16f, fromDeg, toDeg, segments, 10), ink, new Vector3(0f, 1.16f, 0f), Quaternion.identity);
+            Skin(look, "Ring Mid Rail", SunkCost.Editor.Look.MeshKit.Arc(r, 0.08f, fromDeg, toDeg, segments, 8), ink, new Vector3(0f, 0.64f, 0f), Quaternion.identity);
+            Skin(look, "Ring Kick Plate", SunkCost.Editor.Look.MeshKit.Band(r, 0.28f, 0.06f, fromDeg, toDeg, segments), hazard, Vector3.zero, Quaternion.identity);
             for (int i = 0; i < posts; i++)
             {
-                float a = i * step, mid = a + step / 2f;
-                if (Mathf.Abs(Mathf.DeltaAngle(a, gapCentreDeg)) >= gapHalfDeg - step / 2f) // the posts either side of the gap stay
-                    Skin(look, "Ring Post", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.18f, 1.2f, 0.18f)), ink, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * r), Quaternion.Euler(0f, -a, 0f));
-                if (inGap(mid)) continue;
-                float chord = 2f * r * Mathf.Sin(step / 2f * Mathf.Deg2Rad);
-                Vector3 at = new(Mathf.Cos(mid * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(mid * Mathf.Deg2Rad) * r);
-                Quaternion rot = Quaternion.Euler(0f, -mid + 90f, 0f); // the piece's X runs along the tangent
-                GameObject piece = new("Ring Rail");
-                piece.transform.SetParent(look.transform, false);
-                piece.transform.localPosition = at; piece.transform.localRotation = rot;
-                Skin(piece, "Top Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.16f, 0.16f)), ink, new Vector3(0f, 1.08f, 0f), Quaternion.identity);
-                Skin(piece, "Mid Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.08f, 0.08f)), ink, new Vector3(0f, 0.6f, 0f), Quaternion.identity);
-                Skin(piece, "Kick Plate", SunkCost.Editor.Look.MeshKit.Box(new Vector3(chord + 0.1f, 0.28f, 0.06f)), hazard, Vector3.zero, Quaternion.identity);
-                BoxCollider col = piece.AddComponent<BoxCollider>();
-                col.center = new Vector3(0f, 0.62f, 0f); col.size = new Vector3(chord + 0.1f, 1.24f, 0.2f);
+                float a = i * step;
+                if (Mathf.Abs(Mathf.DeltaAngle(a, gapCentreDeg)) < gapHalfDeg - 0.5f) continue;
+                Skin(look, "Ring Post", SunkCost.Editor.Look.MeshKit.Box(new Vector3(0.14f, 1.2f, 0.14f)), ink, new Vector3(Mathf.Cos(a * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(a * Mathf.Deg2Rad) * r), Quaternion.Euler(0f, -a, 0f));
+            }
+            for (float a = fromDeg; a < toDeg - 0.01f; a += 7.5f)
+            {
+                float mid = a + 3.75f, chord = 2f * r * Mathf.Sin(3.75f * Mathf.Deg2Rad);
+                GameObject wall = new("Ring Wall");
+                wall.transform.SetParent(look.transform, false);
+                wall.transform.localPosition = new Vector3(Mathf.Cos(mid * Mathf.Deg2Rad) * r, 0f, Mathf.Sin(mid * Mathf.Deg2Rad) * r);
+                wall.transform.localRotation = Quaternion.Euler(0f, -mid + 90f, 0f);
+                BoxCollider col = wall.AddComponent<BoxCollider>();
+                col.center = new Vector3(0f, 0.62f, 0f); col.size = new Vector3(chord + 0.05f, 1.24f, 0.2f);
             }
         }
 

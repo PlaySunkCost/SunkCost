@@ -42,7 +42,23 @@ namespace SunkCost.Editor.Look
         public static Mesh Ring(float radius, float thickness, int segments = 24, int sides = 8)
         {
             string name = $"Ring_{F(radius)}x{F(thickness)}";
-            return Cached(name, () => BuildRing(radius, thickness, segments, sides));
+            return Cached(name, () => BuildArc(radius, thickness, 0f, 360f, segments, sides, caps: false));
+        }
+
+        // A piece of a ring: a round rail from `fromDeg` to `toDeg` about Y, capped ends.
+        public static Mesh Arc(float radius, float thickness, float fromDeg, float toDeg, int segments = 32, int sides = 8)
+        {
+            string name = $"Arc_{F(radius)}x{F(thickness)}_{F(fromDeg)}to{F(toDeg)}";
+            return Cached(name, () => BuildArc(radius, thickness, fromDeg, toDeg, segments, sides, caps: true));
+        }
+
+        // A curved plate `height` tall and `thick` deep, standing on its base at
+        // `radius` from `fromDeg` to `toDeg` about Y; UVs in metres (u along the
+        // curve, v up), both faces, the top, the ends.
+        public static Mesh Band(float radius, float height, float thick, float fromDeg, float toDeg, int segments = 32)
+        {
+            string name = $"Band_{F(radius)}x{F(height)}x{F(thick)}_{F(fromDeg)}to{F(toDeg)}";
+            return Cached(name, () => BuildBand(radius, height, thick, fromDeg, toDeg, segments));
         }
 
         private static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture).Replace('.', '_');
@@ -142,12 +158,13 @@ namespace SunkCost.Editor.Look
             return Finish(v, n, uv, t); // Finish picks the index format before the triangles go in: set after, it empties them
         }
 
-        private static Mesh BuildRing(float radius, float thickness, int segments, int sides)
+        private static Mesh BuildArc(float radius, float thickness, float fromDeg, float toDeg, int segments, int sides, bool caps)
         {
             var v = new List<Vector3>(); var n = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+            float from = fromDeg * Mathf.Deg2Rad, span = (toDeg - fromDeg) * Mathf.Deg2Rad;
             for (int i = 0; i <= segments; i++)
             {
-                float a = i / (float)segments * Mathf.PI * 2f;
+                float a = from + i / (float)segments * span;
                 Vector3 centre = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
                 Vector3 outward = centre.normalized;
                 for (int j = 0; j <= sides; j++)
@@ -163,6 +180,61 @@ namespace SunkCost.Editor.Look
                     int a = i * (sides + 1) + j, b = a + sides + 1;
                     t.Add(a); t.Add(a + 1); t.Add(b); t.Add(a + 1); t.Add(b + 1); t.Add(b);
                 }
+            if (caps)
+                foreach (int end in new[] { 0, segments })
+                {
+                    float a = from + end / (float)segments * span;
+                    Vector3 centre = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
+                    Vector3 tangent = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a)) * (end == 0 ? -1f : 1f);
+                    int c = v.Count; v.Add(centre); n.Add(tangent); uv.Add(Vector2.zero);
+                    int ring = end * (sides + 1);
+                    for (int j = 0; j < sides; j++)
+                    {
+                        if (end == 0) { t.Add(c); t.Add(ring + j); t.Add(ring + j + 1); }
+                        else { t.Add(c); t.Add(ring + j + 1); t.Add(ring + j); }
+                    }
+                }
+            return Finish(v, n, uv, t);
+        }
+
+        private static Mesh BuildBand(float radius, float height, float thick, float fromDeg, float toDeg, int segments)
+        {
+            var v = new List<Vector3>(); var n = new List<Vector3>(); var uv = new List<Vector2>(); var t = new List<int>();
+            float from = fromDeg * Mathf.Deg2Rad, span = (toDeg - fromDeg) * Mathf.Deg2Rad;
+            float ro = radius + thick / 2f, ri = radius - thick / 2f;
+            // Four strips along the curve: outer face, inner face, top, bottom — each a
+            // row of quads with its own normals.
+            void Strip(System.Func<float, Vector3> lower, System.Func<float, Vector3> upper, System.Func<float, Vector3> normal, float vLow, float vHigh, bool flip)
+            {
+                int start = v.Count;
+                for (int i = 0; i <= segments; i++)
+                {
+                    float a = from + i / (float)segments * span, u = (a - from) * radius;
+                    v.Add(lower(a)); n.Add(normal(a)); uv.Add(new Vector2(u, vLow));
+                    v.Add(upper(a)); n.Add(normal(a)); uv.Add(new Vector2(u, vHigh));
+                }
+                for (int i = 0; i < segments; i++)
+                {
+                    int a = start + i * 2, b = a + 2;
+                    if (flip) { t.Add(a); t.Add(b); t.Add(a + 1); t.Add(a + 1); t.Add(b); t.Add(b + 1); }
+                    else { t.Add(a); t.Add(a + 1); t.Add(b); t.Add(a + 1); t.Add(b + 1); t.Add(b); }
+                }
+            }
+            Vector3 Out(float a) => new(Mathf.Cos(a), 0f, Mathf.Sin(a));
+            Strip(a => Out(a) * ro, a => Out(a) * ro + Vector3.up * height, a => Out(a), 0f, height, flip: false);
+            Strip(a => Out(a) * ri, a => Out(a) * ri + Vector3.up * height, a => -Out(a), 0f, height, flip: true);
+            Strip(a => Out(a) * ri + Vector3.up * height, a => Out(a) * ro + Vector3.up * height, a => Vector3.up, 0f, thick, flip: true);
+            Strip(a => Out(a) * ri, a => Out(a) * ro, a => Vector3.down, 0f, thick, flip: false);
+            foreach (int end in new[] { 0, 1 })
+            {
+                float a = from + end * span;
+                Vector3 tangent = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a)) * (end == 0 ? -1f : 1f);
+                int s = v.Count;
+                v.Add(Out(a) * ri); v.Add(Out(a) * ro); v.Add(Out(a) * ri + Vector3.up * height); v.Add(Out(a) * ro + Vector3.up * height);
+                for (int k = 0; k < 4; k++) { n.Add(tangent); uv.Add(new Vector2(k % 2 * thick, k / 2 * height)); }
+                if (end == 0) { t.Add(s); t.Add(s + 2); t.Add(s + 1); t.Add(s + 1); t.Add(s + 2); t.Add(s + 3); }
+                else { t.Add(s); t.Add(s + 1); t.Add(s + 2); t.Add(s + 1); t.Add(s + 3); t.Add(s + 2); }
+            }
             return Finish(v, n, uv, t);
         }
 
