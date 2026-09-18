@@ -16,7 +16,7 @@ namespace SunkCost.World
 {
     // Executes the scene transitions of docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md
     // section 5 as the ship trip of docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md:
-    // lock the passengers, raise the gangway, pull away, fade, move the scene
+    // lock the passengers, cast off, pull away, fade, move the scene
     // under black, fade in on the stopped ship. Server side it is the only
     // writer of the trip state on CrewDayState and the only orchestrator; client
     // side it answers each stage for its own player (lock, black, placed). It
@@ -304,7 +304,6 @@ namespace SunkCost.World
             CrewSpawner spawner = FindAnyObjectByType<CrewSpawner>();
             if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
             if (!ServerEveryoneAboard(fromShip, out why)) return false;
-            if (ServerCargoOnGangway(fromShip)) { why = "Clear the gangway"; return false; }
             trip = StartCoroutine(TripRoutine(to, fromShip));
             return true;
         }
@@ -334,13 +333,6 @@ namespace SunkCost.World
             }
             why = missing.Count > 0 ? "Not aboard: " + string.Join(", ", missing) : string.Empty;
             return missing.Count == 0;
-        }
-
-        private bool ServerCargoOnGangway(ShipParts ship)
-        {
-            foreach (CarryableItem item in FindObjectsByType<CarryableItem>())
-                if (item.IsSpawned && item.CanGrabFromWorld && ship.IsOnGangway(item.transform.position)) return true;
-            return false;
         }
 
         private static HQPlayerController PlayerOf(NetworkConnection conn)
@@ -387,11 +379,10 @@ namespace SunkCost.World
             if (!AllAcked(prepared)) { yield return Cancel(from, "Not ready: " + Missing(prepared)); yield break; }
             yield return WaitTicks(Settings.SyncFlushTicks); // the owners' last free transforms
 
-            // 4. Someone may have stepped onto the gangway before the lock arrived.
+            // 4. Someone may have stepped off onto the HQ's stair before the lock arrived.
             if (!ServerEveryoneAboard(fromShip, out string why)) { yield return Cancel(from, why); yield break; }
-            if (ServerCargoOnGangway(fromShip)) { yield return Cancel(from, "Clear the gangway"); yield break; }
 
-            // 5. Freeze the deck cargo, close the move list, lift the gangway.
+            // 5. Freeze the deck cargo, close the move list, cast off.
             ServerFreezeCargo(fromShip);
             ServerBuildMoveList();
             SetStage(DepartureStage.RaisingGangway, from, to, Settings.GangwayRaiseSeconds);
@@ -440,7 +431,7 @@ namespace SunkCost.World
             while (Time.unscaledTime < deadline && !AllAcked(arrived)) yield return null;
             if (!AllAcked(arrived)) ServerKickUnresponsive(arrived, "Ship departure: never arrived");
 
-            // Fade in; at HQ the gangway comes down before anyone may walk.
+            // Fade in; at HQ a moment more (making fast) before anyone may walk.
             float arriving = Settings.DepartureFadeSeconds + (to == WorldId.HQ ? Settings.GangwayLowerSeconds : 0f);
             SetStage(DepartureStage.Arriving, from, to, arriving);
             ServerUnload(ActiveCohort().ToArray(), UnloadDataFor(from, keepOnServer: false), "sail: the world left behind");

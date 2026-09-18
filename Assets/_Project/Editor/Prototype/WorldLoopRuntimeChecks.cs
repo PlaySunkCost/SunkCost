@@ -281,24 +281,17 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ"), 6f, "refusal cleared after refusalDisplaySeconds");
             string refusal;
 
-            // D3: the gangway is not the deck. Host on the ramp, guest on the deck.
+            // D3: the HQ's stair foot over the stern is not the deck. Host on the stair, guest on the deck.
             Vector3 guestDeckEarly = hqShip.FromShipLocal(new Vector3(2.5f, 0f, 4f));
             Command(GuestDir, "{\"id\":{id},\"action\":\"move\",\"position\":{\"x\":" + guestDeckEarly.x + ",\"y\":" + guestDeckEarly.y + ",\"z\":" + guestDeckEarly.z + "}}");
             yield return AwaitReply(GuestDir);
-            Vector3 rampSpot = hqShip.FromShipLocal(new Vector3(0f, 0f, -ShipStubBuilder.DeckLength / 2f - 2f));
-            Check(hqShip.IsOnGangway(rampSpot) && !hqShip.IsSafelyAboard(rampSpot), "D3 the ramp spot is on the gangway and not safely aboard");
-            H.ClientMoveLocalPlayerTo(rampSpot); yield return null; yield return null; yield return null;
+            Vector3 stairSpot = hqShip.FromShipLocal(new Vector3(0f, 0f, -ShipStubBuilder.DeckLength / 2f - 1.5f));
+            Check(!hqShip.IsSafelyAboard(stairSpot), "D3 the stair foot is not safely aboard");
+            H.ClientMoveLocalPlayerTo(stairSpot); yield return null; yield return null; yield return null;
             refusal = H.ServerSail("Sea");
-            Check(refusal == "refused: Not aboard: " + WorldSceneFlow.DisplayName(HostPlayer().OwnerId), "D3 a passenger on the gangway is named: " + refusal);
+            Check(refusal == "refused: Not aboard: " + WorldSceneFlow.DisplayName(HostPlayer().OwnerId), "D3 a passenger on the stair is named: " + refusal);
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
-            CarryableItem rampBall = H.Item("Basketball (3)");
-            rampBall.ServerDropAt(hqShip.FromShipLocal(new Vector3(0f, 0.3f, -ShipStubBuilder.DeckLength / 2f - 2f)));
-            yield return null; yield return null;
-            refusal = H.ServerSail("Sea");
-            Check(refusal == "refused: Clear the gangway", "D3 cargo on the gangway refuses: " + refusal);
-            rampBall.ServerDropAt(new Vector3(4f, 0.3f, -4f)); // back into the room, away from the other balls
-            yield return null; yield return null;
-            Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName) && H.ShipStatus("HQ").Contains("lowered=True"), "D3 nothing moved, gangway still down: " + H.ShipStatus("HQ"));
+            Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName), "D3 nothing moved: " + H.ShipStatus("HQ"));
 
             // S3: a ball on the deck, a ball in the host's hand, everyone aboard, sail.
             CarryableItem deckBall = H.Item("Basketball (2)");
@@ -328,7 +321,6 @@ namespace SunkCost.Editor.Prototype
             // fade not yet started, items refused, the deck ball riding along.
             yield return WaitUntil(() => Stage() == DepartureStage.PullingAway, 8f, "the ship pulls away");
             Check(HostPlayer().TravelLocked && !ScreenFade.Instance.IsBlack, "D1 host locked in place, screen still visible while the ship moves");
-            Check(hqShip.GetComponent<ShipDepartureVisual>() != null && !hqShip.GetComponent<ShipDepartureVisual>().GangwayLowered, "D1 gangway raised before moving: " + H.ShipStatus("HQ"));
             yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("travelLocked=True") && GuestLine(r, "server=").Contains("trip=PullingAway/"), 4f, "D1 guest locked and sees PullingAway");
             double untilMoved = EditorApplication.timeSinceStartup + 3.0;
             while (EditorApplication.timeSinceStartup < untilMoved && Stage() == DepartureStage.PullingAway) yield return null;
@@ -350,7 +342,7 @@ namespace SunkCost.Editor.Prototype
             Check(deckBall.gameObject.scene.name == WorldScenes.SeaName && Vector3.Distance(seaShip.ToShipLocal(deckBall.transform.position), deckBallLocalBefore) < 0.15f, "S3 deck ball on the sea deck at the same spot");
             Quaternion deckBallRotationAfter = Quaternion.Inverse(seaShip.transform.rotation) * deckBall.transform.rotation;
             Check(Quaternion.Angle(deckBallRotationBefore, deckBallRotationAfter) < 2f && !deckBall.InTransit, "D7 deck ball keeps its rotation and is released");
-            Check(Vector3.Distance(seaShip.transform.position, seaShip.GetComponent<ShipDepartureVisual>().RestPosition) < 0.01f && !seaShip.GetComponent<ShipDepartureVisual>().GangwayLowered, "D1 sea ship at rest, gangway stowed: " + H.ShipStatus("Sea"));
+            Check(Vector3.Distance(seaShip.transform.position, seaShip.GetComponent<ShipDepartureVisual>().RestPosition) < 0.01f, "D1 sea ship at rest: " + H.ShipStatus("Sea"));
             yield return WaitUntil(() => ScreenFade.Instance.IsClear, 5f, "host fade clears");
             int heldId = heldBall.ObjectId;
             yield return GuestEventually(GuestDir, r =>
@@ -414,9 +406,9 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => Phase() == "SailingHome" || Phase() == "AtHQ", 5f, "sail home accepted from the guest's press");
             File.AppendAllText(Log, "PASS S13 sail home accepted from the guest's monitor press\n");
             yield return WaitUntil(() => Stage() == DepartureStage.Arriving, 25f, "arriving at HQ");
-            Check(HostPlayer().gameObject.scene.name == WorldScenes.HQName && HostPlayer().TravelLocked, "D2 still locked while the gangway lowers");
+            Check(HostPlayer().gameObject.scene.name == WorldScenes.HQName && HostPlayer().TravelLocked, "D2 still locked while the ship makes fast");
             yield return WaitUntil(() => !HostPlayer().TravelLocked, 8f, "unlocked at HQ");
-            Check(H.ShipStatus("HQ").Contains("lowered=True") && H.ShipStatus("HQ").Contains("rampCollider=True"), "D2 gangway down and walkable before the unlock: " + H.ShipStatus("HQ"));
+            Check(H.ShipStatus("HQ").Contains("rest="), "D2 the HQ ship is at rest before the unlock: " + H.ShipStatus("HQ"));
             yield return WaitUntil(() => Phase() == "AtHQ" && !WorldSceneFlow.Instance.Transitioning, 20f, "sail home completes");
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.SeaName), 10f, "sea unloaded on host");
             hqShip = ShipParts.InWorld(WorldId.HQ);

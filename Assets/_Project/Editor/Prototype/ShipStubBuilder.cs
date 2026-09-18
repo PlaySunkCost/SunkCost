@@ -21,8 +21,6 @@ namespace SunkCost.Editor.Prototype
         public const float DeckLength = 30f;
         public const float DeckWidth = 10f;
         public const float DeckThickness = 0.5f;
-        public const float GangwayLength = 6f;
-        public const float GangwayWidth = 1.6f;
 
         [MenuItem("Sunk Cost/Prototype/Create or Update ship stub")]
         public static void CreateOrUpdateFromMenu()
@@ -55,7 +53,6 @@ namespace SunkCost.Editor.Prototype
             Material screen = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipScreen.mat", new Color(0.08f, 0.16f, 0.22f));
             Material button = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipButton.mat", new Color(0.9f, 0.75f, 0.2f));
             Material tape = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipTape.mat", new Color(0.85f, 0.65f, 0.1f));
-            Material gangway = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/HQPlank.mat", new Color(0.42f, 0.33f, 0.22f));
 
             GameObject root = new(ShipParts.RootName);
             try
@@ -66,7 +63,7 @@ namespace SunkCost.Editor.Prototype
                 Block("RailPort", root.transform, new Vector3(-DeckWidth / 2f + 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail);
                 Block("RailStarboard", root.transform, new Vector3(DeckWidth / 2f - 0.1f, 0.5f, 0f), new Vector3(0.2f, 1f, DeckLength), rail);
                 Block("RailBow", root.transform, new Vector3(0f, 0.5f, DeckLength / 2f - 0.1f), new Vector3(DeckWidth, 1f, 0.2f), rail);
-                // The stern rail leaves the boarding gap open: BoardingPoint is where the plank meets the deck.
+                // The stern rail leaves the boarding gap open: BoardingPoint is where the HQ's stair meets the deck.
                 Block("RailSternPort", root.transform, new Vector3(-3f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(4f, 1f, 0.2f), rail);
                 Block("RailSternStarboard", root.transform, new Vector3(3f, 0.5f, -DeckLength / 2f + 0.1f), new Vector3(4f, 1f, 0.2f), rail);
 
@@ -77,13 +74,8 @@ namespace SunkCost.Editor.Prototype
                 GameObject direction = new(ShipParts.DepartureDirectionName);
                 direction.transform.SetParent(root.transform, false);
                 direction.transform.localRotation = Quaternion.identity;
-                // The gangway: hinged at the stern edge, lying toward the dock when down,
-                // swung up by ShipDepartureVisual when the ship moves.
-                GameObject pivot = new(ShipParts.GangwayPivotName);
-                pivot.transform.SetParent(root.transform, false);
-                pivot.transform.localPosition = new Vector3(0f, 0f, -DeckLength / 2f);
-                Block(ShipParts.GangwayName, pivot.transform, new Vector3(0f, -0.05f, -GangwayLength / 2f), new Vector3(GangwayWidth, 0.1f, GangwayLength), gangway);
-                Trigger(ShipParts.GangwayExclusionVolumeName, pivot.transform, new Vector3(0f, 1.2f, -GangwayLength / 2f - 0.3f), new Vector3(GangwayWidth + 0.8f, 2.6f, GangwayLength + 0.6f));
+                // No gangway on the ship (Dan, 18 September 2026): the HQ's own bridge and
+                // stair come down to the stern; the ship carries nothing that reaches the base.
                 root.AddComponent<ShipDepartureVisual>();
 
                 GameObject monitor = Block(ShipParts.MonitorName, root.transform, new Vector3(0f, 1.6f, DeckLength / 2f - 1.5f), new Vector3(1.6f, 1f, 0.1f), screen);

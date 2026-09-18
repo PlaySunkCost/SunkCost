@@ -28,10 +28,9 @@ namespace SunkCost.Editor.Prototype
         public const string SteamTransportPrefabPath = "Assets/_Project/Prefabs/Net/SteamTransport.prefab";
         public const string MaterialPath = "Assets/_Project/Art/Prototype/Materials";
 
-        public const float PlankLength = 6f;   // historical: the old base-owned plank; the ship's gangway is this long now
+        public const float PlankLength = 6f;   // historical: the old base-owned plank
         public const float PlankWidth = 1.6f;
         public const float PierLength = 3f;
-        public const float PierOverlap = 1f;   // how far the gangway tip reaches onto the pier
         public const float DoorwayWidth = 2.4f;
         public const string ShopRoomName = "Shop Room"; // the Gear & Supplies booth (HQPlatformBuilder), where the hooks look
 

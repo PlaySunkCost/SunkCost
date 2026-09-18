@@ -16,8 +16,8 @@ namespace SunkCost.Editor.Look
     // along the north wall with shelves full of goods (the office, Upgrades,
     // Gear & Supplies, Intake/Sell, Check in, the Pickup tower with its stairs);
     // the court in the west; the crew's mark in the east; containers on the
-    // roofs, crates and barrels everywhere; the gangway down to the pontoon and
-    // the moored ship on the west; the plank off the south-east corner.
+    // roofs, crates and barrels everywhere; the bridge off the west rim with the
+    // stairs down to the moored ship; the plank off the south-east corner.
     // Everything is a prop prefab placed here (PropBuilder) or a signed line
     // (HQSigns); nothing gameplay reads any of this — the markers the rules need
     // (spawn points, the plank's base and end, the shop stands and the chute, the
@@ -29,10 +29,15 @@ namespace SunkCost.Editor.Look
         public const float DeckW = 60f, DeckD = 36f, DeckThick = 0.8f;
         public const float WaterY = -12f, SeabedY = -20f; // high above the water (Dan, 18 September 2026)
         public const float BoothZ = 15f;           // booth centres; the front (the counter side) at z = 12
-        public const float PontoonY = -11f;        // the ship's deck level at the mooring, 1 m over the water
-        public static readonly Vector3 PontoonCentre = new(-44f, PontoonY, -27f); // south-west of the platform, at the foot of the second flight
-        public const float PontoonW = 12f, PontoonD = 10f;
-        public static readonly Vector3 GangwayLanding = new(-32f, 0f, -12f);
+        // The way to the ship belongs to the HQ (Dan, 18 September 2026: "the bridge
+        // connected to the HQ, like in the photo, then a staircase from the bridge
+        // to the ship; the ship clean"): a railed bridge west off the rim at deck
+        // level, a landing, two flights south down to the stern of the moored ship.
+        public const float ShipDeckY = -11f;         // the ship's deck level at the mooring, 1 m over the water
+        public static readonly Vector3 GangwayLanding = new(-32f, 0f, -12f); // where the bridge leaves the rim
+        public static readonly Vector3 BridgeEnd = new(-44f, 0f, -12f);      // the landing at the bridge's end; the stairs go south from it
+        public const float StairRun = 8f, StairW = 3f, LandingW = 4f;
+        public static readonly Vector3 StairFoot = new(BridgeEnd.x, ShipDeckY, BridgeEnd.z - LandingW / 2f - StairRun - LandingW - StairRun - LandingW / 2f); // (-44, -11, -36)
         public static readonly Rect Court = new(-24f, -10f, 20f, 12f);   // x, z, w, d
         public static readonly Vector3 CrewMark = new(10f, 0f, -3f);
         public const string PlatformRootName = "Platform";
@@ -172,13 +177,6 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, PropBuilder.Ladder(-SeabedY - DeckThick), new Vector3(24f, SeabedY, -12f - 1.6f), Quaternion.Euler(0f, 180f, 0f)).name = "Leg Ladder";
             PropBuilder.Place(root, lamp, new Vector3(DeckW / 2f - 0.15f, 0f, DeckD / 2f - 6.5f)).name = "Rail Lamp";
             PropBuilder.Place(root, lamp, new Vector3(-DeckW / 2f + 0.15f, 0f, DeckD / 2f - 6.5f)).name = "Rail Lamp";
-            // The gangway landing outside the west rim, railed on its two sides.
-            Part(root, "Gangway Landing", MeshKit.Box(new Vector3(4f, DeckThick, 4f)), LookMaterials.DeckTile(), new Vector3(GangwayLanding.x, -DeckThick, GangwayLanding.z), withCollider: true);
-            Part(root, "Landing Girder", MeshKit.Box(new Vector3(4.2f, 1.2f, 4.2f)), LookMaterials.Panel(), new Vector3(GangwayLanding.x, -DeckThick - 1.2f, GangwayLanding.z));
-            PropBuilder.Place(root, rail, new Vector3(GangwayLanding.x, 0f, GangwayLanding.z + 1.9f)).name = "Rail Landing N";
-            PropBuilder.Place(root, rail, new Vector3(GangwayLanding.x, 0f, GangwayLanding.z - 1.9f)).name = "Rail Landing S";
-            PropBuilder.Place(root, lamp, new Vector3(GangwayLanding.x - 1.8f, 0f, GangwayLanding.z + 1.9f)).name = "Rail Lamp";
-            PropBuilder.Place(root, lamp, new Vector3(GangwayLanding.x - 1.8f, 0f, GangwayLanding.z - 1.9f)).name = "Rail Lamp";
         }
 
         private static void Lamps(GameObject root)
@@ -502,10 +500,8 @@ namespace SunkCost.Editor.Look
 
         private static void Markings(GameObject root)
         {
-            // No writing on the deck (Dan, 18 September 2026): the signs on boards say it all.
-            GameObject shipSign = PropBuilder.Place(root, PropBuilder.SignBoard(3.8f, 1.1f), new Vector3(-DeckW / 2f + 0.6f, 1.4f, GangwayLanding.z + 3.4f), Quaternion.Euler(0f, 90f, 0f));
-            shipSign.name = "Ship Sign";
-            Sign(shipSign, "ship.this.way", null);
+            // No writing on the deck (Dan, 18 September 2026): the signs on boards say it all
+            // (the ship's is the gantry over the bridge, in Dock).
             GameObject plankSign = PropBuilder.Place(root, PropBuilder.SignBoard(3.2f, 1.0f), new Vector3(DeckW / 2f - 0.5f, 1.4f, PlankBase.z + 2.4f), Quaternion.Euler(0f, -90f, 0f));
             plankSign.name = "Plank Sign";
             Sign(plankSign, "plank", null);
@@ -601,52 +597,78 @@ namespace SunkCost.Editor.Look
         private static void Dock(GameObject shipPrefab)
         {
             GameObject dock = new("Dock");
-            Part(dock, "Pontoon", MeshKit.Box(new Vector3(PontoonW, DeckThick, PontoonD)), LookMaterials.DeckTile(), new Vector3(PontoonCentre.x, PontoonY - DeckThick, PontoonCentre.z), withCollider: true);
-            Part(dock, "Pontoon Lip N", MeshKit.Box(new Vector3(PontoonW, 0.02f, 0.5f)), LookMaterials.Hazard(), new Vector3(PontoonCentre.x, PontoonY, PontoonCentre.z + PontoonD / 2f - 0.25f));
-            Part(dock, "Pontoon Lip S", MeshKit.Box(new Vector3(PontoonW, 0.02f, 0.5f)), LookMaterials.Hazard(), new Vector3(PontoonCentre.x, PontoonY, PontoonCentre.z - PontoonD / 2f + 0.25f));
-            Part(dock, "Pontoon Lip W", MeshKit.Box(new Vector3(0.5f, 0.02f, PontoonD)), LookMaterials.Hazard(), new Vector3(PontoonCentre.x - PontoonW / 2f + 0.25f, PontoonY, PontoonCentre.z));
-            foreach (float x in new[] { -4f, 0f, 4f })
-                foreach (float z in new[] { -4f, 4f })
-                    PropBuilder.Place(dock, PropBuilder.Bollard(), new Vector3(PontoonCentre.x + x, PontoonY, PontoonCentre.z + z)).name = "Bollard";
-            foreach (float x in new[] { -4.5f, 4.5f })
-                Part(dock, "Pile", MeshKit.Cylinder(0.45f, PontoonY - SeabedY + 1.8f, 12), LookMaterials.RustSteel(), new Vector3(PontoonCentre.x + x, SeabedY, PontoonCentre.z + PontoonD / 2f + 0.7f));
-            Part(dock, "Float", MeshKit.Box(new Vector3(PontoonW - 0.6f, 1.6f, PontoonD - 0.6f)), LookMaterials.Panel(), new Vector3(PontoonCentre.x, PontoonY - DeckThick - 1.6f, PontoonCentre.z));
-            // Two flights down from the gangway landing, a mid landing between them,
-            // the second flight along the pontoon's edge.
-            float half = -PontoonY / 2f; // 5.5 m each
-            GameObject upper = PropBuilder.Place(dock, PropBuilder.Stairs(half, 8f, 3f), new Vector3(GangwayLanding.x - 2f - 8f, -half, GangwayLanding.z), Quaternion.Euler(0f, 90f, 0f));
-            upper.name = "Gangway Stairs Upper";
-            Vector3 mid = new(GangwayLanding.x - 2f - 8f - 2f, -half, GangwayLanding.z);
-            Part(dock, "Mid Landing", MeshKit.Box(new Vector3(4f, DeckThick, 4f)), LookMaterials.DeckTile(), new Vector3(mid.x, mid.y - DeckThick, mid.z), withCollider: true);
-            Part(dock, "Mid Landing Girder", MeshKit.Box(new Vector3(4.2f, 1.0f, 4.2f)), LookMaterials.Panel(), new Vector3(mid.x, mid.y - DeckThick - 1.0f, mid.z));
-            PropBuilder.Place(dock, PropBuilder.Rail(), new Vector3(mid.x, mid.y, mid.z + 1.9f)).name = "Mid Rail";
-            PropBuilder.Place(dock, PropBuilder.Rail(), new Vector3(mid.x - 1.9f, mid.y, mid.z), Quaternion.Euler(0f, 90f, 0f)).name = "Mid Rail";
-            PropBuilder.Place(dock, PropBuilder.RailLamp(), new Vector3(mid.x - 1.9f, mid.y, mid.z + 1.9f)).name = "Mid Lamp";
-            GameObject lower = PropBuilder.Place(dock, PropBuilder.Stairs(half, 8f, 3f), new Vector3(mid.x, PontoonY, mid.z - 2f - 8f), Quaternion.identity);
-            lower.name = "Gangway Stairs Lower";
-            foreach (float y in new[] { -half, PontoonY })
-                Part(dock, "Landing Post", MeshKit.Cylinder(0.3f, y - SeabedY, 10), LookMaterials.RustSteel(), new Vector3(mid.x, SeabedY, mid.z));
-            PropBuilder.Place(dock, PropBuilder.LampPost(), new Vector3(PontoonCentre.x + PontoonW / 2f - 0.8f, PontoonY, PontoonCentre.z + PontoonD / 2f - 0.8f), Quaternion.Euler(0f, -135f, 0f)).name = "Pontoon Lamp";
-            PropBuilder.Place(dock, PropBuilder.LampPost(), new Vector3(PontoonCentre.x + PontoonW / 2f - 0.8f, PontoonY, PontoonCentre.z - PontoonD / 2f + 0.8f), Quaternion.Euler(0f, -45f, 0f)).name = "Pontoon Lamp";
-            PropBuilder.Place(dock, PropBuilder.Barrel("Red"), new Vector3(PontoonCentre.x + 2f, PontoonY, PontoonCentre.z + 3.6f)).name = "Barrel";
-            // Tyres hung along the pontoon's mooring side.
-            for (float z = -3.5f; z <= 3.5f; z += 1.75f)
+            GameObject rail = PropBuilder.Rail(), lamp = PropBuilder.RailLamp();
+            // The bridge: from the rim's gap west to the landing, railed both sides, a
+            // lamp every 4 m, the gantry sign over its start.
+            float bridgeX0 = -DeckW / 2f, bridgeX1 = BridgeEnd.x + LandingW / 2f;
+            float bridgeCx = (bridgeX0 + bridgeX1) / 2f, bridgeLen = bridgeX0 - bridgeX1;
+            Part(dock, "Bridge", MeshKit.Box(new Vector3(bridgeLen, DeckThick, LandingW)), LookMaterials.DeckTile(), new Vector3(bridgeCx, -DeckThick, BridgeEnd.z), withCollider: true);
+            Part(dock, "Bridge Girder", MeshKit.Box(new Vector3(bridgeLen + 0.4f, 1.2f, LandingW + 0.2f)), LookMaterials.RustSteel(), new Vector3(bridgeCx, -DeckThick - 1.2f, BridgeEnd.z));
+            Part(dock, "Bridge Stripe", MeshKit.Box(new Vector3(bridgeLen, 0.02f, 0.3f)), LookMaterials.Hazard(), new Vector3(bridgeCx, 0f, BridgeEnd.z + LandingW / 2f - 0.15f));
+            Part(dock, "Bridge Stripe", MeshKit.Box(new Vector3(bridgeLen, 0.02f, 0.3f)), LookMaterials.Hazard(), new Vector3(bridgeCx, 0f, BridgeEnd.z - LandingW / 2f + 0.15f));
+            for (float x = bridgeX0 - 1f; x > bridgeX1; x -= 2f)
             {
-                GameObject tyre = new("Tyre");
-                tyre.transform.SetParent(dock.transform);
-                tyre.transform.SetPositionAndRotation(new Vector3(PontoonCentre.x - PontoonW / 2f - 0.15f, PontoonY - 0.6f, PontoonCentre.z + z), Quaternion.Euler(0f, 0f, 90f));
-                tyre.AddComponent<MeshFilter>().sharedMesh = MeshKit.Ring(0.42f, 0.24f, 16, 8);
-                tyre.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.Ink();
+                foreach (float side in new[] { -1f, 1f })
+                    PropBuilder.Place(dock, rail, new Vector3(x, 0f, BridgeEnd.z + side * (LandingW / 2f - 0.1f))).name = "Bridge Rail";
+                if (((int)((bridgeX0 - x - 1f) / 2f)) % 2 == 1)
+                    foreach (float side in new[] { -1f, 1f })
+                        PropBuilder.Place(dock, lamp, new Vector3(x + 1f, 0f, BridgeEnd.z + side * (LandingW / 2f - 0.1f))).name = "Bridge Lamp";
             }
-            PropBuilder.Place(dock, PropBuilder.Crate("Grey"), new Vector3(PontoonCentre.x + 3.2f, PontoonY, PontoonCentre.z - 3.4f), Quaternion.Euler(0f, 12f, 0f)).name = "Crate";
+            // The landing at the bridge's end, railed west and north; the stairs leave it south.
+            Part(dock, "Bridge Landing", MeshKit.Box(new Vector3(LandingW, DeckThick, LandingW)), LookMaterials.DeckTile(), new Vector3(BridgeEnd.x, -DeckThick, BridgeEnd.z), withCollider: true);
+            Part(dock, "Landing Girder", MeshKit.Box(new Vector3(LandingW + 0.2f, 1.2f, LandingW + 0.2f)), LookMaterials.RustSteel(), new Vector3(BridgeEnd.x, -DeckThick - 1.2f, BridgeEnd.z));
+            PropBuilder.Place(dock, rail, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z - 1f), Quaternion.Euler(0f, 90f, 0f)).name = "Landing Rail W";
+            PropBuilder.Place(dock, rail, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z + 1f), Quaternion.Euler(0f, 90f, 0f)).name = "Landing Rail W";
+            PropBuilder.Place(dock, rail, new Vector3(BridgeEnd.x - 1f, 0f, BridgeEnd.z + LandingW / 2f - 0.1f)).name = "Landing Rail N";
+            PropBuilder.Place(dock, rail, new Vector3(BridgeEnd.x + 1f, 0f, BridgeEnd.z + LandingW / 2f - 0.1f)).name = "Landing Rail N";
+            PropBuilder.Place(dock, lamp, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z + LandingW / 2f - 0.1f)).name = "Landing Lamp";
+            PropBuilder.Place(dock, lamp, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z - LandingW / 2f + 0.1f)).name = "Landing Lamp";
+            // The gantry over the bridge's start: two posts and the sign, read from the deck.
+            foreach (float side in new[] { -1f, 1f })
+                Part(dock, "Gantry Post", MeshKit.Box(new Vector3(0.22f, 3.8f, 0.22f)), LookMaterials.Ink(), new Vector3(bridgeX0 - 1.2f, 0f, BridgeEnd.z + side * (LandingW / 2f + 0.3f)));
+            Part(dock, "Gantry Beam", MeshKit.Box(new Vector3(0.22f, 0.22f, LandingW + 0.8f)), LookMaterials.Ink(), new Vector3(bridgeX0 - 1.2f, 3.7f, BridgeEnd.z));
+            GameObject shipSign = PropBuilder.Place(dock, PropBuilder.SignBoard(4f, 1.0f), new Vector3(bridgeX0 - 1.2f, 2.6f, BridgeEnd.z), Quaternion.Euler(0f, 90f, 0f));
+            shipSign.name = "Ship Sign";
+            Sign(shipSign, "ship.this.way", null);
+            // Two flights south from the landing, a mid landing between them, the foot
+            // landing over the stern of the moored ship; every landing on a post to the seabed.
+            float half = -ShipDeckY / 2f; // 5.5 m each
+            Vector3 mid = new(BridgeEnd.x, -half, BridgeEnd.z - LandingW / 2f - StairRun - LandingW / 2f);
+            GameObject upper = PropBuilder.Place(dock, PropBuilder.Stairs(half, StairRun, StairW), new Vector3(BridgeEnd.x, -half, mid.z + LandingW / 2f), Quaternion.identity);
+            upper.name = "Ship Stairs Upper";
+            Landing(dock, "Mid Landing", mid, openSouth: true, openNorth: true);
+            GameObject lower = PropBuilder.Place(dock, PropBuilder.Stairs(half, StairRun, StairW), new Vector3(BridgeEnd.x, ShipDeckY, StairFoot.z + LandingW / 2f), Quaternion.identity);
+            lower.name = "Ship Stairs Lower";
+            Landing(dock, "Stair Foot", StairFoot, openSouth: true, openNorth: true);
+            Part(dock, "Foot Lip", MeshKit.Box(new Vector3(LandingW, 0.02f, 0.4f)), LookMaterials.Hazard(), new Vector3(StairFoot.x, StairFoot.y, StairFoot.z - LandingW / 2f + 0.2f));
+            foreach (float z in new[] { BridgeEnd.z, mid.z, StairFoot.z })
+                foreach (float x in new[] { BridgeEnd.x - LandingW / 2f + 0.4f, BridgeEnd.x + LandingW / 2f - 0.4f })
+                    Part(dock, "Pile", MeshKit.Cylinder(0.4f, (z == StairFoot.z ? ShipDeckY : z == mid.z ? -half : 0f) - SeabedY - DeckThick, 12), LookMaterials.RustSteel(), new Vector3(x, SeabedY, z));
+            // The ship, moored with its stern under the stair's foot, bow to the south
+            // (the way out), nothing on it touching the HQ.
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
             ship.transform.SetParent(dock.transform, true);
             ShipParts parts = ship.GetComponent<ShipParts>();
             Transform boarding = parts != null ? parts.BoardingPoint : null;
             float sternZ = boarding != null ? boarding.localPosition.z : -SunkCost.Editor.Prototype.ShipStubBuilder.DeckLength / 2f;
-            float tipZ = sternZ - SunkCost.Editor.Prototype.ShipStubBuilder.GangwayLength;
-            float tipX = PontoonCentre.x - PontoonW / 2f + SunkCost.Editor.Prototype.HQPrototypeBuilder.PierOverlap;
-            ship.transform.SetPositionAndRotation(new Vector3(tipX + tipZ, PontoonY, PontoonCentre.z), Quaternion.Euler(0f, -90f, 0f));
+            float sternWorldZ = StairFoot.z - LandingW / 2f - 0.05f; // the stern against the foot landing's edge, the decks level
+            ship.transform.SetPositionAndRotation(new Vector3(StairFoot.x, ShipDeckY, sternWorldZ + sternZ), Quaternion.Euler(0f, 180f, 0f)); // yaw 180: the stern (local -z) toward the stairs, the bow south
+        }
+
+        // A 4 x 4 landing on the way down: the plate, its girder, rails on the closed
+        // sides, a lamp on a corner.
+        private static void Landing(GameObject dock, string name, Vector3 at, bool openSouth, bool openNorth)
+        {
+            GameObject rail = PropBuilder.Rail();
+            Part(dock, name, MeshKit.Box(new Vector3(LandingW, DeckThick, LandingW)), LookMaterials.DeckTile(), new Vector3(at.x, at.y - DeckThick, at.z), withCollider: true);
+            Part(dock, name + " Girder", MeshKit.Box(new Vector3(LandingW + 0.2f, 1.0f, LandingW + 0.2f)), LookMaterials.RustSteel(), new Vector3(at.x, at.y - DeckThick - 1.0f, at.z));
+            foreach (float side in new[] { -1f, 1f })
+                foreach (float dz in new[] { -1f, 1f })
+                    PropBuilder.Place(dock, rail, new Vector3(at.x + side * (LandingW / 2f - 0.1f), at.y, at.z + dz), Quaternion.Euler(0f, 90f, 0f)).name = name + " Rail";
+            if (!openNorth) foreach (float dx in new[] { -1f, 1f }) PropBuilder.Place(dock, rail, new Vector3(at.x + dx, at.y, at.z + LandingW / 2f - 0.1f)).name = name + " Rail";
+            if (!openSouth) foreach (float dx in new[] { -1f, 1f }) PropBuilder.Place(dock, rail, new Vector3(at.x + dx, at.y, at.z - LandingW / 2f + 0.1f)).name = name + " Rail";
+            PropBuilder.Place(dock, PropBuilder.RailLamp(), new Vector3(at.x - LandingW / 2f + 0.1f, at.y, at.z + LandingW / 2f - 0.1f)).name = name + " Lamp";
+            PropBuilder.Place(dock, PropBuilder.RailLamp(), new Vector3(at.x + LandingW / 2f - 0.1f, at.y, at.z - LandingW / 2f + 0.1f)).name = name + " Lamp";
         }
 
         private static void Plank(GameObject root)

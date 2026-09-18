@@ -9,11 +9,11 @@ namespace SunkCost.World
     {
         Idle = 0,
         Preparing = 1,      // everyone locked in place, ship still; waiting for Prepared acks
-        RaisingGangway = 2,
+        RaisingGangway = 2, // casting off: the ship still, the moorings coming in (no gangway on the ship since 18 September 2026)
         PullingAway = 3,    // the visible move
         FadingOut = 4,      // waiting for Black acks
         Loading = 5,        // the FishNet scene move, under black
-        Arriving = 6,       // fade in; at HQ the gangway lowers too
+        Arriving = 6,       // fade in; at HQ a moment more while the lines go ashore
         Complete = 7,
         Cancelled = 8
     }

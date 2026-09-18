@@ -37,7 +37,7 @@ namespace SunkCost.World
         [SerializeField] private float dayCardSeconds = 1.5f;
 
         [Header("Ship departure (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md)")]
-        [Tooltip("Seconds the gangway takes to lift before the ship moves.")]
+        [Tooltip("Seconds of casting off (the ship still) before it moves.")]
         [SerializeField] private float gangwayRaiseSeconds = 0.8f;
         [Tooltip("Seconds of visible pull-away before the fade.")]
         [SerializeField] private float departureSeconds = 4f;
@@ -45,7 +45,7 @@ namespace SunkCost.World
         [SerializeField] private float departureDistanceMeters = 8f;
         [Tooltip("Seconds of the departure fade to black and of the fade back in.")]
         [SerializeField] private float departureFadeSeconds = 0.75f;
-        [Tooltip("Seconds the gangway takes to lower on arrival at HQ before controls return.")]
+        [Tooltip("Seconds of making fast on arrival at HQ before controls return.")]
         [SerializeField] private float gangwayLowerSeconds = 0.8f;
         [Tooltip("Seconds the server waits for every passenger to acknowledge the lock before cancelling.")]
         [SerializeField] private float prepareTimeoutSeconds = 10f;

@@ -67,18 +67,10 @@ namespace SunkCost.Editor.Prototype
                 // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
                 if (ship.GetComponent<ShipDepartureVisual>() == null) errors.Add("Ship prefab has no ShipDepartureVisual.");
                 if (parts.SafeDeckVolume == null || !parts.SafeDeckVolume.isTrigger) errors.Add("SafeDeckVolume must be a trigger collider.");
-                if (parts.GangwayExclusionVolume == null || !parts.GangwayExclusionVolume.isTrigger) errors.Add("GangwayExclusionVolume must be a trigger collider.");
-                if (parts.GangwayCollider == null || parts.GangwayCollider.isTrigger) errors.Add("Gangway needs a solid collider (the ramp is a floor when down).");
                 if (parts.DepartureDirection == null) errors.Add("DepartureDirection is missing.");
                 else if (Vector3.Dot(parts.DepartureDirection.forward, Vector3.up) > 0.5f) errors.Add("DepartureDirection must point along the water, not up.");
                 Transform boarding = parts.BoardingPoint;
-                if (boarding != null && parts.IsSafelyAboard(boarding.position)) errors.Add("The boarding point must not count as safely aboard (it is the gangway end).");
-                if (parts.GangwayExclusionVolume != null)
-                {
-                    Vector3 rampMid = parts.GangwayExclusionVolume.bounds.center;
-                    if (!parts.IsOnGangway(rampMid)) errors.Add("The gangway exclusion volume does not contain its own centre.");
-                    if (parts.IsSafelyAboard(rampMid)) errors.Add("A point on the gangway counts as safely aboard.");
-                }
+                if (boarding != null && parts.IsSafelyAboard(boarding.position)) errors.Add("The boarding point must not count as safely aboard (it is the stern edge, where the HQ's stair lands).");
                 Vector3 deckMid = parts.FromShipLocal(new Vector3(0f, 0.1f, 2f));
                 if (!parts.IsSafelyAboard(deckMid)) errors.Add("The middle of the deck does not count as safely aboard.");
                 if (!parts.IsAboard(deckMid)) errors.Add("The middle of the deck does not count as aboard.");

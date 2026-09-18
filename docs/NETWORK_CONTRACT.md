@@ -435,28 +435,29 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   RaisingGangway → PullingAway → FadingOut → Loading → Arriving → Complete`
   (or `Cancelled`). `DayPhase` stays `Sailing`/`SailingHome` throughout. Each
   stage carries the server tick it started on; every peer evaluates the ship's
-  displacement and the gangway angle from the synchronized tick
+  displacement from the synchronized tick
   (`ShipDepartureVisual`), so the ship itself is never replicated and nothing
   is parented under it. Clients answer stages with a `DepartureAckBroadcast
   { Serial, Kind, World }` — `Prepared` (locked at the captured deck spot),
   `Black` (screen fully black), `Arrived` (placed on the destination ship); the
   server ignores anything from outside the trip's cohort or with another serial.
 - Order on the server: refuse unless every active connection's player stands on
-  the deck proper (`SafeDeckVolume` minus `GangwayExclusionVolume`; the
-  refusal names who is not) and no join is pending; `Preparing` and wait for
+  the deck proper (`SafeDeckVolume`; the HQ's bridge, stairs and stair foot
+  are the base, not the ship — the ship has no gangway since 18 September
+  2026; the refusal names who is not) and no join is pending; `Preparing` and wait for
   every `Prepared` (`prepareTimeoutSeconds`, else cancel) and `syncFlushTicks`;
-  re-check aboard (a player who stepped onto the gangway before the lock
+  re-check aboard (a player who stepped off onto the stairs before the lock
   cancels the trip, nobody is teleported aboard); freeze loose deck cargo
   (Free and Released items in `AboardVolume`, position and rotation, kinematic,
   server-followed) and close the root move list (players, Held, Stowed, cargo);
-  `RaisingGangway`, `PullingAway` (the server drags the cargo with the moving
+  `RaisingGangway` (casting off: the ship still), `PullingAway` (the server drags the cargo with the moving
   ship); `FadingOut` and wait for every `Black` (a guest that never answers is
   disconnected with a reason, never shown a half-loaded world); `Loading`: load
   the destination server-side if needed, add **every** traveller to the
   destination before the one `LoadConnectionScenes` with the moved objects
   (observers rebuilt once, nobody blinks out of view), place the cargo on the
   destination ship, wait for every `Arrived`; `Arriving`: fade in, at HQ also
-  the gangway lowering, unload the source scene; only then `ServerArrive`,
+  a moment of making fast, unload the source scene; only then `ServerArrive`,
   `Complete`. FishNet raises load-end twice on a host (server pass, client
   pass); placement runs on the client pass only.
 - Writers during a trip: the server writes the trip state, the cohort, the

@@ -549,7 +549,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(target);
             SunkCost.World.ShipDepartureVisual visual = ship != null ? ship.GetComponent<SunkCost.World.ShipDepartureVisual>() : null;
             if (visual == null) return "no ship";
-            return $"rest={visual.RestPosition}; pos={ship.transform.position}; gangway={visual.GangwayAngle:0.#}; lowered={visual.GangwayLowered}; rampCollider={(ship.GangwayCollider != null && ship.GangwayCollider.enabled)}; engineClip={visual.HasEngineClip}";
+            return $"rest={visual.RestPosition}; pos={ship.transform.position}; engineClip={visual.HasEngineClip}";
         }
 
         // Every player and carryable with the Unity scene it sits in on this peer.

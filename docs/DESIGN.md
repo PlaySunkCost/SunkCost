@@ -43,18 +43,23 @@ what you have against what you owe. A low sill across its doorway keeps a droppe
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
-**Sailing** (decided 15 September 2026). The gangway belongs to the ship: down
-on the pier while docked, lifted before the ship moves, stowed at sea. Someone
-standing on it is not aboard, and cargo lying on it stops the ship ("Clear the
-gangway"). When the monitor accepts a destination everyone is held where they
-stand — you can look around and talk, not walk or use items — the gangway
-lifts, the engine starts and the ship visibly pulls away for about four
-seconds with everyone and everything on the deck riding along at their own
-spots; then the screen fades to black, the scene changes, and you fade back in
-on the stopped ship at the destination. At HQ the gangway lowers before you
-can walk. No docking animation, no steering, no walking on the moving deck in
-this version. Loose deck cargo is secured for the trip: a ball thrown just
-before departure stops where it is and does not keep flying at the far end.
+**Sailing** (decided 15 September 2026; the way aboard changed 18 September
+2026). The ship carries nothing that reaches the base: the way aboard belongs
+to the HQ — a railed bridge off the west rim and two flights of stairs down to
+the stern, the stair's foot level with the deck (Dan: "the bridge connected to
+the HQ, like in the photo, then a staircase from the bridge to the ship; the
+ship clean"). Someone standing on the stairs or their foot is not aboard. When
+the monitor accepts a destination everyone is held where they stand — you can
+look around and talk, not walk or use items — the ship casts off (a short
+still moment), the engine starts and the ship visibly pulls away for about
+four seconds with everyone and everything on the deck riding along at their
+own spots; then the screen fades to black, the scene changes, and you fade
+back in on the stopped ship at the destination. At HQ a moment of making fast
+passes before you can walk. No docking animation, no steering, no walking on
+the moving deck in this version. Loose deck cargo is secured for the trip: a
+ball thrown just before departure stops where it is and does not keep flying
+at the far end. (Until 18 September the gangway was the ship's own and cargo
+on it stopped the ship; there is no gangway now.)
 
 **Scene 3 — the elevator and the site.** One scene per site, holding the shaft,
 the moving cabin and the seafloor; reached only from the deck cabin and left only
@@ -260,7 +265,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
-| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **gangway** leaves the west rim, two flights down to the pontoon where the ship moors, its own gangway onto it; the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
+| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing and two flights of stairs down to the stern of the moored ship (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
 
 ---
 

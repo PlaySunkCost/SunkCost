@@ -23,8 +23,8 @@ namespace SunkCost.Editor.Look
             Shoot("booths", new Vector3(2f, 1.7f, -4f), new Vector3(0f, 2.6f, 14f), 70f);
             Shoot("court", new Vector3(-6f, 1.7f, -14f), new Vector3(-16f, 1.6f, -3f), 75f);
             Shoot("crew-mark", new Vector3(16f, 1.7f, -14f), new Vector3(8f, 1.2f, 8f), 75f);
-            Shoot("gangway", new Vector3(-24f, 1.7f, -6f), new Vector3(-42f, -2.5f, -12f), 70f);
-            Shoot("pontoon", new Vector3(-36f, -2.3f, -2f), new Vector3(-50f, -3.5f, -12f), 70f);
+            Shoot("bridge", new Vector3(-24f, 1.7f, -8f), new Vector3(-44f, 0.5f, -13f), 70f);
+            Shoot("stairs", new Vector3(-38f, -9.5f, -44f), new Vector3(-44f, -4f, -22f), 70f);
             Shoot("plank", new Vector3(24f, 1.7f, -10f), new Vector3(32f, 0.2f, -16f), 70f);
             Shoot("pickup", new Vector3(22f, 6.6f, 6f), new Vector3(25f, 6.5f, 15f), 75f);
             Shoot("from-sea", new Vector3(10f, 2f, -70f), new Vector3(0f, 3f, 0f), 60f);
