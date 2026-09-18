@@ -42,7 +42,7 @@ namespace SunkCost.Sites
         private const float PanelChestHeightMeters = 1.3f;
         private const float PanelDoorwayOffsetDeg = 75f; // 60-90 degrees off the doorway centre: visible on entry, clear of a post at +45
         private const float DoorThicknessMeters = 0.1f;
-        private const int DoorLeafPanelCount = 3; // small flat panels per leaf, enough to read as curved
+        private const int DoorLeafPanelCount = 8; // small flat panels per leaf, smooth enough to read as round (Dan, 19 September 2026)
         private const float BakedDoorwayBearingDeg = 0f; // local bearing the whole prefab is built at; DiveSiteBuilder rotates instances to face the real spawn direction
 
         public static GameObject EnsurePrefab(Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings)

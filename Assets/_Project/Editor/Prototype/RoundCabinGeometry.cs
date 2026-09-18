@@ -74,8 +74,14 @@ namespace SunkCost.Editor.Prototype
             // up to and still can't reliably press E on). The glass stays solid at this
             // bearing; only the wall collider needs to step aside for the panel's own collider.
             float panelHalfAngleDeg = Mathf.Asin(Mathf.Clamp01(panelWidthMeters / 2f / wallRadius)) * Mathf.Rad2Deg + 3f;
-            float glassSegmentArcLength = Mathf.PI * 2f * glassRadius / segmentCount * 1.05f;
             float wallSegmentArcLength = Mathf.PI * 2f * wallRadius / segmentCount * 1.05f;
+            // The glass: one smooth curved band round the whole shell but the doorway
+            // (Dan, 19 September 2026: "truly round" — no panes, no seams). A visual
+            // shroud only; collision comes from the floor and the wall ring below.
+            GameObject glassBand = new("Glass");
+            glassBand.transform.SetParent(shellRoot.transform, false);
+            glassBand.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(glassRadius, height, glassThickness, doorwayCenterAngleDeg + doorwayHalfAngleDeg, doorwayCenterAngleDeg - doorwayHalfAngleDeg + 360f, 96);
+            glassBand.AddComponent<MeshRenderer>().sharedMaterial = glass;
 
             for (int i = 0; i < segmentCount; i++)
             {
@@ -83,23 +89,11 @@ namespace SunkCost.Editor.Prototype
                 bool inDoorway = Mathf.Abs(Mathf.DeltaAngle(angleDeg, doorwayCenterAngleDeg)) <= doorwayHalfAngleDeg;
                 bool inPanel = Mathf.Abs(Mathf.DeltaAngle(angleDeg, panelAngleDeg)) <= panelHalfAngleDeg;
                 if (inDoorway)
-                    continue; // doorway gap: no glass pane, no wall collider here
+                    continue; // doorway gap: no wall collider here
 
                 float angleRad = angleDeg * Mathf.Deg2Rad;
                 Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
                 Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
-
-                GameObject glassPane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                glassPane.name = "Glass Pane " + (i + 1);
-                glassPane.transform.SetParent(shellRoot.transform, false);
-                glassPane.transform.localPosition = direction * glassRadius + new Vector3(0f, height / 2f, 0f);
-                glassPane.transform.localRotation = rotation;
-                glassPane.transform.localScale = new Vector3(glassSegmentArcLength, height, glassThickness);
-                glassPane.GetComponent<Renderer>().sharedMaterial = glass;
-                // CreatePrimitive(Cube) attaches a BoxCollider that would seal the car shut.
-                // The shell is a visual shroud only — collision comes from the floor and the
-                // wall ring.
-                Object.DestroyImmediate(glassPane.GetComponent<Collider>());
 
                 if (inPanel)
                     continue; // the control panel's own collider covers this arc instead

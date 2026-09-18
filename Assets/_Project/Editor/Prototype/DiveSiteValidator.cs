@@ -113,7 +113,7 @@ namespace SunkCost.Sites
                     // Interior Walls can have fewer segments than Glass Shell (the control
                     // panel's own arc is skipped for walls only, see below) but never more —
                     // both come from the same ring over the same doorway gap.
-                    if (interiorWalls != null && interiorWalls.childCount > glassShell.childCount)
+                    if (interiorWalls != null && glassShell.childCount > 1 && interiorWalls.childCount > glassShell.childCount) // one smooth band since 19 September 2026: nothing to compare
                         errors.Add($"Interior Walls has {interiorWalls.childCount} segments but Glass Shell only has {glassShell.childCount} — they must come from the same ring over the same angles.");
                 }
 
