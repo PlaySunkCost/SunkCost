@@ -122,7 +122,13 @@ namespace SunkCost.World
             if (day == null || !day.CabinRide.Active || !day.IsRider(OwnerId)) return;
             if (!WorldSceneFlow.RidersLockedDuring(day.CabinRide)) { PinRemoteCopyToMovingFloor(); return; }
             if (!day.TryGetPlacement(OwnerId, out RiderPlacement placement)) return;
-            CabinFrame frame = WorldSceneFlow.RideFrameFor(day.CabinRide, gameObject.scene);
+            // Which side of the move the rider is on: the server reads its object's
+            // scene (the truth, and it flips at the load, before Below does); a
+            // client reads the replicated Below, because a copy's Unity scene on a
+            // client is not its world (see ProximityVoice.WorldOf; code check, 18
+            // September 2026).
+            bool below = IsServerStarted ? gameObject.scene == WorldScenes.Scene(WorldId.Dive) : day.IsBelow(OwnerId);
+            CabinFrame frame = below ? CabinFrame.Car(WorldSceneFlow.FindCar()) : CabinFrame.DeckCabin(ShipParts.InWorld(WorldId.Sea));
             if (!frame.IsValid) return;
             transform.position = frame.FromLocal(placement.Local);
         }
@@ -145,7 +151,10 @@ namespace SunkCost.World
         private void PinRemoteCopyToMovingFloor()
         {
             SunkCost.Diving.ElevatorController car = WorldSceneFlow.FindCar();
-            if (car == null || gameObject.scene != car.gameObject.scene) return;
+            CrewDayState day = CrewDayState.Instance;
+            if (car == null || day == null) return;
+            bool below = IsServerStarted ? gameObject.scene == car.gameObject.scene : day.IsBelow(OwnerId); // see PlaceRemoteCopy
+            if (!below) return;
             if (!car.IsInsideCar(transform.position + Vector3.up * 0.5f)) return;
             Vector3 local = car.transform.InverseTransformPoint(transform.position);
             bool moving = car.State == SunkCost.Diving.ElevatorState.Descending || car.State == SunkCost.Diving.ElevatorState.Ascending;

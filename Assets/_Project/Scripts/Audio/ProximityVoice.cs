@@ -175,14 +175,22 @@ namespace SunkCost.Audio
         // The dead's "world": they talk only to each other and hear by spectate
         // state (docs/SPECTATING_IMPLEMENTATION_PLAN.md §2), never by scene.
         public const int DeadWorld = 100;
-        // Physical player identity/scene only: a spectator camera or a watched
-        // scene never decides membership.
+        // Physical player identity only: a spectator camera or a watched scene
+        // never decides membership. The server and a peer's own object stand in
+        // their world's scene; another player's copy on a client does not
+        // reliably (a client instantiates spawns into its active scene and only a
+        // load it is part of moves them — after one player rode up alone and the
+        // other followed later, the copy sat in "Session" and every direct frame
+        // from that speaker was dropped; code check, 18 September 2026). So a
+        // remote copy's world is read from the replicated day state instead.
         private int WorldOf(int id)
         {
             if (!players.TryGetValue(id, out var player) || !player.gameObject.activeInHierarchy) return -1;
             var day = CrewDayState.Instance;
             if (day == null || day.Travelling || (day.Riding && day.IsRider(id))) return -1;
             if (day.IsDead(id)) return DeadWorld;
+            bool sceneIsTruth = player.IsOwner || (manager != null && manager.IsServerStarted);
+            if (!sceneIsTruth) return (int)(day.IsBelow(id) ? WorldId.Dive : day.World);
             if (!WorldScenes.TryParse(player.gameObject.scene.name, out var result)) return -1;
             if (day.IsBelow(id) != (result == WorldId.Dive)) return -1;
             if (result != WorldId.Dive && result != day.World) return -1;
