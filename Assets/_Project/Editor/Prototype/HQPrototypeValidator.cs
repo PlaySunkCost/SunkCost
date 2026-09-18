@@ -33,8 +33,9 @@ namespace SunkCost.Editor.Prototype
             CheckCount<LootFixtureSpawner>(scene, 1, errors);
             CheckCount<AudioListener>(scene, 0, errors);
             CheckLootFixture(scene, errors);
-            if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
-            if (!HasRoot(scene, HQPrototypeBuilder.ShopRoomName)) errors.Add("Shop Room is missing (18 September 2026).");
+            if (!HasRoot(scene, SunkCost.Editor.Look.HQPlatformBuilder.PlatformRootName)) errors.Add("The platform is missing (the look card, 18 September 2026).");
+            if (!HasRoot(scene, "Sea") || UnityEngine.Object.FindObjectsByType<SunkCost.Look.WaveSurface>(FindObjectsInactive.Exclude).Length == 0) errors.Add("The sea needs its WaveSurface.");
+            if (GameObject.Find(HQPrototypeBuilder.ShopRoomName) == null) errors.Add("The Gear & Supplies booth (\"" + HQPrototypeBuilder.ShopRoomName + "\") is missing (18 September 2026).");
             var planks = new System.Collections.Generic.List<SunkCost.World.HQPlank>();
             foreach (GameObject root in scene.GetRootGameObjects()) planks.AddRange(root.GetComponentsInChildren<SunkCost.World.HQPlank>(true));
             if (planks.Count != 1) errors.Add("HQ needs exactly one plank (HQPlank; found " + planks.Count + ").");
