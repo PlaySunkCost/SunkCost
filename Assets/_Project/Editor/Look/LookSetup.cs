@@ -61,6 +61,11 @@ namespace SunkCost.Editor.Look
             if (mode != null && mode.intValue != (int)LightRenderingMode.PerPixel) { mode.intValue = (int)LightRenderingMode.PerPixel; changed = true; }
             SerializedProperty limit = serialized.FindProperty("m_AdditionalLightsPerObjectLimit");
             if (limit != null && limit.intValue < 8) { limit.intValue = 8; changed = true; }
+            // The GPU Resident Drawer crashed the editor twice on the platform's load
+            // (GPUResidentDrawer.PostPostLateUpdate → ObjectDispatcher, 18 September
+            // 2026, Unity 6000.6.0f1): off. A few thousand renderers draw fine without it.
+            SerializedProperty drawer = serialized.FindProperty("m_GPUResidentDrawerMode");
+            if (drawer != null && drawer.intValue != 0) { drawer.intValue = 0; changed = true; }
             if (changed) { serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(asset); AssetDatabase.SaveAssets(); }
             // The occlusion feature on the PC renderer: the contact shadows that give
             // the picture its depth. Stronger and wider than the default.

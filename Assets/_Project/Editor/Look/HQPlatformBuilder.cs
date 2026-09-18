@@ -44,7 +44,7 @@ namespace SunkCost.Editor.Look
         public static readonly Vector3 PickupBoothCentre = new(25f, 0f, BoothZ);
         public static readonly Vector3 OfficeBoothCentre = new(-26f, 0f, BoothZ);
         public const float PickupFloorY = 5.5f;    // the roof's top: the pickup room's floor
-        public static readonly Vector3 PickupChute = new(25f, PickupFloorY + 2.6f, BoothZ + 0.5f);
+        public static readonly Vector3 PickupChute = new(25f, 4.4f, BoothZ - 0.4f); // in the Pickup booth's ceiling: bought gear drops down onto its floor (Dan, 18 September 2026)
         public static readonly Vector3 PlankBase = new(30.4f, 0.05f, -16f);
 
         public static void Build(Scene scene, GameObject ballPrefab, GameObject shipPrefab, Material tankMaterial, Material lampMaterial)
@@ -85,25 +85,23 @@ namespace SunkCost.Editor.Look
             // A catwalk under the rim on the south and the east, railed and lit: the
             // picture's lower walkway.
             float walkY = -DeckThick - 2.6f;
-            Part(root, "Catwalk S", MeshKit.Box(new Vector3(DeckW + 3.2f, 0.3f, 1.6f)), LookMaterials.DeckTile(), new Vector3(0f, walkY, -DeckD / 2f - 1.1f), withCollider: true);
-            Part(root, "Catwalk E", MeshKit.Box(new Vector3(1.6f, 0.3f, DeckD + 3.2f)), LookMaterials.DeckTile(), new Vector3(DeckW / 2f + 1.1f, walkY, 0f), withCollider: true);
-            Part(root, "Catwalk Lip S", MeshKit.Box(new Vector3(DeckW + 3.2f, 0.02f, 0.3f)), LookMaterials.Hazard(), new Vector3(0f, walkY + 0.3f, -DeckD / 2f - 1.75f));
-            Part(root, "Catwalk Lip E", MeshKit.Box(new Vector3(0.3f, 0.02f, DeckD + 3.2f)), LookMaterials.Hazard(), new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, 0f));
+            // South only, and it stops short of the plank corner: nothing to land on
+            // off the board (Dan, 18 September 2026).
+            const float walkX0 = -DeckW / 2f - 1.6f, walkX1 = 20f;
+            float walkW = walkX1 - walkX0, walkCx = (walkX0 + walkX1) / 2f;
+            Part(root, "Catwalk S", MeshKit.Box(new Vector3(walkW, 0.3f, 1.6f)), LookMaterials.DeckTile(), new Vector3(walkCx, walkY, -DeckD / 2f - 1.1f), withCollider: true);
+            Part(root, "Catwalk Lip S", MeshKit.Box(new Vector3(walkW, 0.02f, 0.3f)), LookMaterials.Hazard(), new Vector3(walkCx, walkY + 0.3f, -DeckD / 2f - 1.75f));
             GameObject rail = PropBuilder.Rail(), lamp = PropBuilder.RailLamp();
-            for (float x = -DeckW / 2f - 0.6f; x < DeckW / 2f + 1.6f; x += 2f)
+            for (float x = walkX0 + 1f; x < walkX1; x += 2f)
             {
                 PropBuilder.Place(root, rail, new Vector3(x, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Rail";
-                if (((int)((x + DeckW / 2f) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(x - 1f, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Lamp";
+                if (((int)((x - walkX0) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(x - 1f, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Lamp";
             }
-            for (float z = -DeckD / 2f - 0.6f; z < DeckD / 2f + 1.6f; z += 2f)
-            {
-                PropBuilder.Place(root, rail, new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, z), Quaternion.Euler(0f, 90f, 0f)).name = "Catwalk Rail";
-                if (((int)((z + DeckD / 2f) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(DeckW / 2f + 1.75f, walkY + 0.3f, z - 1f)).name = "Catwalk Lamp";
-            }
-            for (float x = -24f; x <= 24f; x += 12f)
+            PropBuilder.Place(root, rail, new Vector3(walkX1 - 0.8f, walkY + 0.3f, -DeckD / 2f - 1.1f), Quaternion.Euler(0f, 90f, 0f)).name = "Catwalk Rail End";
+            for (float x = -24f; x <= 12f; x += 12f)
                 Part(root, "Catwalk Strut", MeshKit.Box(new Vector3(0.3f, 2.6f, 0.3f)), LookMaterials.RustSteel(), new Vector3(x, walkY, -DeckD / 2f - 1.6f));
             PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(-DeckW / 2f + 2f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
-            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(DeckW / 2f - 3f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
+            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(16f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
             GameObject number = PropBuilder.Place(root, PropBuilder.SignBoard(5f, 2.4f), new Vector3(0f, -DeckThick - 6.0f, -DeckD / 2f - 0.05f), Quaternion.Euler(0f, 180f, 0f));
             number.name = "HQ Number";
             Sign(number, "hq.number", "hq.number.sub");
@@ -297,7 +295,7 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, PropBuilder.Shelf(5f), new Vector3(x - 1f, y + 0.16f, BoothZ + d / 2f - wall - 0.4f), Quaternion.identity).name = "Pickup Shelf";
             GameObject disc = new("Shop Landing");
             disc.transform.SetParent(root.transform);
-            disc.transform.position = new Vector3(PickupChute.x, y + 0.17f, PickupChute.z);
+            disc.transform.position = new Vector3(PickupChute.x, 0.17f, PickupChute.z);
             disc.AddComponent<MeshFilter>().sharedMesh = MeshKit.Cylinder(1.0f, 0.02f, 24);
             disc.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.Hazard();
             // Two more storeys above, windows glowing, the beacon and an antenna on top.
@@ -523,7 +521,7 @@ namespace SunkCost.Editor.Look
             C(navy, 2.5f, 0f, 3.5f, -15f); C(grey, 4.0f, 0f, 3.7f, 5f); C(red, 3.2f, 1.2f, 3.6f, -8f);
             B(barrelRed, 17f, 0f, 5f); B(barrelRed, 17.8f, 0f, 5.3f); B(barrelRust, 17.4f, 0f, 6.0f);
             // East rim.
-            C(red, 28.2f, 0f, 3f); C(grey, 28.2f, 0f, 4.5f); C(green, 28.2f, 1.2f, 3.75f, 3f); C(yellow, 28.2f, 0f, 6.2f, -6f);
+            C(red, 28.2f, 0f, -8f); C(grey, 28.2f, 0f, -6.5f); C(green, 28.2f, 1.2f, -7.25f, 3f); C(yellow, 28.2f, 0f, -4.8f, -6f);
             // West rim, north of the gangway.
             C(grey, -28.5f, 0f, -6f, 90f); C(yellow, -28.5f, 0f, -4.5f, 90f); C(navy, -28.5f, 1.2f, -5.25f, 88f); C(red, -28.5f, 0f, 2f, 90f);
             B(barrelRust, -28.6f, 0f, 5.5f); B(barrelRed, -28.6f, 0f, 6.4f);
@@ -537,7 +535,7 @@ namespace SunkCost.Editor.Look
             void S(GameObject prefab, float x, float y, float z, float yaw = 0f) => PropBuilder.Place(root, prefab, new Vector3(x, y, z), Quaternion.Euler(0f, yaw, 0f)).name = "Small Crate";
             S(sRed, -24.6f, 1.2f, -15.8f, 20f); S(sGrey, -23.9f, 1.2f, -15.4f, -10f); S(sYellow, 5.0f, 1.2f, -15.6f, 30f);
             S(sNavy, 21.0f, 1.2f, -2.9f, 5f); S(sGrey, 18.6f, 1.2f, -3.4f, 35f); S(sRed, 4.0f, 1.2f, 3.7f, 50f);
-            S(sYellow, 28.2f, 1.2f, 6.2f, 10f); S(sGrey, -28.5f, 1.2f, 2f, 80f); S(sRed, PickupBoothCentre.x - 2.8f, PickupFloorY + 1.36f, BoothZ + 1.4f, 25f);
+            S(sYellow, 28.2f, 1.2f, -4.8f, 10f); S(sGrey, -28.5f, 1.2f, 2f, 80f); S(sRed, PickupBoothCentre.x - 2.8f, PickupFloorY + 1.36f, BoothZ + 1.4f, 25f);
             S(sNavy, 10f, 0f, -8.5f, 15f); S(sGrey, 10.8f, 0f, -8.3f, -5f); S(sRed, 10.4f, 0.6f, -8.4f, 40f);
             // Containers on the booth roofs (and one on the deck by the tower).
             GameObject cRed = PropBuilder.Container("Red", 6f), cGreen = PropBuilder.Container("Green", 6f), cGrey = PropBuilder.Container("Grey", 4f), cYellow = PropBuilder.Container("Yellow", 4f);
@@ -547,8 +545,20 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(root, cGrey, new Vector3(IntakeBoothCentre.x - 2f, roof, BoothZ + 1.6f), Quaternion.Euler(0f, -8f, 0f)).name = "Container";
             PropBuilder.Place(root, cYellow, new Vector3(CheckinBoothCentre.x + 0.5f, roof, BoothZ + 0.2f)).name = "Container";
             PropBuilder.Place(root, cRed, new Vector3(CheckinBoothCentre.x + 0.5f, roof + 2.6f, BoothZ + 0.2f), Quaternion.Euler(0f, 4f, 0f)).name = "Container";
-            PropBuilder.Place(root, cGrey, new Vector3(22f, 0f, 6f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
+            PropBuilder.Place(root, cGrey, new Vector3(22f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f)).name = "Container";
             PropBuilder.Place(root, cGreen, new Vector3(-6f, 0f, 8.5f), Quaternion.Euler(0f, 2f, 0f)).name = "Container";
+            // Tanks and a long pipe run across the roofs, dishes, and the rim's glow strip.
+            foreach (float x in new[] { UpgradesBoothCentre.x + 3.2f, CheckinBoothCentre.x - 2.4f })
+            {
+                Part(root, "Roof Tank", MeshKit.Cylinder(0.9f, 2.2f, 14), LookMaterials.RustSteel(), new Vector3(x, roof, BoothZ + 1.6f));
+                Part(root, "Roof Tank Band", MeshKit.Cylinder(0.92f, 0.25f, 14), LookMaterials.Hazard(), new Vector3(x, roof + 1.2f, BoothZ + 1.6f));
+                Part(root, "Roof Tank Cap", MeshKit.Cylinder(0.5f, 0.3f, 12), LookMaterials.Ink(), new Vector3(x, roof + 2.2f, BoothZ + 1.6f));
+            }
+            PropBuilder.Place(root, PropBuilder.Pipe(20f), new Vector3(-10f, roof + 0.4f, BoothZ + 2.7f)).name = "Roof Pipe";
+            PropBuilder.Place(root, PropBuilder.Pipe(20f), new Vector3(11f, roof + 0.4f, BoothZ + 2.7f)).name = "Roof Pipe";
+            Part(root, "Rim Glow S", MeshKit.Box(new Vector3(DeckW - 1f, 0.05f, 0.1f)), LookMaterials.LampOrange(), new Vector3(0f, 0.02f, -DeckD / 2f + 0.42f));
+            Part(root, "Rim Glow W", MeshKit.Box(new Vector3(0.1f, 0.05f, DeckD - 8f)), LookMaterials.LampOrange(), new Vector3(-DeckW / 2f + 0.42f, 0.02f, -4f));
+            Part(root, "Rim Glow E", MeshKit.Box(new Vector3(0.1f, 0.05f, DeckD - 8f)), LookMaterials.LampOrange(), new Vector3(DeckW / 2f - 0.42f, 0.02f, -4f));
             // Vents on the roofs, pipes along the booth fronts under the counters.
             GameObject vent = PropBuilder.Vent();
             PropBuilder.Place(root, vent, new Vector3(UpgradesBoothCentre.x + 3f, roof, BoothZ - 1.5f)).name = "Vent";

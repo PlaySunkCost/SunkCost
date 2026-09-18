@@ -11,11 +11,20 @@ namespace SunkCost.Look
     // probe is refreshed the same way. A few milliseconds, once per load.
     // Runtime only: in the editor a capture asks for it explicitly and puts the
     // settings back, so the scene file never references the temporary cubemap.
+    // The render waits two frames after the scene comes up: a camera render from
+    // inside a scene load (FishNet moves objects between scenes then) crashed
+    // the editor in the transform-change job (18 September 2026).
     public sealed class SkyEnvironment : MonoBehaviour
     {
         private RenderTexture reflection;
 
-        private void Start() { if (Application.isPlaying) reflection = Refresh(); }
+        private System.Collections.IEnumerator Start()
+        {
+            if (!Application.isPlaying) yield break;
+            yield return null;
+            yield return null;
+            reflection = Refresh();
+        }
         private void OnDestroy() { if (reflection != null) { reflection.Release(); Destroy(reflection); } }
 
         public static RenderTexture Refresh()

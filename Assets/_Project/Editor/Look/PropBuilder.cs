@@ -454,6 +454,10 @@ namespace SunkCost.Editor.Look
             trigger.transform.localPosition = new Vector3(0f, 2.85f, 0.27f);
             BoxCollider t = trigger.AddComponent<BoxCollider>();
             t.isTrigger = true; t.size = new Vector3(0.36f, 0.16f, 0.36f);
+            // The count on the backboard, above the box (HoopScore keeps it current).
+            GameObject score = Text(root, "Score", new Vector3(0f, 3.75f, 0.06f), 0.16f, new Color(1f, 0.55f, 0.15f), TextAnchor.MiddleCenter);
+            score.GetComponent<TextMesh>().text = "BASKETS 0";
+            trigger.AddComponent<HoopScore>().Configure(score.GetComponent<TextMesh>());
         });
 
         // The beacon: a short mast in a cage with a red lamp that pulses.

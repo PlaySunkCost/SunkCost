@@ -307,7 +307,7 @@ namespace SunkCost.Editor.Prototype
             // From the chute in the ceiling (Dan, 18 September 2026) down onto the landing mark, somewhere on it.
             Vector3 spot = tankStand.DeliveryPoint.transform.position;
             float off = Vector3.Distance(new Vector3(bought.transform.position.x, 0f, bought.transform.position.z), new Vector3(spot.x, 0f, spot.z));
-            Check(spot.y > 2.5f && off < 1.2f && bought.transform.position.y < 0.6f, $"S2 it fell from the chute (y={spot.y:0.0}) onto the floor under it ({off:0.00} m off the mark, y={bought.transform.position.y:0.00})");
+            Check(spot.y - bought.transform.position.y > 2f && off < 1.2f, $"S2 it fell from the chute (y={spot.y:0.0}) onto the floor under it ({off:0.00} m off the mark, y={bought.transform.position.y:0.00})"); // the chute is in the pickup room upstairs (18 September 2026)
             Check(bought.CanGrabFromWorld && bought.HolderClientId < 0 && bought.gameObject.scene == WorldScenes.Scene(WorldId.HQ), "S2 loose in the HQ scene, grabbable (" + bought.State + ")");
             Check(bought.DisplayName == AirTankItem.FullName && bought.UseAction == ItemUseAction.Breathe, "S2 it is a " + bought.DisplayName);
             // Breathing is for underwater (Dan, 18 September 2026): in hand at HQ the
