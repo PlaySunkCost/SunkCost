@@ -9,162 +9,189 @@ namespace SunkCost.Editor.Look
     // no bought assets; everything regenerates with Create or Update HQ). Each
     // set is an albedo, a normal map and a metallic/smoothness mask, written as
     // PNGs under Assets/_Project/Art/HQ/Textures and imported with the right
-    // settings. The style is the reference picture's: hard panels, flat colour,
-    // a little grime, rust where water runs, worn paint on the edges — a rig of
-    // 2300 that has been used. Deterministic: the same seed gives the same
-    // pixels, so a rebuild changes nothing Dan did not change.
+    // settings.
+    //
+    // The style is the reference picture's, 1:1 as far as code can go: chunky
+    // and toy-like — flat saturated colour, bevelled tiles and panels, a rust
+    // seam where plates meet, crisp hazard bands, blocky water — not
+    // photographic grime. Deterministic: the same seed gives the same pixels.
     public static class ProceduralTextures
     {
         public const string Folder = "Assets/_Project/Art/HQ/Textures";
         public const int Size = 512;
 
-        // One texture set on disk: albedo (sRGB), normal (tangent space), mask
-        // (metallic in R, smoothness in A; linear).
         public readonly struct Set
         {
             public readonly Texture2D Albedo, Normal, Mask;
             public Set(Texture2D albedo, Texture2D normal, Texture2D mask) { Albedo = albedo; Normal = normal; Mask = mask; }
         }
 
+        // The picture's palette.
+        public static readonly Color Navy = new(0.16f, 0.20f, 0.30f);
+        public static readonly Color NavyLight = new(0.21f, 0.26f, 0.37f);
+        public static readonly Color NavyDark = new(0.10f, 0.13f, 0.21f);
+        public static readonly Color Rust = new(0.66f, 0.30f, 0.12f);
+        public static readonly Color RustDark = new(0.42f, 0.18f, 0.08f);
+        public static readonly Color HazardYellow = new(0.95f, 0.70f, 0.10f);
+        public static readonly Color Ink = new(0.07f, 0.08f, 0.11f);
+
         // ---- the sets -----------------------------------------------------------------
 
-        // Deck plate: dark steel with a faint tread, plate seams every tile,
-        // rust in the seams and grime pooled in the low spots. One tile = 4 m.
-        public static Set DeckPlate() => Build("DeckPlate", 11, (x, y, p) =>
+        // Deck tiles: 2 m bevelled plates, two tones in a checker, a little noise
+        // and a dark seam. One tile = 4 m (two plates).
+        public static Set DeckTile() => Build("DeckTile", 11, (x, y, p) =>
         {
-            float seam = Seam(x, y, 512, 4f);
-            float tread = Tread(x, y);
-            float grime = Fbm(x, y, 6f, 4, 11) * 0.5f + 0.5f;
-            float rust = Mathf.Clamp01((Fbm(x + 300, y + 77, 3f, 4, 12) - 0.25f) * 1.6f) * Mathf.Clamp01(seam * 1.5f + 0.15f);
-            Color steel = Color.Lerp(new Color(0.20f, 0.21f, 0.23f), new Color(0.27f, 0.28f, 0.30f), grime);
-            Color rusty = new Color(0.36f, 0.19f, 0.10f);
-            Color c = Color.Lerp(steel, rusty, rust);
-            c = Color.Lerp(c, c * 0.75f, tread * 0.5f);
-            c = Color.Lerp(c, c * 0.55f, seam);
+            const float pitch = 256f;
+            float bevel = Bevel(x, y, pitch, 14f);        // 1 at the plate's middle, 0 at its edge
+            float seam = 1f - Mathf.Clamp01(bevel * 4f);   // the gap between plates
+            int cx = Mathf.FloorToInt(x / pitch), cy = Mathf.FloorToInt(y / pitch);
+            bool alt = ((cx + cy) & 1) == 0;
+            float noise = Fbm(x, y, 5f, 3, 12) * 0.5f + 0.5f;
+            float scuff = Mathf.Clamp01((Fbm(x + 40, y + 900, 3f, 3, 13) - 0.32f) * 2.5f);
+            Color c = Color.Lerp(alt ? Navy : NavyLight, alt ? NavyLight : Navy, noise * 0.35f);
+            c = Color.Lerp(c, NavyDark, scuff * 0.35f);
+            c = Color.Lerp(c, NavyDark * 0.7f, seam);
+            c = Color.Lerp(c, c * 1.12f, Mathf.Clamp01((bevel - 0.7f) * 3f) * 0.25f); // the plate's crown catches light
             p.Albedo = c;
-            p.Height = -seam * 0.8f + tread * 0.25f - rust * 0.1f;
-            p.Metallic = 0.45f - rust * 0.4f;
-            p.Smoothness = 0.30f - rust * 0.2f - grime * 0.1f;
+            p.Height = bevel * 1.2f;
+            p.Metallic = 0.25f;
+            p.Smoothness = 0.35f - scuff * 0.15f;
         });
 
-        // Hull panel: riveted plates three metres square, worn navy paint, chips to
-        // bare steel on the edges, rust bleeding down from the rivets. One tile = 3 m.
-        public static Set HullPanel() => Build("HullPanel", 21, (x, y, p) =>
+        // Wall panels: 3 m bevelled plates in navy, a rust seam where they meet,
+        // a bolt in each corner. One tile = 3 m.
+        public static Set Panel() => Build("Panel", 21, (x, y, p) =>
         {
-            float seam = Seam(x, y, 512, 4f);
-            float rivet = Rivets(x, y, 512, 26, 7f);
-            float wear = Mathf.Clamp01((Fbm(x + 50, y + 900, 5f, 4, 22) - 0.3f) * 2.2f) * Mathf.Clamp01(seam * 2f + 0.25f);
-            float drip = Drips(x, y, 23) * Mathf.Clamp01(1f - seam);
-            float grime = Fbm(x, y, 3f, 3, 24) * 0.5f + 0.5f;
-            Color paint = Color.Lerp(new Color(0.15f, 0.18f, 0.24f), new Color(0.22f, 0.26f, 0.32f), grime);
-            Color bare = new Color(0.42f, 0.42f, 0.44f);
-            Color rust = new Color(0.40f, 0.20f, 0.09f);
-            Color c = Color.Lerp(paint, bare, wear);
-            c = Color.Lerp(c, rust, drip * 0.8f);
-            c = Color.Lerp(c, c * 0.6f, seam);
-            c = Color.Lerp(c, c * 1.15f, rivet * 0.6f);
+            const float pitch = 512f;
+            float bevel = Bevel(x, y, pitch, 18f);
+            float seam = 1f - Mathf.Clamp01(bevel * 3f);
+            float bolt = Rivets(x, y, pitch, 34f, 9f);
+            float noise = Fbm(x, y, 4f, 3, 22) * 0.5f + 0.5f;
+            float rustLine = Mathf.Clamp01((seam - 0.3f) * 1.6f) * Mathf.Clamp01((Fbm(x + 300, y, 6f, 2, 23) + 0.55f));
+            Color c = Color.Lerp(Navy, NavyLight, noise * 0.3f);
+            c = Color.Lerp(c, NavyDark, seam * 0.8f);
+            c = Color.Lerp(c, Rust, rustLine * 0.85f);
+            c = Color.Lerp(c, NavyLight * 1.1f, bolt * 0.7f);
             p.Albedo = c;
-            p.Height = -seam * 0.6f + rivet * 0.9f;
-            p.Metallic = 0.2f + wear * 0.6f;
-            p.Smoothness = 0.35f + wear * 0.2f - drip * 0.3f;
-        });
-
-        // Rusted leg: heavy rust with dark pitting and long vertical streaks, a
-        // little of the old red paint left in the dry patches. One tile = 2 m.
-        public static Set RustSteel() => Build("RustSteel", 31, (x, y, p) =>
-        {
-            float body = Fbm(x, y, 4f, 5, 32) * 0.5f + 0.5f;
-            float pit = Mathf.Clamp01((Fbm(x + 800, y, 14f, 3, 33) - 0.35f) * 3f);
-            float streak = Drips(x, y, 34);
-            float paint = Mathf.Clamp01((Fbm(x, y + 400, 2.5f, 3, 35) - 0.45f) * 4f);
-            Color rustLight = new Color(0.55f, 0.29f, 0.14f), rustDark = new Color(0.24f, 0.12f, 0.07f), oldPaint = new Color(0.50f, 0.17f, 0.12f);
-            Color c = Color.Lerp(rustDark, rustLight, body);
-            c = Color.Lerp(c, rustDark * 0.7f, pit);
-            c = Color.Lerp(c, rustDark, streak * 0.5f);
-            c = Color.Lerp(c, oldPaint, paint * 0.7f);
-            p.Albedo = c;
-            p.Height = -pit * 0.7f + body * 0.2f;
-            p.Metallic = 0.15f + paint * 0.3f;
-            p.Smoothness = 0.15f + paint * 0.3f;
-        });
-
-        // Hazard stripes: yellow and black diagonals, the yellow scuffed to the
-        // steel where feet and crates go. One tile = 1 m.
-        public static Set Hazard() => Build("Hazard", 41, (x, y, p) =>
-        {
-            float diag = Mathf.Repeat((x + y) / 64f, 1f);
-            float stripe = diag < 0.5f ? 1f : 0f;
-            float scuff = Mathf.Clamp01((Fbm(x, y, 5f, 4, 42) - 0.2f) * 1.8f);
-            Color yellow = new Color(0.93f, 0.72f, 0.12f), black = new Color(0.09f, 0.09f, 0.10f), steel = new Color(0.38f, 0.38f, 0.40f);
-            Color c = Color.Lerp(black, yellow, stripe);
-            c = Color.Lerp(c, steel, scuff * 0.55f);
-            p.Albedo = c;
-            p.Height = -scuff * 0.3f;
-            p.Metallic = 0.3f + scuff * 0.5f;
-            p.Smoothness = 0.5f - scuff * 0.25f;
-        });
-
-        // Plank wood for the board over the water: grey weathered boards, the
-        // grain along x, a gap between boards. One tile = 1 m across four boards.
-        public static Set Plank() => Build("Plank", 51, (x, y, p) =>
-        {
-            int board = Mathf.FloorToInt(y / 128f);
-            float gap = Mathf.Abs(Mathf.Repeat(y, 128f) - 64f) > 60f ? 1f : 0f;
-            float grain = Fbm(x * 0.15f, y * 2f + board * 131, 4f, 4, 52 + board) * 0.5f + 0.5f;
-            float knot = Mathf.Clamp01((Fbm(x + board * 77, y, 9f, 2, 53) - 0.55f) * 6f);
-            Color light = new Color(0.52f, 0.45f, 0.36f), dark = new Color(0.33f, 0.28f, 0.22f);
-            Color c = Color.Lerp(dark, light, grain);
-            c = Color.Lerp(c, dark * 0.8f, knot);
-            c = Color.Lerp(c, dark * 0.4f, gap);
-            p.Albedo = c;
-            p.Height = -gap * 1f + grain * 0.15f;
-            p.Metallic = 0f;
-            p.Smoothness = 0.2f;
-        });
-
-        // Painted panel for crates and booth trim: flat paint with a stencil band
-        // and chipped edges; the material's colour tints it. One tile = 1 m.
-        public static Set PaintedPanel() => Build("PaintedPanel", 61, (x, y, p) =>
-        {
-            float edge = Mathf.Max(Edge(x, 256, 10f), Edge(y, 256, 10f));
-            float chip = Mathf.Clamp01((Fbm(x, y, 7f, 4, 62) - 0.3f) * 2.5f) * Mathf.Clamp01(edge * 1.3f + 0.1f);
-            float band = Mathf.Repeat(y, 256f) > 96f && Mathf.Repeat(y, 256f) < 128f ? 1f : 0f;
-            float grime = Fbm(x, y, 3f, 3, 63) * 0.5f + 0.5f;
-            Color paint = Color.Lerp(new Color(0.86f, 0.86f, 0.86f), new Color(0.72f, 0.72f, 0.72f), grime);
-            Color steel = new Color(0.40f, 0.40f, 0.42f);
-            Color c = Color.Lerp(paint, paint * 0.8f, band);
-            c = Color.Lerp(c, steel, chip);
-            p.Albedo = c;
-            p.Height = -chip * 0.4f - edge * 0.5f;
-            p.Metallic = 0.1f + chip * 0.6f;
+            p.Height = bevel * 1.0f + bolt * 0.8f;
+            p.Metallic = 0.3f;
             p.Smoothness = 0.4f;
         });
 
-        // Water normals: faint crossing ripples (whole periods per tile, so it
-        // tiles) under a fractal chop; the wave surface scrolls it. Albedo unused.
-        // One tile = 12 m; the material keeps the bump scale low.
-        public static Set WaterRipple() => Build("WaterRipple", 71, (x, y, p) =>
+        // Rust steel for the legs and piles: orange rust with darker bands every
+        // metre and mottling. One tile = 2 m.
+        public static Set RustSteel() => Build("RustSteel", 31, (x, y, p) =>
         {
-            float a = Mathf.Sin((2f * x + 3f * y) / 512f * Mathf.PI * 2f);
-            float b = Mathf.Sin((-3f * x + 2f * y) / 512f * Mathf.PI * 2f);
-            float ripple = Fbm(x, y, 12f, 4, 72);
-            p.Albedo = new Color(0.05f, 0.12f, 0.18f);
-            p.Height = a * 0.08f + b * 0.06f + ripple * 0.35f;
+            float body = Fbm(x, y, 5f, 4, 32) * 0.5f + 0.5f;
+            float band = Mathf.Abs(Mathf.Repeat(y, 256f) - 128f) < 14f ? 1f : 0f;
+            float mottle = Mathf.Clamp01((Fbm(x + 800, y, 9f, 3, 33) - 0.3f) * 2.2f);
+            Color c = Color.Lerp(RustDark, Rust, body);
+            c = Color.Lerp(c, RustDark * 0.8f, mottle * 0.5f);
+            c = Color.Lerp(c, NavyDark, band * 0.85f);
+            p.Albedo = c;
+            p.Height = -band * 0.6f + body * 0.15f;
+            p.Metallic = 0.2f;
+            p.Smoothness = 0.25f;
+        });
+
+        // Hazard stripes: crisp yellow and ink diagonals. One tile = 1 m.
+        public static Set Hazard() => Build("Hazard", 41, (x, y, p) =>
+        {
+            float diag = Mathf.Repeat((x + y) / 72f, 1f);
+            float stripe = diag < 0.5f ? 1f : 0f;
+            float wear = Mathf.Clamp01((Fbm(x, y, 5f, 3, 42) - 0.38f) * 3f);
+            Color c = Color.Lerp(Ink, HazardYellow, stripe);
+            c = Color.Lerp(c, c * 0.75f, wear * 0.5f);
+            p.Albedo = c;
+            p.Height = 0f;
+            p.Metallic = 0.2f;
+            p.Smoothness = 0.45f;
+        });
+
+        // Crate side: a bevelled panel with an inset field and a stencil band; the
+        // material's colour tints it. One tile = 1 m (one crate face).
+        public static Set Crate() => Build("Crate", 61, (x, y, p) =>
+        {
+            const float pitch = 512f;
+            float bevel = Bevel(x, y, pitch, 26f);
+            float inset = Bevel(x, y, pitch, 90f);
+            float field = Mathf.Clamp01((inset - 0.2f) * 6f); // 1 inside the inset field
+            float band = Mathf.Repeat(y, pitch) > 200f && Mathf.Repeat(y, pitch) < 240f ? 1f : 0f;
+            float noise = Fbm(x, y, 4f, 3, 62) * 0.5f + 0.5f;
+            Color c = Color.Lerp(new Color(0.78f, 0.78f, 0.78f), new Color(0.92f, 0.92f, 0.92f), noise);
+            c = Color.Lerp(c, c * 0.72f, field * 0.55f);
+            c = Color.Lerp(c, c * 0.55f, band * field);
+            c = Color.Lerp(c, c * 0.5f, 1f - Mathf.Clamp01(bevel * 5f));
+            p.Albedo = c;
+            p.Height = bevel * 0.8f - field * 0.5f;
+            p.Metallic = 0.15f;
+            p.Smoothness = 0.35f;
+        });
+
+        // Container side: vertical corrugation; the material's colour tints it. One tile = 1 m.
+        public static Set Container() => Build("Container", 71, (x, y, p) =>
+        {
+            float wave = Mathf.Sin(x / 512f * Mathf.PI * 2f * 6f);           // six ribs per metre
+            float rib = Mathf.Clamp01(wave * 0.5f + 0.5f);
+            float noise = Fbm(x, y, 3f, 3, 72) * 0.5f + 0.5f;
+            float wear = Mathf.Clamp01((Fbm(x + 70, y + 40, 6f, 3, 73) - 0.4f) * 3f);
+            Color c = Color.Lerp(new Color(0.72f, 0.72f, 0.72f), new Color(0.9f, 0.9f, 0.9f), noise);
+            c = Color.Lerp(c, c * 0.7f, (1f - rib) * 0.5f);
+            c = Color.Lerp(c, c * 0.6f, wear * 0.4f);
+            p.Albedo = c;
+            p.Height = rib * 0.8f;
+            p.Metallic = 0.3f;
+            p.Smoothness = 0.4f;
+        });
+
+        // The sea: blocky patches — a quantised noise on 1 m cells, deep and
+        // lighter blue — the picture's water. One tile = 24 m.
+        public static Set BlockWater() => Build("BlockWater", 81, (x, y, p) =>
+        {
+            const float cell = 512f / 24f; // 1 m cells
+            float qx = Mathf.Floor(x / cell) * cell + cell / 2f, qy = Mathf.Floor(y / cell) * cell + cell / 2f;
+            float n = Fbm(qx, qy, 7f, 3, 82) + Fbm(qx + 900, qy + 300, 14f, 2, 83) * 0.5f;
+            float level = n > 0.15f ? 2f : n > 0.0f ? 1f : 0f;
+            Color deep = new(0.05f, 0.16f, 0.40f), mid = new(0.09f, 0.25f, 0.52f), light = new(0.20f, 0.40f, 0.68f);
+            p.Albedo = level == 2f ? light : level == 1f ? mid : deep;
+            p.Height = level * 0.15f;
             p.Metallic = 0f;
-            p.Smoothness = 0.95f;
+            p.Smoothness = 0.55f;
+        });
+
+        // The company's mark for the flag and the office: a pale skull with three
+        // tentacles on transparent. One tile = the emblem.
+        public static Set Skull() => Build("Skull", 91, (x, y, p) =>
+        {
+            float u = Mathf.Repeat(x, Size) / Size - 0.5f, v = Mathf.Repeat(y, Size) / Size - 0.5f;
+            float head = Mathf.Clamp01(1f - (Mathf.Sqrt(u * u * 1.15f + (v - 0.08f) * (v - 0.08f)) - 0.20f) / 0.02f);
+            float jaw = (Mathf.Abs(u) < 0.12f && v < -0.02f && v > -0.20f) ? 1f : 0f;
+            float eyeL = Mathf.Clamp01((0.055f - Vector2.Distance(new Vector2(u, v), new Vector2(-0.085f, 0.10f))) / 0.01f);
+            float eyeR = Mathf.Clamp01((0.055f - Vector2.Distance(new Vector2(u, v), new Vector2(0.085f, 0.10f))) / 0.01f);
+            float nose = (Mathf.Abs(u) < 0.02f + (0.02f - v) * 0.3f && v < 0.02f && v > -0.03f) ? 1f : 0f;
+            float teeth = (jaw > 0f && v < -0.06f && Mathf.Repeat(u + 0.12f, 0.06f) < 0.045f) ? 0f : 1f;
+            float tentacles = 0f;
+            for (int i = -1; i <= 1; i++)
+            {
+                float cx = i * 0.16f + Mathf.Sin(v * 22f + i) * 0.03f;
+                if (v < -0.18f && v > -0.42f && Mathf.Abs(u - cx) < 0.035f) tentacles = 1f;
+            }
+            float mark = Mathf.Max(head, jaw, tentacles) * (1f - eyeL) * (1f - eyeR) * (1f - nose) * teeth;
+            p.Albedo = new Color(0.86f, 0.87f, 0.9f, mark);
+            p.Height = 0f; p.Metallic = 0f; p.Smoothness = 0.2f;
         });
 
         public static void GenerateAll()
         {
-            DeckPlate(); HullPanel(); RustSteel(); Hazard(); Plank(); PaintedPanel(); WaterRipple();
+            DeckTile(); Panel(); RustSteel(); Hazard(); Crate(); Container(); BlockWater(); Skull();
         }
 
         // ---- the machinery ------------------------------------------------------------
 
         public sealed class Pixel
         {
-            public Color Albedo;
-            public float Height;      // relative, any range: the normal map is the gradient
+            public Color Albedo = Color.white;
+            public float Height;
             public float Metallic;
             public float Smoothness;
         }
@@ -180,14 +207,15 @@ namespace SunkCost.Editor.Look
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
                 {
-                    shade(x + seed * 1000f, y + seed * 1000f, p);
+                    p.Albedo = Color.white;
+                    shade(x + seed * 1024f, y + seed * 1024f, p);
                     int i = y * n + x;
-                    albedo[i] = new Color(Mathf.Clamp01(p.Albedo.r), Mathf.Clamp01(p.Albedo.g), Mathf.Clamp01(p.Albedo.b), 1f);
+                    albedo[i] = new Color(Mathf.Clamp01(p.Albedo.r), Mathf.Clamp01(p.Albedo.g), Mathf.Clamp01(p.Albedo.b), Mathf.Clamp01(p.Albedo.a));
                     height[i] = p.Height;
                     mask[i] = new Color(Mathf.Clamp01(p.Metallic), 0f, 0f, Mathf.Clamp01(p.Smoothness));
                 }
             var normal = new Color[n * n];
-            const float strength = 6f;
+            const float strength = 5f;
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
                 {
@@ -210,8 +238,6 @@ namespace SunkCost.Editor.Look
             tex.Apply();
             byte[] png = tex.EncodeToPNG();
             UnityEngine.Object.DestroyImmediate(tex);
-            // Only touch the file when the pixels changed: an unchanged PNG keeps its
-            // import and its GUID untouched in git.
             if (!File.Exists(path) || !SameBytes(File.ReadAllBytes(path), png)) File.WriteAllBytes(path, png);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -222,6 +248,7 @@ namespace SunkCost.Editor.Look
             if (importer.wrapMode != TextureWrapMode.Repeat) { importer.wrapMode = TextureWrapMode.Repeat; changed = true; }
             if (importer.mipmapEnabled != true) { importer.mipmapEnabled = true; changed = true; }
             if (importer.maxTextureSize != Size) { importer.maxTextureSize = Size; changed = true; }
+            if (importer.alphaIsTransparency != !normalMap) { importer.alphaIsTransparency = !normalMap; changed = true; }
             if (changed) importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
@@ -235,22 +262,17 @@ namespace SunkCost.Editor.Look
 
         // ---- shading helpers (all tile at Size) -----------------------------------------
 
-        // Fractal noise in -0.5..0.5, tiling across the texture by sampling on a torus.
         private static float Fbm(float x, float y, float frequency, int octaves, int seed)
         {
-            float sum = 0f, amp = 0.5f, total = 0f;
-            float f = frequency;
+            float sum = 0f, amp = 0.5f, total = 0f, f = frequency;
             for (int o = 0; o < octaves; o++)
             {
                 sum += (TiledPerlin(x, y, f, seed + o * 17) - 0.5f) * amp;
-                total += amp;
-                amp *= 0.5f;
-                f *= 2f;
+                total += amp; amp *= 0.5f; f *= 2f;
             }
             return sum / total;
         }
 
-        // Perlin made to tile: two samples blended by position across the seam.
         private static float TiledPerlin(float x, float y, float frequency, int seed)
         {
             float u = Mathf.Repeat(x, Size) / Size, v = Mathf.Repeat(y, Size) / Size;
@@ -263,15 +285,16 @@ namespace SunkCost.Editor.Look
             return Mathf.Lerp(cd, ab, v);
         }
 
-        // 1 inside a groove of `width` px along the lines of a `pitch` px grid.
-        private static float Seam(float x, float y, float pitch, float width)
+        // 0 at a cell's edge rising to 1 `width` px in: a rounded bevel profile.
+        private static float Bevel(float x, float y, float pitch, float width)
         {
-            float sx = Mathf.Abs(Mathf.Repeat(x, pitch) - pitch / 2f), sy = Mathf.Abs(Mathf.Repeat(y, pitch) - pitch / 2f);
-            float d = Mathf.Min(pitch / 2f - sx, pitch / 2f - sy);
-            return Mathf.Clamp01(1f - d / width);
+            float dx = Mathf.Min(Mathf.Repeat(x, pitch), pitch - Mathf.Repeat(x, pitch));
+            float dy = Mathf.Min(Mathf.Repeat(y, pitch), pitch - Mathf.Repeat(y, pitch));
+            float d = Mathf.Min(dx, dy);
+            float t = Mathf.Clamp01(d / width);
+            return Mathf.Sin(t * Mathf.PI * 0.5f);
         }
 
-        // Rivet heads `inset` px inside each plate of a `pitch` grid, `radius` px.
         private static float Rivets(float x, float y, float pitch, float inset, float radius)
         {
             float lx = Mathf.Repeat(x, pitch), ly = Mathf.Repeat(y, pitch);
@@ -280,41 +303,9 @@ namespace SunkCost.Editor.Look
                 foreach (float cy in new[] { inset, pitch - inset })
                 {
                     float d = Vector2.Distance(new Vector2(lx, ly), new Vector2(cx, cy));
-                    best = Mathf.Max(best, Mathf.Clamp01(1f - (d - radius * 0.5f) / (radius * 0.5f)));
-                }
-            // and one mid-edge on the long sides, so a 2 m plate reads riveted
-            foreach (float cx in new[] { pitch / 2f })
-                foreach (float cy in new[] { inset, pitch - inset })
-                {
-                    float d = Vector2.Distance(new Vector2(lx, ly), new Vector2(cx, cy));
-                    best = Mathf.Max(best, Mathf.Clamp01(1f - (d - radius * 0.5f) / (radius * 0.5f)));
+                    best = Mathf.Max(best, Mathf.Clamp01(1f - (d - radius * 0.6f) / (radius * 0.4f)));
                 }
             return best;
-        }
-
-        // Vertical streaks that start strong and fade down the tile.
-        private static float Drips(float x, float y, int seed)
-        {
-            float column = TiledPerlin(x, 0f, 24f, seed);
-            float start = Mathf.Clamp01((column - 0.55f) * 5f);
-            float along = 1f - Mathf.Repeat(y, Size) / Size;
-            float wobble = TiledPerlin(x, y, 40f, seed + 5) * 0.3f;
-            return Mathf.Clamp01(start * along * along + wobble * start) * 0.9f;
-        }
-
-        // 1 within `width` px of the edge of a `pitch` cell along one axis.
-        private static float Edge(float v, float pitch, float width)
-        {
-            float d = Mathf.Min(Mathf.Repeat(v, pitch), pitch - Mathf.Repeat(v, pitch));
-            return Mathf.Clamp01(1f - d / width);
-        }
-
-        // Diamond tread: a faint raised lattice, fine.
-        private static float Tread(float x, float y)
-        {
-            float u = Mathf.Repeat(x + y, 16f), v = Mathf.Repeat(x - y, 16f);
-            float a = Mathf.Clamp01(1f - Mathf.Abs(u - 8f) / 2f), b = Mathf.Clamp01(1f - Mathf.Abs(v - 8f) / 2f);
-            return Mathf.Max(a, b) * 0.6f;
         }
     }
 }

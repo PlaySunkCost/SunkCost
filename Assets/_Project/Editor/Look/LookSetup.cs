@@ -48,6 +48,23 @@ namespace SunkCost.Editor.Look
             return signs;
         }
 
+        // The lamps are point lights, a hundred of them: the PC pipeline asset must
+        // render additional lights per pixel (LightRenderingMode.PerPixel is 1,
+        // PerVertex 2). Forward+ takes the count; the per-object limit is moot.
+        public static bool EnsurePipeline()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
+            if (asset == null) return false;
+            var serialized = new SerializedObject(asset);
+            bool changed = false;
+            SerializedProperty mode = serialized.FindProperty("m_AdditionalLightsRenderingMode");
+            if (mode != null && mode.intValue != (int)LightRenderingMode.PerPixel) { mode.intValue = (int)LightRenderingMode.PerPixel; changed = true; }
+            SerializedProperty limit = serialized.FindProperty("m_AdditionalLightsPerObjectLimit");
+            if (limit != null && limit.intValue < 8) { limit.intValue = 8; changed = true; }
+            if (changed) { serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(asset); AssetDatabase.SaveAssets(); }
+            return changed;
+        }
+
         [MenuItem("Sunk Cost/Look/Rebuild look props (loses edits to the prop prefabs)")]
         public static void RebuildProps()
         {

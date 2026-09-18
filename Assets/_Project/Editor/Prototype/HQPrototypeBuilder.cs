@@ -51,6 +51,7 @@ namespace SunkCost.Editor.Prototype
             // scene references), then the platform (docs/DESIGN.md §2, 18 September 2026).
             SunkCost.Editor.Look.ProceduralTextures.GenerateAll();
             SunkCost.Editor.Look.LookSetup.PatchPlayerCamera();
+            SunkCost.Editor.Look.LookSetup.EnsurePipeline();
             SunkCost.Editor.Look.LookSetup.EnsureSigns();
             Material tankMaterial = GetOrCreateMaterial(DiveLootSetup.AirTankFullMaterialPath, new Color(0.95f, 0.75f, 0.12f)); // the tank prefab's own look
             Material lampMaterial = GetOrCreateMaterial(MaterialPath + "/ShopLamp.mat", new Color(0.95f, 0.95f, 0.8f));

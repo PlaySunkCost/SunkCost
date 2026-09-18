@@ -8,12 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: DawnSky
-  m_Shader: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: abb506c553ece8044b92ac85a8aaa191, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _SUNDISK_HIGH_QUALITY
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -26,13 +26,21 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _AtmosphereThickness: 0.8
-    - _Exposure: 1.3
+    - _AtmosphereThickness: 1.35
+    - _Exposure: 0.55
+    - _GlowHeight: 0.14
+    - _GlowWidth: 0.3
+    - _HorizonSharpness: 2.2
     - _SunDisk: 2
-    - _SunSize: 0.05
+    - _SunSize: 0.04
     - _SunSizeConvergence: 5
     m_Colors:
-    - _GroundColor: {r: 0.7, g: 0.76, b: 0.86, a: 1}
-    - _SkyTint: {r: 0.42, g: 0.58, b: 0.86, a: 1}
+    - _Glow: {r: 0.95, g: 0.42, b: 0.14, a: 1}
+    - _GlowDirection: {r: 0.85, g: 0, b: 0.5, a: 0}
+    - _Ground: {r: 0.09, g: 0.24, b: 0.56, a: 1}
+    - _GroundColor: {r: 0.07, g: 0.11, b: 0.24, a: 1}
+    - _Horizon: {r: 0.09, g: 0.15, b: 0.36, a: 1}
+    - _SkyTint: {r: 0.3, g: 0.42, b: 0.8, a: 1}
+    - _Zenith: {r: 0.03, g: 0.05, b: 0.15, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

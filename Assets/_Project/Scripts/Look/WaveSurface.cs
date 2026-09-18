@@ -13,17 +13,17 @@ namespace SunkCost.Look
     public sealed class WaveSurface : MonoBehaviour
     {
         [Tooltip("Wave train A: height in metres, length in metres, direction in the XZ plane, speed in metres per second.")]
-        [SerializeField] private float heightA = 0.18f;
+        [SerializeField] private float heightA = 0.12f;
         [SerializeField] private float lengthA = 9f;
         [SerializeField] private Vector2 directionA = new(1f, 0.35f);
         [SerializeField] private float speedA = 1.4f;
         [Tooltip("Wave train B, crossing A.")]
-        [SerializeField] private float heightB = 0.10f;
+        [SerializeField] private float heightB = 0.06f;
         [SerializeField] private float lengthB = 4.5f;
         [SerializeField] private Vector2 directionB = new(-0.5f, 1f);
         [SerializeField] private float speedB = 1.0f;
-        [Tooltip("How fast the ripple normals drift, in texture tiles per second.")]
-        [SerializeField] private Vector2 normalScroll = new(0.012f, 0.008f);
+        [Tooltip("How fast the water's pattern drifts, in texture tiles per second.")]
+        [SerializeField] private Vector2 normalScroll = new(0.004f, 0.0025f);
 
         private Mesh working;
         private Vector3[] rest, moved;

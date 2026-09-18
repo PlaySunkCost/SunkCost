@@ -43,7 +43,37 @@ namespace SunkCost.Editor.Look
             Shoot("down", new Vector3(20f, 30f, -40f), new Vector3(25f, -5f, -60f), 60f);
             Shoot("waterline", new Vector3(-38f, -4.2f, -3f), new Vector3(-47f, -5.2f, -12f), 60f);
             RenderSettings.fogStartDistance = start; RenderSettings.fogEndDistance = end;
-            return "Temp/look/fogtest.png";
+            return $"Temp/look/fogtest.png; fog={RenderSettings.fog} {RenderSettings.fogMode} {start}-{end} colour={RenderSettings.fogColor} active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}";
+        }
+
+        public static string LightTest()
+        {
+            RenderTexture sky = SunkCost.Look.SkyEnvironment.Refresh();
+            try
+            {
+                Shoot("lighttest", new Vector3(10f, 1.6f, -13f), new Vector3(9f, 0.2f, -17.5f), 70f);
+            }
+            finally { SunkCost.Look.SkyEnvironment.Restore(sky); }
+            int lights = 0, realtime = 0;
+            foreach (Light l in Object.FindObjectsByType<Light>(FindObjectsInactive.Exclude)) { lights++; if (l.lightmapBakeType == LightmapBakeType.Realtime && l.type == LightType.Point) realtime++; }
+            var asset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            return $"lights={lights} realtimePoint={realtime} asset={(asset == null ? "none" : asset.name)} additional={(asset == null ? "?" : asset.additionalLightsRenderingMode.ToString())} maxAdditional={(asset == null ? -1 : asset.maxAdditionalLightsCount)}";
+        }
+
+        public static string EmissionTest()
+        {
+            Material water = AssetDatabase.LoadAssetAtPath<Material>(LookMaterials.Folder + "/Water.mat");
+            Color e = water.GetColor("_EmissionColor");
+            float start = RenderSettings.fogStartDistance, end = RenderSettings.fogEndDistance;
+            RenderSettings.fogStartDistance = 10f; RenderSettings.fogEndDistance = 60f;
+            water.SetColor("_EmissionColor", Color.black); water.DisableKeyword("_EMISSION");
+            Shoot("emtest-noemission", new Vector3(10f, 2f, -70f), new Vector3(0f, 3f, 0f), 60f);
+            water.SetColor("_EmissionColor", e); water.EnableKeyword("_EMISSION");
+            water.DisableKeyword("_NORMALMAP");
+            Shoot("emtest-nonormal", new Vector3(10f, 2f, -70f), new Vector3(0f, 3f, 0f), 60f);
+            water.EnableKeyword("_NORMALMAP");
+            RenderSettings.fogStartDistance = start; RenderSettings.fogEndDistance = end;
+            return "ok; keywords=" + string.Join(",", water.shaderKeywords) + " shader=" + water.shader.name + " queue=" + water.renderQueue;
         }
 
         public static string WaterTest()
