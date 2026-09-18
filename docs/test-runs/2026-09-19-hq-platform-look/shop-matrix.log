@@ -1,0 +1,76 @@
+Shop matrix started 18/09/2026 23:16:03
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerUpgrades (run the shop setup)
+PASS the catalogue lists the three items
+  · prices: Air tank $40, Large tank $300, Bright headlamp $150; large tank ×1.5; lamp range ×1.6
+
+== S0 — the shop room at HQ: three stands with a name and a price, a delivery spot
+PASS S0 the shop room stands at HQ
+PASS S0 a stand for each item
+PASS S0 the air tank's label reads its name and price: Air tank / $40
+PASS S0 the stand knows its delivery spot
+
+== S1 — look at a stand: the prompt; E with an empty pot is refused
+PASS the dot is on the air-tank stand
+PASS S1 the prompt: Air tank · $40 — Press E to buy (pot $0)
+PASS S1 the pot is empty
+PASS S1 E with no money is refused: Not enough money: $40 needed, $0 in the pot
+PASS S1 the refusal shows in the prompt: Not enough money: $40 needed, $0 in the pot
+PASS S1 nothing was sold
+
+== S2 — with money: the air tank falls at the delivery spot, anyone's to take
+PASS the dot is on the air-tank stand
+PASS S2 an air tank was spawned
+PASS S2 it fell from the chute (y=8.1) onto the floor under it (0.28 m off the mark, y=5.87)
+PASS S2 loose in the HQ scene, grabbable (Free)
+PASS S2 it is a Full air tank
+PASS S2 the dot is on the bought tank
+PASS S2 picked up
+PASS S2 in hand on land the prompt says: Full air tank — breathe from it underwater
+PASS S2 a breath on land is refused: Breathe from the tank underwater
+PASS S2 dropped again
+PASS S2 the pot paid $40: $460 left
+
+== S3 — the large tank: an upgrade on the buyer, one only
+PASS the dot is on the large-tank stand
+PASS S3 the large tank is owned
+PASS S3 the pot paid $300: $160 left
+PASS S3 the stand now says owned: Large tank · owned
+PASS S3 buying it again is refused: You already have a large tank
+PASS S3 nothing charged for the refused buy
+
+== S4 — the bright headlamp: a longer beam; then the pot runs dry
+PASS the dot is on the bright-headlamp stand
+PASS S4 the bright headlamp is owned
+PASS S4 the beam reaches ×1.6: 25.0 → 40.0 m
+PASS S4 $10 left in the pot
+PASS the dot is on the air-tank stand
+PASS S4 a second air tank is refused on money: Not enough money: $40 needed, $10 in the pot
+
+== S5 — a request from across the room is refused
+PASS S5 refused from 12 m: Step up to the shelf
+PASS S5 nothing sold
+
+== S6 — below, the large tank counts and the visor marks what was bought
+PASS sailing to Sea
+PASS arrived at Sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS S6 the tank holds 450 s (plain 300); 429 s in it
+PASS S6 the visor's O2 reads the fraction of the large tank (96%)
+PASS S6 the visor marks: L-TANK  LAMP
+
+== S7 — dying with the body left below costs the upgrades
+PASS S7 dead below
+PASS S7 the site closed with the dead (the body stayed below)
+FAIL: The object of type 'SunkCost.Player.HQPlayerController' has been destroyed but you are still trying to access it.
+Your script should either check if it is null or you should not destroy the object.
+  at UnityEngine.Object+MarshalledUnityObject.TryThrowEditorNullExceptionObject (UnityEngine.Object unityObj, System.String parameterName) [0x00065] in <d5ea965f39d74501b56f4006ef80da34>:0 
+  at UnityEngine.Bindings.ThrowHelper.ThrowNullReferenceException (System.Object obj) [0x0000a] in <d5ea965f39d74501b56f4006ef80da34>:0 
+  at UnityEngine.Component.get_gameObject () [0x00006] in <d5ea965f39d74501b56f4006ef80da34>:0 
+  at SunkCost.Editor.Prototype.ShopRuntimeChecks+<>c__DisplayClass43_0.<Run>b__25 () [0x00000] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:372 
+  at SunkCost.Editor.Prototype.ShopRuntimeChecks+<Expect>d__26.MoveNext () [0x00042] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:113 
+  at SunkCost.Editor.Prototype.ShopRuntimeChecks.Tick () [0x0001d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:76 
