@@ -218,13 +218,15 @@ namespace SunkCost.Player
             return sum;
         }
 
-        // The box against the quota, and what is on you (Dan, 16 September 2026).
+        // The cycle against the quota — what was handed over at HQ already plus
+        // what the box holds (Dan, 18 September 2026: "I paid 400 already, it
+        // should say quota x/500") — and what is on you.
         private static string MoneyText(int onMe)
         {
             CrewDayState day = CrewDayState.Instance;
             if (day == null) return string.Empty;
             int quota = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings.QuotaPerCycle : 0;
-            return $"BOX ${day.BoxValue}/${quota}  ·  ON ME ${onMe}";
+            return $"QUOTA ${day.CycleSales + day.BoxValue}/${quota}  ·  ON ME ${onMe}";
         }
 
         // The deck TV: E is the next channel; nobody below is NO SIGNAL (card 3).

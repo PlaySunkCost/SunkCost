@@ -518,7 +518,12 @@ namespace SunkCost.Editor.Prototype
             GameObject endAt = new("Plank End");
             endAt.transform.SetParent(root.transform);
             endAt.transform.SetPositionAndRotation(new Vector3(pierEdgeX + 3.0f, 0.05f, z), Quaternion.Euler(0f, 90f, 0f));
-            root.AddComponent<SunkCost.World.HQPlank>().Configure(baseAt.transform, endAt.transform, -1f);
+            // The gate: a rail across the board's base on the pier's edge, wider than
+            // the board so nobody sidesteps it; up only while the crew walks the plank.
+            Material gateMaterial = GetOrCreateMaterial(MaterialPath + "/PlankGate.mat", new Color(0.55f, 0.12f, 0.1f));
+            CreateBlock("Plank Gate", new Vector3(pierEdgeX - 0.2f, 0.6f, z), new Vector3(0.2f, 1.2f, 1.6f), gateMaterial, root.transform);
+            GameObject gate = root.transform.Find("Plank Gate").gameObject;
+            root.AddComponent<SunkCost.World.HQPlank>().Configure(baseAt.transform, endAt.transform, -1f, gate);
         }
 
         internal static Type FindType(string fullName)

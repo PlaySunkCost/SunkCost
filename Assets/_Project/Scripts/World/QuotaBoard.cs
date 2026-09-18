@@ -56,8 +56,10 @@ namespace SunkCost.World
             }
             if (Time.unscaledTime - day.LastRefusalAt < settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(day.LastRefusal.Text))
                 return day.LastRefusal.Text;
-            string handed = day.CycleSales > 0 ? $" (${day.CycleSales} handed over)" : string.Empty;
-            string money = $"box ${day.BoxValue} / quota ${settings.QuotaPerCycle}{handed} · balance ${day.Balance}";
+            // The cycle so far: handed over at this board plus the box on the ship
+            // (Dan, 18 September 2026: "quota x/500, x = already paid + what is in the box").
+            string parts = day.CycleSales > 0 ? $" (handed over ${day.CycleSales} + box ${day.BoxValue})" : string.Empty;
+            string money = $"quota ${day.CycleSales + day.BoxValue} / ${settings.QuotaPerCycle}{parts} · balance ${day.Balance}";
             if (day.Payday) return $"PAYDAY\n{money}\nE to pay (sells the box)";
             if (day.Day > 0) return $"DAY {day.Day} OF {settings.DaysPerCycle}\n{money}\nE to pay early (sells the box)";
             return $"NEW CYCLE\n{money}\ndive first";

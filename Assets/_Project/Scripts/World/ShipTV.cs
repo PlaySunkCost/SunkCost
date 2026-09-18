@@ -150,9 +150,16 @@ namespace SunkCost.World
             if (hud == null) hud = local.GetComponent<PlayerHudUI>();
             if (hud != null) hud.Compute(frame, diver, diver.Inventory, cam, watching: true);
             // The site's own fog and ambient for this one render (the active scene
-            // is the ship's), then the ship's back.
+            // is the ship's), then the ship's back. The diver's own head stays out
+            // of the picture: the eased eye lags the head when they turn and the
+            // camera saw the inside of it (Dan, 18 September 2026: a disc of the
+            // diver's colour over half the screen).
             WorldLook.Snapshot? previous = WorldLook.Begin(WorldScenes.Scene(WorldId.Dive));
+            PlayerHeadSplit head = diver.HeadSplit;
+            bool headShown = head != null && head.HeadShown;
+            if (headShown) head.SetHeadShown(false);
             cam.Render();
+            if (headShown) head.SetHeadShown(true);
             WorldLook.Restore(previous);
             renderedThisFrame = true;
             RenderedFrames++;

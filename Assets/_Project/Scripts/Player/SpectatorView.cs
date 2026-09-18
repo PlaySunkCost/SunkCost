@@ -62,6 +62,7 @@ namespace SunkCost.Player
             RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
             RenderPipelineManager.endCameraRendering -= OnEndCamera;
         }
+        private PlayerHeadSplit hiddenHead; // the target's head, out of its own eyes' picture (like ShipTV)
         private void OnBeginCamera(ScriptableRenderContext context, Camera rendering)
         {
             if (!Active || Target == null || rendering != cam) return;
@@ -69,12 +70,15 @@ namespace SunkCost.Player
             if (day == null) return;
             WorldId world = day.IsBelow(Target.OwnerId) ? WorldId.Dive : day.World; // the physical world, never the copy's Unity scene
             swappedLook = WorldLook.Begin(WorldScenes.Scene(world));
+            PlayerHeadSplit head = Target.HeadSplit;
+            if (head != null && head.HeadShown) { head.SetHeadShown(false); hiddenHead = head; }
         }
         private void OnEndCamera(ScriptableRenderContext context, Camera rendering)
         {
             if (rendering != cam) return;
             WorldLook.Restore(swappedLook);
             swappedLook = null;
+            if (hiddenHead != null) { hiddenHead.SetHeadShown(true); hiddenHead = null; }
         }
 
         private void Update()

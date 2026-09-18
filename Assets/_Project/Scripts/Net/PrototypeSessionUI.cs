@@ -251,6 +251,10 @@ namespace SunkCost.Net
             if (controller.InRoom)
             {
                 if (GUILayout.Button("Resume")) SessionInputGate.Resume();
+                // Unstuck (Dan, 18 September 2026): the server puts you back on a
+                // known spot of the world you are in, then the menu closes.
+                SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+                if (local != null && GUILayout.Button("Unstuck")) { local.RequestUnstuck(); SessionInputGate.Resume(); }
                 if (GUILayout.Button(s.Role == SessionRole.Host ? "Leave (closes the room)" : "Leave")) controller.Leave();
             }
             else if (GUILayout.Button("Cancel"))

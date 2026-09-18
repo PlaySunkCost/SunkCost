@@ -39,6 +39,7 @@ namespace SunkCost.Editor.Prototype
             foreach (GameObject root in scene.GetRootGameObjects()) planks.AddRange(root.GetComponentsInChildren<SunkCost.World.HQPlank>(true));
             if (planks.Count != 1) errors.Add("HQ needs exactly one plank (HQPlank; found " + planks.Count + ").");
             else if (planks[0].Base == null || planks[0].End == null) errors.Add("The plank needs its Base and End markers.");
+            else if (planks[0].Gate == null || planks[0].Gate.GetComponent<Collider>() == null) errors.Add("The plank needs its gate (a collider across the base; 18 September 2026).");
             var stands = new System.Collections.Generic.List<SunkCost.Shop.ShopDisplay>();
             foreach (GameObject root in scene.GetRootGameObjects()) stands.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDisplay>(true));
             var catalog = AssetDatabase.LoadAssetAtPath<SunkCost.Shop.ShopCatalog>(ShopSetup.CatalogPath);

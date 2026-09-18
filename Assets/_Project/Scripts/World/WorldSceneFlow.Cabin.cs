@@ -321,12 +321,15 @@ namespace SunkCost.World
             SetVisible(ship.DeckCabinCarGlass, present);
             doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
             doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
-            // The doorway is passable only with the doors fully open: nobody walks into
-            // the housing while the car is away or the doors are moving.
+            // The doorway blocks only with the doors shut: nobody walks into the
+            // housing while the car is away. Moving doors are walked through (the
+            // leaves have no colliders, like the car's); the server turns them around
+            // for anyone in the doorway (Dan, 18 September 2026: "the door opens if
+            // someone touches it, but players can't really leave — it is blocked").
             Collider doorway = ship.DeckCabinDoorCollider;
             if (doorway != null)
             {
-                bool blocks = open < 0.999f;
+                bool blocks = open <= 0.001f;
                 if (doorway.enabled != blocks) doorway.enabled = blocks;
             }
             TextMesh panel = ship.DeckCabinPanel;
@@ -450,29 +453,36 @@ namespace SunkCost.World
         // The doors turn around for anyone crossing or touching them (Dan, 18
         // September 2026: "if someone touches the door or walks through it, the
         // door reopens fully and starts to close again") — at door speed both
-        // ways. Capped: a crew cannot hold the doors open for ever.
+        // ways — and never close on someone standing in the doorway: they hold
+        // open until the doorway is clear (Dan, later that day: "it does not
+        // close until I move"). Capped only against in-and-out crossings: after
+        // this long with the doorway clear the doors close whoever crosses.
         private const float SealCapSeconds = 20f;
 
         // The deck cabin (the ride down): the doors as CabinRideState carries them.
         private IEnumerator ServerSealDeckCabin(ShipParts ship)
         {
-            float seal = Mathf.Max(Settings.CabinSealSeconds, 0.0001f);
             SetRideSeal(1f, opening: false);
             var wasInside = new Dictionary<int, bool>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values) { HQPlayerController p = PlayerOf(conn); if (p != null) wasInside[conn.ClientId] = ship.IsInDeckCabin(p.transform.position); }
             float cap = Time.unscaledTime + SealCapSeconds;
-            while (Time.unscaledTime < cap)
+            string heldBy = null;
+            while (true)
             {
                 CabinRideState state = dayState.CabinRide;
                 float open = DeckCabinOpenFraction();
+                string blocking = ServerInDoorway(ship.DeckCabinDoorCollider);
+                if (blocking != null) cap = Time.unscaledTime + SealCapSeconds; // nobody is closed on
                 if (state.DoorOpening)
                 {
-                    if (open >= 0.999f) { SetRideSeal(1f, opening: false); foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = ship.IsInDeckCabin(p.transform.position); } }
+                    if (open < 0.999f) { }
+                    else if (blocking != null) { if (heldBy != blocking) { heldBy = blocking; Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: the doors hold open for {blocking}"); } }
+                    else { heldBy = null; SetRideSeal(1f, opening: false); foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = ship.IsInDeckCabin(p.transform.position); } }
                 }
                 else
                 {
                     if (open <= 0.001f) yield break; // shut
-                    string who = ServerDoorwayCrossed(ship.DeckCabinDoorCollider, p => ship.IsInDeckCabin(p), wasInside);
+                    string who = blocking ?? (Time.unscaledTime < cap ? ServerDoorwayCrossed(p => ship.IsInDeckCabin(p), wasInside) : null);
                     if (who != null) { Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: {who} at the closing doors — they open again"); SetRideSeal(open, opening: true); }
                 }
                 yield return null;
@@ -498,54 +508,76 @@ namespace SunkCost.World
         // were, ElevatorDoor) and it seals again once they are open.
         private IEnumerator ServerSealCar(ElevatorController car)
         {
+            Collider doorway = car.GetComponentInChildren<ElevatorDoor>(true)?.DoorwayCollider;
             var wasInside = new Dictionary<int, bool>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values) { HQPlayerController p = PlayerOf(conn); if (p != null) wasInside[conn.ClientId] = car.IsInsideCar(p.transform.position); }
             float cap = Time.unscaledTime + SealCapSeconds, resealAt = -1f;
-            while (Time.unscaledTime < cap)
+            string heldBy = null;
+            while (true)
             {
                 ElevatorState state = dayState.Elevator.State;
                 if (state == ElevatorState.Ascending) yield break;
+                string blocking = ServerInDoorway(doorway);
+                if (blocking != null) cap = Time.unscaledTime + SealCapSeconds; // nobody is closed on
                 if (state == ElevatorState.Sealing)
                 {
-                    string who = ServerDoorwayCrossed(null, p => car.IsInsideCar(p), wasInside);
+                    string who = blocking ?? (Time.unscaledTime < cap ? ServerDoorwayCrossed(p => car.IsInsideCar(p), wasInside) : null);
                     if (who != null)
                     {
-                        Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: {who} crossed the car's closing doors — they open again");
+                        Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: {who} at the car's closing doors — they open again");
                         ServerSetElevator(ElevatorState.AtBottom, true);
                         resealAt = Time.unscaledTime + CarSealSeconds;
                     }
                 }
                 else if (state == ElevatorState.AtBottom && resealAt > 0f && Time.unscaledTime >= resealAt)
                 {
-                    foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = car.IsInsideCar(p.transform.position); }
-                    ServerSetElevator(ElevatorState.Sealing, true);
-                    resealAt = -1f;
+                    if (blocking != null) { if (heldBy != blocking) { heldBy = blocking; Debug.Log($"[WorldSceneFlow] Cabin ride {serial}: the car's doors hold open for {blocking}"); } }
+                    else
+                    {
+                        heldBy = null;
+                        foreach (int id in new List<int>(wasInside.Keys)) { HQPlayerController p = PlayerOf(id); if (p != null) wasInside[id] = car.IsInsideCar(p.transform.position); }
+                        ServerSetElevator(ElevatorState.Sealing, true);
+                        resealAt = -1f;
+                    }
                 }
                 yield return null;
             }
-            // Capped: whatever the doors are doing, the tick takes the car up once they seal.
-            yield return WaitForCar(ElevatorState.Ascending, CarSealSeconds + Settings.ArrivalTimeoutSeconds);
         }
 
-        // Who crossed the doorway (their inside/outside changed) or touches its
-        // collider, among the living. Null when nobody did.
-        private string ServerDoorwayCrossed(Collider doorway, System.Func<Vector3, bool> inside, Dictionary<int, bool> wasInside)
+        // Who stands in the doorway — their capsule reaches the doorway box, enabled
+        // or not (it only blocks when shut) — among the living. Null when nobody.
+        private string ServerInDoorway(Collider doorway)
+        {
+            if (!(doorway is BoxCollider box)) return null;
+            foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
+            {
+                if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
+                HQPlayerController player = PlayerOf(conn);
+                if (player == null || player.gameObject.scene != box.gameObject.scene) continue;
+                Vector3 chest = player.transform.position + Vector3.up * 0.9f;
+                float reach = (player.Controller != null ? player.Controller.radius : 0.35f) + 0.15f;
+                // The box's own space (the doorway is rotated with its cabin), the
+                // distance from the chest to the box, the capsule's radius against it.
+                Vector3 local = box.transform.InverseTransformPoint(chest) - box.center;
+                Vector3 half = box.size * 0.5f;
+                Vector3 outside = new Vector3(Mathf.Max(0f, Mathf.Abs(local.x) - half.x), Mathf.Max(0f, Mathf.Abs(local.y) - half.y), Mathf.Max(0f, Mathf.Abs(local.z) - half.z));
+                if (box.transform.TransformVector(outside).sqrMagnitude < reach * reach) return DisplayName(conn) + " (in the doorway)";
+            }
+            return null;
+        }
+
+        // Who crossed the doorway (their inside/outside changed), among the living.
+        // Null when nobody did.
+        private string ServerDoorwayCrossed(System.Func<Vector3, bool> inside, Dictionary<int, bool> wasInside)
         {
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
                 if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
                 if (player == null) continue;
-                Vector3 at = player.transform.position;
-                bool now = inside(at);
+                bool now = inside(player.transform.position);
                 if (wasInside.TryGetValue(conn.ClientId, out bool before) && before != now) { wasInside[conn.ClientId] = now; return DisplayName(conn) + " (crossed)"; }
                 wasInside[conn.ClientId] = now;
-                if (doorway != null && doorway.enabled)
-                {
-                    Vector3 chest = at + Vector3.up * 0.9f;
-                    float reach = (player.Controller != null ? player.Controller.radius : 0.35f) + 0.15f;
-                    if ((doorway.ClosestPoint(chest) - chest).sqrMagnitude < reach * reach) return DisplayName(conn) + " (touched)";
-                }
             }
             return null;
         }

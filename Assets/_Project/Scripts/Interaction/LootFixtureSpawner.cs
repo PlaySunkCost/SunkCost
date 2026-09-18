@@ -54,6 +54,14 @@ namespace SunkCost.Interaction
             else if (args.ConnectionState == LocalConnectionState.Stopped) spawned.Clear();
         }
 
+        // A fresh run (WorldSceneFlow.ServerResetRun, 18 September 2026): the old
+        // instances were despawned with everything else loose; the fixture again.
+        public void ServerRespawn()
+        {
+            spawned.Clear();
+            SpawnAll();
+        }
+
         private void SpawnAll()
         {
             if (spawned.Count > 0) return; // once per scene load

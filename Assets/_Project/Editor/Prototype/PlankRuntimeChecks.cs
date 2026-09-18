@@ -277,8 +277,25 @@ namespace SunkCost.Editor.Prototype
             Heading("P0 — the plank stands off the pier; a lost payday puts the run on it");
             HQPlank plank = HQPlank.InScene(WorldScenes.Scene(WorldId.HQ));
             Check(plank != null && plank.Base != null && plank.End != null, "P0 HQ has the plank with its base and end");
-            // Something to lose: an upgrade and a ball in hand.
+            Check(plank.Gate != null && !plank.GateUp, "P0 the gate at the board's base is down while the run is on");
+            // U1 — Unstuck at HQ (Dan, 18 September 2026): from anywhere back to a pier spawn point; not twice in a row.
+            host.TeleportLocal(new Vector3(40f, 0.05f, 40f), 0f); yield return Wait(0.3f);
+            Check(flow.ServerUnstuck(host.Owner, out string unstuckWhy), "U1 unstuck at HQ is taken: " + unstuckWhy);
+            List<Transform> pierPoints = CrewSpawner.SpawnPointsIn(WorldScenes.Scene(WorldId.HQ));
+            yield return Expect(() => pierPoints.Exists(p => Vector3.Distance(p.position, host.transform.position) < 1f), 3f, () => "U1 back on a pier spawn point: " + host.transform.position.ToString("F1"));
+            Check(!flow.ServerUnstuck(host.Owner, out unstuckWhy) && unstuckWhy == "Just did", "U1 a second press right after is refused: " + unstuckWhy);
+            // Something to lose: an upgrade, a ball in hand, and a bought tank on the shop's floor.
             host.Upgrades.ServerGrant(PlayerUpgrade.LargeTank);
+            ShopDisplay tankStand = null;
+            foreach (ShopDisplay d in UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
+                if (d.ItemId == ShopCatalog.AirTankId && d.gameObject.scene == WorldScenes.Scene(WorldId.HQ)) tankStand = d;
+            Check(tankStand != null, "P0 the shop has the air tank's stand");
+            Day.ServerSetBalanceForChecks(40);
+            Vector3 atStand = tankStand.transform.position + tankStand.transform.forward * 1.6f; atStand.y = 0.05f;
+            host.TeleportLocal(atStand, host.Yaw); yield return Wait(0.3f);
+            Check(flow.ServerBuy(host.Owner, ShopCatalog.AirTankId, out string tankWhy), "P0 an air tank is bought for $40: " + tankWhy);
+            yield return Expect(() => UnityEngine.Object.FindObjectsByType<AirTankItem>(FindObjectsInactive.Exclude).Length == 1, 3f, () => "P0 the tank fell into the shop");
+            yield return Wait(1f);
             CarryableItem ball = H.Item("Basketball");
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
@@ -299,6 +316,12 @@ namespace SunkCost.Editor.Prototype
             yield return null;
             Check(hud.PromptText.StartsWith("WALK THE PLANK"), "P1 the prompt: " + hud.PromptText);
             Check(host.Controller.enabled && !host.TravelLocked, "P1 free to walk");
+            // The gate (Dan, 18 September 2026: "will not be able to leave the plank"):
+            // up behind the jumper, a collider across the base, the jumper clear of it.
+            Check(plank.GateUp && plank.Gate.GetComponent<Collider>().enabled, "P1 the gate is up while the crew walks the plank");
+            Check(Vector3.Dot(plank.Gate.transform.position - host.transform.position, plank.Base.forward) < 0f, "P1 the gate stands behind the jumper, between the board and the pier");
+            Check(!plank.Gate.GetComponent<Collider>().bounds.Contains(host.transform.position + Vector3.up * 0.9f), "P1 the jumper is not inside the gate");
+            Check(!flow.ServerUnstuck(host.Owner, out string jumperWhy) && jumperWhy == "Walk the plank", "U2 unstuck is refused to the jumper: " + jumperWhy);
             Vector3 onBoard = plank.Base.position + plank.Base.forward * 1.5f;
             host.TeleportLocal(onBoard, plank.WalkYaw); yield return Wait(0.5f);
             Check(!plank.IsInWater(host.transform.position) && Day.Plank.Jumper == host.OwnerId && !Day.HasJumped(host.OwnerId), "P1 out on the board is allowed: still the jumper, not in the water");
@@ -314,6 +337,14 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.Phase == DayPhase.AtHQ, card + 4f, () => "P2 the fresh run after the card (phase " + Day.Phase + ")");
             Check(Day.Day == 0 && Day.Balance == 0 && Day.CycleSales == 0 && !Day.Payday && Day.RunDays == 0 && !Day.Plank.Active, "P2 day 0, $0, no cycle, the plank off");
             Check(host.Upgrades.Owned == PlayerUpgrade.None, "P2 the upgrades are gone");
+            yield return Expect(() => !plank.GateUp, 1f, () => "P2 the gate is down again for the fresh run"); // a frame behind the phase (HQPlank.Update)
+            // The world as it was found (Dan, 18 September 2026: "oxygen tanks are still
+            // on the ship after game over"): the bought tank is gone, the fixture's ball is back.
+            yield return Wait(0.5f);
+            Check(UnityEngine.Object.FindObjectsByType<AirTankItem>(FindObjectsInactive.Exclude).Length == 0, "P2 no air tank left anywhere");
+            Check(ball == null || !ball.IsSpawned, "P2 the old ball is gone");
+            CarryableItem freshBall = H.Item("Basketball");
+            Check(freshBall != null && freshBall.IsSpawned && freshBall.HolderClientId < 0 && freshBall.gameObject.scene == WorldScenes.Scene(WorldId.HQ), "P2 the fixture's ball is back on the pier, loose");
             yield return Expect(() => host.Inventory.HeldItem == null && ball.HolderClientId < 0, 3f, () => "P2 empty hands: the ball was dropped");
             yield return Expect(() => !plank.IsInWater(host.transform.position) && host.transform.position.y > -0.5f, 5f, () => $"P2 back on land at a spawn point (y={host.transform.position.y:0.0})");
             yield return Expect(() => ScreenFade.Instance.IsClear, 4f, () => "P2 the screen is clear again");

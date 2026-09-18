@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using FishNet.Connection;
+using SunkCost.Interaction;
 using SunkCost.Player;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -103,12 +104,16 @@ namespace SunkCost.World
         }
 
         // Everything from nothing: the day state, then every player — alive, empty
-        // hands and slots, no upgrades, on a pier spawn point at HQ.
+        // hands and slots, no upgrades, on a pier spawn point at HQ — and the world
+        // as it was found: every loose item (bought tanks, bodies, whatever lies
+        // on the ship or the pier) gone, each loaded scene's fixture spawned again
+        // (Dan, 18 September 2026: "oxygen tanks are still on the ship after game over").
         [FishNet.Object.Server]
         private void ServerResetRun()
         {
             dayState.ServerResetRun();
             Scene hq = WorldScenes.Scene(WorldId.HQ);
+            ServerClearWorldItems();
             List<Transform> points = hq.IsValid() && hq.isLoaded ? CrewSpawner.SpawnPointsIn(hq) : new List<Transform>();
             int k = 0;
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
@@ -126,6 +131,24 @@ namespace SunkCost.World
             }
             plankQueue.Clear();
             Debug.Log("[Plank] A fresh run: day 0, $0, everyone on the pier");
+        }
+
+        [FishNet.Object.Server]
+        private void ServerClearWorldItems()
+        {
+            var gone = new List<CarryableItem>();
+            foreach (CarryableItem item in CarryableItem.Spawned)
+                if (item != null && item.IsSpawned && WorldScenes.TryParse(item.gameObject.scene.name, out _)) gone.Add(item);
+            foreach (CarryableItem item in gone) item.NetworkObject.Despawn();
+            int fixtures = 0;
+            foreach (WorldId world in new[] { WorldId.HQ, WorldId.Sea, WorldId.Dive })
+            {
+                Scene scene = WorldScenes.Scene(world);
+                if (!scene.IsValid() || !scene.isLoaded) continue;
+                foreach (GameObject root in scene.GetRootGameObjects())
+                    foreach (LootFixtureSpawner fixture in root.GetComponentsInChildren<LootFixtureSpawner>(true)) { fixture.ServerRespawn(); fixtures++; }
+            }
+            Debug.Log($"[Plank] The world's items: {gone.Count} despawned, {fixtures} fixture(s) spawned again");
         }
 
         // ---- clients: the card ---------------------------------------------------------

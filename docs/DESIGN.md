@@ -210,8 +210,16 @@ proposal.
   swing fully open at door speed and close again from the start. Who rides is
   decided only once the doors are shut — whoever stands inside then. Stepping
   out fast no longer teleports you back in (the ship) or traps you in the tube
-  (below). A crew cannot hold the doors open for ever: after 20 seconds of
-  turning them around they close regardless.
+  (below). **Later that day:** moving doors are walked through (the doorway
+  blocks only when shut; the leaves have no colliders, greybox) and they
+  **never close on someone standing in the doorway** — they hold open until
+  the body moves, however long. The 20-second cap counts only while the
+  doorway is clear: a crew running in and out gets the doors closed on the
+  next crossing after it.
+- **The day card (Dan, 18 September 2026).** When the crew ends the day at the
+  monitor every player on the ship sees a short black card — `DAY 2 OF 3`,
+  `PAYDAY` after the last day — half a second out, a moment held, half a second
+  in (`dayCardSeconds`, 1.5 s). Day 1 has no card: the deck panel says so.
 - **At the top.** After the doors open, the cabin waits a tuned delay (a new
   serialized field on `ElevatorController`, default 3 s), then closes and
   descends — but only if at least one living player remains at the dive site.
@@ -420,12 +428,12 @@ TV as it is for the diver — the same swap serves a dead diver's eyes on the de
 |---|---|
 | Funds | Shared crew pot. One shop, at HQ only. |
 | The shop | **Built 18 September 2026 (Dan):** a room of things on display at HQ — off the hall's west wall, shelves along its far wall — look at one and press E to buy it from the crew pot; anyone in the crew buys; no menu. A bought item **drops from a chute in the ceiling** onto the landing mark, somewhere on it, so bought things do not stack. The prompt reads `Air tank · $40 — Press E to buy (pot $460)` and the refusal, if any (`Not enough money: $40 needed, $10 in the pot`, `You already have a large tank`, `Step up to the shelf`). Three things for now: the **air tank** ($40, a real tank that **falls to the floor at the delivery spot** in front of the shelves — anyone may take it), the **large tank** ($300, +50 % air: 7.5 minutes) and the **bright headlamp** ($150, a beam ×1.6 as long and ×1.5 as strong). Upgrades are **one per player**, no refunds, shown as small marks on the visor (`L-TANK  LAMP`); others see only the longer beam — a visible tank on the back comes with the shop's art pass. **Lost when you die and your body is not brought up** (§4); kept when it is. Greybox until Dan builds the real shop: the catalogue is data (`ShopCatalog` in Resources: ids, names, prices, prefabs), a stand is a `ShopDisplay` component on any object, the delivery spot a `ShopDeliveryPoint` marker, so the look, the place and the number of stands can change without touching the rules. Prices against the $500 quota: a good first day pays for one upgrade. |
-| Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. **Built 16 September 2026 (Dan):** a small walled room at the stern (doorway toward the centre line) with a readout over the door — `$<in the box> / $<quota>` and the balance — and the same line in the visor's corner with what is on you (`BOX $100/$500 · ON ME $45`). The server sums the loose items inside the room four times a second (`CrewDayState.BoxValue`). |
+| Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. **Built 16 September 2026 (Dan):** a small walled room at the stern (doorway toward the centre line) with a readout over the door — `$<in the box> / $<quota>` and the balance — and the same line in the visor's corner with what is on you. **Both count the cycle, not the box (Dan, 18 September 2026: "I paid 400 already"):** `QUOTA $400/$500 · ON ME $45` on the visor, `quota $400 / $500 (handed over $400 + box $0) · balance $400` on the board — what was handed over at HQ this cycle plus what the box holds. The server sums the loose items inside the room four times a second (`CrewDayState.BoxValue`). |
 | Banked loot | Anything sent up is safe permanently, even on a total wipe. |
 | Quota curve | Gentle for the first few cycles, then accelerating past what a careful crew can earn. Most runs end between cycle 6 and 12. |
 | Early return | You can go back to HQ before all three dives. **Amended 16 September 2026 (Dan):** sailing costs no day — days are spent only by dives — and docking judges nothing. At HQ the crew *may* pay early at the board; if it does not, it sails out again on the same day count. |
 | Run length | Endless. The run recap screen is the ending, every time — give it real production value. |
-| Failure | Miss the quota, walk the plank, run over. **Built 18 September 2026 (Dan):** the crew has sold everything, used its three days and is still short at payday — the board says THE RUN IS OVER and the crew **walks the plank** at HQ, a board off the pier over the water, **one by one in crew order**: the jumper is put at its base, free to walk out and back and jump when ready; after **10 seconds** they are pushed. The last one in the water brings the card — **THE GAME IS OVER · N days · M minutes** (dive days begun this run, across cycles; wall time from the run's start) — for six seconds, then **everything from nothing**: day 0, $0, no cycle, empty hands, no upgrades, everyone alive on the pier at HQ. Sailing, the shop and joining are refused while the plank is on. Nobody can hold the crew hostage on the board: the push, and a leaver simply counts as in the water. |
+| Failure | Miss the quota, walk the plank, run over. **Built 18 September 2026 (Dan):** the crew has sold everything, used its three days and is still short at payday — the board says THE RUN IS OVER and the crew **walks the plank** at HQ, a board off the pier over the water, **one by one in crew order**: the jumper is put at its base, free to walk out and back and jump when ready; after **10 seconds** they are pushed. **A gate** (a rail across the board's base, up on every peer while the crew walks the plank) keeps the jumper on the board — free along it, no way back to the pier — and the others on the pier. The last one in the water brings the card — **THE GAME IS OVER · N days · M minutes** (dive days begun this run, across cycles; wall time from the run's start) — for six seconds, then **everything from nothing**: day 0, $0, no cycle, empty hands, no upgrades, everyone alive on the pier at HQ, and **the world as it was found** — every loose item (bought tanks, bodies, whatever lies on the ship or the pier) gone, each loaded scene's fixture spawned again. Sailing, the shop and joining are refused while the plank is on. Nobody can hold the crew hostage on the board: the push, and a leaver simply counts as in the water. |
 | Between runs | Cosmetics only, unlocked through achievements. No permanent power. |
 | Difficulty | One difficulty for everyone. The site vote is how you choose your risk. |
 | Teaching | No tutorial. The starter site is survivable enough that players learn noise matters by getting away with it once. |
@@ -525,7 +533,12 @@ pitch; a throw lands **on the point the crosshair is on** (Dan, 15 September
 that reaches that point; beyond its range it flies straight at it and falls
 short; looking straight down it still goes forward, landing right in front
 of the feet, never under you. Crouching and standing blend the camera the same way (0.2 s), no snap.
-Escape opens the menu and Escape again closes it. A released item never
+Escape opens the menu and Escape again closes it. The menu has an **Unstuck**
+button (Dan, 18 September 2026): the server puts you back on a known spot of
+the world you are in — a pier spawn point at HQ, the boarding point on the
+ship, below the car's floor when the car is down or the landing outside its
+doorway when it is not — and the menu closes. Refused to the dead, to a rider,
+to the jumper on the plank, and within five seconds of the last one. A released item never
 starts inside or under a player, and never behind a wall — with no room it is
 refused ("Not enough room to drop/throw") and stays in the hands. Players and
 loose items do not collide: you walk through balls, and a dropped or thrown

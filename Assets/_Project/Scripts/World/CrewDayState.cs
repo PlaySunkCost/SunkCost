@@ -201,10 +201,16 @@ namespace SunkCost.World
         public event Action<DayPhase, DayPhase> PhaseChanged;
         public event Action<ShipDepartureState, ShipDepartureState> DepartureChanged;
         public event Action<CabinRideState, CabinRideState> CabinRideChanged;
+        // The day count and payday, once per peer, never for a joiner's initial
+        // values (the day card, WorldSceneFlow.DayCard).
+        public event Action<int, int> DayChanged;
+        public event Action<bool> PaydayChanged;
 
         private void Awake()
         {
             phase.OnChange += OnPhaseChanged;
+            day.OnChange += OnDayChanged;
+            payday.OnChange += OnPaydayChanged;
             lastRefusal.OnChange += OnRefusalChanged;
             lastPay.OnChange += OnPayChanged;
             runOver.OnChange += OnRunOverChanged;
@@ -230,6 +236,18 @@ namespace SunkCost.World
         // 18 September 2026).
         private int clientStartFrame = -1;
         private bool InitialSync(bool asServer) => !asServer && clientStartFrame == Time.frameCount;
+
+        private void OnDayChanged(int previous, int next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (!InitialSync(asServer)) DayChanged?.Invoke(previous, next);
+        }
+
+        private void OnPaydayChanged(bool previous, bool next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (!InitialSync(asServer)) PaydayChanged?.Invoke(next);
+        }
 
         private void OnPayChanged(PayReport previous, PayReport next, bool asServer)
         {

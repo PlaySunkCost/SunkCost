@@ -217,18 +217,13 @@ namespace SunkCost.Editor.Prototype
         }
         // The placeholder body (Body, CharacterModel) is hidden; the owner's
         // first-person arm rig (ArmL/ArmR) is not part of the check.
+        // Every renderer of the player's own object, the arm rig included (Dan, 18
+        // September 2026: "when a player died his hands stay in the air").
         private static bool RenderersOff(HQPlayerController player)
         {
             foreach (Renderer r in player.GetComponentsInChildren<Renderer>(true))
-                if (r.enabled && r.GetComponentInParent<HQPlayerController>() == player && !UnderArmRig(r.transform, player.transform)) return false;
+                if (r.enabled && r.GetComponentInParent<HQPlayerController>() == player) return false;
             return true;
-        }
-
-        private static bool UnderArmRig(Transform t, Transform root)
-        {
-            for (; t != null && t != root; t = t.parent)
-                if (t.name.StartsWith("Arm")) return true;
-            return false;
         }
 
         // ---- moves --------------------------------------------------------------------
@@ -343,6 +338,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !host.IsDead && Day.Dead.Count == 0, 5f, () => "D2 the host is alive again");
             yield return Wait(0.5f);
             Check(host.Spectator != null && !host.Spectator.Active && !hostHud.Visor.NoSignal, "D2 the spectator view ended with the revival");
+            Check(host.GetComponent<PlayerHands>().Visible, "D2 the hands are back with the revival");
             Check(host.Controller.enabled && sea.IsAboard(host.transform.position), "D2 standing on the deck with the capsule on: " + sea.ToShipLocal(host.transform.position).ToString("F1"));
             Check(host.Inventory.Slots.FirstFree() == 0 && host.Inventory.HeldItem == null, "D2 base kit: nothing carried");
             Check(Day.Day == 2 && !Day.DiveDone, "D2 day 2");
@@ -493,6 +489,9 @@ namespace SunkCost.Editor.Prototype
             float tvContent = hostTv.SavePicture("Temp/spectate-tv-b.png");
             Check(hostTv.Frame.Readout.On && tvContent > 0.03f, $"S3/T the TV picture carries B's view and visor (brightness deviation {tvContent:0.000}; Temp/spectate-tv-b.png)");
             Check(hostTv.LastMeanBrightness < 0.35f, $"S3/T the seafloor on the TV is dark, under the site's own fog (mean brightness {hostTv.LastMeanBrightness:0.000})");
+            // The diver's own head is out of its picture for the render only (Dan, 18
+            // September 2026: a disc of the diver's colour over the TV): shown again after.
+            Check(hostTv.Diver != null && hostTv.Diver.HeadSplit != null && hostTv.Diver.HeadSplit.HeadShown, "S3/T B's head is shown to the deck again after the TV's render");
             Check(WorldLook.InScene(WorldScenes.Scene(WorldId.Dive)) != null && WorldLook.InScene(WorldScenes.Scene(WorldId.Sea)) != null, "S3/T both loaded worlds carry a WorldLook");
             // The TV is a second render: half resolution, every other frame, nobody near → nothing.
             int before = hostTv.RenderedFrames;
