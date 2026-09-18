@@ -663,6 +663,22 @@ namespace SunkCost.Player
         [Server]
         public void ServerSetDead(bool value) => dead.Value = value;
 
+        // The menu's Unstuck (Dan, 18 September 2026): the server puts you back on
+        // a known spot of the world you are in (WorldSceneFlow.ServerUnstuck).
+        public void RequestUnstuck()
+        {
+            if (!IsOwner) return;
+            ServerRequestUnstuck();
+        }
+
+        [ServerRpc]
+        private void ServerRequestUnstuck(NetworkConnection sender = null)
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            if (flow == null) return;
+            if (!flow.ServerUnstuck(sender, out string why)) Debug.Log("[Unstuck] refused for " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + ": " + why);
+        }
+
         // Left click while dead: the next living player (card 2). The server
         // cycles; the client only asks.
         public void RequestNextSpectate()
@@ -708,6 +724,7 @@ namespace SunkCost.Player
                     renderer.enabled = !value && (!IsOwner || HeadSplit != null);
                 if (!value && IsOwner && HeadSplit != null) HeadSplit.SetHeadShown(false);
             }
+            GetComponent<PlayerHands>()?.SetVisible(!value); // the arms are not under the body model
             if (!value) return;
             CurrentTarget = null;
             CurrentButton = null;

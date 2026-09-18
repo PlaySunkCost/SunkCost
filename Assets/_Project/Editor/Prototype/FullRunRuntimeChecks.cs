@@ -323,7 +323,7 @@ namespace SunkCost.Editor.Prototype
 
             Heading("Cycle 1 — dive 1, everything into the box");
             yield return Descend(1);
-            Check(hud.Visor.MoneyText == "BOX $0/$500  ·  ON ME $0", "visor money line: " + hud.Visor.MoneyText);
+            Check(hud.Visor.MoneyText == "QUOTA $0/$500  ·  ON ME $0", "visor money line: " + hud.Visor.MoneyText);
             yield return Shot("dive1-seafloor");
             foreach (string name in new[] { "Coin 7", "Coin 3", "Coin 5", "Coin 6" }) yield return Grab(name);
             int haul1 = hud.Visor.OnMeValue;

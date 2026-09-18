@@ -81,6 +81,9 @@ namespace SunkCost.Diving
 
         // 0 shut, 1 open; the tube's gate mirrors it (ShaftGate).
         public float OpenFraction { get; private set; }
+        // The doorway box (blocking only when shut); the server reads who stands in
+        // it to hold the doors open (WorldSceneFlow.ServerSealCar).
+        public Collider DoorwayCollider => doorCollider;
 
         private void Apply(float openFraction)
         {

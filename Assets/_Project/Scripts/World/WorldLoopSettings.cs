@@ -33,6 +33,8 @@ namespace SunkCost.World
         [SerializeField] private float plankTurnSeconds = 10f;
         [Tooltip("Seconds the 'game is over' card holds before the fresh run.")]
         [SerializeField] private float runOverCardSeconds = 6f;
+        [Tooltip("The day card at End day (DAY 2 OF 3, PAYDAY): seconds it holds black between a short fade out and in. 0 = no card.")]
+        [SerializeField] private float dayCardSeconds = 1.5f;
 
         [Header("Ship departure (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md)")]
         [Tooltip("Seconds the gangway takes to lift before the ship moves.")]
@@ -71,6 +73,7 @@ namespace SunkCost.World
         public float PayReportSeconds => payReportSeconds;
         public float PlankTurnSeconds => plankTurnSeconds;
         public float RunOverCardSeconds => runOverCardSeconds;
+        public float DayCardSeconds => dayCardSeconds;
         public bool LockRidersDuringRide => lockRidersDuringRide;
         public float GangwayRaiseSeconds => gangwayRaiseSeconds;
         public float DepartureSeconds => departureSeconds;

@@ -708,6 +708,12 @@ namespace SunkCost.Editor.Prototype
 
             Check(!host.GetComponent<PlayerHudUI>().Visor.On, "V1 the visor is off on the ship");
 
+            // U3: Unstuck at sea (Dan, 18 September 2026): from the bow back to the boarding point.
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(0f, 0.05f, 30f)), 0f); yield return Wait(0.3f);
+            Check(flow.ServerUnstuck(host.Owner, out string unstuckWhy), "U3 unstuck on the ship is taken: " + unstuckWhy);
+            Transform boarding = sea.BoardingPoint ?? sea.SpawnPoint(0);
+            yield return WaitUntil(() => Vector3.Distance(host.transform.position, boarding.position) < 1f, 3f, "U3 back at the boarding point: " + host.transform.position.ToString("F1"));
+
             // R1b: press the cabin button and step out at once (Dan, 18 September 2026:
             // "it teleports you back in"): the doors close with everyone free, the
             // leaver crosses the doorway, the doors turn around and open again, then
@@ -729,6 +735,30 @@ namespace SunkCost.Editor.Prototype
             Check(Day.LastRefusal.Text == "Nobody aboard", "R1b the refusal: " + Day.LastRefusal.Text);
             yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 4f, "R1b the doors open again for the next try");
 
+            // R1c: stand in the doorway while the doors close (Dan, 18 September 2026:
+            // "if I stand on the closing doors the elevator closes on me"): they turn
+            // around, open fully and hold there — the doorway passable — for as long
+            // as the body stays; once it moves out they close, and alone outside: cancelled.
+            H.MoveLocalIntoDeckCabin("Sea");
+            yield return Wait(0.2f);
+            int holdSerial = Day.CabinRide.Serial;
+            H.ClientRequestCabin();
+            yield return WaitUntil(() => Day.CabinRide.Serial > holdSerial && Day.CabinRide.Stage == CabinRideStage.Sealing, 3f, "R1c the ride starts with the doors closing");
+            Collider deckDoorwayBox = sea.DeckCabinDoorCollider;
+            Vector3 inDoorway = deckDoorwayBox.bounds.center; inDoorway.y = host.transform.position.y;
+            host.TeleportLocal(inDoorway, host.Yaw);
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Sealing && Day.CabinRide.DoorOpening, 2f, "R1c a body in the doorway turns the doors around");
+            yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, flow.Settings.CabinSealSeconds + 2f, "R1c the doors open fully");
+            yield return Wait(flow.Settings.CabinSealSeconds * 2f + 1f);
+            Check(Day.CabinRide.Stage == CabinRideStage.Sealing && Day.CabinRide.DoorOpening && flow.DeckCabinOpenFraction() > 0.99f, $"R1c the doors hold open while the body stays ({Day.CabinRide.Stage}, opening={Day.CabinRide.DoorOpening}, open={flow.DeckCabinOpenFraction():0.00})");
+            Check(!deckDoorwayBox.enabled, "R1c the doorway is passable with the doors open");
+            Check(!host.TravelLocked && Vector3.Distance(host.transform.position, inDoorway) < 0.5f, "R1c the body was not moved: " + host.transform.position.ToString("F2"));
+            host.TeleportLocal(sea.DeckCabin.position + cabinDoorway * 3f + Vector3.up * 0.05f, host.Yaw); // out onto the deck
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Sealing && !Day.CabinRide.DoorOpening, 2f, "R1c the doors close once the doorway is clear");
+            yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Cancelled, flow.Settings.CabinSealSeconds * 2f + 3f, "R1c alone and outside when the doors shut: the ride is cancelled");
+            Check(Day.LastRefusal.Text == "Nobody aboard", "R1c the refusal: " + Day.LastRefusal.Text);
+            yield return WaitUntil(() => flow.DeckCabinOpenFraction() > 0.99f, 4f, "R1c the doors open again for the next try");
+
             // R2: down. Sealing closes the deck doors, the suit fade, the car at the top, the descent, doors open at the bottom.
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.2f);
@@ -743,7 +773,7 @@ namespace SunkCost.Editor.Prototype
             // The suit is on from the top of the ride down (the oxygen card, 17 September 2026): the tank counts, health is full.
             Check(hud.Visor.AirFraction > 0.9f && hud.Visor.AirFraction <= 1f && hud.Visor.HealthFraction >= 0.999f, $"V2 the tank counts in the car ({100f * hud.Visor.AirFraction:0}%), health full");
             Check(!hud.Visor.HomeShown, "V3 HOME is hidden inside the car");
-            Check(hud.Visor.MoneyText == "BOX $0/$500  ·  ON ME $0" && hud.Visor.OnMeValue == 0, "M1 the visor's money line reads an empty box against the quota and nothing on me: " + hud.Visor.MoneyText);
+            Check(hud.Visor.MoneyText == "QUOTA $0/$500  ·  ON ME $0" && hud.Visor.OnMeValue == 0, "M1 the visor money line reads nothing toward the quota and nothing on me: " + hud.Visor.MoneyText);
             Check(Day.Elevator.State == ElevatorState.AtBottom, "R2 car at the bottom");
             ElevatorController car = WorldSceneFlow.FindCar();
             Check(car != null && car.Driven && Vector3.Distance(car.transform.position, car.BottomPosition) < 0.05f, "R2 the driven car sits on its bottom position");
@@ -856,12 +886,22 @@ namespace SunkCost.Editor.Prototype
             int leaverSerial = Day.CabinRide.Serial;
             H.ClientRequestCar();
             yield return WaitUntil(() => Day.CabinRide.Serial > leaverSerial && Day.CabinRide.Stage == CabinRideStage.Sealing, 8f, "R3b up ride sealing");
-            host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); // out through the closing doors
-            // Crossing the closing doors turns them around (Dan, 18 September 2026: no
-            // more being trapped in the tube): the car is back at AtBottom with the
-            // doors opening, then seals again, then climbs without the leaver.
-            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.AtBottom, 3f, "R3b the crossing opens the car's doors again");
-            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.Sealing, 6f, "R3b the doors seal again once open");
+            // A body in the doorway first (Dan, 18 September 2026: the doors must not
+            // close on it): the car goes back to AtBottom with the doors opening and
+            // holds there past a seal's length; the doorway box is passable meanwhile.
+            Collider carDoorway = car.GetComponentInChildren<ElevatorDoor>(true).DoorwayCollider;
+            Vector3 inCarDoorway = carDoorway.bounds.center; inCarDoorway.y = host.transform.position.y;
+            host.TeleportLocal(inCarDoorway, host.Yaw);
+            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.AtBottom, 3f, "R3b a body in the doorway opens the car's doors again");
+            yield return WaitUntil(CarDoorsOpen, car.DoorSealSeconds + 2f, "R3b the car's doors open fully");
+            yield return Wait(car.DoorSealSeconds * 2f + 1f);
+            Check(Day.Elevator.State == ElevatorState.AtBottom && CarDoorsOpen(), $"R3b the car's doors hold open while the body stays ({Day.Elevator.State})");
+            Check(!carDoorway.enabled, "R3b the car's doorway is passable with the doors open");
+            Check(!host.TravelLocked && Vector3.Distance(host.transform.position, inCarDoorway) < 0.5f, "R3b the body was not moved: " + host.transform.position.ToString("F2"));
+            host.TeleportLocal(car.transform.position + doorway * 4f, host.Yaw); // out through the doorway, clear of it
+            // Clear of the doorway the doors seal again and the car climbs without the leaver
+            // (Dan, 18 September 2026: no more being trapped in the tube).
+            yield return WaitUntil(() => Day.Elevator.State == ElevatorState.Sealing, 6f, "R3b the doors seal again once the doorway is clear");
             yield return WaitUntil(() => Day.CabinRide.Stage == CabinRideStage.Riding, 8f, "R3b the car climbs");
             yield return WaitUntil(() => !Day.IsRider(host.OwnerId) && Day.Riders.Count == 0, 2f, "R3b the leaver is no longer a rider once the doors shut");
             Check(Day.IsBelow(host.OwnerId), "R3b the leaver is still listed below");
@@ -874,6 +914,10 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(CarDoorsOpen, 3f, "R3b car doors open again at the bottom");
             Check(flow.DeckCabinOpenFraction() < 0.01f, "R3b deck cabin doors stay closed with the car below");
             car = WorldSceneFlow.FindCar();
+            // U4: Unstuck below with the car down: from the seafloor into the car.
+            host.TeleportLocal(car.BottomPosition + doorway * 7f, host.Yaw); yield return Wait(0.3f);
+            Check(flow.ServerUnstuck(host.Owner, out string belowWhy), "U4 unstuck below is taken: " + belowWhy);
+            yield return WaitUntil(() => car.IsInsideCar(host.transform.position), 3f, "U4 back inside the car: " + host.transform.position.ToString("F1"));
             H.MoveLocalIntoCar();
             yield return Wait(0.3f);
 
@@ -893,6 +937,11 @@ namespace SunkCost.Editor.Prototype
             Check(!Day.Riding, "Y3 no ride started");
             H.ClientRequestEndDay();
             yield return WaitUntil(() => Day.Day == 2 && !Day.DiveDone, 3f, "Y3 End day at the monitor: day 2");
+            // The day card (Dan, 18 September 2026: "a small screen fade and write day x") — read at once,
+            // the monitor keeps its report for a while and the card is over by then:
+            // black with DAY 2 OF 3 for a moment, then clear again.
+            yield return WaitUntil(() => ScreenFade.Instance.IsBlack && ScreenFade.Instance.Text == "DAY 2 OF 3", 2f, "Y3 the day card: black with 'DAY 2 OF 3' (" + ScreenFade.Instance.Text + ")");
+            yield return WaitUntil(() => ScreenFade.Instance.IsClear, flow.Settings.DayCardSeconds + 2f, "Y3 the day card fades back in");
             yield return WaitUntil(() => H.MonitorText().StartsWith("Day 2 of 3"), 3f, "Y3 the monitor says 'Day 2 of 3': " + H.MonitorText());
             // C2: the coin came up in the car and now lies on the deck cabin's floor at the same spot.
             CarryableItem coinUp = UnityEngine.Object.FindObjectsByType<CarryableItem>(FindObjectsInactive.Exclude).FirstOrDefault(c => c.ObjectId == coin3Id);
@@ -1079,6 +1128,8 @@ namespace SunkCost.Editor.Prototype
             Check(doneSail == "refused: Dive done — End day first", "Y8 sailing home with the dive done is refused until End day: " + doneSail);
             H.ClientRequestEndDay();
             yield return WaitUntil(() => Day.Payday && Day.Day == 3, 3f, "Y8 End day after the third dive is payday");
+            yield return WaitUntil(() => ScreenFade.Instance.IsBlack && ScreenFade.Instance.Text == "PAYDAY", 2f, "Y8 the day card says PAYDAY (" + ScreenFade.Instance.Text + ")");
+            yield return WaitUntil(() => ScreenFade.Instance.IsClear, flow.Settings.DayCardSeconds + 2f, "Y8 the card fades back in");
             Check(Day.Phase == DayPhase.AtSea, $"Y8 payday at sea (phase={Day.Phase})");
             yield return WaitUntil(() => H.MonitorText().StartsWith("PAYDAY"), 3f, "Y8 the monitor says PAYDAY: " + H.MonitorText());
             string paydaySail = H.ServerSail("Sea");

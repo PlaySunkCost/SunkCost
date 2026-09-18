@@ -47,6 +47,28 @@ namespace SunkCost.Player
         public CarryableItem HeldForHands => held;
         public bool ReachClamped => right.Clamped || left.Clamped;
 
+        // The arms hang off the player root, not the body model: the dead hide
+        // them with the body (HQPlayerController.ApplyDead; Dan, 18 September
+        // 2026: "when a player died his hands stay in the air").
+        public void SetVisible(bool visible)
+        {
+            foreach (Transform arm in new[] { armRight, armLeft })
+            {
+                if (arm == null) continue;
+                foreach (Renderer renderer in arm.GetComponentsInChildren<Renderer>(true))
+                    if (renderer.enabled != visible) renderer.enabled = visible;
+            }
+        }
+        public bool Visible
+        {
+            get
+            {
+                foreach (Transform arm in new[] { armRight, armLeft })
+                    if (arm != null) foreach (Renderer renderer in arm.GetComponentsInChildren<Renderer>(true)) if (renderer.enabled) return true;
+                return false;
+            }
+        }
+
         private sealed class Arm
         {
             public Transform Root, Upper, Forearm, Hand, Thumb;

@@ -12,8 +12,12 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   `air` = the tank and health, `AirRuntimeChecks`, log `Temp/air-matrix.log`, the host alone
   (drain at 1× and 1.5× sprinting on the virtual keyboard, L, suffocation to death, revive)
   then one guest in `Temp/air-guest` (replication, the ride up on an empty tank) — about 5 minutes;
-  `cabin` rows **R1b** (the deck doors turn around for a leaver, "Nobody aboard") and **R3b** (the car's doors reopen
-  for a crossing, seal again, climb without the leaver) cover the door rule of 18 September 2026;
+  `cabin` rows **R1b** (the deck doors turn around for a leaver, "Nobody aboard"), **R1c** (a body in the doorway holds
+  the deck doors open, the doorway passable, until it moves) and **R3b** (a body in the car's doorway holds its doors,
+  then a crossing: seal again, climb without the leaver) cover the door rules of 18 September 2026; **Y3/Y8** read the
+  day card (`DAY 2 OF 3`, `PAYDAY`); **U3/U4** unstuck on the deck and below (`plank` **U1/U2** at HQ and refused to the
+  jumper); `plank` **P0–P2** also the gate and the world's items reset; `spectate` **D1/D2** the arms hidden with the body,
+  **S3/T** the diver's head shown again after the TV's render;
   `plank` = the plank at HQ, `PlankRuntimeChecks`, log `Temp/plank-matrix.log`: a lost payday, the board and
   the prompt, sailing and the shop refused, the host placed and pushed, the card, the fresh run; then a guest in
   `Temp/plank-guest` (the host jumps, the guest is next and pushed, both start over) — about 3 minutes;
