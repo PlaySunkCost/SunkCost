@@ -188,6 +188,13 @@ namespace SunkCost.World
                 else if (points.Count > 0) { Transform p = points[k++ % points.Count]; at = p.position; yaw = p.eulerAngles.y; }
                 else at = player.transform.position;
                 player.ServerSetDead(false);
+                // Dying costs you everything you bought unless the body came back
+                // (design §8; the shop, 18 September 2026).
+                if (body == null && player.Upgrades != null && player.Upgrades.Owned != SunkCost.Shop.PlayerUpgrade.None)
+                {
+                    Debug.Log($"[Shop] {DisplayName(conn)} lost the upgrades {player.Upgrades.Owned}: the body was not brought up");
+                    player.Upgrades.ServerClearAll();
+                }
                 if (player.Vitals != null) player.Vitals.ServerRevive(); // a new life: full tank, full health
                 player.TargetPlace(conn, at, yaw);
                 Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} revived at {at:F1}{(body != null ? " next to the body" : string.Empty)}");

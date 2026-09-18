@@ -125,6 +125,11 @@ namespace SunkCost.Player
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
+        // The shop stand under the crosshair within reach (E buys; the shop, 18 September 2026).
+        public SunkCost.Shop.ShopDisplay CurrentShopDisplay { get; private set; }
+        // What this player bought (PlayerUpgrades on the same prefab); null before the shop setup ran.
+        public PlayerUpgrades Upgrades => upgrades != null ? upgrades : upgrades = GetComponent<PlayerUpgrades>();
+        private PlayerUpgrades upgrades;
         // The deck TV's screen under the crosshair within reach (E = next channel, card 3).
         public SunkCost.World.ShipTV CurrentTv { get; private set; }
         // The cabin control under the crosshair within reach: the deck cabin's
@@ -181,6 +186,18 @@ namespace SunkCost.Player
         {
             if (headlamp != null) headlamp.enabled = value;
         }
+
+        // The bright headlamp upgrade: the plain lamp's range and intensity times
+        // these (1, 1 = the plain lamp). Every peer applies it to its copy.
+        private float headlampBaseRange = -1f, headlampBaseIntensity = -1f;
+        public void SetHeadlampUpgrade(float rangeFactor, float intensityFactor)
+        {
+            if (headlamp == null) return;
+            if (headlampBaseRange < 0f) { headlampBaseRange = headlamp.range; headlampBaseIntensity = headlamp.intensity; }
+            headlamp.range = headlampBaseRange * rangeFactor;
+            headlamp.intensity = headlampBaseIntensity * intensityFactor;
+        }
+        public float HeadlampRange => headlamp != null ? headlamp.range : 0f;
 
         // Minimal hook for a moving platform (e.g. the elevator): a CharacterController does
         // not follow platform motion on its own, so a mover accumulates its world-space delta
@@ -263,6 +280,7 @@ namespace SunkCost.Player
                 CurrentButton = null;
                 CurrentColourPanel = null;
                 CurrentQuotaBoard = null;
+                CurrentShopDisplay = null;
                 CurrentTv = null;
                 CurrentCabinControl = CabinControl.None;
                 grabBufferedUntil = -1f;
@@ -377,6 +395,11 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestPay();
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentShopDisplay != null)
+            {
+                grabConsumed = true;
+                Upgrades?.RequestBuy(CurrentShopDisplay.ItemId);
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentTv != null)
             {
@@ -722,6 +745,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentColourPanel = null;
             CurrentQuotaBoard = null;
+            CurrentShopDisplay = null;
             CurrentTv = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
@@ -736,6 +760,8 @@ namespace SunkCost.Player
             if (CurrentColourPanel != null) return;
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
             if (CurrentQuotaBoard != null) return;
+            CurrentShopDisplay = pressed.GetComponentInParent<SunkCost.Shop.ShopDisplay>();
+            if (CurrentShopDisplay != null) return;
             if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) return; }
             if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
