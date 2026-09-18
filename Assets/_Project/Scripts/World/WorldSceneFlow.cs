@@ -431,6 +431,7 @@ namespace SunkCost.World
             // added to the destination before the one load (see the scene-flow card).
             var conns = ActiveCohort();
             foreach (NetworkConnection conn in conns) networkManager.SceneManager.AddConnectionToScene(conn, destination);
+            moveListClosed = true;
             ServerLoad(conns.ToArray(), LoadDataFor(to, moved.ToArray()), "sail: the crew and cargo cross");
             while (!WorldScenes.IsLoaded(to) && Time.unscaledTime < deadline) yield return null;
 
@@ -579,7 +580,9 @@ namespace SunkCost.World
             }
             foreach (CarryableItem item in cargo)
                 if (item != null && item.IsSpawned && !moved.Contains(item.NetworkObject)) moved.Add(item.NetworkObject);
-            moveListClosed = true;
+            // Not closed here: a passenger who leaves between now and the load (the
+            // gangway, the pull-away, the fade) drops items that must still cross
+            // (code check, 18 September 2026). The load closes it.
         }
 
         private void ServerFollowCargo(ShipParts ship)
@@ -589,8 +592,8 @@ namespace SunkCost.World
 
         // An item that became loose while the ship is under way (a passenger left):
         // it joins the frozen cargo at its spot on whichever ship the trip is on.
-        // Before the move list closes it also travels; after, it is already in the
-        // destination with its carrier.
+        // Before the load it also travels (the move list closes at the load); after,
+        // it is already in the destination with its carrier.
         public void ServerEnrollLooseCargo(CarryableItem item)
         {
             if (networkManager == null || !networkManager.IsServerStarted) return;

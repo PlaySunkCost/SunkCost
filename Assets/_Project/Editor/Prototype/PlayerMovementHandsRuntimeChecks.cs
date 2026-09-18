@@ -380,6 +380,29 @@ namespace SunkCost.Editor.Prototype
             host.transform.rotation = Quaternion.identity; H.ClientMoveLocalPlayerTo(home); yield return null;
             H.ClientRequestDrop(); yield return Wait(0.8f);
 
+            // M8c: a throw whose release the owner cancels after a second grab was
+            // granted does not come back into hands that are full (code check, 18
+            // September 2026): it lies where it was placed; the second item stays held.
+            H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
+            H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
+            host.SetPitchForChecks(-45f); yield return Wait(0.2f);
+            H.ClientRequestUse();
+            yield return WaitUntil(() => ball.State == ItemState.Released, 2f, "M8c the ball is thrown (Released)");
+            host.SetPitchForChecks(0f);
+            CarryableItem heavy = H.Item("HeavyBallBlue");
+            H.ClientMoveLocalPlayerToItem("HeavyBallBlue"); H.ClientLookAtItem("HeavyBallBlue"); yield return null;
+            H.ClientRequestGrab("HeavyBallBlue");
+            yield return WaitUntil(() => heavy.State == ItemState.Held && heavy.HolderClientId == host.OwnerId, 2f, "M8c the heavy ball is in the hands while the throw is still in the air");
+            if (ball.State == ItemState.Released)
+            {
+                ball.ServerCancelReleaseForChecks(host.Owner); yield return Wait(0.4f);
+                Check(ball.State == ItemState.Free && ball.HolderClientId < 0, "M8c the cancelled throw lies loose, not back in full hands (" + ball.State + ")");
+                Check(heavy.State == ItemState.Held && heavy.HolderClientId == host.OwnerId && host.Inventory.HeldItem == heavy, "M8c the heavy ball is still the one held");
+            }
+            else File.AppendAllText(Log, "  · M8c skipped: the ball came to rest before the cancel (" + ball.State + ")\n");
+            H.ClientRequestDrop(); yield return Wait(0.8f);
+            H.ClientMoveLocalPlayerTo(home); yield return Wait(0.3f);
+
             // M9: no standing on cargo. Stand where a ball lies: the feet end on the floor.
             Vector3 ballSpot = ball.transform.position;
             H.ClientMoveLocalPlayerTo(new Vector3(ballSpot.x, ballSpot.y + 0.6f, ballSpot.z)); yield return Wait(1.0f);

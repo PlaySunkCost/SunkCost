@@ -24,7 +24,8 @@ namespace SunkCost.Interaction
         NotFree = 3,
         NoSuchItem = 4,
         Travelling = 5,  // the ship is under way: no item actions until arrival
-        NoRoom = 6       // no clear space in front to drop or throw into
+        NoRoom = 6,      // no clear space in front to drop or throw into
+        AirFull = 7      // a breath from a tank with the air already full would only waste it
     }
 
     // The inventory decision table (docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md
@@ -65,6 +66,7 @@ namespace SunkCost.Interaction
                 case RefuseReason.NoSuchItem: return "Nothing to grab";
                 case RefuseReason.Travelling: return "Hold on — the ship is moving";
                 case RefuseReason.NoRoom: return "Not enough room to drop/throw";
+                case RefuseReason.AirFull: return "Your air is full — keep the tank";
                 default: return string.Empty;
             }
         }

@@ -462,15 +462,28 @@ namespace SunkCost.Interaction
         // the accepted state never replicated in time): back into the hands, same
         // holder, same ownership, as long as this is still the current release.
         [ServerRpc]
-        private void ServerCancelRelease(uint version, NetworkConnection sender = null)
+        private void ServerCancelRelease(uint version, NetworkConnection sender = null) => ServerCancelReleaseFrom(sender, version);
+
+        [Server]
+        private void ServerCancelReleaseFrom(NetworkConnection sender, uint version)
         {
             if (sender == null || sender.ClientId != holderClientId.Value) return;
             if (state.Value != ItemState.Released || version != motionVersion.Value) return;
+            // The hands were taken in the meantime (a grab granted between the throw
+            // and its cancel): back into the hands would be two items held at once
+            // (code check, 18 September 2026). It lies where it was placed instead.
+            CarryableItem other = PlayerInventory.ServerHeldBy(sender.ClientId);
+            if (other != null && other != this) { ServerDropAt(transform.position); return; }
             motionVersion.Value++;
             state.Value = ItemState.Held;
             ApplyRole();
             PlayerInventory.ServerRestoreAfterFailedRelease(this, sender);
         }
+
+#if UNITY_EDITOR
+        // Editor checks only: the owner's cancel of the current release, as its RPC would send it.
+        public void ServerCancelReleaseForChecks(NetworkConnection sender) => ServerCancelReleaseFrom(sender, motionVersion.Value);
+#endif
 
         // A pose written to the transform and the body both: a transform write alone
         // is undone by an interpolating body on the next frame (the interpolator

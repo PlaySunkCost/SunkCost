@@ -307,6 +307,10 @@ namespace SunkCost.Editor.Prototype
             Check(!Day.IsBelow(host.OwnerId) && Day.Below.Count == 0, "D1 the dead are not below");
             yield return Expect(() => coin.CanGrabFromWorld && coin.HolderClientId < 0, 3f, () => "D1 the held coin scattered (" + coin.State + ")");
             Check(Vector3.Distance(coin.transform.position, deathSpot) < 3f, $"D1 the coin lies near the body ({Vector3.Distance(coin.transform.position, deathSpot):0.0} m)");
+            // A grab that lands after the death (the request crossed the wire as the
+            // air ran out) is refused: nothing goes into a dead player's hands.
+            host.Inventory.RequestGrab(coin); yield return Wait(0.6f);
+            Check(coin.CanGrabFromWorld && coin.HolderClientId < 0 && host.Inventory.HeldItem == null, "D1 a dead player's grab is refused: the coin stays loose (" + coin.State + ")");
             PlayerBody body = PlayerBody.FindFor(host.OwnerId, WorldScenes.Scene(WorldId.Dive));
             Check(body != null, "D1 a body was spawned for the host");
             CarryableItem bodyItem = body.GetComponent<CarryableItem>();
