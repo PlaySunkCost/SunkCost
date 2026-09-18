@@ -1,0 +1,258 @@
+Spectate matrix started 18/09/2026 03:51:16
+PASS editor is the host with a spawned player
+
+== D0 — K on deck does nothing
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS D0 K on the deck is refused: alive
+
+== D1 — K below: the body, the scatter, the dead do not block
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS D1 Coin 3 lies on the seafloor
+PASS the dot is on Coin
+PASS Coin grabbed (Held)
+PASS D1 K below: the host is dead
+PASS D1 the dead are not below
+PASS D1 the held coin scattered (Free)
+PASS D1 the coin lies near the body (0.6 m)
+PASS D1 a dead player's grab is refused: the coin stays loose (Free)
+PASS D1 a body was spawned for the host
+PASS D1 the body is a loose two-handed carryable
+PASS D1 it is named after its owner: Skipper's body
+PASS D1 the body lies where the host died (0.0 m)
+PASS D1 the dead host's capsule is off
+PASS D1 nobody living below: the dive is done (phase=AtSea diveDone=True)
+PASS D1 End day while the site closes is refused: Bringing up the dead
+PASS D1 nobody living to watch: the spectator view is on with no target (after the second of own camera)
+PASS D1 the screen says NO SIGNAL
+PASS D1 prompt while dead: prompt=''; target=PlayerBody (0)
+PASS D1 the site unloaded with the dead carried out
+PASS D1 the dead host's object is on the ship: ShipAtSea
+PASS D1 parked aboard at (-3.0, 0.0, 5.0)
+PASS D1 the deck cabin reads the car as up
+PASS D1 cabin panel: Dive done — end the day at the monitor
+PASS D1 still dead and hidden on the ship
+PASS D1 a dead player's End day press is refused: The dead press nothing
+
+== D2 — End day revives on the deck
+PASS D2 End day accepted: 
+PASS D2 the host is alive again
+PASS D2 the spectator view ended with the revival
+PASS D2 standing on the deck with the capsule on: (-3.0, 0.0, 5.0)
+PASS D2 base kit: nothing carried
+PASS D2 day 2
+PASS D2 the seafloor body did not come up (lost with the site)
+
+== D3 — a guest dies below; the host carries the body up; End day revives the guest next to it
+PASS guest player spawned
+PASS G0 guest joined at sea
+PASS the deck cabin took the press (refusal: The dead press nothing)
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/3 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS D3 both below
+PASS D3 the guest is in the site
+PASS D3 the guest died below
+PASS D3 only the living host is below
+PASS D3 the dive goes on for the living
+PASS D3 the guest reads dead=True
+PASS D3 the guest's body lies where it fell
+PASS D3 the dead guest's copy is hidden on the host
+PASS the dot is on Mate bof the's body
+PASS Mate bof the's body grabbed (Held)
+PASS D3 the host carries the body in both hands
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/4 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS D3 the last living diver is up: dive done
+PASS D3 the site unloaded
+PASS D3 the dead guest's object was carried to the ship
+PASS D3 the guest reads itself dead on the ship
+PASS D3 the body came up in the host's hands
+PASS D3 the body is set down on the deck at (-3.0, 0.0, 1.0) yaw 0
+PASS D3 the body rests aboard at (-3.0, 0.2, 1.7)
+PASS D3 End day accepted: 
+PASS D3 the guest is revived
+PASS D3 the brought-up body is gone
+PASS D3 the guest reads itself alive on the ship
+PASS D3 the guest stands next to where its body lay (0.8 m)
+PASS D3 the guest's copy is visible again
+PASS D3 day 3
+
+== S0 — a second guest joins; the cycle is put back to day 1 for the rows below
+PASS S0 second guest player spawned: 1,2
+PASS S0 guest B joined at sea
+PASS S0 guests A=1 B=2
+
+== S1 — guest A dies below with two living: it watches the nearest, the host reads ON AIR, left click cycles
+PASS the deck cabin took the press (refusal: The dead press nothing)
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/5 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS S1 three below
+PASS S1 guest A is in the site
+PASS S1 guest B is in the site
+PASS S1 guest A died below
+PASS S1 A watches the nearest living player, the host (target 0)
+PASS S1 the host's visor reads ON AIR · 1 watching (1)
+PASS S1 A's spectator view is on the host (after its second of own camera and the fade)
+PASS S1 A's screen says SPECTATING Skipper
+PASS S1 A's camera sits on the host's eyes
+PASS S1 left click: A now watches guest B (target 2)
+PASS S1 the host is off air, B has one watcher
+PASS S1 B's visor reads ON AIR · 1 watching
+PASS S1 left click again wraps back to the host
+
+== S2 — dead voice: A hears the living through its target; the living never hear A
+PASS S2 the host has a voice service
+PASS S2 the host's tone is sending (21)
+PASS S2 dead A receives the host's frames on the Spectate route
+PASS S2 living B, nearby, receives them on the Direct route
+PASS S2 dead A's indicator: the host, via the watched player
+PASS S2 living B's indicator: the host, direct
+PASS S2 dead A's tone is sending
+PASS S2 the living host received none of A's frames (0)
+PASS S2 living B received none of A's frames (0)
+
+== S3 — dual world: the host surfaces alone; dead A below watches the deck and back; B's surfacing carries A up
+PASS S3 A watches B before the host leaves
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/6 car=AtTop up=True carPos=(0.00, 0.00, 0.00) carDriven=True riders=[] below=[2] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS S3 B still below: the dive goes on (below=1)
+PASS S3 the site stays loaded on the host
+PASS S3/T the host on deck sees the TV live on B (channel 2)
+PASS S3/T the host stands near the TV, which rendered (153 frames)
+PASS S3/T the TV picture carries B's view and visor (brightness deviation 0.160; Temp/spectate-tv-b.png)
+PASS S3/T the seafloor on the TV is dark, under the site's own fog (mean brightness 0.170)
+PASS S3/T both loaded worlds carry a WorldLook
+PASS S3/T 40 m off the ship the TV stops rendering (0 frames)
+PASS S3/T back on deck the TV renders again
+PASS S3 A (dead, below, watching B) holds only the site
+PASS S3 A now watches the host on the deck
+PASS S3 A's client loaded the ship as well (dual world), its own world still active
+PASS S3 the server tracks A watching the ship
+PASS S3 A's camera is on the host's eyes on the deck
+PASS S3 A's screen is the host's deck view: no visor, SPECTATING Skipper
+PASS S3 A back to B
+PASS S3 the ship was dropped from A's client again
+PASS S3 the server tracks no watch for A
+PASS S3 A on the host again
+PASS S3 dual world again
+PASS S3 the car came back down for B (AtBottom)
+PASS S3 dead A's object stands inside the car with B
+PASS S3 B's car press was taken
+PASS S3 B rides, dead A is no rider (riders 2)
+PASS S3 B's ride up completed
+PASS S3 A is still connected (not kicked as a rider that never arrived)
+PASS S3 nobody below: dive done
+PASS S3 the site unloaded
+PASS S3 A's object was carried to the ship
+PASS S3 A holds only the ship now, dead on it
+PASS S3 the server tracks no watch for A after the move
+PASS S3 A still watches a living player (0)
+
+== S3v — voice after a split surfacing: B, up later than the host, still hears the host on the deck
+  · B's view of the host's copy: player=0; name=Skipper; colour=2; local=False; scene=Session; position=(-3.00, 0.00, 3005.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=1; spectatorActive=False; spectatorTarget=-1; camPos=(-3.00, 1.60, 3005.00); height=1.8; eye=1.6; hands=rest; target=none; obstructed=False; camPitch=58; camFwd=(0.00, -0.85, -0.53)
+PASS S3v the host stands next to B on the deck
+PASS S3v the host's tone is sending
+PASS S3v B receives the host's frames on the Direct route
+PASS S3v B's indicator lists the host, direct
+PASS S3v B's tone is sending
+PASS S3v the host receives B's frames (35)
+
+== S4 — End day: A revives, watches nobody, nobody is on air
+PASS S4 End day accepted: 
+PASS S4 A is alive and the spectate list is empty
+PASS S4 A's spectator view ended; one world
+PASS S4 nobody is on air
+PASS S4 day 2
+
+== T1 — B surfaces early: the deck TV shows the first diver below, E cycles, ON AIR counts the TV
+PASS the deck cabin took the press (refusal: The dead press nothing)
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/8 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS T1 three below on day 2
+PASS T1 guest B is in the site
+PASS T1 guest A is in the site
+PASS T1 B's car press was taken
+PASS T1 B's ride up completed
+PASS T1 the host and A stay below
+PASS T1 the car waits up while B stands in the deck cabin (AtTop)
+PASS T1 the cabin panel says: Step out — the car is needed below
+PASS T1 after the grace B was put out on the deck at (-3.0, 0.0, 5.0)
+PASS T1 the car seals to go back down (Sealing)
+PASS T1 B stepped in while the doors closed: they open again (AtTop)
+PASS T1 B is put out again after the grace
+PASS T1 the car goes down for the host and A (Descending)
+PASS T1 the TV's channel is the first diver below, the host (0)
+PASS T1 B, on the ship, holds the dive world for the TV
+PASS T1 the server tracks B watching the site
+PASS T1 B's TV is live: LIVE · Skipper
+PASS T1 the host's visor reads ON AIR · 1 watching — the TV (1)
+PASS T1 E on the TV: channel A (1)
+PASS T1 B's TV says LIVE · Mate bof the
+PASS T1 A is on air, the host is not
+PASS T1 E again wraps back to the host
+
+== T2 — the channel diver's voice plays at the TV; a dead spectator adds to ON AIR; the dead are no channel
+PASS T2 the host's tone is sending
+PASS T2 B on the deck receives the host's frames on the TV route
+PASS T2 B's indicator: the host, through the TV
+PASS T2 A died below and watches the host
+PASS T2 the host reads ON AIR · 2 watching — the TV and dead A (2)
+PASS T2 dead A is no channel: E keeps the host (0)
+
+== T3 — the last living diver surfaces: NO SIGNAL, the ship drops the dive world, E on the dark TV is refused
+PASS T3 the car came back down for the host (AtBottom)
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/10 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 2992.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='The dead press nothing' failure=''
+PASS T3 nobody below: dive done
+PASS T3 the site unloaded
+PASS T3 the TV has no channel
+PASS T3 B's TV says NO SIGNAL and the dive world is gone from B
+PASS T3 the server tracks no watch for B
+PASS T3 the host is still watched by dead A only (1)
+PASS T3 the dot is on the TV screen
+PASS T3 the prompt reads NO SIGNAL: prompt='NO SIGNAL — nobody below'; target=none
+PASS T3 E on the dark TV is refused: NO SIGNAL — nobody below
+
+== T4 — End day: everyone alive, nothing on air, day 3
+PASS T4 End day accepted: 
+PASS T4 A alive, no spectators, no channel
+PASS T4 nobody on air, day 3 (onAir=0 day=3)
+PASS T4 A's client reads itself alive with the capsule on
+PASS T4 A's client still has the host and B (nothing lost in the move up)
+
+== T5 — the diver below leaves while the car is on its way down for them: the car comes back and the site closes
+  · server view of A: owner=1 valid=True isController=False spawned=True scene=ShipAtSea; B: owner=2 valid=True
+  · A's move reply: id=774; moved to (1.00, 0.15, 2992.00) owner=True locked=False controller=True spawned=True scene=ShipAtSea
+PASS T5 the server sees A and B in the deck cabin (A (1.0, 0.2, -8.0) ShipAtSea, B (-1.0, 0.2, -8.0) ShipAtSea)
+PASS the deck cabin took the press (refusal: NO SIGNAL — nobody below)
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/11 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='NO SIGNAL — nobody below' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 3
+PASS T5 three below on day 3
+PASS T5 guest B is in the site
+PASS T5 the car press was taken
+PASS T5 the host and A rode up
+PASS T5 B alone below
+PASS T5 the cabin is clear: the car is on its way down for B (Descending)
+PASS T5 B left: nobody below, the dive is done
+PASS T5 the car came back up and the site closed (AtTop)
+PASS T5 cabin panel: Dive done — end the day at the monitor
+PASS T5 End day accepted: 
+PASS T5 payday after the third day
+  · done
+MATRIX_PASS
