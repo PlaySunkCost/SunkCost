@@ -116,8 +116,12 @@ namespace SunkCost.Editor.Prototype
             Directory.CreateDirectory(dir);
             foreach (string stale in new[] { "command.json", "reply.txt" })
                 if (File.Exists(Path.Combine(dir, stale))) File.Delete(Path.Combine(dir, stale));
+            // The host's actual port: a session started while the last one's socket
+            // lingers hosts on the next port (PrototypeSessionController.FreeUdpPort).
+            var tugboat = UnityEngine.Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
+            string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
             var info = new ProcessStartInfo(Path.GetFullPath(BuildExe),
-                "-batchmode -nographics -hq-auto-join-local 127.0.0.1 -hq-inventory-test-dir \"" + Path.GetFullPath(dir) + "\" -logFile \"" + Path.GetFullPath(dir + "/player.log") + "\"")
+                "-batchmode -nographics -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(dir) + "\" -logFile \"" + Path.GetFullPath(dir + "/player.log") + "\"")
             { UseShellExecute = false, CreateNoWindow = true };
             return Process.Start(info);
         }

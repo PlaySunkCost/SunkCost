@@ -12,6 +12,10 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   `air` = the tank and health, `AirRuntimeChecks`, log `Temp/air-matrix.log`, the host alone
   (drain at 1× and 1.5× sprinting on the virtual keyboard, L, suffocation to death, revive)
   then one guest in `Temp/air-guest` (replication, the ride up on an empty tank) — about 5 minutes;
+  `shop` = the shop at HQ, `ShopRuntimeChecks`, log `Temp/shop-matrix.log`: the room and stands, the
+  prompt, refusals (no money, owned, too far), an air tank at the delivery spot, both upgrades, the
+  large tank counting below, the visor marks, the upgrades lost with an unrescued body; then a guest in
+  `Temp/shop-guest` (buys from the pot, replication, a body brought up keeps them) — about 6 minutes;
   `figure` = the first-person body, `FigureRuntimeChecks`, log `Temp/figure-matrix.log`: the head cut, what the
   owner sees, the crouch, screenshots `Temp/figure-own-body.png` / `figure-own-crouch.png`, then a guest in
   `Temp/figure-guest` (`figure-friend.png`) — about 2 minutes;

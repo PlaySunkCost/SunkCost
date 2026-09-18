@@ -322,6 +322,21 @@ namespace SunkCost.World
             return report;
         }
 
+        // The shop (18 September 2026): the price leaves the pot if it is there.
+        [Server]
+        public bool ServerSpend(int amount)
+        {
+            if (amount < 0 || balance.Value < amount) return false;
+            balance.Value -= amount;
+            return true;
+        }
+
+#if UNITY_EDITOR
+        // Editor checks only: money in the pot without a sale.
+        [Server]
+        public void ServerSetBalanceForChecks(int value) => balance.Value = Mathf.Max(0, value);
+#endif
+
         // The day begins when the riders stand in the car below (plan section 4.1;
         // WorldSceneFlow calls it after ServerSetBelow). Refused on payday.
         [Server]

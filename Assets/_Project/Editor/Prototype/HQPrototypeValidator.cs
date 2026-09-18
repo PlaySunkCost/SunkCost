@@ -34,6 +34,28 @@ namespace SunkCost.Editor.Prototype
             CheckCount<AudioListener>(scene, 0, errors);
             CheckLootFixture(scene, errors);
             if (!HasRoot(scene, "HQ Room")) errors.Add("HQ Room is missing.");
+            if (!HasRoot(scene, HQPrototypeBuilder.ShopRoomName)) errors.Add("Shop Room is missing (18 September 2026).");
+            var stands = new System.Collections.Generic.List<SunkCost.Shop.ShopDisplay>();
+            foreach (GameObject root in scene.GetRootGameObjects()) stands.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDisplay>(true));
+            var catalog = AssetDatabase.LoadAssetAtPath<SunkCost.Shop.ShopCatalog>(ShopSetup.CatalogPath);
+            if (catalog == null) errors.Add("ShopCatalog asset missing (run Sunk Cost/Prototype/Apply shop setup).");
+            else
+            {
+                foreach (SunkCost.Shop.ShopItem item in catalog.Items)
+                {
+                    if (!stands.Exists(s => s.ItemId == item.Id)) errors.Add("The shop has no stand for " + item.Id + ".");
+                    if (item.Kind == SunkCost.Shop.ShopItemKind.Consumable && (item.Prefab == null || item.Prefab.GetComponent<NetworkObject>() == null)) errors.Add("Catalogue item " + item.Id + " needs a networked prefab.");
+                    if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && item.Upgrade == SunkCost.Shop.PlayerUpgrade.None) errors.Add("Catalogue item " + item.Id + " names no upgrade.");
+                }
+                foreach (SunkCost.Shop.ShopDisplay stand in stands)
+                {
+                    if (catalog.Find(stand.ItemId) == null) errors.Add("Shop stand " + stand.name + " sells an id the catalogue does not have: " + stand.ItemId);
+                    if (stand.GetComponentInChildren<Collider>() == null) errors.Add("Shop stand " + stand.name + " needs a collider to be looked at.");
+                }
+            }
+            var deliveries = new System.Collections.Generic.List<SunkCost.Shop.ShopDeliveryPoint>();
+            foreach (GameObject root in scene.GetRootGameObjects()) deliveries.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDeliveryPoint>(true));
+            if (deliveries.Count == 0) errors.Add("The shop needs a ShopDeliveryPoint.");
             var panels = new System.Collections.Generic.List<SunkCost.World.ColourPanel>();
             foreach (GameObject root in scene.GetRootGameObjects()) panels.AddRange(root.GetComponentsInChildren<SunkCost.World.ColourPanel>(true));
             if (panels.Count != 1) errors.Add("HQ needs exactly one Colour Panel (found " + panels.Count + ").");

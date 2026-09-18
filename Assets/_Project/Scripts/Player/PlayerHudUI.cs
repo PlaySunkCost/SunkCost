@@ -71,6 +71,7 @@ namespace SunkCost.Player
             public bool On;
             public float AirFraction, HealthFraction;
             public bool AirLow, AirEmpty, HealthLow; // the visor blinks the bar and says AIR LOW (PlayerVitals thresholds)
+            public string UpgradeMarks; // "L-TANK  LAMP" — what the diver bought (PlayerUpgrades); null = none
             public float DepthMeters;
             public float HeadingDeg;
             public bool HomeShown;
@@ -120,11 +121,13 @@ namespace SunkCost.Player
                 if (controller.TravelLocked || controller.IsDead) return string.Empty;
                 string refusal = inventory.Refusal;
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
+                if (controller.Upgrades != null && !string.IsNullOrEmpty(controller.Upgrades.Refusal)) return controller.Upgrades.Refusal;
                 CarryableItem target = controller.CurrentTarget;
                 if (target == null && controller.CurrentButton != null)
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
+                if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null && inventory.HeldItem != null)
@@ -362,6 +365,7 @@ namespace SunkCost.Player
             // Air and health from the player's vitals (server-written; a spectator and
             // the TV read the watched player's through this same path).
             PlayerVitals vitals = who.Vitals;
+            r.UpgradeMarks = UpgradeMarksOf(who.Upgrades);
             r.AirFraction = vitals != null ? vitals.AirFraction : 1f;
             r.HealthFraction = vitals != null ? vitals.HealthFraction : 1f;
             r.AirLow = vitals != null && vitals.AirLow;
@@ -533,6 +537,12 @@ namespace SunkCost.Player
             float top = vitals.y;
             DrawBar(left, top, barWidth, barHeight, "O2", Visor.AirFraction, s, Visor.AirLow, Visor.AirEmpty);
             DrawBar(left, top + barRow, barWidth, barHeight, "HP", Visor.HealthFraction, s, Visor.HealthLow, false);
+            if (!string.IsNullOrEmpty(Visor.UpgradeMarks))
+            {
+                // What this diver bought (the shop): small marks under the bars.
+                GUI.color = VisorText;
+                GUI.Label(new Rect(left, top + 2f * barRow - 2f * s, barWidth + 120f * s, 18f * s), Visor.UpgradeMarks, visorTinyStyle);
+            }
             if (Visor.AirLow && Blink())
             {
                 // AIR LOW beside the O2 bar, blinking with it; "NO AIR" once the tank is dry.
@@ -695,6 +705,27 @@ namespace SunkCost.Player
         {
             PlayerIdentity identity = other.GetComponent<PlayerIdentity>();
             return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(other.OwnerId);
+        }
+
+        // The shop stand under the dot: the item, its price, the pot; "owned" for an
+        // upgrade already bought (one each).
+        private string ShopPrompt(SunkCost.Shop.ShopDisplay display)
+        {
+            SunkCost.Shop.ShopItem item = display.Item;
+            if (item == null) return "Nothing for sale here";
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            string pot = day != null ? $" (pot ${day.Balance})" : string.Empty;
+            if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return $"{item.Name} · owned";
+            return $"{item.Name} · ${item.Price} — Press E to buy{pot}";
+        }
+
+        private static string UpgradeMarksOf(PlayerUpgrades upgrades)
+        {
+            if (upgrades == null || upgrades.Owned == SunkCost.Shop.PlayerUpgrade.None) return string.Empty;
+            string marks = string.Empty;
+            foreach (SunkCost.Shop.PlayerUpgrade upgrade in new[] { SunkCost.Shop.PlayerUpgrade.LargeTank, SunkCost.Shop.PlayerUpgrade.BrightHeadlamp })
+                if (upgrades.Has(upgrade)) marks += (marks.Length > 0 ? "  " : string.Empty) + SunkCost.Shop.ShopCatalog.UpgradeMark(upgrade);
+            return marks;
         }
 
         // Twice a second, on for 60 % of it: the low-air and low-health blink.

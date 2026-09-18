@@ -365,6 +365,8 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 60f, () => "A4 the dead host was carried to the ship");
 
             Heading("A5 — End day: alive again with a full tank and full health");
+            // End day waits for the site to close with the dead (code check A, 18 September 2026).
+            yield return Expect(() => WorldSceneFlow.FindCar() == null, 30f, () => "A5 the site closed");
             Check(flow.ServerEndDay(host.Owner, out string endWhy), "A5 End day accepted: " + endWhy);
             yield return Expect(() => !host.IsDead, 5f, () => "A5 revived");
             Check(vitals.AirFraction == 1f && vitals.Health == settings.MaxHealth, $"A5 full tank and health after the revive (air {vitals.AirFraction:0.###}, health {vitals.Health})");
@@ -386,8 +388,18 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => remoteVitals.AirFraction < 1f, 5f, () => $"G1 the guest's tank counts on the server ({remoteVitals.AirFraction:0.###})");
             yield return GuestEventually(r => { float a = Field(GuestPlayerLine(r, guestId), "air"); return a < 1f && Mathf.Abs(a - remoteVitals.AirFraction) < 0.02f; }, 6f, "G1 the guest reads its own air within 2 % of the server's");
             yield return GuestEventually(r => Mathf.Abs(Field(GuestPlayerLine(r, host.OwnerId), "air") - vitals.AirFraction) < 0.02f, 6f, "G1 the guest reads the host's air within 2 %");
-            // The emptied tanks from K1/K2 lie below with their new name on every peer.
-            yield return GuestEventually(r => r.Contains("display=" + AirTankItem.EmptyName), 6f, "G1 the guest reads the thrown tank as an " + AirTankItem.EmptyName);
+            // A fresh site every day: the tanks lie full again (the emptied ones went
+            // with yesterday's site). The host breathes from one; the guest reads the
+            // tank's new name from the SyncVar.
+            yield return GuestEventually(r => r.Contains("display=" + AirTankItem.FullName), 6f, "G1 the guest reads the day's fresh tanks as " + AirTankItem.FullName);
+            CarryableItem dayTank = SiteItem("Air tank 1");
+            Check(dayTank != null && !dayTank.GetComponent<AirTankItem>().IsEmpty, "G1 Air tank 1 lies full below again");
+            yield return GrabItem(dayTank);
+            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
+            yield return Expect(() => dayTank.GetComponent<AirTankItem>().IsEmpty, 3f, () => "G1 the host breathed from it");
+            yield return GuestEventually(r => r.Contains("display=" + AirTankItem.EmptyName), 6f, "G1 the guest reads the used tank as an " + AirTankItem.EmptyName);
+            host.Inventory.RequestDrop();
+            yield return Expect(() => dayTank.HolderClientId != host.OwnerId, 3f, () => "G1 dropped");
 
             Heading("G2 — a ride up on an empty tank: health floors at 1 in the car, a new tank on deck");
             car = WorldSceneFlow.FindCar();

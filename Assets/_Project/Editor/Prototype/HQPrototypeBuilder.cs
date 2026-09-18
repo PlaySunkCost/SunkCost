@@ -258,10 +258,85 @@ namespace SunkCost.Editor.Prototype
             CreateBlock("North Wall Lintel", new Vector3(0f, 3.0f, 6f), new Vector3(DoorwayWidth, 1.0f, 0.3f), wall, room.transform);
             CreateBlock("South Wall", new Vector3(0f, 1.75f, -6f), new Vector3(12f, 3.5f, 0.3f), wall, room.transform);
             CreateBlock("East Wall", new Vector3(6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
-            CreateBlock("West Wall", new Vector3(-6f, 1.75f, 0f), new Vector3(0.3f, 3.5f, 12f), wall, room.transform);
+            // The west wall has a doorway into the shop room (18 September 2026).
+            CreateBlock("West Wall South", new Vector3(-6f, 1.75f, -(DoorwayWidth / 2f + side / 2f)), new Vector3(0.3f, 3.5f, side), wall, room.transform);
+            CreateBlock("West Wall North", new Vector3(-6f, 1.75f, DoorwayWidth / 2f + side / 2f), new Vector3(0.3f, 3.5f, side), wall, room.transform);
+            CreateBlock("West Wall Lintel", new Vector3(-6f, 3.0f, 0f), new Vector3(0.3f, 1.0f, DoorwayWidth), wall, room.transform);
             CreateBlock("Ceiling", new Vector3(0f, 3.65f, 0f), new Vector3(12f, 0.3f, 12f), wall, room.transform);
             CreateColourPanel(room.transform);
             CreateQuotaBoard(room.transform);
+            CreateShopRoom(floor, wall);
+        }
+
+        // The shop (docs/DESIGN.md §8; Dan, 18 September 2026): a small room off the
+        // hall's west wall, shelves along its far wall, three things on display
+        // with a name and a price, the delivery spot on the floor in front of them.
+        // Greybox until Dan's art pass: the stands are ShopDisplay components and
+        // the spot a ShopDeliveryPoint, so the look, the place and the count of
+        // stands can change without touching the rules (WorldSceneFlow.ServerBuy).
+        public const string ShopRoomName = "Shop Room";
+        public const float ShopRoomWidth = 6f, ShopRoomDepth = 6f; // x span outside the west wall, z span centred on the doorway
+        public static readonly Vector3 ShopShelfCentre = new(-6f - ShopRoomWidth + 0.5f, 1.05f, 0f); // the stands stand here, along the far wall
+        public static readonly Vector3 ShopDeliverySpot = new(-6f - ShopRoomWidth + 1.8f, 0.05f, 0f);
+        internal static void CreateShopRoom(Material floor, Material wall)
+        {
+            GameObject room = new(ShopRoomName);
+            float cx = -6f - ShopRoomWidth / 2f; // the room's centre x
+            CreateBlock("Floor", new Vector3(cx, -0.25f, 0f), new Vector3(ShopRoomWidth, 0.5f, ShopRoomDepth), floor, room.transform);
+            CreateBlock("Far Wall", new Vector3(-6f - ShopRoomWidth, 1.75f, 0f), new Vector3(0.3f, 3.5f, ShopRoomDepth), wall, room.transform);
+            CreateBlock("South Wall", new Vector3(cx, 1.75f, -ShopRoomDepth / 2f), new Vector3(ShopRoomWidth, 3.5f, 0.3f), wall, room.transform);
+            CreateBlock("North Wall", new Vector3(cx, 1.75f, ShopRoomDepth / 2f), new Vector3(ShopRoomWidth, 3.5f, 0.3f), wall, room.transform);
+            CreateBlock("Ceiling", new Vector3(cx, 3.65f, 0f), new Vector3(ShopRoomWidth, 0.3f, ShopRoomDepth), wall, room.transform);
+            GameObject light = new("Shop Light", typeof(Light));
+            light.transform.SetParent(room.transform);
+            light.transform.position = new Vector3(cx, 3.2f, 0f);
+            Light l = light.GetComponent<Light>(); l.type = LightType.Point; l.range = 9f; l.intensity = 1.2f;
+            // The delivery spot: a pale disc on the floor in front of the shelves.
+            GameObject delivery = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            delivery.name = SunkCost.Shop.ShopDeliveryPoint.DefaultName;
+            delivery.transform.SetParent(room.transform);
+            delivery.transform.position = ShopDeliverySpot;
+            delivery.transform.localScale = new Vector3(1.2f, 0.02f, 1.2f);
+            Object.DestroyImmediate(delivery.GetComponent<Collider>());
+            delivery.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopDelivery.mat", new Color(0.75f, 0.7f, 0.5f));
+            SunkCost.Shop.ShopDeliveryPoint point = delivery.AddComponent<SunkCost.Shop.ShopDeliveryPoint>();
+            // Three stands along the far wall: a plinth, a greybox shape of the thing, a label.
+            Material plinthMaterial = GetOrCreateMaterial(MaterialPath + "/ShopPlinth.mat", new Color(0.25f, 0.27f, 0.3f));
+            Material tankMaterial = GetOrCreateMaterial(DiveLootSetup.AirTankFullMaterialPath, new Color(0.95f, 0.75f, 0.12f)); // the tank prefab's own look
+            Material lampMaterial = GetOrCreateMaterial(MaterialPath + "/ShopLamp.mat", new Color(0.95f, 0.95f, 0.8f));
+            CreateShopStand(room.transform, point, SunkCost.Shop.ShopCatalog.AirTankId, ShopShelfCentre + new Vector3(0f, 0f, -1.8f), PrimitiveType.Capsule, new Vector3(0.22f, 0.3f, 0.22f), tankMaterial, plinthMaterial);
+            CreateShopStand(room.transform, point, SunkCost.Shop.ShopCatalog.LargeTankId, ShopShelfCentre, PrimitiveType.Capsule, new Vector3(0.3f, 0.45f, 0.3f), tankMaterial, plinthMaterial);
+            CreateShopStand(room.transform, point, SunkCost.Shop.ShopCatalog.BrightHeadlampId, ShopShelfCentre + new Vector3(0f, 0f, 1.8f), PrimitiveType.Sphere, new Vector3(0.35f, 0.35f, 0.35f), lampMaterial, plinthMaterial);
+        }
+
+        private static void CreateShopStand(Transform room, SunkCost.Shop.ShopDeliveryPoint delivery, string itemId, Vector3 at, PrimitiveType shape, Vector3 shapeScale, Material shapeMaterial, Material plinthMaterial)
+        {
+            GameObject stand = new("Shop Stand " + itemId);
+            stand.transform.SetParent(room);
+            stand.transform.position = at;
+            stand.transform.rotation = Quaternion.Euler(0f, 90f, 0f); // faces the room (+x)
+            GameObject plinth = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plinth.name = "Plinth";
+            plinth.transform.SetParent(stand.transform, false);
+            plinth.transform.localPosition = new Vector3(0f, -0.55f, 0f);
+            plinth.transform.localScale = new Vector3(0.8f, 1.0f, 0.8f);
+            plinth.GetComponent<Renderer>().sharedMaterial = plinthMaterial;
+            GameObject thing = GameObject.CreatePrimitive(shape);
+            thing.name = "Display";
+            thing.transform.SetParent(stand.transform, false);
+            thing.transform.localPosition = new Vector3(0f, shapeScale.y * 0.5f + 0.02f, 0f);
+            thing.transform.localScale = shapeScale;
+            thing.GetComponent<Renderer>().sharedMaterial = shapeMaterial;
+            GameObject text = new("Label", typeof(TextMesh));
+            text.transform.SetParent(stand.transform, false);
+            text.transform.localPosition = new Vector3(0f, 1.0f, 0f);
+            TextMesh mesh = text.GetComponent<TextMesh>();
+            mesh.characterSize = 0.04f;
+            mesh.fontSize = 48;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
+            mesh.color = new Color(0.95f, 0.85f, 0.4f);
+            stand.AddComponent<SunkCost.Shop.ShopDisplay>().Configure(itemId, mesh, delivery); // the plinth's and the shape's colliders are the pressable
         }
 
         // The quota board on the south wall's inner face (Dan, 16 September 2026):

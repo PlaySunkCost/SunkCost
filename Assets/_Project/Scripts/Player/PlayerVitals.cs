@@ -38,6 +38,10 @@ namespace SunkCost.Player
         private bool ridingReprieve;         // server: health floors at 1 inside the car (see Tick)
 
         public PlayerVitalsSettings Settings => PlayerVitalsSettings.Resolve(settings);
+        // The tank this player carries: the settings' seconds, times the large-tank
+        // upgrade when bought (PlayerUpgrades; the shop, 18 September 2026).
+        public float TankSeconds => Settings.EffectiveTankSeconds * (upgrades != null ? upgrades.TankMultiplier : 1f);
+        private PlayerUpgrades upgrades;
         public float AirFraction => air.Value / (float)AirScale;
         public float HealthFraction => health.Value / (float)Mathf.Max(1, Settings.MaxHealth);
         public int Health => health.Value;
@@ -51,6 +55,7 @@ namespace SunkCost.Player
         private void Awake()
         {
             controller = GetComponent<HQPlayerController>();
+            upgrades = GetComponent<PlayerUpgrades>();
         }
 
         public override void OnStartServer()
@@ -67,7 +72,7 @@ namespace SunkCost.Player
         [Server]
         private void ServerFill()
         {
-            airSeconds = Settings.EffectiveTankSeconds;
+            airSeconds = TankSeconds;
             air.Value = AirScale;
         }
 
@@ -136,7 +141,7 @@ namespace SunkCost.Player
             if (airSeconds > 0f)
             {
                 airSeconds = Mathf.Max(0f, airSeconds - dt * (ServerSprinting ? Settings.SprintDrainMultiplier : 1f));
-                byte next = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, Settings.EffectiveTankSeconds)));
+                byte next = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, TankSeconds)));
                 if (airSeconds <= 0f) next = 0;
                 if (next != air.Value) air.Value = next;
                 return;
@@ -160,7 +165,7 @@ namespace SunkCost.Player
         public float ServerAddAir(float fraction)
         {
             if (!inDive || controller == null || controller.IsDead) return 0f;
-            float tank = Settings.EffectiveTankSeconds;
+            float tank = TankSeconds;
             float before = Mathf.Max(0f, airSeconds);
             airSeconds = Mathf.Min(tank, before + fraction * tank);
             air.Value = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, tank)));
@@ -180,8 +185,8 @@ namespace SunkCost.Player
         private void ServerRequestDebugAirDown(NetworkConnection sender = null)
         {
             if (!Debug.isDebugBuild || !inDive || controller == null || controller.IsDead) return;
-            airSeconds = Mathf.Max(0f, airSeconds - Settings.DebugAirStepFraction * Settings.EffectiveTankSeconds);
-            byte next = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, Settings.EffectiveTankSeconds)));
+            airSeconds = Mathf.Max(0f, airSeconds - Settings.DebugAirStepFraction * TankSeconds);
+            byte next = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, TankSeconds)));
             if (airSeconds <= 0f) next = 0;
             air.Value = next;
         }
