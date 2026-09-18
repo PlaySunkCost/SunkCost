@@ -315,14 +315,20 @@ namespace SunkCost.Editor.Prototype
             host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
             yield return Expect(() => tankItem.IsEmpty, 3f, () => "K1 the tank empties on left click");
             Check(Mathf.Abs(vitals.AirFraction - (airLow + 0.5f)) < 0.02f, $"K1 half a tank back: {100f * airLow:0}% → {100f * vitals.AirFraction:0}%");
-            Check(tank.DisplayName == AirTankItem.EmptyName && tank.UseAction == ItemUseAction.Throw, $"K1 now a {tank.DisplayName}: throw on use");
+            // An empty tank is not thrown (Dan, 18 September 2026): left click does
+            // nothing, no prompt for it, Q drops it; its inventory icon is the grey one.
+            Check(tank.DisplayName == AirTankItem.EmptyName && tank.UseAction == ItemUseAction.None, $"K1 now a {tank.DisplayName}: nothing on use");
             Check(tank.GetComponent<Renderer>().sharedMaterial.name.Contains("Empty"), "K1 it turned grey: " + tank.GetComponent<Renderer>().sharedMaterial.name);
+            Check(tank.Icon != null && tank.Icon.name.Contains("Empty"), "K1 its inventory icon is the empty one: " + (tank.Icon == null ? "none" : tank.Icon.name));
             Check(tank.HolderClientId == host.OwnerId && tank.State == ItemState.Held, "K1 still in the hand");
             yield return null;
-            Check(hud.PromptText.Contains("throw"), "K1 the prompt now says throw: " + hud.PromptText);
+            Check(hud.PromptText == string.Empty, "K1 no prompt for an empty tank: '" + hud.PromptText + "'");
             float airAfterFirst = vitals.AirFraction;
             host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
-            yield return Expect(() => tank.HolderClientId != host.OwnerId, 3f, () => "K1 left click again throws the empty tank (" + tank.State + ")");
+            yield return Wait(0.6f);
+            Check(tank.HolderClientId == host.OwnerId && tank.State == ItemState.Held, "K1 left click does nothing with an empty tank (" + tank.State + ")");
+            host.Inventory.RequestDrop();
+            yield return Expect(() => tank.HolderClientId != host.OwnerId, 3f, () => "K1 Q drops it (" + tank.State + ")");
             yield return Wait(0.5f);
             Check(Mathf.Abs(vitals.AirFraction - airAfterFirst) < 0.02f, "K1 the empty tank gave no air");
 

@@ -6,5 +6,7 @@ namespace SunkCost.Interaction
     {
         string DisplayName { get; }
         ItemUseAction? UseActionOverride { get; }
+        // A different inventory icon while tagged (an empty tank), or null for the prefab's.
+        UnityEngine.Texture2D IconOverride { get; }
     }
 }

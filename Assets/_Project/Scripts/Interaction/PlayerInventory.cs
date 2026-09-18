@@ -150,6 +150,8 @@ namespace SunkCost.Interaction
             if (!IsOwner || heldItem == null) return;
             if (heldItem.UseAction == ItemUseAction.Breathe)
             {
+                PlayerSubmersion submersion = GetComponent<PlayerSubmersion>();
+                if (submersion == null || !submersion.IsSubmerged) { ShowRefusal(RefuseReason.NotUnderwater); return; }
                 if (player != null && player.Vitals != null && player.Vitals.AirFraction >= 1f) { ShowRefusal(RefuseReason.AirFull); return; }
                 ServerRequestUse(Vector3.zero, Vector3.zero);
                 return;
@@ -338,6 +340,8 @@ namespace SunkCost.Interaction
                 // The tank stays in the hand, full or empty; the server decides what it
                 // gives. With the air already full a breath would only empty the tank
                 // (code check, 18 September 2026): refused, the tank stays full.
+                PlayerSubmersion submersion = GetComponent<PlayerSubmersion>();
+                if (submersion == null || !submersion.IsSubmerged) { TargetRefuse(sender, (byte)RefuseReason.NotUnderwater); return; }
                 if (player != null && player.Vitals != null && player.Vitals.AirFraction >= 1f) { TargetRefuse(sender, (byte)RefuseReason.AirFull); return; }
                 AirTankItem tank = held.GetComponent<AirTankItem>();
                 if (tank != null && !tank.ServerBreathe(sender, out string why)) Debug.Log("[Air] " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + " could not breathe from the tank: " + why);

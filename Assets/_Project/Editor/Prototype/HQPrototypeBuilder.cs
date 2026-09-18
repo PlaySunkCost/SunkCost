@@ -277,7 +277,7 @@ namespace SunkCost.Editor.Prototype
         public const string ShopRoomName = "Shop Room";
         public const float ShopRoomWidth = 6f, ShopRoomDepth = 6f; // x span outside the west wall, z span centred on the doorway
         public static readonly Vector3 ShopShelfCentre = new(-6f - ShopRoomWidth + 0.5f, 1.05f, 0f); // the stands stand here, along the far wall
-        public static readonly Vector3 ShopDeliverySpot = new(-6f - ShopRoomWidth + 1.8f, 0.05f, 0f);
+        public static readonly Vector3 ShopDeliverySpot = new(-6f - ShopRoomWidth + 1.8f, 0.05f, 0f); // the landing mark on the floor; the chute is above it
         internal static void CreateShopRoom(Material floor, Material wall)
         {
             GameObject room = new(ShopRoomName);
@@ -291,15 +291,24 @@ namespace SunkCost.Editor.Prototype
             light.transform.SetParent(room.transform);
             light.transform.position = new Vector3(cx, 3.2f, 0f);
             Light l = light.GetComponent<Light>(); l.type = LightType.Point; l.range = 9f; l.intensity = 1.2f;
-            // The delivery spot: a pale disc on the floor in front of the shelves.
-            GameObject delivery = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            delivery.name = SunkCost.Shop.ShopDeliveryPoint.DefaultName;
-            delivery.transform.SetParent(room.transform);
-            delivery.transform.position = ShopDeliverySpot;
-            delivery.transform.localScale = new Vector3(1.2f, 0.02f, 1.2f);
-            Object.DestroyImmediate(delivery.GetComponent<Collider>());
-            delivery.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopDelivery.mat", new Color(0.75f, 0.7f, 0.5f));
-            SunkCost.Shop.ShopDeliveryPoint point = delivery.AddComponent<SunkCost.Shop.ShopDeliveryPoint>();
+            // The landing mark: a pale disc on the floor in front of the shelves; the
+            // chute above it in the ceiling is where a bought item drops from (Dan,
+            // 18 September 2026), landing somewhere on the disc.
+            GameObject landing = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            landing.name = "Shop Landing";
+            landing.transform.SetParent(room.transform);
+            landing.transform.position = ShopDeliverySpot;
+            landing.transform.localScale = new Vector3(1.4f, 0.02f, 1.4f);
+            Object.DestroyImmediate(landing.GetComponent<Collider>());
+            landing.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopDelivery.mat", new Color(0.75f, 0.7f, 0.5f));
+            GameObject chute = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chute.name = SunkCost.Shop.ShopDeliveryPoint.DefaultName;
+            chute.transform.SetParent(room.transform);
+            chute.transform.position = new Vector3(ShopDeliverySpot.x, 3.2f, ShopDeliverySpot.z); // its mouth just under the ceiling
+            chute.transform.localScale = new Vector3(0.9f, 0.6f, 0.9f);
+            Object.DestroyImmediate(chute.GetComponent<Collider>()); // an item spawns inside it and falls out
+            chute.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial(MaterialPath + "/ShopChute.mat", new Color(0.2f, 0.22f, 0.24f));
+            SunkCost.Shop.ShopDeliveryPoint point = chute.AddComponent<SunkCost.Shop.ShopDeliveryPoint>();
             // Three stands along the far wall: a plinth, a greybox shape of the thing, a label.
             Material plinthMaterial = GetOrCreateMaterial(MaterialPath + "/ShopPlinth.mat", new Color(0.25f, 0.27f, 0.3f));
             Material tankMaterial = GetOrCreateMaterial(DiveLootSetup.AirTankFullMaterialPath, new Color(0.95f, 0.75f, 0.12f)); // the tank prefab's own look

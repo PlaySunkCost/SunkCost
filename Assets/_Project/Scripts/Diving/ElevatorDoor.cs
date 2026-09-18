@@ -42,10 +42,15 @@ namespace SunkCost.Diving
         // "fully open": a button pressed while the doors are still opening (the
         // matrix's R3b, or a hurried player) must not snap them open first.
         private float sealFrom = 1f;
+        // And an opening starts from wherever the leaves are too: a seal turned
+        // around for someone crossing (WorldSceneFlow.ServerSealCar, 18 September
+        // 2026) swings them back open at door speed instead of snapping shut first.
+        private float openFrom;
 
         private void HandleStateChanged(ElevatorState next)
         {
             if (next == ElevatorState.Sealing) sealFrom = OpenFraction;
+            if (next == ElevatorState.AtBottom || next == ElevatorState.AtTop) openFrom = OpenFraction;
             Apply(ComputeOpenFraction());
         }
 
@@ -66,7 +71,7 @@ namespace SunkCost.Diving
             {
                 case ElevatorState.AtTop:
                 case ElevatorState.AtBottom:
-                    return Mathf.Clamp01(controller.StateElapsed / sealSeconds); // opens on arrival, saturates at 1 while resting
+                    return Mathf.Clamp01(openFrom + controller.StateElapsed / sealSeconds); // opens on arrival (from wherever the leaves were), saturates at 1 while resting
                 case ElevatorState.Sealing:
                     return Mathf.Clamp01(sealFrom - controller.StateElapsed / sealSeconds);
                 default: // Descending, Ascending

@@ -374,6 +374,7 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 0}
   refillFraction: 0.5
   emptyMaterial: {fileID: 2100000, guid: 8d8bbb29c0a08104e9cd6325f3bc7ae7, type: 2}
+  emptyIcon: {fileID: 2800000, guid: 0a6f473f641a5f444826c557895d51b5, type: 3}
   tinted:
   - {fileID: 7597849128568480611}
 --- !u!1 &8841535616879134609
