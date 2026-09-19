@@ -401,19 +401,36 @@ namespace SunkCost.Interaction
                 ServerReset();
         }
 
-        // Below this an item is lost and comes back to its reset spot: the sea at
-        // HQ and aboard (y = -2, under the hull), and 20 m under the car's landing
-        // in the dive — the seafloor itself is 45 m down, and a rule of "-2"
-        // there reset every loose item to its spawn spot every physics step (a
-        // coin dropped in the car "disappeared" back onto the seafloor; Dan, 16
-        // September 2026).
-        private const float SeaVoidY = -2f;
+        // Below this an item is lost and comes back to its reset spot: 2 m under
+        // the deck of the ship of its world — the sea at HQ and aboard — and 20 m
+        // under the car's landing in the dive; the seafloor itself is 45 m down,
+        // and a rule of "-2" there reset every loose item to its spawn spot every
+        // physics step (a coin dropped in the car "disappeared" back onto the
+        // seafloor; Dan, 16 September 2026). Measured from the ship since 19
+        // September 2026: the ship moored at the HQ rig lies 6 m under the
+        // platform, and a fixed -2 reset every coin in its storage room the moment
+        // it docked (cabin matrix Z2). In transit between worlds (the Session
+        // scene) nothing is lost.
+        private const float VoidBelowShipDeckMeters = 2f;
         private const float DiveVoidBelowLandingMeters = 20f;
+        private UnityEngine.SceneManagement.Scene voidScene;
+        private float voidY = float.NegativeInfinity;
         private float VoidY()
         {
-            if (!SunkCost.World.WorldScenes.TryParse(gameObject.scene.name, out SunkCost.World.WorldId world) || world != SunkCost.World.WorldId.Dive) return SeaVoidY;
-            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
-            return car != null ? car.BottomPosition.y - DiveVoidBelowLandingMeters : float.NegativeInfinity;
+            UnityEngine.SceneManagement.Scene scene = gameObject.scene;
+            bool inWorld = SunkCost.World.WorldScenes.TryParse(scene.name, out SunkCost.World.WorldId world);
+            if (inWorld && world == SunkCost.World.WorldId.Dive)
+            {
+                SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
+                return car != null ? car.BottomPosition.y - DiveVoidBelowLandingMeters : float.NegativeInfinity;
+            }
+            if (scene != voidScene)
+            {
+                SunkCost.World.ShipParts ship = inWorld ? SunkCost.World.ShipParts.InScene(scene) : null;
+                voidY = ship != null ? ship.transform.position.y - VoidBelowShipDeckMeters : float.NegativeInfinity;
+                voidScene = scene;
+            }
+            return voidY;
         }
 
         // From Free (a world grab) or from Stowed by the same connection (equip).
