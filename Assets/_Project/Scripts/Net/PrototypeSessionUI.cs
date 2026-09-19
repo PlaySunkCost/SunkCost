@@ -30,6 +30,14 @@ namespace SunkCost.Net
         private GUIStyle rosterStyle;
         private int lastReportedPlayerCount = -1;
         private Vector2 rosterScroll;
+        // The three save slots on the Host side (Dan, 19 September 2026): pick one,
+        // name it; a used one continues, renames or is deleted (with a confirm).
+        private int selectedSlot;
+        private string slotNameField;
+        private bool confirmDelete;
+        private readonly string[] slotSummaries = new string[SunkCost.World.SaveSlots.Count];
+        private readonly bool[] slotUsed = new bool[SunkCost.World.SaveSlots.Count];
+        private float slotsReadAt = -1f;
 
         public PrototypeSessionController Controller => controller;
         public bool InRoom => controller != null && controller.InRoom;
@@ -106,12 +114,55 @@ namespace SunkCost.Net
             }
         }
 
+        // The slot rows: a radio each, the chosen one's name editable, Delete
+        // (twice) on a used one. Read from disk at most once a second.
+        private void DrawSaveSlots()
+        {
+            if (Time.unscaledTime - slotsReadAt > 1f || slotsReadAt < 0f)
+            {
+                for (int i = 0; i < SunkCost.World.SaveSlots.Count; i++)
+                {
+                    slotUsed[i] = SunkCost.World.SaveSlots.Exists(i);
+                    slotSummaries[i] = SunkCost.World.SaveSlots.Summary(i);
+                }
+                slotsReadAt = Time.unscaledTime;
+                slotNameField ??= SlotName(selectedSlot);
+            }
+            GUILayout.Label("Save slot (the host keeps the run; guests bring their own upgrades and hands)");
+            for (int i = 0; i < SunkCost.World.SaveSlots.Count; i++)
+            {
+                bool picked = GUILayout.Toggle(selectedSlot == i, slotSummaries[i], GUI.skin.button);
+                if (picked && selectedSlot != i) { selectedSlot = i; slotNameField = SlotName(i); confirmDelete = false; }
+            }
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(slotUsed[selectedSlot] ? "Rename" : "Name", GUILayout.Width(80));
+            slotNameField = GUILayout.TextField(slotNameField ?? SlotName(selectedSlot), SunkCost.World.SaveSlots.MaxNameLength);
+            if (slotUsed[selectedSlot])
+            {
+                if (GUILayout.Button(confirmDelete ? "Really delete?" : "Delete", GUILayout.Width(110)))
+                {
+                    if (confirmDelete) { SunkCost.World.SaveSlots.Delete(selectedSlot); confirmDelete = false; slotsReadAt = -1f; slotNameField = SunkCost.World.SaveSlots.DefaultName(selectedSlot); }
+                    else confirmDelete = true;
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        private static string SlotName(int slot)
+        {
+            SunkCost.World.RunSaveData data = SunkCost.World.SaveSlots.Load(slot);
+            return data != null ? data.name : SunkCost.World.SaveSlots.DefaultName(slot);
+        }
+
         // ---- public entry points (used by automation and the test hooks) -----------
 
-        public void StartLocalHost()
+        // No slot: nothing is saved (the hooks and the matrices host this way).
+        public void StartLocalHost() => StartLocalHost(SunkCost.World.SaveSlots.None);
+
+        public void StartLocalHost(int saveSlot)
         {
             if (!controller.SelectMode(SessionMode.Local, out string error)) { Debug.LogWarning(error); return; }
-            controller.StartHost();
+            controller.StartHost(saveSlot);
         }
 
         public void JoinLocal(string hostAddress)
@@ -120,10 +171,12 @@ namespace SunkCost.Net
             controller.JoinLocal(address);
         }
 
-        public void StartSteamHost()
+        public void StartSteamHost() => StartSteamHost(SunkCost.World.SaveSlots.None);
+
+        public void StartSteamHost(int saveSlot)
         {
             if (!controller.SelectMode(SessionMode.Steam, out string error)) { Debug.LogWarning(error); return; }
-            controller.StartHost();
+            controller.StartHost(saveSlot);
         }
 
         public bool JoinSteamLobby(string lobbyId)
@@ -222,8 +275,15 @@ namespace SunkCost.Net
             if (typed != nameField) { nameField = typed; SunkCost.Player.PlayerNamePrefs.Save(typed); }
             GUILayout.EndHorizontal();
 
+            DrawSaveSlots();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Host")) { if (steamMode) StartSteamHost(); else StartLocalHost(); }
+            if (GUILayout.Button(slotUsed[selectedSlot] ? "Host — continue " + SlotName(selectedSlot) : "Host — new run in " + SlotName(selectedSlot)))
+            {
+                if (!slotUsed[selectedSlot]) SunkCost.World.SaveSlots.Write(selectedSlot, new SunkCost.World.RunSaveData { name = SunkCost.World.SaveSlots.CleanName(slotNameField, selectedSlot) });
+                else if (slotNameField != null && slotNameField != SlotName(selectedSlot)) SunkCost.World.SaveSlots.Rename(selectedSlot, slotNameField);
+                slotsReadAt = -1f;
+                if (steamMode) StartSteamHost(selectedSlot); else StartLocalHost(selectedSlot);
+            }
             if (GUILayout.Button("Join")) { if (steamMode) JoinSteamLobby(lobbyIdField); else JoinLocal(address); }
             GUILayout.EndHorizontal();
             GUILayout.Label("WASD move · E grab/hold to catch · Q drop · click use/throw · 1–4 slots · Esc menu · F3 debug");
@@ -233,6 +293,8 @@ namespace SunkCost.Net
         {
             SessionSnapshot s = controller.Snapshot();
             GUILayout.Label($"{s.Role} · {(s.BoundMode.HasValue ? s.BoundMode.Value.ToString() : s.SelectedMode.ToString())} · {s.State}");
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            if (s.Role == SessionRole.Host && flow != null) GUILayout.Label(flow.HostsASave ? "Save: " + flow.HostedSaveName + " — written whenever the crew is at HQ" : "Save: none (this run is not kept)");
             GUILayout.Label($"Server: {s.ServerStarted}   Client: {s.ClientStarted}");
 
             if (s.BoundMode == SessionMode.Steam && s.LobbyId != 0)

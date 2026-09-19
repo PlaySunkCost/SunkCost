@@ -55,6 +55,9 @@ namespace SunkCost.Player
         {
             displayName.Value = Sanitize(wantedName, OwnerId);
             colourIndex.Value = (byte)SanitizeColour(wantedColour, OwnerId);
+            // The name is the identity on a LAN: the hosted slot's upgrades and
+            // items for this person are given back now that it is known.
+            SunkCost.World.WorldSceneFlow.Instance?.ServerIdentityKnown(this);
         }
 
         [ServerRpc]

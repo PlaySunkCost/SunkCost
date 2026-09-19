@@ -183,6 +183,13 @@ namespace SunkCost.Interaction
                 value.Value = UnityEngine.Random.Range(Mathf.Min(valueMin, valueMax), valueMax + 1);
         }
 
+        // A saved value put back on a respawned item (the slot's box and hands).
+        [Server]
+        public void ServerSetValue(int saved)
+        {
+            if (HasValue && saved > 0) value.Value = saved;
+        }
+
         public override void OnStopServer()
         {
             ServerManager.OnRemoteConnectionState -= ServerOnRemoteConnectionState;

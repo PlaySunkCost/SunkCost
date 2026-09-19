@@ -279,6 +279,14 @@ namespace SunkCost.Net
             Finish(connection, true, AdmissionRejection.None, entry.Nonce);
         }
 
+        // The seat's identity for the save: the Steam id in Steam mode (a LAN seat's
+        // identity is its client id, which means nothing between sessions).
+        public bool TryGetSteamIdentity(int connectionId, out ulong steamId)
+        {
+            steamId = 0;
+            return server != null && server.Steam && ledger.TryGetIdentity(connectionId, out steamId) && steamId != 0;
+        }
+
         private void Finish(NetworkConnection connection, bool accepted, AdmissionRejection reason, uint nonce)
         {
             pending.Remove(connection.ClientId);

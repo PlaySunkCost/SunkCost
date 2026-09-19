@@ -174,9 +174,15 @@ namespace SunkCost.Net
 
         // ---- public operations ----------------------------------------------------
 
-        public void StartHost()
+        // A host without a slot: nothing is saved (the hooks and the editor's
+        // matrices, so a stale slot never leaks into a check).
+        public void StartHost() => StartHost(SunkCost.World.SaveSlots.None);
+
+        // The menu's Host: the slot the run is kept in (SaveSlots), read at server start.
+        public void StartHost(int saveSlot)
         {
             if (!CanStartOperation(out string why)) { message = why; return; }
+            SunkCost.World.SaveSlots.Active = SunkCost.World.SaveSlots.IsValid(saveSlot) ? saveSlot : SunkCost.World.SaveSlots.None;
             if (!PrototypeBuildIdentity.EnsureLoaded()) { message = PrototypeBuildIdentity.LoadError; return; }
             role = SessionRole.Host;
             int op = BeginOperation();
@@ -483,6 +489,9 @@ namespace SunkCost.Net
 
         public void Leave(string finalMessage)
         {
+            // The host's last word at the dock is kept (WorldSceneFlow.Save).
+            if (role == SessionRole.Host && networkManager != null && networkManager.ServerManager.Started)
+                SunkCost.World.WorldSceneFlow.Instance?.ServerSaveRun("host leaves");
             if (state == SessionState.Menu || state == SessionState.Leaving) return;
             SessionRole leavingRole = role;
             state = SessionState.Leaving;

@@ -60,6 +60,7 @@ namespace SunkCost.World
                 networkManager.ServerManager.Spawn(instance.GetComponent<NetworkObject>(), null, hq); // into the HQ scene, not the session scene
             }
             Debug.Log($"[Shop] {DisplayName(conn)} bought {item.Name} for ${item.Price}; pot ${dayState.Balance}");
+            ServerSaveRun("bought " + item.Name);
             return true;
         }
 

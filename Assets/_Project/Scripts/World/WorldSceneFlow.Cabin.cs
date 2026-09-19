@@ -152,6 +152,7 @@ namespace SunkCost.World
             dayState.ServerSetBoxValue(0);
             Debug.Log($"[WorldSceneFlow] Pay: sold ${report.Sales}, quota ${report.Quota}, had ${report.Had} — {(report.Paid ? "paid, balance $" + report.Balance : report.Lost ? "THE RUN IS OVER" : "short")} (pressed by {DisplayName(sender)})");
             if (report.Lost) ServerBeginPlank(); // the walk, then a fresh run (WorldSceneFlow.Plank)
+            else ServerSaveRun("paid");
             return true;
         }
 
