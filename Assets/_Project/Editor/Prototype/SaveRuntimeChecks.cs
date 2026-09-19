@@ -265,7 +265,8 @@ namespace SunkCost.Editor.Prototype
             Heading("S5 — the host leaves and hosts the slot again: the run, the box, the upgrade and the hands are back");
             string savedAtLeave = SaveSlots.Load(0).savedUtc;
             yield return ReHost(0, "S5");
-            Check(Day.Balance == 500 - largePrice - 2 * tankPrice && Day.Day == 0, "S5 the balance is back: $" + Day.Balance);
+            // Day 1: a crew that left HQ is on day 1 until it dives, and sailing home keeps the count (days are spent only by dives).
+            Check(Day.Balance == 500 - largePrice - 2 * tankPrice && Day.Day == 1 && !Day.Payday, "S5 the run is back: day " + Day.Day + ", $" + Day.Balance);
             hqShip = ShipParts.InWorld(WorldId.HQ);
             yield return Expect(() => TankNamed("Box tank", WorldScenes.Scene(WorldId.HQ)) != null, 5f, () => "S5 the box tank respawned");
             CarryableItem boxBack = TankNamed("Box tank", WorldScenes.Scene(WorldId.HQ));
