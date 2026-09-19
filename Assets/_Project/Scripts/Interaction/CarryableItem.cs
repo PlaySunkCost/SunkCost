@@ -310,13 +310,40 @@ namespace SunkCost.Interaction
                 // little until the car stops, but ends exactly where the server has it,
                 // where a pin from the lagged copy would leave it wrong for good.
                 if (!carRestKnown && !IsServerStarted) return;
-                carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(transform.position);
+                // Landed under way, it may have settled a little into the moving floor
+                // (the floor and the body are stepped apart each frame); pinned at that
+                // depth it would carry it to the other cabin, where a box whose centre
+                // is under the floor's face falls through (cabin matrix E1, 19 September
+                // 2026). Pin it with its underside on the floor.
+                carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(LiftedOntoFloor(transform.position));
                 carLocalRotation = carRestKnown ? carRestLocalRotation : Quaternion.Inverse(car.transform.rotation) * transform.rotation;
                 carPinned = true;
                 if (body != null && !body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.isKinematic = true; }
                 if (body != null) body.interpolation = RigidbodyInterpolation.None; // placed by script each frame, like a held item
             }
             PlaceBody(car.transform.TransformPoint(carLocalPosition), car.transform.rotation * carLocalRotation);
+        }
+
+        // The pose with the collider's underside on the floor under it: a ray down
+        // from over the item finds the first solid surface below its centre; if the
+        // collider's bottom is under that surface the pose is raised by the difference.
+        private static readonly RaycastHit[] floorHits = new RaycastHit[16];
+        private Vector3 LiftedOntoFloor(Vector3 position)
+        {
+            Collider col = PrimaryCollider;
+            if (col == null) return position;
+            Bounds bounds = col.bounds;
+            Vector3 from = new(position.x, bounds.max.y + 0.05f, position.z);
+            int count = Physics.RaycastNonAlloc(from, Vector3.down, floorHits, bounds.size.y + 0.5f, ~0, QueryTriggerInteraction.Ignore);
+            float floorY = float.NegativeInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                Transform hit = floorHits[i].collider.transform;
+                if (hit.IsChildOf(transform) || hit.GetComponentInParent<CarryableItem>() != null || hit.GetComponentInParent<SunkCost.Player.HQPlayerController>() != null) continue;
+                if (floorHits[i].point.y < position.y && floorHits[i].point.y > floorY) floorY = floorHits[i].point.y;
+            }
+            float lift = floorY - bounds.min.y;
+            return lift > 0.002f && lift < 0.2f ? position + Vector3.up * lift : position;
         }
 
         private void UnpinFromCar()
