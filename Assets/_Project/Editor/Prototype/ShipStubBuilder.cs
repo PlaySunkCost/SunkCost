@@ -364,7 +364,7 @@ namespace SunkCost.Editor.Prototype
             // The sailing monitor: the console at the tower's foot, the buttons on it.
             float mz = front + 0.5f;
             Visual("Monitor Frame", root, new Vector3(0f, 1.6f, mz - 0.06f), Quaternion.identity, new Vector3(1.8f, 1.2f, 0.1f), ink);
-            Visual("Monitor Console", root, new Vector3(0f, 0.5f, mz - 0.1f), Quaternion.identity, new Vector3(1.8f, 1.0f, 0.5f), dark);
+            Block("Monitor Console", root, new Vector3(0f, 0.5f, mz - 0.1f), new Vector3(1.8f, 1.0f, 0.5f), dark); // solid
             Visual("Monitor Console Stripe", root, new Vector3(0f, 0.16f, mz + 0.16f), Quaternion.identity, new Vector3(1.8f, 0.26f, 0.02f), trim);
             GameObject monitor = Block(ShipParts.MonitorName, root, new Vector3(0f, 1.6f, mz), new Vector3(1.6f, 1f, 0.1f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
             monitor.AddComponent<ShipMonitor>();
@@ -400,18 +400,17 @@ namespace SunkCost.Editor.Prototype
             foreach (float x in new[] { -1f, 1f })
                 SunkCost.Editor.Look.PropBuilder.Place(gate, rail, new Vector3(x, roof, back + 0.1f)).name = "Gate Rail";
             // The roof's furniture, forward: the radar on its mast, the antenna, two funnels, the beacons.
-            Visual("Radar Mast", root, new Vector3(0f, roof + 0.9f, front - 1.4f), Quaternion.identity, new Vector3(0.24f, 1.8f, 0.24f), ink);
+            Block("Radar Mast", root, new Vector3(0f, roof + 0.9f, front - 1.4f), new Vector3(0.24f, 1.8f, 0.24f), ink); // solid
             GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             dome.name = "Radar Dome";
             dome.transform.SetParent(root, false);
             dome.transform.localPosition = new Vector3(0f, roof + 2.3f, front - 1.4f);
             dome.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
             dome.GetComponent<Renderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.FenderBand();
-            Object.DestroyImmediate(dome.GetComponent<Collider>());
             SunkCost.Editor.Look.PropBuilder.Place(root.gameObject, SunkCost.Editor.Look.PropBuilder.Antenna(), new Vector3(2.4f, roof, front - 1.2f)).name = "Antenna";
             foreach (float x in new[] { -2.9f, 2.9f })
             {
-                Visual("Funnel", root, new Vector3(x, roof + 1.1f, front - 0.9f), Quaternion.identity, new Vector3(1.0f, 2.2f, 1.0f), steel);
+                Block("Funnel", root, new Vector3(x, roof + 1.1f, front - 0.9f), new Vector3(1.0f, 2.2f, 1.0f), steel); // solid
                 Visual("Funnel Band", root, new Vector3(x, roof + 1.8f, front - 0.9f), Quaternion.identity, new Vector3(1.04f, 0.3f, 1.04f), trim);
                 Visual("Funnel Cap", root, new Vector3(x, roof + 2.3f, front - 0.9f), Quaternion.identity, new Vector3(1.1f, 0.2f, 1.1f), ink);
             }
@@ -500,6 +499,8 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Editor.Look.PropBuilder.Place(look, SunkCost.Editor.Look.PropBuilder.Crane(), new Vector3(-5.2f, 0f, 17f), Quaternion.Euler(0f, -90f, 0f)).name = "Crane";
             Skin(look, "Winch Drum", SunkCost.Editor.Look.MeshKit.Cylinder(0.7f, 1.6f, 14), ink, new Vector3(-1.8f, 0.7f, 18.4f), Quaternion.Euler(0f, 0f, 90f));
             Skin(look, "Winch Frame", SunkCost.Editor.Look.MeshKit.Box(new Vector3(2.0f, 0.3f, 1.2f)), dark, new Vector3(-1.0f, 0f, 18.4f), Quaternion.identity);
+            BoxCollider winch = look.AddComponent<BoxCollider>(); // solid (Dan, 19 September 2026: nothing to walk through)
+            winch.center = new Vector3(-1.8f, 0.7f, 18.4f); winch.size = new Vector3(1.6f, 1.4f, 1.4f);
             // Cargo along the sides, clear of the spawns, the cabin's ring, the TV, the
             // stair, the storage room and the helipad.
             GameObject container = SunkCost.Editor.Look.PropBuilder.Container("Grey", 6f);

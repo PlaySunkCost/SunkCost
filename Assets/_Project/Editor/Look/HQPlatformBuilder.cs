@@ -136,7 +136,7 @@ namespace SunkCost.Editor.Look
             }
             PropBuilder.Place(root, rail, new Vector3(walkX1 - 0.8f, walkY + 0.3f, -DeckD / 2f - 1.1f), Quaternion.Euler(0f, 90f, 0f)).name = "Catwalk Rail End";
             for (float x = -24f; x <= 12f; x += 12f)
-                Part(root, "Catwalk Strut", MeshKit.Box(new Vector3(0.3f, 2.6f, 0.3f)), LookMaterials.RustSteel(), new Vector3(x, walkY, -DeckD / 2f - 1.6f));
+                Part(root, "Catwalk Strut", MeshKit.Box(new Vector3(0.3f, 2.6f, 0.3f)), LookMaterials.RustSteel(), new Vector3(x, walkY, -DeckD / 2f - 1.6f), withCollider: true);
             PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(-DeckW / 2f + 2f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
             PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(16f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
             GameObject number = PropBuilder.Place(root, PropBuilder.SignBoard(5f, 2.4f), new Vector3(0f, -DeckThick - 6.0f, -DeckD / 2f - 0.05f), Quaternion.Euler(0f, 180f, 0f));
@@ -292,7 +292,7 @@ namespace SunkCost.Editor.Look
             side.name = "Quotas Side";
             Sign(side, "quota.side", null);
             foreach (float x in new[] { -4.6f, 3.4f, 4.6f, 7.4f })
-                Part(root, "Display Post", MeshKit.Box(new Vector3(0.25f, 1.6f, 0.25f)), LookMaterials.Ink(), new Vector3(IntakeBoothCentre.x + x, 5.5f, BoothZ - 2.6f));
+                Part(root, "Display Post", MeshKit.Box(new Vector3(0.25f, 1.6f, 0.25f)), LookMaterials.Ink(), new Vector3(IntakeBoothCentre.x + x, 5.5f, BoothZ - 2.6f), withCollider: true);
 
             GameObject checkin = PropBuilder.Place(root, PropBuilder.Booth(8f), CheckinBoothCentre, facingSouth);
             checkin.name = "Check In";
@@ -378,7 +378,7 @@ namespace SunkCost.Editor.Look
             GameObject stairs = PropBuilder.Place(root, PropBuilder.Stairs(y, 7f, 1.8f), new Vector3(x + 3f, 0f, 4f));
             stairs.name = "Pickup Stairs";
             Part(root, "Pickup Landing", MeshKit.Box(new Vector3(1.8f, 0.16f, 1.2f)), LookMaterials.DeckTile(), new Vector3(x + 3f, y, 11.5f), withCollider: true);
-            Part(root, "Pickup Landing Rail", MeshKit.Box(new Vector3(0.12f, 1.2f, 1.2f)), LookMaterials.Ink(), new Vector3(x + 3.9f, y, 11.5f));
+            Part(root, "Pickup Landing Rail", MeshKit.Box(new Vector3(0.12f, 1.2f, 1.2f)), LookMaterials.Ink(), new Vector3(x + 3.9f, y, 11.5f), withCollider: true);
         }
 
         private static SunkCost.Shop.ShopDeliveryPoint Chute(GameObject root)
@@ -424,7 +424,7 @@ namespace SunkCost.Editor.Look
             thing.GetComponent<Renderer>().sharedMaterial = shapeMaterial;
             // The price on a plate over the stand (no floating text, Dan, 19 September 2026).
             TextMesh mesh = PropBuilder.SignPlate(stand, "Label Plate", "Label", new Vector3(0f, 2.2f, 0f), Quaternion.identity, 1.4f, 0.5f, 0.16f, new Color(1f, 0.82f, 0.50f));
-            Part(stand, "Label Post", MeshKit.Box(new Vector3(0.06f, 0.5f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, 1.5f, 0f));
+            Part(stand, "Label Post", MeshKit.Box(new Vector3(0.06f, 0.5f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, 1.5f, 0f), withCollider: true);
             stand.AddComponent<SunkCost.Shop.ShopDisplay>().Configure(itemId, mesh, delivery);
         }
 
@@ -530,7 +530,7 @@ namespace SunkCost.Editor.Look
             courtSign.name = "Court Sign";
             Sign(courtSign, "court", null);
             foreach (float x in new[] { -1.8f, 1.8f })
-                Part(root, "Court Sign Post", MeshKit.Box(new Vector3(0.14f, 3.3f, 0.14f)), LookMaterials.Ink(), new Vector3(c.x + x, 0f, Court.yMax + 0.2f));
+                Part(root, "Court Sign Post", MeshKit.Box(new Vector3(0.14f, 3.3f, 0.14f)), LookMaterials.Ink(), new Vector3(c.x + x, 0f, Court.yMax + 0.2f), withCollider: true);
             // Chain-link behind each hoop: the ball stays on the court.
             GameObject fence = PropBuilder.Fence(Court.height + 2f, 3.2f);
             PropBuilder.Place(root, fence, new Vector3(Court.x - 2.6f, 0f, c.z), Quaternion.Euler(0f, 90f, 0f)).name = "Court Fence W";
@@ -623,7 +623,7 @@ namespace SunkCost.Editor.Look
             // Tanks and a long pipe run across the roofs, dishes, and the rim's glow strip.
             foreach (float x in new[] { UpgradesBoothCentre.x + 3.2f, CheckinBoothCentre.x - 2.4f })
             {
-                Part(root, "Roof Tank", MeshKit.Cylinder(0.9f, 2.2f, 14), LookMaterials.RustSteel(), new Vector3(x, roof, BoothZ + 1.6f));
+                Part(root, "Roof Tank", MeshKit.Cylinder(0.9f, 2.2f, 14), LookMaterials.RustSteel(), new Vector3(x, roof, BoothZ + 1.6f), withCollider: true);
                 Part(root, "Roof Tank Band", MeshKit.Cylinder(0.92f, 0.25f, 14), LookMaterials.Hazard(), new Vector3(x, roof + 1.2f, BoothZ + 1.6f));
                 Part(root, "Roof Tank Cap", MeshKit.Cylinder(0.5f, 0.3f, 12), LookMaterials.Ink(), new Vector3(x, roof + 2.2f, BoothZ + 1.6f));
             }
@@ -694,7 +694,7 @@ namespace SunkCost.Editor.Look
             PropBuilder.Place(dock, lamp, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z - LandingW / 2f + 0.1f)).name = "Landing Lamp";
             // The gantry over the bridge's start: two posts and the sign, read from the deck.
             foreach (float side in new[] { -1f, 1f })
-                Part(dock, "Gantry Post", MeshKit.Box(new Vector3(0.22f, 3.8f, 0.22f)), LookMaterials.Ink(), new Vector3(bridgeX0 - 1.2f, 0f, BridgeEnd.z + side * (LandingW / 2f + 0.3f)));
+                Part(dock, "Gantry Post", MeshKit.Box(new Vector3(0.22f, 3.8f, 0.22f)), LookMaterials.Ink(), new Vector3(bridgeX0 - 1.2f, 0f, BridgeEnd.z + side * (LandingW / 2f + 0.3f)), withCollider: true);
             Part(dock, "Gantry Beam", MeshKit.Box(new Vector3(0.22f, 0.22f, LandingW + 0.8f)), LookMaterials.Ink(), new Vector3(bridgeX0 - 1.2f, 3.7f, BridgeEnd.z));
             GameObject shipSign = PropBuilder.Place(dock, PropBuilder.SignBoard(4f, 1.0f), new Vector3(bridgeX0 - 1.2f, 2.6f, BridgeEnd.z), Quaternion.Euler(0f, 90f, 0f));
             shipSign.name = "Ship Sign";
@@ -722,8 +722,8 @@ namespace SunkCost.Editor.Look
             Part(plank, "Board", MeshKit.Box(new Vector3(3.8f, 0.12f, 0.8f), 0.12f), LookMaterials.PanelDark(), new Vector3(edge + 1.6f, 0.0f, z), withCollider: true);
             Part(plank, "Board Stripe", MeshKit.Box(new Vector3(3.8f, 0.01f, 0.16f)), LookMaterials.Hazard(), new Vector3(edge + 1.6f, 0.0f, z + 0.32f));
             Part(plank, "Board Stripe", MeshKit.Box(new Vector3(3.8f, 0.01f, 0.16f)), LookMaterials.Hazard(), new Vector3(edge + 1.6f, 0.0f, z - 0.32f));
-            Part(plank, "Bracket", MeshKit.Box(new Vector3(1.4f, 0.5f, 1.2f), 0.5f), LookMaterials.Ink(), new Vector3(edge + 0.2f, -0.12f, z));
-            Part(plank, "Winch", MeshKit.Cylinder(0.35f, 0.5f, 12), LookMaterials.Ink(), new Vector3(edge + 0.6f, -1.5f, z), Quaternion.Euler(0f, 0f, 90f));
+            Part(plank, "Bracket", MeshKit.Box(new Vector3(1.4f, 0.5f, 1.2f), 0.5f), LookMaterials.Ink(), new Vector3(edge + 0.2f, -0.12f, z), withCollider: true);
+            Part(plank, "Winch", MeshKit.Cylinder(0.35f, 0.5f, 12), LookMaterials.Ink(), new Vector3(edge + 0.6f, -1.5f, z), Quaternion.Euler(0f, 0f, 90f), withCollider: true);
             GameObject baseAt = new("Plank Base");
             baseAt.transform.SetParent(plank.transform);
             baseAt.transform.SetPositionAndRotation(PlankBase, Quaternion.Euler(0f, 90f, 0f));

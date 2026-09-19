@@ -3790,9 +3790,9 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9053429055318136994}
-  m_Text: SURFACE
+  m_Text: "\u25B2"
   m_OffsetZ: 0
-  m_CharacterSize: 0.012267453
+  m_CharacterSize: 0.022
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -3830,8 +3830,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Look.SignText
   key: button.surface
-  fit: {x: 0.46000004, y: 0.22}
-  baseCharacterSize: 0.014
+  fit: {x: 0.46000004, y: 0.24}
+  baseCharacterSize: 0.022
 --- !u!1 &9159788932153955160
 GameObject:
   m_ObjectHideFlags: 0

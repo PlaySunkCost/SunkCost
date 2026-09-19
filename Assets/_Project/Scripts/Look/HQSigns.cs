@@ -84,8 +84,8 @@ namespace SunkCost.Look
             { "button.site01", "SITE 01" },
             { "button.hq", "HQ" },
             { "button.endday", "END DAY" },
-            { "button.descend", "DESCEND" },
-            { "button.surface", "SURFACE" },
+            { "button.descend", "▼" }, // a down arrow on the deck cabin's button (Dan, 19 September 2026)
+            { "button.surface", "▲" }, // an up arrow on the car's
         };
 
         private static HQSigns loaded;

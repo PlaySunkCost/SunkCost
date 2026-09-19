@@ -166,6 +166,7 @@ namespace SunkCost.Editor.Look
             GameObject pipe = Part(root, "Pipe", MeshKit.Cylinder(0.15f, length, 10), LookMaterials.RustSteel(), new Vector3(-length / 2f, 0f, 0f), Quaternion.Euler(0f, 0f, -90f));
             foreach (float x in new[] { -length / 2f + 0.4f, length / 2f - 0.4f })
                 Part(root, "Bracket", MeshKit.Box(new Vector3(0.14f, 0.36f, 0.36f), 0.18f), LookMaterials.Ink(), new Vector3(x, 0f, 0f));
+            Box(root, Vector3.zero, new Vector3(length, 0.3f, 0.3f));
         });
 
         // A vent for the roofs: a dark box with slats and a stub chimney.
@@ -186,6 +187,7 @@ namespace SunkCost.Editor.Look
             Part(root, "Dish", MeshKit.Cylinder(0.5f, 0.1f, 14), LookMaterials.PanelDark(), new Vector3(0f, 3.2f, 0.3f), Quaternion.Euler(-60f, 0f, 0f));
             foreach (float y in new[] { 2.2f, 4.0f }) Part(root, "Cross", MeshKit.Box(new Vector3(0.8f, 0.06f, 0.06f)), LookMaterials.Ink(), new Vector3(0f, y, 0f));
             Part(root, "Tip", MeshKit.Box(new Vector3(0.16f, 0.16f, 0.16f)), LookMaterials.BeaconRed(), new Vector3(0f, 5f, 0f));
+            Box(root, new Vector3(0f, 2.5f, 0f), new Vector3(0.5f, 5f, 0.5f));
         });
 
         // A teal screen on a bracket, for booth walls: 1.2 by 0.8 m, pivot at its bottom centre, front +Z.
@@ -353,6 +355,8 @@ namespace SunkCost.Editor.Look
         {
             for (int i = 0; i < 3; i++)
                 Part(root, "Coil", MeshKit.Ring(0.42f - i * 0.03f, 0.13f, 20, 8), LookMaterials.CrateYellow(), new Vector3(0f, 0.07f + i * 0.1f, 0f), Quaternion.Euler(0f, i * 25f, 0f));
+            CapsuleCollider col = root.AddComponent<CapsuleCollider>();
+            col.radius = 0.48f; col.height = 0.4f; col.center = new Vector3(0f, 0.18f, 0f);
         });
 
         // A pallet with sacks on it.
@@ -390,6 +394,7 @@ namespace SunkCost.Editor.Look
             Part(root, "Lid Line", MeshKit.Box(new Vector3(0.72f, 0.03f, 0.38f)), LookMaterials.Ink(), new Vector3(0f, 0.2f, 0f));
             Part(root, "Handle", MeshKit.Box(new Vector3(0.3f, 0.05f, 0.05f)), LookMaterials.Ink(), new Vector3(0f, 0.36f, 0f));
             foreach (float x in new[] { -0.13f, 0.13f }) Part(root, "Handle Post", MeshKit.Box(new Vector3(0.04f, 0.08f, 0.04f)), LookMaterials.Ink(), new Vector3(x, 0.3f, 0f));
+            Box(root, new Vector3(0f, 0.2f, 0f), new Vector3(0.72f, 0.4f, 0.38f));
         });
 
         // A stack of tyres.
@@ -499,9 +504,9 @@ namespace SunkCost.Editor.Look
             Part(root, "Bezel", MeshKit.Box(new Vector3(width, 0.4f, 0.06f)), LookMaterials.Ink(), Vector3.zero);
             Part(root, "Cap", MeshKit.Box(new Vector3(width - 0.12f, 0.28f, 0.1f)), LookMaterials.ButtonRed(), new Vector3(0f, 0.06f, 0.03f));
             Part(root, "Cap Edge", MeshKit.Box(new Vector3(width - 0.08f, 0.32f, 0.02f)), LookMaterials.Ink(), new Vector3(0f, 0.04f, -0.01f));
-            GameObject text = Text(root, "Text", new Vector3(0f, 0.2f, 0.085f), 0.14f, Color.white, TextAnchor.MiddleCenter);
+            GameObject text = Text(root, "Text", new Vector3(0f, 0.2f, 0.085f), 0.22f, Color.white, TextAnchor.MiddleCenter); // an arrow reads big; words shrink to fit
             SignText sign = text.AddComponent<SignText>();
-            sign.Fit(width - 0.14f, 0.22f);
+            sign.Fit(width - 0.14f, 0.24f);
             sign.Configure(textKey);
             BoxCollider col = root.AddComponent<BoxCollider>();
             col.center = new Vector3(0f, 0.2f, 0.02f); col.size = new Vector3(width, 0.4f, 0.12f);
@@ -516,6 +521,7 @@ namespace SunkCost.Editor.Look
         public static GameObject SignBoard(float w, float h) => Prefab($"Sign{F(w)}x{F(h)}", root =>
         {
             Part(root, "Plate", MeshKit.Box(new Vector3(w, h, 0.14f)), LookMaterials.SignBoard(), Vector3.zero);
+            Box(root, new Vector3(0f, h / 2f, 0f), new Vector3(w, h, 0.16f)); // solid: a sign on posts is a wall
             Part(root, "Frame Top", MeshKit.Box(new Vector3(w, 0.07f, 0.04f)), LookMaterials.SignGlow(), new Vector3(0f, h - 0.07f, 0.07f));
             Part(root, "Frame Bottom", MeshKit.Box(new Vector3(w, 0.07f, 0.04f)), LookMaterials.SignGlow(), new Vector3(0f, 0f, 0.07f));
             GameObject title = Text(root, "Title", new Vector3(0f, h * 0.60f, 0.08f), h * 0.38f, new Color(1f, 0.82f, 0.50f), TextAnchor.MiddleCenter);
@@ -618,6 +624,16 @@ namespace SunkCost.Editor.Look
             ramp.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
             BoxCollider col = ramp.AddComponent<BoxCollider>();
             col.size = new Vector3(w, 0.2f, length); col.center = new Vector3(0f, -0.1f + stepH * 0.5f, 0f);
+            // The handrails are walls: nobody steps off the side of a flight (Dan, 19 September 2026).
+            foreach (float x in new[] { -w / 2f, w / 2f })
+            {
+                GameObject side = new("Side Wall");
+                side.transform.SetParent(root.transform, false);
+                side.transform.localPosition = new Vector3(x, rise / 2f, run / 2f);
+                side.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+                BoxCollider wall = side.AddComponent<BoxCollider>();
+                wall.size = new Vector3(0.12f, 1.3f, length); wall.center = new Vector3(0f, 0.55f, 0f);
+            }
         });
 
         // A basketball hoop: a fat post, a backboard, the ring at 3.05 m, a net of
@@ -668,6 +684,7 @@ namespace SunkCost.Editor.Look
             light.transform.localPosition = new Vector3(0f, 2.2f, 0f);
             light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = 40f; light.intensity = 0f; light.color = new Color(1f, 0.25f, 0.15f); light.shadows = LightShadows.None;
             root.AddComponent<Beacon>().Configure(lamp.GetComponent<Renderer>(), light, 2.4f, 0f);
+            Box(root, new Vector3(0f, 1.3f, 0f), new Vector3(0.6f, 2.6f, 0.6f));
         });
 
         // The flagpole with the company's black flag and its skull.
@@ -677,6 +694,7 @@ namespace SunkCost.Editor.Look
             Part(root, "Ball", MeshKit.Cylinder(0.14f, 0.14f, 8), LookMaterials.Ink(), new Vector3(0f, 5f, 0f));
             Part(root, "Flag", MeshKit.Box(new Vector3(2.0f, 1.3f, 0.03f)), LookMaterials.Flag(), new Vector3(1.05f, 3.6f, 0f));
             GameObject mark = Part(root, "Mark", MeshKit.Box(new Vector3(0.9f, 0.9f, 0.035f)), LookMaterials.Skull(), new Vector3(1.05f, 3.8f, 0f));
+            Box(root, new Vector3(0f, 2f, 0f), new Vector3(0.3f, 4f, 0.3f));
         });
 
         // A windsock on a pole: red and white, held out by the wind.
@@ -686,6 +704,7 @@ namespace SunkCost.Editor.Look
             Material red = LookMaterials.Fender(), white = LookMaterials.FenderBand();
             for (int i = 0; i < 4; i++)
                 Part(root, "Sock", MeshKit.Cylinder(0.24f - i * 0.03f, 0.3f, 10, false), i % 2 == 0 ? red : white, new Vector3(0.3f * i, 3.05f, 0f), Quaternion.Euler(0f, 0f, -90f));
+            Box(root, new Vector3(0f, 1.6f, 0f), new Vector3(0.3f, 3.2f, 0.3f));
         });
 
         // ---- the machinery ------------------------------------------------------------

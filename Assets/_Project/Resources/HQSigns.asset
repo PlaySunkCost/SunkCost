@@ -94,6 +94,6 @@ MonoBehaviour:
   - Key: button.endday
     Text: END DAY
   - Key: button.descend
-    Text: DESCEND
+    Text: "▼"
   - Key: button.surface
-    Text: SURFACE
+    Text: "▲"

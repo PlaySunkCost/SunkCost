@@ -189,6 +189,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5189767805207023364}
+  - component: {fileID: 4443822075554348331}
   m_Layer: 0
   m_Name: FlagPole
   m_TagString: Untagged
@@ -215,6 +216,27 @@ Transform:
   - {fileID: 7618332335835132472}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &4443822075554348331
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5085476802676882325}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.3, y: 4, z: 0.3}
+  m_Center: {x: 0, y: 2, z: 0}
 --- !u!1 &6270006775106293258
 GameObject:
   m_ObjectHideFlags: 0
