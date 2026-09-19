@@ -1,4 +1,4 @@
-# The HQ platform and ship look — 18–19 September 2026 — the matrices before the merge
+# The HQ platform and ship look — 18–19 September 2026 — all seven matrices MATRIX_PASS before the merge
 
 Dan's look cards, one branch (`dan/hq-platform-look`, PR #78; the ship/tube
 branch folded in): the HQ rebuilt as the offshore platform of his reference
@@ -23,17 +23,17 @@ What changed for the rules (see `docs/DESIGN.md` §1 Sailing and §2 HQ,
 
 ## Matrices on this branch (host: the editor; guest: this branch's local build)
 
-All at `e98316c` unless noted; the guest built from the same revision.
+Revisions as noted; the guest built from the same revision each time.
 
 | Job | Result | Log |
 |---|---|---|
 | plank | MATRIX_PASS, 60 rows (at `e37bc12`) | `plank-matrix.log` |
 | shop | MATRIX_PASS, 90 rows (at `e37bc12`) — the S7 failure of 18 September did not recur | `shop-matrix.log` |
-| cabin | see below | `deck-cabin-matrix.log` |
-| spectate | see below | `spectate-matrix.log` |
-| loop | see below | `world-loop-matrix.log` |
-| air | see below | `air-matrix.log` |
-| fullrun | see below | `full-run.log` |
+| cabin | MATRIX_PASS, 288 rows (at `829677c`, after the two fixes below) | `deck-cabin-matrix.log` |
+| spectate | MATRIX_PASS, 224 rows (at `3957985`, the T3 spot moved) | `spectate-matrix.log` |
+| loop | MATRIX_PASS, 62 rows (at `196f1b8`, the deck spots moved off the well) | `world-loop-matrix.log` |
+| air | MATRIX_PASS, 86 rows (at `196f1b8`) | `air-matrix.log` |
+| fullrun | MATRIX_PASS, 231 rows (at `196f1b8`) | `full-run.log` |
 
 ### What the cabin matrix found (fixed here)
 
@@ -50,10 +50,32 @@ that landed under way with its underside on the floor (a ray down from over
 the item, `LiftedOntoFloor`). Not a regression of the look work as such —
 the depth depends on frame timing, and the editor runs faster now.
 
+**Z2 — the coin in the storage room reset to the seafloor on docking.** The
+"lost under y = −2" void line was written for a ship whose deck is at 0; the
+ship moored at the rig lies 6 m under the platform, so every loose item on it
+was under the line the moment it was placed. Two fixes in `CarryableItem`:
+the line is 2 m under the deck of the item's world's ship (cached per scene),
+and cargo in transit is never judged at all — it is placed at its destination
+spot a frame before the scene move carries it there, and at that moment its
+scene is still the one it left. An item that does fall under the world now
+says so in the log.
+
 **The guest refused with "Wrong build".** The editor's Play Mode identity is
 `local-dev:` while the working tree is dirty, and the guest build carries a
 clean SHA; committing the fix and rebuilding the guest cleared it. (A rule
-worth remembering: commit before a matrix with a guest.)
+worth remembering: commit — docs included — before a matrix with a guest, and
+rebuild the guest after every commit.)
+
+### What the other matrices found (test rows, not rules)
+
+- **spectate T3**: the row stood 5 m from the TV; the deck is 16 m wide now
+  and the screen is on the port rail. It stands 2 m off the screen.
+- **loop D7**: the row dropped its deck ball at ship-local (2, 0.5, −3) —
+  inside the open well round the car, which is a hole to the sea since this
+  branch; the ball fell, reset to its court spot, and the row saw no cargo.
+  The ball and the host's deck spot moved starboard/port of the ring rail.
+- The runner (`Temp/matrix-run.sh`) reads the verdict line anywhere in the
+  log: the loop and air jobs append a status dump after `MATRIX_PASS`.
 
 ## Remaining debt
 

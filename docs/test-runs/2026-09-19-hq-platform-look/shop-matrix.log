@@ -1,4 +1,4 @@
-Shop matrix started 18/09/2026 23:16:03
+Shop matrix started 19/09/2026 03:46:30
 PASS editor is the host with a spawned player
 PASS the player prefab carries PlayerUpgrades (run the shop setup)
 PASS the catalogue lists the three items
@@ -21,7 +21,7 @@ PASS S1 nothing was sold
 == S2 — with money: the air tank falls at the delivery spot, anyone's to take
 PASS the dot is on the air-tank stand
 PASS S2 an air tank was spawned
-PASS S2 it fell from the chute (y=8.1) onto the floor under it (0.28 m off the mark, y=5.87)
+PASS S2 it fell from the chute (y=4.4) onto the floor under it (0.18 m off the mark, y=0.37)
 PASS S2 loose in the HQ scene, grabbable (Free)
 PASS S2 it is a Full air tank
 PASS S2 the dot is on the bought tank
@@ -66,11 +66,48 @@ PASS S6 the visor marks: L-TANK  LAMP
 == S7 — dying with the body left below costs the upgrades
 PASS S7 dead below
 PASS S7 the site closed with the dead (the body stayed below)
-FAIL: The object of type 'SunkCost.Player.HQPlayerController' has been destroyed but you are still trying to access it.
-Your script should either check if it is null or you should not destroy the object.
-  at UnityEngine.Object+MarshalledUnityObject.TryThrowEditorNullExceptionObject (UnityEngine.Object unityObj, System.String parameterName) [0x00065] in <d5ea965f39d74501b56f4006ef80da34>:0 
-  at UnityEngine.Bindings.ThrowHelper.ThrowNullReferenceException (System.Object obj) [0x0000a] in <d5ea965f39d74501b56f4006ef80da34>:0 
-  at UnityEngine.Component.get_gameObject () [0x00006] in <d5ea965f39d74501b56f4006ef80da34>:0 
-  at SunkCost.Editor.Prototype.ShopRuntimeChecks+<>c__DisplayClass43_0.<Run>b__25 () [0x00000] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:372 
-  at SunkCost.Editor.Prototype.ShopRuntimeChecks+<Expect>d__26.MoveNext () [0x00042] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:113 
-  at SunkCost.Editor.Prototype.ShopRuntimeChecks.Tick () [0x0001d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ShopRuntimeChecks.cs:76 
+PASS S7 the dead host is on the ship
+PASS S7 still owned while dead (nothing decided yet)
+PASS S7 End day accepted: 
+PASS S7 revived with nothing: the body was not brought up (None)
+PASS S7 the plain beam again (25.0 m)
+PASS S7 the pot is untouched by the death
+
+== G1 — a guest buys from the pot at HQ; its upgrade replicates
+PASS sailing to HQ
+PASS arrived at HQ
+PASS G1 the shop is there again at HQ
+PASS guest player spawned
+PASS G1 guest joined at HQ
+PASS G1 $100 in the pot: the guest's large tank is refused, and the guest sees why
+PASS G1 the guest bought the large tank; the host's copy shows it
+PASS G1 the pot paid $300: $100 left
+PASS G1 the guest reads its own upgrade
+PASS G1 the host has none of it (upgrades are per player)
+
+== G2 — the guest dies below; the host brings the body up; End day: the guest keeps its upgrade
+PASS sailing to Sea
+PASS arrived at Sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/5 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS G2 both below
+PASS G2 the guest is in the site
+PASS G2 the guest's tank holds 450 s on the server
+PASS G2 the guest died below
+PASS G2 the guest's body lies below
+PASS the dot is on Mate bof the's body
+PASS Mate bof the's body grabbed (Held)
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/6 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
+PASS G2 the site closed
+PASS G2 the dead guest is on the ship
+PASS G2 the body is set down on the deck
+PASS G2 End day accepted: 
+PASS G2 the guest is revived next to its body
+PASS G2 the body came up: the guest keeps the large tank (LargeTank)
+PASS G2 the guest reads itself alive with the upgrade
+MATRIX_PASS

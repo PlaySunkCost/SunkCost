@@ -1,0 +1,297 @@
+Full run started 19/09/2026 05:22:34
+PASS hosting with a spawned player
+PASS the quota is $500
+
+== Setup — at HQ
+PASS docked at HQ, day 0, balance $0
+PASS board: NEW CYCLE | quota $0 / $500 · balance $0 | dive first
+PASS monitor: Docked at HQ — E on Site 01 to sail
+  · screenshot Logs/full-run/01-hq-board.png
+
+== Colour — sky
+PASS the panel offers the pick: prompt='Press E to pick your colour'; target=none
+PASS sky (8) written by the server
+PASS the body wears sky: RGBA(0.300, 0.700, 1.000, 1.000)
+PASS the pick is saved
+  · screenshot Logs/full-run/02-colour-picked.png
+
+== Cycle 1 — sail out
+PASS the ship arrived: Sea
+PASS controls back after the sail
+PASS day 1 at sea (day=1)
+PASS monitor: Arrived at Site 01
+PASS cabin panel: Day 1 of 3 — all in, press E to descend
+PASS box readout: STORAGE | $0 / $500 | balance $0
+PASS End day before a dive is refused: 'Nobody has dived today'
+
+== Cycle 1 — dive 1, everything into the box
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS the ride down was not cancelled: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='Nobody has dived today' failure=''
+PASS standing in the dive site
+PASS the car is at the bottom
+PASS dive in progress on day 1 (phase=DiveInProgress day=1)
+PASS visor on, corner says DAY 1/3: DAY 1/3
+  · visor money line: QUOTA $0/$500  ·  ON ME $0
+PASS visor money line: QUOTA $0/$500  ·  ON ME $0
+  · screenshot Logs/full-run/03-dive1-seafloor.png
+PASS Coin 7 lies on the seafloor
+PASS the dot is on Coin 7 ($177)
+PASS Coin 7 grabbed (Free)
+PASS ON ME went from $0 to $177 (+$177)
+PASS Coin 3 lies on the seafloor
+PASS the dot is on Coin 3 ($60)
+PASS Coin 3 grabbed (Free)
+PASS ON ME went from $177 to $237 (+$60)
+PASS Coin 5 lies on the seafloor
+PASS the dot is on Coin 5 ($63)
+PASS Coin 5 grabbed (Free)
+PASS ON ME went from $237 to $300 (+$63)
+PASS Coin 6 lies on the seafloor
+PASS the dot is on Coin 6 ($63)
+PASS Coin 6 grabbed (Free)
+PASS ON ME went from $300 to $363 (+$63)
+  · dive 1 haul on me: $363
+  · screenshot Logs/full-run/04-dive1-loaded.png
+PASS the car took the press
+PASS the ride up completed
+PASS the ride up was not cancelled: ride=Complete/Up/3 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='Nobody has dived today' failure=''
+PASS back on the deck
+PASS nobody below: the dive is done
+PASS the site unloaded once empty
+PASS monitor: Day 1 of 3 — dive done — E on END DAY
+PASS cabin panel: Coming up…
+PASS a second dive today is refused: 'Dive done — end the day at the monitor'
+PASS no ride started
+PASS dropped Coin 7 (day 1)
+PASS equipped Coin 3 (day 1)
+PASS dropped Coin 3 (day 1)
+PASS equipped Coin 5 (day 1)
+PASS dropped Coin 5 (day 1)
+PASS equipped Coin 6 (day 1)
+PASS dropped Coin 6 (day 1)
+  · Coin 7 (day 1) rests at ship-local (3.79, 0.06, -12.50) (in the room)
+  · Coin 3 (day 1) rests at ship-local (3.71, 0.10, -12.50) (in the room)
+  · Coin 5 (day 1) rests at ship-local (3.74, 0.13, -12.50) (in the room)
+  · Coin 6 (day 1) rests at ship-local (3.72, 0.16, -12.50) (in the room)
+PASS the four coins in the room are worth the haul ($363)
+PASS box value $363 = $363
+PASS box readout: STORAGE | $363 / $500 | balance $0
+  · screenshot Logs/full-run/05-box-after-dive1.png
+PASS sailing home after a dive is refused until End day: 'Dive done — End day first'
+PASS after End day the monitor says 'Day 2 of 3…': Dive done — End day first
+PASS day 2, no dive yet
+
+== Cycle 1 — early trip home, SHORT
+PASS the ship arrived: HQ
+PASS controls back after the sail
+PASS docked, still day 2 (day=2 payday=False)
+PASS monitor: Docked — making fast
+PASS all 4 coins crossed to HQ inside the room (4)
+PASS the docked ship's box is worth the same
+PASS board: DAY 2 OF 3 | quota $363 / $500 · balance $0 | E to pay early (sells the box)
+PASS looking at the board: prompt='Press E to pay the quota ($500) — sells the box ($363)'; target=none
+  · prompt: prompt='Press E to pay the quota ($500) — sells the box ($363)'; target=none
+  · screenshot Logs/full-run/06-board-before-pay.png
+PASS the pay was processed
+  · pay report: sold $363 quota $500 had $363 → SHORT, balance $363
+  · board: SHORT BY $137 | sold $363, handed over $363 · balance $363 | sail out and dive again
+  · screenshot Logs/full-run/07-board-after-pay.png
+PASS short before payday is SHORT, not a loss
+PASS the box was banked (balance $363), day still 2
+PASS board: SHORT BY $137 | sold $363, handed over $363 · balance $363 | sail out and dive again
+PASS sold: (gone)
+PASS sold: (gone)
+PASS sold: (gone)
+PASS sold: (gone)
+PASS box empty after the sale
+PASS the ship may sail out again: 
+
+== Cycle 1 — dive 2, one coin left on the deck
+PASS the ship arrived: Sea
+PASS controls back after the sail
+PASS at sea on day 2 (day=2)
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS the ride down was not cancelled: ride=Complete/Down/6 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='Dive done — End day first' failure=''
+PASS standing in the dive site
+PASS the car is at the bottom
+PASS dive in progress on day 2 (phase=DiveInProgress day=2)
+PASS visor on, corner says DAY 2/3: DAY 2/3
+  · visor money line: QUOTA $363/$500  ·  ON ME $0
+PASS Coin 7 lies on the seafloor
+PASS the dot is on Coin 7 ($219)
+PASS Coin 7 grabbed (Free)
+PASS ON ME went from $0 to $219 (+$219)
+PASS Coin 3 lies on the seafloor
+PASS the dot is on Coin 3 ($84)
+PASS Coin 3 grabbed (Free)
+PASS ON ME went from $219 to $303 (+$84)
+PASS Coin 5 lies on the seafloor
+PASS the dot is on Coin 5 ($82)
+PASS Coin 5 grabbed (Free)
+PASS ON ME went from $303 to $385 (+$82)
+PASS Coin 6 lies on the seafloor
+PASS the dot is on Coin 6 ($41)
+PASS Coin 6 grabbed (Free)
+PASS ON ME went from $385 to $426 (+$41)
+  · dive 2 haul on me: $426
+PASS the car took the press
+PASS the ride up completed
+PASS the ride up was not cancelled: ride=Complete/Up/7 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='Dive done — End day first' failure=''
+PASS back on the deck
+PASS nobody below: the dive is done
+PASS the site unloaded once empty
+PASS dropped Coin 7 (day 2) on the open deck
+PASS Coin 7 (day 2) lies on the deck, outside the room
+PASS equipped Coin 3 (day 2)
+PASS dropped Coin 3 (day 2)
+PASS equipped Coin 5 (day 2)
+PASS dropped Coin 5 (day 2)
+PASS equipped Coin 6 (day 2)
+PASS dropped Coin 6 (day 2)
+  · Coin 3 (day 2) rests at ship-local (3.72, 0.05, -12.50) (in the room)
+  · Coin 5 (day 2) rests at ship-local (3.74, 0.08, -12.50) (in the room)
+  · Coin 6 (day 2) rests at ship-local (3.72, 0.11, -12.50) (in the room)
+PASS three coins in the room ($207), the deck coin ($219) not counted
+PASS box value $207
+PASS after End day the monitor says 'Day 3 of 3…': Day 2 of 3 — dive done — E on END DAY
+
+== Cycle 1 — dive 3, payday
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS the ride down was not cancelled: ride=Complete/Down/8 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='Dive done — End day first' failure=''
+PASS standing in the dive site
+PASS the car is at the bottom
+PASS dive in progress on day 3 (phase=DiveInProgress day=3)
+PASS visor on, corner says DAY 3/3: DAY 3/3
+  · visor money line: QUOTA $570/$500  ·  ON ME $0
+PASS Coin 7 lies on the seafloor
+PASS the dot is on Coin 7 ($213)
+PASS Coin 7 grabbed (Free)
+PASS ON ME went from $0 to $213 (+$213)
+PASS Coin 3 lies on the seafloor
+PASS the dot is on Coin 3 ($49)
+PASS Coin 3 grabbed (Free)
+PASS ON ME went from $213 to $262 (+$49)
+PASS Coin 5 lies on the seafloor
+PASS the dot is on Coin 5 ($83)
+PASS Coin 5 grabbed (Free)
+PASS ON ME went from $262 to $345 (+$83)
+PASS Coin 6 lies on the seafloor
+PASS the dot is on Coin 6 ($78)
+PASS Coin 6 grabbed (Free)
+PASS ON ME went from $345 to $423 (+$78)
+  · dive 3 haul on me: $423
+PASS the car took the press
+PASS the ride up completed
+PASS the ride up was not cancelled: ride=Complete/Up/9 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='Dive done — End day first' failure=''
+PASS back on the deck
+PASS nobody below: the dive is done
+PASS the site unloaded once empty
+PASS dropped Coin 7 (day 3)
+PASS equipped Coin 3 (day 3)
+PASS dropped Coin 3 (day 3)
+PASS equipped Coin 5 (day 3)
+PASS dropped Coin 5 (day 3)
+PASS equipped Coin 6 (day 3)
+PASS dropped Coin 6 (day 3)
+  · Coin 7 (day 3) rests at ship-local (3.84, 0.12, -12.51) (in the room)
+  · Coin 3 (day 3) rests at ship-local (3.75, 0.17, -12.51) (in the room)
+  · Coin 5 (day 3) rests at ship-local (3.73, 0.20, -12.50) (in the room)
+  · Coin 6 (day 3) rests at ship-local (3.72, 0.23, -12.51) (in the room)
+PASS box value $630 = $630
+PASS box readout: STORAGE | $630 / $500 | balance $363
+  · screenshot Logs/full-run/08-box-full.png
+PASS after End day the monitor says 'PAYDAY…': Day 3 of 3 — dive done — E on END DAY
+PASS payday
+PASS visor corner would say PAYDAY: PAYDAY
+PASS the cabin refuses on payday: 'Payday — sail home'
+PASS Site 01 refused on payday: 'Payday — only HQ'
+  · screenshot Logs/full-run/09-payday-monitor.png
+
+== Cycle 1 — home and pay
+PASS the ship arrived: HQ
+PASS controls back after the sail
+PASS monitor: Docked — making fast
+PASS the docked ship will not sail out unpaid: 'Pay the quota first'
+PASS the deck coin came home on the deck, outside the room
+PASS board: Pay the quota first
+PASS looking at the board: prompt='Press E to pay the quota ($500) — sells the box ($630)'; target=none
+  · prompt: prompt='Press E to pay the quota ($500) — sells the box ($630)'; target=none
+  · screenshot Logs/full-run/10-board-before-pay.png
+PASS the pay was processed
+  · pay report: sold $630 quota $500 had $993 → PAID, balance $993
+  · board: PAID $500 | handed over $993 — every dollar yours · balance $993 | next dive is day 1
+  · screenshot Logs/full-run/11-board-after-pay.png
+PASS PAID: sold $630, handed over $993 this cycle, balance $993 (nothing charged), day 0
+PASS board: PAID $500 | handed over $993 — every dollar yours · balance $993 | next dive is day 1
+PASS box empty
+PASS the deck coin was not sold
+PASS End day at the dock is refused: 'Not at sea'
+PASS paying twice is refused: 'Nothing to pay yet — dive first'
+
+== Cycle 2 — one dive, pay early; money from cycle 1 is the crew's and pays no quota
+PASS the ship arrived: Sea
+PASS controls back after the sail
+PASS day 1 again
+PASS the deck coin sailed out again on the deck
+PASS the deck cabin took the press
+PASS the ride down completed
+PASS the ride down was not cancelled: ride=Complete/Down/12 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='Nothing to pay yet — dive first' failure=''
+PASS standing in the dive site
+PASS the car is at the bottom
+PASS dive in progress on day 1 (phase=DiveInProgress day=1)
+PASS visor on, corner says DAY 1/3: DAY 1/3
+  · visor money line: QUOTA $0/$500  ·  ON ME $0
+PASS Coin 7 lies on the seafloor
+PASS the dot is on Coin 7 ($155)
+PASS Coin 7 grabbed (Free)
+PASS ON ME went from $0 to $155 (+$155)
+PASS Coin 3 lies on the seafloor
+PASS the dot is on Coin 3 ($59)
+PASS Coin 3 grabbed (Free)
+PASS ON ME went from $155 to $214 (+$59)
+PASS Coin 5 lies on the seafloor
+PASS the dot is on Coin 5 ($89)
+PASS Coin 5 grabbed (Free)
+PASS ON ME went from $214 to $303 (+$89)
+PASS Coin 6 lies on the seafloor
+PASS the dot is on Coin 6 ($83)
+PASS Coin 6 grabbed (Free)
+PASS ON ME went from $303 to $386 (+$83)
+PASS the car took the press
+PASS the ride up completed
+PASS the ride up was not cancelled: ride=Complete/Up/13 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='Nothing to pay yet — dive first' failure=''
+PASS back on the deck
+PASS nobody below: the dive is done
+PASS the site unloaded once empty
+PASS dropped Coin 7 (day 1)
+PASS equipped Coin 3 (day 1)
+PASS dropped Coin 3 (day 1)
+PASS equipped Coin 5 (day 1)
+PASS dropped Coin 5 (day 1)
+PASS equipped Coin 6 (day 1)
+PASS dropped Coin 6 (day 1)
+  · Coin 7 (day 1) rests at ship-local (3.79, 0.06, -12.50) (in the room)
+  · Coin 3 (day 1) rests at ship-local (3.72, 0.10, -12.50) (in the room)
+  · Coin 5 (day 1) rests at ship-local (3.70, 0.13, -12.50) (in the room)
+  · Coin 6 (day 1) rests at ship-local (3.73, 0.16, -12.50) (in the room)
+PASS box $386
+PASS after End day the monitor says 'Day 2 of 3…': Day 1 of 3 — dive done — E on END DAY
+PASS End day twice is refused: 'Nobody has dived today'
+PASS the ship arrived: HQ
+PASS controls back after the sail
+PASS looking at the board: prompt='Press E to pay the quota ($500) — sells the box ($0)'; target=none
+  · prompt: prompt='Press E to pay the quota ($500) — sells the box ($0)'; target=none
+  · screenshot Logs/full-run/12-board-before-pay.png
+PASS the pay was processed
+  · pay report: sold $386 quota $500 had $386 → SHORT, balance $1379
+  · board: SHORT BY $114 | sold $386, handed over $386 · balance $1379 | sail out and dive again
+  · screenshot Logs/full-run/13-board-after-pay.png
+PASS cycle 2 judged on this cycle's $386 only; balance $993 + $386 = $1379
+PASS cycle 2 SHORT by $114, banked
+PASS the deck coin survived two sails and two sales
+  · screenshot Logs/full-run/14-end.png
+  · done
+MATRIX_PASS

@@ -1,4 +1,4 @@
-Plank matrix started 18/09/2026 23:15:06
+Plank matrix started 19/09/2026 03:43:35
 PASS editor is the host with a spawned player
   · turn 10 s, card 6 s
 
@@ -32,7 +32,7 @@ PASS P1 the gate stands behind the jumper, between the board and the pier
 PASS P1 the jumper is not inside the gate
 PASS U2 unstuck is refused to the jumper: Walk the plank
 PASS P1 out on the board is allowed: still the jumper, not in the water
-PASS P1 pushed after 10 s: in the water (y=-12.1)
+PASS P1 pushed after 10 s: in the water (y=-12.2)
 PASS P1 counted as jumped
 
 == P2 — the last one in: the card, then everything from nothing
