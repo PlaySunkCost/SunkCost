@@ -128,6 +128,7 @@ namespace SunkCost.Editor.Prototype
 
         private static IEnumerator Run()
         {
+            H.MoveLocalIntoDeckCabin("HQ"); yield return Wait(0.3f); // aboard, or the monitor names the missing
             string sail = H.ServerSail("Sea");
             Check(sail.StartsWith("sailing"), "sailing to sea: " + sail);
             yield return Expect(() => Day != null && Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.Sea, 40f, () => "at sea");
