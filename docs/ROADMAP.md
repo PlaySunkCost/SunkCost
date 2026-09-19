@@ -32,8 +32,7 @@ listens yet); names, colours, the first-person body (unrigged); Unstuck; an
 FPS counter; a Windows build on every push to `main`.
 
 **Not built at all:** a monster (nothing hurts you but an empty tank), damage
-and leaks, **saving** (HQ is "the only save point" in the design and no save
-exists — a run lives as long as the host's process), the site vote, dive
+and leaks, the site vote, dive
 conditions, more than one site, the seafloor beyond a wreck and coins, the
 run recap screen, the handheld device, the surface radio, cosmetics and
 achievements, the quota curve (a flat $500), music and ambience, real art
@@ -101,7 +100,7 @@ a radius, the seafloor list, health.
 
 | Card | Why | Size | Notes |
 |---|---|---|---|
-| Save at HQ, load from the menu | The design's only save point. Host-owned (contract §6). Save: day count, cycle, balance, each player's upgrades by Steam id, the storage box's items, the site chosen. Load: from the host's menu, everyone spawns at HQ. | L | **Contract** (what is saved, who owns it, a joiner's gear). A save format that survives a version bump (a version field, unknown fields ignored). |
+| ~~Save at HQ, load from the menu~~ **built 19 September 2026** | Three named slots per player, picked when hosting; written whenever the crew is at HQ; the run, the box, everyone's upgrades and hands by identity (DESIGN §1). | L | Done (`dan/save`). The main menu card redraws its IMGUI. |
 | The run recap screen | "The run recap screen is the ending, every time — give it real production value." First cut: days, cycles, money handed over, who died where, the best haul; on the plank card. | M | Data only now; the production value is Phase 03. |
 | The starter site is survivable | Tune the Bell Eater and the coins so a careful crew clears $500 on day one without knowing the rules. "No tutorial." | S | Playtest-driven. |
 
