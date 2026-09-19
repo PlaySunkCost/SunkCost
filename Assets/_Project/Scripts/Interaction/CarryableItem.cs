@@ -399,7 +399,10 @@ namespace SunkCost.Interaction
                 }
             }
 
-            if (IsServerStarted && state.Value == ItemState.Free && transform.position.y < VoidY())
+            // Frozen cargo is placed by script and cannot fall; it is also placed at
+            // its destination spot a frame before the scene move carries it there,
+            // and the ship moored at the rig lies under the sea ship's line.
+            if (IsServerStarted && state.Value == ItemState.Free && transitSerial == 0 && transform.position.y < VoidY())
             {
                 Debug.Log($"{name} fell under the world ({gameObject.scene.name}, y {transform.position.y:F2} < {VoidY():F2}, transit {transitSerial}): back to its spot {resetPosition:F2}");
                 ServerReset();
@@ -414,8 +417,7 @@ namespace SunkCost.Interaction
         // seafloor; Dan, 16 September 2026). Measured from the ship since 19
         // September 2026: the ship moored at the HQ rig lies 6 m under the
         // platform, and a fixed -2 reset every coin in its storage room the moment
-        // it docked (cabin matrix Z2). In transit between worlds (the Session
-        // scene) nothing is lost.
+        // it docked (cabin matrix Z2). Cargo in transit is never lost (above).
         private const float VoidBelowShipDeckMeters = 2f;
         private const float DiveVoidBelowLandingMeters = 20f;
         private UnityEngine.SceneManagement.Scene voidScene;
