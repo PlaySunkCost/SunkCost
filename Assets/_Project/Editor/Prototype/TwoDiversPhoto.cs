@@ -138,8 +138,15 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea");
             Vector3 guestSpot = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f);
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
-            yield return Wait(0.5f);
-            H.ClientRequestCabin();
+            yield return Expect(() => GuestPlayer() != null && sea.IsInDeckCabin(GuestPlayer().transform.position + Vector3.up * 0.5f), 10f, () => "player 2 stands in the deck cabin on the host");
+            for (int press = 0; press < 5 && !Day.Riding; press++)
+            {
+                H.MoveLocalIntoDeckCabin("Sea");
+                H.ClientRequestCabin();
+                yield return Wait(1.5f);
+                if (!Day.Riding) File.AppendAllText(Log, "  press " + (press + 1) + " refused: " + Day.LastRefusal.Text + "\n");
+            }
+            Check(Day.Riding, "the ride down started");
             yield return Expect(() => Day.Below.Count == 2 && Day.Elevator.State == ElevatorState.AtBottom && !Day.Riding, 60f, () => "both at the bottom");
             yield return Wait(1f);
             ElevatorController car = WorldSceneFlow.FindCar();
