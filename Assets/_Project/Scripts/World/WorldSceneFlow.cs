@@ -211,6 +211,7 @@ namespace SunkCost.World
                 ResetTrip();
                 SunkCost.Noise.NoiseSystem.IsServer = true; // the ocean's ears open with the server (section 3 of the contract)
                 SpawnDayState();
+                ServerBeginHostedSave(); // the slot the menu picked, if any (WorldSceneFlow.Save)
                 // Pre-warm HQ on the server so the host's own client join finds it loaded.
                 ServerLoad(null, LoadDataFor(WorldId.HQ, null), "server start: HQ pre-warmed");
             }
@@ -304,6 +305,7 @@ namespace SunkCost.World
             CrewSpawner spawner = FindAnyObjectByType<CrewSpawner>();
             if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
             if (!ServerEveryoneAboard(fromShip, out why)) return false;
+            if (currentWorld == WorldId.HQ) ServerSaveRun("cast off"); // the last state at the dock: everyone aboard with what they carry
             trip = StartCoroutine(TripRoutine(to, fromShip));
             return true;
         }
@@ -445,6 +447,7 @@ namespace SunkCost.World
             SetStage(DepartureStage.Complete, from, to, 0f);
             transitioning = false;
             trip = null;
+            if (to == WorldId.HQ) ServerSaveRun("docked");
         }
 
         // A trip that stops before the scene moved: nothing has changed for gameplay.
@@ -507,6 +510,7 @@ namespace SunkCost.World
         private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
         {
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
+            ServerSaveLeaver(conn);
             cohort.Remove(conn.ClientId);
             prepared.Remove(conn.ClientId); black.Remove(conn.ClientId); arrived.Remove(conn.ClientId);
             watching.Remove(conn.ClientId);

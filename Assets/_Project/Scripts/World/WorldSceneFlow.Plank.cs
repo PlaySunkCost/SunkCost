@@ -131,6 +131,7 @@ namespace SunkCost.World
             }
             plankQueue.Clear();
             Debug.Log("[Plank] A fresh run: day 0, $0, everyone on the pier");
+            ServerSaveRun("a fresh run"); // the slot keeps its name; the run in it starts over
         }
 
         [FishNet.Object.Server]

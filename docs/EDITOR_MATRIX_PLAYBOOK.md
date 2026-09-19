@@ -9,6 +9,10 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   (`spectate` = death and dead spectating, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`,
   guest dirs `Temp/spectate-guest` and `Temp/spectate-guest-b` — the S rows run two guest builds;
   `Send`/`GuestEventually` take the directory as their last argument;
+  `save` = the three save slots, `SaveRuntimeChecks`, log `Temp/save-matrix.log`: the slots live in
+  `Temp/save-matrix-saves` for the run (`SaveSlots.DirectoryOverride`), the rows leave and re-host with
+  `PrototypeSessionUI.StartLocalHost(slot)` — the driver's own host has no slot, so a stale save never
+  leaks into any other job; one guest in `Temp/save-guest` (an upgrade back by name) — about 4 minutes;
   `air` = the tank and health, `AirRuntimeChecks`, log `Temp/air-matrix.log`, the host alone
   (drain at 1× and 1.5× sprinting on the virtual keyboard, L, suffocation to death, revive)
   then one guest in `Temp/air-guest` (replication, the ride up on an empty tank) — about 5 minutes;

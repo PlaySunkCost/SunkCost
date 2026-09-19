@@ -407,6 +407,44 @@ namespace SunkCost.Interaction
             slots.Value = InventorySlots.None;
         }
 
+        // What this player carries, for the save: the held item (and its slot, if
+        // it has one) and the four slots by index.
+        [Server]
+        public CarryableItem ServerCarried(CarryableItem[] bySlot, out int heldSlot)
+        {
+            CarryableItem held = ServerFindHeld();
+            InventorySlots current = slots.Value;
+            for (int i = 0; i < InventorySlots.Count; i++)
+            {
+                CarryableItem item = Resolve(current.Get(i));
+                bySlot[i] = item != null && item != held && item.HolderClientId == Owner.ClientId && item.State == ItemState.Stowed ? item : null;
+            }
+            heldSlot = held == null ? -1 : current.IndexOf(held.ObjectId);
+            return held;
+        }
+
+        // The saved hands and slots put back on a fresh player: freshly spawned,
+        // free items go straight into the slots and the hand (no reach, no line of
+        // sight — nothing was in the world to reach).
+        [Server]
+        public void ServerRestoreCarried(CarryableItem held, int heldSlot, CarryableItem[] bySlot)
+        {
+            InventorySlots current = slots.Value;
+            for (int i = 0; i < InventorySlots.Count && i < bySlot.Length; i++)
+            {
+                CarryableItem item = bySlot[i];
+                if (item == null || !item.IsSpawned) continue;
+                if (item.ServerStowFromWorld(Owner, player)) current = current.With(i, item.ObjectId);
+            }
+            if (held != null && held.IsSpawned && held.ServerGrab(Owner, player))
+            {
+                if (held.FitsInSlot && heldSlot >= 0 && heldSlot < InventorySlots.Count && current.Get(heldSlot) == InventorySlots.Empty)
+                    current = current.With(heldSlot, held.ObjectId);
+            }
+            slots.Value = current;
+            ServerRecomputeCarriedMass();
+        }
+
         // Every spawned NetworkObject this player carries (hands and slots), for a
         // scene move: FishNet moves only spawned root objects, and a carrier's
         // items must travel with it (docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md 5.6).

@@ -245,6 +245,17 @@ If a method name does not say who calls it and who runs it, rename it.
   with the connection; the server handles their ownership and inventory state.
 - The **host owns the save.** If the host quits, the run ends. Host migration is
   explicitly out of scope for v1 — revisit only if it turns out to be cheap.
+  **Built 19 September 2026:** the slot is a JSON file on the host's machine
+  (`RunSave`, `SaveSlots`), written by the server alone whenever the crew is
+  at HQ (`WorldSceneFlow.ServerSaveRun`) and read once at server start; no
+  client ever sends save data. A person is identified by their Steam id in
+  Steam mode (the admission ledger's seat identity) and by their display name
+  on a LAN; what the slot keeps for them — upgrades, hands and slots — is
+  granted and spawned by the server when their name has landed
+  (`PlayerIdentity` → `WorldSceneFlow.ServerIdentityKnown`), once per
+  connection. Items come back as fresh server spawns with their saved value
+  and state; nothing about the save crosses the wire except the ordinary
+  replicated result.
 - The HQ harness has four inventory slots plus hands, but no death or persistent
   run. In this harness only, disconnect despawns the temporary avatar and drops
   held, stowed and still-released items near that player's last position under

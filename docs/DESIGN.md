@@ -31,6 +31,26 @@ save point, so a cycle is a commitment you can't put down halfway. Miss the quot
 here and everyone walks the plank — the run is over. The cabin on the docked ship
 is dead: there is no diving from HQ.
 
+**The save (built 19 September 2026, Dan).** Every player has **three save
+slots** on their own machine, named **Save 1, 2, 3** until renamed. Hosting
+shows the three: pick one — an empty slot starts a new run under the name you
+type; a used slot **continues** its run (its name, day, balance and last save
+time on the row), can be **renamed**, or **deleted** (a second press confirms).
+The host owns the run: the slot is written **automatically whenever the crew is
+at HQ** — on docking, after paying the quota, after every buy, at the cast-off,
+when someone leaves, when the run ends on the plank (the slot keeps its name,
+the run in it starts over) and when the host leaves — never at sea or below,
+so a cycle cannot be put down halfway. A slot keeps the crew's run (the day
+count, payday, the cycle's hand-over, the balance, the run's days and clock,
+the court's count), **everything in the storage room** where it lay, and for
+**every person who was ever in the run**, by identity — the Steam account, or
+the display name on a LAN — their bought upgrades and **whatever they carried**
+in their hands and slots at the last save. Guests bring nothing of their own:
+join the host's run and you get your gear back. Loose items anywhere else (a
+tank dropped on the pier, a coin on the deck) are not kept. A run hosted
+without a slot — the editor's checks — keeps nothing. The Continue-from-the-menu
+screen is IMGUI for now; the main menu card (Phase 03) redraws it.
+
 **Scene 2 — the ship at sea.** The same ship that was docked at HQ, now alone on
 the ocean. Where you live during a cycle, between days. One big **monitor** on
 board is the ship's only control: it lists every site and HQ, and choosing a

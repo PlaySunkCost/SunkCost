@@ -449,6 +449,41 @@ namespace SunkCost.World
             phase.Value = DayPhase.AtHQ;
         }
 
+        // ---- the save (19 September 2026) ---------------------------------------------
+
+        // The run as the slot keeps it (RunSave). Written at HQ only, so the phase
+        // is AtHQ and nothing is riding, sailing or below.
+        [Server]
+        public void ServerCapture(RunSaveData into)
+        {
+            into.day = day.Value;
+            into.payday = payday.Value;
+            into.diveDone = diveDone.Value;
+            into.cycleSales = cycleSales.Value;
+            into.balance = balance.Value;
+            into.runDays = runDays.Value;
+            into.runSeconds = RunSeconds;
+            into.baskets = baskets.Value;
+        }
+
+        // A hosted slot, applied at server start: the crew is at HQ with its run
+        // where the slot left it; the run clock resumes from the saved time.
+        [Server]
+        public void ServerRestore(RunSaveData from)
+        {
+            day.Value = Mathf.Max(0, from.day);
+            payday.Value = from.payday;
+            diveDone.Value = from.diveDone;
+            cycleSales.Value = Mathf.Max(0, from.cycleSales);
+            balance.Value = Mathf.Max(0, from.balance);
+            runDays.Value = Mathf.Max(0, from.runDays);
+            baskets.Value = Mathf.Max(0, from.baskets);
+            runStartTime = Time.unscaledTime - Mathf.Max(0f, from.runSeconds);
+            world.Value = WorldId.HQ;
+            destination.Value = WorldId.HQ;
+            phase.Value = DayPhase.AtHQ;
+        }
+
         // When nobody living is below the dive is done: the phase returns to at-sea
         // (joins allowed, the monitor free) but the day is not over — the deck
         // cabin refuses until the crew ends it.

@@ -83,6 +83,10 @@ namespace SunkCost.Interaction
             return true;
         }
 
+        // A saved tank comes back as it was (the slot's box and hands).
+        [Server]
+        public void ServerSetEmpty(bool value) => empty.Value = value;
+
 #if UNITY_EDITOR
         // Editor checks only: a used tank made full again for the next row.
         [Server]
