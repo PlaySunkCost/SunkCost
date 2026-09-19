@@ -400,7 +400,10 @@ namespace SunkCost.Interaction
             }
 
             if (IsServerStarted && state.Value == ItemState.Free && transform.position.y < VoidY())
+            {
+                Debug.Log($"{name} fell under the world ({gameObject.scene.name}, y {transform.position.y:F2} < {VoidY():F2}, transit {transitSerial}): back to its spot {resetPosition:F2}");
                 ServerReset();
+            }
         }
 
         // Below this an item is lost and comes back to its reset spot: 2 m under
