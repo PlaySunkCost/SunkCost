@@ -325,7 +325,7 @@ namespace SunkCost.Interaction
         }
 
         // The pose with the collider's underside on the floor under it: a ray down
-        // from over the item finds the first solid surface below its centre; if the
+        // from over the item finds the highest solid surface under its top; if the
         // collider's bottom is under that surface the pose is raised by the difference.
         private static readonly RaycastHit[] floorHits = new RaycastHit[16];
         private Vector3 LiftedOntoFloor(Vector3 position)
@@ -340,7 +340,9 @@ namespace SunkCost.Interaction
             {
                 Transform hit = floorHits[i].collider.transform;
                 if (hit.IsChildOf(transform) || hit.GetComponentInParent<CarryableItem>() != null || hit.GetComponentInParent<SunkCost.Player.HQPlayerController>() != null) continue;
-                if (floorHits[i].point.y < position.y && floorHits[i].point.y > floorY) floorY = floorHits[i].point.y;
+                // Under the item's top, not under its centre: a coin settled so far in
+                // that its centre is below the floor's face is the very case to lift.
+                if (floorHits[i].point.y <= bounds.max.y && floorHits[i].point.y > floorY) floorY = floorHits[i].point.y;
             }
             float lift = floorY - bounds.min.y;
             return lift > 0.002f && lift < 0.2f ? position + Vector3.up * lift : position;
@@ -659,6 +661,9 @@ namespace SunkCost.Interaction
             if (transitSerial == 0) return;
             transitSerial = 0;
             transitInCabin = false;
+            // Released where it was placed — and never inside the floor it was placed
+            // on (a box whose centre is under a mesh face gets no contact and falls).
+            PlaceBody(LiftedOntoFloor(transform.position), transform.rotation);
             ApplyRole();
             if (body != null && !body.isKinematic)
             {
