@@ -90,7 +90,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &5521346841083293486
+--- !u!1 &5636526636877207866
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -98,9 +98,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7232038530578940365}
-  - component: {fileID: 3722313117888319115}
-  - component: {fileID: 1167762084787078223}
+  - component: {fileID: 4816405083068048491}
+  - component: {fileID: 2243251892322264418}
+  - component: {fileID: 1139319454188133359}
   m_Layer: 0
   m_Name: Ring
   m_TagString: Untagged
@@ -108,13 +108,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7232038530578940365
+--- !u!4 &4816405083068048491
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5521346841083293486}
+  m_GameObject: {fileID: 5636526636877207866}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.72, z: 0}
@@ -123,21 +123,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3136686461709714770}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &3722313117888319115
+--- !u!33 &2243251892322264418
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5521346841083293486}
+  m_GameObject: {fileID: 5636526636877207866}
   m_Mesh: {fileID: 4300000, guid: 4872830f19934124d86b976e385a7b75, type: 2}
---- !u!23 &1167762084787078223
+--- !u!23 &1139319454188133359
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5521346841083293486}
+  m_GameObject: {fileID: 5636526636877207866}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -212,7 +212,7 @@ Transform:
   m_Children:
   - {fileID: 7131861304633399131}
   - {fileID: 1940272592229189820}
-  - {fileID: 7232038530578940365}
+  - {fileID: 4816405083068048491}
   - {fileID: 8845102661644545259}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -21,7 +21,7 @@ Material:
   m_DoubleSidedGI: 1
   m_CustomRenderQueue: 2450
   stringTagMap:
-    RenderType: TransparentCutout
+    RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3354537738516931654
+--- !u!1 &4881225774765188871
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2553656142688215301}
-  - component: {fileID: 2022120021934688034}
-  - component: {fileID: 6956594926374513639}
+  - component: {fileID: 506748093128874728}
+  - component: {fileID: 2186706986029598392}
+  - component: {fileID: 5746767661564893047}
   m_Layer: 0
   m_Name: Bracket
   m_TagString: Untagged
@@ -18,36 +18,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2553656142688215301
+--- !u!4 &506748093128874728
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3354537738516931654}
+  m_GameObject: {fileID: 4881225774765188871}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.6, y: 0, z: 0}
+  m_LocalPosition: {x: 3.6, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4988323718967024010}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2022120021934688034
+--- !u!33 &2186706986029598392
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3354537738516931654}
+  m_GameObject: {fileID: 4881225774765188871}
   m_Mesh: {fileID: 4300000, guid: cdbdd3f0d002c3e4dae242bf89377735, type: 2}
---- !u!23 &6956594926374513639
+--- !u!23 &5746767661564893047
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3354537738516931654}
+  m_GameObject: {fileID: 4881225774765188871}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -120,8 +120,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4060928059811769605}
-  - {fileID: 2553656142688215301}
   - {fileID: 606455186936175598}
+  - {fileID: 506748093128874728}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8156399681230550317
@@ -241,7 +241,7 @@ Transform:
   m_GameObject: {fileID: 9086456358491347452}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.6, y: 0, z: 0}
+  m_LocalPosition: {x: -3.6, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

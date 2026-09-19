@@ -44,6 +44,49 @@ namespace SunkCost.Editor.Look
             return Folder;
         }
 
+        // What the frame is made of: renderers, triangles, lights, colliders, text —
+        // the census behind a frame-rate question (Dan, 19 September 2026).
+        public static string PerfReport()
+        {
+            var renderers = UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            long tris = 0; int meshRenderers = 0, textMeshes = 0, staticBatched = 0;
+            var byMaterial = new System.Collections.Generic.Dictionary<string, int>();
+            foreach (Renderer r in renderers)
+            {
+                if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                if (r is MeshRenderer) meshRenderers++;
+                if (r.GetComponent<TextMesh>() != null) textMeshes++;
+                if (UnityEditor.GameObjectUtility.AreStaticEditorFlagsSet(r.gameObject, UnityEditor.StaticEditorFlags.BatchingStatic)) staticBatched++;
+                MeshFilter mf = r.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null) tris += mf.sharedMesh.triangles.Length / 3;
+                string mat = r.sharedMaterial != null ? r.sharedMaterial.name : "none";
+                byMaterial[mat] = byMaterial.TryGetValue(mat, out int c) ? c + 1 : 1;
+            }
+            var lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+            int point = 0, spot = 0, dir = 0, shadowed = 0;
+            foreach (Light l in lights)
+            {
+                if (!l.enabled || !l.gameObject.activeInHierarchy) continue;
+                if (l.type == LightType.Point) point++; else if (l.type == LightType.Spot) spot++; else if (l.type == LightType.Directional) dir++;
+                if (l.shadows != LightShadows.None) shadowed++;
+            }
+            int colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsSortMode.None).Length;
+            int meshColliders = UnityEngine.Object.FindObjectsByType<MeshCollider>(FindObjectsSortMode.None).Length;
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"renderers {renderers.Length} (mesh {meshRenderers}, text {textMeshes}, batching-static {staticBatched}); triangles {tris}; lights point {point} spot {spot} dir {dir} shadowed {shadowed}; colliders {colliders} (mesh {meshColliders}); materials {byMaterial.Count}: ");
+            var top = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, int>>(byMaterial);
+            top.Sort((x, y) => y.Value.CompareTo(x.Value));
+            for (int i = 0; i < Mathf.Min(8, top.Count); i++) sb.Append(top[i].Key).Append('=').Append(top[i].Value).Append(' ');
+            return sb.ToString();
+        }
+
+        // The last frame's numbers in Play Mode: batches, draw calls, the frame time.
+        public static string PerfSample()
+        {
+            Camera cam = Camera.main;
+            return $"fps {1f / Mathf.Max(0.0001f, Time.smoothDeltaTime):0.0} (smooth), frame {Time.smoothDeltaTime * 1000f:0.0} ms, draw calls {UnityEditor.UnityStats.drawCalls}, setPass {UnityEditor.UnityStats.setPassCalls}, tris {UnityEditor.UnityStats.triangles}, shadow casters {UnityEditor.UnityStats.shadowCasters}; static batched draws {UnityEditor.UnityStats.staticBatchedDrawCalls}, dynamic {UnityEditor.UnityStats.dynamicBatchedDrawCalls}; vsync {QualitySettings.vSyncCount}, target {Application.targetFrameRate}; cam {(cam != null ? cam.name + " at " + cam.transform.position : "none")}; screen {Screen.width}x{Screen.height}";
+        }
+
         public static string ShootAll()
         {
             Directory.CreateDirectory(Folder);

@@ -72,7 +72,7 @@ namespace SunkCost.Editor.Look
             Light light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root.transform, false);
             light.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = 9f; light.intensity = 4.5f; light.color = new Color(1f, 0.58f, 0.24f); light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = 6f; light.intensity = 5f; // a short reach: 170 of these overlap otherwise (the frame rate) light.color = new Color(1f, 0.58f, 0.24f); light.shadows = LightShadows.None;
             BoxCollider col = root.AddComponent<BoxCollider>();
             col.center = new Vector3(0f, 0.85f, 0f); col.size = new Vector3(0.38f, 1.75f, 0.38f);
         });
@@ -88,7 +88,7 @@ namespace SunkCost.Editor.Look
             Light light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root.transform, false);
             light.transform.localPosition = new Vector3(0f, 3.7f, 0.75f);
-            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = 18f; light.intensity = 10f; light.color = new Color(1f, 0.76f, 0.48f); light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = 14f; light.intensity = 10f; light.color = new Color(1f, 0.76f, 0.48f); light.shadows = LightShadows.None;
             BoxCollider col = root.AddComponent<BoxCollider>();
             col.center = new Vector3(0f, 2f, 0f); col.size = new Vector3(0.5f, 4f, 0.5f);
         });
@@ -270,7 +270,7 @@ namespace SunkCost.Editor.Look
             Light light = new GameObject("Light").AddComponent<Light>();
             light.transform.SetParent(root.transform, false);
             light.transform.localPosition = new Vector3(0f, -sag - 0.5f, 0f);
-            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = length * 0.9f; light.intensity = 5f; light.color = new Color(1f, 0.6f, 0.26f); light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime; light.type = LightType.Point; light.range = Mathf.Min(length * 0.9f, 16f); light.intensity = 5f; light.color = new Color(1f, 0.6f, 0.26f); light.shadows = LightShadows.None;
         });
 
         // A tool board for a booth wall: a panel with hanging shapes in a row.

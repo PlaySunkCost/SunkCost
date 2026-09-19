@@ -69,6 +69,27 @@ namespace SunkCost.Editor.Look
             Dock(shipPrefab);
             Plank(platform);
             Sky(scene);
+            // 4,000 renderers drew one by one (the frame rate, Dan, 19 September 2026):
+            // everything that never moves is batching-static, so Unity draws it in a
+            // few dozen calls. Left dynamic: the ship (it sails), the plank's gate,
+            // the waves, the beacons' pulsing lamps, every text.
+            MarkStatic(platform);
+            MarkStatic(GameObject.Find("Dock"));
+            MarkStatic(GameObject.Find("Sea"));
+        }
+
+        private static void MarkStatic(GameObject root)
+        {
+            if (root == null) return;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.GetComponentInParent<ShipParts>() != null) continue;
+                if (r.GetComponentInParent<HQPlank>() != null) continue;
+                if (r.GetComponentInParent<SunkCost.Look.WaveSurface>() != null) continue;
+                if (r.GetComponentInParent<SunkCost.Look.Beacon>() != null) continue;
+                if (r.GetComponent<TextMesh>() != null) continue;
+                GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic);
+            }
         }
 
         // ---- the deck -------------------------------------------------------------------
