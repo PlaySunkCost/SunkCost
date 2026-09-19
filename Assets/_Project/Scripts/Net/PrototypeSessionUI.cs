@@ -138,9 +138,28 @@ namespace SunkCost.Net
 
         // ---- drawing --------------------------------------------------------------
 
+        // The frame-rate readout (Dan, 19 September 2026): a checkbox in the menu, a
+        // smoothed count in the top-right corner while it is on; remembered between runs.
+        private const string FpsPrefKey = "sunkcost.fps";
+        private static bool fpsOn, fpsLoaded;
+        private static float fpsSmoothed;
+        public static bool FpsCounterOn
+        {
+            get { if (!fpsLoaded) { fpsOn = PlayerPrefs.GetInt(FpsPrefKey, 0) == 1; fpsLoaded = true; } return fpsOn; }
+            set { fpsLoaded = true; if (fpsOn == value) return; fpsOn = value; PlayerPrefs.SetInt(FpsPrefKey, value ? 1 : 0); }
+        }
+
+        private void DrawFps()
+        {
+            float dt = Time.unscaledDeltaTime;
+            if (dt > 0f) fpsSmoothed = fpsSmoothed <= 0f ? 1f / dt : Mathf.Lerp(fpsSmoothed, 1f / dt, 0.1f);
+            GUI.Label(new Rect(Screen.width - 130f, 8f, 120f, 24f), $"{Mathf.RoundToInt(fpsSmoothed)} FPS  {dt * 1000f:0.0} ms", GUI.skin.box);
+        }
+
         private void OnGUI()
         {
             if (controller == null) return;
+            if (FpsCounterOn) DrawFps();
             if (controller.InRoom && !SessionInputGate.MenuOpen)
             {
                 GUILayout.BeginArea(new Rect(18, 18, 300, 26), GUI.skin.box);
@@ -251,6 +270,7 @@ namespace SunkCost.Net
             if (controller.InRoom)
             {
                 if (GUILayout.Button("Resume")) SessionInputGate.Resume();
+                FpsCounterOn = GUILayout.Toggle(FpsCounterOn, "FPS counter");
                 // Unstuck (Dan, 18 September 2026): the server puts you back on a
                 // known spot of the world you are in, then the menu closes.
                 SunkCost.Player.HQPlayerController local = SunkCost.World.WorldSceneFlow.LocalPlayer();

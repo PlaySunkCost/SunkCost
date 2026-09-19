@@ -74,8 +74,14 @@ namespace SunkCost.Editor.Prototype
             // up to and still can't reliably press E on). The glass stays solid at this
             // bearing; only the wall collider needs to step aside for the panel's own collider.
             float panelHalfAngleDeg = Mathf.Asin(Mathf.Clamp01(panelWidthMeters / 2f / wallRadius)) * Mathf.Rad2Deg + 3f;
-            float glassSegmentArcLength = Mathf.PI * 2f * glassRadius / segmentCount * 1.05f;
             float wallSegmentArcLength = Mathf.PI * 2f * wallRadius / segmentCount * 1.05f;
+            // The glass: one smooth curved band round the whole shell but the doorway
+            // (Dan, 19 September 2026: "truly round" — no panes, no seams). A visual
+            // shroud only; collision comes from the floor and the wall ring below.
+            GameObject glassBand = new("Glass");
+            glassBand.transform.SetParent(shellRoot.transform, false);
+            glassBand.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(glassRadius, height, glassThickness, doorwayCenterAngleDeg + doorwayHalfAngleDeg, doorwayCenterAngleDeg - doorwayHalfAngleDeg + 360f, 96);
+            glassBand.AddComponent<MeshRenderer>().sharedMaterial = glass;
 
             for (int i = 0; i < segmentCount; i++)
             {
@@ -83,23 +89,11 @@ namespace SunkCost.Editor.Prototype
                 bool inDoorway = Mathf.Abs(Mathf.DeltaAngle(angleDeg, doorwayCenterAngleDeg)) <= doorwayHalfAngleDeg;
                 bool inPanel = Mathf.Abs(Mathf.DeltaAngle(angleDeg, panelAngleDeg)) <= panelHalfAngleDeg;
                 if (inDoorway)
-                    continue; // doorway gap: no glass pane, no wall collider here
+                    continue; // doorway gap: no wall collider here
 
                 float angleRad = angleDeg * Mathf.Deg2Rad;
                 Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
                 Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
-
-                GameObject glassPane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                glassPane.name = "Glass Pane " + (i + 1);
-                glassPane.transform.SetParent(shellRoot.transform, false);
-                glassPane.transform.localPosition = direction * glassRadius + new Vector3(0f, height / 2f, 0f);
-                glassPane.transform.localRotation = rotation;
-                glassPane.transform.localScale = new Vector3(glassSegmentArcLength, height, glassThickness);
-                glassPane.GetComponent<Renderer>().sharedMaterial = glass;
-                // CreatePrimitive(Cube) attaches a BoxCollider that would seal the car shut.
-                // The shell is a visual shroud only — collision comes from the floor and the
-                // wall ring.
-                Object.DestroyImmediate(glassPane.GetComponent<Collider>());
 
                 if (inPanel)
                     continue; // the control panel's own collider covers this arc instead
@@ -175,6 +169,21 @@ namespace SunkCost.Editor.Prototype
             float doorwayHalfAngleDeg = Mathf.Asin(Mathf.Clamp01(doorwayWidthMeters / 2f / glassRadius)) * Mathf.Rad2Deg;
             float arcLength = Mathf.PI * 2f * glassRadius / segmentCount * 1.05f;
             float wallRadius = glassRadius - 0.02f;
+            // The glass: two smooth bands — the doorway's height with the doorway left
+            // open, the rest of the tube all round (Dan, 19 September 2026: truly round).
+            GameObject lower = new("Glass Lower");
+            lower.transform.SetParent(glassRoot.transform, false);
+            lower.transform.position = new Vector3(0f, bottomY, 0f);
+            lower.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(glassRadius, Mathf.Min(doorwayHeight, height), glassThickness, doorwayCenterAngleDeg + doorwayHalfAngleDeg, doorwayCenterAngleDeg - doorwayHalfAngleDeg + 360f, 96);
+            lower.AddComponent<MeshRenderer>().sharedMaterial = glass;
+            if (height > doorwayHeight + 0.01f)
+            {
+                GameObject upper = new("Glass Upper");
+                upper.transform.SetParent(glassRoot.transform, false);
+                upper.transform.position = new Vector3(0f, bottomY + doorwayHeight, 0f);
+                upper.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(glassRadius, height - doorwayHeight, glassThickness, 0f, 360f, 96);
+                upper.AddComponent<MeshRenderer>().sharedMaterial = glass;
+            }
 
             for (int i = 0; i < segmentCount; i++)
             {
@@ -190,15 +199,6 @@ namespace SunkCost.Editor.Prototype
                 float segmentHeight = topY - segmentBottom;
                 if (segmentHeight <= 0.01f) continue;
 
-                GameObject pane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pane.name = "Tube Pane " + (i + 1);
-                pane.transform.SetParent(glassRoot.transform, false);
-                pane.transform.position = direction * glassRadius + new Vector3(0f, segmentBottom + segmentHeight / 2f, 0f);
-                pane.transform.rotation = rotation;
-                pane.transform.localScale = new Vector3(arcLength, segmentHeight, glassThickness);
-                pane.GetComponent<Renderer>().sharedMaterial = glass;
-                Object.DestroyImmediate(pane.GetComponent<Collider>());
-
                 GameObject wall = new("Tube Wall " + (i + 1), typeof(BoxCollider));
                 wall.transform.SetParent(wallsRoot.transform, false);
                 wall.transform.position = direction * wallRadius + new Vector3(0f, segmentBottom + segmentHeight / 2f, 0f);
@@ -206,27 +206,19 @@ namespace SunkCost.Editor.Prototype
                 wall.GetComponent<BoxCollider>().size = new Vector3(arcLength, segmentHeight, wallThickness);
             }
 
-            // Ribs are hollow rings: the same segmented ring, just outside the glass, a
-            // rib's height tall. A cylinder primitive would be a solid plate across the tube.
+            // Ribs are hollow rings just outside the glass: one round band each (a
+            // cylinder primitive would be a solid plate across the tube). Visual only;
+            // the walls block.
             int ribIndex = 0;
             for (float y = bottomY + ribSpacing; y < topY - 0.1f; y += ribSpacing)
             {
                 GameObject ring = new(ribPrefix + "_" + (++ribIndex));
                 ring.transform.SetParent(parent, false);
-                ring.transform.position = new Vector3(0f, y, 0f);
-                for (int i = 0; i < segmentCount; i++)
-                {
-                    float angleRad = i * 360f / segmentCount * Mathf.Deg2Rad;
-                    Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
-                    GameObject piece = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    piece.name = "Rib Segment " + (i + 1);
-                    piece.transform.SetParent(ring.transform, false);
-                    piece.transform.localPosition = direction * (glassRadius + ribProud / 2f);
-                    piece.transform.localRotation = Quaternion.LookRotation(direction, Vector3.up);
-                    piece.transform.localScale = new Vector3(arcLength, ribHeight, ribProud);
-                    piece.GetComponent<Renderer>().sharedMaterial = rib;
-                    Object.DestroyImmediate(piece.GetComponent<Collider>()); // a visual ring around the outside; the walls block
-                }
+                ring.transform.position = new Vector3(0f, y - ribHeight / 2f, 0f);
+                GameObject band = new("Rib Band");
+                band.transform.SetParent(ring.transform, false);
+                band.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(glassRadius + ribProud / 2f, ribHeight, ribProud, 0f, 360f, 64);
+                band.AddComponent<MeshRenderer>().sharedMaterial = rib;
             }
 
             return doorwayHalfAngleDeg;

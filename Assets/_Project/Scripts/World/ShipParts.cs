@@ -20,6 +20,8 @@ namespace SunkCost.World
         public const string DeckCabinVolumeName = "DeckCabinVolume";
         public const string DeckCabinDoorLName = "DeckCabinDoorL";
         public const string DeckCabinDoorRName = "DeckCabinDoorR";
+        public const string DeckCabinHousingDoorLName = "DeckCabinHousingDoorL"; // the tube's own leaves at the top: shut while the car is away (optional parts)
+        public const string DeckCabinHousingDoorRName = "DeckCabinHousingDoorR";
         public const string DeckCabinButtonName = "DeckCabinButton";
         public const string DeckCabinPanelName = "DeckCabinPanel";
         public const string DeckCabinCarGlassName = "DeckCabinCarGlass"; // the car's own glass, shown while the car is up (optional part)
@@ -38,10 +40,9 @@ namespace SunkCost.World
         public const string BoardingPointName = "BoardingPoint";
         // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
         public const string SafeDeckVolumeName = "SafeDeckVolume";           // the deck proper: where a passenger must stand
-        public const string GangwayPivotName = "GangwayPivot";               // hinge at the ship's edge; rotates to raise
-        public const string GangwayName = "Gangway";                         // the ramp mesh + collider under the pivot
-        public const string GangwayExclusionVolumeName = "GangwayExclusionVolume"; // the ramp and its lip: not aboard, and cargo here blocks departure
         public const string DepartureDirectionName = "DepartureDirection";   // its forward is the straight way out
+        // No gangway on the ship (Dan, 18 September 2026): the HQ's bridge and stair
+        // reach the stern; the ship carries nothing that touches the base.
         public const int SpawnPointCount = 4;
 
         public static readonly string[] RequiredChildren =
@@ -50,7 +51,7 @@ namespace SunkCost.World
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
             StorageAreaName, StorageVolumeName, StorageReadoutName, BoardingPointName,
             TvScreenName, TvCaptionName, TvSpeakerName,
-            SafeDeckVolumeName, GangwayPivotName, GangwayName, GangwayExclusionVolumeName, DepartureDirectionName,
+            SafeDeckVolumeName, DepartureDirectionName,
             SpawnPointPrefix + "1", SpawnPointPrefix + "2", SpawnPointPrefix + "3", SpawnPointPrefix + "4"
         };
 
@@ -60,6 +61,8 @@ namespace SunkCost.World
         public Collider DeckCabinVolume => Find(DeckCabinVolumeName)?.GetComponent<Collider>();
         public Transform DeckCabinDoorL => Find(DeckCabinDoorLName);
         public Transform DeckCabinDoorR => Find(DeckCabinDoorRName);
+        public Transform DeckCabinHousingDoorL => Find(DeckCabinHousingDoorLName);
+        public Transform DeckCabinHousingDoorR => Find(DeckCabinHousingDoorRName);
         public Transform DeckCabinButton => Find(DeckCabinButtonName);
         public TextMesh DeckCabinPanel => Find(DeckCabinPanelName)?.GetComponent<TextMesh>();
         public Transform DeckCabinCarGlass => Find(DeckCabinCarGlassName);
@@ -71,9 +74,6 @@ namespace SunkCost.World
         public TextMesh TvCaption => Find(TvCaptionName)?.GetComponent<TextMesh>();
         public Transform TvSpeaker => Find(TvSpeakerName);
         public Collider SafeDeckVolume => Find(SafeDeckVolumeName)?.GetComponent<Collider>();
-        public Transform GangwayPivot => Find(GangwayPivotName);
-        public Collider GangwayCollider => Find(GangwayName)?.GetComponent<Collider>();
-        public Collider GangwayExclusionVolume => Find(GangwayExclusionVolumeName)?.GetComponent<Collider>();
         public Transform DepartureDirection => Find(DepartureDirectionName);
 
         public Transform SpawnPoint(int index) => Find(SpawnPointPrefix + (index + 1));
@@ -94,17 +94,15 @@ namespace SunkCost.World
 
         public bool IsInStorageRoom(Vector3 worldPosition) => Contains(StorageVolume, worldPosition);
 
-        // Standing on the deck proper, not on the gangway or its lip: what a passenger
-        // needs before the ship may move. Falls back to the aboard volume on a ship
-        // without the departure parts.
+        // Standing on the deck proper (the HQ's stair foot over the stern is not the
+        // ship): what a passenger needs before the ship may move. Falls back to the
+        // aboard volume on a ship without the departure parts.
         public bool IsSafelyAboard(Vector3 worldPosition)
         {
             Collider deck = SafeDeckVolume;
             if (deck == null) return IsAboard(worldPosition);
-            return Contains(deck, worldPosition) && !IsOnGangway(worldPosition);
+            return Contains(deck, worldPosition);
         }
-
-        public bool IsOnGangway(Vector3 worldPosition) => Contains(GangwayExclusionVolume, worldPosition);
 
         public static bool Contains(Collider volume, Vector3 worldPosition)
         {

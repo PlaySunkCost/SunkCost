@@ -43,18 +43,26 @@ what you have against what you owe. A low sill across its doorway keeps a droppe
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
-**Sailing** (decided 15 September 2026). The gangway belongs to the ship: down
-on the pier while docked, lifted before the ship moves, stowed at sea. Someone
-standing on it is not aboard, and cargo lying on it stops the ship ("Clear the
-gangway"). When the monitor accepts a destination everyone is held where they
-stand — you can look around and talk, not walk or use items — the gangway
-lifts, the engine starts and the ship visibly pulls away for about four
-seconds with everyone and everything on the deck riding along at their own
-spots; then the screen fades to black, the scene changes, and you fade back in
-on the stopped ship at the destination. At HQ the gangway lowers before you
-can walk. No docking animation, no steering, no walking on the moving deck in
-this version. Loose deck cargo is secured for the trip: a ball thrown just
-before departure stops where it is and does not keep flying at the far end.
+**Sailing** (decided 15 September 2026; the way aboard changed 18 September
+2026). The ship carries nothing that reaches the base: the way aboard belongs
+to the HQ — a railed bridge off the west rim that meets, level, the roof of
+the ship's bridge tower at its stern; the ship's own stair comes down the
+tower's side to its deck, 6 m below the platform (Dan, 19 September: "the
+stairs near the tower lead to the top of the tower, connected through a bridge
+to the HQ — no staircase down from the HQ, only the bridge"). Someone standing
+on the HQ's bridge or its landing is not aboard; on the tower's roof or its
+stair they are. When
+the monitor accepts a destination everyone is held where they stand — you can
+look around and talk, not walk or use items — the ship casts off (a short
+still moment), the engine starts and the ship visibly pulls away for about
+four seconds with everyone and everything on the deck riding along at their
+own spots; then the screen fades to black, the scene changes, and you fade
+back in on the stopped ship at the destination. At HQ a moment of making fast
+passes before you can walk. No docking animation, no steering, no walking on
+the moving deck in this version. Loose deck cargo is secured for the trip: a
+ball thrown just before departure stops where it is and does not keep flying
+at the far end. (Until 18 September the gangway was the ship's own and cargo
+on it stopped the ship; there is no gangway now.)
 
 **Scene 3 — the elevator and the site.** One scene per site, holding the shaft,
 the moving cabin and the seafloor; reached only from the deck cabin and left only
@@ -260,6 +268,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
+| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing that meets the roof of the moored ship's bridge tower (the **ship**, after Dan's second picture: a 44 × 16 m barge, the glass elevator dead centre in its round rail, the two-storey captain's tower at the stern with the sailing console, the BRIDGE door and the crew's screen on its face, radar, funnels and beacons on its roof, the crane at the bow, the helipad, cargo, the company's name painted on the hull, red fenders; its own stair down the tower's side) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
 
 ---
 
@@ -427,7 +436,7 @@ TV as it is for the diver — the same swap serves a dead diver's eyes on the de
 | System | Decision |
 |---|---|
 | Funds | Shared crew pot. One shop, at HQ only. |
-| The shop | **Built 18 September 2026 (Dan):** a room of things on display at HQ — off the hall's west wall, shelves along its far wall — look at one and press E to buy it from the crew pot; anyone in the crew buys; no menu. A bought item **drops from a chute in the ceiling** onto the landing mark, somewhere on it, so bought things do not stack. The prompt reads `Air tank · $40 — Press E to buy (pot $460)` and the refusal, if any (`Not enough money: $40 needed, $10 in the pot`, `You already have a large tank`, `Step up to the shelf`). Three things for now: the **air tank** ($40, a real tank that **falls to the floor at the delivery spot** in front of the shelves — anyone may take it), the **large tank** ($300, +50 % air: 7.5 minutes) and the **bright headlamp** ($150, a beam ×1.6 as long and ×1.5 as strong). Upgrades are **one per player**, no refunds, shown as small marks on the visor (`L-TANK  LAMP`); others see only the longer beam — a visible tank on the back comes with the shop's art pass. **Lost when you die and your body is not brought up** (§4); kept when it is. Greybox until Dan builds the real shop: the catalogue is data (`ShopCatalog` in Resources: ids, names, prices, prefabs), a stand is a `ShopDisplay` component on any object, the delivery spot a `ShopDeliveryPoint` marker, so the look, the place and the number of stands can change without touching the rules. Prices against the $500 quota: a good first day pays for one upgrade. |
+| The shop | **Built 18 September 2026 (Dan):** things on display at HQ — look at one and press E to buy it from the crew pot; anyone in the crew buys; no menu. **On the platform (later that day):** two counters — **Upgrades** (the large tank, the bright headlamp: click and it is fitted) and **Gear & Supplies** (the air tank and whatever comes: click and it **lands upstairs**, dropping from the chute in the **Pickup** room on the tower's first floor, somewhere on the landing mark, so bought things do not stack). The prompt reads `Air tank · $40 — Press E to buy (pot $460)` and the refusal, if any (`Not enough money: $40 needed, $10 in the pot`, `You already have a large tank`, `Step up to the shelf`). Three things for now: the **air tank** ($40, a real tank that **falls to the floor at the delivery spot** in front of the shelves — anyone may take it), the **large tank** ($300, +50 % air: 7.5 minutes) and the **bright headlamp** ($150, a beam ×1.6 as long and ×1.5 as strong). Upgrades are **one per player**, no refunds, shown as small marks on the visor (`L-TANK  LAMP`); others see only the longer beam — a visible tank on the back comes with the shop's art pass. **Lost when you die and your body is not brought up** (§4); kept when it is. Greybox until Dan builds the real shop: the catalogue is data (`ShopCatalog` in Resources: ids, names, prices, prefabs), a stand is a `ShopDisplay` component on any object, the delivery spot a `ShopDeliveryPoint` marker, so the look, the place and the number of stands can change without touching the rules. Prices against the $500 quota: a good first day pays for one upgrade. |
 | Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. **Built 16 September 2026 (Dan):** a small walled room at the stern (doorway toward the centre line) with a readout over the door — `$<in the box> / $<quota>` and the balance — and the same line in the visor's corner with what is on you. **Both count the cycle, not the box (Dan, 18 September 2026: "I paid 400 already"):** `QUOTA $400/$500 · ON ME $45` on the visor, `quota $400 / $500 (handed over $400 + box $0) · balance $400` on the board — what was handed over at HQ this cycle plus what the box holds. The server sums the loose items inside the room four times a second (`CrewDayState.BoxValue`). |
 | Banked loot | Anything sent up is safe permanently, even on a total wipe. |
 | Quota curve | Gentle for the first few cycles, then accelerating past what a careful crew can earn. Most runs end between cycle 6 and 12. |

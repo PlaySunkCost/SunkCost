@@ -1,0 +1,59 @@
+// The sky at six in the morning (the look card, 18 September 2026): a plain
+// gradient from a navy zenith to a lighter horizon, with a warm glow low on
+// one side where the sun is about to come up. No sun disc, no atmosphere
+// maths: the reference sky is flat and dark and the lamps do the work.
+Shader "Sunk Cost/Sky Gradient"
+{
+    Properties
+    {
+        _Zenith ("Zenith", Color) = (0.04, 0.06, 0.16, 1)
+        _Horizon ("Horizon", Color) = (0.12, 0.18, 0.40, 1)
+        _Glow ("Dawn glow", Color) = (0.95, 0.45, 0.15, 1)
+        _GlowDirection ("Glow direction (xyz)", Vector) = (0.8, 0.0, 0.5, 0)
+        _GlowWidth ("Glow width", Range(0.05, 1)) = 0.35
+        _GlowHeight ("Glow height", Range(0.01, 0.5)) = 0.12
+        _HorizonSharpness ("Horizon sharpness", Range(0.5, 8)) = 2.5
+        _Ground ("Below the horizon", Color) = (0.05, 0.08, 0.18, 1)
+        _Stars ("Stars", Range(0, 2)) = 0.8
+    }
+    SubShader
+    {
+        Tags { "Queue"="Background" "RenderType"="Background" "PreviewType"="Skybox" }
+        Cull Off ZWrite Off
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc"
+            fixed4 _Zenith, _Horizon, _Glow, _Ground; float4 _GlowDirection; float _GlowWidth, _GlowHeight, _HorizonSharpness, _Stars;
+            float hash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            struct appdata { float4 vertex : POSITION; };
+            struct v2f { float4 pos : SV_POSITION; float3 dir : TEXCOORD0; };
+            v2f vert (appdata v) { v2f o; o.pos = UnityObjectToClipPos(v.vertex); o.dir = v.vertex.xyz; return o; }
+            fixed4 frag (v2f i) : SV_Target
+            {
+                float3 d = normalize(i.dir);
+                float up = saturate(d.y);
+                float t = pow(up, 1.0 / _HorizonSharpness);
+                fixed4 sky = lerp(_Horizon, _Zenith, t);
+                float3 g = normalize(_GlowDirection.xyz);
+                float along = saturate(dot(normalize(float3(d.x, 0, d.z)), g));
+                float lobe = pow(along, 1.0 / _GlowWidth);
+                float low = saturate(1.0 - abs(d.y) / _GlowHeight);
+                sky = lerp(sky, _Glow, lobe * low * low * 0.9);
+                // Stars: one per cell of a grid over the direction, a few of them lit,
+                // fading out toward the horizon and into the dawn glow.
+                float2 cell = floor(d.xz / max(d.y, 0.05) * 18.0 + 100.0);
+                float2 inCell = frac(d.xz / max(d.y, 0.05) * 18.0 + 100.0) - 0.5;
+                float seed = hash(cell);
+                float star = saturate(1.0 - length(inCell - (float2(hash(cell + 7.0), hash(cell + 13.0)) - 0.5) * 0.6) / 0.08);
+                star *= step(0.93, seed) * (0.5 + seed) * saturate(up * 3.0) * (1.0 - lobe * low) * _Stars;
+                sky.rgb += star;
+                fixed4 ground = lerp(_Ground, _Horizon, saturate(1.0 + d.y * 12.0));
+                return d.y >= 0 ? sky : ground;
+            }
+            ENDCG
+        }
+    }
+}

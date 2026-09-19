@@ -640,7 +640,8 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => r.Contains("tvLive=False") && r.Contains("tvCaption=NO SIGNAL") && !Loaded(r, "DiveSite01"), 20f, "T3 B's TV says NO SIGNAL and the dive world is gone from B", GuestDirB);
             Check(!WorldSceneFlow.Instance.IsWatching(idB, out _), "T3 the server tracks no watch for B");
             yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T3 the host is still watched by dead A only (" + hostHud.Visor.OnAirCount + ")");
-            host.TeleportLocal(sea.FromShipLocal(new Vector3(-2.5f, 0.05f, -3f)), sea.FromShipYaw(-90f)); yield return Wait(0.3f);
+            // Two metres off the screen on the port rail (the deck is 16 m wide since 19 September 2026; the old spot was out of reach).
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(-ShipStubBuilder.DeckWidth / 2f + 2.5f, 0.05f, -3f)), sea.FromShipYaw(-90f)); yield return Wait(0.3f);
             H.ClientLookAtNamed(ShipParts.TvScreenName);
             yield return Expect(() => host.CurrentTv != null, 3f, () => "T3 the dot is on the TV screen");
             Check(H.PromptText().Contains("NO SIGNAL"), "T3 the prompt reads NO SIGNAL: " + H.PromptText());

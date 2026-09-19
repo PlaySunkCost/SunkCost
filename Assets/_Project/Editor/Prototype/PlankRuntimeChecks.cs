@@ -284,6 +284,21 @@ namespace SunkCost.Editor.Prototype
             List<Transform> pierPoints = CrewSpawner.SpawnPointsIn(WorldScenes.Scene(WorldId.HQ));
             yield return Expect(() => pierPoints.Exists(p => Vector3.Distance(p.position, host.transform.position) < 1f), 3f, () => "U1 back on a pier spawn point: " + host.transform.position.ToString("F1"));
             Check(!flow.ServerUnstuck(host.Owner, out unstuckWhy) && unstuckWhy == "Just did", "U1 a second press right after is refused: " + unstuckWhy);
+            // C1 — the court counts (Dan, 18 September 2026): a loose basketball dropped
+            // through the west hoop's ring is a basket on the day state and the backboard.
+            Transform hoopTrigger = GameObject.Find("Hoop W")?.transform.Find("Score Trigger");
+            Check(hoopTrigger != null, "C1 the west hoop has its score trigger");
+            CarryableItem courtBall = H.Item("Basketball (2)");
+            Rigidbody courtBody = courtBall.GetComponent<Rigidbody>();
+            int basketsBefore = Day.Baskets;
+            courtBody.position = hoopTrigger.position + Vector3.up * 0.7f; courtBody.linearVelocity = Vector3.down * 2f;
+            yield return Expect(() => Day.Baskets == basketsBefore + 1, 3f, () => $"C1 the ball through the ring counts one basket ({Day.Baskets})");
+            yield return null;
+            TextMesh scoreboard = GameObject.Find("Hoop W")?.transform.Find("Score")?.GetComponent<TextMesh>();
+            Check(scoreboard != null && scoreboard.text == "BASKETS " + Day.Baskets, "C1 the backboard shows it: " + (scoreboard == null ? "none" : scoreboard.text));
+            yield return Wait(0.5f);
+            Check(Day.Baskets == basketsBefore + 1, "C1 a ball rattling in the ring counts once");
+
             // Something to lose: an upgrade, a ball in hand, and a bought tank on the shop's floor.
             host.Upgrades.ServerGrant(PlayerUpgrade.LargeTank);
             ShopDisplay tankStand = null;
@@ -301,7 +316,7 @@ namespace SunkCost.Editor.Prototype
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
             Check(ball.State == ItemState.Held && ball.HolderClientId == host.OwnerId && host.Upgrades.Has(PlayerUpgrade.LargeTank), "P0 the host holds a ball and owns the large tank");
             Day.ServerForceCycleForChecks(3, true); // payday, nothing in the box, $0
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return Wait(0.3f);
+            H.ClientMoveLocalPlayerToBoard(); yield return Wait(0.3f);
             int paySerial = Day.LastPay.Serial;
             Check(flow.ServerPay(host.Owner, out string payWhy), "P0 the pay press is taken: " + payWhy);
             yield return Expect(() => Day.LastPay.Serial > paySerial && Day.LastPay.Lost, 3f, () => "P0 short at payday: the run is lost");
@@ -336,6 +351,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => ScreenFade.Instance != null && ScreenFade.Instance.IsBlack, 3f, () => "P2 the screen is black with the card");
             yield return Expect(() => Day.Phase == DayPhase.AtHQ, card + 4f, () => "P2 the fresh run after the card (phase " + Day.Phase + ")");
             Check(Day.Day == 0 && Day.Balance == 0 && Day.CycleSales == 0 && !Day.Payday && Day.RunDays == 0 && !Day.Plank.Active, "P2 day 0, $0, no cycle, the plank off");
+            Check(Day.Baskets == 0, "P2 the court's count starts again with the run");
             Check(host.Upgrades.Owned == PlayerUpgrade.None, "P2 the upgrades are gone");
             yield return Expect(() => !plank.GateUp, 1f, () => "P2 the gate is down again for the fresh run"); // a frame behind the phase (HQPlank.Update)
             // The world as it was found (Dan, 18 September 2026: "oxygen tanks are still
@@ -359,7 +375,7 @@ namespace SunkCost.Editor.Prototype
             int guestId = remote.OwnerId;
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=HQ"), 20f, "G1 guest joined at HQ");
             Day.ServerForceCycleForChecks(3, true);
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return Wait(0.3f);
+            H.ClientMoveLocalPlayerToBoard(); yield return Wait(0.3f);
             paySerial = Day.LastPay.Serial;
             Check(flow.ServerPay(host.Owner, out string payWhy2), "G1 the pay press is taken: " + payWhy2);
             yield return Expect(() => Day.LastPay.Serial > paySerial && Day.LastPay.Lost && Day.Phase == DayPhase.Plank, 3f, () => "G1 lost again: the plank");

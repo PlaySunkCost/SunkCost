@@ -1180,7 +1180,7 @@ namespace SunkCost.Editor.Prototype
 
             // Z3: look at the board: the prompt offers the pay. Pay with the quota set to
             // the coin's worth: sold, paid exactly, a new cycle, the coin gone.
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return null;
+            H.ClientMoveLocalPlayerToBoard(); yield return null;
             H.ClientLookAtNamed(SunkCost.World.QuotaBoard.BoardName); yield return null; yield return null;
             Check(host.CurrentQuotaBoard != null && H.PromptText().Contains("Press E to pay the quota"), "Z3 looking at the board offers the pay: " + H.PromptText());
             WorldLoopSettings.QuotaOverrideForTests = coinValue;

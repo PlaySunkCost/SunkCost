@@ -269,7 +269,7 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator Pay(int serialBefore)
         {
             HQPlayerController host = Host();
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return null;
+            H.ClientMoveLocalPlayerToBoard(); yield return null;
             H.ClientLookAtNamed(QuotaBoard.BoardName); yield return null; yield return null;
             Check(host.CurrentQuotaBoard != null, "looking at the board: " + H.PromptText());
             Say("prompt: " + H.PromptText());
@@ -472,7 +472,7 @@ namespace SunkCost.Editor.Prototype
             H.ClientMoveLocalPlayerTo(hqShip.SpawnPoint(0).position); yield return Wait(0.3f);
             H.ClientRequestEndDay();
             yield return ExpectRefusal("Not at sea", "End day at the dock is refused");
-            H.ClientMoveLocalPlayerTo(new Vector3(-2.5f, 0f, -4.4f)); yield return Wait(0.3f);
+            H.ClientMoveLocalPlayerToBoard(); yield return Wait(0.3f);
             H.ClientRequestPay();
             yield return ExpectRefusal("Nothing to pay yet — dive first", "paying twice is refused");
 

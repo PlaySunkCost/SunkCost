@@ -3,6 +3,7 @@ using SunkCost.Interaction;
 using SunkCost.Net;
 using SunkCost.World;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SunkCost.Player
 {
@@ -329,10 +330,45 @@ namespace SunkCost.Player
         private HQPlayerController Who => spectator != null && spectator.Active && spectator.Target != null ? spectator.Target : controller;
         private PlayerInventory ShownInventory => Who == controller ? inventory : Who.Inventory;
 
+        // Nothing shows while you merely look at a thing (Dan, 19 September 2026:
+        // "I don't like these"). A press that does nothing — "Not at sea", "Hands
+        // full", a refusal from the server — shows its words for a moment, once.
+        private string notice;
+        private float noticeUntil;
+        private string lastInventoryRefusal, lastUpgradeRefusal;
+        private const float NoticeSeconds = 1.8f;
+
+        private void Notice(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            notice = text;
+            noticeUntil = Time.unscaledTime + NoticeSeconds;
+        }
+
+        private static bool IsAnOffer(string prompt) =>
+            prompt.StartsWith("Press E") || prompt.StartsWith("Hold E") || prompt.StartsWith("Left click") || prompt.Contains("— Press E");
+
+        private void WatchPresses()
+        {
+            Keyboard keyboard = Keyboard.current;
+            Mouse mouse = Mouse.current;
+            bool pressed = SessionInputGate.CanPlay && ((keyboard != null && keyboard.eKey.wasPressedThisFrame) || (mouse != null && mouse.leftButton.wasPressedThisFrame));
+            if (pressed)
+            {
+                string prompt = PromptText;
+                if (!string.IsNullOrEmpty(prompt) && PlankPrompt() == null && !IsAnOffer(prompt)) Notice(prompt);
+            }
+            string refusal = inventory.Refusal;
+            if (refusal != lastInventoryRefusal) { lastInventoryRefusal = refusal; Notice(refusal); }
+            string upgrade = controller.Upgrades != null ? controller.Upgrades.Refusal : string.Empty;
+            if (upgrade != lastUpgradeRefusal) { lastUpgradeRefusal = upgrade; Notice(upgrade); }
+        }
+
         private void Update()
         {
             if (inventory == null || !inventory.IsOwner) return;
             if (spectator == null) spectator = controller.Spectator;
+            WatchPresses();
             HQPlayerController who = Who;
             bool watching = who != controller;
             Compute(own, who, ShownInventory, controller.PlayerCamera, watching);
@@ -828,7 +864,9 @@ namespace SunkCost.Player
 
         private void DrawPrompt()
         {
-            string text = PromptText;
+            // The plank's turn is the one line that stays up; everything else is a notice after a press.
+            string text = PlankPrompt();
+            if (text == null && Time.unscaledTime < noticeUntil) text = notice;
             if (string.IsNullOrEmpty(text)) return;
             float width = 420f;
             GUI.Label(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.5f + 28f, width, 28f), text, promptStyle);

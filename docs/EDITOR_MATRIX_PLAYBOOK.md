@@ -18,6 +18,11 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   day card (`DAY 2 OF 3`, `PAYDAY`); **U3/U4** unstuck on the deck and below (`plank` **U1/U2** at HQ and refused to the
   jumper); `plank` **P0–P2** also the gate and the world's items reset; `spectate` **D1/D2** the arms hidden with the body,
   **S3/T** the diver's head shown again after the TV's render;
+  `plank` also **C1** (a ball through the west hoop counts once, the backboard shows it; P2 the count resets); the HQ is the
+  platform since 18 September 2026 — **Create or Update HQ** regenerates the textures, the materials, the prop prefabs
+  that do not exist yet and the scene (`Sunk Cost/Look/Rebuild look props` rewrites every prop from code and loses
+  hand edits to them; `Regenerate textures and materials` alone for a palette change); rows that stood in the old hall
+  by coordinates (camera clearance, hands, inventory) are matrix debt until they are re-placed;
   `plank` = the plank at HQ, `PlankRuntimeChecks`, log `Temp/plank-matrix.log`: a lost payday, the board and
   the prompt, sailing and the shop refused, the host placed and pushed, the card, the fresh run; then a guest in
   `Temp/plank-guest` (the host jumps, the guest is next and pushed, both start over) — about 3 minutes;

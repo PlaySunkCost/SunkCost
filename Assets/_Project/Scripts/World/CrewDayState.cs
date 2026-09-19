@@ -168,6 +168,13 @@ namespace SunkCost.World
         public bool HasJumped(int clientId) => jumped.Contains(clientId);
         public RunOverReport RunOver => runOver.Value;
         public int RunDays => runDays.Value;
+        // The court's count (Dan, 18 September 2026: "a ball through the hoop
+        // counts"): baskets this run, server-written by HoopScore, shown on the
+        // backboards. Nothing else reads it.
+        private readonly SyncVar<int> baskets = new(0);
+        public int Baskets => baskets.Value;
+        [Server]
+        public void ServerAddBasket() => baskets.Value = baskets.Value + 1;
         public float RunSeconds => Time.unscaledTime - runStartTime; // server view
         public event Action<RunOverReport> RunOverChanged;
         // How many watch this player: the dead spectating it, plus the TV when it is the channel.
@@ -435,6 +442,7 @@ namespace SunkCost.World
             payday.Value = false;
             diveDone.Value = false;
             runDays.Value = 0;
+            baskets.Value = 0;
             runStartTime = Time.unscaledTime;
             jumped.Clear();
             plank.Value = new PlankState { Active = false, Jumper = -1, Serial = plank.Value.Serial + 1 };

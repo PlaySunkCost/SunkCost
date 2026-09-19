@@ -113,7 +113,7 @@ namespace SunkCost.Sites
                     // Interior Walls can have fewer segments than Glass Shell (the control
                     // panel's own arc is skipped for walls only, see below) but never more —
                     // both come from the same ring over the same doorway gap.
-                    if (interiorWalls != null && interiorWalls.childCount > glassShell.childCount)
+                    if (interiorWalls != null && glassShell.childCount > 1 && interiorWalls.childCount > glassShell.childCount) // one smooth band since 19 September 2026: nothing to compare
                         errors.Add($"Interior Walls has {interiorWalls.childCount} segments but Glass Shell only has {glassShell.childCount} — they must come from the same ring over the same angles.");
                 }
 
@@ -232,7 +232,9 @@ namespace SunkCost.Sites
                     Transform pane = tubeGlass.childCount > 0 ? tubeGlass.GetChild(0) : null;
                     if (pane != null)
                     {
+                        Renderer paneRenderer = pane.GetComponent<Renderer>();
                         float radius = new Vector2(pane.position.x, pane.position.z).magnitude;
+                        if (radius < 0.1f && paneRenderer != null) radius = paneRenderer.bounds.extents.x - 0.025f; // one round band since 19 September 2026: its bounds say the radius
                         if (Mathf.Abs(radius - settings.TubeRadiusMeters) > 0.05f) errors.Add($"Shaft tube radius is {radius:0.00} m, expected {settings.TubeRadiusMeters:0.00} m (car radius + tubeClearanceMeters).");
                     }
                 }

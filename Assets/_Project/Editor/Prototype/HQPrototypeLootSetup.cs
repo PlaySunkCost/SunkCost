@@ -41,15 +41,16 @@ namespace SunkCost.Editor.Prototype
         // the hooks read this; nothing else decides names or positions.
         public static readonly FixtureEntry[] Manifest =
         {
-            Ball("Basketball", new Vector3(0f, 1f, 0f)),
-            Ball("Basketball (2)", new Vector3(1.5f, 1f, 1.5f)),
-            Ball("Basketball (3)", new Vector3(-1.5f, 1f, 1.5f)),
+            // On the platform (18 September 2026): the basketballs by the court's west hoop, the heavy balls by the crew's mark.
+            Ball("Basketball", new Vector3(-20f, 1f, -8f)),
+            Ball("Basketball (2)", new Vector3(-18.5f, 1f, -8.6f)),
+            Ball("Basketball (3)", new Vector3(-21f, 1f, -0.4f)),
             // Blue is heavy but one-handed and slot-able (Dan, 14/09): two of them so
             // the slots can be loaded past the 25 kg capacity for the overload test.
-            Heavy("HeavyBallBlue", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(3f, 1f, 0f)),
-            Heavy("HeavyBallBlue (2)", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(3f, 1f, 2.5f)),
-            Heavy("HeavyBallPurple", "HeavyBallPurple", "Purple ball", 0.55f, 12f, new Color(0.55f, 0.22f, 0.80f), CarryGrip.TwoHands, new Vector3(-3f, 1f, 0f)),
-            Heavy("HeavyBallBlack", "HeavyBallBlack", "Black ball", 0.70f, 20f, new Color(0.13f, 0.13f, 0.15f), CarryGrip.TwoHands, new Vector3(0f, 1f, -3.5f))
+            Heavy("HeavyBallBlue", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(12f, 1f, -7f)),
+            Heavy("HeavyBallBlue (2)", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(14f, 1f, -7f)),
+            Heavy("HeavyBallPurple", "HeavyBallPurple", "Purple ball", 0.55f, 12f, new Color(0.55f, 0.22f, 0.80f), CarryGrip.TwoHands, new Vector3(8f, 1f, 1f)),
+            Heavy("HeavyBallBlack", "HeavyBallBlack", "Black ball", 0.70f, 20f, new Color(0.13f, 0.13f, 0.15f), CarryGrip.TwoHands, new Vector3(14f, 1f, 1f))
         };
 
         public static int SceneItemCount => Manifest.Length;

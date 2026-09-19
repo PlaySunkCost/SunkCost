@@ -321,6 +321,13 @@ namespace SunkCost.World
             SetVisible(ship.DeckCabinCarGlass, present);
             doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
             doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
+            // The tube's own leaves mirror the car's while it is up and stay shut while
+            // it is away, like the gate at the seafloor (Dan, 19 September 2026: "only the
+            // elevator's doors close at the top").
+            float housingOpen = present ? open : 0f;
+            Transform housingL = ship.DeckCabinHousingDoorL, housingR = ship.DeckCabinHousingDoorR;
+            if (housingR != null) housingR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * housingOpen, 0f);
+            if (housingL != null) housingL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * housingOpen, 0f);
             // The doorway blocks only with the doors shut: nobody walks into the
             // housing while the car is away. Moving doors are walked through (the
             // leaves have no colliders, like the car's); the server turns them around

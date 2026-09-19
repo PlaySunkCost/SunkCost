@@ -41,8 +41,8 @@ namespace SunkCost.World
                 switch (trip.Stage)
                 {
                     case DepartureStage.Preparing: return "All aboard — hold on";
-                    case DepartureStage.RaisingGangway: return "Raising the gangway";
-                    case DepartureStage.Arriving: return trip.ToWorld == WorldId.HQ ? "Docked — lowering the gangway" : "Arrived at Site 01";
+                    case DepartureStage.RaisingGangway: return "Casting off";
+                    case DepartureStage.Arriving: return trip.ToWorld == WorldId.HQ ? "Docked — making fast" : "Arrived at Site 01";
                     default: return "Sailing " + where + "…";
                 }
             }

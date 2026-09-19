@@ -42,7 +42,7 @@ namespace SunkCost.Sites
         private const float PanelChestHeightMeters = 1.3f;
         private const float PanelDoorwayOffsetDeg = 75f; // 60-90 degrees off the doorway centre: visible on entry, clear of a post at +45
         private const float DoorThicknessMeters = 0.1f;
-        private const int DoorLeafPanelCount = 3; // small flat panels per leaf, enough to read as curved
+        private const int DoorLeafPanelCount = 8; // small flat panels per leaf, smooth enough to read as round (Dan, 19 September 2026)
         private const float BakedDoorwayBearingDeg = 0f; // local bearing the whole prefab is built at; DiveSiteBuilder rotates instances to face the real spawn direction
 
         public static GameObject EnsurePrefab(Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings)
@@ -58,10 +58,12 @@ namespace SunkCost.Sites
             try
             {
                 RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
-                RoundCabinGeometry.CreateFramePosts(root.transform, carRadius, interiorHeight, frame, BakedDoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
+                // No frame posts: the car is clean, clear glass like the tube (Dan, 19 September 2026).
                 float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
 
-                GameObject panel = RoundCabinGeometry.CreateWallPanel(root.transform, "Control Panel", interiorRadius, panelAngleDeg, PanelWidthMeters, PanelHeightMeters, PanelThicknessMeters, PanelChestHeightMeters, panelAccent);
+                // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
+                Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
+                GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
                 panel.AddComponent<ElevatorControlPanel>();
                 // Cube's default BoxCollider is exactly what the interactor's raycast needs to
                 // hit, and it visually stands out from the frame posts via the accent material.
@@ -74,7 +76,7 @@ namespace SunkCost.Sites
                 // instance after PrefabUtility.InstantiatePrefab, the same way it always has.
                 root.AddComponent<ElevatorController>();
 
-                CreateElevatorDoor(root.transform, interiorRadius, interiorHeight, frame, BakedDoorwayBearingDeg, doorwayHalfAngleDeg);
+                CreateElevatorDoor(root.transform, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, doorwayHalfAngleDeg); // glass leaves: clean, clear (Dan, 19 September 2026)
 
                 // The prefab is regenerated whole on every site rebuild, so the later
                 // cards' additions are part of the build, not patches that a rebuild

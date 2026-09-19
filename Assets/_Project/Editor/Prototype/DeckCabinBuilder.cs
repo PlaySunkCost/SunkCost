@@ -36,9 +36,8 @@ namespace SunkCost.Editor.Prototype
         private const float PanelThicknessMeters = 0.08f;
         private const float PanelChestHeightMeters = 1.3f;
         private const float DoorThicknessMeters = 0.1f;
-        private const int DoorLeafPanelCount = 3;
+        private const int DoorLeafPanelCount = 8; // smooth enough to read as round (Dan, 19 September 2026)
         public const float FloorThicknessMeters = 0.1f;
-        private const float LabelCharacterSize = 0.05f;
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the
         // direction the crew boards from and the ship departs toward, matching the stub's
@@ -56,17 +55,26 @@ namespace SunkCost.Editor.Prototype
             cabin.transform.localPosition = localPosition;
 
             RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Floor", DiameterMeters, FloorThicknessMeters, floor, FloorThicknessMeters / 2f);
-            RoundCabinGeometry.CreateFramePosts(cabin.transform, carRadius, InteriorHeightMeters, frame, DoorwayBearingDeg, PostDoorwayOffsetDeg, CarFrameRadius, "Frame Post");
+            // No frame posts: the tube is clean, clear glass (Dan, 19 September 2026).
             float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
-            RoundCabinGeometry.CreateWallPanel(cabin.transform, ShipParts.DeckCabinButtonName, interiorRadius, panelAngleDeg, PanelWidthMeters, PanelHeightMeters, PanelThicknessMeters, PanelChestHeightMeters, panelAccent);
+            // The button: red, its word on it, facing into the cabin (every button in the game, Dan, 19 September 2026).
+            Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
+            SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
             RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);
 
-            Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters);
-            Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, frame, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
+            Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters); // glass leaves: no dark slabs beside the doorway
+            Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
             // Fully open, permanently: the same rotation ElevatorDoor would reach at rest,
             // set once here since nothing sweeps a static cabin's doors yet.
             doorRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
             doorLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
+            // The tube's own leaves, just inside its glass: open with the car's while it
+            // is up, shut while it is away (WorldSceneFlow.PresentDeckCabin), like the
+            // gate at the seafloor. Parked open here.
+            Transform housingRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorRName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, 0.05f);
+            Transform housingLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorLName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, 0.05f);
+            housingRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
+            housingLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
 
             CreateDoorCollider(cabin.transform, interiorRadius, doorwayHalfAngleDeg);
 
@@ -111,21 +119,11 @@ namespace SunkCost.Editor.Prototype
             float angleRad = DoorwayBearingDeg * Mathf.Deg2Rad;
             Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
 
-            GameObject go = new(ShipParts.DeckCabinPanelName, typeof(TextMesh));
-            go.transform.SetParent(cabinTransform, false);
-            go.transform.localPosition = direction * (interiorRadius + 0.3f) + new Vector3(0f, PanelChestHeightMeters + 0.5f, 0f);
-            // A TextMesh reads correctly to a viewer looking along +Z; this plate sits on the
-            // bow side of the doorway, read by someone approaching from further along the bow
-            // (+Z) looking back toward -Z, so it needs the same 180-degree turn ShipStubBuilder's
-            // Label(..., facingBow: true) already used for this exact part.
-            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            TextMesh mesh = go.GetComponent<TextMesh>();
-            mesh.text = string.Empty;
-            mesh.characterSize = LabelCharacterSize;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(0.9f, 0.95f, 1f);
+            // On a plate over the doorway, read by someone approaching from the bow (+Z)
+            // looking back toward -Z: the plate's +Z faces them (no floating text, Dan,
+            // 19 September 2026).
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, direction * (interiorRadius + 0.2f) + new Vector3(0f, InteriorHeightMeters - 0.5f, 0f), Quaternion.identity, 2.0f, 0.5f, 0.16f, new Color(0.9f, 0.95f, 1f));
+            mesh.text = string.Empty; // the plate's own size and colour; the flow writes the words
         }
     }
 }

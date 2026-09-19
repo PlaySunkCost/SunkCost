@@ -427,6 +427,19 @@ namespace SunkCost.Editor.Prototype
             return "requested pay";
         }
 
+        // In front of the quota board's console, where E pays (the platform, 18
+        // September 2026: the board sits on the Intake counter, facing south).
+        public static string ClientMoveLocalPlayerToBoard()
+        {
+            SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();
+            if (board == null) return "No quota board.";
+            Vector3 front = board.transform.rotation * Vector3.forward; // the console faces the buyer
+            Vector3 flat = new Vector3(front.x, 0f, front.z).normalized;
+            Vector3 at = board.transform.position + flat * 1.6f;
+            at.y = 0f;
+            return ClientMoveLocalPlayerTo(at);
+        }
+
         public static string QuotaBoardText()
         {
             SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();
@@ -536,7 +549,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(target);
             SunkCost.World.ShipDepartureVisual visual = ship != null ? ship.GetComponent<SunkCost.World.ShipDepartureVisual>() : null;
             if (visual == null) return "no ship";
-            return $"rest={visual.RestPosition}; pos={ship.transform.position}; gangway={visual.GangwayAngle:0.#}; lowered={visual.GangwayLowered}; rampCollider={(ship.GangwayCollider != null && ship.GangwayCollider.enabled)}; engineClip={visual.HasEngineClip}";
+            return $"rest={visual.RestPosition}; pos={ship.transform.position}; engineClip={visual.HasEngineClip}";
         }
 
         // Every player and carryable with the Unity scene it sits in on this peer.

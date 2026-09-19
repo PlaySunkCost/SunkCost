@@ -310,13 +310,42 @@ namespace SunkCost.Interaction
                 // little until the car stops, but ends exactly where the server has it,
                 // where a pin from the lagged copy would leave it wrong for good.
                 if (!carRestKnown && !IsServerStarted) return;
-                carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(transform.position);
+                // Landed under way, it may have settled a little into the moving floor
+                // (the floor and the body are stepped apart each frame); pinned at that
+                // depth it would carry it to the other cabin, where a box whose centre
+                // is under the floor's face falls through (cabin matrix E1, 19 September
+                // 2026). Pin it with its underside on the floor.
+                carLocalPosition = carRestKnown ? carRestLocalPosition : car.transform.InverseTransformPoint(LiftedOntoFloor(transform.position));
                 carLocalRotation = carRestKnown ? carRestLocalRotation : Quaternion.Inverse(car.transform.rotation) * transform.rotation;
                 carPinned = true;
                 if (body != null && !body.isKinematic) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.isKinematic = true; }
                 if (body != null) body.interpolation = RigidbodyInterpolation.None; // placed by script each frame, like a held item
             }
             PlaceBody(car.transform.TransformPoint(carLocalPosition), car.transform.rotation * carLocalRotation);
+        }
+
+        // The pose with the collider's underside on the floor under it: a ray down
+        // from over the item finds the highest solid surface under its top; if the
+        // collider's bottom is under that surface the pose is raised by the difference.
+        private static readonly RaycastHit[] floorHits = new RaycastHit[16];
+        private Vector3 LiftedOntoFloor(Vector3 position)
+        {
+            Collider col = PrimaryCollider;
+            if (col == null) return position;
+            Bounds bounds = col.bounds;
+            Vector3 from = new(position.x, bounds.max.y + 0.05f, position.z);
+            int count = Physics.RaycastNonAlloc(from, Vector3.down, floorHits, bounds.size.y + 0.5f, ~0, QueryTriggerInteraction.Ignore);
+            float floorY = float.NegativeInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                Transform hit = floorHits[i].collider.transform;
+                if (hit.IsChildOf(transform) || hit.GetComponentInParent<CarryableItem>() != null || hit.GetComponentInParent<SunkCost.Player.HQPlayerController>() != null) continue;
+                // Under the item's top, not under its centre: a coin settled so far in
+                // that its centre is below the floor's face is the very case to lift.
+                if (floorHits[i].point.y <= bounds.max.y && floorHits[i].point.y > floorY) floorY = floorHits[i].point.y;
+            }
+            float lift = floorY - bounds.min.y;
+            return lift > 0.002f && lift < 0.2f ? position + Vector3.up * lift : position;
         }
 
         private void UnpinFromCar()
@@ -370,23 +399,45 @@ namespace SunkCost.Interaction
                 }
             }
 
-            if (IsServerStarted && state.Value == ItemState.Free && transform.position.y < VoidY())
+            // Frozen cargo is placed by script and cannot fall; it is also placed at
+            // its destination spot a frame before the scene move carries it there,
+            // and the ship moored at the rig lies under the sea ship's line.
+            if (IsServerStarted && state.Value == ItemState.Free && transitSerial == 0 && transform.position.y < VoidY())
+            {
+                Debug.Log($"{name} fell under the world ({gameObject.scene.name}, y {transform.position.y:F2} < {VoidY():F2}, transit {transitSerial}): back to its spot {resetPosition:F2}");
                 ServerReset();
+            }
         }
 
-        // Below this an item is lost and comes back to its reset spot: the sea at
-        // HQ and aboard (y = -2, under the hull), and 20 m under the car's landing
-        // in the dive — the seafloor itself is 45 m down, and a rule of "-2"
-        // there reset every loose item to its spawn spot every physics step (a
-        // coin dropped in the car "disappeared" back onto the seafloor; Dan, 16
-        // September 2026).
-        private const float SeaVoidY = -2f;
+        // Below this an item is lost and comes back to its reset spot: 2 m under
+        // the deck of the ship of its world — the sea at HQ and aboard — and 20 m
+        // under the car's landing in the dive; the seafloor itself is 45 m down,
+        // and a rule of "-2" there reset every loose item to its spawn spot every
+        // physics step (a coin dropped in the car "disappeared" back onto the
+        // seafloor; Dan, 16 September 2026). Measured from the ship since 19
+        // September 2026: the ship moored at the HQ rig lies 6 m under the
+        // platform, and a fixed -2 reset every coin in its storage room the moment
+        // it docked (cabin matrix Z2). Cargo in transit is never lost (above).
+        private const float VoidBelowShipDeckMeters = 2f;
         private const float DiveVoidBelowLandingMeters = 20f;
+        private UnityEngine.SceneManagement.Scene voidScene;
+        private float voidY = float.NegativeInfinity;
         private float VoidY()
         {
-            if (!SunkCost.World.WorldScenes.TryParse(gameObject.scene.name, out SunkCost.World.WorldId world) || world != SunkCost.World.WorldId.Dive) return SeaVoidY;
-            SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
-            return car != null ? car.BottomPosition.y - DiveVoidBelowLandingMeters : float.NegativeInfinity;
+            UnityEngine.SceneManagement.Scene scene = gameObject.scene;
+            bool inWorld = SunkCost.World.WorldScenes.TryParse(scene.name, out SunkCost.World.WorldId world);
+            if (inWorld && world == SunkCost.World.WorldId.Dive)
+            {
+                SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCarCached();
+                return car != null ? car.BottomPosition.y - DiveVoidBelowLandingMeters : float.NegativeInfinity;
+            }
+            if (scene != voidScene)
+            {
+                SunkCost.World.ShipParts ship = inWorld ? SunkCost.World.ShipParts.InScene(scene) : null;
+                voidY = ship != null ? ship.transform.position.y - VoidBelowShipDeckMeters : float.NegativeInfinity;
+                voidScene = scene;
+            }
+            return voidY;
         }
 
         // From Free (a world grab) or from Stowed by the same connection (equip).
@@ -615,6 +666,9 @@ namespace SunkCost.Interaction
             if (transitSerial == 0) return;
             transitSerial = 0;
             transitInCabin = false;
+            // Released where it was placed — and never inside the floor it was placed
+            // on (a box whose centre is under a mesh face gets no contact and falls).
+            PlaceBody(LiftedOntoFloor(transform.position), transform.rotation);
             ApplyRole();
             if (body != null && !body.isKinematic)
             {

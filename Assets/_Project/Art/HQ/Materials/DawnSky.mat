@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DawnSky
+  m_Shader: {fileID: 4800000, guid: abb506c553ece8044b92ac85a8aaa191, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _SUNDISK_HIGH_QUALITY
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _AtmosphereThickness: 1.35
+    - _Exposure: 0.55
+    - _GlowHeight: 0.14
+    - _GlowWidth: 0.3
+    - _HorizonSharpness: 2.2
+    - _Stars: 0.8
+    - _SunDisk: 2
+    - _SunSize: 0.04
+    - _SunSizeConvergence: 5
+    m_Colors:
+    - _Glow: {r: 0.95, g: 0.42, b: 0.14, a: 1}
+    - _GlowDirection: {r: 0.85, g: 0, b: 0.5, a: 0}
+    - _Ground: {r: 0.09, g: 0.24, b: 0.56, a: 1}
+    - _GroundColor: {r: 0.07, g: 0.11, b: 0.24, a: 1}
+    - _Horizon: {r: 0.09, g: 0.15, b: 0.36, a: 1}
+    - _SkyTint: {r: 0.3, g: 0.42, b: 0.8, a: 1}
+    - _Zenith: {r: 0.03, g: 0.05, b: 0.15, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
