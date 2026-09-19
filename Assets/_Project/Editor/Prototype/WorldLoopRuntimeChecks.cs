@@ -270,7 +270,7 @@ namespace SunkCost.Editor.Prototype
             yield return AwaitReply(GuestDir);
             yield return WaitUntil(() => H.MonitorText().StartsWith("Not aboard: " + WorldSceneFlow.DisplayName(guestClient)), 5f, "host monitor shows the guest's refusal");
             yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("monitor=Not aboard: " + WorldSceneFlow.DisplayName(guestClient)), 5f, "S2 guest's monitor shows the same refusal");
-            Vector3 deckSpot = hqShip.FromShipLocal(new Vector3(-2f, 0f, 2f));
+            Vector3 deckSpot = hqShip.FromShipLocal(new Vector3(-5f, 0f, 2f)); // port of the ring rail, clear of the open well
             H.ClientMoveLocalPlayerTo(deckSpot); yield return null; yield return null; yield return null;
             // The host presses from the deck while the guest is ashore.
             H.ClientRequestSail("Sea");
@@ -295,7 +295,8 @@ namespace SunkCost.Editor.Prototype
 
             // S3: a ball on the deck, a ball in the host's hand, everyone aboard, sail.
             CarryableItem deckBall = H.Item("Basketball (2)");
-            deckBall.ServerDropAt(hqShip.FromShipLocal(new Vector3(2f, 0.5f, -3f)));
+            // Starboard of the elevator's ring rail: the well round the car is open to the sea since 19 September 2026.
+            deckBall.ServerDropAt(hqShip.FromShipLocal(new Vector3(5f, 0.5f, -3f)));
             yield return null; yield return null;
             Vector3 deckBallLocalBefore = hqShip.ToShipLocal(deckBall.transform.position);
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
