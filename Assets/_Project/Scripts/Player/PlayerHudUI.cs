@@ -718,16 +718,16 @@ namespace SunkCost.Player
                 GUI.Label(new Rect(hp.x - 60f * t, hp.y + 6f * s, 120f * t, 18f * t), $"HOME {Visor.HomeDistance:0} m", visorSmallStyle);
             }
 
-            // Crew tags over heads; brighter when under the dot.
+            // The distance to each crew member, under the name plate over their head
+            // (PlayerNamePlate carries the name, 20 September 2026); brighter under the dot.
             foreach ((HQPlayerController other, Vector3 head, float distance) in frame.Crew)
             {
                 if (!PlayerVisorMath.TryProject(camera, head, out Vector2 p)) continue;
                 bool lookedAt = Mathf.Abs(p.x - Screen.width * 0.5f) < 60f * s && Mathf.Abs(p.y - Screen.height * 0.5f) < 90f * s;
-                PlayerIdentity otherIdentity = other.GetComponent<PlayerIdentity>();
-                Color crewColour = otherIdentity != null ? otherIdentity.Colour : VisorColor;
+                Color crewColour = VisorColor;
                 crewColour.a = lookedAt ? 1f : 0.7f;
                 GUI.color = crewColour;
-                GUI.Label(new Rect(p.x - 80f * t, p.y - 22f * t, 160f * t, 18f * t), $"{CrewName(other)} · {distance:0} m", lookedAt ? visorStyle : visorSmallStyle);
+                GUI.Label(new Rect(p.x - 80f * t, p.y - 22f * t, 160f * t, 18f * t), $"{distance:0} m", lookedAt ? visorStyle : visorSmallStyle);
             }
 
             // Item brackets; the dot's item in gold with its tag.
@@ -749,12 +749,6 @@ namespace SunkCost.Player
                 }
             }
             GUI.color = previous;
-        }
-
-        private static string CrewName(HQPlayerController other)
-        {
-            PlayerIdentity identity = other.GetComponent<PlayerIdentity>();
-            return identity != null ? identity.DisplayName : PlayerIdentity.Fallback(other.OwnerId);
         }
 
         // The plank (18 September 2026): the jumper is told to jump and how long it
