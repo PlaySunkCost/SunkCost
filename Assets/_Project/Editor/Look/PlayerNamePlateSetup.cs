@@ -25,9 +25,9 @@ namespace SunkCost.Editor.Look
                 GameObject plate = new(PlayerNamePlate.PlateName);
                 plate.transform.SetParent(root.transform, false);
                 plate.transform.localPosition = new Vector3(0f, PlayerNamePlate.HeightMeters, 0f);
-                Transform board = Part(plate, "Plate", MeshKit.Box(new Vector3(Width, Height, 0.06f)), LookMaterials.SignBoard(), Vector3.zero);
-                Transform top = Part(plate, "Frame Top", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f)), LookMaterials.SignGlow(), new Vector3(0f, Height / 2f - 0.02f, 0.03f));
-                Transform bottom = Part(plate, "Frame Bottom", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f)), LookMaterials.SignGlow(), new Vector3(0f, -Height / 2f + 0.02f, 0.03f));
+                Transform board = Part(plate, "Plate", MeshKit.Box(new Vector3(Width, Height, 0.06f), Height / 2f), LookMaterials.SignBoard(), Vector3.zero);
+                Transform top = Part(plate, "Frame Top", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f), 0.015f), LookMaterials.SignGlow(), new Vector3(0f, Height / 2f - 0.03f, 0.03f));
+                Transform bottom = Part(plate, "Frame Bottom", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f), 0.015f), LookMaterials.SignGlow(), new Vector3(0f, -Height / 2f + 0.03f, 0.03f));
                 GameObject text = PropBuilder.Text(plate, "Name", new Vector3(0f, 0f, 0.04f), LineHeight, Color.white, TextAnchor.MiddleCenter);
                 text.GetComponent<TextMesh>().text = "Diver";
                 plate.AddComponent<PlayerNamePlate>().Configure(text.GetComponent<TextMesh>(), new[] { board, top, bottom }, Width);
