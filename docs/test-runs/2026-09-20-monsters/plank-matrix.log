@@ -1,0 +1,71 @@
+Plank matrix started 20/09/2026 18:09:54
+PASS editor is the host with a spawned player
+  · turn 10 s, card 6 s
+
+== P0 — the plank stands off the pier; a lost payday puts the run on it
+PASS P0 HQ has the plank with its base and end
+PASS P0 the gate at the board's base is down while the run is on
+PASS U1 unstuck at HQ is taken: 
+PASS U1 back on a pier spawn point: (7.0, 0.0, -5.0)
+PASS U1 a second press right after is refused: Just did
+PASS C1 the west hoop has its score trigger
+PASS C1 the ball through the ring counts one basket (1)
+PASS C1 the backboard shows it: BASKETS 1
+PASS C1 a ball rattling in the ring counts once
+PASS P0 the shop has the air tank's stand
+PASS P0 an air tank is bought for $40: 
+PASS P0 the tank fell into the shop
+PASS P0 the host holds a ball and owns the large tank
+PASS P0 the pay press is taken: 
+PASS P0 short at payday: the run is lost
+PASS P0 the plank phase; the host is first on the board (phase Plank, jumper 0)
+PASS P0 the board: THE RUN IS OVER | quota $500 missed (handed over $0) | walk the plank
+PASS P0 sailing is refused: The run is over
+PASS P0 the shop is shut: The run is over
+
+== P1 — the host stands on the board, free to move, told to jump; pushed when its time runs out
+PASS P1 placed at the base of the board (0.0 m)
+PASS P1 the prompt: WALK THE PLANK — jump when you are ready · 10 s
+PASS P1 free to walk
+PASS P1 the gate is up while the crew walks the plank
+PASS P1 the gate stands behind the jumper, between the board and the pier
+PASS P1 the jumper is not inside the gate
+PASS U2 unstuck is refused to the jumper: Walk the plank
+PASS P1 out on the board is allowed: still the jumper, not in the water
+PASS P1 pushed after 10 s: in the water (y=-12.1)
+PASS P1 counted as jumped
+
+== P2 — the last one in: the card, then everything from nothing
+PASS P2 the run-over card was sent
+PASS P2 the card counts the dive days and the minutes of the run (0 days, 0 minutes; no dive this run)
+PASS P2 the screen is black with the card
+PASS P2 the fresh run after the card (phase AtHQ)
+PASS P2 day 0, $0, no cycle, the plank off
+PASS P2 the court's count starts again with the run
+PASS P2 the upgrades are gone
+PASS P2 the gate is down again for the fresh run
+PASS P2 no air tank left anywhere
+PASS P2 the old ball is gone
+PASS P2 the fixture's ball is back on the pier, loose
+PASS P2 empty hands: the ball was dropped
+PASS P2 back on land at a spawn point (y=0.0)
+PASS P2 the screen is clear again
+PASS P2 alive with a full tank
+PASS P2 no plank prompt any more: 
+
+== G1 — with a guest: the host jumps by itself, the guest is next and is pushed; both start over
+PASS guest player spawned
+PASS G1 guest joined at HQ
+PASS G1 the pay press is taken: 
+PASS G1 lost again: the plank
+PASS G1 the host (id 0) goes first
+PASS G1 the guest reads the plank phase
+PASS G1 the host is at the base
+PASS G1 the host jumped
+PASS G1 the guest is next (jumper 1)
+PASS G1 the guest was placed at the base (0.0 m)
+PASS G1 the guest, not jumping, was pushed into the water (y=-12.1)
+PASS G1 the fresh run (phase AtHQ)
+PASS G1 the guest reads the fresh run, alive, no upgrades
+PASS G1 both back on land
+MATRIX_PASS

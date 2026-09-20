@@ -1,0 +1,115 @@
+Air matrix started 20/09/2026 17:56:20
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerVitals (run the vitals setup)
+  · tank 300s, sprint ×1.5, suffocation 8/s, max health 100
+
+== A0 — on the ship the suit is off: a full tank that does not count
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS A0 full tank and full health on deck (air 1, health 100)
+PASS A0 two seconds on deck cost no air
+PASS A0 L on deck does nothing (the suit is off)
+
+== A1 — below, the tank counts: one second of air a second while walking
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS A1 the tank counts once landed (air 0.93)
+PASS A1 standing still: 1.00 s of air per second (target 1)
+PASS A1 not sprinting while standing
+PASS A1 health untouched with air in the tank
+
+== A2 — sprinting drains the tank faster
+  · A2 sprinted 12.0 m; server saw sprinting=True; drain 1.50/s
+PASS A2 the server judged the run a sprint from the copy's speed
+PASS A2 sprint drain 1.50 s of air per second (target 1.5)
+PASS A2 stopped: no longer sprinting
+
+== A3 — L takes a step off the tank
+PASS A3 two presses of L took 10.5% (target 10%)
+PASS A3 the low-air flag follows the threshold
+
+== K1 — an air tank on the site: half a tank back, then it is an empty one
+PASS K1 Air tank 1 lies on the seafloor
+PASS K1 it is a Full air tank: breathe on use, worth nothing
+PASS the dot is on Full air tank
+PASS Full air tank grabbed (Held)
+PASS K1 in hand, the prompt says what left click does: Left click to breathe from the tank (+50% air)
+  · K1 air down to 21% before breathing
+PASS K1 the tank empties on left click
+PASS K1 half a tank back: 21% → 71%
+PASS K1 now a Empty air tank: nothing on use
+PASS K1 it turned grey: AirTankEmpty
+PASS K1 its inventory icon is the empty one: AirTankEmpty
+PASS K1 still in the hand
+PASS K1 no prompt for an empty tank: ''
+PASS K1 left click does nothing with an empty tank (Held)
+PASS K1 Q drops it (Free)
+PASS K1 the empty tank gave no air
+
+== K2 — a second tank never fills past full
+PASS K2 Air tank 2 lies full on the seafloor
+PASS the dot is on Full air tank
+PASS Full air tank grabbed (Held)
+  · K2 air 70% before breathing
+PASS K2 the second tank empties
+PASS K2 the tank is full and no fuller (100%)
+
+== K3 — a breath with the air already full is refused: the tank is kept
+PASS K3 the tank in hand is full again (checks only)
+PASS K3 the prompt says the air is full: Full air tank — your air is full, keep it for later
+PASS K3 left click at full air: the tank stays full (100%)
+PASS K3 the refusal reads: Your air is full — keep the tank
+PASS K3 dropped
+
+== A4 — an empty tank costs health, then the ordinary death
+PASS A4 the tank is empty after 20 presses
+PASS A4 the visor reads NO AIR
+PASS A4 suffocating: 8.0 health a second (target 8)
+PASS A4 the HP bar shows it (0.84)
+PASS A4 dead of suffocation
+PASS A4 the ordinary death: a body where the host stood
+PASS A4 nobody living below: the dive is done
+PASS A4 the dead host was carried to the ship
+
+== A5 — End day: alive again with a full tank and full health
+PASS A5 the site closed
+PASS A5 End day accepted: 
+PASS A5 revived
+PASS A5 full tank and health after the revive (air 1, health 100)
+
+== G1 — a guest's tank and health replicate to the host
+PASS the guest's copy is here
+PASS G1 the guest joined at sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/3 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS G1 the guest is in the site
+PASS G1 the guest's tank counts on the server (0.93)
+PASS G1 the guest reads its own air within 2 % of the server's
+PASS G1 the guest reads the host's air within 2 %
+PASS G1 the guest reads the day's fresh tanks as Full air tank
+PASS G1 Air tank 1 lies full below again
+PASS the dot is on Full air tank
+PASS Full air tank grabbed (Held)
+PASS G1 the host breathed from it
+PASS G1 the guest reads the used tank as an Empty air tank
+PASS G1 dropped
+
+== G2 — a ride up on an empty tank: health floors at 1 in the car, a new tank on deck
+PASS G2 the guest's tank is empty
+PASS G2 the car took the press (refusal: )
+PASS G2 riding up
+PASS G2 in the car the guest still suffocates (97 → 62) but cannot die
+PASS G2 the ride up completed
+PASS G2 the guest reached the deck alive with 1 health
+PASS G2 a new tank on deck
+PASS G2 the host's tank is new too
+PASS G2 health lost stays lost on deck
+  · done
+MATRIX_PASS
