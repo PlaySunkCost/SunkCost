@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace SunkCost.Editor.Look
 {
-    // The name plate over the head, built onto PrototypePlayer.prefab in the kit's
-    // materials (PlayerNamePlate reads the name and turns it). Run once; a rebuild
-    // replaces the old plate.
+    // The name over the head — floating text with a drop shadow, no plate (Dan,
+    // 20 September 2026, after his reference) — built onto PrototypePlayer.prefab
+    // (PlayerNamePlate reads the name and turns it). Run once; a rebuild replaces it.
     public static class PlayerNamePlateSetup
     {
-        private const float Width = 1f, Height = 0.3f, LineHeight = 0.17f;
+        private const float LineHeight = 0.13f;
 
         [MenuItem("Sunk Cost/Look/Player name plate onto the player prefab")]
         public static void ApplyFromMenu() => Debug.Log("Name plate: " + (Apply() ? "built" : "unchanged"));
@@ -25,28 +25,16 @@ namespace SunkCost.Editor.Look
                 GameObject plate = new(PlayerNamePlate.PlateName);
                 plate.transform.SetParent(root.transform, false);
                 plate.transform.localPosition = new Vector3(0f, PlayerNamePlate.HeightMeters, 0f);
-                Transform board = Part(plate, "Plate", MeshKit.Box(new Vector3(Width, Height, 0.06f), Height / 2f), LookMaterials.SignBoard(), Vector3.zero);
-                Transform top = Part(plate, "Frame Top", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f), 0.015f), LookMaterials.SignGlow(), new Vector3(0f, Height / 2f - 0.03f, 0.03f));
-                Transform bottom = Part(plate, "Frame Bottom", MeshKit.Box(new Vector3(Width, 0.03f, 0.02f), 0.015f), LookMaterials.SignGlow(), new Vector3(0f, -Height / 2f + 0.03f, 0.03f));
-                GameObject text = PropBuilder.Text(plate, "Name", new Vector3(0f, 0f, 0.04f), LineHeight, Color.white, TextAnchor.MiddleCenter);
-                text.GetComponent<TextMesh>().text = "Diver";
-                plate.AddComponent<PlayerNamePlate>().Configure(text.GetComponent<TextMesh>(), new[] { board, top, bottom }, Width);
+                // The name and, a hair behind and below it, its shadow (the same words in dark).
+                GameObject shadow = PropBuilder.Text(plate, "Shadow", new Vector3(0.008f, -0.008f, -0.006f), LineHeight, new Color(0f, 0f, 0f, 0.7f), TextAnchor.MiddleCenter);
+                GameObject text = PropBuilder.Text(plate, "Name", Vector3.zero, LineHeight, new Color(0.96f, 0.96f, 0.96f, 0.95f), TextAnchor.MiddleCenter);
+                text.GetComponent<TextMesh>().text = shadow.GetComponent<TextMesh>().text = "Diver";
+                plate.AddComponent<PlayerNamePlate>().Configure(text.GetComponent<TextMesh>(), shadow.GetComponent<TextMesh>());
                 foreach (Renderer r in plate.GetComponentsInChildren<Renderer>(true)) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false; }
                 PrefabUtility.SaveAsPrefabAsset(root, path);
                 return true;
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
-        }
-
-        // A mesh part with no collider (nothing about a name blocks anyone).
-        private static Transform Part(GameObject parent, string name, Mesh mesh, Material material, Vector3 localPosition)
-        {
-            GameObject go = new(name);
-            go.transform.SetParent(parent.transform, false);
-            go.transform.localPosition = localPosition;
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            go.AddComponent<MeshRenderer>().sharedMaterial = material;
-            return go.transform;
         }
     }
 }
