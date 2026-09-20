@@ -50,7 +50,7 @@ namespace SunkCost.Monsters
         private void Awake()
         {
             cue.OnChange += OnCueChanged;
-            hitSerial.OnChange += (_, next, _) => { if (next != 0 && Time.frameCount != clientStartFrame) Hit?.Invoke(); };
+            hitSerial.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; if (next != 0 && Time.frameCount != clientStartFrame) Hit?.Invoke(); };
         }
 
         public override void OnStartClient()

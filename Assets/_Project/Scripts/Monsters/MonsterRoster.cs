@@ -42,6 +42,8 @@ namespace SunkCost.Monsters
             Scene dive = WorldScenes.Scene(WorldId.Dive);
             if (!dive.IsValid() || !dive.isLoaded) { rolled = false; firstDiverAt = -1f; wreck = null; return; }
             if (rolled) return;
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null || day.Elevator.State != SunkCost.Diving.ElevatorState.AtBottom) { firstDiverAt = -1f; return; } // the riders are listed below from the top of the ride down
             if (CreatureSenses.Divers().Count == 0) { firstDiverAt = -1f; return; }
             if (firstDiverAt < 0f) firstDiverAt = Time.time;
             if (Time.time - firstDiverAt < MonsterSettings.Get().WakeDelaySeconds) return;

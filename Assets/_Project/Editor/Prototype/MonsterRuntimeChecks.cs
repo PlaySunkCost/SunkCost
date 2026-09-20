@@ -563,7 +563,7 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoCar();
             yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 5f, () => "G1 the host stepped in and died");
             Check(Day.Ghost.SlamSerial == slamsBefore + 1 && !Day.Ghost.Active, "G1 the doors slammed and the car is clean");
-            yield return GuestEventually(r => Field(r.Split('\n')[0], "slamsHeard") >= 1f, 8f, "G1 the guest heard the slam");
+            yield return GuestEventually(r => Field(r, "slamsHeard") >= 1f, 8f, "G1 the guest heard the slam");
             Check(PlayerBody.FindFor(host.OwnerId, WorldScenes.Scene(WorldId.Dive)) != null, "G1 the ordinary death: a body in the car");
             yield return Expect(() => Day.Phase == DayPhase.AtSea && Day.DiveDone, 5f, () => "G1 nobody living below: the dive is done");
             yield return Expect(() => host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 60f, () => "G1 the dead host was carried to the ship");

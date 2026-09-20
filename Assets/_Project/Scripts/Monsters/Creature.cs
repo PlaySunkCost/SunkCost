@@ -67,8 +67,8 @@ namespace SunkCost.Monsters
         protected virtual void Awake()
         {
             mover = GetComponent<CharacterController>();
-            pose.OnChange += (_, next, _) => PoseChanged?.Invoke((CreaturePose)next);
-            strikeSerial.OnChange += (_, next, _) => { if (next != 0) Struck?.Invoke(); };
+            pose.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; PoseChanged?.Invoke((CreaturePose)next); };
+            strikeSerial.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; if (next != 0) Struck?.Invoke(); };
         }
 
         public override void OnStartNetwork()
