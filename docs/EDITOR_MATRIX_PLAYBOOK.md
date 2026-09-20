@@ -52,7 +52,9 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   killers (W2 the guest, A2 the host) — about 9 minutes. **Every other job runs with
   `MonsterSettings.RosterOverrideForTests` set to an empty draw and the Ghost's chance at 0 by the
   driver**, so no old row meets a Walker; the monsters job sets its own and the driver clears both
-  after it. Rows spawn what they need with `MonsterRoster.ServerSpawnForChecks` (awake at once),
+  after it — and every Play Mode entry resets both (`MonsterSettings.ResetForPlayMode`), because
+  the editor enters Play Mode without a domain reload and an override from a killed run once
+  emptied Dan's own dive (20 September 2026). Rows spawn what they need with `MonsterRoster.ServerSpawnForChecks` (awake at once),
   place with `Creature.ServerPlaceForChecks`, read `ServerStatus`/`M.MonstersText()`, and clear with
   `MonsterTestHooks.ServerDespawnMonsters`. The guest's peer took `lamp` (slot 1/0) and `patch` (the
   nearest living teammate — the peer cannot hold a key), its player line `lamp=`, `leak=`,

@@ -167,6 +167,19 @@ namespace SunkCost.Monsters
         public static MonsterKind[] RosterOverrideForTests;
         public static float? GhostChanceOverrideForTests;
 
+        // The editor enters Play Mode without a domain reload, so a matrix's "no
+        // monsters" override would outlive its run into Dan's next session (20
+        // September 2026: "I just walked and didn't see any monster"). Every Play
+        // Mode entry starts with the settings' own draw.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetForPlayMode()
+        {
+            RosterOverrideForTests = null;
+            GhostChanceOverrideForTests = null;
+            loaded = null;
+            looked = false;
+        }
+
         private static MonsterSettings loaded;
         private static bool looked;
         public static MonsterSettings Get()
