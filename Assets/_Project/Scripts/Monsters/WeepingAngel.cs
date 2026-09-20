@@ -12,12 +12,16 @@ namespace SunkCost.Monsters
     {
         public bool ServerWatched { get; private set; }
         public int ServerWatcherId { get; private set; } = -1;
+        private float lastWatchedAt = float.NegativeInfinity;
+        // A remote diver's eyes reach the server a little late: the freeze outlasts the last watched frame by this.
+        private const float GraceSeconds = 0.25f;
 
         protected override void ServerThink(float dt)
         {
             ServerWatched = CreatureSenses.Watched(EyePoint, Settings, out HQPlayerController watcher);
             ServerWatcherId = watcher != null ? watcher.OwnerId : -1;
-            if (ServerWatched) { SetPose(CreaturePose.Frozen); return; } // not a turn, not a step
+            if (ServerWatched) lastWatchedAt = Now;
+            if (ServerWatched || Now - lastWatchedAt < GraceSeconds) { SetPose(CreaturePose.Frozen); return; } // not a turn, not a step
             HQPlayerController prey = CreatureSenses.Nearest(transform.position, Settings.AngelWakeMeters);
             if (prey == null) { SetPose(CreaturePose.Idle); SetTarget(-1); return; }
             SetTarget(prey.OwnerId);

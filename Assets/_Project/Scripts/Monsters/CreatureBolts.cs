@@ -94,7 +94,9 @@ namespace SunkCost.Monsters
                     foreach (HQPlayerController diver in CreatureSenses.Divers())
                     {
                         if (CreatureSenses.Safe(diver, settings)) continue;
-                        if (DistanceToSegment(CreatureSenses.Chest(diver), f.Last, now) > settings.BoltHitRadius) continue;
+                        Vector3 chest = CreatureSenses.Chest(diver);
+                        if (DistanceToSegment(chest, f.Last, now) > settings.BoltHitRadius) continue;
+                        if (!CreatureSenses.ClearLine(ClosestOnSegment(chest, f.Last, now), chest)) continue; // a wall between the bolt and the diver
                         PlayerVitals vitals = diver.Vitals;
                         if (vitals != null && vitals.ServerDamage(f.Damage, true, f.Cause))
                         {
@@ -109,12 +111,13 @@ namespace SunkCost.Monsters
             }
         }
 
-        private static float DistanceToSegment(Vector3 point, Vector3 a, Vector3 b)
+        private static float DistanceToSegment(Vector3 point, Vector3 a, Vector3 b) => Vector3.Distance(point, ClosestOnSegment(point, a, b));
+        private static Vector3 ClosestOnSegment(Vector3 point, Vector3 a, Vector3 b)
         {
             Vector3 ab = b - a;
             float len = ab.sqrMagnitude;
             float t = len < 0.0001f ? 0f : Mathf.Clamp01(Vector3.Dot(point - a, ab) / len);
-            return Vector3.Distance(point, a + ab * t);
+            return a + ab * t;
         }
     }
 }

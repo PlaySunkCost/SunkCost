@@ -48,6 +48,9 @@ namespace SunkCost.Monsters
         private float sidestepUntil = -1f;
         private bool awake;
         private float wakeAt = -1f;
+        private int clientStartFrame = -1;
+        // Where it appeared: an idle creature drifts back here (the Listener after the car's call).
+        public Vector3 Home { get; private set; }
 
         public MonsterKind Kind => kind;
         public CreaturePose Pose => (CreaturePose)pose.Value;
@@ -67,8 +70,18 @@ namespace SunkCost.Monsters
         protected virtual void Awake()
         {
             mover = GetComponent<CharacterController>();
-            pose.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; PoseChanged?.Invoke((CreaturePose)next); };
-            strikeSerial.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; if (next != 0) Struck?.Invoke(); };
+            // Once per peer (the host sees both passes), and never for a joiner's initial values.
+            pose.OnChange += (_, next, asServer) => { if ((IsServerStarted && !asServer) || Time.frameCount == clientStartFrame) return; PoseChanged?.Invoke((CreaturePose)next); };
+            strikeSerial.OnChange += (_, next, asServer) => { if ((IsServerStarted && !asServer) || Time.frameCount == clientStartFrame) return; if (next != 0) Struck?.Invoke(); };
+        }
+
+        // The site's unload moves a spawned object out of the scene rather than
+        // destroying it (FishNet, on the host): the roster despawns the creatures when
+        // the site goes; this is the last resort for the lists.
+        private void OnDestroy()
+        {
+            All.Remove(this);
+            NoiseSystem.Unregister(this);
         }
 
         public override void OnStartNetwork()
@@ -88,6 +101,7 @@ namespace SunkCost.Monsters
             base.OnStartServer();
             NoiseSystem.Register(this);
             wakeAt = Now + Settings.WakeDelaySeconds;
+            Home = transform.position;
             if (mover != null) mover.enabled = true;
         }
 
@@ -100,6 +114,7 @@ namespace SunkCost.Monsters
         public override void OnStartClient()
         {
             base.OnStartClient();
+            clientStartFrame = Time.frameCount;
             // A copy: the NetworkTransform writes its position; the capsule must not fight it.
             if (!IsServerStarted && mover != null) mover.enabled = false;
         }
@@ -220,9 +235,16 @@ namespace SunkCost.Monsters
 
         protected bool StrikeReady => Now >= strikeReadyAt;
 
-        // Close enough to touch a diver who is not on safe ground.
+        // Close enough to touch a diver who is not on safe ground: within reach, on the
+        // same floor, with nothing (a wreck wall) between its eyes and the diver's chest.
         protected bool WithinReach(HQPlayerController diver) =>
-            diver != null && !CreatureSenses.Safe(diver, Settings) && CreatureSenses.Flat(transform.position, diver.transform.position) <= Settings.ReachMeters;
+            diver != null && !CreatureSenses.Safe(diver, Settings)
+            && CreatureSenses.Flat(transform.position, diver.transform.position) <= Settings.ReachMeters
+            && Mathf.Abs(diver.transform.position.y - transform.position.y) < 2f
+            && CreatureSenses.ClearLine(EyePoint, CreatureSenses.Chest(diver));
+
+        // Standing near where it appeared (the idle drift's goal).
+        protected bool AtHome => CreatureSenses.Flat(transform.position, Home) < 2f;
 
         // The strike this kind makes: death for the killers (the ordinary death
         // through WorldSceneFlow.ServerKill, which keeps the deck safe), health and a

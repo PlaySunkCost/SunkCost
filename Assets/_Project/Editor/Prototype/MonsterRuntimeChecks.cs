@@ -600,7 +600,7 @@ namespace SunkCost.Editor.Prototype
             Creature angel2 = Spawn(MonsterKind.WeepingAngel, Seabed(car, 200f, 26f));
             yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 8f, () => "A2 taken by the Weeping Angel (" + angel2.ServerStatus + ")");
             yield return Expect(() => WorldSceneFlow.FindCar() == null, 90f, () => "A2 the site closed with the dead");
-            Check(Creature.All.Count == 0, "A2 the Angel went with the site");
+            yield return Expect(() => Creature.All.Count(c => c != null) == 0, 10f, () => "A2 the Angel went with the site (" + Creature.All.Count(c => c != null) + " left)");
             yield return Send(Action("leave"));
             yield return Wait(1f);
             Say("done");

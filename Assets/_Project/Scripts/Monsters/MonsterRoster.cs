@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using FishNet;
 using FishNet.Managing;
 using FishNet.Object;
@@ -40,7 +41,15 @@ namespace SunkCost.Monsters
             NetworkManager nm = InstanceFinder.NetworkManager;
             if (nm == null || !nm.IsServerStarted) return;
             Scene dive = WorldScenes.Scene(WorldId.Dive);
-            if (!dive.IsValid() || !dive.isLoaded) { rolled = false; firstDiverAt = -1f; wreck = null; return; }
+            if (!dive.IsValid() || !dive.isLoaded)
+            {
+                // The site is gone: so are its creatures (the unload moves a spawned
+                // object out of the scene on the host rather than destroying it).
+                foreach (Creature c in Creature.All.ToArray())
+                    if (c != null && c.IsServerStarted && c.IsSpawned) c.NetworkObject.Despawn();
+                rolled = false; firstDiverAt = -1f; wreck = null;
+                return;
+            }
             if (rolled) return;
             CrewDayState day = CrewDayState.Instance;
             if (day == null || day.Elevator.State != SunkCost.Diving.ElevatorState.AtBottom) { firstDiverAt = -1f; return; } // the riders are listed below from the top of the ride down

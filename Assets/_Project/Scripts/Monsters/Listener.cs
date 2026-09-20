@@ -41,10 +41,14 @@ namespace SunkCost.Monsters
         {
             if (Now - heardTime > Settings.ListenerForgetSeconds)
             {
-                SetPose(CreaturePose.Idle);
+                // Silence: it drifts back to where it appeared, so the car's call never leaves it at the door.
+                SetPose(AtHome ? CreaturePose.Idle : CreaturePose.Drawn);
+                if (!AtHome) { FaceToward(Home); MoveToward(Home, WalkSpeed * 0.35f, dt, 1.5f); }
                 return;
             }
             FaceToward(heardAt);
+            // The car's scream turns it and draws a bolt, but does not walk it up to the shaft's doorway.
+            bool walk = heardKind != NoiseKind.Elevator || !CreatureSenses.ShaftCentre(out Vector3 shaft) || CreatureSenses.Flat(transform.position, shaft) > Settings.SafeZoneMeters * 3f;
             if (unshot && Now >= nextShotAt && CreatureSenses.Flat(heardAt, transform.position) > 1.5f)
             {
                 bolts.ServerFire(EyePoint, heardAt + Vector3.up * 1.1f, dark: true, Settings.ListenerDamage, MonsterCatalog.DisplayName(Kind));
@@ -53,7 +57,7 @@ namespace SunkCost.Monsters
                 SetPose(CreaturePose.Shooting);
             }
             else if (Pose != CreaturePose.Shooting || Now > nextShotAt - Settings.ListenerShotCooldownSeconds + 0.6f) SetPose(CreaturePose.Drawn);
-            MoveToward(heardAt, WalkSpeed * Settings.ListenerApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
+            if (walk) MoveToward(heardAt, WalkSpeed * Settings.ListenerApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
         }
 
         protected override string ServerBrainStatus() => $" heard={ServerHeard} last={heardKind} ago={(float.IsInfinity(heardTime) ? -1f : Now - heardTime):0.0}s fired={bolts.ServerFired} hits={bolts.ServerHits}";

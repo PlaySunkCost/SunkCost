@@ -17,6 +17,8 @@ namespace SunkCost.Monsters
         private Vector3 rushDir;
         private float rushLeft;
         private bool rushHit;
+        private Vector3 rushLast;
+        private int rushStalled;
         public int ServerRushes { get; private set; }
 
         protected override void ServerThink(float dt)
@@ -53,25 +55,32 @@ namespace SunkCost.Monsters
                     rushDir = rushDir.sqrMagnitude > 0.01f ? rushDir.normalized : transform.forward;
                     rushLeft = Settings.ChargerRushMeters;
                     rushHit = false;
+                    rushLast = transform.position;
+                    rushStalled = 0;
                     ServerRushes++;
                     phase = Phase.Rushing;
                     SetPose(CreaturePose.Rushing);
                     return;
                 case Phase.Rushing:
                 {
-                    Vector3 before = transform.position;
-                    float speed = SprintSpeed * Settings.ChargerRushSpeedFactor;
-                    float step = Mathf.Min(rushLeft, speed * dt);
-                    bool blocked = MoveToward(before + rushDir * (step + 2f), speed, dt, 0f);
-                    rushLeft -= step;
-                    Vector3 after = before + rushDir * step;
-                    if (!rushHit)
+                    // The path the body actually travelled since the last tick (the move
+                    // lands after the brain): a wall that stops it stops the rush and
+                    // nothing behind that wall is hit.
+                    Vector3 here = transform.position;
+                    float travelled = CreatureSenses.Flat(rushLast, here);
+                    if (!rushHit && travelled > 0.01f)
                         foreach (HQPlayerController diver in CreatureSenses.Divers())
                         {
                             if (CreatureSenses.Safe(diver, Settings)) continue;
-                            if (DistanceToSegment(diver.transform.position, before, after) > Settings.ChargerHitRadius + 0.3f) continue;
+                            if (DistanceToSegment(diver.transform.position, rushLast, here) > Settings.ChargerHitRadius + 0.3f) continue;
                             if (Strike(diver, Settings.ChargerDamage)) { rushHit = true; break; }
                         }
+                    float speed = SprintSpeed * Settings.ChargerRushSpeedFactor;
+                    float step = Mathf.Min(rushLeft, speed * dt);
+                    rushStalled = travelled < step * 0.3f && dt > 0f ? rushStalled + 1 : 0;
+                    rushLeft -= Mathf.Max(travelled, 0f);
+                    rushLast = here;
+                    bool blocked = MoveToward(here + rushDir * (step + 2f), speed, dt, 0f) || rushStalled >= 4;
                     if (rushLeft <= 0.01f || blocked)
                     {
                         phase = Phase.Turning;
