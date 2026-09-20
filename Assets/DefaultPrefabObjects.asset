@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: DefaultPrefabObjects
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Managing.Object.DefaultPrefabObjects
   _prefabs:
+  - {fileID: 3455403117760786101, guid: 0169dc9cd717e1849b3641a24551d735, type: 3}
+  - {fileID: 5858233546774328497, guid: 2b70d8ff22074cd4fa54b23f6eee5843, type: 3}
+  - {fileID: 7696592414742249092, guid: c54c33462476f9e4db542e9f32a609be, type: 3}
   - {fileID: 3455403117760786101, guid: d8654699f5894c7449bafe54861f84d8, type: 3}
   - {fileID: 3455403117760786101, guid: f04967762ed5a0b42868a0d2097595d4, type: 3}
   - {fileID: 9028595235081660295, guid: 668054784c5b533448e77c8a7603a97f, type: 3}
   - {fileID: 3455403117760786101, guid: eed9b41f8bfb3c5499fbce2637036c96, type: 3}
   - {fileID: 3455403117760786101, guid: 19bda0a5bb512a24eb1fb24e5c4103ec, type: 3}
+  - {fileID: 1168620776905238831, guid: fa28657239a9c8d41958745a0ff9dcfd, type: 3}
   - {fileID: 3455403117760786101, guid: 4bd106d085613f043a779b2fb1aa88be, type: 3}
   - {fileID: 3455403117760786101, guid: 0b650eb9d53375e4f85923fd3882a9dc, type: 3}
   - {fileID: 3455403117760786101, guid: eb12388b8ab8f9549a10949745198b8e, type: 3}
+  - {fileID: 8695023153383504649, guid: 781cd703e3283144f89ef0686d3a0f7f, type: 3}
+  - {fileID: 962078085943536272, guid: 6d364664d75619e4daf9c9dfc2591acd, type: 3}
   - {fileID: 3455403117760786101, guid: ad4bd2096bad9a1488dfaeb13d2fc8c1, type: 3}
   - {fileID: 364150461512337757, guid: 74fd43e164e6b1047a76c35027d102ee, type: 3}
-  - {fileID: 3455403117760786101, guid: 09511aa6ede6a3a47bde4497697c6a2e, type: 3}
-  - {fileID: 962078085943536272, guid: 6d364664d75619e4daf9c9dfc2591acd, type: 3}
-  - {fileID: 1168620776905238831, guid: fa28657239a9c8d41958745a0ff9dcfd, type: 3}
-  - {fileID: 7696592414742249092, guid: c54c33462476f9e4db542e9f32a609be, type: 3}
-  - {fileID: 5858233546774328497, guid: 2b70d8ff22074cd4fa54b23f6eee5843, type: 3}
   - {fileID: 8531746342306775878, guid: 3cb47d9c2c635864d9ddccfb622d5217, type: 3}
-  - {fileID: 8695023153383504649, guid: 781cd703e3283144f89ef0686d3a0f7f, type: 3}
-  - {fileID: 3455403117760786101, guid: 0169dc9cd717e1849b3641a24551d735, type: 3}
+  - {fileID: 3455403117760786101, guid: 09511aa6ede6a3a47bde4497697c6a2e, type: 3}
