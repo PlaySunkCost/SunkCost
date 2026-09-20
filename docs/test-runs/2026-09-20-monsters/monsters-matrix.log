@@ -1,8 +1,9 @@
-Monsters matrix started 20/09/2026 17:01:23
+Monsters matrix started 20/09/2026 19:06:56
 PASS editor is the host with a spawned player
 PASS the player prefab carries PlayerVitals (run the vitals setup)
 PASS MonsterSettings lives in Resources (run the monster setup)
-  · roster 3 per dive, spawn ≥ 22 m, safe zone 4.5 m, ghost chance 0.25, green 30 s; walker ×0.85; charger 35 HP; lure 35; listener 35; impostor 30
+  · roster 3 per dive, spawn ≥ 22 m, safe zone 4.5 m, ghost chance 0.25, green 30 s; walker ×0.85; angel ×2.5 sprint, screen 75°/2.4; charger 20 m ×3, 35 HP; beams aim 0.4 s; lure 35; listener 35; impostor 30 at ×1 walk
+PASS the settings carry Dan's numbers (Angel ×2.5, Charger 20 m ×3, Impostor at walking speed)
 PASS Monster LongWalker is a registered spawnable
 PASS Monster WeepingAngel is a registered spawnable
 PASS Monster Charger is a registered spawnable
@@ -27,25 +28,25 @@ PASS M0 the ride down rolled no Ghost (never the first arrival)
 == R1 — the day's roster: three distinct walkers on the seabed, away from the shaft and the divers
 PASS R1 3 monsters spawned (target 3)
 PASS R1 exactly 3 monsters
-PASS R1 distinct kinds: Impostor, Listener, Charger
+PASS R1 distinct kinds: Lure, LongWalker, Impostor
 PASS R1 the roster on the day state made the draw
-PASS R1 Impostor appeared 42 m from the shaft (≥ 22)
+PASS R1 Lure appeared 27 m from the shaft (≥ 22)
+PASS R1 Lure appeared clear of the divers (they are in the car)
+PASS R1 LongWalker appeared 42 m from the shaft (≥ 22)
+PASS R1 LongWalker appeared clear of the divers (they are in the car)
+PASS R1 Impostor appeared 41 m from the shaft (≥ 22)
 PASS R1 Impostor appeared clear of the divers (they are in the car)
-PASS R1 Listener appeared 28 m from the shaft (≥ 22)
-PASS R1 Listener appeared clear of the divers (they are in the car)
-PASS R1 Charger appeared 40 m from the shaft (≥ 22)
-PASS R1 Charger appeared clear of the divers (they are in the car)
+PASS R1 Lure stands in the dive scene
+PASS R1 Lure stands on the seabed (y -44.5)
+PASS R1 Lure keeps off the safe ground (26.6 m from the shaft)
+PASS R1 LongWalker stands in the dive scene
+PASS R1 LongWalker stands on the seabed (y -44.5)
+PASS R1 LongWalker keeps off the safe ground (41.9 m from the shaft)
 PASS R1 Impostor stands in the dive scene
 PASS R1 Impostor stands on the seabed (y -44.5)
-PASS R1 Impostor keeps off the safe ground (41.8 m from the shaft)
-PASS R1 Listener stands in the dive scene
-PASS R1 Listener stands on the seabed (y -44.5)
-PASS R1 Listener keeps off the safe ground (28.1 m from the shaft)
-PASS R1 Charger stands in the dive scene
-PASS R1 Charger stands on the seabed (y -44.5)
-PASS R1 Charger keeps off the safe ground (39.6 m from the shaft)
+PASS R1 Impostor keeps off the safe ground (41.0 m from the shaft)
 PASS R1 the divers in the car are untouched
-  · R1 Impostor pose=Idle target=-1 at=(12.0, -44.5, -40.0) phase=Choosing wears=/0 touches=0 | Listener pose=Idle target=-1 at=(-23.3, -44.5, 15.6) heard=0 last=Footstep ago=-1.0s fired=0 hits=0 | Charger pose=Idle target=-1 at=(38.6, -44.5, -9.2) phase=Hunting rushes=0
+  · R1 Lure pose=Idle target=-1 at=(24.2, -44.5, 11.0) seen=-1 ago=-1.0s fired=0 hits=0 | LongWalker pose=Idle target=-1 at=(32.4, -44.5, 26.6) | Impostor pose=Idle target=-1 at=(15.5, -44.5, 37.9) phase=Choosing wears=/0 touches=0
 PASS R1 the guest holds copies of the three
 PASS every monster despawned (0 left)
 PASS R1 the guest's copies went with them
@@ -62,7 +63,7 @@ PASS L1 and on again
 PASS spawned LongWalker at (13.0, -44.9, 35.7)
 PASS W1 it saw the host and hunts (LongWalker pose=Hunting target=0 at=(13.0, -44.9, 35.7) prey=0)
 PASS W1 it closes at 3.4 m/s (walking 4 × 0.85 = 3.4)
-PASS W1 out of sight, it still walks after the host: LongWalker pose=Hunting target=0 at=(14.3, -45.0, 23.4) prey=0
+PASS W1 out of sight, it still walks after the host: LongWalker pose=Hunting target=0 at=(14.4, -45.0, 23.3) prey=0
 PASS W1 the guest reads its pose
 PASS W1 it stops at the car's doorway: 5.5 m from the shaft (safe ground 4.5 m)
 PASS W1 inside the car the host is untouched
@@ -72,9 +73,10 @@ PASS every monster despawned (0 left)
 PASS spawned WeepingAngel at (34.6, -44.9, 20.0)
 PASS A1 watched: frozen (WeepingAngel pose=Frozen target=-1 at=(34.6, -44.9, 20.0) watched by 0)
 PASS A1 a frozen Angel does not move
-PASS A1 unwatched: it hunts (WeepingAngel pose=Hunting target=0 at=(34.6, -45.0, 20.0) unwatched)
-PASS A1 it comes at 6.0 m/s (sprint 6)
-PASS A1 looked at again: frozen (WeepingAngel pose=Frozen target=0 at=(26.8, -45.0, 15.5) watched by 0)
+PASS A1 at the edge of the screen it is still frozen (WeepingAngel pose=Frozen target=-1 at=(34.6, -45.0, 20.0) watched by 0)
+PASS A1 unwatched: it hunts (WeepingAngel pose=Hunting target=0 at=(34.5, -45.0, 19.9) unwatched)
+PASS A1 it comes at 15.0 m/s (sprint 6 × 2.5)
+PASS A1 looked at again: frozen (WeepingAngel pose=Frozen target=0 at=(27.9, -45.0, 16.1) watched by 0)
 PASS A1 the host lives
 PASS every monster despawned (0 left)
 
@@ -114,6 +116,7 @@ PASS P3 the guest reads the used kit
 PASS P4 the guest reads its own leak
 PASS P4 the prompt offers the hold: Hold E to patch Mate bof the
 PASS P4 the hold is under way (0.40)
+PASS P4 the visor shows no LAMP OFF with the lamp on
 PASS P4 the prompt counts down: Hold E to patch Mate bof the — 2 s
 PASS P4 the guest's leak is closed by the host's hands
 PASS P4 the host was told: Patched Mate bof the
@@ -124,10 +127,14 @@ PASS P4 the prompt says a kit now: Mate bof the was patched by a friend today �
 == LU1 — the Lure: a bolt of light at a lit lamp; lamps off and it forgets
 PASS LU1 the host's lamp is on
 PASS spawned Lure at (18.0, -44.9, -31.2)
-PASS LU1 it saw the lamp and shot (Lure pose=Shooting target=0 at=(18.0, -44.9, -31.1) seen=0 ago=0.0s fired=1 hits=0)
-PASS LU1 the bolt landed on a diver standing still: health 65, leaking True
+PASS LU1 it saw the lamp and aims (Lure pose=Shooting target=0 at=(18.0, -44.9, -31.1) seen=0 ago=0.0s fired=0 hits=0)
+PASS LU1 the aim is replicated as the tell
+PASS LU1 the beam fired after the aim
+PASS LU1 the beam hit a diver standing still: health 65, leaking True
+PASS LU1 the shot is replicated
 PASS LU1 the guest holds the Lure
 PASS LU1 lamp off
+PASS LU1 the visor says LAMP OFF
 PASS LU1 in the dark it lost interest (Lure pose=Idle target=-1 at=(12.5, -45.0, -21.7) seen=-1 ago=8.0s fired=1 hits=1)
 PASS LU1 no more bolts in the dark (0 after the lamp went off)
 PASS LU1 lamp on again
@@ -137,8 +144,8 @@ PASS every monster despawned (0 left)
 PASS spawned Listener at (-31.2, -44.9, -18.0)
 PASS LI1 a crouch-walk of 3 s made no sound it could hear (heard 0)
 PASS LI1 it stands idle: Listener pose=Idle target=-1 at=(-31.2, -45.0, -18.0) heard=0 last=Footstep ago=-1.0s fired=0 hits=0
-PASS LI1 a sprint is heard (Listener pose=Shooting target=-1 at=(-31.1, -45.0, -18.0) heard=1 last=Sprint ago=0.0s fired=1 hits=0)
-PASS LI1 it shot a dark bolt at the sound
+PASS LI1 a sprint is heard (Listener pose=Shooting target=-1 at=(-31.2, -45.0, -18.0) heard=1 last=Sprint ago=0.0s fired=0 hits=0)
+PASS LI1 it aimed and fired a dark beam at the sound
 PASS LI1 the last thing it heard was a step: Sprint
 PASS LI1 the host lives
 PASS every monster despawned (0 left)
@@ -149,7 +156,7 @@ PASS I1 it chose the guest
 PASS I1 it wears the host's name and colour: Skipper/2
 PASS I1 the host, not the victim, does not see it
 PASS I1 the guest sees it, wearing the host's name
-PASS I1 it came close and chases (Impostor pose=Hunting target=1 at=(-14.7, -45.0, -40.4) phase=Chase wears=Skipper/2 touches=0)
+PASS I1 it walked close and chases at walking speed (Impostor pose=Hunting target=1 at=(-14.7, -45.0, -40.4) phase=Chase wears=Skipper/2 touches=0)
 PASS I1 a touch: the guest at 70 health, leaking True
 PASS I1 30 HP gone (70)
 PASS I1 then it runs away
@@ -199,7 +206,7 @@ PASS every monster despawned (0 left)
 
 == A2 — the Weeping Angel reaches a diver whose back is turned: death
 PASS spawned WeepingAngel at (-8.9, -44.9, -24.4)
-PASS A2 taken by the Weeping Angel (WeepingAngel pose=Hunting target=0 at=(-7.3, -45.0, -20.0) unwatched)
+PASS A2 taken by the Weeping Angel (WeepingAngel pose=Hunting target=0 at=(-7.3, -45.0, -20.1) unwatched)
 PASS A2 the site closed with the dead
 PASS A2 the Angel went with the site (0 left)
   · done

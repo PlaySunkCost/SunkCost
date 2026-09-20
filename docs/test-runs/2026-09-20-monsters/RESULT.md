@@ -1,4 +1,4 @@
-# The monsters — 20 September 2026 — monsters MATRIX_PASS (166 rows); regressions below
+# The monsters — 20 September 2026 — monsters MATRIX_PASS (173 rows); regressions below
 
 Dan's card, decided in one sitting (design §6 "The monsters"): seven monsters,
 nobody fights back, the deck is always safe, three drawn per dive. Built on one
@@ -10,7 +10,7 @@ Host: the editor; guest: the local build of the same revision.
 
 | Job | Result | Log |
 |---|---|---|
-| monsters (new, `MonsterRuntimeChecks`) | MATRIX_PASS, 166 rows — the roster, the lamp, the Long Walker, the Weeping Angel, the Charger, a friend's patch and the once-a-day refusal, the patch kit, the hold on E, the Lure, the Listener, the Impostor, the Elevator Ghost (a return trip waited out, then walked into), End day, day 2 with an empty draw and the two killers | `monsters-matrix.log` |
+| monsters (new, `MonsterRuntimeChecks`) | MATRIX_PASS, 173 rows after Dan's pass (the Angel 2.5x and frozen at the screen's edge, the Charger 20 m x3, the beams' aim and shot, the Impostor at walking speed, LAMP OFF); 166 before it — the roster, the lamp, the Long Walker, the Weeping Angel, the Charger, a friend's patch and the once-a-day refusal, the patch kit, the hold on E, the Lure, the Listener, the Impostor, the Elevator Ghost (a return trip waited out, then walked into), End day, day 2 with an empty draw and the two killers | `monsters-matrix.log` |
 | shop | MATRIX_PASS, 90 rows (the catalogue now four items; the kit's stand) | `shop-matrix.log` |
 | air | MATRIX_PASS, 86 rows | `air-matrix.log` |
 | spectate | MATRIX_PASS, 224 rows | `spectate-matrix.log` |
