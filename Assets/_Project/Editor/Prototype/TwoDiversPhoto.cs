@@ -137,8 +137,15 @@ namespace SunkCost.Editor.Prototype
             ShipParts sea = ShipParts.InWorld(WorldId.Sea);
             H.MoveLocalIntoDeckCabin("Sea");
             Vector3 guestSpot = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f);
-            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
-            yield return Expect(() => GuestPlayer() != null && sea.IsInDeckCabin(GuestPlayer().transform.position + Vector3.up * 0.5f), 10f, () => "player 2 stands in the deck cabin on the host");
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
+                float until = Time.unscaledTime + 4f;
+                while (Time.unscaledTime < until && !(GuestPlayer() != null && sea.IsInDeckCabin(GuestPlayer().transform.position + Vector3.up * 0.5f))) yield return null;
+                if (GuestPlayer() != null && sea.IsInDeckCabin(GuestPlayer().transform.position + Vector3.up * 0.5f)) break;
+                File.AppendAllText(Log, "  move " + (attempt + 1) + ": the guest's copy is at " + (GuestPlayer() != null ? GuestPlayer().transform.position.ToString("F1") : "?") + " (" + lastReply.Split((char)10)[0] + ")" + (char)10);
+            }
+            Check(GuestPlayer() != null && sea.IsInDeckCabin(GuestPlayer().transform.position + Vector3.up * 0.5f), "player 2 stands in the deck cabin on the host");
             for (int press = 0; press < 5 && !Day.Riding; press++)
             {
                 H.MoveLocalIntoDeckCabin("Sea");
