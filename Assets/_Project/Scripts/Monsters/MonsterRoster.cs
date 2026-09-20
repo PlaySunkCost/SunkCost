@@ -24,9 +24,12 @@ namespace SunkCost.Monsters
         private bool rolled;
         private float firstDiverAt = -1f;
         private readonly List<MonsterKind> lastRoll = new();
+        private readonly List<(MonsterKind kind, Vector3 at)> lastSpawns = new();
         private Vector3? wreck;
 
         public IReadOnlyList<MonsterKind> LastRoll => lastRoll;
+        // Where the day's creatures appeared (the checks: they walk from there at once).
+        public IReadOnlyList<(MonsterKind kind, Vector3 at)> LastSpawns => lastSpawns;
         public bool Rolled => rolled;
 
         private void Awake() { Instance = this; }
@@ -49,13 +52,14 @@ namespace SunkCost.Monsters
         {
             rolled = true;
             lastRoll.Clear();
+            lastSpawns.Clear();
             MonsterSettings settings = MonsterSettings.Get();
             MonsterKind[] draw = MonsterSettings.RosterOverrideForTests ?? Draw(settings.MonstersPerDive);
             foreach (MonsterKind kind in draw)
             {
                 if (!TryRandomSpot(settings, out Vector3 at)) { Debug.LogWarning("[Monsters] no clear spot for " + kind); continue; }
                 Creature spawned = ServerSpawn(nm, kind, at, dive);
-                if (spawned != null) lastRoll.Add(kind);
+                if (spawned != null) { lastRoll.Add(kind); lastSpawns.Add((kind, at)); }
             }
             Debug.Log($"[Monsters] day {(CrewDayState.Instance != null ? CrewDayState.Instance.Day : 0)}: {(lastRoll.Count == 0 ? "no monsters" : string.Join(", ", lastRoll))}");
         }

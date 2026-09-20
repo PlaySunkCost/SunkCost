@@ -308,13 +308,21 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Creature.All.Count >= s.MonstersPerDive, s.WakeDelaySeconds + 8f, () => $"R1 {Creature.All.Count} monsters spawned (target {s.MonstersPerDive})");
             Check(Creature.All.Count == s.MonstersPerDive, $"R1 exactly {s.MonstersPerDive} monsters");
             Check(Creature.All.Select(c => c.Kind).Distinct().Count() == Creature.All.Count, "R1 distinct kinds: " + string.Join(", ", Creature.All.Select(c => c.Kind)));
+            MonsterRoster roster = MonsterRoster.Instance;
+            Check(roster != null && roster.Rolled && roster.LastSpawns.Count == Creature.All.Count, "R1 the roster on the day state made the draw");
+            // They walk from their spots at once (an Angel is at the car's edge in seconds): judge the spots.
+            foreach ((MonsterKind kind, Vector3 at) in roster.LastSpawns)
+            {
+                Check(FlatDistance(at, shaft) >= s.SpawnMinMeters - 1f, $"R1 {kind} appeared {FlatDistance(at, shaft):0} m from the shaft (≥ {s.SpawnMinMeters})");
+                Check(FlatDistance(at, host.transform.position) >= s.SpawnClearOfDiversMeters - 2f && FlatDistance(at, remote.transform.position) >= s.SpawnClearOfDiversMeters - 2f, $"R1 {kind} appeared clear of the divers (they are in the car)");
+            }
             foreach (Creature c in Creature.All)
             {
                 Check(c.gameObject.scene == WorldScenes.Scene(WorldId.Dive), "R1 " + c.Kind + " stands in the dive scene");
-                Check(FlatDistance(c.transform.position, shaft) >= s.SpawnMinMeters - 1f, $"R1 {c.Kind} is {FlatDistance(c.transform.position, shaft):0} m from the shaft (≥ {s.SpawnMinMeters})");
-                Check(FlatDistance(c.transform.position, host.transform.position) >= s.SpawnClearOfDiversMeters - 2f && FlatDistance(c.transform.position, remote.transform.position) >= s.SpawnClearOfDiversMeters - 2f, $"R1 {c.Kind} spawned clear of the divers");
                 Check(Mathf.Abs(c.transform.position.y - car.BottomPosition.y) < 2.5f, $"R1 {c.Kind} stands on the seabed (y {c.transform.position.y:0.0})");
+                Check(FlatDistance(c.transform.position, shaft) >= s.SafeZoneMeters - 0.5f, $"R1 {c.Kind} keeps off the safe ground ({FlatDistance(c.transform.position, shaft):0.0} m from the shaft)");
             }
+            Check(!host.IsDead && !remote.IsDead && vitals.Health == vitals.Settings.MaxHealth, "R1 the divers in the car are untouched");
             Say("R1 " + M.MonstersText());
             yield return GuestEventually(r => r.Split('\n').Count(l => l.StartsWith("monster=")) == s.MonstersPerDive, 10f, "R1 the guest holds copies of the three");
             yield return Despawn();
@@ -417,9 +425,6 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(1.5f);
             Check(vitals.Leaking, "P2 a second patch by a friend the same day is refused: still leaking");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("once today"), 6f, "P2 the guest was told why");
-            M.ClientLookAtPlayer(remote); yield return null; yield return null;
-            Check(host.CurrentPatient == remote, "P2 the dot is on the guest");
-            Check(hud.PromptText.Contains("patched by a friend today"), "P2 the prompt says so: " + hud.PromptText);
 
             Heading("P3 — the patch kit: left click closes your own leak, once");
             CarryableItem kit = M.ServerSpawnPatchKit(stand + Vector3.right * 1.2f);
@@ -438,7 +443,6 @@ namespace SunkCost.Editor.Prototype
             host.Inventory.RequestDrop();
             yield return Expect(() => kit.HolderClientId != host.OwnerId, 3f, () => "P3 Q drops it");
             yield return GuestEventually(r => r.Contains("display=" + PatchKitItem.UsedName), 6f, "P3 the guest reads the used kit");
-            host.Inventory.RequestUse(host.PlayerCamera.transform.forward);
 
             Heading("P4 — the hold: E on a leaking friend for three seconds");
             remoteVitals.ServerSetLeak(true);
@@ -453,6 +457,12 @@ namespace SunkCost.Editor.Prototype
             Keys(); yield return null;
             yield return Expect(() => !remoteVitals.Leaking, 4f, () => "P4 the guest's leak is closed by the host's hands");
             yield return Expect(() => vitals.PatchNotice.StartsWith("Patched "), 3f, () => "P4 the host was told: " + vitals.PatchNotice);
+            // The same friend a second time today: the prompt says so and the dot is not offered.
+            remoteVitals.ServerSetLeak(true); yield return Wait(0.3f);
+            Check(remoteVitals.FriendPatchedToday, "P4 the guest reads that a friend patched it today");
+            M.ClientLookAtPlayer(remote); yield return null; yield return null;
+            Check(host.CurrentPatient == remote, "P4 the dot is on the guest again");
+            Check(hud.PromptText.Contains("patched by a friend today"), "P4 the prompt says a kit now: " + hud.PromptText);
             vitals.ServerHealForChecks(); remoteVitals.ServerHealForChecks();
 
             Heading("LU1 — the Lure: a bolt of light at a lit lamp; lamps off and it forgets");
@@ -491,7 +501,8 @@ namespace SunkCost.Editor.Prototype
             Keys(); yield return null;
             Check(ears.ServerHeard == heardBefore && listenerBolts.ServerFired == 0, $"LI1 a crouch-walk of 3 s made no sound it could hear (heard {ears.ServerHeard - heardBefore})");
             Check(listener.Pose == CreaturePose.Idle, "LI1 it stands idle: " + listener.ServerStatus);
-            yield return HostAt(stand, listenerAt);
+            // A sprint across its front: the bolt flies at where a step was and the runner is gone.
+            yield return HostAt(stand, stand + Vector3.Cross(Vector3.up, listenerAt - stand));
             Keys(Key.W, Key.LeftShift);
             yield return Expect(() => ears.ServerHeard > heardBefore, 3f, () => "LI1 a sprint is heard (" + ears.ServerStatus + ")");
             yield return Expect(() => listenerBolts.ServerFired >= 1, 3f, () => "LI1 it shot a dark bolt at the sound");

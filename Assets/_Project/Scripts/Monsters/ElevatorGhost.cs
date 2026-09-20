@@ -65,8 +65,20 @@ namespace SunkCost.Monsters
         private void LateUpdate()
         {
             CrewDayState day = CrewDayState.Instance;
+            if (day == null) { IsGreen = false; Toggle(hum, false); return; }
+            GhostPhase phase = day.Ghost;
             ElevatorController car = WorldSceneFlow.FindCarCached();
-            if (day == null || car == null) { IsGreen = false; Toggle(hum, false); return; }
+            // The slam: counted from the phase's serial even where the car is gone
+            // already (the site closes right after a death), heard at the car when held.
+            if (seenSlam < 0) seenSlam = phase.SlamSerial; // a joiner's old slams are old news
+            else if (phase.SlamSerial != seenSlam)
+            {
+                seenSlam = phase.SlamSerial;
+                if (car != null) slam.transform.position = car.transform.position + Vector3.up * 1.5f;
+                slam.Play();
+                SlamsHeard++;
+            }
+            if (car == null) { IsGreen = false; Toggle(hum, false); return; }
             if (lightCar != car)
             {
                 lightCar = car;
@@ -74,7 +86,6 @@ namespace SunkCost.Monsters
                 lamp = bulb != null ? bulb.GetComponent<Light>() : null;
                 if (lamp != null) baseIntensity = lamp.intensity;
             }
-            GhostPhase phase = day.Ghost;
             bool green = phase.Active && car.State == ElevatorState.AtBottom;
             IsGreen = green;
             if (lamp != null)
@@ -88,10 +99,7 @@ namespace SunkCost.Monsters
                 else if (lamp.color != Warm) { lamp.color = Warm; lamp.intensity = baseIntensity; }
             }
             hum.transform.position = car.transform.position + Vector3.up * 1.5f;
-            slam.transform.position = car.transform.position + Vector3.up * 1.5f;
             Toggle(hum, green);
-            if (seenSlam < 0) seenSlam = phase.SlamSerial; // a joiner's old slams are old news
-            else if (phase.SlamSerial != seenSlam) { seenSlam = phase.SlamSerial; slam.Play(); SlamsHeard++; }
         }
 
         private static void Toggle(AudioSource source, bool on)
