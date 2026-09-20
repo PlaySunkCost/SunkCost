@@ -348,7 +348,7 @@ namespace SunkCost.Editor.Prototype
             yield return GuestMove(guestPark);
             yield return GuestLook(Quaternion.Euler(0f, 200f, 0f) * Vector3.forward);
 
-            Heading("W1 — the Long Walker sees a lit diver and walks after them at 85 % of walking speed; the car is safe");
+            Heading("W1 — the Long Walker sees a lit diver and walks after them slower than a walk; the car is safe");
             Vector3 stand = Seabed(car, 20f, 20f);
             Vector3 walkerAt = Seabed(car, 20f, 38f);
             yield return HostAt(stand, walkerAt);

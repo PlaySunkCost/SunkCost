@@ -43,8 +43,8 @@ namespace SunkCost.Monsters
         [SerializeField] private float sightDarkMeters = 6f;
 
         [Header("The Long Walker")]
-        [Tooltip("Its speed as a fraction of a diver's walking speed: you outwalk it unless you are heavy or you stop.")]
-        [SerializeField] private float walkerSpeedFactor = 0.85f;
+        [Tooltip("Its speed as a fraction of a diver's walking speed: you outwalk it unless you are heavy or you stop (Dan, 20 September 2026: slower than a walk — 0.6).")]
+        [SerializeField] private float walkerSpeedFactor = 0.6f;
 
         [Header("The Weeping Angel")]
         [Tooltip("Frozen while inside any living diver's view within this many metres with a clear line of sight.")]

@@ -24,7 +24,7 @@ MonoBehaviour:
   ghostOncePerDay: 1
   sightMeters: 25
   sightDarkMeters: 6
-  walkerSpeedFactor: 0.85
+  walkerSpeedFactor: 0.6
   angelWatchMeters: 25
   angelWakeMeters: 45
   angelSpeedFactor: 2.5
