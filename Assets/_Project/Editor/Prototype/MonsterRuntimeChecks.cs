@@ -264,7 +264,8 @@ namespace SunkCost.Editor.Prototype
             WorldSceneFlow flow = WorldSceneFlow.Instance;
             Check(Resources.Load<MonsterSettings>(MonsterSettings.ResourceName) != null, "MonsterSettings lives in Resources (run the monster setup)");
             MonsterSettings s = Settings;
-            Say($"roster {s.MonstersPerDive} per dive, spawn ≥ {s.SpawnMinMeters} m, safe zone {s.SafeZoneMeters} m, ghost chance {s.GhostChance}, green {s.GhostSeconds} s; walker ×{s.WalkerSpeedFactor}; charger {s.ChargerDamage} HP; lure {s.LureDamage}; listener {s.ListenerDamage}; impostor {s.ImpostorDamage}");
+            Say($"roster {s.MonstersPerDive} per dive, spawn ≥ {s.SpawnMinMeters} m, safe zone {s.SafeZoneMeters} m, ghost chance {s.GhostChance}, green {s.GhostSeconds} s; walker ×{s.WalkerSpeedFactor}; angel ×{s.AngelSpeedFactor} sprint, screen {s.WatchVerticalFovDeg}°/{s.WatchAspect}; charger {s.ChargerRushMeters} m ×{s.ChargerRushSpeedFactor}, {s.ChargerDamage} HP; beams aim {s.BeamAimSeconds} s; lure {s.LureDamage}; listener {s.ListenerDamage}; impostor {s.ImpostorDamage} at ×{s.ImpostorSpeedFactor} walk");
+            Check(s.AngelSpeedFactor >= 2f && s.ChargerRushMeters >= 20f && s.ChargerRushSpeedFactor >= 3f && s.ImpostorSpeedFactor == 1f, "the settings carry Dan's numbers (Angel ×2.5, Charger 20 m ×3, Impostor at walking speed)");
             foreach (MonsterKind kind in MonsterCatalog.Walkers)
                 Check(Enumerable.Range(0, host.NetworkManager.SpawnablePrefabs.GetObjectCount()).Any(i => host.NetworkManager.SpawnablePrefabs.GetObject(true, i)?.name == MonsterCatalog.PrefabName(kind)), MonsterCatalog.PrefabName(kind) + " is a registered spawnable");
             savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
@@ -380,12 +381,16 @@ namespace SunkCost.Editor.Prototype
             Vector3 frozenAt = angel.transform.position;
             yield return Wait(2f);
             Check(Vector3.Distance(angel.transform.position, frozenAt) < 0.2f, "A1 a frozen Angel does not move");
+            // At the edge of the screen (45° off the look, the screen is ~54° wide each way): still on the screen, still frozen.
+            Vector3 toAngel = angelAt - stand; toAngel.y = 0f;
+            M.ClientLookAt(stand + Quaternion.Euler(0f, 45f, 0f) * toAngel); yield return Wait(0.5f);
+            Check(angel.Pose == CreaturePose.Frozen, "A1 at the edge of the screen it is still frozen (" + angel.ServerStatus + ")");
             M.ClientLookAt(stand + (stand - angelAt)); yield return null; // the host turns its back
             yield return Expect(() => angel.Pose == CreaturePose.Hunting, 3f, () => "A1 unwatched: it hunts (" + angel.ServerStatus + ")");
             d0 = FlatDistance(angel.transform.position, host.transform.position); t0 = Time.unscaledTime;
-            yield return Wait(1.5f);
+            yield return Wait(0.5f);
             closed = (d0 - FlatDistance(angel.transform.position, host.transform.position)) / (Time.unscaledTime - t0);
-            Check(closed > host.SprintSpeed * 0.5f, $"A1 it comes at {closed:0.0} m/s (sprint {host.SprintSpeed})");
+            Check(closed > host.SprintSpeed * 1.5f, $"A1 it comes at {closed:0.0} m/s (sprint {host.SprintSpeed} × {s.AngelSpeedFactor})");
             M.ClientLookAt(angel.transform.position + Vector3.up * angel.EyeHeight); yield return null;
             yield return Expect(() => angel.Pose == CreaturePose.Frozen, 2f, () => "A1 looked at again: frozen (" + angel.ServerStatus + ")");
             Check(!host.IsDead, "A1 the host lives");
@@ -452,6 +457,7 @@ namespace SunkCost.Editor.Prototype
             Keys(Key.E);
             yield return Wait(1.2f);
             Check(host.PatchProgress > 0.2f && host.PatchProgress < 0.7f, $"P4 the hold is under way ({host.PatchProgress:0.00})");
+            Check(!hud.Visor.LampOff, "P4 the visor shows no LAMP OFF with the lamp on");
             Check(hud.PromptText.Contains(" s"), "P4 the prompt counts down: " + hud.PromptText);
             yield return Wait(vitals.Settings.TeammatePatchSeconds);
             Keys(); yield return null;
@@ -472,11 +478,16 @@ namespace SunkCost.Editor.Prototype
             Check(host.LampOn, "LU1 the host's lamp is on");
             Creature lure = Spawn(MonsterKind.Lure, lureAt);
             CreatureBolts lureBolts = lure.GetComponent<CreatureBolts>();
-            yield return Expect(() => lureBolts.ServerFired >= 1 && lure.TargetId == host.OwnerId, 4f, () => "LU1 it saw the lamp and shot (" + lure.ServerStatus + ")");
-            yield return Expect(() => vitals.Leaking && vitals.Health <= vitals.Settings.MaxHealth - s.LureDamage + 1, 4f, () => $"LU1 the bolt landed on a diver standing still: health {vitals.Health}, leaking {vitals.Leaking}");
+            yield return Expect(() => lureBolts.ServerAiming && lure.TargetId == host.OwnerId, 4f, () => "LU1 it saw the lamp and aims (" + lure.ServerStatus + ")");
+            Check(lureBolts.Cue.Serial >= 1 && !lureBolts.Cue.Fired, "LU1 the aim is replicated as the tell");
+            yield return Expect(() => lureBolts.ServerFired >= 1, s.BeamAimSeconds + 1f, () => "LU1 the beam fired after the aim");
+            yield return Expect(() => vitals.Leaking && vitals.Health <= vitals.Settings.MaxHealth - s.LureDamage + 1, 2f, () => $"LU1 the beam hit a diver standing still: health {vitals.Health}, leaking {vitals.Leaking}");
+            Check(lureBolts.Cue.Fired, "LU1 the shot is replicated");
             yield return GuestEventually(r => GuestMonsterLine(r, MonsterKind.Lure).Length > 0, 6f, "LU1 the guest holds the Lure");
             yield return Press(Key.F);
             yield return Expect(() => !host.LampOn, 2f, () => "LU1 lamp off");
+            yield return null;
+            Check(hud.Visor.LampOff, "LU1 the visor says LAMP OFF");
             int firedAtDark = lureBolts.ServerFired;
             yield return Wait(1f);
             firedAtDark = Mathf.Max(firedAtDark, lureBolts.ServerFired); // a bolt already in the air is not a new one
@@ -505,7 +516,7 @@ namespace SunkCost.Editor.Prototype
             yield return HostAt(stand, stand + Vector3.Cross(Vector3.up, listenerAt - stand));
             Keys(Key.W, Key.LeftShift);
             yield return Expect(() => ears.ServerHeard > heardBefore, 3f, () => "LI1 a sprint is heard (" + ears.ServerStatus + ")");
-            yield return Expect(() => listenerBolts.ServerFired >= 1, 3f, () => "LI1 it shot a dark bolt at the sound");
+            yield return Expect(() => listenerBolts.ServerFired >= 1, 3f + s.BeamAimSeconds, () => "LI1 it aimed and fired a dark beam at the sound");
             yield return Wait(2f);
             Keys(); yield return null;
             Check(ears.ServerLastKind == SunkCost.Noise.NoiseKind.Sprint || ears.ServerLastKind == SunkCost.Noise.NoiseKind.Footstep, "LI1 the last thing it heard was a step: " + ears.ServerLastKind);
@@ -528,7 +539,7 @@ namespace SunkCost.Editor.Prototype
             ImpostorLook look = impostor.GetComponent<ImpostorLook>();
             Check(look != null && !look.ShownToLocal, "I1 the host, not the victim, does not see it");
             yield return GuestEventually(r => GuestMonsterLine(r, MonsterKind.Impostor).Contains("shown=True") && GuestMonsterLine(r, MonsterKind.Impostor).Contains("wears=" + hostIdentity.DisplayName), 8f, "I1 the guest sees it, wearing the host's name");
-            yield return Expect(() => impostor.Pose == CreaturePose.Hunting, 20f, () => "I1 it came close and chases (" + impostor.ServerStatus + ")");
+            yield return Expect(() => impostor.Pose == CreaturePose.Hunting, 25f, () => "I1 it walked close and chases at walking speed (" + impostor.ServerStatus + ")");
             yield return Expect(() => doppel.ServerTouches >= 1 && remoteVitals.Leaking, 12f, () => $"I1 a touch: the guest at {remoteVitals.Health} health, leaking {remoteVitals.Leaking}");
             Check(remoteVitals.Health <= remoteVitals.Settings.MaxHealth - s.ImpostorDamage + 1, $"I1 30 HP gone ({remoteVitals.Health})");
             yield return Expect(() => impostor.Pose == CreaturePose.Fleeing, 3f, () => "I1 then it runs away");

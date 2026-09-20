@@ -49,9 +49,10 @@ namespace SunkCost.Monsters
             FaceToward(heardAt);
             // The car's scream turns it and draws a bolt, but does not walk it up to the shaft's doorway.
             bool walk = heardKind != NoiseKind.Elevator || !CreatureSenses.ShaftCentre(out Vector3 shaft) || CreatureSenses.Flat(transform.position, shaft) > Settings.SafeZoneMeters * 3f;
-            if (unshot && Now >= nextShotAt && CreatureSenses.Flat(heardAt, transform.position) > 1.5f)
+            if (unshot && Now >= nextShotAt && !bolts.ServerAiming && CreatureSenses.Flat(heardAt, transform.position) > 1.5f)
             {
-                bolts.ServerFire(EyePoint, heardAt + Vector3.up * 1.1f, dark: true, Settings.ListenerDamage, MonsterCatalog.DisplayName(Kind));
+                // The beam's line is fixed now at the sound; it fires BeamAimSeconds later.
+                bolts.ServerAim(EyePoint, heardAt + Vector3.up * 1.1f, dark: true, Settings.ListenerDamage, MonsterCatalog.DisplayName(Kind));
                 nextShotAt = Now + Settings.ListenerShotCooldownSeconds;
                 unshot = false;
                 SetPose(CreaturePose.Shooting);

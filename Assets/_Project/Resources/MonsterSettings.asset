@@ -27,11 +27,13 @@ MonoBehaviour:
   walkerSpeedFactor: 0.85
   angelWatchMeters: 25
   angelWakeMeters: 45
-  angelSpeedFactor: 1
-  watchHalfAngleDeg: 40
+  angelSpeedFactor: 2.5
+  watchVerticalFovDeg: 75
+  watchAspect: 2.4
+  watchPadDeg: 4
   chargerWindupSeconds: 1.5
-  chargerRushMeters: 12
-  chargerRushSpeedFactor: 2
+  chargerRushMeters: 20
+  chargerRushSpeedFactor: 3
   chargerTurnSeconds: 3
   chargerDamage: 35
   chargerHitRadius: 0.9
@@ -45,12 +47,11 @@ MonoBehaviour:
   listenerDamage: 35
   listenerShotCooldownSeconds: 4
   listenerApproachSpeedFactor: 0.6
-  boltSpeed: 14
-  boltHitRadius: 0.7
-  boltLifeSeconds: 3
+  beamAimSeconds: 0.4
+  beamHitRadius: 0.7
+  beamRangeMeters: 40
   impostorDamage: 30
-  impostorApproachSpeedFactor: 0.6
-  impostorChaseSpeedFactor: 0.95
+  impostorSpeedFactor: 1
   impostorChaseMeters: 8
   impostorChaseSeconds: 30
   impostorRunSeconds: 30

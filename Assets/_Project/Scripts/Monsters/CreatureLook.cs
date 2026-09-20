@@ -36,10 +36,12 @@ namespace SunkCost.Monsters
             block = new MaterialPropertyBlock();
         }
 
-        private void OnEnable() { if (bolts != null) bolts.Fired += OnBolt; }
-        private void OnDisable() { if (bolts != null) bolts.Fired -= OnBolt; }
+        private void OnEnable() { if (bolts != null) { bolts.Aimed += OnAim; bolts.Fired += OnBeam; } }
+        private void OnDisable() { if (bolts != null) { bolts.Aimed -= OnAim; bolts.Fired -= OnBeam; } }
 
-        private void OnBolt(BoltCue cue) => MonsterBoltView.Spawn(cue);
+        private MonsterBeamView beam;
+        private void OnAim(BeamCue cue) { if (beam == null) beam = MonsterBeamView.Make(transform); beam.Aim(cue); }
+        private void OnBeam(BeamCue cue) { if (beam == null) beam = MonsterBeamView.Make(transform); beam.Fire(cue); }
 
         private void LateUpdate()
         {
@@ -78,42 +80,69 @@ namespace SunkCost.Monsters
         }
     }
 
-    // A bolt as every peer draws it: a short glowing rod flying from the cue's
-    // start point through its aim point at BoltSpeed for BoltLifeSeconds. Made
-    // at runtime; two shared materials, light and dark.
-    public sealed class MonsterBoltView : MonoBehaviour
+    // A beam as every peer draws it: a faint thin line while the monster aims (the
+    // tell), then the line thick and bright for a moment, fading. A LineRenderer
+    // on a child of the creature; two materials, light and dark. Presentation only.
+    public sealed class MonsterBeamView : MonoBehaviour
     {
+        private const float FlashSeconds = 0.25f;
         private static Material lightMaterial, darkMaterial;
-        private Vector3 from, dir;
-        private float startedAt, speed, life;
+        private LineRenderer line;
+        private float firedAt = float.NegativeInfinity;
+        private bool aiming;
+        private Color colour;
 
-        public static void Spawn(BoltCue cue)
+        public static MonsterBeamView Make(Transform creature)
         {
-            MonsterSettings settings = MonsterSettings.Get();
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = cue.Dark ? "Dark bolt" : "Light bolt";
-            Object.Destroy(go.GetComponent<Collider>());
-            go.transform.localScale = new Vector3(0.12f, 0.12f, 0.7f);
-            go.GetComponent<Renderer>().sharedMaterial = cue.Dark ? DarkMaterial() : LightMaterial();
-            MonsterBoltView view = go.AddComponent<MonsterBoltView>();
-            view.from = cue.From;
-            view.dir = (cue.To - cue.From).normalized;
-            view.speed = settings.BoltSpeed;
-            view.life = settings.BoltLifeSeconds;
-            view.startedAt = Time.time;
-            go.transform.SetPositionAndRotation(cue.From, Quaternion.LookRotation(view.dir, Vector3.up));
-            if (!cue.Dark)
-            {
-                Light glow = go.AddComponent<Light>();
-                glow.type = LightType.Point; glow.range = 6f; glow.intensity = 4f; glow.color = new Color(1f, 0.92f, 0.55f); glow.shadows = LightShadows.None;
-            }
+            var go = new GameObject("Beam");
+            go.transform.SetParent(creature, false);
+            MonsterBeamView view = go.AddComponent<MonsterBeamView>();
+            view.line = go.AddComponent<LineRenderer>();
+            view.line.useWorldSpace = true;
+            view.line.positionCount = 2;
+            view.line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            view.line.receiveShadows = false;
+            view.line.enabled = false;
+            return view;
         }
 
-        private void Update()
+        private void Lay(BeamCue cue)
         {
-            float t = Time.time - startedAt;
-            if (t > life) { Destroy(gameObject); return; }
-            transform.position = from + dir * (speed * t);
+            Vector3 dir = (cue.To - cue.From).normalized;
+            float range = CreatureBolts.BeamEnd(cue.From, dir, MonsterSettings.Get().BeamRangeMeters);
+            line.SetPosition(0, cue.From);
+            line.SetPosition(1, cue.From + dir * range);
+            line.sharedMaterial = cue.Dark ? DarkMaterial() : LightMaterial();
+            colour = cue.Dark ? new Color(0.45f, 0.15f, 0.75f) : new Color(1f, 0.92f, 0.55f);
+        }
+
+        public void Aim(BeamCue cue)
+        {
+            Lay(cue);
+            aiming = true;
+            line.startWidth = line.endWidth = 0.03f;
+            line.startColor = line.endColor = colour * 0.5f;
+            line.enabled = true;
+        }
+
+        public void Fire(BeamCue cue)
+        {
+            Lay(cue);
+            aiming = false;
+            firedAt = Time.time;
+            line.startWidth = line.endWidth = 0.18f;
+            line.startColor = line.endColor = colour;
+            line.enabled = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (aiming) { float pulse = 0.4f + 0.2f * Mathf.Sin(Time.time * 30f); line.startColor = line.endColor = colour * pulse; return; }
+            float t = Time.time - firedAt;
+            if (t > FlashSeconds) { line.enabled = false; return; }
+            float fade = 1f - t / FlashSeconds;
+            line.startWidth = line.endWidth = 0.18f * fade;
+            line.startColor = line.endColor = colour * fade;
         }
 
         private static Material LightMaterial()
@@ -123,17 +152,15 @@ namespace SunkCost.Monsters
         }
         private static Material DarkMaterial()
         {
-            if (darkMaterial == null) darkMaterial = Make(new Color(0.35f, 0.1f, 0.6f), 2.5f);
+            if (darkMaterial == null) darkMaterial = Make(new Color(0.45f, 0.15f, 0.75f), 3f);
             return darkMaterial;
         }
         private static Material Make(Color colour, float intensity)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            Material m = new(shader != null ? shader : Shader.Find("Standard"));
-            m.SetColor("_BaseColor", colour * 0.4f);
-            m.color = colour * 0.4f;
-            m.EnableKeyword("_EMISSION");
-            m.SetColor("_EmissionColor", colour * intensity);
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            Material m = new(shader != null ? shader : Shader.Find("Sprites/Default"));
+            m.SetColor("_BaseColor", colour * intensity);
+            m.color = colour;
             return m;
         }
     }

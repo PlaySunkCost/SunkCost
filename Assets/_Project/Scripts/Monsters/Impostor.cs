@@ -9,9 +9,11 @@ namespace SunkCost.Monsters
     // The Impostor (docs/DESIGN.md §6): it picks you. It chooses one diver at
     // random among those still underwater — only that diver sees it, and the
     // spectators and the TV watching them (ImpostorLook decides per camera) —
-    // and wears the body colour and the name tag of a living crewmate. It comes
-    // slowly, then chases; a touch is 30 HP and a leak, and then it runs away
-    // and comes back for someone else. Keep away 30 s and it gives up too.
+    // and wears the body colour and the name tag of a living crewmate. It walks at
+    // a diver's walking speed the whole time (Dan, 20 September 2026: it reaches
+    // you only if you stop, or walk to it as a friend); a touch is 30 HP and a
+    // leak, and then it runs away and comes back for someone else. Keep away
+    // 30 s and it gives up too.
     // Everything replicates: the position, the pose, whose it is, what it wears.
     public sealed class Impostor : Creature
     {
@@ -57,7 +59,7 @@ namespace SunkCost.Monsters
                         return;
                     }
                     SetPose(CreaturePose.Drawn);
-                    MoveToward(prey.transform.position, WalkSpeed * Settings.ImpostorApproachSpeedFactor, dt, Settings.TouchStandoffMeters);
+                    MoveToward(prey.transform.position, WalkSpeed * Settings.ImpostorSpeedFactor, dt, Settings.TouchStandoffMeters);
                     return;
                 case Phase.Chase:
                     if (prey == null) { Choose(); return; }
@@ -69,12 +71,12 @@ namespace SunkCost.Monsters
                     }
                     if (Now - chaseStartedAt > Settings.ImpostorChaseSeconds) { Flee(prey); return; }
                     SetPose(CreaturePose.Hunting);
-                    MoveToward(prey.transform.position, SprintSpeed * Settings.ImpostorChaseSpeedFactor, dt, Settings.TouchStandoffMeters);
+                    MoveToward(prey.transform.position, WalkSpeed * Settings.ImpostorSpeedFactor, dt, Settings.TouchStandoffMeters);
                     return;
                 case Phase.Flee:
                     if (Now >= fleeUntil) { phase = Phase.Choosing; nextChoiceAt = Now + 2f; SetTarget(-1); return; }
                     SetPose(CreaturePose.Fleeing);
-                    MoveToward(transform.position + fleeDir * 6f, SprintSpeed, dt);
+                    MoveToward(transform.position + fleeDir * 6f, WalkSpeed * Settings.ImpostorSpeedFactor, dt);
                     FaceToward(transform.position + fleeDir);
                     return;
             }

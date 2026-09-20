@@ -18,7 +18,7 @@ namespace SunkCost.Monsters
 
         protected override void ServerThink(float dt)
         {
-            ServerWatched = CreatureSenses.Watched(EyePoint, Settings, out HQPlayerController watcher);
+            ServerWatched = CreatureSenses.Watched(BodyPoints(), Settings, out HQPlayerController watcher);
             ServerWatcherId = watcher != null ? watcher.OwnerId : -1;
             if (ServerWatched) lastWatchedAt = Now;
             if (ServerWatched || Now - lastWatchedAt < GraceSeconds) { SetPose(CreaturePose.Frozen); return; } // not a turn, not a step

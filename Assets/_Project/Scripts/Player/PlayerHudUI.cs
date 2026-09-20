@@ -73,6 +73,7 @@ namespace SunkCost.Player
             public float AirFraction, HealthFraction;
             public bool AirLow, AirEmpty, HealthLow; // the visor blinks the bar and says AIR LOW (PlayerVitals thresholds)
             public bool Leaking;               // the suit leaks: LEAK blinks by the HP bar (the monsters, 20 September 2026)
+            public bool LampOff;               // the headlamp's switch is off (F): LAMP OFF under the mode
             public string UpgradeMarks; // "L-TANK  LAMP" — what the diver bought (PlayerUpgrades); null = none
             public float DepthMeters;
             public float HeadingDeg;
@@ -444,6 +445,7 @@ namespace SunkCost.Player
             r.AirEmpty = vitals != null && vitals.AirEmpty;
             r.HealthLow = vitals != null && vitals.HealthLow;
             r.Leaking = vitals != null && vitals.Leaking;
+            r.LampOff = !who.LampOn;
             r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : who.Yaw, 360f);
 
             // HOME: the tube's doorway at the seafloor, hidden while inside the car.
@@ -600,7 +602,7 @@ namespace SunkCost.Player
             DrawDashes(tl.x, tl.y + 36f * t, 6, s);
             if (!string.IsNullOrEmpty(Visor.MoneyText)) GUI.Label(new Rect(tl.x, tl.y + 44f * t, tl.width + 200f * t, 14f * t), Visor.MoneyText, visorTinyStyle);
             GUI.color = VisorText;
-            GUI.Label(new Rect(tr.x - 120f * t, tr.y, tr.width + 120f * t, 18f * t), "MODE: DIVE", visorRightStyle);
+            GUI.Label(new Rect(tr.x - 120f * t, tr.y, tr.width + 120f * t, 18f * t), Visor.LampOff ? "MODE: DIVE  ·  LAMP OFF (F)" : "MODE: DIVE", visorRightStyle);
             DrawDashes(tr.xMax - 6f * 10f * s, tr.y + 24f * t, 6, s);
 
             // Vitals, bottom-left, as the picture: the lungs badge, then O2 and HP as

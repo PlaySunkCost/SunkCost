@@ -39,9 +39,10 @@ namespace SunkCost.Monsters
                 seen = lit; seenAt = lit.transform.position; seenTime = Now;
                 SetTarget(lit.OwnerId);
                 FaceToward(seenAt);
-                if (Now >= nextShotAt)
+                if (Now >= nextShotAt && !bolts.ServerAiming)
                 {
-                    bolts.ServerFire(EyePoint, CreatureSenses.Chest(lit), dark: false, Settings.LureDamage, MonsterCatalog.DisplayName(Kind));
+                    // The beam's line is fixed now at the lamp; it fires BeamAimSeconds later.
+                    bolts.ServerAim(EyePoint, CreatureSenses.Chest(lit), dark: false, Settings.LureDamage, MonsterCatalog.DisplayName(Kind));
                     nextShotAt = Now + Settings.LureShotCooldownSeconds;
                     SetPose(CreaturePose.Shooting);
                 }

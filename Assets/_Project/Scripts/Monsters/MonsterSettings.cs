@@ -51,16 +51,21 @@ namespace SunkCost.Monsters
         [SerializeField] private float angelWatchMeters = 25f;
         [Tooltip("It notices divers this far and goes for the nearest; farther than that it waits.")]
         [SerializeField] private float angelWakeMeters = 45f;
-        [Tooltip("Unwatched it moves at this fraction of a diver's sprint speed.")]
-        [SerializeField] private float angelSpeedFactor = 1f;
-        [Tooltip("Half the view angle, degrees, that counts as watching (the camera's field of view is 75 tall, wider across).")]
-        [SerializeField] private float watchHalfAngleDeg = 40f;
+        [Tooltip("Unwatched it moves at this fraction of a diver's sprint speed (Dan, 20 September 2026: much faster).")]
+        [SerializeField] private float angelSpeedFactor = 2.5f;
+        [Tooltip("Watched means any part of it on anyone's screen: the diver camera's vertical field of view, degrees.")]
+        [SerializeField] private float watchVerticalFovDeg = 75f;
+        [Tooltip("The widest screen a diver is assumed to have (16:9 = 1.78; ultrawide 2.4 is generous toward frozen).")]
+        [SerializeField] private float watchAspect = 2.4f;
+        [Tooltip("Degrees of slack outside the screen's edge that still count as watched (lag errs toward frozen).")]
+        [SerializeField] private float watchPadDeg = 4f;
 
         [Header("The Charger")]
         [SerializeField] private float chargerWindupSeconds = 1.5f;
-        [SerializeField] private float chargerRushMeters = 12f;
-        [Tooltip("The rush's speed as a fraction of a diver's sprint speed (2 = twice sprint).")]
-        [SerializeField] private float chargerRushSpeedFactor = 2f;
+        [Tooltip("Dan, 20 September 2026: faster and longer — 20 m at three times sprint.")]
+        [SerializeField] private float chargerRushMeters = 20f;
+        [Tooltip("The rush's speed as a fraction of a diver's sprint speed (3 = three times sprint).")]
+        [SerializeField] private float chargerRushSpeedFactor = 3f;
         [SerializeField] private float chargerTurnSeconds = 3f;
         [SerializeField] private float chargerDamage = 35f;
         [Tooltip("The rush hits a diver within this many metres of its line.")]
@@ -84,17 +89,18 @@ namespace SunkCost.Monsters
         [Tooltip("It walks toward the last sound at this fraction of walking speed.")]
         [SerializeField] private float listenerApproachSpeedFactor = 0.6f;
 
-        [Header("Bolts (the Lure's light, the Listener's dark)")]
-        [SerializeField] private float boltSpeed = 14f;
-        [Tooltip("A bolt hits a diver within this many metres of its path.")]
-        [SerializeField] private float boltHitRadius = 0.7f;
-        [SerializeField] private float boltLifeSeconds = 3f;
+        [Header("Beams (the Lure's light, the Listener's dark — a laser, not a shot; Dan, 20 September 2026)")]
+        [Tooltip("The aim shows as a faint line this long before the beam fires: the whole dodge window.")]
+        [SerializeField] private float beamAimSeconds = 0.4f;
+        [Tooltip("The beam hits a diver within this many metres of its line.")]
+        [SerializeField] private float beamHitRadius = 0.7f;
+        [Tooltip("How far the beam reaches before the water takes it.")]
+        [SerializeField] private float beamRangeMeters = 40f;
 
         [Header("The Impostor")]
         [SerializeField] private float impostorDamage = 30f;
-        [Tooltip("It walks toward its target at this fraction of walking speed until close, then chases at this fraction of sprint speed.")]
-        [SerializeField] private float impostorApproachSpeedFactor = 0.6f;
-        [SerializeField] private float impostorChaseSpeedFactor = 0.95f;
+        [Tooltip("It walks at this fraction of a diver's walking speed the whole time (Dan, 20 September 2026: normal walk, always).")]
+        [SerializeField] private float impostorSpeedFactor = 1f;
         [Tooltip("It starts chasing this close.")]
         [SerializeField] private float impostorChaseMeters = 8f;
         [Tooltip("It gives up after this long chasing, and runs off this long after a touch.")]
@@ -128,7 +134,9 @@ namespace SunkCost.Monsters
         public float AngelWatchMeters => angelWatchMeters;
         public float AngelWakeMeters => angelWakeMeters;
         public float AngelSpeedFactor => angelSpeedFactor;
-        public float WatchHalfAngleDeg => watchHalfAngleDeg;
+        public float WatchVerticalFovDeg => watchVerticalFovDeg;
+        public float WatchAspect => watchAspect;
+        public float WatchPadDeg => watchPadDeg;
         public float ChargerWindupSeconds => chargerWindupSeconds;
         public float ChargerRushMeters => chargerRushMeters;
         public float ChargerRushSpeedFactor => chargerRushSpeedFactor;
@@ -145,12 +153,11 @@ namespace SunkCost.Monsters
         public float ListenerDamage => listenerDamage;
         public float ListenerShotCooldownSeconds => listenerShotCooldownSeconds;
         public float ListenerApproachSpeedFactor => listenerApproachSpeedFactor;
-        public float BoltSpeed => boltSpeed;
-        public float BoltHitRadius => boltHitRadius;
-        public float BoltLifeSeconds => boltLifeSeconds;
+        public float BeamAimSeconds => beamAimSeconds;
+        public float BeamHitRadius => beamHitRadius;
+        public float BeamRangeMeters => beamRangeMeters;
         public float ImpostorDamage => impostorDamage;
-        public float ImpostorApproachSpeedFactor => impostorApproachSpeedFactor;
-        public float ImpostorChaseSpeedFactor => impostorChaseSpeedFactor;
+        public float ImpostorSpeedFactor => impostorSpeedFactor;
         public float ImpostorChaseMeters => impostorChaseMeters;
         public float ImpostorChaseSeconds => impostorChaseSeconds;
         public float ImpostorRunSeconds => impostorRunSeconds;

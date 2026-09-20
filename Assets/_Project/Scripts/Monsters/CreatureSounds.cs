@@ -42,12 +42,18 @@ namespace SunkCost.Monsters
             if (creature != null) { creature.PoseChanged += OnPose; creature.Struck += OnStruck; }
             if (bolts != null) { bolts.Fired += OnBolt; bolts.Hit += OnStruck; }
         }
+        private void OnBolt(BeamCue cue)
+        {
+            if (!Audible) return;
+            voice.PlayOneShot(library.BoltShot, library.BoltShotVolume);
+        }
 
         private void OnDisable()
         {
             if (creature != null) { creature.PoseChanged -= OnPose; creature.Struck -= OnStruck; }
             if (bolts != null) { bolts.Fired -= OnBolt; bolts.Hit -= OnStruck; }
         }
+
 
         private bool Audible => impostor == null || impostor.AudibleToLocal;
 
@@ -59,12 +65,6 @@ namespace SunkCost.Monsters
             nextCallAt = Time.unscaledTime + 3f;
             voice.PlayOneShot(library.MonsterCall, library.MonsterCallVolume);
             CallsPlayed++;
-        }
-
-        private void OnBolt(BoltCue cue)
-        {
-            if (!Audible) return;
-            voice.PlayOneShot(library.BoltShot, library.BoltShotVolume);
         }
 
         private void OnStruck()

@@ -110,22 +110,29 @@ namespace SunkCost.Monsters
             return ClearLine(eye, chest);
         }
 
-        // The point is inside some living diver's view: within the watch range, inside
-        // the half-angle of that diver's eyes, with a clear line from the eyes.
-        public static bool Watched(Vector3 point, MonsterSettings settings, out HQPlayerController watcher)
+        // Any of the points is on some living diver's screen (Dan, 20 September 2026:
+        // "not only pointing towards it"): within the watch range, inside that diver's
+        // camera frustum — the vertical field of view and the widest assumed screen,
+        // padded — with a clear line from the eyes to that point.
+        public static bool Watched(IReadOnlyList<Vector3> points, MonsterSettings settings, out HQPlayerController watcher)
         {
             watcher = null;
-            float cosHalf = Mathf.Cos(settings.WatchHalfAngleDeg * Mathf.Deg2Rad);
+            float vHalf = settings.WatchVerticalFovDeg * 0.5f + settings.WatchPadDeg;
+            float hHalf = Mathf.Atan(Mathf.Tan(settings.WatchVerticalFovDeg * 0.5f * Mathf.Deg2Rad) * settings.WatchAspect) * Mathf.Rad2Deg + settings.WatchPadDeg;
             foreach (HQPlayerController p in Divers())
             {
                 p.EyePose(out Vector3 eye, out Quaternion look);
-                Vector3 to = point - eye;
-                float distance = to.magnitude;
-                if (distance > settings.AngelWatchMeters || distance < 0.01f) continue;
-                if (Vector3.Dot(look * Vector3.forward, to / distance) < cosHalf) continue;
-                if (!ClearLine(eye, point)) continue;
-                watcher = p;
-                return true;
+                Quaternion toLocal = Quaternion.Inverse(look);
+                foreach (Vector3 point in points)
+                {
+                    Vector3 local = toLocal * (point - eye);
+                    if (local.z <= 0.01f || local.magnitude > settings.AngelWatchMeters) continue;
+                    if (Mathf.Atan2(Mathf.Abs(local.x), local.z) * Mathf.Rad2Deg > hHalf) continue;
+                    if (Mathf.Atan2(Mathf.Abs(local.y), local.z) * Mathf.Rad2Deg > vHalf) continue;
+                    if (!ClearLine(eye, point)) continue;
+                    watcher = p;
+                    return true;
+                }
             }
             return false;
         }

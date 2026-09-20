@@ -246,6 +246,30 @@ namespace SunkCost.Monsters
         // Standing near where it appeared (the idle drift's goal).
         protected bool AtHome => CreatureSenses.Flat(transform.position, Home) < 2f;
 
+        // The points a watcher may see of it: the corners and the centre of its body's
+        // bounds and its eyes — a wingtip at the corner of a screen is enough.
+        private Renderer[] bodyRenderers;
+        private readonly List<Vector3> bodyPoints = new(10);
+        protected IReadOnlyList<Vector3> BodyPoints()
+        {
+            bodyRenderers ??= GetComponentsInChildren<Renderer>(true);
+            bodyPoints.Clear();
+            bool any = false;
+            Bounds b = default;
+            foreach (Renderer r in bodyRenderers)
+            {
+                if (r == null) continue;
+                if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
+            }
+            if (!any) { bodyPoints.Add(EyePoint); return bodyPoints; }
+            Vector3 min = b.min, max = b.max;
+            bodyPoints.Add(b.center);
+            bodyPoints.Add(EyePoint);
+            for (int i = 0; i < 8; i++)
+                bodyPoints.Add(new Vector3((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y, (i & 4) == 0 ? min.z : max.z));
+            return bodyPoints;
+        }
+
         // The strike this kind makes: death for the killers (the ordinary death
         // through WorldSceneFlow.ServerKill, which keeps the deck safe), health and a
         // leak for the rest. True when it landed.
