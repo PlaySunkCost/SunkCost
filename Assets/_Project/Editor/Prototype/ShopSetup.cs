@@ -22,22 +22,27 @@ namespace SunkCost.Editor.Prototype
         {
             var changes = new List<string>();
             foreach (string change in DiveLootSetup.EnsureAirTankPrefab()) changes.Add(change);
+            foreach (string change in PatchKitSetup.EnsurePrefab()) changes.Add(change);
             GameObject airTank = AssetDatabase.LoadAssetAtPath<GameObject>(DiveLootSetup.AirTankPrefabPath);
+            GameObject patchKit = AssetDatabase.LoadAssetAtPath<GameObject>(PatchKitSetup.PrefabPath);
             HQPrototypeBuilder.EnsureFolder("Assets/_Project/Resources");
             ShopCatalog catalog = AssetDatabase.LoadAssetAtPath<ShopCatalog>(CatalogPath);
             if (catalog == null)
             {
                 catalog = ScriptableObject.CreateInstance<ShopCatalog>();
-                catalog.ResetToDefaults(airTank);
+                catalog.ResetToDefaults(airTank, patchKit);
                 AssetDatabase.CreateAsset(catalog, CatalogPath);
-                changes.Add("ShopCatalog created with the three items");
+                changes.Add("ShopCatalog created with the four items");
             }
             else
             {
                 // An existing catalogue keeps Dan's edits; only a missing prefab is filled in.
                 ShopItem tank = catalog.Find(ShopCatalog.AirTankId);
                 if (tank != null && tank.Prefab == null && airTank != null) { tank.Prefab = airTank; EditorUtility.SetDirty(catalog); changes.Add("air tank prefab wired"); }
+                // The patch kit's row (the monsters, 20 September 2026) joins an older catalogue.
+                if (catalog.EnsurePatchKit(patchKit)) { EditorUtility.SetDirty(catalog); changes.Add("patch kit row ensured"); }
             }
+            changes.AddRange(PatchKitSetup.Register());
 
             GameObject root = PrefabUtility.LoadPrefabContents(HQPrototypeBuilder.PlayerPrefabPath);
             try

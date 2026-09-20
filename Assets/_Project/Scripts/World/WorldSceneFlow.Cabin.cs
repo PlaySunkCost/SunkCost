@@ -90,7 +90,7 @@ namespace SunkCost.World
         private void Update()
         {
             if (dayState == null || networkManager == null) return;
-            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerSumBox(); ServerTickSpectators(); ServerTickPlank(); }
+            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerTickGhost(); ServerSumBox(); ServerTickSpectators(); ServerTickPlank(); }
             DriveCar();
             if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
@@ -450,7 +450,7 @@ namespace SunkCost.World
                     ServerSetElevator(phase.Upward ? ElevatorState.Ascending : ElevatorState.Descending, phase.Upward);
                     break;
                 case ElevatorState.Descending:
-                    if (elapsed >= CarTravelSeconds) ServerSetElevator(ElevatorState.AtBottom, false);
+                    if (elapsed >= CarTravelSeconds) { ServerSetElevator(ElevatorState.AtBottom, false); ServerCarArrivedBelow(); }
                     break;
                 case ElevatorState.Ascending:
                     if (elapsed >= CarTravelSeconds) ServerSetElevator(ElevatorState.AtTop, true);

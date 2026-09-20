@@ -17,6 +17,7 @@ namespace SunkCost.Interaction
     {
         None = 0,
         Throw = 1,
-        Breathe = 2 // an air tank: left click refills the holder's tank (AirTankItem)
+        Breathe = 2, // an air tank: left click refills the holder's tank (AirTankItem)
+        Patch = 3    // a patch kit: left click closes the holder's own leak (PatchKitItem)
     }
 }

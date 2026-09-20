@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba8c99bbbed6b834f922b2159560cac7, type: 3}
+  m_Name: MonsterSettings
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.MonsterSettings
+  monstersPerDive: 3
+  spawnMinMeters: 22
+  roamHalfMeters: 60
+  spawnClearOfDiversMeters: 12
+  wakeDelaySeconds: 2
+  safeZoneMeters: 4.5
+  tubeSafeMeters: 3.2
+  ghostChance: 0.25
+  ghostSeconds: 30
+  ghostOncePerDay: 1
+  sightMeters: 25
+  sightDarkMeters: 6
+  walkerSpeedFactor: 0.85
+  angelWatchMeters: 25
+  angelWakeMeters: 45
+  angelSpeedFactor: 1
+  watchHalfAngleDeg: 40
+  chargerWindupSeconds: 1.5
+  chargerRushMeters: 12
+  chargerRushSpeedFactor: 2
+  chargerTurnSeconds: 3
+  chargerDamage: 35
+  chargerHitRadius: 0.9
+  chargerRushFromMeters: 14
+  lureSeeMeters: 25
+  lureForgetSeconds: 8
+  lureDamage: 35
+  lureShotCooldownSeconds: 4
+  lureApproachSpeedFactor: 0.5
+  listenerForgetSeconds: 10
+  listenerDamage: 35
+  listenerShotCooldownSeconds: 4
+  listenerApproachSpeedFactor: 0.6
+  boltSpeed: 14
+  boltHitRadius: 0.7
+  boltLifeSeconds: 3
+  impostorDamage: 30
+  impostorApproachSpeedFactor: 0.6
+  impostorChaseSpeedFactor: 0.95
+  impostorChaseMeters: 8
+  impostorChaseSeconds: 30
+  impostorRunSeconds: 30
+  reachMeters: 1.4
+  strikeCooldownSeconds: 2
+  fallbackWalkSpeed: 4
+  fallbackSprintSpeed: 6

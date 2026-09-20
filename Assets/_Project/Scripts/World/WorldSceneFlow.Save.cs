@@ -144,7 +144,8 @@ namespace SunkCost.World
             NetworkObject prefab = nob.PrefabId < networkManager.SpawnablePrefabs.GetObjectCount() ? networkManager.SpawnablePrefabs.GetObject(true, nob.PrefabId) : null;
             if (prefab == null) return null;
             AirTankItem tank = item.GetComponent<AirTankItem>();
-            return new SavedItem { prefab = prefab.name, instanceName = item.name, value = item.Value, empty = tank != null && tank.IsEmpty };
+            PatchKitItem kit = item.GetComponent<PatchKitItem>();
+            return new SavedItem { prefab = prefab.name, instanceName = item.name, value = item.Value, empty = (tank != null && tank.IsEmpty) || (kit != null && kit.IsUsed) };
         }
 
         private CarryableItem SpawnSaved(SavedItem saved, Vector3 at, Quaternion rotation, Scene scene)
@@ -166,6 +167,8 @@ namespace SunkCost.World
             item.ServerSetValue(saved.value);
             AirTankItem tank = instance.GetComponent<AirTankItem>();
             if (tank != null) tank.ServerSetEmpty(saved.empty);
+            PatchKitItem kit = instance.GetComponent<PatchKitItem>();
+            if (kit != null) kit.ServerSetUsed(saved.empty);
             return item;
         }
 

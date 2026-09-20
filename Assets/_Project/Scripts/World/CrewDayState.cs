@@ -103,6 +103,9 @@ namespace SunkCost.World
         // is at the seafloor.
         private readonly SyncVar<CabinRideState> cabinRide = new(new CabinRideState { Stage = CabinRideStage.Idle });
         private readonly SyncVar<ElevatorPhase> elevator = new(new ElevatorPhase { State = SunkCost.Diving.ElevatorState.AtTop });
+        // The Elevator Ghost's green window on the car (the monsters, 20 September
+        // 2026): tick-anchored like the phase; WorldSceneFlow is its only writer.
+        private readonly SyncVar<SunkCost.Monsters.GhostPhase> ghost = new(new SunkCost.Monsters.GhostPhase { Active = false });
         private readonly SyncList<int> riders = new();
         private readonly SyncList<RiderPlacement> placements = new();
         private readonly SyncList<int> below = new();
@@ -147,6 +150,7 @@ namespace SunkCost.World
         public bool Travelling => departure.Value.Active;
         public CabinRideState CabinRide => cabinRide.Value;
         public ElevatorPhase Elevator => elevator.Value;
+        public SunkCost.Monsters.GhostPhase Ghost => ghost.Value;
         public bool Riding => cabinRide.Value.Active;
         // The deck cabin is not available: a ride is running, or the car is not up at the top.
         public bool CabinAway => cabinRide.Value.Active || elevator.Value.State != SunkCost.Diving.ElevatorState.AtTop;
@@ -288,6 +292,8 @@ namespace SunkCost.World
             base.OnStartServer();
             runStartTime = Time.unscaledTime;
             if (GetComponent<SunkCost.Noise.ElevatorNoise>() == null) gameObject.AddComponent<SunkCost.Noise.ElevatorNoise>();
+            // The day's monsters (server only): drawn and spawned when the site is fresh.
+            if (GetComponent<SunkCost.Monsters.MonsterRoster>() == null) gameObject.AddComponent<SunkCost.Monsters.MonsterRoster>();
         }
 
         public override void OnStartClient()
@@ -295,6 +301,8 @@ namespace SunkCost.World
             base.OnStartClient();
             clientStartFrame = Time.frameCount;
             if (GetComponent<SunkCost.Audio.ElevatorSounds>() == null) gameObject.AddComponent<SunkCost.Audio.ElevatorSounds>();
+            // The Ghost's green light and hum at the car (every client), from the replicated phase.
+            if (GetComponent<SunkCost.Monsters.ElevatorGhostLight>() == null) gameObject.AddComponent<SunkCost.Monsters.ElevatorGhostLight>();
         }
 
         public override void OnStopNetwork()
@@ -543,6 +551,9 @@ namespace SunkCost.World
 
         [Server]
         public void ServerSetElevator(ElevatorPhase next) => elevator.Value = next;
+
+        [Server]
+        public void ServerSetGhost(SunkCost.Monsters.GhostPhase next) => ghost.Value = next;
 
         [Server]
         public void ServerSetRiders(IEnumerable<int> clientIds)

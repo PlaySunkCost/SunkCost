@@ -40,6 +40,24 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   `noise` = footsteps, the elevator's noise and sounds, `NoiseRuntimeChecks`, log `Temp/noise-matrix.log`,
   the host alone with a listener on the NoiseSystem (walk/sprint/crouch on the virtual keyboard, two rides)
   then one guest in `Temp/noise-guest` on the deck (the winch low, the bell) — about 4 minutes;
+  `monsters` = the seven monsters, the leak and the patches, `MonsterRuntimeChecks`, log
+  `Temp/monsters-matrix.log`, host and one guest in `Temp/monsters-guest` both below: the day's roster
+  (R1, the real draw, then despawned), the lamp's F (L1), the Long Walker's chase and the safe car (W1),
+  the Weeping Angel frozen under a look (A1), the Charger's wind-up, rush, 35 HP and a leak, LEAK on
+  the visor and the 3× drain (C1), a friend's patch and the once-a-day refusal (P1/P2), the patch kit
+  (P3), the host's hold on E (P4), the Lure's bolt at a lit lamp and its loss of interest in the dark
+  (LU1), the Listener deaf to a crouch and shooting at a sprint (LI1), the Impostor seen by its victim
+  only and its touch (I1), the Elevator Ghost on the empty return trip, waited out (G0), then summoned
+  and walked into (G1: the host dies, the site closes), End day, day 2 with an empty draw and the two
+  killers (W2 the guest, A2 the host) — about 9 minutes. **Every other job runs with
+  `MonsterSettings.RosterOverrideForTests` set to an empty draw and the Ghost's chance at 0 by the
+  driver**, so no old row meets a Walker; the monsters job sets its own and the driver clears both
+  after it. Rows spawn what they need with `MonsterRoster.ServerSpawnForChecks` (awake at once),
+  place with `Creature.ServerPlaceForChecks`, read `ServerStatus`/`M.MonstersText()`, and clear with
+  `MonsterTestHooks.ServerDespawnMonsters`. The guest's peer took `lamp` (slot 1/0) and `patch` (the
+  nearest living teammate — the peer cannot hold a key), its player line `lamp=`, `leak=`,
+  `patchNotice='…'`, its header `ghostGreen=`, `ghostActive=`, `slamsHeard=`, and one `monster=<kind>;
+  id=; pose=; target=; position=; shown=; wears=` line per creature it holds;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator

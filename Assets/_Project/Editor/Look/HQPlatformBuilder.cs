@@ -332,6 +332,9 @@ namespace SunkCost.Editor.Look
             Stand(root, chute, SunkCost.Shop.ShopCatalog.LargeTankId, new Vector3(UpgradesBoothCentre.x - 2f, 0.16f, BoothZ + 0.2f), PrimitiveType.Capsule, new Vector3(0.3f, 0.45f, 0.3f), tankMaterial, plinth);
             Stand(root, chute, SunkCost.Shop.ShopCatalog.BrightHeadlampId, new Vector3(UpgradesBoothCentre.x + 2f, 0.16f, BoothZ + 0.2f), PrimitiveType.Sphere, new Vector3(0.35f, 0.35f, 0.35f), lampMaterial, plinth);
             Stand(root, chute, SunkCost.Shop.ShopCatalog.AirTankId, new Vector3(GearBoothCentre.x, 0.16f, BoothZ + 0.2f), PrimitiveType.Capsule, new Vector3(0.22f, 0.3f, 0.22f), tankMaterial, plinth);
+            // The patch kit (the monsters, 20 September 2026): a red box beside the tank in Gear & Supplies.
+            Material kitMaterial = SunkCost.Editor.Prototype.HQPrototypeBuilder.GetOrCreateMaterial(SunkCost.Editor.Prototype.PatchKitSetup.MaterialPath, SunkCost.Editor.Prototype.PatchKitSetup.KitColour);
+            Stand(root, chute, SunkCost.Shop.ShopCatalog.PatchKitId, new Vector3(GearBoothCentre.x - 2.5f, 0.16f, BoothZ + 0.2f), PrimitiveType.Cube, new Vector3(0.30f, 0.18f, 0.22f), kitMaterial, plinth);
         }
 
         // The pickup tower: the room on the booth's roof where bought gear lands,

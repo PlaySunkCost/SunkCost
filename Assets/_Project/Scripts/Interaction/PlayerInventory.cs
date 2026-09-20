@@ -156,6 +156,13 @@ namespace SunkCost.Interaction
                 ServerRequestUse(Vector3.zero, Vector3.zero);
                 return;
             }
+            if (heldItem.UseAction == ItemUseAction.Patch)
+            {
+                // A patch kit closes the holder's own leak (no pose to propose).
+                if (player == null || player.Vitals == null || !player.Vitals.Leaking) { ShowRefusal(RefuseReason.NoLeak); return; }
+                ServerRequestUse(Vector3.zero, Vector3.zero);
+                return;
+            }
             if (!TryProposeRelease(heldItem, drop: false, out Vector3 pose, out Vector3 direction)) { ShowRefusal(RefuseReason.NoRoom); return; }
             ServerRequestUse(pose, direction);
         }
@@ -345,6 +352,14 @@ namespace SunkCost.Interaction
                 if (player != null && player.Vitals != null && player.Vitals.AirFraction >= 1f) { TargetRefuse(sender, (byte)RefuseReason.AirFull); return; }
                 AirTankItem tank = held.GetComponent<AirTankItem>();
                 if (tank != null && !tank.ServerBreathe(sender, out string why)) Debug.Log("[Air] " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + " could not breathe from the tank: " + why);
+                return;
+            }
+            if (held.UseAction == ItemUseAction.Patch)
+            {
+                // The kit stays in the hand, fresh or used; the server decides what it closes.
+                if (player == null || player.Vitals == null || !player.Vitals.Leaking) { TargetRefuse(sender, (byte)RefuseReason.NoLeak); return; }
+                PatchKitItem kit = held.GetComponent<PatchKitItem>();
+                if (kit != null && !kit.ServerPatch(sender, out string why)) Debug.Log("[Leak] " + SunkCost.World.WorldSceneFlow.DisplayName(sender) + " could not patch with the kit: " + why);
                 return;
             }
             if (held.UseAction != ItemUseAction.Throw) return;

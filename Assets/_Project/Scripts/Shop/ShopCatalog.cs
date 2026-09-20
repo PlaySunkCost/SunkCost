@@ -45,6 +45,8 @@ namespace SunkCost.Shop
     {
         public const string ResourceName = "ShopCatalog";
         public const string AirTankId = "air-tank", LargeTankId = "large-tank", BrightHeadlampId = "bright-headlamp";
+        public const string PatchKitId = "patch-kit"; // the monsters, 20 September 2026: one use, closes your own leak
+        public const int PatchKitPrice = 60;
 
         [SerializeField] private List<ShopItem> items = new();
         [Tooltip("How much more air the large tank holds (1.5 = +50 %).")]
@@ -67,17 +69,32 @@ namespace SunkCost.Shop
 
         // The first cut's three items (Dan, 18 September 2026): an air tank to
         // carry down, the large tank, the bright headlamp — $40 / $300 / $150.
-        public void ResetToDefaults(GameObject airTankPrefab)
+        public void ResetToDefaults(GameObject airTankPrefab, GameObject patchKitPrefab = null)
         {
             items = new List<ShopItem>
             {
                 new() { Id = AirTankId, Name = "Air tank", Price = 40, Kind = ShopItemKind.Consumable, Prefab = airTankPrefab },
                 new() { Id = LargeTankId, Name = "Large tank", Price = 300, Kind = ShopItemKind.Upgrade, Upgrade = PlayerUpgrade.LargeTank },
                 new() { Id = BrightHeadlampId, Name = "Bright headlamp", Price = 150, Kind = ShopItemKind.Upgrade, Upgrade = PlayerUpgrade.BrightHeadlamp },
+                new() { Id = PatchKitId, Name = "Patch kit", Price = PatchKitPrice, Kind = ShopItemKind.Consumable, Prefab = patchKitPrefab },
             };
             largeTankMultiplier = 1.5f;
             brightHeadlampRange = 1.6f;
             brightHeadlampIntensity = 1.5f;
+        }
+
+        // The patch kit's row, added to an existing catalogue that predates it
+        // (the setup; Dan's edits to the other rows are kept). True if added or wired.
+        public bool EnsurePatchKit(GameObject patchKitPrefab)
+        {
+            ShopItem row = Find(PatchKitId);
+            if (row == null)
+            {
+                items.Add(new ShopItem { Id = PatchKitId, Name = "Patch kit", Price = PatchKitPrice, Kind = ShopItemKind.Consumable, Prefab = patchKitPrefab });
+                return true;
+            }
+            if (row.Prefab == null && patchKitPrefab != null) { row.Prefab = patchKitPrefab; return true; }
+            return false;
         }
 
         private static ShopCatalog loaded;
