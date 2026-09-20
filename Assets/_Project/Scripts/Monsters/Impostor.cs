@@ -57,7 +57,7 @@ namespace SunkCost.Monsters
                         return;
                     }
                     SetPose(CreaturePose.Drawn);
-                    MoveToward(prey.transform.position, WalkSpeed * Settings.ImpostorApproachSpeedFactor, dt);
+                    MoveToward(prey.transform.position, WalkSpeed * Settings.ImpostorApproachSpeedFactor, dt, Settings.TouchStandoffMeters);
                     return;
                 case Phase.Chase:
                     if (prey == null) { Choose(); return; }
@@ -69,7 +69,7 @@ namespace SunkCost.Monsters
                     }
                     if (Now - chaseStartedAt > Settings.ImpostorChaseSeconds) { Flee(prey); return; }
                     SetPose(CreaturePose.Hunting);
-                    MoveToward(prey.transform.position, SprintSpeed * Settings.ImpostorChaseSpeedFactor, dt);
+                    MoveToward(prey.transform.position, SprintSpeed * Settings.ImpostorChaseSpeedFactor, dt, Settings.TouchStandoffMeters);
                     return;
                 case Phase.Flee:
                     if (Now >= fleeUntil) { phase = Phase.Choosing; nextChoiceAt = Now + 2f; SetTarget(-1); return; }

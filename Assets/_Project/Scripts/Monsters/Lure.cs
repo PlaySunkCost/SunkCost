@@ -46,14 +46,14 @@ namespace SunkCost.Monsters
                     SetPose(CreaturePose.Shooting);
                 }
                 else if (Pose != CreaturePose.Shooting || Now > nextShotAt - Settings.LureShotCooldownSeconds + 0.6f) SetPose(CreaturePose.Hunting);
-                MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt);
+                MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
                 return;
             }
             if (Now - seenTime < Settings.LureForgetSeconds)
             {
                 SetPose(CreaturePose.Drawn);
                 FaceToward(seenAt);
-                MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt);
+                MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
                 return;
             }
             seen = null;

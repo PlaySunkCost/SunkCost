@@ -106,6 +106,8 @@ namespace SunkCost.Monsters
         [SerializeField] private float reachMeters = 1.4f;
         [Tooltip("A monster that has drawn blood backs off this long before it can strike again.")]
         [SerializeField] private float strikeCooldownSeconds = 2f;
+        [Tooltip("The Lure and the Listener keep this far from what they walk toward; they shoot, they do not touch.")]
+        [SerializeField] private float shooterStandoffMeters = 3f;
         [Tooltip("The walk and sprint speeds a monster's fractions are of when no diver is on the site to read them from.")]
         [SerializeField] private float fallbackWalkSpeed = 4f;
         [SerializeField] private float fallbackSprintSpeed = 6f;
@@ -154,6 +156,9 @@ namespace SunkCost.Monsters
         public float ImpostorRunSeconds => impostorRunSeconds;
         public float ReachMeters => reachMeters;
         public float StrikeCooldownSeconds => strikeCooldownSeconds;
+        public float ShooterStandoffMeters => shooterStandoffMeters;
+        // Close enough to touch: a hunter stops a little inside its reach.
+        public float TouchStandoffMeters => reachMeters * 0.7f;
         public float FallbackWalkSpeed => fallbackWalkSpeed;
         public float FallbackSprintSpeed => fallbackSprintSpeed;
 

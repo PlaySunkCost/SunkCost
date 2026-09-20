@@ -53,7 +53,7 @@ namespace SunkCost.Monsters
                 SetPose(CreaturePose.Shooting);
             }
             else if (Pose != CreaturePose.Shooting || Now > nextShotAt - Settings.ListenerShotCooldownSeconds + 0.6f) SetPose(CreaturePose.Drawn);
-            MoveToward(heardAt, WalkSpeed * Settings.ListenerApproachSpeedFactor, dt);
+            MoveToward(heardAt, WalkSpeed * Settings.ListenerApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
         }
 
         protected override string ServerBrainStatus() => $" heard={ServerHeard} last={heardKind} ago={(float.IsInfinity(heardTime) ? -1f : Now - heardTime):0.0}s fired={bolts.ServerFired} hits={bolts.ServerHits}";

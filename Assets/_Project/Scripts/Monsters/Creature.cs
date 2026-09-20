@@ -171,9 +171,12 @@ namespace SunkCost.Monsters
             get { IReadOnlyList<HQPlayerController> d = CreatureSenses.Divers(); return d.Count > 0 ? d[0].SprintSpeed : Settings.FallbackSprintSpeed; }
         }
 
-        // Walk toward a point at a speed this frame; never into the safe ground round
-        // the shaft. True when standing at it (or at the safe ground's edge before it).
-        protected bool MoveToward(Vector3 point, float speed, float dt)
+        // Walk toward a point at a speed this frame, stopping `stopWithin` metres
+        // short of it (a hunter stops inside its reach; a shooter keeps its distance —
+        // a creature standing in a diver's capsule blocks their camera and their
+        // keys); never into the safe ground round the shaft. True when there (or at
+        // the safe ground's edge before it).
+        protected bool MoveToward(Vector3 point, float speed, float dt, float stopWithin = 0.3f)
         {
             Vector3 here = transform.position;
             Vector3 goal = point;
@@ -191,10 +194,10 @@ namespace SunkCost.Monsters
             }
             Vector3 delta = goal - here; delta.y = 0f;
             float distance = delta.magnitude;
-            if (distance < 0.3f) return true;
+            if (distance <= Mathf.Max(0.3f, stopWithin)) return true;
             Vector3 dir = delta / distance;
             if (Now < sidestepUntil) dir = (dir + sidestep).normalized;
-            float step = Mathf.Min(distance, speed * dt);
+            float step = Mathf.Min(distance - stopWithin, speed * dt);
             Vector3 move = dir * step;
             // Never a step onto the safe ground.
             if (CreatureSenses.ShaftCentre(out centre))

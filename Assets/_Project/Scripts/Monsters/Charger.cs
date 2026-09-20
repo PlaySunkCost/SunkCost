@@ -62,7 +62,7 @@ namespace SunkCost.Monsters
                     Vector3 before = transform.position;
                     float speed = SprintSpeed * Settings.ChargerRushSpeedFactor;
                     float step = Mathf.Min(rushLeft, speed * dt);
-                    bool blocked = MoveToward(before + rushDir * (step + 2f), speed, dt);
+                    bool blocked = MoveToward(before + rushDir * (step + 2f), speed, dt, 0f);
                     rushLeft -= step;
                     Vector3 after = before + rushDir * step;
                     if (!rushHit)

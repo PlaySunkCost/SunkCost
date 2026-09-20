@@ -24,7 +24,7 @@ namespace SunkCost.Monsters
             SetPose(CreaturePose.Hunting);
             FaceToward(prey.transform.position);
             if (WithinReach(prey) && StrikeReady) { Strike(prey, 0f); return; }
-            MoveToward(prey.transform.position, SprintSpeed * Settings.AngelSpeedFactor, dt);
+            MoveToward(prey.transform.position, SprintSpeed * Settings.AngelSpeedFactor, dt, Settings.TouchStandoffMeters);
         }
 
         protected override string ServerBrainStatus() => ServerWatched ? " watched by " + ServerWatcherId : " unwatched";
