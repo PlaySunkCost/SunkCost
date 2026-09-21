@@ -83,6 +83,22 @@ fed data**, never copied:
   data-in, pixels-out function first and call it from both places. A copy that
   drifts is a bug we will only find in a playtest.
 
+### Every screen sees it (Dan, 21 September 2026)
+
+Anything a player can see or hear happen — an effect, a sound, a mark on the
+visor, a monster's tell — is seen **from every screen that looks at that place**:
+the player's own, every other player's, a dead spectator's view and the deck TV.
+Not as a feature to add later; as the default, every time. That falls out of one
+rule: an effect is **a world thing every peer builds from replicated state**
+(a SyncVar, a serial, a pose), never something the owner's client draws for
+itself alone or a screen re-triggers by hand. Presentation reads the state and
+decides nothing (the contract's "clients display, never compute"); the TV and the
+spectator camera render the same world, so they see it for free. A visor readout
+goes into `VisorReadout` from replicated state so the one `DrawVisor` shows it on
+all three screens. When a card is done, check it on a friend's screen, through a
+spectator and on the TV before calling it done — the matrices' guest snapshot is
+where it is asserted.
+
 ## Pull requests
 
 - Gameplay tweaks: merge your own, no ceremony.

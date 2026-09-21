@@ -74,6 +74,7 @@ namespace SunkCost.Player
             public bool AirLow, AirEmpty, HealthLow; // the visor blinks the bar and says AIR LOW (PlayerVitals thresholds)
             public bool Leaking;               // the suit leaks: LEAK blinks by the HP bar (the monsters, 20 September 2026)
             public bool LampOff;               // the headlamp's switch is off (F): LAMP OFF under the mode
+            public float DashReady;            // 0..1, the dash's cooldown run down (Alt); the same on every peer from the cue (Dan, 21 September 2026)
             public string UpgradeMarks; // "L-TANK  LAMP" — what the diver bought (PlayerUpgrades); null = none
             public float DepthMeters;
             public float HeadingDeg;
@@ -446,6 +447,7 @@ namespace SunkCost.Player
             r.HealthLow = vitals != null && vitals.HealthLow;
             r.Leaking = vitals != null && vitals.Leaking;
             r.LampOff = !who.LampOn;
+            r.DashReady = who.DashReady;
             r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : who.Yaw, 360f);
 
             // HOME: the tube's doorway at the seafloor, hidden while inside the car.
@@ -604,6 +606,16 @@ namespace SunkCost.Player
             GUI.color = VisorText;
             GUI.Label(new Rect(tr.x - 120f * t, tr.y, tr.width + 120f * t, 18f * t), Visor.LampOff ? "MODE: DIVE  ·  LAMP OFF (F)" : "MODE: DIVE", visorRightStyle);
             DrawDashes(tr.xMax - 6f * 10f * s, tr.y + 24f * t, 6, s);
+            // The dash (Alt) under the mode: DASH and a short bar that fills back over
+            // the cooldown; full and bright = ready. From the replicated cue, so it
+            // reads the same through a spectator and on the TV.
+            float dashW = 90f * s, dashH = 5f * s, dashX = tr.xMax - dashW, dashY = tr.y + 40f * t;
+            GUI.color = VisorText;
+            GUI.Label(new Rect(dashX - 160f * t, dashY - 8f * s, 152f * t, 18f * t), "DASH (ALT)", visorRightStyle);
+            GUI.color = new Color(0.1f, 0.35f, 0.4f, 0.35f);
+            GUI.DrawTexture(new Rect(dashX, dashY, dashW, dashH), whiteTexture);
+            GUI.color = Visor.DashReady >= 1f ? VisorColor : new Color(VisorText.r, VisorText.g, VisorText.b, 0.45f);
+            if (Visor.DashReady > 0f) GUI.DrawTexture(new Rect(dashX, dashY, dashW * Mathf.Clamp01(Visor.DashReady), dashH), whiteTexture);
 
             // Vitals, bottom-left, as the picture: the lungs badge, then O2 and HP as
             // thick bars with the label left and the percentage right, then DEPTH and

@@ -43,6 +43,7 @@ namespace SunkCost.Player
             if (moved > 3f) { sinceStep = 0f; return; } // a teleport, not a stride
             bool crouched = stance != null && stance.Accepted.Crouched;
             if (crouched) { sinceStep = 0f; return; } // silent (Dan)
+            if (controller.ServerDashing) { sinceStep = 0f; return; } // the dash is its own, louder noise (HQPlayerController)
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
             float speed = moved / dt;

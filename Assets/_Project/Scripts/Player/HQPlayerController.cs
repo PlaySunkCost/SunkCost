@@ -3,12 +3,21 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using SunkCost.Interaction;
 using SunkCost.Net;
+using SunkCost.Noise;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace SunkCost.Player
 {
     public enum CabinControl : byte { None, DeckCabin, Car }
+
+    // A dash the server saw (the repo's one-shot idiom: a serial in a SyncVar): every
+    // peer plays the rings and the whoosh from it, in this direction.
+    public struct DashCue
+    {
+        public int Serial;
+        public Vector3 Direction;
+    }
 
     // Look, move, jump, crouch and input only. Every item request goes through
     // PlayerInventory, which owns the RPCs and the server decisions; the stance
@@ -148,6 +157,28 @@ namespace SunkCost.Player
         private readonly SyncVar<bool> lampOn = new(true);
         private bool lampWanted; // this copy is one whose lamp shows: the local player below, a remote copy listed below
         public bool LampOn => lampOn.Value;
+        // The dash (docs/DESIGN.md §3; Dan, 21 September 2026): Alt, a burst of
+        // DashMeters over DashSeconds in the steering direction (forward with none),
+        // below only, standing, not with both hands full, DashCooldownSeconds apart.
+        // Client-simulated like the rest of movement — the owner moves its own
+        // capsule — and judged by the server from the copy's own speed, as sprinting
+        // is: the air (PlayerVitals.ServerSpendAir), the noise (NoiseKind.Dash) and
+        // this cue, from which every other peer plays the rings and the whoosh
+        // (PlayerDashEffects; the owner plays its own at the press).
+        private readonly SyncVar<DashCue> dashCue = new(new DashCue { Serial = 0 });
+        private float dashUntil = float.NegativeInfinity, dashReadyAt = float.NegativeInfinity;
+        private float dashStartedAt = float.NegativeInfinity; // every peer: the owner's press, a remote copy's cue
+        private Vector3 dashDirection;
+        private float dashSpeed;
+        private int dashClientStartFrame = -1;
+        public int Dashes { get; private set; } // owner: bursts started
+        public string DashRefusal { get; private set; } = string.Empty;
+        public bool Dashing => Time.unscaledTime < dashUntil;
+        public DashCue LastDashCue => dashCue.Value;
+        public event System.Action<Vector3> DashStarted; // every peer: the direction, for the rings and the whoosh
+        // 0..1, how far the cooldown has run (1 = ready); the same on every peer, so a
+        // spectator's and the TV's visor read it too.
+        public float DashReady => Movement.DashCooldownSeconds <= 0f ? 1f : Mathf.Clamp01((Time.unscaledTime - dashStartedAt) / Movement.DashCooldownSeconds);
         // Riding a departing ship: look works, walking and items do not (the rider
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
@@ -225,6 +256,86 @@ namespace SunkCost.Player
         [Server]
         public void ServerSetLamp(bool on) => lampOn.Value = on;
 
+        // ---- the dash ------------------------------------------------------------------
+
+        // Alt, or the peer's dash command: a burst in the steering direction (forward
+        // with none). Refused with a reason the visor and the checks can read. The
+        // owner's own rings and whoosh play now; the server's cue reaches the others.
+        public bool TryDash(Vector2 input)
+        {
+            if (!IsOwner || dead.Value || travelLocked) return RefuseDash("Not now");
+            float now = Time.unscaledTime;
+            if (now < dashUntil) return RefuseDash("Already dashing");
+            if (now < dashReadyAt) return RefuseDash($"Dash in {dashReadyAt - now:0.0} s");
+            if (stanceCrouched || (stance != null && stance.DesiredCrouch)) return RefuseDash("Not crouched");
+            CarryableItem held = inventory != null ? inventory.HeldItem : null;
+            if (held != null && held.Grip == CarryGrip.TwoHands) return RefuseDash("Not with both hands full");
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null || !day.IsBelow(OwnerId)) return RefuseDash("Only below");
+            PlayerMovementSettings settings = Movement;
+            input = Vector2.ClampMagnitude(input, 1f);
+            Vector3 direction = input.sqrMagnitude > 0.01f ? transform.forward * input.y + transform.right * input.x : transform.forward;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f) direction = transform.forward;
+            dashDirection = direction.normalized;
+            dashSpeed = settings.DashMeters * SpeedFactor / settings.DashSeconds; // a heavy diver dashes shorter, not longer
+            dashUntil = now + settings.DashSeconds;
+            dashReadyAt = now + settings.DashCooldownSeconds;
+            dashStartedAt = now;
+            Dashes++;
+            DashRefusal = string.Empty;
+            DashStarted?.Invoke(dashDirection);
+            return true;
+        }
+        private bool RefuseDash(string why) { DashRefusal = why; return false; }
+
+        private void OnDashCueChanged(DashCue previous, DashCue next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return; // once per peer (the host sees both passes)
+            if (next.Serial == 0 || Time.frameCount == dashClientStartFrame || IsOwner) return; // a joiner's old cue is old news; the owner played its own at the press
+            dashStartedAt = Time.unscaledTime;
+            DashStarted?.Invoke(next.Direction);
+        }
+
+        // The server's view of a dash, judged from the copy's own speed as sprinting is
+        // (no flag from the owner): the flat ground covered over the last
+        // DashJudgeWindow seconds reaches DashJudgeFraction of a dash's length — a
+        // sprint covers well under half of it in that time — and once per burst the
+        // air, the noise and the cue. Hysteresis and a gap keep one burst one dash; a
+        // move over 3 m in a frame is a teleport, not a dash. A hacked client dashing
+        // without a cooldown only pays air for every burst.
+        private const float DashJudgeWindow = 0.3f, DashJudgeFraction = 0.6f, DashJudgeGap = 0.6f;
+        private readonly System.Collections.Generic.List<(float time, Vector3 position)> dashTrail = new();
+        private bool serverDashing;
+        private float serverDashGapUntil;
+        public bool ServerDashing => serverDashing;
+        public int ServerDashes { get; private set; }
+
+        [Server]
+        private void ServerJudgeDash()
+        {
+            float now = Time.unscaledTime;
+            Vector3 position = transform.position;
+            if (dashTrail.Count > 0 && (position - dashTrail[dashTrail.Count - 1].position).sqrMagnitude > 9f) dashTrail.Clear(); // a teleport
+            dashTrail.Add((now, position));
+            while (dashTrail.Count > 1 && now - dashTrail[0].time > DashJudgeWindow) dashTrail.RemoveAt(0);
+            Vector3 flat = position - dashTrail[0].position; flat.y = 0f;
+            float covered = flat.magnitude;
+            float dashLength = Movement.DashMeters * SpeedFactor;
+            if (!serverDashing)
+            {
+                bool suitOn = Vitals != null && Vitals.ServerSuitOn && !dead.Value;
+                if (!suitOn || now < serverDashGapUntil || dashTrail.Count < 2 || covered < dashLength * DashJudgeFraction) return;
+                serverDashing = true;
+                serverDashGapUntil = now + DashJudgeGap;
+                ServerDashes++;
+                Vitals.ServerSpendAir(Vitals.Settings.DashAirSeconds);
+                NoiseSystem.Emit(position, NoiseSettings.Get().DashRadius, NoiseKind.Dash, ObjectId);
+                dashCue.Value = new DashCue { Serial = dashCue.Value.Serial + 1, Direction = flat.normalized };
+            }
+            else if (covered < dashLength * DashJudgeFraction * 0.5f) serverDashing = false;
+        }
+
         // The bright headlamp upgrade: the plain lamp's range and intensity times
         // these (1, 1 = the plain lamp). Every peer applies it to its copy.
         private float headlampBaseRange = -1f, headlampBaseIntensity = -1f;
@@ -258,6 +369,7 @@ namespace SunkCost.Player
         {
             dead.OnChange += OnDeadChanged;
             lampOn.OnChange += (_, _, _) => ApplyLamp();
+            dashCue.OnChange += OnDashCueChanged;
             controller = GetComponent<CharacterController>();
             inventory = GetComponent<PlayerInventory>();
             stance = GetComponent<PlayerStance>();
@@ -277,6 +389,8 @@ namespace SunkCost.Player
             base.OnStartClient();
             SetLocalPresentation(IsOwner);
             if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
+            dashClientStartFrame = Time.frameCount;
+            if (GetComponent<PlayerDashEffects>() == null) gameObject.AddComponent<PlayerDashEffects>(); // the rings and the whoosh, on every peer
             // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
             PlayerIdentity identity = GetComponent<PlayerIdentity>();
             if (identity != null)
@@ -296,6 +410,7 @@ namespace SunkCost.Player
             // value and the applied one disagree (a client whose object was moved
             // between scenes or re-initialised can miss the change callback).
             if (appliedDead != dead.Value) ApplyDead(dead.Value);
+            if (IsServerStarted) ServerJudgeDash(); // every copy, the host's own included: one path
             if (!IsOwner) return; // the eyes ease in LateUpdate, after the NetworkTransform has moved
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
@@ -354,6 +469,7 @@ namespace SunkCost.Player
                     sprint = keyboard.leftShiftKey.isPressed;
                     if (keyboard.spaceKey.wasPressedThisFrame) jumpBufferedUntil = Time.unscaledTime + Movement.JumpBufferSeconds;
                     stance?.SetDesiredCrouch(keyboard.leftCtrlKey.isPressed);
+                    if (keyboard.leftAltKey.wasPressedThisFrame) TryDash(moveInput); // the burst, in the steering direction
                 }
             }
             else
@@ -584,6 +700,7 @@ namespace SunkCost.Player
             input = Vector2.ClampMagnitude(input, 1f);
             float speed = (sprint && !stanceCrouched ? sprintSpeed : walkSpeed) * (stanceCrouched ? settings.CrouchSpeedFactor : 1f) * SpeedFactor;
             Vector3 planar = (transform.forward * input.y + transform.right * input.x) * speed;
+            if (now < dashUntil) planar = dashDirection * dashSpeed; // the burst: steering and sprint do not matter for a quarter second; gravity goes on (an air dash is allowed — Dan wants to try it)
             lastFlags = controller.Move((planar + Vector3.up * verticalSpeed) * Mathf.Min(Time.deltaTime, 0.1f));
             if ((lastFlags & CollisionFlags.Above) != 0 && verticalSpeed > 0f) verticalSpeed = 0f; // head hit: the ascent ends now
         }

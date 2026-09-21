@@ -36,6 +36,14 @@ namespace SunkCost.Player
         [Tooltip("Extra headroom required above the standing capsule before standing is accepted, metres.")]
         [SerializeField] private float standClearance = 0.05f;
 
+        [Header("Dash (docs/DESIGN.md §3; Dan, 21 September 2026)")]
+        [Tooltip("Ground a dash covers with nothing carried, metres; the weight factor scales it.")]
+        [SerializeField] private float dashMeters = 4f;
+        [Tooltip("How long the burst lasts, seconds.")]
+        [SerializeField] private float dashSeconds = 0.25f;
+        [Tooltip("Seconds from one dash to the next (the Charger turns in about 3).")]
+        [SerializeField] private float dashCooldownSeconds = 3f;
+
         [Header("Release placement (section 6A)")]
         [Tooltip("Gap between the player's capsule and the released item's near surface, metres.")]
         [SerializeField] private float releaseClearance = 0.10f;
@@ -73,6 +81,9 @@ namespace SunkCost.Player
         public float CrouchSpeedFactor => crouchSpeedFactor;
         public float StandRetrySeconds => standRetrySeconds;
         public float StandClearance => standClearance;
+        public float DashMeters => dashMeters;
+        public float DashSeconds => dashSeconds;
+        public float DashCooldownSeconds => dashCooldownSeconds;
         public float ReleaseClearance => releaseClearance;
         public float ReleaseMaxForward => releaseMaxForward;
         public float DropGroundSearch => dropGroundSearch;
@@ -99,6 +110,7 @@ namespace SunkCost.Player
             crouchStepOffset >= 0f && crouchStepOffset < crouchHeight &&
             crouchBlendSeconds >= 0f && crouchSpeedFactor > 0f && crouchSpeedFactor <= 1f &&
             standRetrySeconds >= 0f && standClearance >= 0f &&
+            Finite(dashMeters) && dashMeters > 0f && dashSeconds > 0f && dashCooldownSeconds >= dashSeconds &&
             releaseClearance >= 0f && releaseMaxForward > 0f && dropGroundSearch >= 0f && dropSkin >= 0f &&
             minThrowPitchDegrees >= -89f && maxThrowPitchDegrees <= 89f && minThrowPitchDegrees <= maxThrowPitchDegrees &&
             releaseTimeoutSeconds > 0f && dotDiameterPx > 0f && dotOutlinePx >= 0f;

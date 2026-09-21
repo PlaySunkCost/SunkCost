@@ -49,6 +49,11 @@ namespace SunkCost.Audio
         [SerializeField] private AudioClip leakHiss;
         [Range(0f, 1f)] [SerializeField] private float leakHissVolume = 0.35f;
 
+        [Header("The dash (Dan, 21 September 2026)")]
+        [Tooltip("The whoosh at the feet as a diver dashes; heard by everyone near.")]
+        [SerializeField] private AudioClip dashWhoosh;
+        [Range(0f, 1f)] [SerializeField] private float dashWhooshVolume = 0.5f;
+
         [Header("Monsters")]
         [Tooltip("A creature's call as it starts to hunt (the Charger's wind-up too).")]
         [SerializeField] private AudioClip monsterCall;
@@ -95,6 +100,9 @@ namespace SunkCost.Audio
         public float GhostHumVolume => ghostHumVolume;
         public AudioClip DoorSlam => doorSlam != null ? doorSlam : PlaceholderSounds.Slam;
         public float DoorSlamVolume => doorSlamVolume;
+        public AudioClip DashWhoosh => dashWhoosh != null ? dashWhoosh : PlaceholderSounds.Whoosh;
+        public float DashWhooshVolume => dashWhooshVolume;
+        public bool DashWhooshIsPlaceholder => dashWhoosh == null;
         public bool LeakHissIsPlaceholder => leakHiss == null;
         public bool MonsterCallIsPlaceholder => monsterCall == null;
 
@@ -197,6 +205,29 @@ namespace SunkCost.Audio
                 hum = AudioClip.Create("Placeholder hum", n, 1, Rate, false);
                 hum.SetData(data, 0);
                 return hum;
+            }
+        }
+        // A dash's whoosh: filtered noise that swells and fades over a third of a second.
+        private static AudioClip whoosh;
+        public static AudioClip Whoosh
+        {
+            get
+            {
+                if (whoosh != null) return whoosh;
+                int n = (int)(Rate * 0.35f);
+                var data = new float[n];
+                System.Random random = new(21);
+                float low = 0f;
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)n;
+                    low = low * 0.9f + (float)(random.NextDouble() * 2 - 1) * 0.1f;
+                    float envelope = Mathf.Sin(Mathf.PI * Mathf.Pow(t, 0.6f));
+                    data[i] = Mathf.Clamp(low * 5f * envelope, -1f, 1f);
+                }
+                whoosh = AudioClip.Create("Placeholder whoosh", n, 1, Rate, false);
+                whoosh.SetData(data, 0);
+                return whoosh;
             }
         }
         // The doors slamming: a very heavy short bang.

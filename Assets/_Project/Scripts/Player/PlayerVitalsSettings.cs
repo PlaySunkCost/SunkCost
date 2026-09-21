@@ -16,6 +16,8 @@ namespace SunkCost.Player
         [SerializeField] private float sprintDrainMultiplier = 1.5f;
         [Tooltip("The visor blinks and says AIR LOW under this fraction of the tank.")]
         [SerializeField] private float lowAirFraction = 0.2f;
+        [Tooltip("Seconds of tank one dash costs (Dan, 21 September 2026: a flat bite of 4); a leaking tank pays the leak multiplier on it.")]
+        [SerializeField] private float dashAirSeconds = 4f;
 
         [Header("Leaks (the monsters, 20 September 2026)")]
         [Tooltip("A leak drains the tank this many times faster until it is patched (Dan: 3x).")]
@@ -42,6 +44,7 @@ namespace SunkCost.Player
         public float TeammatePatchReach => teammatePatchReach;
         public float SprintDrainMultiplier => sprintDrainMultiplier;
         public float LowAirFraction => lowAirFraction;
+        public float DashAirSeconds => dashAirSeconds;
         public int MaxHealth => maxHealth;
         public float SuffocationDamagePerSecond => suffocationDamagePerSecond;
         public float LowHealthFraction => lowHealthFraction;

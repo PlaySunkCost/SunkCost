@@ -148,6 +148,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "noise") NoiseRuntimeChecks.RunAsHost();
                         else if (job == "figure") FigureRuntimeChecks.RunAsHost();
                         else if (job == "monsters") MonsterRuntimeChecks.RunAsHost();
+                        else if (job == "dash") DashRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }
