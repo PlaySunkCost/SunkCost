@@ -17,6 +17,14 @@ namespace SunkCost.Player
         [Tooltip("The visor blinks and says AIR LOW under this fraction of the tank.")]
         [SerializeField] private float lowAirFraction = 0.2f;
 
+        [Header("Leaks (the monsters, 20 September 2026)")]
+        [Tooltip("A leak drains the tank this many times faster until it is patched (Dan: 3x).")]
+        [SerializeField] private float leakDrainMultiplier = 3f;
+        [Tooltip("A teammate holds E on the leaking diver this long to patch it, free — once per day per patient.")]
+        [SerializeField] private float teammatePatchSeconds = 3f;
+        [Tooltip("How far a helper's eyes may be from the patient's body for the patch.")]
+        [SerializeField] private float teammatePatchReach = 2.5f;
+
         [Header("Health")]
         [SerializeField] private int maxHealth = 100;
         [Tooltip("Health lost per second with the tank empty. 8 = a dozen seconds from empty to dead (between Minecraft's 10 s and Dan's first thought of 20).")]
@@ -29,6 +37,9 @@ namespace SunkCost.Player
         [SerializeField] private float debugAirStepFraction = 0.05f;
 
         public float TankSeconds => tankSeconds;
+        public float LeakDrainMultiplier => leakDrainMultiplier;
+        public float TeammatePatchSeconds => teammatePatchSeconds;
+        public float TeammatePatchReach => teammatePatchReach;
         public float SprintDrainMultiplier => sprintDrainMultiplier;
         public float LowAirFraction => lowAirFraction;
         public int MaxHealth => maxHealth;

@@ -44,6 +44,28 @@ namespace SunkCost.Audio
         [Tooltip("Your own steps, jumps and landings play at this fraction of a friend's (they are under your own ears).")]
         [Range(0f, 1f)] [SerializeField] private float ownFootstepScale = 0.6f;
 
+        [Header("Leaks (the monsters, 20 September 2026)")]
+        [Tooltip("The hiss of a punctured suit; loops at the diver while the tank leaks.")]
+        [SerializeField] private AudioClip leakHiss;
+        [Range(0f, 1f)] [SerializeField] private float leakHissVolume = 0.35f;
+
+        [Header("Monsters")]
+        [Tooltip("A creature's call as it starts to hunt (the Charger's wind-up too).")]
+        [SerializeField] private AudioClip monsterCall;
+        [Range(0f, 1f)] [SerializeField] private float monsterCallVolume = 0.7f;
+        [Tooltip("A strike or a bolt landing on a diver.")]
+        [SerializeField] private AudioClip monsterHit;
+        [Range(0f, 1f)] [SerializeField] private float monsterHitVolume = 0.8f;
+        [Tooltip("A bolt leaving the Lure or the Listener.")]
+        [SerializeField] private AudioClip boltShot;
+        [Range(0f, 1f)] [SerializeField] private float boltShotVolume = 0.6f;
+        [Tooltip("The Elevator Ghost: a hum at the car while its light is green.")]
+        [SerializeField] private AudioClip ghostHum;
+        [Range(0f, 1f)] [SerializeField] private float ghostHumVolume = 0.5f;
+        [Tooltip("The car's doors slamming on someone who walked into the green.")]
+        [SerializeField] private AudioClip doorSlam;
+        [Range(0f, 1f)] [SerializeField] private float doorSlamVolume = 0.9f;
+
         public AudioClip ElevatorWinch => elevatorWinch != null ? elevatorWinch : PlaceholderSounds.Winch;
         public AudioClip ElevatorDing => elevatorDing != null ? elevatorDing : PlaceholderSounds.Ding;
         public float WinchVolumeAtCar => winchVolumeAtCar;
@@ -61,6 +83,20 @@ namespace SunkCost.Audio
         public float DingVolume => dingVolume;
         public bool WinchIsPlaceholder => elevatorWinch == null;
         public bool DingIsPlaceholder => elevatorDing == null;
+        public AudioClip LeakHiss => leakHiss != null ? leakHiss : PlaceholderSounds.Hiss;
+        public float LeakHissVolume => leakHissVolume;
+        public AudioClip MonsterCall => monsterCall != null ? monsterCall : PlaceholderSounds.Call;
+        public float MonsterCallVolume => monsterCallVolume;
+        public AudioClip MonsterHit => monsterHit != null ? monsterHit : PlaceholderSounds.Hit;
+        public float MonsterHitVolume => monsterHitVolume;
+        public AudioClip BoltShot => boltShot != null ? boltShot : PlaceholderSounds.Shot;
+        public float BoltShotVolume => boltShotVolume;
+        public AudioClip GhostHum => ghostHum != null ? ghostHum : PlaceholderSounds.Hum;
+        public float GhostHumVolume => ghostHumVolume;
+        public AudioClip DoorSlam => doorSlam != null ? doorSlam : PlaceholderSounds.Slam;
+        public float DoorSlamVolume => doorSlamVolume;
+        public bool LeakHissIsPlaceholder => leakHiss == null;
+        public bool MonsterCallIsPlaceholder => monsterCall == null;
 
         private static AudioLibrary loaded;
         public static AudioLibrary Get()
@@ -77,7 +113,102 @@ namespace SunkCost.Audio
     public static class PlaceholderSounds
     {
         private const int Rate = 48000;
-        private static AudioClip winch, ding, step, land;
+        private static AudioClip winch, ding, step, land, hiss, call, hit, shot, hum, slam;
+
+        // A leak: a 2 s loop of bright noise, seamless (the monsters, 20 September 2026).
+        public static AudioClip Hiss
+        {
+            get
+            {
+                if (hiss != null) return hiss;
+                int n = Rate * 2;
+                var data = new float[n];
+                System.Random random = new(11);
+                float high = 0f, prev = 0f;
+                for (int i = 0; i < n; i++)
+                {
+                    float white = (float)(random.NextDouble() * 2 - 1);
+                    high = 0.6f * (high + white - prev); prev = white; // a high-pass: the bright part of the noise
+                    float flutter = 0.85f + 0.15f * Mathf.Sin(2f * Mathf.PI * 7f * i / Rate);
+                    data[i] = Mathf.Clamp(high * 0.55f * flutter, -1f, 1f);
+                }
+                hiss = AudioClip.Create("Placeholder hiss", n, 1, Rate, false);
+                hiss.SetData(data, 0);
+                return hiss;
+            }
+        }
+        // A creature's call: a low growl — two detuned sines with a rasp — 0.9 s.
+        public static AudioClip Call
+        {
+            get
+            {
+                if (call != null) return call;
+                int n = (int)(Rate * 0.9f);
+                var data = new float[n];
+                System.Random random = new(5);
+                float rasp = 0f;
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)Rate, u = i / (float)n;
+                    float envelope = Mathf.Min(1f, u * 12f) * (1f - u) * (1f - u);
+                    float tone = Mathf.Sin(2f * Mathf.PI * 62f * t) + 0.8f * Mathf.Sin(2f * Mathf.PI * 67f * t + 0.5f) + 0.3f * Mathf.Sin(2f * Mathf.PI * 190f * t);
+                    rasp = rasp * 0.9f + (float)(random.NextDouble() * 2 - 1) * 0.1f;
+                    data[i] = Mathf.Clamp((tone * 0.35f + rasp * 2f) * envelope, -1f, 1f);
+                }
+                call = AudioClip.Create("Placeholder call", n, 1, Rate, false);
+                call.SetData(data, 0);
+                return call;
+            }
+        }
+        // A hit on a diver: a heavy, dull thud.
+        public static AudioClip Hit
+        {
+            get
+            {
+                if (hit != null) return hit;
+                hit = Burst("Placeholder hit", 0.22f, 0.97f, 0.9f, 9);
+                return hit;
+            }
+        }
+        // A bolt leaving: a short bright crack.
+        public static AudioClip Shot
+        {
+            get
+            {
+                if (shot != null) return shot;
+                shot = Burst("Placeholder shot", 0.12f, 0.6f, 0.6f, 13);
+                return shot;
+            }
+        }
+        // The Ghost's hum: two close low tones beating, a 2 s loop.
+        public static AudioClip Hum
+        {
+            get
+            {
+                if (hum != null) return hum;
+                int n = Rate * 2;
+                var data = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)Rate;
+                    float a = Mathf.Sin(2f * Mathf.PI * 55f * t), b = Mathf.Sin(2f * Mathf.PI * 56f * t), c = 0.25f * Mathf.Sin(2f * Mathf.PI * 165f * t);
+                    data[i] = Mathf.Clamp((a + b + c) * 0.25f, -1f, 1f);
+                }
+                hum = AudioClip.Create("Placeholder hum", n, 1, Rate, false);
+                hum.SetData(data, 0);
+                return hum;
+            }
+        }
+        // The doors slamming: a very heavy short bang.
+        public static AudioClip Slam
+        {
+            get
+            {
+                if (slam != null) return slam;
+                slam = Burst("Placeholder slam", 0.35f, 0.98f, 1f, 17);
+                return slam;
+            }
+        }
 
         public static AudioClip Winch
         {

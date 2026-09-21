@@ -72,6 +72,8 @@ namespace SunkCost.Player
             public bool On;
             public float AirFraction, HealthFraction;
             public bool AirLow, AirEmpty, HealthLow; // the visor blinks the bar and says AIR LOW (PlayerVitals thresholds)
+            public bool Leaking;               // the suit leaks: LEAK blinks by the HP bar (the monsters, 20 September 2026)
+            public bool LampOff;               // the headlamp's switch is off (F): LAMP OFF under the mode
             public string UpgradeMarks; // "L-TANK  LAMP" — what the diver bought (PlayerUpgrades); null = none
             public float DepthMeters;
             public float HeadingDeg;
@@ -137,8 +139,17 @@ namespace SunkCost.Player
                 if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
+                if (target == null && controller.CurrentPatient != null) return PatientPrompt(controller.CurrentPatient);
                 if (target == null && inventory.HeldItem != null)
                 {
+                    // A patch kit in hand: what left click does with it.
+                    PatchKitItem kit = inventory.HeldItem.GetComponent<PatchKitItem>();
+                    if (kit != null)
+                    {
+                        if (kit.IsUsed) return string.Empty; // a used kit: nothing to say, Q drops it
+                        if (controller.Vitals == null || !controller.Vitals.Leaking) return "Patch kit — left click patches your leak";
+                        return "Left click to patch your leak";
+                    }
                     // An air tank in hand: what left click does with it.
                     AirTankItem tank = inventory.HeldItem.GetComponent<AirTankItem>();
                     if (tank != null)
@@ -348,6 +359,19 @@ namespace SunkCost.Player
         private static bool IsAnOffer(string prompt) =>
             prompt.StartsWith("Press E") || prompt.StartsWith("Hold E") || prompt.StartsWith("Left click") || prompt.Contains("— Press E");
 
+        // A teammate under the dot: only a leaking one has a prompt (the patch).
+        private string PatientPrompt(HQPlayerController patient)
+        {
+            PlayerVitals theirs = patient.Vitals;
+            if (theirs == null || !theirs.Leaking) return string.Empty;
+            PlayerIdentity identity = patient.GetComponent<PlayerIdentity>();
+            string name = identity != null ? identity.DisplayName : PlayerIdentity.Fallback(patient.OwnerId);
+            if (theirs.FriendPatchedToday) return $"{name} was patched by a friend today — a kit now";
+            float seconds = controller.Vitals != null ? controller.Vitals.Settings.TeammatePatchSeconds : 3f;
+            if (controller.PatchProgress > 0f) return $"Hold E to patch {name} — {Mathf.CeilToInt((1f - controller.PatchProgress) * seconds)} s";
+            return $"Hold E to patch {name}";
+        }
+
         private void WatchPresses()
         {
             Keyboard keyboard = Keyboard.current;
@@ -362,7 +386,10 @@ namespace SunkCost.Player
             if (refusal != lastInventoryRefusal) { lastInventoryRefusal = refusal; Notice(refusal); }
             string upgrade = controller.Upgrades != null ? controller.Upgrades.Refusal : string.Empty;
             if (upgrade != lastUpgradeRefusal) { lastUpgradeRefusal = upgrade; Notice(upgrade); }
+            string patch = controller.Vitals != null ? controller.Vitals.PatchNotice : string.Empty;
+            if (patch != lastPatchNotice) { lastPatchNotice = patch; Notice(patch); }
         }
+        private string lastPatchNotice;
 
         private void Update()
         {
@@ -417,6 +444,8 @@ namespace SunkCost.Player
             r.AirLow = vitals != null && vitals.AirLow;
             r.AirEmpty = vitals != null && vitals.AirEmpty;
             r.HealthLow = vitals != null && vitals.HealthLow;
+            r.Leaking = vitals != null && vitals.Leaking;
+            r.LampOff = !who.LampOn;
             r.HeadingDeg = Mathf.Repeat(camera != null ? camera.transform.eulerAngles.y : who.Yaw, 360f);
 
             // HOME: the tube's doorway at the seafloor, hidden while inside the car.
@@ -573,7 +602,7 @@ namespace SunkCost.Player
             DrawDashes(tl.x, tl.y + 36f * t, 6, s);
             if (!string.IsNullOrEmpty(Visor.MoneyText)) GUI.Label(new Rect(tl.x, tl.y + 44f * t, tl.width + 200f * t, 14f * t), Visor.MoneyText, visorTinyStyle);
             GUI.color = VisorText;
-            GUI.Label(new Rect(tr.x - 120f * t, tr.y, tr.width + 120f * t, 18f * t), "MODE: DIVE", visorRightStyle);
+            GUI.Label(new Rect(tr.x - 120f * t, tr.y, tr.width + 120f * t, 18f * t), Visor.LampOff ? "MODE: DIVE  ·  LAMP OFF (F)" : "MODE: DIVE", visorRightStyle);
             DrawDashes(tr.xMax - 6f * 10f * s, tr.y + 24f * t, 6, s);
 
             // Vitals, bottom-left, as the picture: the lungs badge, then O2 and HP as
@@ -598,6 +627,12 @@ namespace SunkCost.Player
                 // AIR LOW beside the O2 bar, blinking with it; "NO AIR" once the tank is dry.
                 GUI.color = new Color(1f, 0.35f, 0.3f, 0.95f);
                 GUI.Label(new Rect(left + 56f * t + barWidth + 70f * t, top - 2f * s, 160f * t, 22f * t), Visor.AirEmpty ? "NO AIR" : "AIR LOW", visorStyle);
+            }
+            if (Visor.Leaking && Blink())
+            {
+                // LEAK beside the HP bar, in phase with the rest: the tank drains 3× until it is patched.
+                GUI.color = new Color(1f, 0.35f, 0.3f, 0.95f);
+                GUI.Label(new Rect(left + 56f * t + barWidth + 70f * t, top + barRow - 2f * s, 160f * t, 22f * t), "LEAK", visorStyle);
             }
             GUI.color = VisorText;
             GUI.Label(new Rect(left, textTop, 70f * t, row), "DEPTH", visorSmallLeftStyle);
@@ -990,6 +1025,7 @@ namespace SunkCost.Player
             else if (controller.CurrentButton != null) usable = CrewDayState.Instance != null && !CrewDayState.Instance.Travelling && !CrewDayState.Instance.Sailing;
             else if (controller.CurrentTv != null) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
+            else if (controller.CurrentPatient != null) usable = controller.CurrentPatient.Vitals != null && controller.CurrentPatient.Vitals.Leaking && !controller.CurrentPatient.Vitals.FriendPatchedToday;
             Color previous = GUI.color;
             if (outline > 0f)
             {

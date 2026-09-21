@@ -260,7 +260,7 @@ namespace SunkCost.Editor.Prototype
             Check(host != null && host.IsServerStarted, "editor is the host with a spawned player");
             Check(host.Upgrades != null, "the player prefab carries PlayerUpgrades (run the shop setup)");
             ShopCatalog catalog = ShopCatalog.Resolve();
-            Check(catalog.Items.Count == 3 && catalog.Find(ShopCatalog.AirTankId) != null && catalog.Find(ShopCatalog.LargeTankId) != null && catalog.Find(ShopCatalog.BrightHeadlampId) != null, "the catalogue lists the three items");
+            Check(catalog.Items.Count == 4 && catalog.Find(ShopCatalog.AirTankId) != null && catalog.Find(ShopCatalog.LargeTankId) != null && catalog.Find(ShopCatalog.BrightHeadlampId) != null && catalog.Find(ShopCatalog.PatchKitId) != null, "the catalogue lists the four items (the patch kit since the monsters)");
             ShopItem airTank = catalog.Find(ShopCatalog.AirTankId), largeTank = catalog.Find(ShopCatalog.LargeTankId), lamp = catalog.Find(ShopCatalog.BrightHeadlampId);
             Say($"prices: {airTank.Name} ${airTank.Price}, {largeTank.Name} ${largeTank.Price}, {lamp.Name} ${lamp.Price}; large tank ×{catalog.LargeTankMultiplier}; lamp range ×{catalog.BrightHeadlampRange}");
             WorldSceneFlow flow = WorldSceneFlow.Instance;
@@ -281,7 +281,7 @@ namespace SunkCost.Editor.Prototype
             Heading("S0 — the shop room at HQ: three stands with a name and a price, a delivery spot");
             Check(GameObject.Find(HQPrototypeBuilder.ShopRoomName) != null, "S0 the shop room stands at HQ");
             ShopDisplay tankStand = Stand(ShopCatalog.AirTankId), largeStand = Stand(ShopCatalog.LargeTankId), lampStand = Stand(ShopCatalog.BrightHeadlampId);
-            Check(tankStand != null && largeStand != null && lampStand != null, "S0 a stand for each item");
+            Check(tankStand != null && largeStand != null && lampStand != null && Stand(ShopCatalog.PatchKitId) != null, "S0 a stand for each item");
             TextMesh tankLabel = tankStand.GetComponentInChildren<TextMesh>();
             Check(tankLabel != null && tankLabel.text == $"{airTank.Name}\n${airTank.Price}", "S0 the air tank's label reads its name and price: " + (tankLabel == null ? "none" : tankLabel.text.Replace("\n", " / ")));
             Check(tankStand.DeliveryPoint != null, "S0 the stand knows its delivery spot");

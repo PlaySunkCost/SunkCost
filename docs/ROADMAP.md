@@ -31,8 +31,12 @@ the winch, the bell and the footsteps; noise events on the server (nothing
 listens yet); names, colours, the first-person body (unrigged); Unstuck; an
 FPS counter; a Windows build on every push to `main`.
 
-**Not built at all:** a monster (nothing hurts you but an empty tank), damage
-and leaks, the site vote, dive
+**Built since (20 September 2026, `dan/monsters`):** the seven monsters of
+design §6 as placeholder shapes — the Elevator Ghost, the Long Walker, the
+Weeping Angel, the Charger, the Lure, the Listener, the Impostor — on one
+creature skeleton, three drawn at random per dive; damage and leaks, the
+friend's patch (once a day) and the patch kit in the shop; the headlamp's
+switch (F). **Not built at all:** the site vote, dive
 conditions, more than one site, the seafloor beyond a wreck and coins, the
 run recap screen, the handheld device, the surface radio, cosmetics and
 achievements, the quota curve (a flat $500), music and ambience, real art
@@ -80,21 +84,23 @@ make a run a run (a save, a recap). Nothing gets art here.
 | World loop on Steam, two machines, recorded | Nothing since the rig replaced the hall has been walked host + client over Steam end to end (HQ → sea → dive → up → End day ×3 → payday → HQ → plank). | S | A `docs/test-runs/` folder with roles, build revision, latency. |
 | Four clients connected for ten minutes | The lobby holds four on paper; only three have ever stood together. | S | Two clients (four, really). |
 
-### 2.2 Something down there — the first monster
+### 2.2 Something down there — the monsters (built 20 September 2026, `dan/monsters`)
 
-The design's answer to "which monster first" is the **Bell Eater**: drawn to
-the elevator, so it tests the whole loop (the noise, the car's scream, "SEND
-IT UP!"). Everything it needs already exists on the server: noise events with
-a radius, the seafloor list, health.
+Dan decided the seven on 20 September 2026 (design §6 "The monsters") and
+they were built in one pass on one creature skeleton. The Bell Eater's idea
+lives on as the Listener. What remains here is the polish.
 
 | Card | Why | Size | Notes |
 |---|---|---|---|
-| Creature skeleton: server brain, replicated pose, a hearing sense on `INoiseListener` | One base every monster is built from. The server owns it entirely; clients see a smoothed copy. States: idle, drawn (to a heard point), hunting (a seen player), lost. | L | **Contract** (a new owned thing, section 2/8). Idan's module. |
-| The Bell Eater: drawn to the car, hunts what it finds near it | The monster that makes riding up a decision. Hears the winch's 60 m; hangs around the doorway; loses interest after a tuned time. Attack = a hit for health and a **leak**. | L | Two clients. Placeholder shape (a capsule with eyes); the look is a Phase 03 card. |
-| Damage and leaks | An attack opens a leak: the tank drains faster (a tuned multiplier) until patched. The visor hisses and bubbles; the O2 bar shows the rate. | M | Design §3 "Damage" is decided; the numbers are new (`PlayerVitalsSettings`). |
-| Patch kit — the first healing item | A shop consumable that closes a leak (and, decided here or not, restores no health — healing is items only, and the design leaves *which* items open). | S | Ships in the shop next to the air tank. |
+| ~~Creature skeleton: server brain, replicated pose, a hearing sense on `INoiseListener`~~ | Done: `Creature` (server brain, `CharacterController` on the Monster layer, pose and target SyncVars, a server-authoritative `NetworkTransform`), `CreatureSenses` (sight, watched, light, hearing), `MonsterRoster` (three distinct kinds per dive). | — | Contract §3 rows "Monster AI and targeting", "Elevator Ghost", "Headlamp switch". |
+| ~~The seven~~ | Done as placeholders: the Elevator Ghost (green car on a return trip, the doors slam), the Long Walker (sees you, walks forever at 60 % of walking, stops at the car), the Weeping Angel (frozen while any part of it is on anyone's screen, 2.5× sprint unwatched), the Charger (1.5 s shake, a 20 m rush at 3× sprint, 35 HP + a leak), the Lure (a laser at a lit lamp after a 0.4 s aim; lamps off and it forgets), the Listener (blind; a dark laser at what the noise bus says; crouch is silent), the Impostor (seen by its chosen diver only, wears a crewmate's colour and name, walks at walking speed, 30 HP + a leak, then runs). Tuned with Dan the same day. | — | `docs/test-runs/2026-09-20-monsters`. |
+| ~~Damage and leaks~~ | Done: `ServerDamage`, the `leaking` SyncVar (3× drain), LEAK on the visor, the hiss. | — | |
+| ~~Patch kit~~ and the friend's hands | Done: hold E on a leaking friend for 3 s (once a day per patient), the $60 kit in Gear & Supplies (one use). | — | |
+| The dash key | Dan: the intended dodge for the Charger; "the dash is later" — confirmed 20 September 2026 as the first card of the next update. A short burst on a key with a cooldown; costs air; a noise event for the Listener; client-simulated like movement, the server judges it from the copy's speed. | M | Design §6 names it. |
+| A landed throw makes noise | The Listener's counterplay: throw a coin, it turns. `NoiseEmitter` exists and is on nothing. | S | Attach to the carryable prefabs, `Impact` kind, `SourceId` = the item. |
 | Lamps in the player's colour | The design's "how you identify a shape in the dark"; the colour exists, the headlamp is white. | S | Cosmetic, but the dark is the game. |
-| The monster is heard | A creature sound (placeholder in `AudioLibrary`), louder as it nears, through the TV for the deck. | S | |
+| Monster looks and signature sounds | Seven placeholder silhouettes with glowing eyes and generated calls today. Dan's models; a sound designer for the calls, the Ghost's hum, the slam. | L | Phase 03. |
+| Tuning from play | Every number is in `MonsterSettings` (Resources) and provisional: three per dive, the Angel's 25 m and 2.5×, the Charger's 20 m and 35, the Walker's 60 %, the beams' 0.4 s aim. | S | Playtest-driven. |
 
 ### 2.3 A run is a run — save and recap
 
@@ -138,9 +144,9 @@ the screenshots and the trailer are made of.
 
 | Card | Why | Size | Notes |
 |---|---|---|---|
-| Monster 2 — a hunter that never lets go | "Some hunt until the dive ends." A stalker with a long memory; slow, relentless; the thing you send up to get away from. | L | Idan. |
-| Monster 3 — a lurker that loses interest | "Some lose interest once they can't reach you." Room-bound; breaks off when you leave its room; the thing that makes a room a decision. | L | |
-| Monster look, sound and signature | Three silhouettes in the R.E.P.O./PEAK direction, each with a call. The Bell Eater's is the game's second-most-important sound after the elevator's scream. | L | Dan (Blender) + a sound designer for the two signatures. |
+| ~~Monster 2 — a hunter that never lets go~~ | Done as the Long Walker (20 September 2026). | — | |
+| ~~Monster 3 — a lurker that loses interest~~ | Done as the Lure and the Listener (they forget after 8–10 s of dark or silence). | — | |
+| Monster look, sound and signature | Seven silhouettes in the R.E.P.O./PEAK direction, each with a call; the Listener's is the game's second-most-important sound after the elevator's scream. | L | Dan (Blender) + a sound designer for the signatures. |
 | Lethality that reads | Design §3: damage depends on the monster, your health, your air. Tune so low air is fragile and a full tank survives one hit. | S | Playtest-driven. |
 
 ### 3.3 The player

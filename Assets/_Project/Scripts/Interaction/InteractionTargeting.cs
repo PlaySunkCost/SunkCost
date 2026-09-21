@@ -8,6 +8,9 @@ namespace SunkCost.Interaction
     {
         private static readonly Collider[] Candidates = new Collider[64];
         private static readonly RaycastHit[] Obstructions = new RaycastHit[64];
+        // Everything but the monsters: a creature's capsule lives on the host only (a
+        // client copy has no collider), so it must block the dot on neither.
+        private static int PressableMask => CarryableCollisionPolicy.MonsterLayer >= 0 ? ~(1 << CarryableCollisionPolicy.MonsterLayer) : ~0;
 
         public static CarryableItem Find(Vector3 eye, Vector3 forward, Transform player, float reach, float aimRadius)
         {
@@ -48,7 +51,7 @@ namespace SunkCost.Interaction
         // plain colliders told apart by their components and names.
         public static Transform FindPressable(Vector3 eye, Vector3 forward, Transform player, float reach)
         {
-            int count = Physics.RaycastNonAlloc(eye, forward, Obstructions, reach, ~0, QueryTriggerInteraction.Ignore);
+            int count = Physics.RaycastNonAlloc(eye, forward, Obstructions, reach, PressableMask, QueryTriggerInteraction.Ignore);
             if (count == Obstructions.Length) return null;
             RaycastHit nearest = default;
             bool any = false;
@@ -65,7 +68,7 @@ namespace SunkCost.Interaction
             Vector3 delta = point - eye;
             float distance = delta.magnitude;
             if (distance < 0.001f) return true;
-            int count = Physics.RaycastNonAlloc(eye, delta / distance, Obstructions, distance, ~0, QueryTriggerInteraction.Ignore);
+            int count = Physics.RaycastNonAlloc(eye, delta / distance, Obstructions, distance, PressableMask, QueryTriggerInteraction.Ignore);
             if (count == Obstructions.Length) return false; // do not trust an incomplete obstruction list
             for (int i = 0; i < count; i++)
             {

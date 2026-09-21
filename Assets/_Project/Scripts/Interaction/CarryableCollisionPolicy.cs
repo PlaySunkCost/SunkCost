@@ -15,9 +15,15 @@ namespace SunkCost.Interaction
     {
         public const string PlayerLayerName = "Player";
         public const string CarryableLayerName = "Carryable";
+        // The monsters' layer (MonsterSetup; the monsters, 20 September 2026): they
+        // move like players and touch nothing but the world, so the world masks
+        // leave them out too — a creature standing at a diver must not push the
+        // camera or block a drop.
+        public const string MonsterLayerName = "Monster";
 
         public static int PlayerLayer => LayerMask.NameToLayer(PlayerLayerName);
         public static int CarryableLayer => LayerMask.NameToLayer(CarryableLayerName);
+        public static int MonsterLayer => LayerMask.NameToLayer(MonsterLayerName);
         public static bool LayersExist => PlayerLayer >= 0 && CarryableLayer >= 0;
 
         // Everything a movement or clearance query should treat as solid: not
@@ -29,6 +35,7 @@ namespace SunkCost.Interaction
                 int mask = ~0;
                 if (CarryableLayer >= 0) mask &= ~(1 << CarryableLayer);
                 if (PlayerLayer >= 0) mask &= ~(1 << PlayerLayer);
+                if (MonsterLayer >= 0) mask &= ~(1 << MonsterLayer);
                 return mask;
             }
         }
@@ -40,6 +47,7 @@ namespace SunkCost.Interaction
             {
                 int mask = ~0;
                 if (CarryableLayer >= 0) mask &= ~(1 << CarryableLayer);
+                if (MonsterLayer >= 0) mask &= ~(1 << MonsterLayer);
                 return mask;
             }
         }

@@ -31,6 +31,12 @@ MonoBehaviour:
     Kind: 1
     Prefab: {fileID: 0}
     Upgrade: 2
+  - Id: patch-kit
+    Name: Patch kit
+    Price: 60
+    Kind: 0
+    Prefab: {fileID: 6262863972986464730, guid: 0169dc9cd717e1849b3641a24551d735, type: 3}
+    Upgrade: 0
   largeTankMultiplier: 1.5
   brightHeadlampRange: 1.6
   brightHeadlampIntensity: 1.5

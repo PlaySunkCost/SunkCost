@@ -1,0 +1,213 @@
+Monsters matrix started 20/09/2026 19:06:56
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerVitals (run the vitals setup)
+PASS MonsterSettings lives in Resources (run the monster setup)
+  · roster 3 per dive, spawn ≥ 22 m, safe zone 4.5 m, ghost chance 0.25, green 30 s; walker ×0.85; angel ×2.5 sprint, screen 75°/2.4; charger 20 m ×3, 35 HP; beams aim 0.4 s; lure 35; listener 35; impostor 30 at ×1 walk
+PASS the settings carry Dan's numbers (Angel ×2.5, Charger 20 m ×3, Impostor at walking speed)
+PASS Monster LongWalker is a registered spawnable
+PASS Monster WeepingAngel is a registered spawnable
+PASS Monster Charger is a registered spawnable
+PASS Monster Lure is a registered spawnable
+PASS Monster Listener is a registered spawnable
+PASS Monster Impostor is a registered spawnable
+
+== M0 — to sea; a guest joins; both ride down on day 1
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS the guest's copy is here
+PASS M0 the guest joined at sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS M0 the guest is in the site
+PASS M0 the ride down rolled no Ghost (never the first arrival)
+
+== R1 — the day's roster: three distinct walkers on the seabed, away from the shaft and the divers
+PASS R1 3 monsters spawned (target 3)
+PASS R1 exactly 3 monsters
+PASS R1 distinct kinds: Lure, LongWalker, Impostor
+PASS R1 the roster on the day state made the draw
+PASS R1 Lure appeared 27 m from the shaft (≥ 22)
+PASS R1 Lure appeared clear of the divers (they are in the car)
+PASS R1 LongWalker appeared 42 m from the shaft (≥ 22)
+PASS R1 LongWalker appeared clear of the divers (they are in the car)
+PASS R1 Impostor appeared 41 m from the shaft (≥ 22)
+PASS R1 Impostor appeared clear of the divers (they are in the car)
+PASS R1 Lure stands in the dive scene
+PASS R1 Lure stands on the seabed (y -44.5)
+PASS R1 Lure keeps off the safe ground (26.6 m from the shaft)
+PASS R1 LongWalker stands in the dive scene
+PASS R1 LongWalker stands on the seabed (y -44.5)
+PASS R1 LongWalker keeps off the safe ground (41.9 m from the shaft)
+PASS R1 Impostor stands in the dive scene
+PASS R1 Impostor stands on the seabed (y -44.5)
+PASS R1 Impostor keeps off the safe ground (41.0 m from the shaft)
+PASS R1 the divers in the car are untouched
+  · R1 Lure pose=Idle target=-1 at=(24.2, -44.5, 11.0) seen=-1 ago=-1.0s fired=0 hits=0 | LongWalker pose=Idle target=-1 at=(32.4, -44.5, 26.6) | Impostor pose=Idle target=-1 at=(15.5, -44.5, 37.9) phase=Choosing wears=/0 touches=0
+PASS R1 the guest holds copies of the three
+PASS every monster despawned (0 left)
+PASS R1 the guest's copies went with them
+
+== L1 — F: the headlamp's switch, replicated both ways
+PASS L1 the host's lamp is on after landing
+PASS L1 F turned the host's lamp off
+PASS L1 the guest reads the host's lamp off
+PASS L1 F turned it on again
+PASS L1 the guest's F reaches the server
+PASS L1 and on again
+
+== W1 — the Long Walker sees a lit diver and walks after them at 85 % of walking speed; the car is safe
+PASS spawned LongWalker at (13.0, -44.9, 35.7)
+PASS W1 it saw the host and hunts (LongWalker pose=Hunting target=0 at=(13.0, -44.9, 35.7) prey=0)
+PASS W1 it closes at 3.4 m/s (walking 4 × 0.85 = 3.4)
+PASS W1 out of sight, it still walks after the host: LongWalker pose=Hunting target=0 at=(14.4, -45.0, 23.3) prey=0
+PASS W1 the guest reads its pose
+PASS W1 it stops at the car's doorway: 5.5 m from the shaft (safe ground 4.5 m)
+PASS W1 inside the car the host is untouched
+PASS every monster despawned (0 left)
+
+== A1 — the Weeping Angel: frozen under a look, sprinting when unwatched
+PASS spawned WeepingAngel at (34.6, -44.9, 20.0)
+PASS A1 watched: frozen (WeepingAngel pose=Frozen target=-1 at=(34.6, -44.9, 20.0) watched by 0)
+PASS A1 a frozen Angel does not move
+PASS A1 at the edge of the screen it is still frozen (WeepingAngel pose=Frozen target=-1 at=(34.6, -45.0, 20.0) watched by 0)
+PASS A1 unwatched: it hunts (WeepingAngel pose=Hunting target=0 at=(34.5, -45.0, 19.9) unwatched)
+PASS A1 it comes at 15.0 m/s (sprint 6 × 2.5)
+PASS A1 looked at again: frozen (WeepingAngel pose=Frozen target=0 at=(27.9, -45.0, 16.1) watched by 0)
+PASS A1 the host lives
+PASS every monster despawned (0 left)
+
+== C1 — the Charger: the shake, the rush, 35 HP and a leak; LEAK on the visor
+PASS spawned Charger at (-29.4, -44.9, 17.0)
+PASS C1 facing the host it winds up (Charger pose=Windup target=0 at=(-29.4, -44.9, 17.0) phase=Windup rushes=0)
+PASS C1 then it rushes
+  · C1 wind-up lasted 1.5 s (target 1.5)
+PASS C1 the rush hit: health 65, leaking True
+PASS C1 the visor says LEAK
+PASS C1 the guest reads the host's leak
+PASS C1 a leaking tank drains at 3.0 s/s (×3)
+PASS every monster despawned (0 left)
+
+== P1 — a friend's hands patch the leak, once a day; P2 the second one needs a kit
+PASS P1 the guest asked to patch: id=1714; patch requested on 0 at 1.5 m
+PASS P1 the host's leak is closed
+PASS P1 the host was told: Patched by Mate bof the
+PASS P1 the guest was told it patched
+PASS P2 the host reads that a friend patched it today
+PASS P2 a second patch by a friend the same day is refused: still leaking
+PASS P2 the guest was told why
+
+== P3 — the patch kit: left click closes your own leak, once
+PASS P3 a patch kit spawned by the host (run the monster setup for the prefab)
+PASS P3 spawned
+PASS the dot is on Patch kit
+PASS Patch kit grabbed (Held)
+PASS P3 in hand the prompt says what left click does: Left click to patch your leak
+PASS P3 the kit closed the leak
+PASS P3 now a Used patch kit: nothing on use
+PASS P3 left click does nothing with a used kit
+PASS P3 Q drops it
+PASS P3 the guest reads the used kit
+
+== P4 — the hold: E on a leaking friend for three seconds
+PASS P4 the guest reads its own leak
+PASS P4 the prompt offers the hold: Hold E to patch Mate bof the
+PASS P4 the hold is under way (0.40)
+PASS P4 the visor shows no LAMP OFF with the lamp on
+PASS P4 the prompt counts down: Hold E to patch Mate bof the — 2 s
+PASS P4 the guest's leak is closed by the host's hands
+PASS P4 the host was told: Patched Mate bof the
+PASS P4 the guest reads that a friend patched it today
+PASS P4 the dot is on the guest again
+PASS P4 the prompt says a kit now: Mate bof the was patched by a friend today — a kit now
+
+== LU1 — the Lure: a bolt of light at a lit lamp; lamps off and it forgets
+PASS LU1 the host's lamp is on
+PASS spawned Lure at (18.0, -44.9, -31.2)
+PASS LU1 it saw the lamp and aims (Lure pose=Shooting target=0 at=(18.0, -44.9, -31.1) seen=0 ago=0.0s fired=0 hits=0)
+PASS LU1 the aim is replicated as the tell
+PASS LU1 the beam fired after the aim
+PASS LU1 the beam hit a diver standing still: health 65, leaking True
+PASS LU1 the shot is replicated
+PASS LU1 the guest holds the Lure
+PASS LU1 lamp off
+PASS LU1 the visor says LAMP OFF
+PASS LU1 in the dark it lost interest (Lure pose=Idle target=-1 at=(12.5, -45.0, -21.7) seen=-1 ago=8.0s fired=1 hits=1)
+PASS LU1 no more bolts in the dark (0 after the lamp went off)
+PASS LU1 lamp on again
+PASS every monster despawned (0 left)
+
+== LI1 — the Listener: deaf to a crouch, shoots at a sprint
+PASS spawned Listener at (-31.2, -44.9, -18.0)
+PASS LI1 a crouch-walk of 3 s made no sound it could hear (heard 0)
+PASS LI1 it stands idle: Listener pose=Idle target=-1 at=(-31.2, -45.0, -18.0) heard=0 last=Footstep ago=-1.0s fired=0 hits=0
+PASS LI1 a sprint is heard (Listener pose=Shooting target=-1 at=(-31.2, -45.0, -18.0) heard=1 last=Sprint ago=0.0s fired=0 hits=0)
+PASS LI1 it aimed and fired a dark beam at the sound
+PASS LI1 the last thing it heard was a step: Sprint
+PASS LI1 the host lives
+PASS every monster despawned (0 left)
+
+== I1 — the Impostor: seen by its chosen diver only, wearing a crewmate's name; a touch, then it runs
+PASS spawned Impostor at (-18.8, -44.9, -51.7)
+PASS I1 it chose the guest
+PASS I1 it wears the host's name and colour: Skipper/2
+PASS I1 the host, not the victim, does not see it
+PASS I1 the guest sees it, wearing the host's name
+PASS I1 it walked close and chases at walking speed (Impostor pose=Hunting target=1 at=(-14.7, -45.0, -40.4) phase=Chase wears=Skipper/2 touches=0)
+PASS I1 a touch: the guest at 70 health, leaking True
+PASS I1 30 HP gone (70)
+PASS I1 then it runs away
+PASS I1 the guest reads its leak
+PASS every monster despawned (0 left)
+
+== G0 — the Elevator Ghost rides the car back down for a diver still below; wait it out
+PASS G0 the car took the guest's press (refusal: )
+PASS G0 the guest's ride up completed
+PASS G0 the guest is on deck
+PASS G0 the car came back down empty and was rolled
+PASS G0 with the chance forced to 1 the Ghost is in the car
+PASS G0 the car's light is green on the host
+PASS G0 the guest reads the green
+PASS G0 the cabin light is green
+PASS G0 the green ended by itself
+PASS G0 the host who waited outside lives; the light is white
+
+== G1 — walking into the green: the doors slam
+PASS G1 the Ghost summoned for the checks: 
+PASS G1 green again
+PASS G1 the host stepped in and died
+PASS G1 the doors slammed and the car is clean
+PASS G1 the guest heard the slam
+PASS G1 the ordinary death: a body in the car
+PASS G1 nobody living below: the dive is done
+PASS G1 the dead host was carried to the ship
+PASS G1 the site closed
+PASS G1 no monster outlived the site
+
+== D2 — End day; day 2 with no roster: the two killers
+PASS D2 End day accepted: 
+PASS D2 revived
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/4 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS D2 the guest is below again
+PASS D2 the forced empty roster spawned nothing
+
+== W2 — the Long Walker reaches the guest: death
+PASS spawned LongWalker at (9.9, -44.9, 27.3)
+PASS W2 taken by the Long Walker (LongWalker pose=Hunting target=1 at=(9.0, -45.0, 24.8) prey=1)
+PASS W2 a body where the guest stood
+PASS every monster despawned (0 left)
+
+== A2 — the Weeping Angel reaches a diver whose back is turned: death
+PASS spawned WeepingAngel at (-8.9, -44.9, -24.4)
+PASS A2 taken by the Weeping Angel (WeepingAngel pose=Hunting target=0 at=(-7.3, -45.0, -20.1) unwatched)
+PASS A2 the site closed with the dead
+PASS A2 the Angel went with the site (0 left)
+  · done
+MATRIX_PASS

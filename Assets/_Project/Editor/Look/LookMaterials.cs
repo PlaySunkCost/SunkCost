@@ -55,6 +55,9 @@ namespace SunkCost.Editor.Look
         public static Material Net() => Flat("Net", new Color(0.9f, 0.9f, 0.9f), 0f, 0.1f);
         public static Material Flag() => Flat("Flag", new Color(0.06f, 0.06f, 0.08f), 0f, 0.2f);
         public static Material Seabed() => Flat("Seabed", new Color(0.04f, 0.10f, 0.20f), 0f, 0.1f);
+        // The monsters (20 September 2026): a body darker than the water, and the eyes that give it away.
+        public static Material Creature() => Flat("Creature", new Color(0.04f, 0.045f, 0.06f), 0f, 0.12f);
+        public static Material EyeGlow() => Emissive("EyeGlow", new Color(1f, 0.85f, 0.25f), 4f);
 
         // Chain-link fencing: the wire's tile cut out, seen from both sides.
         public static Material ChainLink()

@@ -1,0 +1,227 @@
+Deck cabin ride matrix started 20/09/2026 18:07:06
+PASS editor is the host with a spawned player
+PASS R0 no ride started at HQ
+PASS R0 sailing to sea
+PASS R0 deck cabin doors open at sea
+PASS R0 deck cabin panel invites: Day 1 of 3 — all in, press E to descend
+PASS Y1 arriving at sea is day 1 (day=1 payday=False phase=AtSea)
+PASS Y1 the cabin panel says 'Day 1 of 3': Day 1 of 3 — all in, press E to descend
+PASS Y1 the day did not move
+PASS V1 the visor is off on the ship
+PASS U3 unstuck on the ship is taken: 
+PASS R1b free to move while the doors close
+PASS R1b the leaver was not put back inside
+PASS R1b the refusal: Nobody aboard
+PASS R1c the doors hold open while the body stays (Sealing, opening=True, open=1.00)
+PASS R1c the doorway is passable with the doors open
+PASS R1c the body was not moved: (0.00, 0.15, 3002.35)
+PASS R1c the refusal: Nobody aboard
+  R2 profiler markers recorded: 14
+  R2: requested cabin
+PASS R2 ride direction Down
+  R2 t+1: stage=Sealing car=AtTop carPos=- local=(0.00, 0.15, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R2 t+94: stage=Sealing car=AtTop carPos=- local=(0.00, 0.15, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R2 t+191: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 t+296: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 t+394: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 t+490: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 t+594: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 t+700: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 HITCH 49ms at t+7.9s stage=Riding car=Descending carY=-0.2 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 99ms, PlayerLoop 8ms
+  R2 t+795: stage=Riding car=Descending carPos=(0.00, -0.89, 0.00) local=(-0.45, -0.74, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 HITCH 53ms at t+8.2s stage=Riding car=Descending carY=-1.1 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 17ms, PlayerLoop 8ms
+  R2 t+887: stage=Riding car=Descending carPos=(0.00, -1.97, 0.00) local=(-0.45, -1.82, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 HITCH 52ms at t+9.9s stage=Riding car=Descending carY=-2.8 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 18ms, PlayerLoop 8ms
+  R2 t+975: stage=Riding car=Descending carPos=(0.00, -2.98, 0.00) local=(-0.45, -2.83, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1071: stage=Riding car=Descending carPos=(0.00, -3.99, 0.00) local=(-0.45, -3.84, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1166: stage=Riding car=Descending carPos=(0.00, -5.99, 0.00) local=(-0.45, -5.84, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1263: stage=Riding car=Descending carPos=(0.00, -9.01, 0.00) local=(-0.45, -8.86, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1358: stage=Riding car=Descending carPos=(0.00, -12.02, 0.00) local=(-0.45, -11.87, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1448: stage=Riding car=Descending carPos=(0.00, -15.03, 0.00) local=(-0.45, -14.88, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1539: stage=Riding car=Descending carPos=(0.00, -18.04, 0.00) local=(-0.45, -17.89, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1636: stage=Riding car=Descending carPos=(0.00, -21.04, 0.00) local=(-0.45, -20.89, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1733: stage=Riding car=Descending carPos=(0.00, -24.09, 0.00) local=(-0.45, -23.94, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1828: stage=Riding car=Descending carPos=(0.00, -27.09, 0.00) local=(-0.45, -26.94, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1919: stage=Riding car=Descending carPos=(0.00, -30.12, 0.00) local=(-0.45, -29.97, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2016: stage=Riding car=Descending carPos=(0.00, -33.13, 0.00) local=(-0.45, -32.98, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2112: stage=Riding car=Descending carPos=(0.00, -36.15, 0.00) local=(-0.45, -36.00, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2209: stage=Riding car=Descending carPos=(0.00, -39.16, 0.00) local=(-0.45, -39.01, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2306: stage=Riding car=Descending carPos=(0.00, -42.21, 0.00) local=(-0.45, -42.06, -0.45) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+PASS R2 ride completed in 2386 frames
+PASS R2 the suit fade went black
+PASS R2 the car moved with the rider inside
+PASS R2 the rider never left the car while it moved
+PASS R2 the rider never sank into the car floor (max 0.000 m)
+PASS R2 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS D R2 the car's doors read shut from the swap to the bottom on 1933 frames (worst open 0.00)
+PASS R2 the rider was locked exactly when it should be
+PASS R2 the rider was free inside the moving car
+PASS R2 the rider walked 0.63 m inside the moving car and stayed inside
+  R2 bands: above 3.23 m/s over 0.20 s, crossing 1.00 m/s over 2.88 s, below 3.00 m/s over 13.38 s; moving 17.30 s (expected 17.33); waterError 0.000; deepest 3.50; end 3.50; dry at floor y NaN; submersion streak 0
+PASS R2 about 3 m/s above the surface band (3.23 m/s over 0.20 s)
+PASS R2 about 1 m/s through the surface band (1.00 m/s)
+PASS R2 about 3 m/s below the band (3.00 m/s)
+PASS R2 the car moved for 17.3 s (profile says 17.3)
+PASS R2 the car moved on 1255 of 1255 frames at full speed (largest step 0.081 m)
+  R2 host (editor) hitches while the car moved: 3 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R2 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R2 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R2 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R2 the car arrived full (3.50 m of 3.50)
+PASS R2 captured floor-at-surface and eyes-under
+  R2 host frames: fps=94 median=9.7ms 1%low=23.3ms worst=53ms hitches=3/2390 frames in 25.1s; t=7.9s 49ms (median 8.9ms; Semaphore.WaitForSignal 99ms, PlayerLoop 8ms), t=8.2s 53ms (median 9.0ms; Semaphore.WaitForSignal 17ms, PlayerLoop 8ms), t=9.9s 52ms (median 9.2ms; Semaphore.WaitForSignal 18ms, PlayerLoop 8ms)
+PASS R2 the host's player is in DiveSite01
+PASS V1 the visor is on in the dive
+PASS V2 the visor's depth is the submersion's (42.3 m)
+PASS V2 the visor's heading is the camera's (225°)
+PASS V2 the tank counts in the car (94%), health full
+PASS V3 HOME is hidden inside the car
+PASS M1 the visor money line reads nothing toward the quota and nothing on me: QUOTA $0/$500  ·  ON ME $0
+PASS R2 car at the bottom
+PASS R2 the driven car sits on its bottom position
+PASS R2 the host stands inside the car
+PASS R2 shaft gate open at the bottom
+PASS R2 host listed below
+PASS R2 deck cabin doors closed while the car is below
+PASS Y2 the day began when the riders arrived below (phase=DiveInProgress day=1)
+PASS Y2 the visor's corner says DAY 1/3: DAY 1/3
+PASS Y2 the monitor is locked for the dive: Day 1 of 3 — dive in progress — monitor locked
+PASS R2 deck cabin panel says 'Cabin below'
+PASS T2 the cabin water stands at the car's full height with the doors open
+PASS T2 submerged at the bottom, F3 says so: slots=[-1,-1,-1,-1] 0kg x1.00; underwater=True depth=42.3
+PASS T2 host outside the car and the tube after walking out
+PASS T2 still submerged on the seafloor
+PASS T3 tube walls present
+PASS T3 sweep into the tube from behind is blocked by Tube Wall 4
+PASS T3 sweep into the tube from the side is blocked by Tube Wall 10
+PASS T3 sweep out of the car away from the doorway is blocked
+PASS T3 sweep out of the car through the doorway passes
+PASS V3 facing the tube from 10 m out HOME reads ahead at 10 m (angle 0.0°, 10.0 m)
+PASS V3 facing away HOME reads behind (angle 180.0°)
+PASS V4 7 coins spawned on the seafloor (coin placements: 7)
+PASS V4 every coin's value lies in its range
+PASS V4 Coin 3 exists
+PASS V4 the tag under the dot reads the coin's value: Coin · $86
+PASS V5 the coin in view is bracketed (1)
+PASS V5 looking away from every coin nothing is bracketed (0)
+PASS V5 looking back at the trail the near coins are bracketed (2)
+PASS C1 Coin 3 lies on the car's floor: (0.42, -44.89, 0.42)
+  C1 Coin 3 rests 0.115 above the car's origin (value $86, id #11)
+PASS R3 host outside the car
+PASS R3b the car's doors hold open while the body stays (AtBottom)
+PASS R3b the car's doorway is passable with the doors open
+PASS R3b the body was not moved: (-1.66, -44.85, -1.66)
+PASS R3b the leaver is still listed below
+PASS R3b the ride completed without a cancel
+PASS R3b the leaver stayed in DiveSite01, unlocked
+PASS R3b the leaver was not moved: (-2.83, -45.00, -2.83)
+PASS R3b the site stays loaded while the leaver is below
+PASS R3b deck cabin doors stay closed with the car below
+PASS U4 unstuck below is taken: 
+  R4 profiler markers recorded: 14
+  R4: requested car
+PASS R4 ride direction Up
+  R4 t+1: stage=Preparing car=AtBottom carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R4 HITCH 33ms at t+0.2s stage=Sealing car=Sealing carY=-45.0 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 96ms, PlayerLoop 31ms, GC.Collect 7ms
+  R4 t+93: stage=Sealing car=Sealing carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+190: stage=Riding car=Ascending carPos=(0.00, -43.58, 0.00) local=(0.43, -43.43, -0.43) carLocal=(0.00, 0.15, 0.61) locked=False travelLocked=False grounded=True inside=True
+  R4 t+281: stage=Riding car=Ascending carPos=(0.00, -40.55, 0.00) local=(0.43, -40.40, -0.43) carLocal=(0.00, 0.15, 0.61) locked=False travelLocked=False grounded=True inside=True
+  R4 t+376: stage=Riding car=Ascending carPos=(0.00, -37.53, 0.00) local=(0.43, -37.38, -0.43) carLocal=(0.00, 0.15, 0.61) locked=False travelLocked=False grounded=True inside=True
+  R4 t+469: stage=Riding car=Ascending carPos=(0.00, -34.51, 0.00) local=(0.43, -34.36, -0.43) carLocal=(0.00, 0.15, 0.61) locked=False travelLocked=False grounded=True inside=True
+PASS E1 the coin rides as frozen cargo in the moving car
+  E1 look try 1: target=Coin 3 (day 1) find=Coin 3 (day 1) obstructed=False travelLocked=False eye=(-0.21, -31.10, -0.21) coin=(0.42, -32.74, 0.42) dist=1.77 colliderOn=True los=True state=Free transit=True camPitch=61 hostLocal=(0.30, 0.15, 0.00)
+  E1 host at car-local (0.30, 0.15, 0.00), coin at (-0.60, 0.11, 0.00)
+PASS E1 mid-ride the dot finds the cargo on the car's floor (target Coin 3 (day 1))
+PASS E2 mid-ride the visor brackets and tags it (1, 'Coin · $86')
+PASS E1 grabbed cargo is cargo no more
+PASS M2 the held coin counts on me (QUOTA $0/$500  ·  ON ME $86)
+PASS E3 it rests on the moving car's floor, not below it (car-local (-2.13, 0.11, -0.15))
+PASS E3 at rest it is pinned to the car
+  R4 t+517: stage=Riding car=Ascending carPos=(0.00, -26.08, 0.00) local=(-0.21, -25.93, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+604: stage=Riding car=Ascending carPos=(0.00, -23.06, 0.00) local=(-0.21, -22.91, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+697: stage=Riding car=Ascending carPos=(0.00, -20.08, 0.00) local=(-0.21, -19.93, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+789: stage=Riding car=Ascending carPos=(0.00, -17.04, 0.00) local=(-0.21, -16.89, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+876: stage=Riding car=Ascending carPos=(0.00, -14.02, 0.00) local=(-0.21, -13.87, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+967: stage=Riding car=Ascending carPos=(0.00, -11.02, 0.00) local=(-0.21, -10.87, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1051: stage=Riding car=Ascending carPos=(0.00, -7.97, 0.00) local=(-0.21, -7.82, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1143: stage=Riding car=Ascending carPos=(0.00, -4.94, 0.00) local=(-0.21, -4.79, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1232: stage=Riding car=Ascending carPos=(0.00, -3.65, 0.00) local=(-0.21, -3.50, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1320: stage=Riding car=Ascending carPos=(0.00, -2.64, 0.00) local=(-0.21, -2.49, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1412: stage=Riding car=Ascending carPos=(0.00, -1.63, 0.00) local=(-0.21, -1.48, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1497: stage=Loading car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R4 t+1590: stage=Arriving car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+PASS R4 ride completed in 1643 frames
+PASS R4 the car moved with the rider inside
+PASS R4 the rider never left the car while it moved
+PASS R4 the rider never sank into the car floor (max 0.000 m)
+PASS R4 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS R4 the tube gate mirrored the car door at the bottom on 146 frames (worst gap 0.02)
+PASS C R4 loose items on the car's floor rode with it on 1343 frames (worst step 0.0 cm)
+PASS R4 the rider was locked exactly when it should be
+PASS R4 the rider was free inside the moving car
+PASS R4 the rider walked 0.61 m inside the moving car and stayed inside
+  R4 bands: above 3.13 m/s over 0.21 s, crossing 1.00 m/s over 2.89 s, below 3.00 m/s over 13.38 s; moving 17.31 s (expected 17.33); waterError 0.000; deepest 3.50; end 0.00; dry at floor y -0.99; submersion streak 0
+PASS R4 about 3 m/s above the surface band (3.13 m/s over 0.21 s)
+PASS R4 about 1 m/s through the surface band (1.00 m/s)
+PASS R4 about 3 m/s below the band (3.00 m/s)
+PASS R4 the car moved for 17.3 s (profile says 17.3)
+PASS R4 the car moved on 995 of 995 frames at full speed (largest step 0.086 m)
+  R4 host (editor) hitches while the car moved: 0 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R4 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R4 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R4 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R4 the car arrived dry (0.00 m)
+PASS R4 the water drained to nothing as the floor passed sea level (floor y -0.99, sea level -1.00)
+PASS R4 not submerged at the swap
+  R4 host frames: fps=89 median=10.3ms 1%low=24.2ms worst=33ms hitches=1/1866 frames in 20.6s; t=0.2s 33ms (median 9.9ms; Semaphore.WaitForSignal 96ms, PlayerLoop 31ms, GC.Collect 7ms)
+PASS R4 the host's player is back in ShipAtSea
+PASS V1 the visor is off again on the deck
+PASS R4 the host stands in the deck cabin
+PASS R4 the car is up
+PASS R4 nobody below
+PASS Y3 the last one up: dive done, still day 1 (phase=AtSea day=1 diveDone=True)
+PASS Y3 no ride started
+PASS C2 Coin 3 rode up into the deck cabin: ShipAtSea (0.15, 0.02, 2997.87)
+PASS C2 Coin 3 is loose again on the deck cabin's floor
+PASS C2 the coin thrown mid-ride crossed to the same spot in the deck cabin ((0.15, 0.02, -2.13) vs (0.15, 0.11, -2.13) in the car)
+  R5a profiler markers recorded: 14
+  R5a: requested cabin
+PASS R5a ride direction Down
+  R5a t+1: stage=Sealing car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R5a HITCH 19ms at t+0.1s stage=Sealing car=AtTop carY=- submerged=False scene=ShipAtSea blame: Semaphore.WaitForSignal 16ms, PlayerLoop 7ms
+  R5a t+91: stage=Sealing car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R5a t+181: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a t+277: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a t+372: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.15, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a HITCH 36ms at t+4.8s stage=Loading car=AtTop carY=0.0 submerged=False scene=ShipAtSea blame: Semaphore.WaitForSignal 102ms, PlayerLoop 29ms, GC.Collect 3ms
+  R5a t+458: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a t+555: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a t+654: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a HITCH 35ms at t+8.0s stage=Riding car=Descending carY=-0.2 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 68ms, PlayerLoop 8ms
+  R5a t+753: stage=Riding car=Descending carPos=(0.00, -0.69, 0.00) local=(0.23, -0.54, 0.23) carLocal=(-0.33, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a HITCH 56ms at t+8.3s stage=Riding car=Descending carY=-1.1 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 28ms, PlayerLoop 8ms
+  R5a t+840: stage=Riding car=Descending carPos=(0.00, -1.91, 0.00) local=(0.23, -1.76, 0.23) carLocal=(-0.33, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a HITCH 58ms at t+10.0s stage=Riding car=Descending carY=-2.8 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 32ms, PlayerLoop 9ms
+  R5a t+929: stage=Riding car=Descending carPos=(0.00, -2.92, 0.00) local=(0.23, -2.77, 0.23) carLocal=(-0.33, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+1018: stage=Riding car=Descending carPos=(0.00, -3.92, 0.00) local=(0.23, -3.77, 0.23) carLocal=(-0.33, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+PASS E1 the coin rides as frozen cargo in the moving car
+  E1 look try 1: target=none find=none obstructed=False travelLocked=False eye=(0.81, -3.44, 0.93) coin=(1.40, -5.17, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 61: target=none find=none obstructed=False travelLocked=False eye=(0.81, -5.27, 0.93) coin=(1.40, -7.01, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 121: target=none find=none obstructed=False travelLocked=False eye=(0.81, -7.12, 0.93) coin=(1.40, -8.85, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 181: target=none find=none obstructed=False travelLocked=False eye=(0.81, -8.92, 0.93) coin=(1.40, -10.66, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 241: target=none find=none obstructed=False travelLocked=False eye=(0.81, -10.80, 0.93) coin=(1.40, -12.53, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 301: target=none find=none obstructed=False travelLocked=False eye=(0.81, -12.63, 0.93) coin=(1.40, -14.37, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 361: target=none find=none obstructed=False travelLocked=False eye=(0.81, -14.41, 0.93) coin=(1.40, -16.15, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 421: target=none find=none obstructed=False travelLocked=False eye=(0.81, -16.39, 0.93) coin=(1.40, -18.12, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 481: target=none find=none obstructed=False travelLocked=False eye=(0.81, -18.28, 0.93) coin=(1.40, -20.01, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 541: target=none find=none obstructed=False travelLocked=False eye=(0.81, -20.12, 0.93) coin=(1.40, -21.86, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 601: target=none find=none obstructed=False travelLocked=False eye=(0.81, -22.13, 0.93) coin=(1.40, -23.87, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 661: target=none find=none obstructed=False travelLocked=False eye=(0.81, -23.95, 0.93) coin=(1.40, -25.68, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 look try 721: target=none find=none obstructed=False travelLocked=False eye=(0.81, -25.80, 0.93) coin=(1.40, -27.53, 1.61) dist=1.88 colliderOn=True los=False state=Free transit=True camPitch=63 hostLocal=(-1.23, 0.15, -0.09)
+  E1 host at car-local (-1.23, 0.15, -0.09), coin at (-2.13, 0.02, -0.15)
+FAIL: E1 mid-ride the dot finds the cargo on the car's floor (target none)
+ride=Riding/Down/7 car=Descending up=False carPos=(0.00, -29.17, 0.00) carDriven=True riders=[0] below=[0] placements=1 local=(DiveSite01 (0.81, -29.02, 0.93)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='Dive done — end the day at the monitor' failure=''
+flow=world=Sea transitioning=False pending=; day=phase=DiveInProgress day=2 balance=0 handed=0 world=Sea to=Sea ride=Riding/Down car=Descending riders=[0] below=[0] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=2; trip=serial=1 stage=Complete from=HQ to=Sea; rider=locked=False placed=True local=(0.00, 0.15, 0.30); loaded=DiveSite01+Session+ShipAtSea; active=DiveSite01; fade=0
+  at SunkCost.Editor.Prototype.DeckCabinRideRuntimeChecks.Check (System.Boolean value, System.String label) [0x00052] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\DeckCabinRideRuntimeChecks.cs:134 
+  at SunkCost.Editor.Prototype.DeckCabinRideRuntimeChecks+<HostGrabsAndThrowsCargoMidRide>d__23.MoveNext () [0x0058c] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\DeckCabinRideRuntimeChecks.cs:173 
+  at SunkCost.Editor.Prototype.DeckCabinRideRuntimeChecks.Tick () [0x0001d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\DeckCabinRideRuntimeChecks.cs:113 

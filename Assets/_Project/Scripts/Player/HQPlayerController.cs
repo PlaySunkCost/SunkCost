@@ -135,6 +135,19 @@ namespace SunkCost.Player
         // The cabin control under the crosshair within reach: the deck cabin's
         // button on the ship or the seafloor car's panel (owner only).
         public CabinControl CurrentCabinControl { get; private set; }
+        // A living teammate under the crosshair within reach (owner only): E held on
+        // a leaking one patches their suit (the monsters, 20 September 2026).
+        public HQPlayerController CurrentPatient { get; private set; }
+        // How far along the hold on CurrentPatient is, 0..1 (owner only).
+        public float PatchProgress { get; private set; }
+        private HQPlayerController patchPatient;
+        private float patchHeldSince = -1f;
+        // The headlamp's switch (the Lure hunts light; F toggles it below). Server-
+        // written from the owner's request; every peer applies it to its copy and
+        // the server reads it for the monsters. On again at every ride down.
+        private readonly SyncVar<bool> lampOn = new(true);
+        private bool lampWanted; // this copy is one whose lamp shows: the local player below, a remote copy listed below
+        public bool LampOn => lampOn.Value;
         // Riding a departing ship: look works, walking and items do not (the rider
         // moves the root; docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 5).
         public bool TravelLocked => travelLocked;
@@ -182,10 +195,35 @@ namespace SunkCost.Player
             if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
+        // Where a lamp shows at all (the dive; PresentSky for the local player, the
+        // day state's Below for a remote copy); the switch decides the rest.
         public void SetHeadlampEnabled(bool value)
         {
-            if (headlamp != null) headlamp.enabled = value;
+            lampWanted = value;
+            ApplyLamp();
         }
+
+        private void ApplyLamp()
+        {
+            if (headlamp != null) headlamp.enabled = lampWanted && lampOn.Value;
+        }
+
+        // F: the owner asks; the server writes the switch.
+        public void RequestLamp(bool on)
+        {
+            if (!IsOwner || dead.Value) return;
+            ServerRequestLamp(on);
+        }
+
+        [ServerRpc]
+        private void ServerRequestLamp(bool on, NetworkConnection sender = null)
+        {
+            if (sender != Owner) return;
+            lampOn.Value = on;
+        }
+
+        [Server]
+        public void ServerSetLamp(bool on) => lampOn.Value = on;
 
         // The bright headlamp upgrade: the plain lamp's range and intensity times
         // these (1, 1 = the plain lamp). Every peer applies it to its copy.
@@ -219,6 +257,7 @@ namespace SunkCost.Player
         private void Awake()
         {
             dead.OnChange += OnDeadChanged;
+            lampOn.OnChange += (_, _, _) => ApplyLamp();
             controller = GetComponent<CharacterController>();
             inventory = GetComponent<PlayerInventory>();
             stance = GetComponent<PlayerStance>();
@@ -283,6 +322,7 @@ namespace SunkCost.Player
                 CurrentShopDisplay = null;
                 CurrentTv = null;
                 CurrentCabinControl = CabinControl.None;
+                ClearPatch();
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
@@ -331,6 +371,7 @@ namespace SunkCost.Player
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentCabinControl = CabinControl.None;
+                ClearPatch();
                 grabBufferedUntil = -1f;
                 grabConsumed = true;
                 jumpBufferedUntil = float.NegativeInfinity;
@@ -351,12 +392,12 @@ namespace SunkCost.Player
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentCabinControl = CabinControl.None;
+                ClearPatch();
                 grabConsumed = true;
                 return;
             }
             UpdateTarget();
-            if (!canPlay || SessionInputGate.ClickSuppressedThisFrame || inventory == null)
-                return;
+            if (!canPlay || SessionInputGate.ClickSuppressedThisFrame || inventory == null) { ClearPatch(); return; }
 
             Keyboard keys = ActiveKeyboard;
             // K kills, below only, in development builds and the editor (nothing
@@ -365,11 +406,17 @@ namespace SunkCost.Player
             // L takes a step off the tank (Dan, 17 September 2026: "we need to test
             // oxygen somehow"), below only, development builds and the editor.
             if (keys.lKey.wasPressedThisFrame && Debug.isDebugBuild && Vitals != null) Vitals.RequestDebugAirDown();
+            // F: the headlamp's switch (the Lure hunts light).
+            if (keys.fKey.wasPressedThisFrame) RequestLamp(!lampOn.Value);
             if (keys.eKey.wasPressedThisFrame)
             {
                 grabConsumed = false;
                 grabBufferedUntil = Time.unscaledTime + grabBufferSeconds;
             }
+            // E held on a leaking teammate for TeammatePatchSeconds patches their suit
+            // (free, once a day per patient — the server keeps the count). The hold
+            // is the owner's; the request goes when it completes.
+            UpdatePatchHold(keys);
             // Hold E while a ball approaches, or press slightly early. Consume one
             // request per gesture so holding E cannot vacuum every nearby item.
             if (!grabConsumed && (keys.eKey.isPressed || Time.unscaledTime <= grabBufferedUntil) && CurrentTarget != null)
@@ -423,6 +470,33 @@ namespace SunkCost.Player
             else if (keys.digit2Key.wasPressedThisFrame) inventory.RequestEquip(1);
             else if (keys.digit3Key.wasPressedThisFrame) inventory.RequestEquip(2);
             else if (keys.digit4Key.wasPressedThisFrame) inventory.RequestEquip(3);
+        }
+
+        private void UpdatePatchHold(Keyboard keys)
+        {
+            HQPlayerController patient = CurrentTarget == null ? CurrentPatient : null;
+            bool leaking = patient != null && patient.Vitals != null && patient.Vitals.Leaking;
+            if (!leaking || !keys.eKey.isPressed || patient != patchPatient)
+            {
+                patchPatient = leaking && keys.eKey.wasPressedThisFrame ? patient : null;
+                patchHeldSince = patchPatient != null ? Time.unscaledTime : -1f;
+                PatchProgress = 0f;
+                if (patchPatient != null) grabConsumed = true;
+                return;
+            }
+            float seconds = Vitals != null ? Vitals.Settings.TeammatePatchSeconds : 3f;
+            PatchProgress = Mathf.Clamp01((Time.unscaledTime - patchHeldSince) / Mathf.Max(0.1f, seconds));
+            if (PatchProgress < 1f) return;
+            Vitals?.RequestPatchTeammate(patient);
+            ClearPatch();
+            grabConsumed = true;
+        }
+
+        private void ClearPatch()
+        {
+            patchPatient = null;
+            patchHeldSince = -1f;
+            PatchProgress = 0f;
         }
 
         private void Look()
@@ -607,6 +681,8 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentButton = null;
             CurrentCabinControl = CabinControl.None;
+            CurrentPatient = null;
+            ClearPatch();
         }
 
         // Continuous owner-side placement while riding: no teleport flag, so the
@@ -729,6 +805,8 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentButton = null;
             CurrentCabinControl = CabinControl.None;
+            CurrentPatient = null;
+            ClearPatch();
             verticalSpeed = 0f;
             grabBufferedUntil = -1f;
             grabConsumed = true;
@@ -743,6 +821,10 @@ namespace SunkCost.Player
         {
             if (IsOwner) return;
             float dt = Time.deltaTime;
+            // A remote copy's lamp shows while its diver is listed below (its Unity
+            // scene on a client is not its world) and alive; the switch does the rest.
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            SetHeadlampEnabled(day != null && day.IsBelow(OwnerId) && !dead.Value);
             remotePitch = Mathf.LerpAngle(remotePitch, lookPitch.Value, 1f - Mathf.Exp(-dt / PitchSmoothSeconds));
             if (playerCamera != null) playerCamera.transform.localRotation = Quaternion.Euler(remotePitch, 0f, 0f);
             Vector3 target = EyeAnchor.position;
@@ -764,6 +846,7 @@ namespace SunkCost.Player
             CurrentQuotaBoard = null;
             CurrentShopDisplay = null;
             CurrentTv = null;
+            CurrentPatient = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
@@ -771,6 +854,9 @@ namespace SunkCost.Player
             if (CurrentTarget != null) return;
             Transform pressed = InteractionTargeting.FindPressable(eye.position, eye.forward, transform, interactReach);
             if (pressed == null) return;
+            // A living teammate's capsule under the dot (the patch; a dead one is a body, an item).
+            HQPlayerController teammate = pressed.GetComponentInParent<HQPlayerController>();
+            if (teammate != null && teammate != this && !teammate.IsDead) { CurrentPatient = teammate; return; }
             CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
             if (CurrentButton != null) return;
             CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();

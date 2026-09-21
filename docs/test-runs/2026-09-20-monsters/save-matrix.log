@@ -1,0 +1,77 @@
+Save matrix started 20/09/2026 18:11:16
+
+== S0 — hosted by the driver without a slot: nothing is kept
+PASS S0 this run hosts no save
+PASS S0: a stand sells large-tank
+PASS S0: bought large-tank ()
+PASS S0 a buy wrote no slot
+PASS S0 the empty slots read 'Save 1 — empty': Save 1 — empty
+
+== S1 — a new run in slot 1, named; the host keeps nothing from the unsaved run
+PASS S1 slot 1 written fresh as 'Matrix run'
+PASS S1 host left
+PASS S1 day state gone
+PASS S1 re-hosted on slot 1
+PASS S1 the host runs slot 1 'Matrix run'
+PASS S1 a fresh run: day 0, $0
+PASS S1 the unsaved run's large tank is gone
+
+== S2 — a buy at HQ writes the slot: the balance, the host's upgrade under its name
+PASS S2: a stand sells large-tank
+PASS S2: bought large-tank ()
+PASS S2 the slot's balance is $200
+PASS S2 the host is kept as 'name:Skipper' with the large tank
+PASS S2 the summary reads: Matrix run · at HQ, no cycle · $200 · 20 ספט׳ 18:11
+
+== S3 — a tank in the storage room and one in the hands cross the cast-off into the slot
+PASS S3 first tank: a stand sells air-tank
+PASS S3 first tank: bought air-tank ()
+PASS S3 the first tank landed
+PASS S3 the first tank lies in the docked ship's storage room
+PASS S3 second tank: a stand sells air-tank
+PASS S3 second tank: bought air-tank ()
+PASS S3 the second tank landed
+PASS S3 the dot is on the second tank
+PASS S3 the second tank is in the hands
+PASS S3 cast off: sailing to Sea
+PASS S3 cast off: arrived at Sea
+PASS S3 the slot's box holds the first tank (1)
+PASS S3 the host's hands hold the second tank in the slot
+PASS S3 the cast-off state: day 0, $120
+
+== S4 — home again: the docking writes the slot; nothing new at sea leaked in
+PASS S4 home: sailing to HQ
+PASS S4 home: arrived at HQ
+PASS S4 written at the dock: 1 in the box, 1 known
+
+== S5 — the host leaves and hosts the slot again: the run, the box, the upgrade and the hands are back
+PASS S5 host left
+PASS S5 day state gone
+PASS S5 re-hosted on slot 1
+PASS S5 the run is back: day 1, $120
+PASS S5 the box tank respawned
+PASS S5 it lies in the storage room, loose ((3.2, 0.3, -12.5))
+PASS S5 the host's large tank is back
+PASS S5 the hand tank is in the host's hands again
+PASS S5 exactly two tanks exist (2)
+PASS S5 the leave wrote the slot once more
+
+== S6 — rename and delete
+PASS S6 renamed, the run untouched
+PASS S6 an empty name falls back to 'Save 2'
+PASS S6 slot 2 deleted, slot 1 kept
+
+== G1 — a guest's upgrade comes back by its name after a re-host
+PASS G1 the guest spawned with its name
+PASS G1 a buy to write the slot: a stand sells air-tank
+PASS G1 a buy to write the slot: bought air-tank ()
+PASS G1 the guest 'Mate bof the' is kept with the headlamp
+PASS G1 host left
+PASS G1 day state gone
+PASS G1 re-hosted on slot 1
+PASS G1 the guest rejoined and has its headlamp back
+PASS G1 and not the host's large tank
+
+== Z — the scratch slots are the matrix's alone
+PASS Z the slots lived in Temp/save-matrix-saves
+MATRIX_PASS

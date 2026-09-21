@@ -126,6 +126,10 @@ namespace SunkCost.Editor.Prototype
                     if (EditorApplication.timeSinceStartup < waitUntil) return;
                     if (SunkCost.World.WorldSceneFlow.LocalPlayer() == null) return;
                     string job = SessionState.GetString(JobKey, "camera");
+                    // The other jobs run their rows on a seafloor without monsters (a
+                    // Walker would kill a row's diver); the monsters job forces its own.
+                    SunkCost.Monsters.MonsterSettings.RosterOverrideForTests = job == "monsters" ? null : System.Array.Empty<SunkCost.Monsters.MonsterKind>();
+                    SunkCost.Monsters.MonsterSettings.GhostChanceOverrideForTests = job == "monsters" ? null : 0f;
                     try
                     {
                         if (job == "camera") PlayerCameraClearanceRuntimeChecks.RunAsHost();
@@ -143,6 +147,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "plank") PlankRuntimeChecks.RunAsHost();
                         else if (job == "noise") NoiseRuntimeChecks.RunAsHost();
                         else if (job == "figure") FigureRuntimeChecks.RunAsHost();
+                        else if (job == "monsters") MonsterRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }

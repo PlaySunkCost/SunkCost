@@ -26,7 +26,8 @@ namespace SunkCost.Interaction
         Travelling = 5,  // the ship is under way: no item actions until arrival
         NoRoom = 6,      // no clear space in front to drop or throw into
         AirFull = 7,     // a breath from a tank with the air already full would only waste it
-        NotUnderwater = 8 // a tank is breathed from underwater only (Dan, 18 September 2026)
+        NotUnderwater = 8, // a tank is breathed from underwater only (Dan, 18 September 2026)
+        NoLeak = 9         // a patch kit with nothing to patch (the monsters, 20 September 2026)
     }
 
     // The inventory decision table (docs/HOLD_INVENTORY_IMPLEMENTATION_PLAN.md
@@ -69,6 +70,7 @@ namespace SunkCost.Interaction
                 case RefuseReason.NoRoom: return "Not enough room to drop/throw";
                 case RefuseReason.AirFull: return "Your air is full — keep the tank";
                 case RefuseReason.NotUnderwater: return "Breathe from the tank underwater";
+                case RefuseReason.NoLeak: return "No leak to patch — keep the kit";
                 default: return string.Empty;
             }
         }
