@@ -315,7 +315,7 @@ namespace SunkCost.Editor.Prototype
             Vector3 before = host.transform.position;
             yield return HostDash();
             Check(host.Dashes == 0 && host.DashRefusal == "Only below" && FlatDistance(host.transform.position, before) < 0.5f, $"D0 Alt on the deck is refused: '{host.DashRefusal}', moved {FlatDistance(host.transform.position, before):0.00} m");
-            Check(host.DashReady >= 1f && hud.Visor.DashReady >= 1f, "D0 the dash reads ready");
+            Check(host.DashReady >= 1f, "D0 the dash reads ready (the visor is off on the deck; its bar is read below)");
             yield return GuestMove(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * cabinFloor);
             yield return Wait(0.5f);
             yield return Descend(1);
