@@ -5,6 +5,7 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using FishNet.Transporting;
 using SunkCost.Net;
+using SunkCost.Noise;
 using SunkCost.Player;
 using UnityEngine;
 
@@ -394,6 +395,7 @@ namespace SunkCost.Interaction
             // interpolate its rendering between steps (see ApplyRole).
             if (body != null && !body.isKinematic && body.interpolation == RigidbodyInterpolation.None && Time.unscaledTime > carriedUntil)
                 body.interpolation = RigidbodyInterpolation.Interpolate;
+            if (IsServerStarted) ServerJudgeLanding();
             if (state.Value == ItemState.Released && LocalWriter && !hasPendingRelease && !restRequested)
             {
                 releaseTime += Time.fixedDeltaTime;
@@ -686,6 +688,51 @@ namespace SunkCost.Interaction
         }
 
         public bool InCabinTransit => transitSerial != 0 && transitInCabin;
+
+        // ---- a landing's noise (Dan, 21 September 2026: "throw a coin, it turns") ------
+
+        // The server judges the landing from the copy it holds — the thrower simulates
+        // a Released item (contract section 2), so the server's own collisions never
+        // see it land: the item was falling at LandingSpeed or more and has stopped
+        // falling for a few fixed steps. Once per release, in the dive world: an
+        // Impact at LandingRadius (scaled down for a slow fall — a drop from the
+        // hands about half) with the item's id as the source. Server only, through
+        // NoiseSystem; nothing replicates. A Free item the server itself drops off a
+        // ledge lands the same way.
+        private float landingLastY, landingPeakFall;
+        private bool landingPrimed, landingFalling, landed;
+        private int landingStillSteps;
+        private uint landingVersion = uint.MaxValue;
+        public int ServerLandings { get; private set; }
+
+        [Server]
+        private void ServerJudgeLanding()
+        {
+            float y = transform.position.y;
+            if (!landingPrimed) { landingLastY = y; landingPrimed = true; return; }
+            float vy = (y - landingLastY) / Time.fixedDeltaTime;
+            landingLastY = y;
+            if (motionVersion.Value != landingVersion) { landingVersion = motionVersion.Value; landed = false; landingFalling = false; }
+            if (state.Value == ItemState.Held || state.Value == ItemState.Stowed || transitSerial != 0 || carPinned) { landingFalling = false; return; }
+            NoiseSettings noise = NoiseSettings.Get();
+            if (vy < -noise.LandingSpeed)
+            {
+                if (!landingFalling) landingPeakFall = 0f;
+                landingFalling = true;
+                landingPeakFall = Mathf.Max(landingPeakFall, -vy);
+                landingStillSteps = 0;
+                return;
+            }
+            if (!landingFalling) return;
+            if (vy < -0.5f) { landingStillSteps = 0; return; } // still going down, slower
+            if (++landingStillSteps < 3) return; // a copy moved by its NetworkTransform can hold still for a frame mid-fall
+            landingFalling = false;
+            if (landed || gameObject.scene != SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.Dive)) return;
+            landed = true;
+            float radius = noise.LandingRadius * Mathf.Clamp(landingPeakFall / Mathf.Max(0.1f, noise.LandingFullSpeed), 0.5f, 1f);
+            NoiseSystem.Emit(transform.position, radius, NoiseKind.Impact, ObjectId);
+            ServerLandings++;
+        }
 
         // ---- the car carries loose bodies ---------------------------------------------
 

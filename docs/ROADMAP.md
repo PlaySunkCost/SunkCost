@@ -36,7 +36,8 @@ design §6 as placeholder shapes — the Elevator Ghost, the Long Walker, the
 Weeping Angel, the Charger, the Lure, the Listener, the Impostor — on one
 creature skeleton, three drawn at random per dive; damage and leaks, the
 friend's patch (once a day) and the patch kit in the shop; the headlamp's
-switch (F). **Not built at all:** the site vote, dive
+switch (F). **21 September 2026, `dan/dash`:** the dash (Alt) with its rings
+and whoosh on every screen, and a thrown item's landing as noise. **Not built at all:** the site vote, dive
 conditions, more than one site, the seafloor beyond a wreck and coins, the
 run recap screen, the handheld device, the surface radio, cosmetics and
 achievements, the quota curve (a flat $500), music and ambience, real art
@@ -96,8 +97,8 @@ lives on as the Listener. What remains here is the polish.
 | ~~The seven~~ | Done as placeholders: the Elevator Ghost (green car on a return trip, the doors slam), the Long Walker (sees you, walks forever at 60 % of walking, stops at the car), the Weeping Angel (frozen while any part of it is on anyone's screen, 2.5× sprint unwatched), the Charger (1.5 s shake, a 20 m rush at 3× sprint, 35 HP + a leak), the Lure (a laser at a lit lamp after a 0.4 s aim; lamps off and it forgets), the Listener (blind; a dark laser at what the noise bus says; crouch is silent), the Impostor (seen by its chosen diver only, wears a crewmate's colour and name, walks at walking speed, 30 HP + a leak, then runs). Tuned with Dan the same day. | — | `docs/test-runs/2026-09-20-monsters`. |
 | ~~Damage and leaks~~ | Done: `ServerDamage`, the `leaking` SyncVar (3× drain), LEAK on the visor, the hiss. | — | |
 | ~~Patch kit~~ and the friend's hands | Done: hold E on a leaking friend for 3 s (once a day per patient), the $60 kit in Gear & Supplies (one use). | — | |
-| The dash key | Dan: the intended dodge for the Charger; "the dash is later" — confirmed 20 September 2026 as the first card of the next update. A short burst on a key with a cooldown; costs air; a noise event for the Listener; client-simulated like movement, the server judges it from the copy's speed. | M | Design §6 names it. |
-| A landed throw makes noise | The Listener's counterplay: throw a coin, it turns. `NoiseEmitter` exists and is on nothing. | S | Attach to the carryable prefabs, `Impact` kind, `SourceId` = the item. |
+| ~~The dash key~~ | Done 21 September 2026 (`dan/dash`): Alt, 4 m in 0.25 s in the steering direction, 3 s apart, 4 s of tank, a 20 m noise; client-simulated, judged by the server from the copy's speed; rings out of the boots and a whoosh on every screen; DASH (ALT) on the visor. The air dash is in for Dan to try. | — | Design §3; contract §3 "The dash". |
+| ~~A landed throw makes noise~~ | Done the same day: the server judges a Released item's landing from the copy (the thrower simulates it, so `NoiseEmitter`'s collision path could never see it) — an `Impact` at 10 m, scaled by the fall. | — | Contract §3 "A landing's noise". |
 | Lamps in the player's colour | The design's "how you identify a shape in the dark"; the colour exists, the headlamp is white. | S | Cosmetic, but the dark is the game. |
 | Monster looks and signature sounds | Seven placeholder silhouettes with glowing eyes and generated calls today. Dan's models; a sound designer for the calls, the Ghost's hum, the slam. | L | Phase 03. |
 | Tuning from play | Every number is in `MonsterSettings` (Resources) and provisional: three per dive, the Angel's 25 m and 2.5×, the Charger's 20 m and 35, the Walker's 60 %, the beams' 0.4 s aim. | S | Playtest-driven. |

@@ -294,6 +294,21 @@ namespace SunkCost.Player
         }
         public bool ServerSuitOn => inDive;
 
+        // A dash's bite (Dan, 21 September 2026: a flat 4 s of tank; the dash is judged
+        // by HQPlayerController from the copy's speed): off the exact tank, a leaking
+        // one paying LeakDrainMultiplier on it like everything else. Returns what went.
+        [Server]
+        public float ServerSpendAir(float seconds)
+        {
+            if (!inDive || controller == null || controller.IsDead || airSeconds <= 0f || seconds <= 0f) return 0f;
+            float before = airSeconds;
+            airSeconds = Mathf.Max(0f, airSeconds - seconds * (leaking.Value ? Settings.LeakDrainMultiplier : 1f));
+            byte next = (byte)Mathf.CeilToInt(AirScale * Mathf.Clamp01(airSeconds / Mathf.Max(0.001f, TankSeconds)));
+            if (airSeconds <= 0f) next = 0;
+            if (next != air.Value) air.Value = next;
+            return before - airSeconds;
+        }
+
         // The debug key (L; HQPlayerController) and the peer's air_down: a step off
         // the tank, below only. Development builds and the editor only.
         public void RequestDebugAirDown()

@@ -41,7 +41,11 @@ namespace SunkCost.Editor.Prototype
         }
 
         // A patch kit spawned at a spot in the dive scene (server only).
-        public static CarryableItem ServerSpawnPatchKit(Vector3 at)
+        public static CarryableItem ServerSpawnPatchKit(Vector3 at) => ServerSpawnItem(PatchKitSetup.PrefabName, at, "Patch kit (checks)");
+
+        // Any registered carryable prefab by name, spawned into the dive scene (the
+        // dash checks throw a coin, hold a heavy ball).
+        public static CarryableItem ServerSpawnItem(string prefabName, Vector3 at, string instanceName = null)
         {
             NetworkManager nm = InstanceFinder.NetworkManager;
             if (nm == null || !nm.IsServerStarted) return null;
@@ -49,11 +53,11 @@ namespace SunkCost.Editor.Prototype
             for (int i = 0; i < nm.SpawnablePrefabs.GetObjectCount(); i++)
             {
                 NetworkObject candidate = nm.SpawnablePrefabs.GetObject(true, i);
-                if (candidate != null && candidate.name == PatchKitSetup.PrefabName) { prefab = candidate; break; }
+                if (candidate != null && candidate.name == prefabName) { prefab = candidate; break; }
             }
             if (prefab == null) return null;
             NetworkObject instance = Object.Instantiate(prefab, at, Quaternion.identity);
-            instance.name = "Patch kit (checks)";
+            instance.name = instanceName ?? prefabName + " (checks)";
             CarryableItem item = instance.GetComponent<CarryableItem>();
             item.SetResetPositionBeforeSpawn(at);
             nm.ServerManager.Spawn(instance, null, WorldScenes.Scene(WorldId.Dive));

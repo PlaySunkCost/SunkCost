@@ -26,12 +26,26 @@ namespace SunkCost.Noise
         [Tooltip("Seconds between the car's noise events while it moves.")]
         [SerializeField] private float elevatorEmitInterval = 1f;
 
+        [Header("A dash and a landing (server; Dan, 21 September 2026)")]
+        [Tooltip("How far a diver's dash carries, metres — louder than a sprinting step.")]
+        [SerializeField] private float dashRadius = 20f;
+        [Tooltip("How far a thrown item's landing carries, metres (a drop from the hands about half: the radius scales with the fall).")]
+        [SerializeField] private float landingRadius = 10f;
+        [Tooltip("An item falling slower than this, metres per second, lands silently.")]
+        [SerializeField] private float landingSpeed = 3f;
+        [Tooltip("A fall at this speed or more lands at the full radius; slower ones proportionally, never under half.")]
+        [SerializeField] private float landingFullSpeed = 8f;
+
         public float WalkStepMetres => walkStepMetres;
         public float WalkRadius => walkRadius;
         public float SprintStepMetres => sprintStepMetres;
         public float SprintRadius => sprintRadius;
         public float ElevatorRadius => elevatorRadius;
         public float ElevatorEmitInterval => elevatorEmitInterval;
+        public float DashRadius => dashRadius;
+        public float LandingRadius => landingRadius;
+        public float LandingSpeed => landingSpeed;
+        public float LandingFullSpeed => landingFullSpeed;
 
         private static NoiseSettings loaded;
         public static NoiseSettings Get()

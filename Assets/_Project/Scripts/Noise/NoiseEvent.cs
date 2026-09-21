@@ -15,7 +15,8 @@ namespace SunkCost.Noise
         Impact,      // a dropped object, a body hitting the floor
         Tool,        // cutting torch, tank swap, winch
         Voice,       // a scream through the helmet radio
-        Beacon       // deliberate distraction: a noisemaker
+        Beacon,      // deliberate distraction: a noisemaker
+        Dash         // a diver's burst on Alt (Dan, 21 September 2026): louder than a sprinting step
     }
 
     /// <summary>

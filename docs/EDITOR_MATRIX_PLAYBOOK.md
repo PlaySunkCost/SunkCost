@@ -60,6 +60,16 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   nearest living teammate — the peer cannot hold a key), its player line `lamp=`, `leak=`,
   `patchNotice='…'`, its header `ghostGreen=`, `ghostActive=`, `slamsHeard=`, and one `monster=<kind>;
   id=; pose=; target=; position=; shown=; wears=` line per creature it holds;
+  `dash` = the dash and a landing's noise (docs/DESIGN.md §3, 21 September 2026), `DashRuntimeChecks`,
+  log `Temp/dash-matrix.log`, host and one guest in `Temp/dash-guest` both below, a listener on the
+  NoiseSystem: Alt refused on the deck (D0), the burst on the seabed with the server's judgement, the
+  4 s of air, the Dash noise, the rings and the whoosh on the host and on the guest's copy of it (D1),
+  the cooldown (D2), A + Alt to the left (D3), an air dash (D4), refused crouched and with a heavy ball
+  (D5), the guest's dash judged and seen by the host (D6), the Listener turning to a dash (D7), a
+  thrown coin's landing heard from the host's throw and the guest's (D8) — about 4 minutes. The guest's
+  peer took `dash` (aim = the flat direction; the reply says `dash=True/False; refusal='…'`), its player
+  line `dashes=`, `dashReady=`, `dashSerial=`, `dashRings=`; rows spawn items with
+  `MonsterTestHooks.ServerSpawnItem(prefabName, at)`;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator
