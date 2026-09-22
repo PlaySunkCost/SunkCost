@@ -377,7 +377,7 @@ namespace SunkCost.Net
                 var impostorLook = creature.GetComponent<SunkCost.Monsters.ImpostorLook>();
                 var impostor = creature.GetComponent<SunkCost.Monsters.Impostor>();
                 var beams = creature.GetComponent<SunkCost.Monsters.CreatureBolts>();
-                text += $"monster={creature.Kind}; id={creature.ObjectId}; pose={creature.Pose}; target={creature.TargetId}; position={creature.transform.position}; shown={(impostorLook == null ? true : impostorLook.ShownToLocal)}; wears={(impostor == null ? string.Empty : impostor.WornName + "/" + impostor.WornColourIndex)}; beam={(beams == null ? "none" : beams.Cue.Serial + (beams.Cue.Fired ? "/fired" : "/aim"))}\n";
+                text += $"monster={creature.Kind}; id={creature.ObjectId}; pose={creature.Pose}; target={creature.TargetId}; position={creature.transform.position}; shown={(impostorLook == null ? true : impostorLook.ShownToLocal)}; wears={(impostor == null ? string.Empty : impostor.WornName + "/" + impostor.WornColourIndex)}; beam={(beams == null ? "none" : beams.Cue.Serial + "/" + beams.Cue.Phase.ToString().ToLowerInvariant())}\n";
             }
             foreach (var item in FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name))
             {

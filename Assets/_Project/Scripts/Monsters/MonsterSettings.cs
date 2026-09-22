@@ -89,9 +89,13 @@ namespace SunkCost.Monsters
         [Tooltip("It walks toward the last sound at this fraction of walking speed.")]
         [SerializeField] private float listenerApproachSpeedFactor = 0.6f;
 
-        [Header("Beams (the Lure's light, the Listener's dark — a laser, not a shot; Dan, 20 September 2026)")]
-        [Tooltip("The aim shows as a faint line this long before the beam fires: the whole dodge window.")]
-        [SerializeField] private float beamAimSeconds = 0.4f;
+        [Header("Beams (the Lure's light, the Listener's dark; Dan, 22 September 2026: a second of charge, then three seconds of beam that turns after you, one hit)")]
+        [Tooltip("The charge: a glow at the mouth and a faint line this long before the beam burns — the warning.")]
+        [SerializeField] private float beamChargeSeconds = 1f;
+        [Tooltip("How long the beam burns once it fires. It hurts once per beam.")]
+        [SerializeField] private float beamSeconds = 3f;
+        [Tooltip("How fast the beam turns after its target, degrees per second, charging and firing alike. Fast enough that only a wall or a dash across it at the right moment saves you (Dan: it should hit about 95 % of the time).")]
+        [SerializeField] private float beamSweepDegPerSec = 160f;
         [Tooltip("The beam hits a diver within this many metres of its line.")]
         [SerializeField] private float beamHitRadius = 0.7f;
         [Tooltip("How far the beam reaches before the water takes it.")]
@@ -153,7 +157,9 @@ namespace SunkCost.Monsters
         public float ListenerDamage => listenerDamage;
         public float ListenerShotCooldownSeconds => listenerShotCooldownSeconds;
         public float ListenerApproachSpeedFactor => listenerApproachSpeedFactor;
-        public float BeamAimSeconds => beamAimSeconds;
+        public float BeamChargeSeconds => beamChargeSeconds;
+        public float BeamSeconds => beamSeconds;
+        public float BeamSweepDegPerSec => beamSweepDegPerSec;
         public float BeamHitRadius => beamHitRadius;
         public float BeamRangeMeters => beamRangeMeters;
         public float ImpostorDamage => impostorDamage;

@@ -264,7 +264,7 @@ namespace SunkCost.Editor.Prototype
             WorldSceneFlow flow = WorldSceneFlow.Instance;
             Check(Resources.Load<MonsterSettings>(MonsterSettings.ResourceName) != null, "MonsterSettings lives in Resources (run the monster setup)");
             MonsterSettings s = Settings;
-            Say($"roster {s.MonstersPerDive} per dive, spawn ≥ {s.SpawnMinMeters} m, safe zone {s.SafeZoneMeters} m, ghost chance {s.GhostChance}, green {s.GhostSeconds} s; walker ×{s.WalkerSpeedFactor}; angel ×{s.AngelSpeedFactor} sprint, screen {s.WatchVerticalFovDeg}°/{s.WatchAspect}; charger {s.ChargerRushMeters} m ×{s.ChargerRushSpeedFactor}, {s.ChargerDamage} HP; beams aim {s.BeamAimSeconds} s; lure {s.LureDamage}; listener {s.ListenerDamage}; impostor {s.ImpostorDamage} at ×{s.ImpostorSpeedFactor} walk");
+            Say($"roster {s.MonstersPerDive} per dive, spawn ≥ {s.SpawnMinMeters} m, safe zone {s.SafeZoneMeters} m, ghost chance {s.GhostChance}, green {s.GhostSeconds} s; walker ×{s.WalkerSpeedFactor}; angel ×{s.AngelSpeedFactor} sprint, screen {s.WatchVerticalFovDeg}°/{s.WatchAspect}; charger {s.ChargerRushMeters} m ×{s.ChargerRushSpeedFactor}, {s.ChargerDamage} HP; beams charge {s.BeamChargeSeconds} s, burn {s.BeamSeconds} s at {s.BeamSweepDegPerSec}°/s; lure {s.LureDamage}; listener {s.ListenerDamage}; impostor {s.ImpostorDamage} at ×{s.ImpostorSpeedFactor} walk");
             Check(s.AngelSpeedFactor >= 2f && s.ChargerRushMeters >= 20f && s.ChargerRushSpeedFactor >= 3f && s.ImpostorSpeedFactor == 1f, "the settings carry Dan's numbers (Angel ×2.5, Charger 20 m ×3, Impostor at walking speed)");
             foreach (MonsterKind kind in MonsterCatalog.Walkers)
                 Check(Enumerable.Range(0, host.NetworkManager.SpawnablePrefabs.GetObjectCount()).Any(i => host.NetworkManager.SpawnablePrefabs.GetObject(true, i)?.name == MonsterCatalog.PrefabName(kind)), MonsterCatalog.PrefabName(kind) + " is a registered spawnable");
@@ -479,10 +479,13 @@ namespace SunkCost.Editor.Prototype
             Creature lure = Spawn(MonsterKind.Lure, lureAt);
             CreatureBolts lureBolts = lure.GetComponent<CreatureBolts>();
             yield return Expect(() => lureBolts.ServerAiming && lure.TargetId == host.OwnerId, 4f, () => "LU1 it saw the lamp and aims (" + lure.ServerStatus + ")");
-            Check(lureBolts.Cue.Serial >= 1 && !lureBolts.Cue.Fired, "LU1 the aim is replicated as the tell");
-            yield return Expect(() => lureBolts.ServerFired >= 1, s.BeamAimSeconds + 1f, () => "LU1 the beam fired after the aim");
+            Check(lureBolts.Cue.Serial >= 1 && lureBolts.Cue.Phase == BeamPhase.Charging, "LU1 the charge is replicated as the tell");
+            yield return Expect(() => lureBolts.ServerFired >= 1, s.BeamChargeSeconds + 1f, () => "LU1 the beam fired after the charge");
             yield return Expect(() => vitals.Leaking && vitals.Health <= vitals.Settings.MaxHealth - s.LureDamage + 1, 2f, () => $"LU1 the beam hit a diver standing still: health {vitals.Health}, leaking {vitals.Leaking}");
-            Check(lureBolts.Cue.Fired, "LU1 the shot is replicated");
+            Check(lureBolts.Cue.Phase == BeamPhase.Firing, "LU1 the beam is replicated as burning");
+            int hitsAfterFirst = lureBolts.ServerHits;
+            yield return Expect(() => lureBolts.Cue.Phase == BeamPhase.Done, s.BeamSeconds + 1f, () => "LU1 the beam ended after its three seconds");
+            Check(lureBolts.ServerHits == hitsAfterFirst && vitals.Health >= vitals.Settings.MaxHealth - s.LureDamage - 1, $"LU1 one hit per beam, no more (hits {lureBolts.ServerHits}, health {vitals.Health})");
             yield return GuestEventually(r => GuestMonsterLine(r, MonsterKind.Lure).Length > 0, 6f, "LU1 the guest holds the Lure");
             yield return Press(Key.F);
             yield return Expect(() => !host.LampOn, 2f, () => "LU1 lamp off");
@@ -516,7 +519,7 @@ namespace SunkCost.Editor.Prototype
             yield return HostAt(stand, stand + Vector3.Cross(Vector3.up, listenerAt - stand));
             Keys(Key.W, Key.LeftShift);
             yield return Expect(() => ears.ServerHeard > heardBefore, 3f, () => "LI1 a sprint is heard (" + ears.ServerStatus + ")");
-            yield return Expect(() => listenerBolts.ServerFired >= 1, 3f + s.BeamAimSeconds, () => "LI1 it aimed and fired a dark beam at the sound");
+            yield return Expect(() => listenerBolts.ServerFired >= 1, 3f + s.BeamChargeSeconds, () => "LI1 it charged and fired a dark beam at the sound");
             yield return Wait(2f);
             Keys(); yield return null;
             Check(ears.ServerLastKind == SunkCost.Noise.NoiseKind.Sprint || ears.ServerLastKind == SunkCost.Noise.NoiseKind.Footstep, "LI1 the last thing it heard was a step: " + ears.ServerLastKind);

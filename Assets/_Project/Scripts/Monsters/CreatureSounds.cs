@@ -43,18 +43,47 @@ namespace SunkCost.Monsters
         private void OnEnable()
         {
             if (creature != null) { creature.PoseChanged += OnPose; creature.Struck += OnStruck; }
-            if (bolts != null) { bolts.Fired += OnBolt; bolts.Hit += OnStruck; }
+            if (bolts != null) { bolts.Aimed += OnCharge; bolts.Fired += OnBolt; bolts.Ended += OnBeamEnd; bolts.Hit += OnStruck; }
+        }
+        // The beam (Dan, 22 September 2026): a rising charge for the second before it
+        // fires, then the beam's own hum for as long as it burns, from the voice's spot.
+        private AudioSource beamLoop;
+        private AudioSource BeamLoop
+        {
+            get
+            {
+                if (beamLoop != null) return beamLoop;
+                beamLoop = voice.gameObject.AddComponent<AudioSource>();
+                beamLoop.playOnAwake = false; beamLoop.loop = true;
+                beamLoop.spatialBlend = 1f; beamLoop.rolloffMode = AudioRolloffMode.Linear;
+                beamLoop.minDistance = 3f; beamLoop.maxDistance = 45f; beamLoop.dopplerLevel = 0f;
+                beamLoop.clip = library.BeamLoop; beamLoop.volume = library.BeamLoopVolume;
+                AudioDeviceService devices = FindAnyObjectByType<AudioDeviceService>();
+                if (devices != null) devices.Route(beamLoop);
+                return beamLoop;
+            }
+        }
+        private void OnCharge(BeamCue cue)
+        {
+            if (!Audible) return;
+            voice.PlayOneShot(library.BeamCharge, library.BeamChargeVolume);
         }
         private void OnBolt(BeamCue cue)
         {
             if (!Audible) return;
             voice.PlayOneShot(library.BoltShot, library.BoltShotVolume);
+            BeamLoop.Play();
+        }
+        private void OnBeamEnd(BeamCue cue)
+        {
+            if (beamLoop != null && beamLoop.isPlaying) beamLoop.Stop();
         }
 
         private void OnDisable()
         {
             if (creature != null) { creature.PoseChanged -= OnPose; creature.Struck -= OnStruck; }
-            if (bolts != null) { bolts.Fired -= OnBolt; bolts.Hit -= OnStruck; }
+            if (bolts != null) { bolts.Aimed -= OnCharge; bolts.Fired -= OnBolt; bolts.Ended -= OnBeamEnd; bolts.Hit -= OnStruck; }
+            if (beamLoop != null && beamLoop.isPlaying) beamLoop.Stop();
         }
 
 

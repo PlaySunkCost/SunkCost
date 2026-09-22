@@ -6,8 +6,9 @@ namespace SunkCost.Monsters
     // What every peer sees of a creature beyond its replicated position: the
     // eyes glow by pose (a slow pulse idle, bright on the hunt, steady frozen,
     // dim in flight), the body bobs as it walks and shakes in the Charger's
-    // wind-up, and a bolt flies when the cue changes. Placeholder until Dan's
-    // models: nothing about the rules reads the look. Presentation only.
+    // wind-up, and a beam charges, burns and dies when the cue changes.
+    // Placeholder until Dan's models: nothing about the rules reads the look.
+    // Presentation only.
     public sealed class CreatureLook : MonoBehaviour
     {
         [Tooltip("The part that bobs and shakes (the whole silhouette).")]
@@ -38,12 +39,14 @@ namespace SunkCost.Monsters
             block = new MaterialPropertyBlock();
         }
 
-        private void OnEnable() { if (bolts != null) { bolts.Aimed += OnAim; bolts.Fired += OnBeam; } }
-        private void OnDisable() { if (bolts != null) { bolts.Aimed -= OnAim; bolts.Fired -= OnBeam; } }
+        private void OnEnable() { if (bolts != null) { bolts.Aimed += OnCharge; bolts.Fired += OnBeam; bolts.Ended += OnBeamEnd; } }
+        private void OnDisable() { if (bolts != null) { bolts.Aimed -= OnCharge; bolts.Fired -= OnBeam; bolts.Ended -= OnBeamEnd; } }
 
         private MonsterBeamView beam;
-        private void OnAim(BeamCue cue) { if (beam == null) beam = MonsterBeamView.Make(transform); beam.Aim(cue); }
-        private void OnBeam(BeamCue cue) { if (beam == null) beam = MonsterBeamView.Make(transform); beam.Fire(cue); }
+        private MonsterBeamView Beam => beam != null ? beam : beam = MonsterBeamView.Make(transform, bolts);
+        private void OnCharge(BeamCue cue) => Beam.Charge(cue);
+        private void OnBeam(BeamCue cue) => Beam.Fire(cue);
+        private void OnBeamEnd(BeamCue cue) => Beam.End();
 
         private void LateUpdate()
         {
@@ -82,23 +85,35 @@ namespace SunkCost.Monsters
         }
     }
 
-    // A beam as every peer draws it: a faint thin line while the monster aims (the
-    // tell), then the line thick and bright for a moment, fading. A LineRenderer
-    // on a child of the creature; two materials, light and dark. Presentation only.
+    // A beam as every peer draws it (Dan, 22 September 2026: a second of loading,
+    // then three seconds of beam): while it charges, a glow swells at the mouth and
+    // a faint thread points where it aims; while it burns, a thick bright line from
+    // the mouth to the replicated aim point, easing after it as it sweeps, flaring
+    // when the hit lands; then it fades. A LineRenderer and a glow sphere on a child
+    // of the creature; two materials, light and dark. Presentation only.
     public sealed class MonsterBeamView : MonoBehaviour
     {
-        private const float FlashSeconds = 0.25f;
+        private const float FadeSeconds = 0.3f, AimEaseSeconds = 0.06f;
         private static Material lightMaterial, darkMaterial;
         private LineRenderer line;
-        private float firedAt = float.NegativeInfinity;
-        private bool aiming;
+        private Transform glow;
+        private Renderer glowRenderer;
+        private CreatureBolts bolts;
+        private CreatureRig rig; // a modelled monster: the line visibly leaves its BeamOrigin (the server's line still starts at the eye point)
         private Color colour;
+        private BeamPhase phase = BeamPhase.None;
+        private float phaseAt = float.NegativeInfinity, hitAt = float.NegativeInfinity;
+        private Vector3 shownAim;
+        private bool aimPrimed;
 
-        public static MonsterBeamView Make(Transform creature)
+        public BeamPhase Phase => phase;
+
+        public static MonsterBeamView Make(Transform creature, CreatureBolts bolts)
         {
             var go = new GameObject("Beam");
             go.transform.SetParent(creature, false);
             MonsterBeamView view = go.AddComponent<MonsterBeamView>();
+            view.bolts = bolts;
             view.rig = creature.GetComponent<CreatureRig>();
             view.line = go.AddComponent<LineRenderer>();
             view.line.useWorldSpace = true;
@@ -106,48 +121,108 @@ namespace SunkCost.Monsters
             view.line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             view.line.receiveShadows = false;
             view.line.enabled = false;
+            GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            ball.name = "Charge glow";
+            Object.Destroy(ball.GetComponent<Collider>());
+            ball.transform.SetParent(go.transform, false);
+            view.glow = ball.transform;
+            view.glowRenderer = ball.GetComponent<Renderer>();
+            view.glowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            view.glowRenderer.receiveShadows = false;
+            ball.SetActive(false);
+            if (bolts != null) bolts.Hit += view.OnHit;
             return view;
         }
 
-        private CreatureRig rig; // a modelled monster: the line visibly leaves its BeamOrigin (the server's line still starts at the eye point)
+        private void OnDestroy() { if (bolts != null) bolts.Hit -= OnHit; }
+        private void OnHit() => hitAt = Time.time;
 
-        private void Lay(BeamCue cue)
+        private Vector3 Origin
         {
-            Vector3 dir = (cue.To - cue.From).normalized;
-            float range = CreatureBolts.BeamEnd(cue.From, dir, MonsterSettings.Get().BeamRangeMeters);
-            line.SetPosition(0, rig != null ? rig.BeamOriginPoint(cue.From) : cue.From);
-            line.SetPosition(1, cue.From + dir * range);
-            line.sharedMaterial = cue.Dark ? DarkMaterial() : LightMaterial();
-            colour = cue.Dark ? new Color(0.45f, 0.15f, 0.75f) : new Color(1f, 0.92f, 0.55f);
+            get
+            {
+                Vector3 fallback = bolts != null && bolts.Cue.Serial > 0 ? bolts.Cue.From : transform.position;
+                return rig != null ? rig.BeamOriginPoint(fallback) : fallback;
+            }
         }
 
-        public void Aim(BeamCue cue)
+        private void Dress(bool dark)
         {
-            Lay(cue);
-            aiming = true;
-            line.startWidth = line.endWidth = 0.03f;
-            line.startColor = line.endColor = colour * 0.5f;
+            Material m = dark ? DarkMaterial() : LightMaterial();
+            line.sharedMaterial = m;
+            glowRenderer.sharedMaterial = m;
+            colour = dark ? new Color(0.45f, 0.15f, 0.75f) : new Color(1f, 0.92f, 0.55f);
+        }
+
+        public void Charge(BeamCue cue)
+        {
+            Dress(cue.Dark);
+            phase = BeamPhase.Charging;
+            phaseAt = Time.time;
+            shownAim = cue.To;
+            aimPrimed = true;
             line.enabled = true;
+            glow.gameObject.SetActive(true);
         }
 
         public void Fire(BeamCue cue)
         {
-            Lay(cue);
-            aiming = false;
-            firedAt = Time.time;
-            line.startWidth = line.endWidth = 0.18f;
-            line.startColor = line.endColor = colour;
+            Dress(cue.Dark);
+            phase = BeamPhase.Firing;
+            phaseAt = Time.time;
+            if (!aimPrimed) { shownAim = cue.To; aimPrimed = true; }
             line.enabled = true;
+            glow.gameObject.SetActive(true);
+        }
+
+        public void End()
+        {
+            phase = BeamPhase.Done;
+            phaseAt = Time.time;
         }
 
         private void LateUpdate()
         {
-            if (aiming) { float pulse = 0.4f + 0.2f * Mathf.Sin(Time.time * 30f); line.startColor = line.endColor = colour * pulse; return; }
-            float t = Time.time - firedAt;
-            if (t > FlashSeconds) { line.enabled = false; return; }
-            float fade = 1f - t / FlashSeconds;
-            line.startWidth = line.endWidth = 0.18f * fade;
-            line.startColor = line.endColor = colour * fade;
+            if (phase == BeamPhase.None) return;
+            float since = Time.time - phaseAt;
+            Vector3 from = Origin;
+            // The aim eases after the replicated point so the sweep reads as a turn, not steps.
+            Vector3 target = bolts != null ? bolts.BeamAim : shownAim;
+            shownAim = aimPrimed ? Vector3.Lerp(shownAim, target, 1f - Mathf.Exp(-Time.deltaTime / AimEaseSeconds)) : target;
+            line.SetPosition(0, from);
+            line.SetPosition(1, shownAim);
+            glow.position = from;
+            switch (phase)
+            {
+                case BeamPhase.Charging:
+                {
+                    float charge = MonsterSettings.Get().BeamChargeSeconds;
+                    float t = charge <= 0f ? 1f : Mathf.Clamp01(since / charge);
+                    float pulse = 0.35f + 0.25f * Mathf.Sin(Time.time * 40f);
+                    line.startWidth = line.endWidth = 0.015f + 0.02f * t;
+                    line.startColor = line.endColor = colour * pulse * (0.4f + 0.6f * t);
+                    glow.localScale = Vector3.one * Mathf.Lerp(0.08f, 0.42f, t * t);
+                    break;
+                }
+                case BeamPhase.Firing:
+                {
+                    float flare = Time.time - hitAt < 0.25f ? 1f + 1.5f * (1f - (Time.time - hitAt) / 0.25f) : 1f;
+                    float pulse = 0.85f + 0.15f * Mathf.Sin(Time.time * 60f);
+                    line.startWidth = 0.22f * flare; line.endWidth = 0.14f * flare;
+                    line.startColor = line.endColor = colour * pulse * flare;
+                    glow.localScale = Vector3.one * (0.5f * flare);
+                    break;
+                }
+                case BeamPhase.Done:
+                {
+                    float fade = 1f - Mathf.Clamp01(since / FadeSeconds);
+                    if (fade <= 0f) { line.enabled = false; glow.gameObject.SetActive(false); phase = BeamPhase.None; aimPrimed = false; return; }
+                    line.startWidth = line.endWidth = 0.22f * fade;
+                    line.startColor = line.endColor = colour * fade;
+                    glow.localScale = Vector3.one * (0.5f * fade);
+                    break;
+                }
+            }
         }
 
         private static Material LightMaterial()

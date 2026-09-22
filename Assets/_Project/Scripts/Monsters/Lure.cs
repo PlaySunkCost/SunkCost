@@ -41,13 +41,12 @@ namespace SunkCost.Monsters
                 FaceToward(seenAt);
                 if (Now >= nextShotAt && !bolts.ServerAiming)
                 {
-                    // The beam's line is fixed now at the lamp; it fires BeamAimSeconds later.
-                    bolts.ServerAim(EyePoint, CreatureSenses.Chest(lit), dark: false, Settings.LureDamage, MonsterCatalog.DisplayName(Kind));
-                    nextShotAt = Now + Settings.LureShotCooldownSeconds;
-                    SetPose(CreaturePose.Shooting);
+                    // The charge begins at the lamp; the beam follows that diver for BeamSeconds after it.
+                    bolts.ServerAim(EyePoint, CreatureSenses.Chest(lit), dark: false, Settings.LureDamage, MonsterCatalog.DisplayName(Kind), lit.OwnerId);
+                    nextShotAt = Now + Settings.BeamChargeSeconds + Settings.BeamSeconds + Settings.LureShotCooldownSeconds;
                 }
-                else if (Pose != CreaturePose.Shooting || Now > nextShotAt - Settings.LureShotCooldownSeconds + 0.6f) SetPose(CreaturePose.Hunting);
-                MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt, Settings.ShooterStandoffMeters);
+                SetPose(bolts.ServerAiming ? CreaturePose.Shooting : CreaturePose.Hunting);
+                if (!bolts.ServerAiming) MoveToward(seenAt, WalkSpeed * Settings.LureApproachSpeedFactor, dt, Settings.ShooterStandoffMeters); // it plants itself to fire
                 return;
             }
             if (Now - seenTime < Settings.LureForgetSeconds)

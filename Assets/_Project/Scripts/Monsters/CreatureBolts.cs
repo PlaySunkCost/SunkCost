@@ -6,49 +6,65 @@ using UnityEngine;
 
 namespace SunkCost.Monsters
 {
-    // A beam cue, replicated once per change as a SyncVar with a serial (the
-    // repo's one-shot idiom): the aim (a faint line for BeamAimSeconds — the
-    // whole dodge window) and then the shot along that same line. Every peer
-    // draws the same line; the server alone judges the hit.
+    public enum BeamPhase : byte { None = 0, Charging = 1, Firing = 2, Done = 3 }
+
+    // A beam cue, replicated on every phase change as a SyncVar with a serial (the
+    // repo's one-shot idiom). The live aim point rides beside it in its own SyncVar
+    // while the beam sweeps. Every peer draws the same beam; the server alone
+    // judges the hit.
     public struct BeamCue
     {
         public int Serial;
-        public Vector3 From;
-        public Vector3 To;      // the aim point; the beam runs on through it to BeamRangeMeters
+        public Vector3 From;   // where it started charging (the presentation draws from the live origin)
+        public Vector3 To;     // the aim at that moment
         public uint StartTick;
         public bool Dark;
-        public bool Fired;
+        public BeamPhase Phase;
     }
 
-    // The Lure's beam of light and the Listener's dark one (docs/DESIGN.md §6,
-    // Dan 20 September 2026: "a laser, not a shot" — the bolts were too easy to
-    // dodge). The line is fixed at the aim; BeamAimSeconds later it fires and
-    // hits at once: the first diver within BeamHitRadius of the line before the
-    // first wall, not on safe ground, with a clear line from the beam to their
-    // chest. Off the line during the aim and it passes where you were.
+    // The Lure's beam of light and the Listener's dark one (docs/DESIGN.md §6;
+    // Dan, 22 September 2026: "a second of loading the laser, then shoot it for 3
+    // continuous seconds… 1 hit, not more" and "95 % hit the player"). It charges
+    // for BeamChargeSeconds — the tell, a glow at the mouth and a faint line — then
+    // burns for BeamSeconds, turning after its target at BeamSweepDegPerSec, fast
+    // enough that only a wall between you or a dash across it at the right moment
+    // saves you. The first diver on the line takes the hit, once; the beam goes on
+    // burning without hurting anyone else. Server only for the judgement; the
+    // cues and the aim point replicate for the look.
     public sealed class CreatureBolts : NetworkBehaviour
     {
         private readonly SyncVar<BeamCue> cue = new(new BeamCue { Serial = 0 });
+        private readonly SyncVar<Vector3> beamAim = new(Vector3.zero); // the live aim point while charging and firing
         private readonly SyncVar<int> hitSerial = new(0);
 
-        private bool aiming;
-        private float fireAt, damage;
+        private Creature creature;
+        private BeamPhase phase = BeamPhase.None;
+        private float phaseEndsAt, damage;
         private string cause;
+        private int targetOwnerId = -1;
+        private Vector3 aimDir;
+        private bool hitThisBeam;
         private static readonly RaycastHit[] Hits = new RaycastHit[16];
 
         public BeamCue Cue => cue.Value;
+        public Vector3 BeamAim => beamAim.Value;
         public int HitSerial => hitSerial.Value;
-        public bool ServerAiming => aiming;
+        public BeamPhase ServerPhase => phase;
+        public bool ServerAiming => phase == BeamPhase.Charging || phase == BeamPhase.Firing;
+        public bool ServerCharging => phase == BeamPhase.Charging;
+        public bool ServerFiring => phase == BeamPhase.Firing;
         public int ServerFired { get; private set; }
         public int ServerHits { get; private set; }
-        public event Action<BeamCue> Aimed; // every peer, from the SyncVar (not for a joiner's old value)
-        public event Action<BeamCue> Fired;
+        public event Action<BeamCue> Aimed;  // every peer: the charge began (not for a joiner's old value)
+        public event Action<BeamCue> Fired;  // every peer: the beam is on
+        public event Action<BeamCue> Ended;  // every peer: the beam is off
         public event Action Hit;
 
         private int clientStartFrame = -1;
 
         private void Awake()
         {
+            creature = GetComponent<Creature>();
             cue.OnChange += OnCueChanged;
             hitSerial.OnChange += (_, next, asServer) => { if (IsServerStarted && !asServer) return; if (next != 0 && Time.frameCount != clientStartFrame) Hit?.Invoke(); };
         }
@@ -63,60 +79,91 @@ namespace SunkCost.Monsters
         {
             if (IsServerStarted && !asServer) return; // once per peer (the host sees both passes)
             if (next.Serial == 0 || Time.frameCount == clientStartFrame) return; // a joiner's old cue is old news
-            if (next.Fired) Fired?.Invoke(next); else Aimed?.Invoke(next);
+            switch (next.Phase)
+            {
+                case BeamPhase.Charging: Aimed?.Invoke(next); break;
+                case BeamPhase.Firing: Fired?.Invoke(next); break;
+                case BeamPhase.Done: Ended?.Invoke(next); break;
+            }
         }
 
-        // The aim: the line is fixed now; the shot comes BeamAimSeconds later.
+        // The charge begins: the tell. The beam follows `targetOwnerId` (a diver) from
+        // here on; with no diver (a coin's landing) it stays on the point.
         [Server]
-        public void ServerAim(Vector3 from, Vector3 aim, bool dark, float damage, string cause)
+        public void ServerAim(Vector3 from, Vector3 aim, bool dark, float damage, string cause, int targetOwnerId = -1)
         {
-            if (aiming || (aim - from).sqrMagnitude < 0.01f) return;
+            if (ServerAiming || (aim - from).sqrMagnitude < 0.01f) return;
+            MonsterSettings settings = MonsterSettings.Get();
             uint tick = NetworkManager != null && NetworkManager.TimeManager != null ? NetworkManager.TimeManager.Tick : 0u;
-            cue.Value = new BeamCue { Serial = cue.Value.Serial + 1, From = from, To = aim, StartTick = tick, Dark = dark, Fired = false };
-            aiming = true;
-            fireAt = Time.time + MonsterSettings.Get().BeamAimSeconds;
+            aimDir = (aim - from).normalized;
+            this.targetOwnerId = targetOwnerId;
             this.damage = damage;
             this.cause = cause;
+            hitThisBeam = false;
+            phase = BeamPhase.Charging;
+            phaseEndsAt = Time.time + settings.BeamChargeSeconds;
+            beamAim.Value = aim;
+            cue.Value = new BeamCue { Serial = cue.Value.Serial + 1, From = from, To = aim, StartTick = tick, Dark = dark, Phase = BeamPhase.Charging };
         }
+
+        private Vector3 Origin => creature != null ? creature.EyePoint : transform.position;
 
         private void Update()
         {
-            if (!IsServerStarted || !aiming || Time.time < fireAt) return;
-            aiming = false;
-            ServerFire();
-        }
-
-        [Server]
-        private void ServerFire()
-        {
+            if (!IsServerStarted || !ServerAiming) return;
             MonsterSettings settings = MonsterSettings.Get();
-            BeamCue c = cue.Value;
-            Vector3 dir = (c.To - c.From).normalized;
-            float range = BeamEnd(c.From, dir, settings.BeamRangeMeters);
-            Vector3 end = c.From + dir * range;
-            ServerFired++;
-            HQPlayerController victim = null;
-            float best = float.PositiveInfinity;
-            foreach (HQPlayerController diver in CreatureSenses.Divers())
+            float dt = Time.deltaTime;
+            Vector3 from = Origin;
+            // Turn after the target, charging and firing alike, at the sweep rate.
+            HQPlayerController target = targetOwnerId >= 0 ? CreatureSenses.DiverOf(targetOwnerId) : null;
+            if (target != null)
             {
-                if (CreatureSenses.Safe(diver, settings)) continue;
-                Vector3 chest = CreatureSenses.Chest(diver);
-                Vector3 on = ClosestOnSegment(chest, c.From, end);
-                if (Vector3.Distance(chest, on) > settings.BeamHitRadius) continue;
-                if (!CreatureSenses.ClearLine(on, chest)) continue; // a wall between the beam and the diver
-                float along = Vector3.Distance(c.From, on);
-                if (along < best) { best = along; victim = diver; }
+                Vector3 want = (CreatureSenses.Chest(target) - from).normalized;
+                aimDir = Vector3.RotateTowards(aimDir, want, settings.BeamSweepDegPerSec * Mathf.Deg2Rad * dt, 0f);
             }
-            if (victim != null)
+            float range = BeamEnd(from, aimDir, settings.BeamRangeMeters);
+            Vector3 end = from + aimDir * range;
+            beamAim.Value = end;
+            if (phase == BeamPhase.Charging)
             {
-                PlayerVitals vitals = victim.Vitals;
-                if (vitals != null && vitals.ServerDamage(damage, true, cause))
+                if (Time.time < phaseEndsAt) return;
+                phase = BeamPhase.Firing;
+                phaseEndsAt = Time.time + settings.BeamSeconds;
+                ServerFired++;
+                BeamCue c = cue.Value;
+                cue.Value = new BeamCue { Serial = c.Serial + 1, From = from, To = end, StartTick = c.StartTick, Dark = c.Dark, Phase = BeamPhase.Firing };
+                return;
+            }
+            // Firing: the first diver on the line takes it, once per beam.
+            if (!hitThisBeam)
+            {
+                HQPlayerController victim = null;
+                float best = float.PositiveInfinity;
+                foreach (HQPlayerController diver in CreatureSenses.Divers())
                 {
-                    ServerHits++;
-                    hitSerial.Value = hitSerial.Value + 1;
+                    if (CreatureSenses.Safe(diver, settings)) continue;
+                    Vector3 chest = CreatureSenses.Chest(diver);
+                    Vector3 on = ClosestOnSegment(chest, from, end);
+                    if (Vector3.Distance(chest, on) > settings.BeamHitRadius) continue;
+                    if (!CreatureSenses.ClearLine(on, chest)) continue; // a wall between the beam and the diver
+                    float along = Vector3.Distance(from, on);
+                    if (along < best) { best = along; victim = diver; }
+                }
+                if (victim != null)
+                {
+                    PlayerVitals vitals = victim.Vitals;
+                    if (vitals != null && vitals.ServerDamage(damage, true, cause))
+                    {
+                        hitThisBeam = true;
+                        ServerHits++;
+                        hitSerial.Value = hitSerial.Value + 1;
+                    }
                 }
             }
-            cue.Value = new BeamCue { Serial = c.Serial + 1, From = c.From, To = c.To, StartTick = c.StartTick, Dark = c.Dark, Fired = true };
+            if (Time.time < phaseEndsAt) return;
+            phase = BeamPhase.Done;
+            BeamCue f = cue.Value;
+            cue.Value = new BeamCue { Serial = f.Serial + 1, From = from, To = end, StartTick = f.StartTick, Dark = f.Dark, Phase = BeamPhase.Done };
         }
 
         // How far a beam runs before the world stops it.

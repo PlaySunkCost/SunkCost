@@ -64,6 +64,12 @@ namespace SunkCost.Audio
         [Tooltip("A bolt leaving the Lure or the Listener.")]
         [SerializeField] private AudioClip boltShot;
         [Range(0f, 1f)] [SerializeField] private float boltShotVolume = 0.6f;
+        [Tooltip("The beam charging: a rising tone for the second before it fires (Dan, 22 September 2026).")]
+        [SerializeField] private AudioClip beamCharge;
+        [Range(0f, 1f)] [SerializeField] private float beamChargeVolume = 0.6f;
+        [Tooltip("The beam burning: a loop for as long as it is on.")]
+        [SerializeField] private AudioClip beamLoop;
+        [Range(0f, 1f)] [SerializeField] private float beamLoopVolume = 0.45f;
         [Tooltip("The Elevator Ghost: a hum at the car while its light is green.")]
         [SerializeField] private AudioClip ghostHum;
         [Range(0f, 1f)] [SerializeField] private float ghostHumVolume = 0.5f;
@@ -95,6 +101,10 @@ namespace SunkCost.Audio
         public AudioClip MonsterHit => monsterHit != null ? monsterHit : PlaceholderSounds.Hit;
         public float MonsterHitVolume => monsterHitVolume;
         public AudioClip BoltShot => boltShot != null ? boltShot : PlaceholderSounds.Shot;
+        public AudioClip BeamCharge => beamCharge != null ? beamCharge : PlaceholderSounds.Charge;
+        public float BeamChargeVolume => beamChargeVolume;
+        public AudioClip BeamLoop => beamLoop != null ? beamLoop : PlaceholderSounds.BeamHum;
+        public float BeamLoopVolume => beamLoopVolume;
         public float BoltShotVolume => boltShotVolume;
         public AudioClip GhostHum => ghostHum != null ? ghostHum : PlaceholderSounds.Hum;
         public float GhostHumVolume => ghostHumVolume;
@@ -205,6 +215,49 @@ namespace SunkCost.Audio
                 hum = AudioClip.Create("Placeholder hum", n, 1, Rate, false);
                 hum.SetData(data, 0);
                 return hum;
+            }
+        }
+        // The beam charging: a tone rising over a second with a tremor in it.
+        private static AudioClip charge;
+        public static AudioClip Charge
+        {
+            get
+            {
+                if (charge != null) return charge;
+                int n = Rate;
+                var data = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)n;
+                    float f = 90f + 520f * t * t;
+                    float phase = 2f * Mathf.PI * (90f * t + 520f * t * t * t / 3f) * (n / (float)Rate);
+                    float tremor = 0.8f + 0.2f * Mathf.Sin(2f * Mathf.PI * 14f * t);
+                    float envelope = Mathf.Min(1f, t * 8f) * (0.4f + 0.6f * t);
+                    data[i] = Mathf.Clamp((Mathf.Sin(phase) * 0.6f + 0.2f * Mathf.Sin(phase * 2.01f)) * tremor * envelope, -1f, 1f);
+                }
+                charge = AudioClip.Create("Placeholder charge", n, 1, Rate, false);
+                charge.SetData(data, 0);
+                return charge;
+            }
+        }
+        // The beam burning: a harsh two-tone buzz, a 1 s loop.
+        private static AudioClip beamHum;
+        public static AudioClip BeamHum
+        {
+            get
+            {
+                if (beamHum != null) return beamHum;
+                int n = Rate;
+                var data = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i / (float)Rate;
+                    float a = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 110f * t)) * 0.25f, b = Mathf.Sin(2f * Mathf.PI * 660f * t) * 0.25f, c = Mathf.Sin(2f * Mathf.PI * 1320f * t) * 0.1f;
+                    data[i] = Mathf.Clamp((a + b + c) * (0.9f + 0.1f * Mathf.Sin(2f * Mathf.PI * 30f * t)), -1f, 1f);
+                }
+                beamHum = AudioClip.Create("Placeholder beam", n, 1, Rate, false);
+                beamHum.SetData(data, 0);
+                return beamHum;
             }
         }
         // A dash's whoosh: filtered noise that swells and fades over a third of a second.

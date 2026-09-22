@@ -47,7 +47,9 @@ MonoBehaviour:
   listenerDamage: 35
   listenerShotCooldownSeconds: 4
   listenerApproachSpeedFactor: 0.6
-  beamAimSeconds: 0.4
+  beamChargeSeconds: 1
+  beamSeconds: 3
+  beamSweepDegPerSec: 160
   beamHitRadius: 0.7
   beamRangeMeters: 40
   impostorDamage: 30
