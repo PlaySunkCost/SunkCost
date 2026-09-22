@@ -33,13 +33,13 @@ KINDS = {
 }
 
 
-def build_armature(height, build, side, four_legs=False):
+def build_armature(height, build, side, four_legs=False, length=None):
     """The Listener's layout scaled to this kind: the fractions are of the height,
     the widths of the height times the build factor. A four-legged kind (the
     Charger) lays the spine horizontally and puts the arm bones down as front legs,
     keeping the same bone names so the clips key it without a second animation set."""
     if four_legs:
-        return build_quadruped(height, build)
+        return build_quadruped(height, build, length)
     h, w = height, height * build
     arm_data = bpy.data.armatures.new("Armature")
     arm = bpy.data.objects.new("Armature", arm_data)
@@ -80,7 +80,7 @@ def build_armature(height, build, side, four_legs=False):
     return arm
 
 
-def build_quadruped(height, build):
+def build_quadruped(height, build, length=None):
     """A low, wide, four-legged body about twice as long as it is high (the
     Charger): the spine runs from the hips at the back to the head at the front,
     the "arms" are the front legs and the "thighs" the back ones. Same bone names
@@ -88,7 +88,7 @@ def build_quadruped(height, build):
     legs, the Charger's wind-up shakes the whole body.
     Facing −Y, so the head is at negative y and the tail at positive."""
     h = height
-    length = h * 2.0 * (build / 1.45)
+    length = length or h * 2.0 * (build / 1.45)  # the mesh's own front-to-back size when it is known
     w = h * build
     back, front = 0.42 * length, -0.42 * length  # y of the hips and the shoulders
     arm_data = bpy.data.armatures.new("Armature")
@@ -177,7 +177,12 @@ def main():
         print("decimated %d -> %d faces" % (faces, len(mesh.data.polygons)))
     bpy.ops.object.shade_flat()
 
-    arm = build_armature(height, build, side, four_legs)
+    framed_lo = Vector((1e9, 1e9, 1e9)); framed_hi = Vector((-1e9, -1e9, -1e9))
+    for v in mesh.data.vertices:
+        framed_lo = Vector(map(min, framed_lo, v.co)); framed_hi = Vector(map(max, framed_hi, v.co))
+    measured_length = framed_hi.y - framed_lo.y
+    print("framed body: %.2f wide, %.2f long, %.2f high" % (framed_hi.x - framed_lo.x, measured_length, framed_hi.z - framed_lo.z))
+    arm = build_armature(height, build, side, four_legs, measured_length)
     bpy.ops.object.select_all(action="DESELECT")
     mesh.select_set(True)
     arm.select_set(True)

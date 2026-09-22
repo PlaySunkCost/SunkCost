@@ -346,7 +346,9 @@ def action(arm, name, frames, keys):
             pb.keyframe_insert("rotation_euler", frame=frame)
             pb.keyframe_insert("location", frame=frame)
     for bone_name, frame_keys in keys.items():
-        pb = arm.pose.bones[bone_name]
+        pb = arm.pose.bones.get(bone_name)
+        if pb is None:
+            continue  # a kind without this bone (no ears, no lantern) simply misses those keys
         for frame, rot, loc in frame_keys:
             pb.rotation_euler = tuple(math.radians(a) for a in rot)
             pb.location = loc
@@ -456,6 +458,41 @@ def animate(arm):
         "HandR": [(1, R(0, 0, 0), Z3), (6, R(22, 0, -28), Z3), (15, R(20, 0, -25), Z3)],
     }
     action(arm, "Shooting", 15, shooting)
+
+    # Frozen (the Weeping Angel, watched): dead still — a statue. Two frames at rest,
+    # so the Animator holds the bind pose and nothing breathes.
+    action(arm, "Frozen", 2, {"Spine": [(1, Z3, Z3), (2, Z3, Z3)]})
+
+    # Windup (the Charger): it plants itself and shakes, the tell before the rush.
+    # 1.5 s, looping, the whole body trembling and the head lowering into the charge.
+    windup = {"Root": [], "Spine": [], "Neck": [], "Head": []}
+    for i in range(10):
+        frame = 1 + i * 5
+        jitter = 0.012 * (1 if i % 2 == 0 else -1)
+        windup["Root"].append((frame, R(0, 0, jitter * 180), (jitter, 0, 0)))
+        windup["Spine"].append((frame, R(jitter * 120, 0, -jitter * 90), Z3))
+        windup["Neck"].append((frame, R(-6 - i * 0.8, 0, jitter * 140), Z3))
+        windup["Head"].append((frame, R(-10 - i * 1.2, 0, -jitter * 200), Z3))
+    action(arm, "Windup", 46, windup)
+
+    # Rushing (the Charger): the head down and level, the legs pumping — 0.4 s loop.
+    rushing = {n: [] for n in ("Root", "Spine", "Neck", "Head", "ThighL", "ThighR", "ShinL", "ShinR", "UpperArmL", "UpperArmR", "LowerArmL", "LowerArmR")}
+    for i, phase in enumerate((0.0, 0.5, 1.0)):
+        frame = 1 + int(phase * 11)
+        s = math.cos(phase * 2 * math.pi)
+        rushing["Root"].append((frame, Z3, (0, 0, -0.03 - 0.02 * abs(s))))
+        rushing["Spine"].append((frame, R(3 * s, 0, 0), Z3))
+        rushing["Neck"].append((frame, R(-14, 0, 0), Z3))
+        rushing["Head"].append((frame, R(-20, 0, 0), Z3))
+        rushing["ThighL"].append((frame, R(-38 * s, 0, 0), Z3))
+        rushing["ThighR"].append((frame, R(38 * s, 0, 0), Z3))
+        rushing["ShinL"].append((frame, R(46 * max(0.0, s), 0, 0), Z3))
+        rushing["ShinR"].append((frame, R(46 * max(0.0, -s), 0, 0), Z3))
+        rushing["UpperArmL"].append((frame, R(40 * s, 0, 0), Z3))
+        rushing["UpperArmR"].append((frame, R(-40 * s, 0, 0), Z3))
+        rushing["LowerArmL"].append((frame, R(-20 * max(0.0, -s), 0, 0), Z3))
+        rushing["LowerArmR"].append((frame, R(-20 * max(0.0, s), 0, 0), Z3))
+    action(arm, "Rushing", 12, rushing)
 
 
 # ---- export -------------------------------------------------------------------------------
