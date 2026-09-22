@@ -65,7 +65,7 @@ ModelImporter:
       takeName: Armature|Hunting
       internalID: -6058285500679984963
       firstFrame: 0
-      lastFrame: 17
+      lastFrame: 20
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -94,7 +94,7 @@ ModelImporter:
       takeName: Armature|Idle
       internalID: -8945691123924629249
       firstFrame: 0
-      lastFrame: 59
+      lastFrame: 71
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
