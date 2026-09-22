@@ -24,18 +24,22 @@ import make_listener as L  # noqa: E402
 # Per kind: the height the game gives it, how wide it is built, where the side
 # bones sit (ears, a lantern stalk), and which clips it needs.
 KINDS = {
-    #                 height  build  side bones          clips
-    "Listener":      (2.0,    1.00,  "ears",             ("Idle", "Drawn", "Hunting", "Shooting")),
-    "Lure":          (2.2,    0.92,  "lantern",          ("Idle", "Drawn", "Hunting", "Shooting")),
-    "LongWalker":    (3.2,    0.78,  None,               ("Idle", "Drawn", "Hunting")),
-    "WeepingAngel":  (2.1,    1.05,  None,               ("Idle", "Hunting", "Frozen")),
-    "Charger":       (1.4,    1.45,  None,               ("Idle", "Hunting", "Windup", "Rushing")),
+    #                 height  build  side bones   four legs  clips
+    "Listener":      (2.0,    1.00,  "ears",      False,     ("Idle", "Drawn", "Hunting", "Shooting")),
+    "Lure":          (2.2,    0.92,  "lantern",   False,     ("Idle", "Drawn", "Hunting", "Shooting")),
+    "LongWalker":    (3.2,    0.78,  None,        False,     ("Idle", "Drawn", "Hunting")),
+    "WeepingAngel":  (2.1,    1.05,  None,        False,     ("Idle", "Hunting", "Frozen")),
+    "Charger":       (1.4,    1.45,  None,        True,      ("Idle", "Hunting", "Windup", "Rushing")),
 }
 
 
-def build_armature(height, build, side):
+def build_armature(height, build, side, four_legs=False):
     """The Listener's layout scaled to this kind: the fractions are of the height,
-    the widths of the height times the build factor."""
+    the widths of the height times the build factor. A four-legged kind (the
+    Charger) lays the spine horizontally and puts the arm bones down as front legs,
+    keeping the same bone names so the clips key it without a second animation set."""
+    if four_legs:
+        return build_quadruped(height, build)
     h, w = height, height * build
     arm_data = bpy.data.armatures.new("Armature")
     arm = bpy.data.objects.new("Armature", arm_data)
@@ -76,13 +80,60 @@ def build_armature(height, build, side):
     return arm
 
 
+def build_quadruped(height, build):
+    """A low, wide, four-legged body about twice as long as it is high (the
+    Charger): the spine runs from the hips at the back to the head at the front,
+    the "arms" are the front legs and the "thighs" the back ones. Same bone names
+    as the two-legged layout, so the clips drive it unchanged — a walk swings the
+    legs, the Charger's wind-up shakes the whole body.
+    Facing −Y, so the head is at negative y and the tail at positive."""
+    h = height
+    length = h * 2.0 * (build / 1.45)
+    w = h * build
+    back, front = 0.42 * length, -0.42 * length  # y of the hips and the shoulders
+    arm_data = bpy.data.armatures.new("Armature")
+    arm = bpy.data.objects.new("Armature", arm_data)
+    bpy.context.collection.objects.link(arm)
+    bpy.context.view_layer.objects.active = arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    L.BONES.clear()
+
+    def bone(name, head, tail, parent=None, connected=False):
+        b = arm_data.edit_bones.new(name)
+        b.head, b.tail = Vector(head), Vector(tail)
+        if parent is not None:
+            b.parent = arm_data.edit_bones[parent]
+            b.use_connect = connected
+        L.BONES[name] = (Vector(head), Vector(tail))
+        return b
+
+    bone("Root", (0, back, 0), (0, back, 0.62 * h))
+    bone("Hips", (0, back, 0.62 * h), (0, back * 0.45, 0.66 * h), "Root", True)
+    bone("Spine", (0, back * 0.45, 0.66 * h), (0, front * 0.55, 0.68 * h), "Hips", True)
+    bone("Neck", (0, front * 0.55, 0.68 * h), (0, front * 0.85, 0.60 * h), "Spine", True)
+    bone("Head", (0, front * 0.85, 0.60 * h), (0, front * 1.20, 0.42 * h), "Neck", True)  # the lowered ram head
+    for s, tag in ((-1, "L"), (1, "R")):
+        # The front legs, under the shoulders.
+        bone("UpperArm" + tag, (s * 0.22 * w, front * 0.62, 0.56 * h), (s * 0.24 * w, front * 0.66, 0.30 * h), "Spine")
+        bone("LowerArm" + tag, (s * 0.24 * w, front * 0.66, 0.30 * h), (s * 0.24 * w, front * 0.60, 0.12 * h), "UpperArm" + tag, True)
+        bone("Hand" + tag, (s * 0.24 * w, front * 0.60, 0.12 * h), (s * 0.24 * w, front * 0.80, 0.02 * h), "LowerArm" + tag, True)
+        # The back legs, under the hips.
+        bone("Thigh" + tag, (s * 0.24 * w, back * 0.72, 0.56 * h), (s * 0.26 * w, back * 0.80, 0.30 * h), "Hips")
+        bone("Shin" + tag, (s * 0.26 * w, back * 0.80, 0.30 * h), (s * 0.26 * w, back * 0.70, 0.12 * h), "Thigh" + tag, True)
+        bone("Foot" + tag, (s * 0.26 * w, back * 0.70, 0.12 * h), (s * 0.26 * w, back * 0.90, 0.02 * h), "Shin" + tag, True)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    arm.select_set(False)
+    return arm
+
+
 def main():
     args = sys.argv[sys.argv.index("--") + 1:]
     kind, src, dst = args[0], os.path.abspath(args[1]), os.path.abspath(args[2])
     target_faces = int(args[3]) if len(args) > 3 else 20000
     if kind not in KINDS:
         raise SystemExit("unknown kind " + kind + "; one of " + ", ".join(KINDS))
-    height, build, side, clips = KINDS[kind]
+    height, build, side, four_legs, clips = KINDS[kind]
 
     L.clear()
     if src.lower().endswith(".fbx"):
@@ -126,7 +177,7 @@ def main():
         print("decimated %d -> %d faces" % (faces, len(mesh.data.polygons)))
     bpy.ops.object.shade_flat()
 
-    arm = build_armature(height, build, side)
+    arm = build_armature(height, build, side, four_legs)
     bpy.ops.object.select_all(action="DESELECT")
     mesh.select_set(True)
     arm.select_set(True)
@@ -196,8 +247,13 @@ def main():
             image.reload()
             print("map", role, "=", os.path.basename(path), image.size[:])
 
-    L.anchor("BeamOrigin", (0, -0.085 * height, 0.89 * height), arm, "Head")
-    L.anchor("Voice", (0, 0, 0.93 * height), arm, "Head")
+    if four_legs:
+        head_tip = L.BONES["Head"][1]
+        L.anchor("BeamOrigin", (head_tip.x, head_tip.y - 0.05 * height, head_tip.z), arm, "Head")
+        L.anchor("Voice", (head_tip.x, head_tip.y, head_tip.z + 0.05 * height), arm, "Head")
+    else:
+        L.anchor("BeamOrigin", (0, -0.085 * height, 0.89 * height), arm, "Head")
+        L.anchor("Voice", (0, 0, 0.93 * height), arm, "Head")
     L.animate(arm)
     # Only the clips this kind uses ride along; the rest are dropped before the export.
     for act in list(bpy.data.actions):
