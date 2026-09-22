@@ -26,9 +26,12 @@ namespace SunkCost.Monsters
             bolts = GetComponent<CreatureBolts>();
             impostor = GetComponent<ImpostorLook>();
             library = AudioLibrary.Get();
-            var go = new GameObject("Voice");
-            go.transform.SetParent(transform, false);
-            go.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            var go = new GameObject("Voice source");
+            // A modelled monster's voice sits on its Voice anchor (it moves with the head); the placeholders' at chest height.
+            CreatureRig rig = GetComponent<CreatureRig>();
+            Transform anchor = rig != null ? rig.VoiceAnchor : null;
+            go.transform.SetParent(anchor != null ? anchor : transform, false);
+            go.transform.localPosition = anchor != null ? Vector3.zero : new Vector3(0f, 1.2f, 0f);
             voice = go.AddComponent<AudioSource>();
             voice.playOnAwake = false; voice.loop = false;
             voice.spatialBlend = 1f; voice.rolloffMode = AudioRolloffMode.Linear;

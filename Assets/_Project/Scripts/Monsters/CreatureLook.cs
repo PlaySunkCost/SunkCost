@@ -18,6 +18,7 @@ namespace SunkCost.Monsters
 
         private Creature creature;
         private CreatureBolts bolts;
+        private CreatureRig rig; // a modelled monster: its clips take the poses they cover, the bob the rest
         private Vector3 bodyRest;
         private MaterialPropertyBlock block;
         private static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
@@ -26,6 +27,7 @@ namespace SunkCost.Monsters
         {
             creature = GetComponent<Creature>();
             bolts = GetComponent<CreatureBolts>();
+            rig = GetComponent<CreatureRig>();
             if (body != null) bodyRest = body.localPosition;
             if (eyes == null || eyes.Length == 0)
             {
@@ -65,7 +67,7 @@ namespace SunkCost.Monsters
                 block.SetColor(EmissionId, eyeColour * Mathf.Max(0f, glow));
                 foreach (Renderer r in eyes) if (r != null) r.SetPropertyBlock(block);
             }
-            if (body != null)
+            if (body != null && !(rig != null && rig.Animated(pose)))
             {
                 Vector3 offset = Vector3.zero;
                 switch (pose)
@@ -97,6 +99,7 @@ namespace SunkCost.Monsters
             var go = new GameObject("Beam");
             go.transform.SetParent(creature, false);
             MonsterBeamView view = go.AddComponent<MonsterBeamView>();
+            view.rig = creature.GetComponent<CreatureRig>();
             view.line = go.AddComponent<LineRenderer>();
             view.line.useWorldSpace = true;
             view.line.positionCount = 2;
@@ -106,11 +109,13 @@ namespace SunkCost.Monsters
             return view;
         }
 
+        private CreatureRig rig; // a modelled monster: the line visibly leaves its BeamOrigin (the server's line still starts at the eye point)
+
         private void Lay(BeamCue cue)
         {
             Vector3 dir = (cue.To - cue.From).normalized;
             float range = CreatureBolts.BeamEnd(cue.From, dir, MonsterSettings.Get().BeamRangeMeters);
-            line.SetPosition(0, cue.From);
+            line.SetPosition(0, rig != null ? rig.BeamOriginPoint(cue.From) : cue.From);
             line.SetPosition(1, cue.From + dir * range);
             line.sharedMaterial = cue.Dark ? DarkMaterial() : LightMaterial();
             colour = cue.Dark ? new Color(0.45f, 0.15f, 0.75f) : new Color(1f, 0.92f, 0.55f);
