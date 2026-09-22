@@ -52,6 +52,37 @@ the pipeline end to end; it is not the look.
 9. **Export:** Armature + Mesh + Empty; "Bake Animation", **all actions**, no NLA
    strips needed; leaf bones off.
 
+## The generated route (Dan + an image AI + Meshy, 22 September 2026)
+
+How the Listener was made, and how the rest are made:
+
+1. **The concept picture:** an image AI, with the prompt blocks in
+   `docs/reference/monster-prompts.md` (the GAME block + the monster's block +
+   the OUTPUT block). Keep the sheet: front, side, attack.
+2. **The mesh:** crop the front and the side to squares and feed them to
+   **Meshy** (Image to 3D, multi-view; realistic; ~15 k polys; **auto-rig off**;
+   texture on; symmetry on). Export **FBX** (GLB works too) into
+   `Assets/_Project/Models/Monsters/<Kind>/Generated/`.
+3. **The rig:** one command turns that mesh into the model the prefab wears —
+   framed to the kind's height with its feet at the origin, decimated to about
+   20 k triangles, skinned to the kind's armature, `BeamOrigin` and `Voice` on
+   the head, the kind's clips keyed, the maps written out by role:
+
+   ```bash
+   "/c/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b -P tools/blender/rig_generated_monster.py -- <Kind> "Assets/_Project/Models/Monsters/<Kind>/Generated/<generated>.fbx" "Assets/_Project/Models/Monsters/<Kind>/<Kind>.fbx" 20000
+   ```
+
+4. **The prefab:** the menu below (or `MonsterModelSetup.Apply`), which also
+   extracts the maps into `<Kind>/Textures`, builds `<Kind>.mat` (URP Lit, base
+   colour + normal) and remaps the model onto it.
+5. **Look at it:** the portraits menu, then judge the sheet before anything is
+   merged.
+
+The clips are keyed by bone name in `tools/blender/make_listener.py`, so a new
+kind needs no new animation work: `rig_generated_monster.py`'s `KINDS` table
+carries its height, its build, whether it has side bones (ears, a lantern) and
+which clips it uses.
+
 ## Applying it
 
 - Unity menu **Sunk Cost → Look → Apply monster models (every kind with an
