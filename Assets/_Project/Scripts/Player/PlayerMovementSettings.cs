@@ -37,10 +37,12 @@ namespace SunkCost.Player
         [SerializeField] private float standClearance = 0.05f;
 
         [Header("Dash (docs/DESIGN.md §3; Dan, 21 September 2026)")]
-        [Tooltip("Ground a dash covers with nothing carried, metres; the weight factor scales it.")]
-        [SerializeField] private float dashMeters = 4f;
+        [Tooltip("Ground a dash covers with nothing carried, metres; the weight factor scales it (Dan: 6, \"longer, like 150 %\" of the first 4).")]
+        [SerializeField] private float dashMeters = 6f;
         [Tooltip("How long the burst lasts, seconds.")]
         [SerializeField] private float dashSeconds = 0.25f;
+        [Tooltip("The kick upward at the start of a dash, metres per second — the little lift of a dash through water (Dan); gravity takes it back. 2.5 = about a third of a metre.")]
+        [SerializeField] private float dashLiftSpeed = 2.5f;
         [Tooltip("Seconds from one dash to the next (the Charger turns in about 3).")]
         [SerializeField] private float dashCooldownSeconds = 3f;
 
@@ -83,6 +85,7 @@ namespace SunkCost.Player
         public float StandClearance => standClearance;
         public float DashMeters => dashMeters;
         public float DashSeconds => dashSeconds;
+        public float DashLiftSpeed => dashLiftSpeed;
         public float DashCooldownSeconds => dashCooldownSeconds;
         public float ReleaseClearance => releaseClearance;
         public float ReleaseMaxForward => releaseMaxForward;
@@ -110,7 +113,7 @@ namespace SunkCost.Player
             crouchStepOffset >= 0f && crouchStepOffset < crouchHeight &&
             crouchBlendSeconds >= 0f && crouchSpeedFactor > 0f && crouchSpeedFactor <= 1f &&
             standRetrySeconds >= 0f && standClearance >= 0f &&
-            Finite(dashMeters) && dashMeters > 0f && dashSeconds > 0f && dashCooldownSeconds >= dashSeconds &&
+            Finite(dashMeters) && dashMeters > 0f && dashSeconds > 0f && dashCooldownSeconds >= dashSeconds && dashLiftSpeed >= 0f &&
             releaseClearance >= 0f && releaseMaxForward > 0f && dropGroundSearch >= 0f && dropSkin >= 0f &&
             minThrowPitchDegrees >= -89f && maxThrowPitchDegrees <= 89f && minThrowPitchDegrees <= maxThrowPitchDegrees &&
             releaseTimeoutSeconds > 0f && dotDiameterPx > 0f && dotOutlinePx >= 0f;

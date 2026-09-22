@@ -45,6 +45,8 @@ namespace SunkCost.Editor.Prototype
         private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
         private static bool inputBehaviorChanged;
         private static Ears ears;
+        private static bool liftSeen;   // HostDash: the vertical speed was upward right after the press
+        private static float peakY;     // HostDash: the highest the feet got during the burst
         public static string Status { get; private set; } = "Not run";
 
         private sealed class Ears : INoiseListener
@@ -259,9 +261,13 @@ namespace SunkCost.Editor.Prototype
             var pressed = steering.ToList();
             if (pressed.Count > 0) { Keys(pressed.ToArray()); yield return null; yield return null; }
             pressed.Add(Key.LeftAlt);
-            Keys(pressed.ToArray()); yield return Wait(0.06f);
+            Keys(pressed.ToArray()); yield return null; yield return null;
+            liftSeen = Host().VerticalSpeed > 0f; // the little lift, right after the press
+            peakY = Host().transform.position.y;
+            yield return Wait(0.04f);
             if (steering.Length > 0) Keys(steering); else Keys();
-            yield return Wait(Host().Movement.DashSeconds + 0.15f);
+            float until = Time.unscaledTime + Host().Movement.DashSeconds + 0.15f;
+            while (Time.unscaledTime < until) { peakY = Mathf.Max(peakY, Host().transform.position.y); yield return null; }
             Keys(); yield return null;
         }
         private static IEnumerator CooldownOver()
@@ -279,8 +285,8 @@ namespace SunkCost.Editor.Prototype
             Check(vitals != null, "the player prefab carries PlayerVitals (run the vitals setup)");
             PlayerMovementSettings move = host.Movement;
             NoiseSettings noise = NoiseSettings.Get();
-            Say($"dash {move.DashMeters} m in {move.DashSeconds} s, {move.DashCooldownSeconds} s apart, {vitals.Settings.DashAirSeconds} s of air; noise {noise.DashRadius} m; a landing {noise.LandingRadius} m over {noise.LandingSpeed} m/s (full at {noise.LandingFullSpeed})");
-            Check(move.IsValid && move.DashMeters >= 4f && Mathf.Approximately(move.DashSeconds, 0.25f) && move.DashCooldownSeconds >= 3f && vitals.Settings.DashAirSeconds >= 4f, "the settings carry Dan's numbers (4 m, 0.25 s, 3 s, 4 s of air)");
+            Say($"dash {move.DashMeters} m in {move.DashSeconds} s with a {move.DashLiftSpeed} m/s lift, {move.DashCooldownSeconds} s apart, {vitals.Settings.DashAirSeconds} s of air; noise {noise.DashRadius} m; a landing {noise.LandingRadius} m over {noise.LandingSpeed} m/s (full at {noise.LandingFullSpeed})");
+            Check(move.IsValid && move.DashMeters >= 6f && Mathf.Approximately(move.DashSeconds, 0.25f) && move.DashLiftSpeed > 0f && move.DashCooldownSeconds >= 3f && vitals.Settings.DashAirSeconds >= 4f, "the settings carry Dan's numbers (6 m, 0.25 s, a lift, 3 s, 4 s of air)");
             Check(noise.DashRadius > noise.SprintRadius, $"a dash carries farther than a sprinting step ({noise.DashRadius} > {noise.SprintRadius})");
             savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
             savedBackgroundBehavior = InputSystem.settings.backgroundBehavior;
@@ -342,6 +348,7 @@ namespace SunkCost.Editor.Prototype
             Check(host.Dashes == 1 && host.DashRefusal == string.Empty, "D1 Alt started a dash");
             Check(moved.magnitude >= move.DashMeters * 0.75f && moved.magnitude <= move.DashMeters * 1.3f, $"D1 the burst covered {moved.magnitude:0.0} m (target {move.DashMeters})");
             Check(Vector3.Dot(moved.normalized, forward) > 0.9f, "D1 forward, with no steering");
+            Check(liftSeen && peakY - before.y >= 0.12f, $"D1 the little lift: going up right after the press, feet {peakY - before.y:0.00} m over the floor at the peak (a dash through water)");
             yield return Expect(() => host.ServerDashes == 1, 1f, () => "D1 the server judged one dash from the copy's speed");
             Check(host.LastDashCue.Serial == 1, "D1 the cue's serial is 1");
             float spent = airBefore - vitals.ServerAirSeconds;

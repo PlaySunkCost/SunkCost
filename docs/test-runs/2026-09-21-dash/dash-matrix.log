@@ -1,0 +1,103 @@
+Dash matrix started 21/09/2026 23:02:02
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerVitals (run the vitals setup)
+  · dash 6 m in 0.25 s with a 2.5 m/s lift, 3 s apart, 4 s of air; noise 20 m; a landing 10 m over 3 m/s (full at 8)
+PASS the settings carry Dan's numbers (6 m, 0.25 s, a lift, 3 s, 4 s of air)
+PASS a dash carries farther than a sprinting step (20 > 15)
+PASS the host's player carries PlayerDashEffects (added at OnStartClient)
+
+== D0 — to sea; a guest joins; Alt on the deck is refused (only below)
+PASS sailing to sea
+PASS arrived at sea
+PASS controls back
+PASS the guest's copy is here
+PASS D0 the guest joined at sea
+PASS D0 Alt on the deck is refused: 'Only below', moved 0.00 m
+PASS D0 the dash reads ready (the visor is off on the deck; its bar is read below)
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS D0 the guest is in the site
+
+== D1 — Alt on the seabed: the burst, the server's judgement, 4 s of air, the noise, the rings on both screens
+PASS D1 Alt started a dash
+PASS D1 the burst covered 6.0 m (target 6)
+PASS D1 forward, with no steering
+PASS D1 the little lift: going up right after the press, feet 0.30 m over the floor at the peak (a dash through water)
+PASS D1 the server judged one dash from the copy's speed
+PASS D1 the cue's serial is 1
+PASS D1 the tank lost 4.6 s (the dash's 4 plus the moment's breathing)
+PASS D1 one Dash noise from the host (1 heard)
+PASS D1 at the dash radius (20 m)
+PASS D1 two rings out of the boots and a whoosh on the host (2, 1)
+PASS D1 the visor's DASH bar is running down (0.17)
+PASS D1 the guest's copy of the host played the two rings from the cue
+PASS D1 the guest reads the host's dash bar running down (a spectator's and the TV's visor read the same)
+
+== D2 — the cooldown: a second Alt at once does nothing; after it, the next dash
+PASS D2 refused within the cooldown: 'Dash in 2.1 s'
+PASS the cooldown ran down
+PASS D2 the next dash went (6.0 m)
+PASS D2 judged as the second
+PASS the cooldown ran down
+
+== D3 — the steering direction: A held with Alt dashes left
+PASS D3 dashed 7.2 m to the left (dot right -1.00)
+PASS D3 judged
+PASS D3 the cue carries the direction (the rings trail the right way on every screen)
+PASS the cooldown ran down
+
+== D4 — an air dash: Space, then Alt in the air (Dan wants to try it)
+PASS D4 the host took off
+PASS D4 the air dash covered 6.1 m
+PASS D4 judged, and the host landed
+PASS the cooldown ran down
+
+== D5 — refused crouched, and with both hands full
+PASS D5 crouched: 'Not crouched'
+PASS D5 a heavy ball spawned (registered prefab)
+PASS D5 spawned
+PASS the dot is on Black ball
+PASS Black ball grabbed (Held)
+PASS D5 it takes both hands
+PASS D5 both hands full: 'Not with both hands full'
+PASS D5 dropped it
+
+== D6 — the guest dashes: the host's copy moves, the server judges it, the host sees the rings
+PASS D6 the host's copy of the guest carries PlayerDashEffects
+PASS D6 the guest's dash started: id=1809; dash=True; refusal=''
+PASS D6 the host's copy of the guest moved 5.9 m
+PASS D6 the server judged the guest's dash
+PASS D6 the guest's tank lost 4.9 s
+PASS D6 one Dash noise from the guest (1 heard)
+PASS D6 the host sees the guest's two rings (2)
+PASS D6 the guest played its own rings at the press
+PASS D6 the guest reads its own cue
+
+== D7 — the Listener turns to a dash
+PASS D7 a Listener spawned 14 m to the side
+PASS D7 it heard the dash: Listener pose=Shooting target=-1 at=(18.3, -45.0, 12.8) heard=4 last=Dash ago=0.3s fired=1 hits=0
+PASS D7 and turned to it (Listener pose=Shooting target=-1 at=(18.3, -45.0, 12.8) heard=4 last=Dash ago=0.3s fired=1 hits=0)
+PASS the cooldown ran down
+
+== D8 — a thrown coin lands loud: the host's throw, the guest's throw, the Listener
+PASS D8 a small coin spawned
+PASS D8 spawned
+PASS the dot is on Small coin
+PASS Small coin grabbed (Held)
+PASS D8 the coin left the hands and came to rest (Free)
+PASS D8 the landing was heard, from the coin (1 impacts)
+PASS D8 at 6.7 m (the landing's 10, scaled by the fall)
+PASS D8 where the coin lies (0.0 m off)
+PASS D8 one landing on the server's count
+PASS D8 the Listener heard the coin land: Listener pose=Drawn target=-1 at=(10.1, -45.0, 19.5) heard=5 last=Impact ago=0.6s fired=2 hits=0
+PASS D8 the guest holds the coin (Held)
+PASS D8 the coin left the guest's hands and came to rest (Free)
+PASS D8 the guest's throw landed loud on the server (1 impacts, landings 2)
+PASS D8 near where it lies
+PASS the Listener despawned
+PASS both divers live
+  · done: host dashes=5 serverDashes=5 serial=5 ready=1.00 refusal='' grounded=True heard=Impact/7.646942/21
+MATRIX_PASS
