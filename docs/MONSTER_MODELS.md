@@ -71,6 +71,30 @@ the pipeline end to end; it is not the look.
 - **Play it:** the monsters matrix (`monsters` job) still passes with a model on;
   a model changes no rule.
 
+## Briefs per monster
+
+### The Listener — from Dan's concept, 22 September 2026
+
+Reference: `docs/reference/monsters/listener-concept.webp` — a thin grey
+humanoid, a smooth eyeless skull with two huge red fan ears, a spine of spikes
+down the back, long clawed hands, digitigrade feet; the attack is a crouch with
+the ears fully spread and a violet beam from the open mouth.
+
+- 2.0 m to the top of the skull (the ears above that). Feet at the origin,
+  facing −Y in Blender.
+- Rig (Generic): Root at the feet → hips → two spine bones → neck → head; one or
+  two bones per ear from the skull outward; arms upper/lower/hand; legs
+  thigh/shin/foot, the ankle high like the picture. The back spikes are mesh.
+- Empties on the head bone: `BeamOrigin` inside the mouth, `Voice` in the skull.
+- No `Eye*` meshes. Ear meshes named `EarL`/`EarR` if the ears should glow when
+  it hears (a pose-driven glow to wire, Dan's call).
+- Clips, in place: `Idle` (straight, ears half-folded, twitches, the head
+  turning as if listening), `Drawn` (a careful walk toward a sound, ears fanning
+  open, head cocked), `Hunting` (the crouched stance walking: low, hands
+  forward, ears wide, quicker), `Shooting` (the attack picture: crouch, ears
+  spread, head thrust, mouth open; ~0.5 s, plays once and holds).
+- Two materials: the grey body, the red ears. Under ~15 k triangles.
+
 ## Not yet
 
 - The Impostor keeps its placeholder: it must wear the diver's own model
