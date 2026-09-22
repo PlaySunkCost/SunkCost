@@ -51,6 +51,10 @@ namespace SunkCost.Editor.Look
                 {
                     r.enabled = true;
                     if (r.name.StartsWith("Eye")) r.SetPropertyBlock(block);
+                    // A modelled monster is a skinned mesh: a camera rendered by hand in edit
+                    // mode reuses the last bone matrices, so every sampled pose comes out the
+                    // same picture. These two make it re-skin for each render.
+                    if (r is SkinnedMeshRenderer skinned) { skinned.updateWhenOffscreen = true; skinned.forceMatrixRecalculationPerRender = true; }
                 }
                 // The Impostor is seen wearing a crewmate's colour; a light so the suit reads.
                 Renderer suit = instance.transform.Find("Body/Suit")?.GetComponent<Renderer>();

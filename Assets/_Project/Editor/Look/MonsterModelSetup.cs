@@ -67,6 +67,10 @@ namespace SunkCost.Editor.Look
             ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
             foreach (ModelImporterClipAnimation clip in clips)
             {
+                // Blender's exporter names a take after its object: "Armature|Idle". The
+                // pose is what follows the last bar; the clip is renamed to it.
+                string poseName = clip.name.Contains('|') ? clip.name.Substring(clip.name.LastIndexOf('|') + 1) : clip.name;
+                if (Enum.TryParse(poseName, out CreaturePose _)) clip.name = poseName;
                 bool loops = Loops.Any(p => p.ToString() == clip.name);
                 clip.loopTime = loops;
                 clip.loopPose = false;
