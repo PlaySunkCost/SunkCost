@@ -160,18 +160,21 @@ def build_ear(side, ear_mat, ear_dark_mat, skin_mat):
     fans stay apart: each spans from below the horizontal to well short of the top
     of the skull, like the picture's frill."""
     root = Vector((side * 0.13, 0.0, 1.86))
-    ribs = 12
-    a0, a1 = math.radians(-35), math.radians(72)  # from below the outward horizontal up
-    r_in, r_mid, r_out = 0.15, 0.30, 0.62
+    ribs = 10
+    # Not a full fan (Dan, 22 September 2026: "a little more closed"): a narrower
+    # spread, smaller, and cupped — the outer edge curls forward like a petal.
+    a0, a1 = math.radians(-18), math.radians(60)
+    r_in, r_mid, r_out = 0.13, 0.27, 0.50
     inner, middle, outer = [], [], []
     for i in range(ribs):
         t = i / (ribs - 1)
         a = a0 + (a1 - a0) * t
         d = Vector((side * math.cos(a), 0.0, math.sin(a)))
-        pleat = 0.02 * (1 if i % 2 == 0 else -1)
+        pleat = 0.014 * (1 if i % 2 == 0 else -1)
+        cup = -0.07  # forward (−Y) at the rim: the cupping
         inner.append(root + d * r_in + Vector((0, pleat * 0.3, 0)))
-        middle.append(root + d * r_mid + Vector((0, pleat * 0.7, 0)))
-        outer.append(root + d * r_out + Vector((0, pleat, 0)))
+        middle.append(root + d * r_mid + Vector((0, pleat * 0.7 + cup * 0.35, 0)))
+        outer.append(root + d * r_out + Vector((0, pleat + cup, 0)))
     verts = [root] + inner + middle + outer
     faces, mats = [], []
     for i in range(ribs - 1):
@@ -193,7 +196,7 @@ def build_ear(side, ear_mat, ear_dark_mat, skin_mat):
     group.add(list(range(len(verts))), 1.0, "REPLACE")
     # The whole fan leans back a little, like the picture's.
     pivot = Matrix.Translation(root)
-    tilt = Matrix.Rotation(math.radians(-12), 4, "X") @ Matrix.Rotation(math.radians(side * 8), 4, "Z")
+    tilt = Matrix.Rotation(math.radians(-8), 4, "X") @ Matrix.Rotation(math.radians(side * 4), 4, "Z")
     obj.matrix_world = pivot @ tilt @ pivot.inverted()
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
@@ -266,7 +269,7 @@ def build_armature():
     bone("Neck", (0, 0, 1.55), (0, 0.01, 1.73), "Spine", True)
     bone("Head", (0, 0.01, 1.73), (0, 0.0, 2.0), "Neck", True)
     for s, tag in ((-1, "L"), (1, "R")):
-        bone("Ear" + tag, (s * 0.13, 0.0, 1.86), (s * 0.60, -0.05, 2.06), "Head")
+        bone("Ear" + tag, (s * 0.13, 0.0, 1.86), (s * 0.50, -0.06, 2.02), "Head")
         bone("UpperArm" + tag, (s * 0.25, 0.0, 1.55), (s * 0.35, 0.04, 1.15), "Spine")
         bone("LowerArm" + tag, (s * 0.35, 0.04, 1.15), (s * 0.33, -0.04, 0.76), "UpperArm" + tag, True)
         bone("Hand" + tag, (s * 0.33, -0.04, 0.76), (s * 0.32, -0.14, 0.50), "LowerArm" + tag, True)
@@ -332,10 +335,16 @@ def action(arm, name, frames, keys):
         ad.action_slot = act.slots.new(id_type="OBJECT", name=arm.name)
     except (AttributeError, TypeError):
         pass
+    # Every bone at rest on the first and last frame, so a bone this clip does not
+    # animate is at rest in it — not wherever the previous clip left it (the
+    # exporter bakes whatever the pose holds for unkeyed bones).
     for pb in arm.pose.bones:
         pb.rotation_mode = "XYZ"
         pb.rotation_euler = (0, 0, 0)
         pb.location = (0, 0, 0)
+        for frame in (1, frames):
+            pb.keyframe_insert("rotation_euler", frame=frame)
+            pb.keyframe_insert("location", frame=frame)
     for bone_name, frame_keys in keys.items():
         pb = arm.pose.bones[bone_name]
         for frame, rot, loc in frame_keys:
@@ -438,10 +447,13 @@ def animate(arm):
         "ThighR": [(1, R(-30, 0, 0), Z3), (15, R(-34, 0, 0), Z3)],
         "ShinL": [(1, R(44, 0, 0), Z3), (15, R(48, 0, 0), Z3)],
         "ShinR": [(1, R(44, 0, 0), Z3), (15, R(48, 0, 0), Z3)],
-        "UpperArmL": [(1, R(-55, 0, 0), Z3), (6, R(-70, 0, 14), Z3), (15, R(-66, 0, 12), Z3)],
-        "UpperArmR": [(1, R(-55, 0, 0), Z3), (6, R(-70, 0, -14), Z3), (15, R(-66, 0, -12), Z3)],
-        "LowerArmL": [(1, R(-35, 0, 0), Z3), (15, R(-30, 0, 0), Z3)],
-        "LowerArmR": [(1, R(-35, 0, 0), Z3), (15, R(-30, 0, 0), Z3)],
+        # The arms wide and low, the claws splayed (Dan: "shooting with his hands spreading").
+        "UpperArmL": [(1, R(-55, 0, 0), Z3), (6, R(-38, 0, 62), Z3), (15, R(-40, 0, 58), Z3)],
+        "UpperArmR": [(1, R(-55, 0, 0), Z3), (6, R(-38, 0, -62), Z3), (15, R(-40, 0, -58), Z3)],
+        "LowerArmL": [(1, R(-35, 0, 0), Z3), (6, R(-18, 0, 10), Z3), (15, R(-20, 0, 8), Z3)],
+        "LowerArmR": [(1, R(-35, 0, 0), Z3), (6, R(-18, 0, -10), Z3), (15, R(-20, 0, -8), Z3)],
+        "HandL": [(1, R(0, 0, 0), Z3), (6, R(22, 0, 28), Z3), (15, R(20, 0, 25), Z3)],
+        "HandR": [(1, R(0, 0, 0), Z3), (6, R(22, 0, -28), Z3), (15, R(20, 0, -25), Z3)],
     }
     action(arm, "Shooting", 15, shooting)
 
