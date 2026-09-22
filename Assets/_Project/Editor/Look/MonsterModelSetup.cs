@@ -84,6 +84,51 @@ namespace SunkCost.Editor.Look
             importer.clipAnimations = clips;
             importer.SaveAndReimport();
 
+            // 1b. A generated model (Meshy and the like) carries its maps embedded under
+            // names the rig script set by role (<Kind>_BaseColor, _Normal, _Roughness):
+            // out to a Textures folder, into a URP Lit material of ours, remapped onto
+            // the model's material. A model with no embedded maps keeps its own.
+            string textureFolder = Path.GetDirectoryName(fbx).Replace('\\', '/') + "/Textures";
+            Directory.CreateDirectory(textureFolder);
+            if (importer.ExtractTextures(textureFolder)) AssetDatabase.Refresh();
+            Texture2D baseMap = FindTexture(textureFolder, kind + "_BaseColor");
+            if (baseMap != null)
+            {
+                Texture2D normalMap = FindTexture(textureFolder, kind + "_Normal");
+                if (normalMap != null)
+                {
+                    string normalPath = AssetDatabase.GetAssetPath(normalMap);
+                    if (AssetImporter.GetAtPath(normalPath) is TextureImporter normalImporter && normalImporter.textureType != TextureImporterType.NormalMap)
+                    {
+                        normalImporter.textureType = TextureImporterType.NormalMap;
+                        normalImporter.SaveAndReimport();
+                        normalMap = AssetDatabase.LoadAssetAtPath<Texture2D>(normalPath);
+                    }
+                }
+                string materialPath = Path.GetDirectoryName(fbx).Replace('\\', '/') + "/" + kind + ".mat";
+                Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                if (material == null)
+                {
+                    material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = kind.ToString() };
+                    AssetDatabase.CreateAsset(material, materialPath);
+                }
+                material.SetTexture("_BaseMap", baseMap);
+                material.SetColor("_BaseColor", Color.white);
+                material.SetTexture("_BumpMap", normalMap);
+                if (normalMap != null) material.EnableKeyword("_NORMALMAP"); else material.DisableKeyword("_NORMALMAP");
+                material.SetFloat("_Smoothness", 0.25f);
+                material.SetFloat("_Metallic", 0f);
+                EditorUtility.SetDirty(material);
+                bool remapped = false;
+                foreach (Material embedded in AssetDatabase.LoadAllAssetsAtPath(fbx).OfType<Material>())
+                {
+                    importer.AddRemap(new AssetImporter.SourceAssetIdentifier(embedded), material);
+                    remapped = true;
+                }
+                if (remapped) importer.SaveAndReimport();
+                report.Add($"material {kind}.mat from the embedded maps (normal {(normalMap != null ? "yes" : "no")})");
+            }
+
             // 2. The clips, by pose.
             var loaded = AssetDatabase.LoadAllAssetsAtPath(fbx).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview")).ToList();
             var byPose = new Dictionary<CreaturePose, AnimationClip>();
@@ -192,6 +237,13 @@ namespace SunkCost.Editor.Look
             AssetDatabase.SaveAssets();
             return $"{kind}: {fbx} → {prefabPath}; " + string.Join("; ", report);
         }
+
+        private static Texture2D FindTexture(string folder, string name) =>
+            AssetDatabase.FindAssets(name + " t:Texture2D", new[] { folder })
+                .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
+                .Where(path => Path.GetFileNameWithoutExtension(path) == name)
+                .Select(AssetDatabase.LoadAssetAtPath<Texture2D>)
+                .FirstOrDefault(t => t != null);
 
         private static Transform FindNamed(Transform root, string name)
         {

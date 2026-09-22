@@ -504,4 +504,5 @@ def main():
     print("wrote", path, "and", blend)
 
 
-main()
+if __name__ == "__main__":
+    main()
