@@ -69,7 +69,7 @@ namespace SunkCost.Editor.Look
             if (importer.importBlendShapes) { importer.importBlendShapes = false; reimport = true; }
             if (!importer.useFileScale) { importer.useFileScale = true; reimport = true; }
             if (importer.materialImportMode != ModelImporterMaterialImportMode.None) { importer.materialImportMode = ModelImporterMaterialImportMode.None; reimport = true; }
-            if (!importer.isReadable && part == "Hull") { importer.isReadable = true; reimport = true; } // the outline is read off the mesh at build time, and it is the deck's collider
+            if (!importer.isReadable && (part == "Hull" || part == "TvCabinet")) { importer.isReadable = true; reimport = true; } // read at build time: the hull's outline (and its collider), the TV's screen panel
             if (reimport) importer.SaveAndReimport();
 
             Material material = BuildMaterial(part);

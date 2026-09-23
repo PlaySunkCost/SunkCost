@@ -292,29 +292,115 @@ namespace SunkCost.Editor.Look
         private static void DressTv(Transform root, GameObject cabinet)
         {
             if (cabinet == null) return;
-            Renderer r = cabinet.GetComponentInChildren<Renderer>();
-            Vector3 centre = root.InverseTransformPoint(r.bounds.center);
-            Vector3 ext = r.bounds.extents;
-            float front = centre.z - ext.z; // the cabinet faces aft, down the deck
-            float w = ext.x * 2f * 0.82f, h = w * 9f / 16f;
-            float y = Mathf.Max(centre.y + 0.15f, h / 2f + 0.6f);
+            // The picture goes exactly on the model's own screen panel and nowhere else
+            // (Dan, 23 September 2026: "exactly the screen 3D model, I dont want to see
+            // anything other than that"): the panel is measured off the mesh, and the
+            // game's screen quad - what ShipTV draws the channel onto, and what E
+            // presses - covers that rectangle, 5 mm proud of it.
+            if (!ScreenPanel(root, cabinet, out Vector3 centre, out Vector2 size))
+            {
+                Debug.LogWarning("Ship dressing: no screen panel found on the TV cabinet");
+                return;
+            }
             Transform screen = root.Find(ShipParts.TvScreenName);
             if (screen != null)
             {
-                screen.localPosition = new Vector3(centre.x, y, front - 0.05f);
-                screen.localScale = new Vector3(w, h, 1f);
+                screen.localPosition = centre + new Vector3(0f, 0f, -0.005f);
+                screen.localScale = new Vector3(size.x, size.y, 1f);
+                // What E finds: reaching 30 cm out past the frame toward the viewer, so the
+                // crosshair meets the screen before the cabinet's own box.
+                if (screen.TryGetComponent(out BoxCollider press)) { press.center = new Vector3(0f, 0f, -0.15f); press.size = new Vector3(1f, 1f, 0.3f); }
             }
+            // The channel's name is the screen's own line of text, top centre, no plate.
             Transform caption = root.Find("Tv Caption Sign");
             if (caption != null)
             {
-                caption.localPosition = new Vector3(centre.x, y + h * 0.32f, front - 0.09f);
+                caption.localPosition = centre + new Vector3(0f, size.y * 0.38f, -0.01f);
                 foreach (Transform part in caption.Cast<Transform>().ToArray())
                     if (part.name == "Plate" || part.name.StartsWith("Frame")) Object.DestroyImmediate(part.gameObject);
                 var text = caption.GetComponentInChildren<TextMesh>();
-                if (text != null) text.characterSize = text.characterSize * 1.4f;
+                if (text != null) text.characterSize *= 1.4f;
             }
             Transform speaker = root.Find(ShipParts.TvSpeakerName);
-            if (speaker != null) speaker.localPosition = new Vector3(centre.x, y, front - 0.1f);
+            if (speaker != null) speaker.localPosition = centre + new Vector3(0f, 0f, -0.1f);
+        }
+
+        // The cabinet's screen panel, in ship space: of the triangles facing aft (the
+        // way the cabinet looks), the flat layer with the most area is the panel - the
+        // frame and the legs are thin - and its extent there is the screen.
+        private static bool ScreenPanel(Transform root, GameObject cabinet, out Vector3 centre, out Vector2 size)
+        {
+            centre = default; size = default;
+            MeshFilter mf = cabinet.GetComponentInChildren<MeshFilter>();
+            if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) return false;
+            Matrix4x4 m = root.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+            Vector3[] v = mf.sharedMesh.vertices; int[] tri = mf.sharedMesh.triangles;
+            var faces = new List<(Vector3 a, Vector3 b, Vector3 c, float area)>();
+            var layers = new Dictionary<int, float>(); // area by 1 cm of depth
+            for (int i = 0; i < tri.Length; i += 3)
+            {
+                Vector3 a = m.MultiplyPoint3x4(v[tri[i]]), b = m.MultiplyPoint3x4(v[tri[i + 1]]), c = m.MultiplyPoint3x4(v[tri[i + 2]]);
+                Vector3 n = Vector3.Cross(b - a, c - a);
+                float area = n.magnitude / 2f;
+                if (area < 1e-6f || n.normalized.z > -0.97f) continue; // facing aft: -z in the ship
+                faces.Add((a, b, c, area));
+                int key = Mathf.RoundToInt((a.z + b.z + c.z) / 3f * 100f);
+                layers[key] = layers.TryGetValue(key, out float s) ? s + area : area;
+            }
+            if (layers.Count == 0) return false;
+            int panel = layers.OrderByDescending(kv => kv.Value).First().Key;
+            // The layer holds the panel and whatever is flush with it (the legs run down
+            // from it): the screen is the largest solid rectangle in the layer. Cover a
+            // 5 cm grid with the layer's triangles, then find that rectangle.
+            const float cell = 0.05f;
+            Vector2 lo = new(float.PositiveInfinity, float.PositiveInfinity), hi = new(float.NegativeInfinity, float.NegativeInfinity);
+            var flat = faces.Where(f => Mathf.Abs(Mathf.RoundToInt((f.a.z + f.b.z + f.c.z) / 3f * 100f) - panel) <= 3).ToList();
+            foreach (var f in flat) foreach (Vector3 q in new[] { f.a, f.b, f.c }) { lo = Vector2.Min(lo, q); hi = Vector2.Max(hi, q); }
+            int nx = Mathf.CeilToInt((hi.x - lo.x) / cell) + 1, ny = Mathf.CeilToInt((hi.y - lo.y) / cell) + 1;
+            var cover = new bool[nx, ny];
+            foreach (var f in flat)
+            {
+                Vector2 a = f.a, b = f.b, c = f.c;
+                int x0 = Mathf.FloorToInt((Mathf.Min(a.x, Mathf.Min(b.x, c.x)) - lo.x) / cell), x1 = Mathf.CeilToInt((Mathf.Max(a.x, Mathf.Max(b.x, c.x)) - lo.x) / cell);
+                int y0 = Mathf.FloorToInt((Mathf.Min(a.y, Mathf.Min(b.y, c.y)) - lo.y) / cell), y1 = Mathf.CeilToInt((Mathf.Max(a.y, Mathf.Max(b.y, c.y)) - lo.y) / cell);
+                for (int ix = Mathf.Max(0, x0); ix <= Mathf.Min(nx - 1, x1); ix++)
+                    for (int iy = Mathf.Max(0, y0); iy <= Mathf.Min(ny - 1, y1); iy++)
+                        if (Inside(new Vector2(lo.x + (ix + 0.5f) * cell, lo.y + (iy + 0.5f) * cell), a, b, c)) cover[ix, iy] = true;
+            }
+            // Largest rectangle of covered cells: a histogram per row, a stack per histogram.
+            int bestArea = 0, bx0 = 0, bx1 = 0, by0 = 0, by1 = 0;
+            var heights = new int[nx];
+            for (int iy = 0; iy < ny; iy++)
+            {
+                for (int ix = 0; ix < nx; ix++) heights[ix] = cover[ix, iy] ? heights[ix] + 1 : 0;
+                var stack = new Stack<int>();
+                for (int ix = 0; ix <= nx; ix++)
+                {
+                    int hgt = ix < nx ? heights[ix] : 0;
+                    while (stack.Count > 0 && heights[stack.Peek()] >= hgt)
+                    {
+                        int top = stack.Pop(), height = heights[top];
+                        int left = stack.Count > 0 ? stack.Peek() + 1 : 0, width = ix - left;
+                        if (height * width > bestArea) { bestArea = height * width; bx0 = left; bx1 = ix - 1; by1 = iy; by0 = iy - height + 1; }
+                    }
+                    if (ix < nx) stack.Push(ix);
+                }
+            }
+            if (bestArea == 0) return false;
+            // One cell in from each side: the picture stays inside the frame.
+            float px0 = lo.x + (bx0 + 1) * cell, px1 = lo.x + bx1 * cell, py0 = lo.y + (by0 + 1) * cell, py1 = lo.y + by1 * cell;
+            centre = new Vector3((px0 + px1) / 2f, (py0 + py1) / 2f, panel / 100f);
+            size = new Vector2(px1 - px0, py1 - py0);
+            return size.x > 0.5f && size.y > 0.3f;
+        }
+
+        private static bool Inside(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+        {
+            float d1 = (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+            float d2 = (p.x - c.x) * (b.y - c.y) - (b.x - c.x) * (p.y - c.y);
+            float d3 = (p.x - a.x) * (c.y - a.y) - (c.x - a.x) * (p.y - a.y);
+            bool neg = d1 < 0 || d2 < 0 || d3 < 0, pos = d1 > 0 || d2 > 0 || d3 > 0;
+            return !(neg && pos);
         }
 
         // The game's monitor onto the console model's face: the screen block (the
