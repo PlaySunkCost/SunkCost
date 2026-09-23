@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FishNet.Object;
 using SunkCost.Interaction;
 using UnityEngine;
@@ -57,6 +58,14 @@ namespace SunkCost.Player
                 if (arm == null) continue;
                 foreach (Renderer renderer in arm.GetComponentsInChildren<Renderer>(true))
                     if (renderer.enabled != visible) renderer.enabled = visible;
+            }
+        }
+        public IEnumerable<Renderer> ArmRenderers
+        {
+            get
+            {
+                foreach (Transform arm in new[] { armRight, armLeft })
+                    if (arm != null) foreach (Renderer renderer in arm.GetComponentsInChildren<Renderer>(true)) yield return renderer;
             }
         }
         public bool Visible

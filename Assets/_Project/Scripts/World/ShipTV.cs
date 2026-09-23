@@ -162,11 +162,9 @@ namespace SunkCost.World
             // silhouetted against it (Dan, 23 September 2026: "still not good").
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = RenderSettings.fogColor;
-            PlayerHeadSplit head = diver.HeadSplit;
-            bool headShown = head != null && head.HeadShown;
-            if (headShown) head.SetHeadShown(false);
+            diver.BeginWatchedRender(); // none of the diver's own figure, as on the diver's own screen
             cam.Render();
-            if (headShown) head.SetHeadShown(true);
+            diver.EndWatchedRender();
             WorldLook.Restore(previous);
             renderedThisFrame = true;
             RenderedFrames++;

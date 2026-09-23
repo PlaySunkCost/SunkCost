@@ -564,6 +564,12 @@ namespace SunkCost.Editor.Prototype
                 foreach (Renderer r in p.GetComponentsInChildren<Renderer>(true)) { if (r is ParticleSystemRenderer) continue; all++; if (r.enabled && r.gameObject.activeInHierarchy) drawn++; }
                 Say("on the host, player " + p.OwnerId + (p.IsOwner ? " (host)" : "") + " dead=" + p.IsDead + " at " + p.transform.position.ToString("F1") + ": " + drawn + " of " + all + " renderers drawn");
             }
+            HQPlayerController copyA = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.OwnerId == idA);
+            HQPlayerController copyB = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.OwnerId == idB);
+            string[] figureParts = { "CharacterModel", "Head", "Eye.L", "Eye.R", "UpperArm", "Forearm", "Palm" };
+            int drawnA = copyA == null ? -1 : copyA.GetComponentsInChildren<Renderer>(true).Count(r => figureParts.Contains(r.name) && r.enabled && r.gameObject.activeInHierarchy);
+            Check(copyA != null && copyA.IsDead && drawnA == 0, $"S3/T the host draws none of dead A's figure after coming back to the dive (only its body lies there; {drawnA} renderers drawn)");
+            Check(copyB != null && copyB.GetComponentsInChildren<Renderer>(true).Any(r => r.name == "CharacterModel" && r.enabled), "S3/T B's figure is drawn for everyone else again after the TV's render");
             Say("the Impostor at this moment: " + (impostorNow == null ? "none" : "following " + impostorNow.TargetId + " at " + impostorNow.transform.position.ToString("F1") + " (B is " + idB + "; the TV and B see it only when it follows B)"));
             yield return Send("{\"id\":{id},\"action\":\"capture_play\",\"item\":\"" + bOwnShot.Replace("\\", "/") + "\"}", GuestDirB);
             hostTv.SavePicture(bOnTv);

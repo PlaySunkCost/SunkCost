@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -388,6 +389,11 @@ namespace SunkCost.Player
         {
             base.OnStartClient();
             SetLocalPresentation(IsOwner);
+            // This machine may set a player up again after its death: the host, when it
+            // comes back to a world it left, starts its copies there anew. The figure a
+            // death hid stays hidden (Dan, 23 September 2026: a dead diver stood upright on
+            // the TV, which the host renders, while the other diver saw only the body).
+            if (dead.Value) ApplyDead(true);
             if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
             dashClientStartFrame = Time.frameCount;
             if (GetComponent<PlayerDashEffects>() == null) gameObject.AddComponent<PlayerDashEffects>(); // the rings and the whoosh, on every peer
@@ -987,6 +993,31 @@ namespace SunkCost.Player
             else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
         }
 
+        // A render through this player's eyes on another machine (the deck TV, a dead
+        // player spectating): the figure as its owner sees it, which is none of it at
+        // eye level. The eyes there are eased and trail the body, so a running or
+        // jumping diver's own body and hands swung into the picture (Dan, 23 September
+        // 2026: "in my screen I dont see hands or myself while moving and jumping, and
+        // in tv and spectate I see"). The hands stay while they hold something - the
+        // owner sees them then. Pair with EndWatchedRender, same frame.
+        private readonly List<Renderer> hiddenForWatch = new();
+        public void BeginWatchedRender()
+        {
+            hiddenForWatch.Clear();
+            if (bodyVisual != null)
+                foreach (Renderer r in bodyVisual.GetComponentsInChildren<Renderer>(true))
+                    if (r.enabled) { r.enabled = false; hiddenForWatch.Add(r); }
+            PlayerHands hands = GetComponent<PlayerHands>();
+            if (hands != null && hands.HeldForHands == null)
+                foreach (Renderer r in hands.ArmRenderers)
+                    if (r.enabled) { r.enabled = false; hiddenForWatch.Add(r); }
+        }
+        public void EndWatchedRender()
+        {
+            foreach (Renderer r in hiddenForWatch) if (r != null) r.enabled = true;
+            hiddenForWatch.Clear();
+        }
+
         public void SetBodyColour(Color colour)
         {
             if (bodyRenderer != null) bodyRenderer.material.color = colour;
@@ -1009,7 +1040,7 @@ namespace SunkCost.Player
             {
                 bool bodyForOwner = HeadSplit != null;
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
-                    renderer.enabled = !active || bodyForOwner;
+                    renderer.enabled = (!active || bodyForOwner) && !appliedDead;
                 if (active && bodyForOwner) HeadSplit.SetHeadShown(false);
             }
         }
