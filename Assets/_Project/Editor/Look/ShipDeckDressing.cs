@@ -37,16 +37,28 @@ namespace SunkCost.Editor.Look
         // (HULL_BULWARK) where the hull is cut to it.
         public const float Bulwark = 1.2f;
 
-        // The props' scale over the brief's metres (Dan, 23 September 2026: "making
-        // everything 2x"). The hull, the tower and the storage room are the game's
-        // own sizes and stay at one.
-        public const float Scale = 2f;
+        // The props' scale over the brief's metres. Dan asked for everything at 2x
+        // (23 September 2026), then found the crew looking up at the table and unable
+        // to sit on the couch: what a person uses stays at a person's size, what a
+        // crane lifts stays big. The hull, the tower and the storage room are the
+        // game's own sizes and stay at one.
+        public const float Scale = 2f;          // cargo and machinery: containers, the crane, the winch
+        public const float GearScale = 1.5f;    // deck gear: barrels, crates, lamps, bollards, buoys, pipes, coils, ladder, signs
+        public const float HumanScale = 1.25f;  // what the crew touch: couch, table, bench, toolbox
+        private static readonly Dictionary<string, float> Scales = new()
+        {
+            ["Couch"] = HumanScale, ["Table"] = HumanScale, ["Bench"] = HumanScale, ["Toolbox"] = HumanScale,
+            ["Barrel"] = GearScale, ["Crate"] = GearScale, ["DeckLamp"] = GearScale, ["Bollard"] = GearScale,
+            ["Lifebuoy"] = GearScale, ["Pipes"] = GearScale, ["CableCoil"] = GearScale, ["Ladder"] = GearScale,
+            ["Signs"] = GearScale, ["NamePlate"] = GearScale,
+        };
+        private static float ScaleOf(string part) => Scales.TryGetValue(part, out float s) ? s : Scale;
 
         // What loses its renderer and keeps its collider: the shapes a model now covers
         // whose collider is the game's (the storage room's walls, the monitor's desk).
         private static readonly string[] HiddenPrefixes =
         {
-            "Hull", "Tower", "Storage", "Monitor Frame", "Monitor Console", "Crew Screen Frame",
+            "Hull", "Tower", "Storage", "Monitor Frame", "Monitor Console", // the crew screen keeps its frame: it hangs on the tower's face
         };
 
         // What goes entirely, renderer and collider: the decoration the models stand
@@ -168,7 +180,8 @@ namespace SunkCost.Editor.Look
             // proud of the cabinet's face. Two couches in front of it, a table between
             // the benches, lamps either side: the living end of the ship (Dan).
             float tv = halfL - 5f;
-            Place(look, "TvCabinet", new Vector3(0f, 0f, tv + 0.45f), Quaternion.Euler(0f, 180f, 0f));
+            GameObject cabinet = Place(look, "TvCabinet", new Vector3(0f, 0f, tv + 0.45f), Quaternion.Euler(0f, 180f, 0f));
+            DressTv(root, cabinet);
             foreach (float x in new[] { -2.1f, 2.1f })
                 Place(look, "Couch", new Vector3(x, 0f, tv - 5.5f));
             Place(look, "Table", new Vector3(0f, 0f, tv - 9.5f));
@@ -196,8 +209,7 @@ namespace SunkCost.Editor.Look
 
             // Port side, the cargo: a stack of two containers against the rail, the
             // plant and pipework, barrels, a second coil.
-            Place(look, "Container", new Vector3(-6.2f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f));
-            Place(look, "Container", new Vector3(-6.2f, 5.2f, -12f), Quaternion.Euler(0f, 90f, 0f));
+            Place(look, "Container", new Vector3(-6.2f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f)); // one, not a stack (Dan)
             Place(look, "Pipes", new Vector3(-W(-20f) + 2.2f, 0f, -20f), Quaternion.Euler(0f, 90f, 0f));
             Place(look, "Barrel", new Vector3(-5.6f, 0f, -3.4f));
             Place(look, "Barrel", new Vector3(-7.0f, 0f, -4.2f));
@@ -218,8 +230,13 @@ namespace SunkCost.Editor.Look
             // sizes, and the game's colliders.
             Place(look, "StorageRoom", new Vector3(3.2f, 0f, -12.5f), Quaternion.identity, 1f, false);
             Place(look, "StorageSill", new Vector3(3.2f - 1.4f, 0f, -12.5f), Quaternion.Euler(0f, 90f, 0f), 1f, false);
-            // The console on the tower's forward face: the panel the crew press to sail.
-            Place(look, "Console", new Vector3(0f, 0f, towerFront + 1.0f));
+            // The console on the tower's forward face is the panel the crew press to
+            // sail: the game's monitor screen, its three buttons and its status line
+            // move onto the model's front face (Dan, 23 September 2026: "replace the
+            // last thing that helped the player choose, now use the new display"). At
+            // one and a half so the buttons stay at hand height.
+            GameObject console = Place(look, "Console", new Vector3(0f, 0f, towerFront + 0.75f), Quaternion.identity, 1.5f, false);
+            DressConsole(root, console);
             // A ladder and the plant on the tower's flanks, signs on its face and the room.
             Place(look, "Ladder", new Vector3(-towerHalf - 0.4f, 0f, towerZ), Quaternion.Euler(0f, 90f, 0f));
             Place(look, "Pipes", new Vector3(towerHalf + 0.9f, 0f, towerZ + 1.2f), Quaternion.Euler(0f, -90f, 0f));
@@ -237,6 +254,62 @@ namespace SunkCost.Editor.Look
             foreach ((GameObject prop, bool byMesh) in solid) Solidify(prop, byMesh);
             MeshFilter hullMesh = hull.GetComponentInChildren<MeshFilter>();
             hullMesh.gameObject.AddComponent<MeshCollider>().sharedMesh = hullMesh.sharedMesh;
+        }
+
+        // The game's TV onto the cabinet model's face (Dan, 23 September 2026: "the TV
+        // should be on the TV"): the screen quad sits just proud of the cabinet's
+        // front, sized to it at sixteen by nine; the caption loses its plate and its
+        // glow strips and its words sit on the screen itself ("write it on the TV");
+        // the speaker point moves with the screen.
+        private static void DressTv(Transform root, GameObject cabinet)
+        {
+            if (cabinet == null) return;
+            Renderer r = cabinet.GetComponentInChildren<Renderer>();
+            Vector3 centre = root.InverseTransformPoint(r.bounds.center);
+            Vector3 ext = r.bounds.extents;
+            float front = centre.z - ext.z; // the cabinet faces aft, down the deck
+            float w = ext.x * 2f * 0.82f, h = w * 9f / 16f;
+            float y = Mathf.Max(centre.y + 0.15f, h / 2f + 0.6f);
+            Transform screen = root.Find(ShipParts.TvScreenName);
+            if (screen != null)
+            {
+                screen.localPosition = new Vector3(centre.x, y, front - 0.05f);
+                screen.localScale = new Vector3(w, h, 1f);
+            }
+            Transform caption = root.Find("Tv Caption Sign");
+            if (caption != null)
+            {
+                caption.localPosition = new Vector3(centre.x, y + h * 0.32f, front - 0.09f);
+                foreach (Transform part in caption.Cast<Transform>().ToArray())
+                    if (part.name == "Plate" || part.name.StartsWith("Frame")) Object.DestroyImmediate(part.gameObject);
+                var text = caption.GetComponentInChildren<TextMesh>();
+                if (text != null) text.characterSize = text.characterSize * 1.4f;
+            }
+            Transform speaker = root.Find(ShipParts.TvSpeakerName);
+            if (speaker != null) speaker.localPosition = new Vector3(centre.x, y, front - 0.1f);
+        }
+
+        // The game's monitor onto the console model's face: the screen block (the
+        // ShipMonitor's target), the three buttons and the status line keep their
+        // heights and move to just proud of the model's front, so what the crew
+        // press is the new display. The old desk under the screen loses its collider;
+        // the model's own box takes over.
+        private static void DressConsole(Transform root, GameObject console)
+        {
+            if (console == null) return;
+            Renderer r = console.GetComponentInChildren<Renderer>();
+            float front = root.InverseTransformPoint(r.bounds.center).z + r.bounds.extents.z;
+            Transform monitor = root.Find(ShipParts.MonitorName);
+            if (monitor != null) monitor.localPosition = new Vector3(0f, monitor.localPosition.y, front + 0.06f);
+            foreach (string name in new[] { ShipParts.MonitorButtonSite01Name, ShipParts.MonitorButtonHQName, ShipParts.MonitorButtonEndDayName })
+            {
+                Transform b = root.Find(name);
+                if (b != null) b.localPosition = new Vector3(b.localPosition.x, b.localPosition.y, front + 0.12f);
+            }
+            Transform status = root.Find(ShipParts.MonitorStatusName);
+            if (status != null) status.localPosition = new Vector3(status.localPosition.x, status.localPosition.y, front + 0.13f);
+            Transform desk = root.Find("Monitor Console");
+            if (desk != null) foreach (Collider c in desk.GetComponents<Collider>()) Object.DestroyImmediate(c);
         }
 
         // A collider on the prop's mesh object, in the mesh's own space so it turns
@@ -375,8 +448,8 @@ namespace SunkCost.Editor.Look
 
         private static readonly Dictionary<string, GameObject> Cache = new();
 
-        private static GameObject Place(GameObject parent, string part, Vector3 position) => Place(parent, part, position, Quaternion.identity, Scale, false);
-        private static GameObject Place(GameObject parent, string part, Vector3 position, Quaternion rotation) => Place(parent, part, position, rotation, Scale, false);
+        private static GameObject Place(GameObject parent, string part, Vector3 position) => Place(parent, part, position, Quaternion.identity, ScaleOf(part), false);
+        private static GameObject Place(GameObject parent, string part, Vector3 position, Quaternion rotation) => Place(parent, part, position, rotation, ScaleOf(part), false);
 
         // A prop at a place, a turn and a scale; solid unless it is the hull (its own
         // collider) or stands outboard. byMesh: collide with the shape, not a box.
