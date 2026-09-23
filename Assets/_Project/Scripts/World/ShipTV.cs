@@ -155,6 +155,13 @@ namespace SunkCost.World
             // camera saw the inside of it (Dan, 18 September 2026: a disc of the
             // diver's colour over half the screen).
             WorldLook.Snapshot? previous = WorldLook.Begin(WorldScenes.Scene(WorldId.Dive));
+            // Under water there is no sky: the diver's own camera clears to the fog
+            // colour (WorldSceneFlow.PresentSky), and so does the TV. Copied from the
+            // diver's copy on this machine, which is never switched, it cleared to the
+            // deck's sky - a bright backdrop the fog never darkens, the seafloor
+            // silhouetted against it (Dan, 23 September 2026: "still not good").
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = RenderSettings.fogColor;
             PlayerHeadSplit head = diver.HeadSplit;
             bool headShown = head != null && head.HeadShown;
             if (headShown) head.SetHeadShown(false);

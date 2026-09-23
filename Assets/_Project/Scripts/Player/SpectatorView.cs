@@ -63,6 +63,7 @@ namespace SunkCost.Player
             RenderPipelineManager.endCameraRendering -= OnEndCamera;
         }
         private PlayerHeadSplit hiddenHead; // the target's head, out of its own eyes' picture (like ShipTV)
+        private CameraClearFlags keptClear; private Color keptBackground; private bool clearSwapped;
         private void OnBeginCamera(ScriptableRenderContext context, Camera rendering)
         {
             if (!Active || Target == null || rendering != cam) return;
@@ -70,6 +71,12 @@ namespace SunkCost.Player
             if (day == null) return;
             WorldId world = day.IsBelow(Target.OwnerId) ? WorldId.Dive : day.World; // the physical world, never the copy's Unity scene
             swappedLook = WorldLook.Begin(WorldScenes.Scene(world));
+            // And that world's backdrop: the dark water colour below, the sky above -
+            // the owner's own camera is set for the owner's world (PresentSky), which
+            // is not the watched one when a dead diver watches the deck or the reverse.
+            keptClear = cam.clearFlags; keptBackground = cam.backgroundColor; clearSwapped = true;
+            if (world == WorldId.Dive) { cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = RenderSettings.fogColor; }
+            else cam.clearFlags = CameraClearFlags.Skybox;
             PlayerHeadSplit head = Target.HeadSplit;
             if (head != null && head.HeadShown) { head.SetHeadShown(false); hiddenHead = head; }
         }
@@ -78,6 +85,7 @@ namespace SunkCost.Player
             if (rendering != cam) return;
             WorldLook.Restore(swappedLook);
             swappedLook = null;
+            if (clearSwapped) { cam.clearFlags = keptClear; cam.backgroundColor = keptBackground; clearSwapped = false; }
             if (hiddenHead != null) { hiddenHead.SetHeadShown(true); hiddenHead = null; }
         }
 
