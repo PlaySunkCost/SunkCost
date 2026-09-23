@@ -542,6 +542,10 @@ namespace SunkCost.Editor.Prototype
             Check(bCam is Vector3 bc && tvCam != null && Vector3.Distance(bc, tvCam.position) < 0.4f, $"S3/T the TV's camera is at B's own eyes (TV camera {(tvCam != null ? tvCam.position.ToString("F2") : "none")}, B's camera {bCam?.ToString("F2") ?? "unknown"})");
             string bOwnShot = Path.GetFullPath("Temp/spectate-b-own.png"), bOnTv = Path.GetFullPath("Temp/spectate-b-on-tv.png");
             File.Delete(bOwnShot);
+            yield return Send("{\"id\":{id},\"action\":\"resume\"}", GuestDirB); // no session menu over B's screen
+            yield return Wait(0.3f);
+            SunkCost.Monsters.Impostor impostorNow = UnityEngine.Object.FindAnyObjectByType<SunkCost.Monsters.Impostor>();
+            Say("the Impostor at this moment: " + (impostorNow == null ? "none" : "following " + impostorNow.TargetId + " at " + impostorNow.transform.position.ToString("F1") + " (B is " + idB + "; the TV and B see it only when it follows B)"));
             yield return Send("{\"id\":{id},\"action\":\"capture\",\"item\":\"" + bOwnShot.Replace("\\", "/") + "\"}", GuestDirB);
             hostTv.SavePicture(bOnTv);
             yield return Expect(() => File.Exists(bOwnShot), 5f, () => "S3/T B's own screen captured");

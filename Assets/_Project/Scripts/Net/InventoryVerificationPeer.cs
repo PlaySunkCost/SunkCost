@@ -186,6 +186,9 @@ namespace SunkCost.Net
                 case "snapshot": break;
                 // The guest's own screen, HUD and visor included, to a file (the item field is the path).
                 case "capture": ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
+                // Close the session menu (as Resume does): a guest window that took an Escape
+                // or lost focus to the test shows the menu over its screen and no visor.
+                case "resume": SunkCost.Net.SessionInputGate.Resume(); break;
                 case "voice_tone": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().StartLocalTestTone(); break;
                 case "voice_off": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetMicrophone(false); break;
                 case "voice_peer_mute": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetPeer(command.slot, true, 1); break;
