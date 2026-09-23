@@ -26,6 +26,20 @@ namespace SunkCost.World
         public Vector3 RestPosition => restPosition;
         public bool HasEngineClip => engine != null && engine.clip != null;
 
+        // SHIP-034: the ship's ~90 colliders (the hull and tower meshes among them) are
+        // children of this root. Without a body they are static colliders, and moving
+        // static colliders makes the physics scene move each one; with one kinematic
+        // body on the root they are one compound actor that moves as a whole. Added at
+        // runtime so the builders and the prefab stay as they are. The pose is still
+        // written to the transform (a kinematic teleport), not by MovePosition: the
+        // riders read this transform in LateUpdate every rendered frame and the pose
+        // is evaluated sub-tick from the synchronized clock, so a physics-step
+        // MovePosition would step the ship at 60 Hz under riders following it
+        // smoothly. Nothing dynamic rides the deck during a trip (loose cargo is frozen
+        // kinematic), so no contact needs the body's velocity.
+        private Rigidbody body;
+        public Rigidbody Body => body;
+
         private void Awake()
         {
             if (engine != null) SunkCost.Audio.AudioDeviceService.RouteSource(engine);
@@ -33,6 +47,12 @@ namespace SunkCost.World
             restPosition = transform.position;
             restRotation = transform.rotation;
             hasWorld = WorldScenes.TryParse(gameObject.scene.name, out world);
+            body = GetComponent<Rigidbody>();
+            if (body == null) body = gameObject.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+            body.interpolation = RigidbodyInterpolation.None; // the transform is the pose (see above)
+            body.collisionDetectionMode = CollisionDetectionMode.Discrete;
         }
 
         private void Update()
@@ -82,7 +102,11 @@ namespace SunkCost.World
         {
             Transform direction = parts != null ? parts.DepartureDirection : null;
             Vector3 forward = direction != null ? direction.forward : transform.forward;
-            transform.SetPositionAndRotation(restPosition + forward.normalized * distance, restRotation);
+            Vector3 position = restPosition + forward.normalized * distance;
+            // At rest (almost always) nothing is written: every write re-poses the whole
+            // ship in the physics scene, and this ran every frame at the pier and at sea.
+            if (transform.position == position && transform.rotation == restRotation) return;
+            transform.SetPositionAndRotation(position, restRotation);
         }
 
         private void Engine(bool on)

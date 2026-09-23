@@ -77,13 +77,22 @@ namespace SunkCost.Editor.Prototype
             GameObject lamp = new(CarLightName, typeof(Light));
             lamp.transform.SetParent(root, false);
             lamp.transform.localPosition = new Vector3(0f, interiorHeight - 0.4f, 0f);
-            Light light = lamp.GetComponent<Light>();
+            ConfigureCarLight(lamp.GetComponent<Light>());
+            return true;
+        }
+
+        // The one light of the glass car, in both worlds: the seafloor car's and the
+        // ship's tube (ShipStubBuilder.DressCabin) are the same cabin, and a rider saw
+        // it turn from cyan to warm at the scene swap. Warm white on both (Dan, 23
+        // September 2026).
+        public static void ConfigureCarLight(Light light)
+        {
             light.type = LightType.Point;
+            light.lightmapBakeType = LightmapBakeType.Realtime;
             light.range = 7f;
             light.intensity = 6f;
             light.color = new Color(1f, 0.95f, 0.85f);
             light.shadows = LightShadows.None;
-            return true;
         }
 
         // The deck cabin is the same glass car as the seafloor's (Dan, 15 September

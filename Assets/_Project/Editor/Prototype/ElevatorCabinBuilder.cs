@@ -59,12 +59,16 @@ namespace SunkCost.Sites
             {
                 RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
                 // No frame posts: the car is clean, clear glass like the tube (Dan, 19 September 2026).
-                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
+                // The wall behind the button is open over the button's band only (as the deck cabin's).
+                float buttonBottom = PanelChestHeightMeters - 0.2f;
+                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
 
                 // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
                 Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
-                GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
+                GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
                 panel.AddComponent<ElevatorControlPanel>();
+                // On its pillar and plate, like the deck cabin's: the same car (Dan, 15 September 2026).
+                RoundCabinGeometry.CreateButtonMount(root.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, CarFloorThickness, interiorHeight, buttonBottom + 0.56f, "SURFACE", SunkCost.Editor.Look.ShipModelSetup.HullMaterial());
                 // Cube's default BoxCollider is exactly what the interactor's raycast needs to
                 // hit, and it visually stands out from the frame posts via the accent material.
 

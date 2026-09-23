@@ -84,9 +84,7 @@ MonoBehaviour:
   - Key: ship.bridge.label
     Text: CAPTAIN / NAVIGATION
   - Key: ship.screen
-    Text: 'GOOD HAULS
-
-      TODAY :)'
+    Text: CREW
   - Key: button.site01
     Text: SITE 01
   - Key: button.hq
@@ -97,3 +95,9 @@ MonoBehaviour:
     Text: "▼"
   - Key: button.surface
     Text: "▲"
+  - Key: ship.cabin.idle
+    Text: "DIVE CAGE — standing by"
+  - Key: ship.tv.idle
+    Text: "SALVAGE · CREW CHANNEL"
+  - Key: ship.tv.idle.hint
+    Text: Live when a diver is below

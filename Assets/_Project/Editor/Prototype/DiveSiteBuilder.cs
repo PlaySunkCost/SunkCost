@@ -37,6 +37,11 @@ namespace SunkCost.Sites
         // car's own circular footprint (see CreatePlatformRing) — there is no square-vs-round
         // mismatch left to bridge, just a uniform walk-across lip on every bearing.
         public const float ElevatorClearanceMeters = 0.1f;
+
+        // How far under the water the Surface Light still reaches what moves (players,
+        // items, monsters, the car; WorldLightLayers): past it they are lit like the
+        // seafloor, by the site's own lights and the headlamps (SHIP-003, 23 September 2026).
+        public const float SunlitWaterMeters = 5f;
         private const int PlatformHoleSegmentCount = 32;
 
         [MenuItem("Sunk Cost/Prototype/Create or Update Dive Site 01")]
@@ -93,7 +98,7 @@ namespace SunkCost.Sites
             CreateDiveLoot(anchorBottom.position, doorwayBearingDeg, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();
-            WorldLookSetup.WriteIntoOpenScene(scene); // the site's fog and ambient, for a camera showing it from another world
+            WorldLookSetup.WriteIntoOpenScene(scene, settings.SeaLevelY - SunlitWaterMeters); // the site's look, for a camera showing it from another world
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
                 throw new InvalidOperationException("Unity could not save " + ScenePath);
@@ -223,13 +228,9 @@ namespace SunkCost.Sites
         // from primitives here. ElevatorAnchor_Top/_Bottom stay as position markers only;
         // their positions configure the travel endpoints on the instantiated controller.
         //
-        // Known issue, deferred: the seafloor sits on DiveSiteDeep so the surface directional
-        // light doesn't reach it (see CreateSeafloor/CreateSurfaceLight), but this car stays
-        // on the Default layer for its whole 45m descent, so it will read as fully sunlit at
-        // the bottom. Switching the car's layer partway down would also need to keep its own
-        // collisions (rider trigger, floor, interior walls) working against the physics layer
-        // collision matrix — real work, not done here. Revisit before this scene is used for
-        // anything beyond a smoke test.
+        // The car stays on the Default physics layer for its whole 45m descent (its
+        // collisions need it); the surface light leaves it once it is SunlitWaterMeters under
+        // the water through its rendering layer instead (WorldLightLayers, 23 September 2026).
         private static ElevatorController CreateElevator(Vector3 topAnchorPosition, Vector3 bottomAnchorPosition, Vector3 playerSpawnPosition, Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings, out float doorwayBearingDegOut)
         {
             GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, panelAccent, settings); // the tube's look (Dan, 19 September 2026)
@@ -325,7 +326,7 @@ namespace SunkCost.Sites
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(WaterSurfaceMaterialPath);
             if (material != null)
-                return material;
+                return CleanLegacyKeywords(material);
             material = new Material(GetOrCreateGlassMaterial());
             material.SetColor("_BaseColor", new Color(0.25f, 0.55f, 0.6f, 0.55f));
             if (material.HasProperty("_Color")) material.SetColor("_Color", new Color(0.25f, 0.55f, 0.6f, 0.55f));
@@ -488,6 +489,7 @@ namespace SunkCost.Sites
                 AssetDatabase.CreateAsset(profile, VolumeProfilePath);
             }
 
+            profile.components.RemoveAll(component => component == null); // the overrides were never saved (SHIP-021)
             if (!profile.TryGet(out ColorAdjustments colorAdjustments))
                 colorAdjustments = profile.Add<ColorAdjustments>(true);
             colorAdjustments.active = true;
@@ -512,11 +514,17 @@ namespace SunkCost.Sites
             tonemapping.mode.overrideState = true;
             tonemapping.mode.value = TonemappingMode.Neutral;
 
+            // The overrides live inside the profile asset, and the volume takes the asset
+            // itself: `profile` is a run-time copy that is never saved, and the site had
+            // no grade at all (ship audit SHIP-021, 23 September 2026).
+            foreach (VolumeComponent component in profile.components)
+                if (!AssetDatabase.Contains(component)) { component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy; AssetDatabase.AddObjectToAsset(component, profile); }
             EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssetIfDirty(profile);
 
             GameObject volumeObject = new(UnderwaterVolumeName);
             Volume volume = volumeObject.AddComponent<Volume>();
-            volume.profile = profile;
+            volume.sharedProfile = profile;
             ShapeUnderwaterVolume(volumeObject, settings);
         }
 
@@ -524,7 +532,7 @@ namespace SunkCost.Sites
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(GlassMaterialPath);
             if (material != null)
-                return material;
+                return CleanLegacyKeywords(material);
 
             Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             material = new Material(shader);
@@ -535,11 +543,23 @@ namespace SunkCost.Sites
             material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
             material.SetInt("_ZWrite", 0);
             material.DisableKeyword("_ALPHATEST_ON");
-            material.EnableKeyword("_ALPHABLEND_ON");
             material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.renderQueue = (int)RenderQueue.Transparent;
             material.SetColor("_BaseColor", new Color(0.65f, 0.88f, 0.92f, 0.22f));
             AssetDatabase.CreateAsset(material, GlassMaterialPath);
+            return material;
+        }
+
+        // _ALPHABLEND_ON is the built-in pipeline's keyword; URP Lit has no such keyword and
+        // lists it as invalid on the material (ship audit SHIP-082). Its transparency is
+        // _SURFACE_TYPE_TRANSPARENT with the blend factors.
+        private static Material CleanLegacyKeywords(Material material)
+        {
+            if (System.Array.IndexOf(material.shaderKeywords, "_ALPHABLEND_ON") < 0) return material;
+            material.DisableKeyword("_ALPHABLEND_ON");
+            EditorUtility.SetDirty(material);
+            AssetDatabase.SaveAssetIfDirty(material);
             return material;
         }
 

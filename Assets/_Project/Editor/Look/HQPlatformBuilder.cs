@@ -35,10 +35,11 @@ namespace SunkCost.Editor.Look
         // level, a landing, and the roof of the ship's bridge tower right behind it —
         // no stair on the HQ at all (Dan, 19 September 2026: "the stairs near the
         // tower lead to the top of the tower, connected through a bridge to the
-        // HQ"); the ship's own stair comes down from the roof to its deck.
-        public const float ShipDeckY = -SunkCost.Editor.Prototype.ShipStubBuilder.TowerHeight; // the tower's roof at the platform's level
+        // HQ"). The ship's stair came off on 23 September 2026 (Dan: no stairs on
+        // the ship); the way down to the deck is a later card (docs/ROADMAP.md).
+        public const float ShipDeckY = -SunkCost.Editor.Prototype.ShipStubBuilder.TowerHeight; // the ship's deck TowerHeight under the platform's
         public static readonly Vector3 GangwayLanding = new(-32f, 0f, -12f); // where the bridge leaves the rim
-        public static readonly Vector3 BridgeEnd = new(-44f, 0f, -12f);      // the landing at the bridge's end; the stairs go south from it
+        public static readonly Vector3 BridgeEnd = new(-44f, 0f, -12f);      // the landing at the bridge's end; the moored tower's aft face south of it
         public const float LandingW = 4f;
         public static readonly Rect Court = new(-24f, -10f, 20f, 12f);   // x, z, w, d
         public static readonly Vector3 CrewMark = new(10f, 0f, -3f);
@@ -686,7 +687,7 @@ namespace SunkCost.Editor.Look
                     foreach (float side in new[] { -1f, 1f })
                         PropBuilder.Place(dock, lamp, new Vector3(x + 1f, 0f, BridgeEnd.z + side * (LandingW / 2f - 0.1f))).name = "Bridge Lamp";
             }
-            // The landing at the bridge's end, railed west and north; the stairs leave it south.
+            // The landing at the bridge's end, railed west and north; open south, over the moored tower.
             Part(dock, "Bridge Landing", MeshKit.Box(new Vector3(LandingW, DeckThick, LandingW)), LookMaterials.DeckTile(), new Vector3(BridgeEnd.x, -DeckThick, BridgeEnd.z), withCollider: true);
             Part(dock, "Landing Girder", MeshKit.Box(new Vector3(LandingW + 0.2f, 1.2f, LandingW + 0.2f)), LookMaterials.RustSteel(), new Vector3(BridgeEnd.x, -DeckThick - 1.2f, BridgeEnd.z));
             PropBuilder.Place(dock, rail, new Vector3(BridgeEnd.x - LandingW / 2f + 0.1f, 0f, BridgeEnd.z - 1f), Quaternion.Euler(0f, 90f, 0f)).name = "Landing Rail W";
@@ -705,16 +706,18 @@ namespace SunkCost.Editor.Look
             Part(dock, "Landing Lip", MeshKit.Box(new Vector3(LandingW, 0.02f, 0.4f)), LookMaterials.Hazard(), new Vector3(BridgeEnd.x, 0f, BridgeEnd.z - LandingW / 2f + 0.2f));
             foreach (float x in new[] { BridgeEnd.x - LandingW / 2f + 0.4f, BridgeEnd.x + LandingW / 2f - 0.4f })
                 Part(dock, "Pile", MeshKit.Cylinder(0.4f, -SeabedY - DeckThick, 12), LookMaterials.RustSteel(), new Vector3(x, SeabedY, BridgeEnd.z));
-            // The ship, moored stern-on under the landing: its tower's roof is level with
-            // the landing and its rail's gap faces it; bow to the south (the way out);
-            // nothing on it touching the HQ.
+            // The ship, moored stern-on under the landing: its deck TowerHeight under the
+            // landing, the tower's aft face at the stern (DeckLength / 2); bow to the
+            // south (the way out); nothing on it touching the HQ. The tower model's roof
+            // is lower than TowerHeight (about 3.7 m, 23 September 2026): from the landing
+            // it is a 2.3 m drop onto it, which the way-aboard card settles.
             GameObject ship = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
             ship.transform.SetParent(dock.transform, true);
             float sternZ = -SunkCost.Editor.Prototype.ShipStubBuilder.DeckLength / 2f;
-            float sternWorldZ = BridgeEnd.z - LandingW / 2f - 0.05f; // the tower's aft face against the landing's edge
+            // The tower's aft face 20 cm off the landing's edge: clear of the girders (10 cm
+            // proud of the slab) and of the bridge lamps' hoods over the stern's corner.
+            float sternWorldZ = BridgeEnd.z - LandingW / 2f - 0.2f;
             ship.transform.SetPositionAndRotation(new Vector3(BridgeEnd.x, ShipDeckY, sternWorldZ + sternZ), Quaternion.Euler(0f, 180f, 0f)); // yaw 180: the stern (local -z) toward the landing, the bow south
-            Transform gate = ship.transform.Find(SunkCost.Editor.Prototype.ShipStubBuilder.RoofGateName);
-            if (gate != null) gate.gameObject.SetActive(false); // moored: the bridge meets the gap; at sea the gate stays up
         }
 
         private static void Plank(GameObject root)

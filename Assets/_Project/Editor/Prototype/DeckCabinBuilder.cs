@@ -38,6 +38,10 @@ namespace SunkCost.Editor.Prototype
         private const float DoorThicknessMeters = 0.1f;
         private const int DoorLeafPanelCount = 8; // smooth enough to read as round (Dan, 19 September 2026)
         public const float FloorThicknessMeters = 0.1f;
+        // The tube's cap ring (ShipStubBuilder.DressCabin) is centred on the glass's top
+        // edge: its underside, where the status plate hangs.
+        public const float CapRingHeight = 0.36f;
+        public const float CapRingBottom = InteriorHeightMeters - CapRingHeight / 2f;
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the
         // direction the crew boards from and the ship departs toward, matching the stub's
@@ -56,11 +60,20 @@ namespace SunkCost.Editor.Prototype
 
             RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Floor", DiameterMeters, FloorThicknessMeters, floor, FloorThicknessMeters / 2f);
             // No frame posts: the tube is clean, clear glass (Dan, 19 September 2026).
-            float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, "Glass Shell", "Interior Walls");
+            // The button's band (its collider, 1.1 to 1.5 m, and a few centimetres) is the
+            // only open arc in the wall behind it.
+            float buttonBottom = PanelChestHeightMeters - 0.2f;
+            float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
             // The button: red, its word on it, facing into the cabin (every button in the game, Dan, 19 September 2026).
             Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
-            SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, PanelChestHeightMeters - 0.2f, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
-            RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);
+            SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
+            // On a pillar with its plate, not floating on the glass (ship audit SHIP-049);
+            // the elevator's redesign replaces it (Dan: "we will do a new one after").
+            RoundCabinGeometry.CreateButtonMount(cabin.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, FloorThicknessMeters, InteriorHeightMeters, buttonBottom + 0.56f, "DESCEND", SunkCost.Editor.Look.ShipModelSetup.HullMaterial());
+            // The roof: a collider only. Its glass lies wholly inside the tube's opaque cap
+            // ring (ShipStubBuilder.DressCabin), where nobody can ever see it.
+            GameObject roof = RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);
+            roof.GetComponent<Renderer>().enabled = false;
 
             Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters); // glass leaves: no dark slabs beside the doorway
             Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
@@ -78,12 +91,20 @@ namespace SunkCost.Editor.Prototype
 
             CreateDoorCollider(cabin.transform, interiorRadius, doorwayHalfAngleDeg);
 
-            GameObject volume = new(ShipParts.DeckCabinVolumeName, typeof(BoxCollider));
+            // The inside, round like the cabin (ship audit SHIP-086: a square box reached
+            // over the well at its corners and took in the grate): an upright capsule out
+            // to the wall ring's inner face, the interior's height. ShipParts.Contains tests
+            // it as that cylinder, in its own space. PhysX keeps a capsule at least as tall
+            // as it is wide, so the trigger's physical shape reaches a little over and
+            // under the cabin; nothing reads its trigger events, only Contains.
+            GameObject volume = new(ShipParts.DeckCabinVolumeName, typeof(CapsuleCollider));
             volume.transform.SetParent(cabin.transform, false);
             volume.transform.localPosition = new Vector3(0f, InteriorHeightMeters / 2f, 0f);
-            BoxCollider volumeCollider = volume.GetComponent<BoxCollider>();
+            CapsuleCollider volumeCollider = volume.GetComponent<CapsuleCollider>();
             volumeCollider.isTrigger = true;
-            volumeCollider.size = new Vector3(carRadius * 2f, InteriorHeightMeters, carRadius * 2f);
+            volumeCollider.direction = 1; // upright
+            volumeCollider.radius = interiorRadius - 0.075f; // the wall ring's inner face (its walls are 0.15 m)
+            volumeCollider.height = InteriorHeightMeters;
 
             CreatePanelLabel(cabin.transform, interiorRadius);
 
@@ -121,8 +142,10 @@ namespace SunkCost.Editor.Prototype
 
             // On a plate over the doorway, read by someone approaching from the bow (+Z)
             // looking back toward -Z: the plate's +Z faces them (no floating text, Dan,
-            // 19 September 2026).
-            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, direction * (interiorRadius + 0.2f) + new Vector3(0f, InteriorHeightMeters - 0.5f, 0f), Quaternion.identity, 2.0f, 0.5f, 0.16f, new Color(0.9f, 0.95f, 1f));
+            // 19 September 2026). It hangs from the tube's cap ring (ShipStubBuilder.
+            // DressCabin, its underside at CapRingBottom), in the doorway's line of glass.
+            const float plateHeight = 0.5f;
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, direction * (DiameterMeters / 2f + 0.01f) + new Vector3(0f, CapRingBottom - plateHeight / 2f, 0f), Quaternion.identity, 2.0f, plateHeight, 0.16f, new Color(0.9f, 0.95f, 1f));
             mesh.text = string.Empty; // the plate's own size and colour; the flow writes the words
         }
     }

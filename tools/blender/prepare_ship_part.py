@@ -1,9 +1,12 @@
 """Turn one generated ship part into a game-ready model (docs/reference/'Ship art -
 what to generate.docx'): import it, put it in the game's frame — the right size, the
-right way round, its feet on y = 0 — decimate it to a budget, flat-shade it, write its
-maps out by role, and export the FBX the ship prefab uses.
+right way round, its feet on y = 0 — decimate it to a budget, shade it smooth by
+angle, write its maps out by role, and export the FBX the ship prefab uses.
 
-  blender -b -P tools/blender/prepare_ship_part.py -- <Part> <generated.fbx|.glb> <out.fbx> [faces]
+  blender -b -P tools/blender/prepare_ship_part.py -- <Part> <generated.fbx|.glb|auto> <out.fbx> [faces]
+
+The raw download is kept in Models/Ship/<Part>/Generated~ (git-ignored, and the
+trailing ~ keeps Unity from importing it); `auto` takes the one .fbx or .glb there.
 
 The parts table lives in ShipPartTable below: target size in metres (x = width,
 y = depth, z = height, as the ship uses them), how to fit it, and the triangle budget.
@@ -68,6 +71,19 @@ TABLE = {
 
 # Decimation that keeps fewer than one face in four gets its maps baked afresh.
 BAKE_RATIO = 4
+
+# Faces meeting at less than this stay one smooth surface; a sharper crease keeps
+# its edge. Flat shading gave every triangle its own three vertices (about 960k on
+# the ship) and faceted every barrel and buoy (SHIP-062). It is set before the
+# bake, so the baked tangent-space normals are relative to these smooth normals,
+# the ones Unity imports.
+SMOOTH_ANGLE = 50.0
+
+# Parts the ship stands at twice their size (ShipDeckDressing.Scale): their bake
+# gets the big parts' 2048 maps, not 1024 (the winch looked rough up close).
+LARGE_ON_DECK = {"Winch"}
+
+MODELS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Assets", "_Project", "Models", "Ship")
 
 # The hull's rules, in metres: the bulwark is chest high, well over the 65 cm
 # jump (Dan, 23 September 2026: no fences, "the sides of the ship tall enough so
@@ -143,6 +159,34 @@ def hull_deck_slot(data):
             faces += 1
     print("deck faces %d" % faces)
     return plate
+
+
+# ---- the shading ----------------------------------------------------------------
+
+def shade_smooth(mesh):
+    """Triangulated (so Blender's bake tangents and Unity's MikkTSpace ones see the
+    same triangles), any imported custom normals dropped (a decimation leaves them
+    meaningless), then smooth by angle with the sharp creases kept."""
+    bpy.ops.object.select_all(action="DESELECT")
+    mesh.select_set(True)
+    bpy.context.view_layer.objects.active = mesh
+    tri = mesh.modifiers.new("Triangulate", "TRIANGULATE")
+    tri.quad_method = "BEAUTY"
+    tri.ngon_method = "BEAUTY"
+    bpy.ops.object.modifier_apply(modifier="Triangulate")
+    if mesh.data.has_custom_normals:
+        bpy.ops.mesh.customdata_custom_splitnormals_clear()
+    bpy.ops.object.shade_smooth_by_angle(angle=math.radians(SMOOTH_ANGLE), keep_sharp_edges=False)
+    print("smooth by angle %.0f, %d faces" % (SMOOTH_ANGLE, len(mesh.data.polygons)))
+
+
+def generated_source(part):
+    """The raw download in Models/Ship/<Part>/Generated~: the one .fbx or .glb."""
+    folder = os.path.join(MODELS, part, "Generated~")
+    found = [f for f in sorted(os.listdir(folder)) if f.lower().endswith((".fbx", ".glb"))] if os.path.isdir(folder) else []
+    if len(found) != 1:
+        raise SystemExit("expected one .fbx or .glb in %s, found %s" % (folder, found))
+    return os.path.join(folder, found[0])
 
 
 # ---- the bake -----------------------------------------------------------------
@@ -237,9 +281,11 @@ def bake_from(high, low, part, size, ray):
 
 def main():
     args = sys.argv[sys.argv.index("--") + 1:]
-    part, src, dst = args[0], os.path.abspath(args[1]), os.path.abspath(args[2])
+    part, dst = args[0], os.path.abspath(args[2])
     if part not in TABLE:
         raise SystemExit("unknown part " + part)
+    src = generated_source(part) if args[1] == "auto" else os.path.abspath(args[1])
+    print("source", src)
     target, fit, budget = TABLE[part]
     if len(args) > 3:
         budget = int(args[3])
@@ -316,7 +362,6 @@ def main():
         mesh.select_set(True)
         bpy.ops.object.modifier_apply(modifier="Decimate")
         print("decimated %d -> %d faces" % (faces, len(mesh.data.polygons)))
-    bpy.ops.object.shade_flat()
 
     if part == "Hull":
         deck, top = hull_measure(mesh.data)
@@ -324,13 +369,14 @@ def main():
         if high is not None:
             hull_flatten(high.data, deck, top)  # the bake source keeps the same shape
         hull_cut_well(mesh)
+    shade_smooth(mesh)  # after the well's cut, so its wall is shaded with the rest
 
     if high is not None:
         unwrap_fresh(mesh)
     if part == "Hull":
         hull_deck_slot(mesh.data)  # after the unwrap, so the metre UVs are the ones kept
     if high is not None:
-        bake_from(high, mesh, part, 2048 if max(target) >= 4.0 else 1024, 1.0 if part == "Hull" else 0.3)
+        bake_from(high, mesh, part, 2048 if max(target) >= 4.0 or part in LARGE_ON_DECK else 1024, 1.0 if part == "Hull" else 0.3)
 
     # The maps out beside the model, named by their role, so Unity's setup finds them.
     map_dir = os.path.join(os.path.dirname(dst), "Maps")
@@ -386,7 +432,12 @@ def main():
         axis_up="Y",
         apply_unit_scale=True,
         apply_scale_options="FBX_SCALE_ALL",
-        mesh_smooth_type="OFF",
+        # The axis change into the vertices, not onto the node: the mesh comes into
+        # Unity Y-up with no (270.02, 0, 0) under it (ship audit SHIP-078), facing
+        # exactly as before. Unity's bakeAxisConversion must stay off on top of it,
+        # or the model comes in turned half round (ShipModelSetup.Apply).
+        bake_space_transform=True,
+        mesh_smooth_type="OFF",  # the split normals themselves go out; Unity imports them
         path_mode="STRIP",  # no .fbm copies beside the model: Unity reads Maps/ by name
         embed_textures=False,
     )

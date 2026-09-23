@@ -32,6 +32,29 @@ namespace SunkCost.Audio
         [Tooltip("The winch as heard on the ship, through the deck (Dan: 'low').")]
         [Range(0f, 1f)] [SerializeField] private float winchVolumeOnShip = 0.15f;
         [Range(0f, 1f)] [SerializeField] private float dingVolume = 0.8f;
+        [Tooltip("How 3D the winch and the bell are on the ship: 'mostly 3D' (Dan, 23 September 2026) - loud near the cabin, the rest heard faintly across the deck.")]
+        [Range(0f, 1f)] [SerializeField] private float shipCabinSpatialBlend = 0.7f;
+        [Tooltip("Metres from the deck cabin within which the winch and the bell are at full volume.")]
+        [SerializeField] private float shipCabinNearMetres = 6f;
+        [Tooltip("Metres from the deck cabin where their 3D part has faded out (the ship is 48 m long).")]
+        [SerializeField] private float shipCabinFarMetres = 40f;
+
+        [Header("The ship (ship audit SHIP-065, 23 September 2026): ambience, kept quiet")]
+        [Tooltip("The sea washing along the hull, heard from both sides, louder at the rails.")]
+        [SerializeField] private AudioClip seaWash;
+        [Range(0f, 1f)] [SerializeField] private float seaWashVolume = 0.14f;
+        [Tooltip("The wind over the deck; it rises with the height above it (the tower roof).")]
+        [SerializeField] private AudioClip wind;
+        [Range(0f, 1f)] [SerializeField] private float windVolume = 0.035f;
+        [Range(0f, 1f)] [SerializeField] private float windVolumeHigh = 0.1f;
+        [Tooltip("Metres over the deck where the wind reaches its high volume.")]
+        [SerializeField] private float windHighMetres = 6f;
+        [Tooltip("The engine: a diesel at the stern while the ship sails (ShipDepartureVisual plays it).")]
+        [SerializeField] private AudioClip engineHum;
+        [Range(0f, 1f)] [SerializeField] private float engineVolume = 0.3f;
+        [Tooltip("A low hiss at the TV speaker while it shows NO SIGNAL.")]
+        [SerializeField] private AudioClip tvHiss;
+        [Range(0f, 1f)] [SerializeField] private float tvHissVolume = 0.04f;
 
         [Header("Feet")]
         [Tooltip("A footstep on the seafloor; pitched a little differently left and right, higher sprinting.")]
@@ -86,6 +109,19 @@ namespace SunkCost.Audio
         public float LandVolume => landVolume;
         public float OwnFootstepScale => ownFootstepScale;
         public float DingVolume => dingVolume;
+        public float ShipCabinSpatialBlend => shipCabinSpatialBlend;
+        public float ShipCabinNearMetres => shipCabinNearMetres;
+        public float ShipCabinFarMetres => Mathf.Max(shipCabinFarMetres, shipCabinNearMetres + 1f);
+        public AudioClip SeaWash => seaWash != null ? seaWash : PlaceholderSounds.SeaWash;
+        public float SeaWashVolume => seaWashVolume;
+        public AudioClip Wind => wind != null ? wind : PlaceholderSounds.Wind;
+        public float WindVolume => windVolume;
+        public float WindVolumeHigh => windVolumeHigh;
+        public float WindHighMetres => Mathf.Max(0.5f, windHighMetres);
+        public AudioClip EngineHum => engineHum != null ? engineHum : PlaceholderSounds.Engine;
+        public float EngineVolume => engineVolume;
+        public AudioClip TvHiss => tvHiss != null ? tvHiss : PlaceholderSounds.Static;
+        public float TvHissVolume => tvHissVolume;
         public bool WinchIsPlaceholder => elevatorWinch == null;
         public bool DingIsPlaceholder => elevatorDing == null;
         public AudioClip LeakHiss => leakHiss != null ? leakHiss : PlaceholderSounds.Hiss;
@@ -122,6 +158,100 @@ namespace SunkCost.Audio
     {
         private const int Rate = 48000;
         private static AudioClip winch, ding, step, land, hiss, call, hit, shot, hum, slam;
+
+        // ---- the ship's ambience (ship audit SHIP-065, 23 September 2026) ----
+        private static AudioClip seaWash, windLoop, engine, tvStatic;
+
+        // The sea along the hull: dull noise swelling with two slow swells, a little
+        // foam on the crests; a 12 s loop.
+        public static AudioClip SeaWash
+        {
+            get
+            {
+                if (seaWash != null) return seaWash;
+                const float seconds = 12f;
+                seaWash = Loop("Placeholder sea wash", seconds, 31, (t, white, state) =>
+                {
+                    state[0] = state[0] * 0.995f + white * 0.005f;          // the body of the water: very low
+                    state[1] = state[1] * 0.9f + white * 0.1f;              // foam: brighter
+                    float swell = 0.55f + 0.3f * Mathf.Sin(2f * Mathf.PI * t * 3f / seconds) + 0.15f * Mathf.Sin(2f * Mathf.PI * t * 5f / seconds + 1.3f);
+                    float crest = Mathf.Max(0f, swell - 0.6f) * 2.5f;
+                    return state[0] * 9f * swell + state[1] * 0.35f * crest;
+                });
+                return seaWash;
+            }
+        }
+        // The wind: mid noise in slow gusts; a 10 s loop.
+        public static AudioClip Wind
+        {
+            get
+            {
+                if (windLoop != null) return windLoop;
+                const float seconds = 10f;
+                windLoop = Loop("Placeholder wind", seconds, 37, (t, white, state) =>
+                {
+                    state[0] = state[0] * 0.97f + white * 0.03f;
+                    state[1] = state[1] * 0.995f + white * 0.005f;
+                    float band = state[0] - state[1];                        // a band: no rumble, no hiss
+                    float gust = 0.6f + 0.25f * Mathf.Sin(2f * Mathf.PI * t * 2f / seconds) + 0.15f * Mathf.Sin(2f * Mathf.PI * t * 3f / seconds + 0.7f);
+                    return band * 5f * gust;
+                });
+                return windLoop;
+            }
+        }
+        // The engine: a slow diesel's firing thump (24 Hz and its harmonics) over a
+        // low rumble; a 2 s loop.
+        public static AudioClip Engine
+        {
+            get
+            {
+                if (engine != null) return engine;
+                engine = Loop("Placeholder engine", 2f, 41, (t, white, state) =>
+                {
+                    state[0] = state[0] * 0.98f + white * 0.02f;
+                    float firing = 0.4f * Mathf.Sin(2f * Mathf.PI * 24f * t) + 0.25f * Mathf.Sin(2f * Mathf.PI * 48f * t + 0.4f) + 0.12f * Mathf.Sin(2f * Mathf.PI * 72f * t + 1.1f) + 0.06f * Mathf.Sin(2f * Mathf.PI * 96f * t);
+                    float throb = 0.85f + 0.15f * Mathf.Sin(2f * Mathf.PI * 4f * t); // the cylinders
+                    return firing * throb * 0.8f + state[0] * 2f;
+                });
+                return engine;
+            }
+        }
+        // A screen with no signal: soft static; a 2 s loop.
+        public static AudioClip Static
+        {
+            get
+            {
+                if (tvStatic != null) return tvStatic;
+                tvStatic = Loop("Placeholder static", 2f, 43, (t, white, state) =>
+                {
+                    state[0] = state[0] * 0.5f + white * 0.5f;
+                    return state[0] * 0.5f;
+                });
+                return tvStatic;
+            }
+        }
+
+        // A seamless loop of `seconds`: the sample function runs on past the end and
+        // the overrun is faded into the start, so the loop point never clicks.
+        private static AudioClip Loop(string name, float seconds, int seed, System.Func<float, float, float[], float> sample)
+        {
+            int n = (int)(Rate * seconds), fade = Rate / 2;
+            var raw = new float[n + fade];
+            var state = new float[4];
+            System.Random random = new(seed);
+            for (int i = 0; i < raw.Length; i++)
+                raw[i] = sample(i / (float)Rate, (float)(random.NextDouble() * 2 - 1), state);
+            var data = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                float v = raw[i];
+                if (i < fade) { float k = i / (float)fade; v = raw[i] * k + raw[n + i] * (1f - k); }
+                data[i] = Mathf.Clamp(v, -1f, 1f);
+            }
+            AudioClip clip = AudioClip.Create(name, n, 1, Rate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
 
         // A leak: a 2 s loop of bright noise, seamless (the monsters, 20 September 2026).
         public static AudioClip Hiss

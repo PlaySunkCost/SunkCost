@@ -475,41 +475,71 @@ namespace SunkCost.Editor.Look
         // depth-tested TextMesh on its face — no text floats or shows through walls
         // (Dan, 19 September 2026). The plate's local +Z faces the reader; the text
         // object is named `textName` so the rules find it as before.
+        //
+        // The words fit the plate, between its frame bars (ship audit SHIP-018: the
+        // cabin's status ran off its 2 m plate). On the ship the plate wears the
+        // ship's screen style - dark glass, accent bars (SHIP-059) - and the cabin's
+        // status is drawn as a state over a hint, with an idle line (PlateText); the
+        // HQ's plates keep their look. The bars are the kit's worn bezel on the ship (SHIP-060).
         public static TextMesh SignPlate(GameObject parent, string name, string textName, Vector3 localPosition, Quaternion localRotation, float w, float h, float lineHeight, Color colour)
         {
             GameObject root = new(name);
             root.transform.SetParent(parent.transform, false);
             root.transform.localPosition = localPosition;
             root.transform.localRotation = localRotation;
-            Part(root, "Plate", MeshKit.Box(new Vector3(w, h, 0.1f), h / 2f), LookMaterials.SignBoard(), Vector3.zero);
-            Part(root, "Frame Top", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), LookMaterials.SignGlow(), new Vector3(0f, h / 2f - 0.04f, 0.05f));
-            Part(root, "Frame Bottom", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), LookMaterials.SignGlow(), new Vector3(0f, -h / 2f + 0.04f, 0.05f));
+            bool ship = parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null;
+            Material bar = ship ? ShipKitMaterials.Bezel() : LookMaterials.SignGlow(); // on the ship a worn dark rail from the kit (SHIP-060), no orange glow
+            Part(root, "Plate", MeshKit.Box(new Vector3(w, h, 0.1f), h / 2f), ship ? LookMaterials.ShipScreen() : LookMaterials.SignBoard(), Vector3.zero);
+            Part(root, "Frame Top", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), bar, new Vector3(0f, h / 2f - 0.04f, 0.05f));
+            Part(root, "Frame Bottom", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), bar, new Vector3(0f, -h / 2f + 0.04f, 0.05f));
             GameObject text = Text(root, textName, new Vector3(0f, 0f, 0.06f), lineHeight, colour, TextAnchor.MiddleCenter);
+            bool status = textName == SunkCost.World.ShipParts.DeckCabinPanelName;
+            text.AddComponent<PlateText>().Configure(new Vector2(w - 0.2f, h - 0.16f), status ? PlateText.Mode.StateHint : PlateText.Mode.Fit, status ? "ship.cabin.idle" : null);
             return text.GetComponent<TextMesh>();
         }
 
         // ---- buttons --------------------------------------------------------------------
 
         // Every button in the game (Dan, 19 September 2026: "a red button with the
-        // text on it" — never a label beside a button): an ink bezel, a fat red cap
+        // text on it" - never a label beside a button): an ink bezel, a fat cap
         // proud of it, the words on the cap from HQSigns by `textKey`. The root
         // carries the collider the crosshair finds and keeps the name the rules look
         // for; its local +Z faces the person pressing it. `width` m across.
+        //
+        // One button with states (ship audit SHIP-048, 23 September 2026, ButtonLook):
+        // red only for what cannot be undone (End day), the ship's accent for a
+        // destination; a lit rim round the cap, proud of the bezel, for the aimed and
+        // locked states (SHIP-072: the old "Cap Edge" was buried inside the bezel);
+        // the buttons side by side share one text size, the longest label's (SHIP-050).
+        public static readonly string[] DangerKeys = { "button.endday" };
         public static GameObject PushButton(GameObject parent, string name, Vector3 localPosition, Quaternion localRotation, string textKey, float width = 0.6f)
         {
             GameObject root = new(name);
             root.transform.SetParent(parent.transform, false);
             root.transform.localPosition = localPosition;
             root.transform.localRotation = localRotation;
-            Part(root, "Bezel", MeshKit.Box(new Vector3(width, 0.4f, 0.06f)), LookMaterials.Ink(), Vector3.zero);
-            Part(root, "Cap", MeshKit.Box(new Vector3(width - 0.12f, 0.28f, 0.1f)), LookMaterials.ButtonRed(), new Vector3(0f, 0.06f, 0.03f));
-            Part(root, "Cap Edge", MeshKit.Box(new Vector3(width - 0.08f, 0.32f, 0.02f)), LookMaterials.Ink(), new Vector3(0f, 0.04f, -0.01f));
-            GameObject text = Text(root, "Text", new Vector3(0f, 0.2f, 0.085f), 0.22f, Color.white, TextAnchor.MiddleCenter); // an arrow reads big; words shrink to fit
+            SunkCost.World.ButtonLook.Role role = Array.IndexOf(DangerKeys, textKey) >= 0 ? SunkCost.World.ButtonLook.Role.Danger : SunkCost.World.ButtonLook.Role.Destination;
+            bool ship = parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null;
+            // On the ship the bezel wears the worn kit like the models round it (SHIP-060); the HQ's stays ink.
+            Part(root, "Bezel", MeshKit.Box(new Vector3(width, 0.4f, 0.06f)), ship ? ShipKitMaterials.Bezel() : LookMaterials.Ink(), Vector3.zero);
+            Part(root, SunkCost.World.ButtonLook.CapName, MeshKit.Box(new Vector3(width - 0.12f, 0.28f, 0.1f)), role == SunkCost.World.ButtonLook.Role.Danger ? LookMaterials.ButtonRed() : LookMaterials.ButtonAccent(), new Vector3(0f, 0.06f, 0.03f));
+            // The rim: four bars 8 mm clear of the cap, 6 mm proud of the bezel's face (z 0.03).
+            GameObject rim = new(SunkCost.World.ButtonLook.RimName);
+            rim.transform.SetParent(root.transform, false);
+            Material rimIdle = LookMaterials.ShipFlat(Color.Lerp(ScreenStyle.Track, SunkCost.World.ButtonLook.RimColour(role), 0.45f));
+            float rw = width - 0.06f, bar = 0.022f, rz = 0.036f;
+            Part(rim, "Rim", MeshKit.Box(new Vector3(rw, bar, 0.012f)), rimIdle, new Vector3(0f, 0.03f, rz));
+            Part(rim, "Rim", MeshKit.Box(new Vector3(rw, bar, 0.012f)), rimIdle, new Vector3(0f, 0.37f - bar, rz));
+            Part(rim, "Rim", MeshKit.Box(new Vector3(bar, 0.34f, 0.012f)), rimIdle, new Vector3(-(rw - bar) / 2f, 0.03f, rz));
+            Part(rim, "Rim", MeshKit.Box(new Vector3(bar, 0.34f, 0.012f)), rimIdle, new Vector3((rw - bar) / 2f, 0.03f, rz));
+            GameObject text = Text(root, SunkCost.World.ButtonLook.TextName, new Vector3(0f, 0.2f, 0.085f), 0.22f, Color.white, TextAnchor.MiddleCenter); // an arrow reads big; words shrink to fit
             SignText sign = text.AddComponent<SignText>();
-            sign.Fit(width - 0.14f, 0.24f);
+            sign.Fit(width - 0.14f, 0.2f);
+            sign.Group("button:" + parent.name);
             sign.Configure(textKey);
             BoxCollider col = root.AddComponent<BoxCollider>();
             col.center = new Vector3(0f, 0.2f, 0.02f); col.size = new Vector3(width, 0.4f, 0.12f);
+            root.AddComponent<SunkCost.World.ButtonLook>().Configure(role);
             return root;
         }
 

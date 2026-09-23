@@ -12,6 +12,9 @@
 # Asset meta data for ignored folders
 !/[Aa]ssets/**/*.meta
 
+# Unity's crash-recovery copies of unsaved scenes: local only, never the source
+/[Aa]ssets/_Recovery*
+
 # IDE
 .vs/
 .idea/
@@ -55,6 +58,9 @@ steam_appid.txt
 
 # Raw generator downloads (Meshy and the like): huge, and reproducible from the
 # concept pictures in docs/reference. The processed model beside them is committed.
+# They live in Generated~, which Unity does not import (2.1 GB of it once did);
+# tools/blender/prepare_ship_part.py reads them from there.
+Assets/_Project/Models/**/Generated~/
 Assets/_Project/Models/**/Generated/
 Assets/_Project/Models/**/Generated.meta
 

@@ -44,7 +44,10 @@ namespace SunkCost.Audio
                 echo = go.AddComponent<AudioSource>();
                 echo.spatialBlend = 1f;
                 echo.rolloffMode = AudioRolloffMode.Linear;
-                echo.maxDistance = earshotMeters;
+                // Heard as far as the picture is drawn, through the chosen output like
+                // every other source (ship audit SHIP-085, 23 September 2026).
+                echo.maxDistance = ShipTV.ViewerMetres;
+                AudioDeviceService.RouteSource(echo);
             }
             echo.transform.position = tv.SpeakerPosition;
             echo.PlayOneShot(source.clip, source.volume * (1f - distance / earshotMeters));

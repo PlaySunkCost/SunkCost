@@ -60,3 +60,31 @@ ambient probe follows the swapped ambient colour.
 - The TV and spectators draw none of the watched diver's own figure (hands only when holding something):
   the eased eyes trail the body, and a running or jumping diver's body and hands came into the picture.
 - The host keeps a dead player's figure hidden when it sets that player up again.
+
+## Ship audit fix — 23 September 2026 — testing owed
+
+The fixes for `SHIP_FULL_AUDIT.md` (SHIP-001 … SHIP-087) were made in edit mode
+only: rebuilds, validators, raycast and overlap probes, captures. **Nothing in
+this section has been run in Play Mode.** The lead fills in the placeholders.
+
+Build revision: `<revision>` · Host: `<host>` · Guests: `<guests>`
+
+| Job / check | What is new since the last run | Result |
+|---|---|---|
+| **HQ mooring** | `HQPrototype.unity` regenerated for the 48 m ship: the tower's aft face 0.2 m off the landing, no pile or girder in the hull or tower. Regenerate once more after the final ship rebuild. Walk the bridge to the landing and look over the edge. | `<result>` |
+| **cabin** | The ring round the well (low visible rail, 1.2 m collider, open at the grate); the Unstuck point clear of the container; the warm car light on both cars. | `<result>` |
+| **loop** and **fullrun** | Props at Dan's sizes; the console buttons SITE 01 · HQ · END DAY; the ladder gone; the lounge table between the benches. | `<result>` |
+| **spectate** | The TV lowered (same size); the rows below on the TV and the couch. | `<result>` |
+| TV reach (SHIP-043) | At the couch front, about 5 m from the screen: the dot turns gold, E changes the channel and the server accepts it. At 6.7 m nothing happens. A console button at 4.5 m: no target; at 3.0 m: pressable. The cabin button, loot and the car panel still at 3.5 m. Needs the `ShipControls` server check wired first. | `<result>` |
+| Couch: sit and stand | E on each couch: host and guest both see `SeatNumber` = N; the owner's root within 5 cm of `CouchSeat_N`, capsule off; the view turns to the TV; the FOV settles with the screen's four corners inside viewport [0.02, 0.98] and one axis at 0.95 ± 0.02. Space, E and W each stand you up on the deck (y about 0, capsule on, seat 0 on both peers). A second player asking for the same seat gets "Seat taken". Stepping onto the seat (seat and back collide, SHIP-024). | `<result>` |
+| Couch: others see the sitter | The guest's copy of the seated host is at the seat, not floating: `SeatedPose` true, body scale about 0.95/1.8, eyes at hip + 0.75. Kill a diver below (K), spectate the seated host: the spectator's FOV equals the host's within 1°. Look at the squashed body and the arms on it. | `<result>` |
+| Couch: departure while seated | Sit, sail HQ to sea: seated through the fades; on arrival the root within 5 cm of the destination ship's `CouchSeat_N`; the capsule stays off after the unlock until the player stands; standing puts them on the destination deck. The server logs no "[Seat] ... stood up". | `<result>` |
+| Couch: edge cases | Unstuck stands you up (seat 0); a disconnect frees the seat; the plank at HQ stands you up. | `<result>` |
+| Riders while sailing (SHIP-034) | The ship root has a kinematic Rigidbody in both worlds; during PullingAway the local rider's ship-local offset stays constant (under 1 cm) and remote copies behave as before; at rest `transform.hasChanged` stays false and the physics sync cost is near zero; frozen cargo sails and lands as before (matrix D1 on). | `<result>` |
+| Use highlight (SHIP-054) | `InteractHighlight.Highlighted` is the target root with PartCount > 0 for a console button, the cabin button, the TV screen, a couch and a coin; null aimed at the sky, at a teammate, with the menu open, while seated, and for an item "Hands full" blocks. Look at it on the deck and below in fog. | `<result>` |
+| Winch and bell | Mostly 3D: loud near the cabin, faint across the deck. | `<result>` |
+| The 1.2 m side and the well's rail against a jump | Including from a crate or barrel beside them. | `<result>` |
+| `Sunk Cost/Look/Audit the ship's shell` | Must report 0 problems after the final ship rebuild. | `<result>` |
+| Lighting between worlds | The dive site loaded next to the ship: neither world's lights leak into the other (ties to the TV floor question above). | `<result>` |
+
+Test seams for the couch rows (editor only, `HQPlayerController.Couch.cs`): `RequestSitForChecks(int number)` makes the same request E does, `StandForChecks()` stands up. Matrix rows fix-player suggested (not written): T3b/T3c in `SpectateRuntimeChecks` after T3 (the TV from 5 m, the console from 4.5 m); a couch block (the four couch rows above); next to D1 in `WorldLoopRuntimeChecks`, the ship's kinematic Rigidbody and no root writes at rest.

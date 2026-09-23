@@ -48,6 +48,31 @@ namespace SunkCost.Editor.Look
         public static Material BeaconWhite() => Emissive("BeaconWhite", new Color(1.0f, 0.95f, 0.85f), 3f);
         public static Material ScreenTeal() => Emissive("ScreenTeal", new Color(0.25f, 0.92f, 0.82f), 1.4f);
         public static Material SignBoard() => Flat("SignBoard", new Color(0.06f, 0.06f, 0.08f), 0f, 0.2f);
+        // A destination's button: the ship's accent, darkened for white words on it;
+        // red stays for what cannot be undone (ship audit SHIP-048, 23 September 2026).
+        public static Material ButtonAccent() => Flat("ButtonAccent", SunkCost.World.ButtonLook.DestinationCap, 0f, 0.45f);
+
+        // The ship's screens (SHIP-044/059): unlit flat colours of the one screen
+        // style (SunkCost.Look.ScreenStyle), so the glass never glows brighter than
+        // its words and the deck's sun never lifts it. The HQ's ScreenTeal is left as it is.
+        public const string ScreenFolder = Folder + "/ShipScreens";
+        public static Material ShipScreen() => ShipFlat(SunkCost.Look.ScreenStyle.Back);
+        public static Material ShipFlat(Color c)
+        {
+            string path = ScreenFolder + "/ScreenFlat_" + ColorUtility.ToHtmlStringRGB(c) + ".mat";
+            Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
+            if (unlit == null) throw new System.InvalidOperationException("URP Unlit shader not found.");
+            if (m == null)
+            {
+                System.IO.Directory.CreateDirectory(ScreenFolder);
+                m = new Material(unlit);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            if (m.shader != unlit) m.shader = unlit;
+            if (m.GetColor("_BaseColor") != c) { m.SetColor("_BaseColor", c); EditorUtility.SetDirty(m); }
+            return m;
+        }
         public static Material DeckMarking() => Flat("DeckMarking", new Color(0.82f, 0.80f, 0.74f), 0.0f, 0.2f);
         public static Material CourtPaint() => Flat("CourtPaint", new Color(0.72f, 0.34f, 0.20f), 0.0f, 0.12f);
         public static Material Backboard() => Flat("Backboard", new Color(0.85f, 0.87f, 0.90f), 0f, 0.2f);

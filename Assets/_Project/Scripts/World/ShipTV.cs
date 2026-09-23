@@ -25,6 +25,10 @@ namespace SunkCost.World
     // the screen. It renders with the site's own fog and ambient (WorldLook) and
     // the diver camera's post-processing, so the seafloor looks as dark on the
     // TV as it does to the diver.
+    //
+    // Round the picture (TvDisplay, ship audit SHIP-046, 23 September 2026): a
+    // "● LIVE — NAME" chip while it broadcasts, and while nobody is below an idle
+    // channel - the ship's name over faint static - instead of a dead field.
     [DefaultExecutionOrder(500)] // after the divers' NetworkTransforms have moved
     public sealed class ShipTV : MonoBehaviour
     {
@@ -48,6 +52,7 @@ namespace SunkCost.World
         private PlayerHudUI hud;
         private readonly PlayerHudUI.VisorFrame frame = new();
         private bool renderedThisFrame;
+        private TvDisplay display;
 
         // What the screen shows this frame (for the checks and the peer snapshot).
         public int Channel { get; private set; } = -1;
@@ -69,6 +74,7 @@ namespace SunkCost.World
             speaker = ship != null ? ship.TvSpeaker : null;
             if (screen == null) return;
             material = screen.material; // an instance: the shared asset keeps its colour
+            display = TvDisplay.Ensure(ship);
             GameObject go = new("TvCamera");
             go.transform.SetParent(transform, false);
             cam = go.AddComponent<Camera>();
@@ -87,7 +93,7 @@ namespace SunkCost.World
             picture = new RenderTexture(w, h, 16) { name = "TvPicture" };
             shown = new RenderTexture(w, h, 0) { name = "TvShown" };
             if (cam != null) cam.targetTexture = picture;
-            if (material != null && diver != null) material.mainTexture = shown;
+            if (material != null && diver != null) TvDisplay.ShowPicture(material, shown);
         }
 
         private void ReleaseTextures()
@@ -99,6 +105,7 @@ namespace SunkCost.World
         private void OnDestroy()
         {
             ReleaseTextures();
+            display?.Release();
             if (material != null) Destroy(material);
         }
 
@@ -140,7 +147,7 @@ namespace SunkCost.World
                 if (diver == null) ShowNoSignal();
                 else ShowLive(diver);
             }
-            if (diver == null) return;
+            if (diver == null) { display?.AnimateIdle(material); return; }
             HQPlayerController local = WorldSceneFlow.LocalPlayer();
             ViewerNear = local != null && Vector3.Distance(local.transform.position, SpeakerPosition) <= ViewerMetres;
             if (!ViewerNear || Time.frameCount % FrameStep != 0) return;
@@ -196,16 +203,19 @@ namespace SunkCost.World
         private void ShowLive(HQPlayerController who)
         {
             PlayerIdentity identity = who.GetComponent<PlayerIdentity>();
-            Caption = "LIVE · " + (identity != null ? identity.DisplayName : PlayerIdentity.Fallback(who.OwnerId));
-            if (caption != null) { caption.text = Caption; caption.color = new Color(1f, 0.35f, 0.3f); }
-            if (material != null) { material.mainTexture = shown; material.color = Color.white; }
+            string name = identity != null ? identity.DisplayName : PlayerIdentity.Fallback(who.OwnerId);
+            Caption = "LIVE · " + name;
+            if (caption != null) caption.text = Caption; // hidden behind the chip; its colour is the chip's
+            display?.ShowLive(name);
+            TvDisplay.ShowPicture(material, shown);
         }
 
         private void ShowNoSignal()
         {
             Caption = "NO SIGNAL";
-            if (caption != null) { caption.text = Caption; caption.color = new Color(0.7f, 0.7f, 0.7f); }
-            if (material != null) { material.mainTexture = null; material.color = DarkScreen; }
+            if (caption != null) caption.text = Caption;
+            display?.ShowIdleCard();
+            if (material != null) { material.mainTexture = null; material.color = DarkScreen; material.mainTextureOffset = Vector2.zero; }
         }
 
         // For the checks: the shown picture as a PNG, and how much is in it (the
