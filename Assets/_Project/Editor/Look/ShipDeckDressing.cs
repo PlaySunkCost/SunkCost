@@ -305,11 +305,15 @@ namespace SunkCost.Editor.Look
             Transform screen = root.Find(ShipParts.TvScreenName);
             if (screen != null)
             {
+                // The whole panel, edge to edge: the 16:9 feed is drawn 2.3:1, a little
+                // wide. Pillarboxed it read as a slab on the screen again, and cropped
+                // it would cut the diver's visor readouts that spectators rely on.
+                float w = size.x, h = size.y;
                 screen.localPosition = centre + new Vector3(0f, 0f, -0.005f);
-                screen.localScale = new Vector3(size.x, size.y, 1f);
-                // What E finds: reaching 30 cm out past the frame toward the viewer, so the
-                // crosshair meets the screen before the cabinet's own box.
-                if (screen.TryGetComponent(out BoxCollider press)) { press.center = new Vector3(0f, 0f, -0.15f); press.size = new Vector3(1f, 1f, 0.3f); }
+                screen.localScale = new Vector3(w, h, 1f);
+                // What E finds: the whole panel, reaching 30 cm out past the frame toward
+                // the viewer, so the crosshair meets the screen before the cabinet's box.
+                if (screen.TryGetComponent(out BoxCollider press)) { press.center = new Vector3(0f, 0f, -0.15f); press.size = new Vector3(size.x / w, size.y / h, 0.3f); }
             }
             // The channel's name is the screen's own line of text, top centre, no plate.
             Transform caption = root.Find("Tv Caption Sign");
