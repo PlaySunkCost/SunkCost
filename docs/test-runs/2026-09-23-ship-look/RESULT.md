@@ -42,6 +42,16 @@ render has one main directional light (the query on the host found no directiona
 light at all, which itself needs explaining), and the ambient probe the host keeps
 from the ship's scene while `WorldLook` swaps only the ambient colour and fog.
 
+Lead from an edit-mode look (ShipAtSea with DiveSite01 added, no Play Mode): the
+dive has its own directional light ('Surface Light', intensity 2) and three
+'Seafloor Light' points on the DiveSiteDeep layer; the ship has its 'Sun' (0.9),
+'Well Light', 'Tube Light' and a zero-intensity 'Light'. Both suns cull layer 8.
+The dive's ambient is Flat (0.015, 0.030, 0.028), the ship's (0.25, 0.28, 0.32).
+Next step: render one camera at the seafloor twice - the dive scene active, then the
+ship active with `WorldLook.Begin(dive)` as the TV does - and compare; then check
+which directional light URP takes as the main light in each case and whether the
+ambient probe follows the swapped ambient colour.
+
 ## Fixed on the way (to be verified by the runs above)
 
 - The deck TV's screen is unlit (it was lit and glossy: the deck's daylight lifted the picture).
