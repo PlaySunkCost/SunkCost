@@ -541,12 +541,10 @@ namespace SunkCost.Editor.Prototype
                 Vector3 keepAt = host.transform.position; float keepYaw = host.Yaw;
                 Vector3 tvAtHold = sea.ToShipLocal(sea.TvScreen.position);
                 host.TeleportLocal(sea.FromShipLocal(new Vector3(tvAtHold.x, 0.05f, tvAtHold.z - 6f)), sea.FromShipYaw(0f));
-                File.AppendAllText(Log, "HOLDING for a look: the host faces the TV (live on B), B dives, A watches B
-");
+                File.AppendAllText(Log, "HOLDING for a look: the host faces the TV (live on B), B dives, A watches B\n");
                 float until = Time.realtimeSinceStartup + 900f;
                 while (File.Exists("Temp/spectate-hold.txt") && Time.realtimeSinceStartup < until) yield return Wait(1f);
-                File.AppendAllText(Log, "HOLD released
-");
+                File.AppendAllText(Log, "HOLD released\n");
                 host.TeleportLocal(keepAt, keepYaw); yield return Wait(0.5f);
             }
             // The TV is a second render: half resolution, every other frame, nobody near → nothing.
