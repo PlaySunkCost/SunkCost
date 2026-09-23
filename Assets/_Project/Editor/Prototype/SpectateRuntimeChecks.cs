@@ -149,6 +149,24 @@ namespace SunkCost.Editor.Prototype
             try { string p = Path.Combine(dir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
             catch (IOException) { return string.Empty; }
         }
+        // Mean luminance of a saved picture over a window (fractions of its width and
+        // height), every fourth pixel.
+        private static float MeanLuma(string path, float x0, float x1, float y0, float y1)
+        {
+            if (!File.Exists(path)) return -1f;
+            var tex = new Texture2D(2, 2);
+            try
+            {
+                if (!tex.LoadImage(File.ReadAllBytes(path))) return -1f;
+                int ax = (int)(x0 * tex.width), bx = (int)(x1 * tex.width), ay = (int)(y0 * tex.height), by = (int)(y1 * tex.height);
+                double sum = 0; int n = 0;
+                for (int y = ay; y < by; y += 4)
+                    for (int x = ax; x < bx; x += 4) { Color c = tex.GetPixel(x, y); sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b; n++; }
+                return n > 0 ? (float)(sum / n) : -1f;
+            }
+            finally { UnityEngine.Object.DestroyImmediate(tex); }
+        }
+
         private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label, string dir = GuestDir)
         {
             float deadline = Time.unscaledTime + seconds;
@@ -443,6 +461,17 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("spectatorActive=True") && GuestPlayerLine(r, idA).Contains("spectatorTarget=" + host.OwnerId + ";"), 6f, "S1 A's spectator view is on the host (after its second of own camera and the fade)");
             yield return GuestEventually(r => r.Contains("spectatingName=" + NameOf(host) + ";"), 4f, "S1 A's screen says SPECTATING " + NameOf(host));
             yield return GuestEventually(r => CamPosOf(GuestPlayerLine(r, idA)) is Vector3 p && Vector3.Distance(p, host.EyePosition) < 1.5f, 4f, "S1 A's camera sits on the host's eyes");
+            // A spectator sees no more than the diver it watches (Dan, 23 September 2026:
+            // the TV showed the dark below brighter than the diver saw it - "make sure it
+            // does not happen to spectators too"). Both screens as shown, the same moment.
+            string ownShot = Path.GetFullPath("Temp/spectate-diver-own.png"), watchShot = Path.GetFullPath("Temp/spectate-a-watching.png");
+            File.Delete(ownShot); File.Delete(watchShot);
+            H.CaptureScreen(ownShot);
+            yield return Send("{\"id\":{id},\"action\":\"capture\",\"item\":\"" + watchShot.Replace("\\", "/") + "\"}");
+            yield return Expect(() => File.Exists(ownShot) && File.Exists(watchShot), 5f, () => "S1b both screens captured");
+            yield return Wait(0.5f); // the writers close their files
+            float ownLuma = MeanLuma(ownShot, 0f, 1f, 0f, 1f), watchLuma = MeanLuma(watchShot, 0f, 1f, 0f, 1f);
+            Check(watchLuma <= ownLuma + 0.04f && Mathf.Abs(watchLuma - ownLuma) < 0.08f, $"S1b A watching the host below sees it as dark as the host does (spectator {watchLuma:0.000}, diver {ownLuma:0.000})");
             yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
             yield return Expect(() => Day.SpectateTargetOf(idA) == idB, 3f, () => "S1 left click: A now watches guest B (target " + Day.SpectateTargetOf(idA) + ")");
             yield return Expect(() => hostHud.Visor.OnAirCount == 0 && Day.WatchersOf(idB) == 1, 3f, () => "S1 the host is off air, B has one watcher");
@@ -489,6 +518,16 @@ namespace SunkCost.Editor.Prototype
             float tvContent = hostTv.SavePicture("Temp/spectate-tv-b.png");
             Check(hostTv.Frame.Readout.On && tvContent > 0.03f, $"S3/T the TV picture carries B's view and visor (brightness deviation {tvContent:0.000}; Temp/spectate-tv-b.png)");
             Check(hostTv.LastMeanBrightness < 0.35f, $"S3/T the seafloor on the TV is dark, under the site's own fog (mean brightness {hostTv.LastMeanBrightness:0.000})");
+            // And as it stands on the deck, in daylight: a camera 1.5 m in front of the
+            // screen sees the picture, not the deck's sun on it (the screen was lit and
+            // glossy until 23 September 2026 and lifted the black water to mid-blue). The
+            // same window of both: at 1.5 m the frame shows the screen's middle 59% x 75%.
+            string deckShot = Path.GetFullPath("Temp/spectate-tv-on-deck.png");
+            Transform tvQuad = sea.TvScreen;
+            H.CaptureFrom(tvQuad.position - tvQuad.forward * 1.5f, tvQuad.position, deckShot);
+            float onDeck = MeanLuma(deckShot, 0.1f, 0.9f, 0.1f, 0.9f);
+            float picture = MeanLuma(Path.GetFullPath("Temp/spectate-tv-b.png"), 0.266f, 0.734f, 0.198f, 0.802f); // the capture's 0.1-0.9 of the screen's middle 59% x 75%
+            Check(Mathf.Abs(onDeck - picture) < 0.05f, $"S3/T the TV on the deck shows the picture as rendered, not lit by the deck (on deck {onDeck:0.000}, picture {picture:0.000}; Temp/spectate-tv-on-deck.png)");
             // The diver's own head is out of its picture for the render only (Dan, 18
             // September 2026: a disc of the diver's colour over the TV): shown again after.
             Check(hostTv.Diver != null && hostTv.Diver.HeadSplit != null && hostTv.Diver.HeadSplit.HeadShown, "S3/T B's head is shown to the deck again after the TV's render");
