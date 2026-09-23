@@ -532,6 +532,23 @@ namespace SunkCost.Editor.Prototype
             // September 2026: a disc of the diver's colour over the TV): shown again after.
             Check(hostTv.Diver != null && hostTv.Diver.HeadSplit != null && hostTv.Diver.HeadSplit.HeadShown, "S3/T B's head is shown to the deck again after the TV's render");
             Check(WorldLook.InScene(WorldScenes.Scene(WorldId.Dive)) != null && WorldLook.InScene(WorldScenes.Scene(WorldId.Sea)) != null, "S3/T both loaded worlds carry a WorldLook");
+            // A hold for a person to look (Dan, 23 September 2026: "get to the same point
+            // and tell me to watch"): with Temp/spectate-hold.txt present, the run waits
+            // here - B diving below, dead A watching B, the host on deck facing the TV live
+            // on B - until the file is deleted (15 minutes at most), then goes on as before.
+            if (File.Exists("Temp/spectate-hold.txt"))
+            {
+                Vector3 keepAt = host.transform.position; float keepYaw = host.Yaw;
+                Vector3 tvAtHold = sea.ToShipLocal(sea.TvScreen.position);
+                host.TeleportLocal(sea.FromShipLocal(new Vector3(tvAtHold.x, 0.05f, tvAtHold.z - 6f)), sea.FromShipYaw(0f));
+                File.AppendAllText(Log, "HOLDING for a look: the host faces the TV (live on B), B dives, A watches B
+");
+                float until = Time.realtimeSinceStartup + 900f;
+                while (File.Exists("Temp/spectate-hold.txt") && Time.realtimeSinceStartup < until) yield return Wait(1f);
+                File.AppendAllText(Log, "HOLD released
+");
+                host.TeleportLocal(keepAt, keepYaw); yield return Wait(0.5f);
+            }
             // The TV is a second render: half resolution, every other frame, nobody near → nothing.
             int before = hostTv.RenderedFrames;
             host.TeleportLocal(sea.FromShipLocal(new Vector3(40f, 0.05f, 0f)), 0f);
