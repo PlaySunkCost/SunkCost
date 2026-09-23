@@ -42,30 +42,30 @@ namespace SunkCost.Editor.Look
         // own sizes and stay at one.
         public const float Scale = 2f;
 
-        // What loses its renderer and keeps its collider: the shapes a model now covers.
+        // What loses its renderer and keeps its collider: the shapes a model now covers
+        // whose collider is the game's (the storage room's walls, the monitor's desk).
         private static readonly string[] HiddenPrefixes =
         {
-            "Hull", "Tower", "Bridge Windows", "Bridge Label", "Bridge Door", "Bridge Sign",
-            "Storage", "TvPost", "TvFrame", "Monitor Frame", "Monitor Console",
-            "Fender", "Tyre", "Roof Gap", "Radar", "Antenna", "Funnel", "Beacon",
-            "Crew Screen Frame",
+            "Hull", "Tower", "Storage", "Monitor Frame", "Monitor Console", "Crew Screen Frame",
         };
 
-        // Hidden decoration whose collider goes with it: nothing a model stands in
-        // for is left to be walked into unseen (Dan: "invisible walls"). The tower's
-        // box and the storage room's walls are the game's and stay.
-        private static readonly string[] StripColliderPrefixes =
+        // What goes entirely, renderer and collider: the decoration the models stand
+        // in for, and the tower roof's rails, lamps and gate that stood on the hidden
+        // tower block (Dan, 23 September 2026: "remove those gates and the invisible
+        // platform they are on"). The tower block's own box goes too (below), so the
+        // tower model's shape is what the crew collides with.
+        private static readonly string[] RemovedPrefixes =
         {
             "Bridge Windows", "Bridge Label", "Bridge Door", "Bridge Sign",
             "TvPost", "TvFrame", "Fender", "Tyre", "Radar", "Antenna", "Funnel", "Beacon",
+            "Roof Rail", "Roof Lamp", "Roof Gate", "Roof Gap",
         };
 
         // What the models never replace, whatever its name begins with: the glass
-        // cabin, the monitor and its buttons, the screens the game writes on, the
-        // roof's rails and lamps (the way from the rig lands there) and its gate.
+        // cabin, the monitor and its buttons, the screens the game writes on.
         private static readonly string[] KeptPrefixes =
         {
-            "DeckCabin", "Monitor", "TvScreen", "Tv Caption", "Roof Gate", "Roof Rail", "Roof Lamp", "Crew Screen Text",
+            "DeckCabin", "Monitor", "TvScreen", "Tv Caption", "Crew Screen Text",
             "Storage Sign", "StorageReadout", // the room's readout: the game writes on it
         };
 
@@ -81,12 +81,11 @@ namespace SunkCost.Editor.Look
 
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true).ToArray())
             {
-                if (t == null || !HiddenPrefixes.Any(p => t.name.StartsWith(p))) continue;
-                if (KeptPrefixes.Any(p => t.name.StartsWith(p))) continue;
-                bool stripColliders = StripColliderPrefixes.Any(p => t.name.StartsWith(p));
+                if (t == null || KeptPrefixes.Any(p => t.name.StartsWith(p))) continue;
+                if (RemovedPrefixes.Any(p => t.name.StartsWith(p))) { Object.DestroyImmediate(t.gameObject); continue; }
+                if (!HiddenPrefixes.Any(p => t.name.StartsWith(p))) continue;
                 // The whole branch stops being seen: a hidden box often carries its
-                // trim and its lamps as children. The colliders below it stay unless
-                // the box was decoration.
+                // trim and its lamps as children. The colliders below it stay.
                 foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true).ToArray())
                 {
                     if (r == null || KeptPrefixes.Any(p => r.name.StartsWith(p))) continue;
@@ -97,9 +96,6 @@ namespace SunkCost.Editor.Look
                     Object.DestroyImmediate(r);
                     if (filter != null) Object.DestroyImmediate(filter);
                 }
-                if (stripColliders)
-                    foreach (Collider c in t.GetComponentsInChildren<Collider>(true).ToArray())
-                        if (c != null && !c.isTrigger) Object.DestroyImmediate(c);
             }
 
             GameObject look = new(LookName);
@@ -119,7 +115,13 @@ namespace SunkCost.Editor.Look
             GameObject hull = Place(look, "Hull", Vector3.zero, Quaternion.identity, 1f, false);
             SampleOutline(root, hull);
             BuildBulwark(look);
-            Place(look, "Tower", new Vector3(0f, 0f, towerZ), Quaternion.identity, 1f, false);
+            // The tower: the model's own shape is its collider. The game's box (8 x 6 x
+            // 6, hidden) came with a flat roof nothing stands on now - the invisible
+            // platform the crew found from the deck - so its collider goes.
+            GameObject tower = Place(look, "Tower", new Vector3(0f, 0f, towerZ), Quaternion.identity, 1f, false);
+            Transform towerBlock = root.Find("Tower");
+            if (towerBlock != null) foreach (Collider c in towerBlock.GetComponents<Collider>()) Object.DestroyImmediate(c);
+            solid.Add((tower, true));
 
             // The walkable rim between the hull's deck and the round hole wears the
             // deck's plate, like the hull's deck faces do (its UVs are in metres too).
