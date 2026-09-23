@@ -42,7 +42,7 @@ namespace SunkCost.Editor.Look
         // to sit on the couch: what a person uses stays at a person's size, what a
         // crane lifts stays big. The hull, the tower and the storage room are the
         // game's own sizes and stay at one.
-        public const float Scale = 2f;          // cargo and machinery: containers, the crane, the winch
+        public const float Scale = 2f;          // machinery: the crane, the winch
         public const float GearScale = 1.5f;    // deck gear: barrels, crates, lamps, bollards, buoys, pipes, coils, ladder, signs
         public const float HumanScale = 1.25f;  // what the crew touch: couch, table, bench, toolbox
         private static readonly Dictionary<string, float> Scales = new()
@@ -51,6 +51,7 @@ namespace SunkCost.Editor.Look
             ["Barrel"] = GearScale, ["Crate"] = GearScale, ["DeckLamp"] = GearScale, ["Bollard"] = GearScale,
             ["Lifebuoy"] = GearScale, ["Pipes"] = GearScale, ["CableCoil"] = GearScale, ["Ladder"] = GearScale,
             ["Signs"] = GearScale, ["NamePlate"] = GearScale,
+            ["Container"] = GearScale, // 9 m: a 12 m one reached from the well to the stern taper
         };
         private static float ScaleOf(string part) => Scales.TryGetValue(part, out float s) ? s : Scale;
 
@@ -153,12 +154,15 @@ namespace SunkCost.Editor.Look
 
             // A lamp every 12 m, a bollard between them, two lifebuoys a side; all
             // inboard of the bulwark by their own doubled size.
+            // The width is read at the length the prop stands at - the starboard row
+            // is staggered 6 m forward, and the bow narrows (Dan found a lamp on the sea).
             foreach (float side in new[] { -1f, 1f })
             {
-                for (float z = -halfL + 5f; z < halfL - 4f; z += 12f)
-                    Place(look, "DeckLamp", new Vector3(side * (W(z) - 1.6f), 0f, z + (side > 0f ? 6f : 0f)));
-                for (float z = -halfL + 11f; z < halfL - 6f; z += 12f)
-                    Place(look, "Bollard", new Vector3(side * (W(z) - 1.7f), 0f, z + (side > 0f ? 6f : 0f)));
+                float stagger = side > 0f ? 6f : 0f;
+                for (float z = -halfL + 5f + stagger; z < halfL - 6f; z += 12f)
+                    Place(look, "DeckLamp", new Vector3(side * (W(z) - 1.6f), 0f, z));
+                for (float z = -halfL + 11f + stagger; z < halfL - 8f; z += 12f)
+                    Place(look, "Bollard", new Vector3(side * (W(z) - 1.7f), 0f, z));
                 foreach (float z in new[] { -9f, 9f })
                     Place(look, "Lifebuoy", new Vector3(side * (W(z) - 1.0f), 0f, z), Quaternion.Euler(0f, side > 0f ? -90f : 90f, 0f));
             }
@@ -169,7 +173,7 @@ namespace SunkCost.Editor.Look
             // bollards, and to starboard the winch that runs the car and its cable.
             foreach (float a in new[] { 45f, 135f, 225f, 315f })
                 Place(look, "Bollard", new Vector3(Mathf.Sin(a * Mathf.Deg2Rad) * (well + 2.2f), 0f, Mathf.Cos(a * Mathf.Deg2Rad) * (well + 2.2f)));
-            Place(look, "Winch", new Vector3(well + 3.6f, 0f, -3.5f), Quaternion.Euler(0f, -90f, 0f));
+            Place(look, "Winch", new Vector3(well + 2.4f, 0f, -3.5f), Quaternion.Euler(0f, -90f, 0f));
             Place(look, "CableCoil", new Vector3(well + 3.4f, 0f, -7.0f));
             Place(look, "Toolbox", new Vector3(well + 2.2f, 0f, -9.2f), Quaternion.Euler(0f, -14f, 0f));
 
@@ -202,34 +206,39 @@ namespace SunkCost.Editor.Look
             Place(look, "Crane", new Vector3(6.5f, 0f, -6.5f), Quaternion.Euler(0f, 90f, 0f), Scale, true); // boom out over the starboard side, not over heads on the deck
             Place(look, "Crate", new Vector3(6.8f, 0f, -16.4f), Quaternion.Euler(0f, 18f, 0f));
             Place(look, "Crate", new Vector3(6.8f, 1.2f, -16.6f), Quaternion.Euler(0f, -32f, 0f));
-            Place(look, "Barrel", new Vector3(8.4f, 0f, -13.2f));
-            Place(look, "Barrel", new Vector3(8.8f, 0f, -14.8f));
+            Place(look, "Barrel", new Vector3(7.4f, 0f, -13.2f));
+            Place(look, "Barrel", new Vector3(7.0f, 0f, -14.8f));
             Place(look, "CableCoil", new Vector3(3.4f, 0f, -18.2f));
             Place(look, "Signs", new Vector3(W(-11f) - 0.9f, 3.0f, -11f), Quaternion.Euler(0f, -90f, 0f));
 
             // Port side, the cargo: a stack of two containers against the rail, the
             // plant and pipework, barrels, a second coil.
-            Place(look, "Container", new Vector3(-6.2f, 0f, -12f), Quaternion.Euler(0f, 90f, 0f)); // one, not a stack (Dan)
+            Place(look, "Container", new Vector3(-5.6f, 0f, -10f), Quaternion.Euler(0f, 90f, 0f)); // one, not a stack (Dan), between the well and the stern taper
             Place(look, "Pipes", new Vector3(-W(-20f) + 2.2f, 0f, -20f), Quaternion.Euler(0f, 90f, 0f));
-            Place(look, "Barrel", new Vector3(-5.6f, 0f, -3.4f));
-            Place(look, "Barrel", new Vector3(-7.0f, 0f, -4.2f));
+            Place(look, "Barrel", new Vector3(-6.8f, 0f, -12.4f));
+            Place(look, "Barrel", new Vector3(-5.6f, 0f, -13.2f));
             Place(look, "CableCoil", new Vector3(-6.0f, 0f, -20.6f));
             Place(look, "Toolbox", new Vector3(-3.4f, 0f, -18.6f), Quaternion.Euler(0f, 24f, 0f));
 
             // Round the well, clear of the spawn points at (+-3.5, 7) and (+-3.5, 10).
             Place(look, "Crate", new Vector3(-6.6f, 0f, 3.2f), Quaternion.Euler(0f, 8f, 0f));
-            Place(look, "Barrel", new Vector3(-8.0f, 0f, 5.2f));
+            Place(look, "Barrel", new Vector3(-7.0f, 0f, 5.2f));
             Place(look, "Toolbox", new Vector3(-7.2f, 0f, 9.0f), Quaternion.Euler(0f, -30f, 0f));
             Place(look, "Pipes", new Vector3(W(4f) - 2.2f, 0f, 4f), Quaternion.Euler(0f, -90f, 0f));
-            Place(look, "Crate", new Vector3(7.4f, 0f, 9.6f), Quaternion.Euler(0f, -17f, 0f));
+            Place(look, "Crate", new Vector3(6.4f, 0f, 9.6f), Quaternion.Euler(0f, -17f, 0f));
 
             // ---- the stern: the tower, the storage room, the working gear ---------
 
             // The storage room to starboard of the tower, its doorway toward the centre
             // line exactly where the game's walls and sill already are: the game's
             // sizes, and the game's colliders.
-            Place(look, "StorageRoom", new Vector3(3.2f, 0f, -12.5f), Quaternion.identity, 1f, false);
-            Place(look, "StorageSill", new Vector3(3.2f - 1.4f, 0f, -12.5f), Quaternion.Euler(0f, 90f, 0f), 1f, false);
+            // The model was fitted to the brief's 2.8 x 3.0 x 2.2 m; the game's room is
+            // ShipStubBuilder's, so the model is stretched to those numbers exactly.
+            float sx = ShipStubBuilder.StorageCentreX, sz = ShipStubBuilder.StorageCentreZ;
+            GameObject room = Place(look, "StorageRoom", new Vector3(sx, 0f, sz), Quaternion.identity, 1f, false);
+            if (room != null) room.transform.localScale = new Vector3(ShipStubBuilder.StorageWidth / 2.8f, ShipStubBuilder.StorageHeight / 2.2f, ShipStubBuilder.StorageDepth / 3.0f);
+            GameObject sill = Place(look, "StorageSill", new Vector3(sx - ShipStubBuilder.StorageWidth / 2f, 0f, sz), Quaternion.Euler(0f, 90f, 0f), 1f, false);
+            if (sill != null) sill.transform.localScale = Vector3.one * (ShipStubBuilder.StorageDoor / 1.4f);
             // The console on the tower's forward face is the panel the crew press to
             // sail: the game's monitor screen, its three buttons and its status line
             // move onto the model's front face (Dan, 23 September 2026: "replace the
@@ -244,13 +253,24 @@ namespace SunkCost.Editor.Look
             Place(look, "Barrel", new Vector3(-towerHalf - 4.2f, 0f, -halfL + 3.8f));
             Place(look, "Toolbox", new Vector3(towerHalf + 2.6f, 0f, towerZ - 2.4f), Quaternion.Euler(0f, -14f, 0f));
             Place(look, "Signs", new Vector3(0f, 4.6f, towerFront + 0.12f), Quaternion.identity);
-            Place(look, "Signs", new Vector3(3.2f, 1.6f, -12.5f + 1.56f), Quaternion.identity, 1f, true);
+            Place(look, "Signs", new Vector3(sx, ShipStubBuilder.StorageHeight * 0.55f, sz + ShipStubBuilder.StorageDepth / 2f + 0.06f), Quaternion.identity, 1f, true);
 
             // The models bring no colliders of their own; every prop then gets one
             // (a box round its mesh, or the mesh itself where the shape matters), and
             // the hull's own mesh is the deck and the walls.
             foreach (Collider c in look.GetComponentsInChildren<Collider>(true))
                 if (c.gameObject.name != "Bulwark") Object.DestroyImmediate(c);
+            // Nothing stands off the deck (Dan: "I dont want anything floating weird"):
+            // a prop whose footprint reaches past the hull's outline is removed and
+            // named, rather than left hanging over the sea.
+            for (int i = solid.Count - 1; i >= 0; i--)
+            {
+                GameObject prop = solid[i].Item1;
+                if (prop == null || prop.name == "Tower" || OverTheDeck(root, prop)) continue; // the tower is the game's structure, wider than the stern's outline
+                Debug.LogWarning("Ship dressing: " + prop.name + " at " + prop.transform.localPosition + " reaches past the hull; removed");
+                Object.DestroyImmediate(prop);
+                solid.RemoveAt(i);
+            }
             foreach ((GameObject prop, bool byMesh) in solid) Solidify(prop, byMesh);
             MeshFilter hullMesh = hull.GetComponentInChildren<MeshFilter>();
             hullMesh.gameObject.AddComponent<MeshCollider>().sharedMesh = hullMesh.sharedMesh;
@@ -310,6 +330,29 @@ namespace SunkCost.Editor.Look
             if (status != null) status.localPosition = new Vector3(status.localPosition.x, status.localPosition.y, front + 0.13f);
             Transform desk = root.Find("Monitor Console");
             if (desk != null) foreach (Collider c in desk.GetComponents<Collider>()) Object.DestroyImmediate(c);
+        }
+
+        // Whether a prop's footprint lies inside the hull's outline: the four bottom
+        // corners of its bounds, in ship space, each inboard of the edge at their own
+        // length. The crane's boom is meant to hang over the side, so only the crane
+        // is judged by its foot (its centre) rather than its whole span.
+        private static bool OverTheDeck(Transform root, GameObject prop)
+        {
+            Renderer r = prop.GetComponentInChildren<Renderer>();
+            if (r == null) return true;
+            Bounds b = r.bounds;
+            if (prop.name == "Crane")
+            {
+                Vector3 foot = root.InverseTransformPoint(prop.transform.position);
+                return Mathf.Abs(foot.x) < W(foot.z) - 0.5f && Mathf.Abs(foot.z) < halfL - 0.5f;
+            }
+            foreach (float sx in new[] { -1f, 1f })
+                foreach (float sz in new[] { -1f, 1f })
+                {
+                    Vector3 corner = root.InverseTransformPoint(new Vector3(b.center.x + sx * b.extents.x, b.min.y, b.center.z + sz * b.extents.z));
+                    if (Mathf.Abs(corner.x) > W(corner.z) - 0.15f || Mathf.Abs(corner.z) > halfL - 0.15f) return false;
+                }
+            return true;
         }
 
         // A collider on the prop's mesh object, in the mesh's own space so it turns

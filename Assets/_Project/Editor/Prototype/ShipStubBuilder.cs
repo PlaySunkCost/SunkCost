@@ -146,12 +146,18 @@ namespace SunkCost.Editor.Prototype
         // starboard side, clear of the boarding path down the middle, with a
         // doorway toward the centre line and the readout over it. StorageArea is
         // its taped floor; StorageVolume its inside (what the pay button sells).
+        // Grown by half on 23 September 2026 (Dan: "it is smaller than a player now")
+        // and moved a step to starboard so the doorway keeps its place by the centre
+        // line. The generated room model is fitted to these numbers (ShipDeckDressing).
+        public const float StorageCentreX = 3.9f, StorageCentreZ = -12.5f;
+        public const float StorageWidth = 4.2f, StorageDepth = 4.5f, StorageHeight = 3.3f, StorageDoor = 2.1f;
+
         private static void BuildStorageRoom(Transform root, Material wall, Material tape)
         {
-            const float cx = 3.2f, cz = -12.5f;     // centre on the deck
-            const float w = 2.8f, d = 3.0f, h = 2.2f; // outer width (x), depth (z), height
+            const float cx = StorageCentreX, cz = StorageCentreZ; // centre on the deck
+            const float w = StorageWidth, d = StorageDepth, h = StorageHeight; // outer width (x), depth (z), height
             const float t = 0.1f;                    // wall thickness
-            const float door = 1.4f;                 // doorway width along z, in the port wall; full height (Dan: "I want to go inside")
+            const float door = StorageDoor;          // doorway width along z, in the port wall; full height (Dan: "I want to go inside")
             Block(ShipParts.StorageAreaName, root, new Vector3(cx, 0.02f, cz), new Vector3(w, 0.04f, d), tape);
             Block("StorageWallStarboard", root, new Vector3(cx + w / 2f - t / 2f, h / 2f, cz), new Vector3(t, h, d), wall);
             Block("StorageWallStern", root, new Vector3(cx, h / 2f, cz - d / 2f + t / 2f), new Vector3(w, h, t), wall);
@@ -168,8 +174,9 @@ namespace SunkCost.Editor.Prototype
             // The inside, reaching under the deck: a flat item's pivot lies a few
             // centimetres up, right at a floor-level bottom (Dan: "an item stays after the sell").
             Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, h / 2f - 0.25f, cz), new Vector3(w - 2f * t, h + 0.5f - t, d - 2f * t));
-            // The readout on a plate on the port wall over the doorway, read from the deck's centre line.
-            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Storage Sign", ShipParts.StorageReadoutName, new Vector3(cx - w / 2f - 0.06f, h + 0.45f, cz), Quaternion.Euler(0f, -90f, 0f), 1.8f, 0.7f, 0.18f, new Color(0.95f, 0.85f, 0.4f));
+            // The readout on a plate on the port wall's face, on the doorway's header,
+            // read from the deck's centre line (not floating over the roof: Dan).
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Storage Sign", ShipParts.StorageReadoutName, new Vector3(cx - w / 2f - 0.06f, h - 0.4f, cz), Quaternion.Euler(0f, -90f, 0f), 1.8f, 0.6f, 0.16f, new Color(0.95f, 0.85f, 0.4f));
             mesh.text = "STORAGE\n$0 / $0";
             root.gameObject.AddComponent<StorageReadout>();
         }
