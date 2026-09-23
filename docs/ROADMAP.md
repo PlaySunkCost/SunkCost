@@ -177,7 +177,9 @@ the screenshots and the trailer are made of.
 | Card | Why | Size | Notes |
 |---|---|---|---|
 | Art pass 1: HQ props from Blender | Dan replaces the code-built prop prefabs one by one (the prefabs are the seam: drop a mesh in). Booths, containers, the tower, the crane. | L | Dan. Rolling, no gate. |
-| Art pass 2: the ship | Hull, tower, the tube's housing, the storage room, the TV. | L | Dan. |
+| Art pass 2: the ship | Hull, tower, the tube's housing, the storage room, the TV. | L | Dan. Done 23 September 2026 (`dan/ship-look`): thirty generated parts on a 48 x 20 m deck. |
+| The way aboard from the HQ | The ship's stair came off on 23 September 2026 (Dan: no stairs on the ship). At the rig the bridge still lands on the tower roof, 6 m over the deck, with no way down but a jump. Dan wants a fixed place on the HQ - a bridge the crew walks from the ship to the HQ - and maybe the HQ lower; the boarding point stays at `ShipStubBuilder.StairFoot` meanwhile. | M | Dan, 23 September 2026: "do it later". Blocks the cabin matrix's boarding rows until done. |
+| How high the ship floats | Done 23 September 2026 (Dan: "make the ship move above the water"): the sea is 4.5 m under the deck at sea, one number in `ShipStubBuilder.SeaLevelY` mirrored by `DiveSiteSettings.seaLevelY`, the car and `PlayerSubmersion`'s fallback. The ride's dry stretch grew from 1 m to 4.5 m; the cabin matrix is the check. At the rig the water is 12 m down (`HQPlatformBuilder.WaterY`), unchanged. | M | |
 | Art pass 3: the car and the tube | Glass that reads as glass, the ribs, the gate, the seafloor doorway. | M | Dan. |
 | Textures: a stylised palette | Generated textures are placeholders. A flat-shaded palette with bold silhouettes; one trim sheet for metal, one for the colony. | M | Dan (Unity AI or procedural, per his choice). |
 | Music on the ship, drones below | Design §2: "ambient drones underwater, real music on the ship". Two ship tracks (docked, at sea), one drone set, the HQ's morning. | M | A composer or a licensed pack; the `AudioLibrary` slots exist. |

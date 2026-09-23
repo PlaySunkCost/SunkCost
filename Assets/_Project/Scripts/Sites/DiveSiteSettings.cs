@@ -22,8 +22,8 @@ namespace SunkCost.Sites
         // Dan 15 September 2026). The tube holds water only below sea level; the
         // car slows while its floor-to-roof span crosses that surface. Travel time
         // is derived from the speeds and the depth, no longer a setting.
-        [Tooltip("World height of the water surface inside the tube. The ship's deck is 1 m above the sea, so the top anchor at 0 puts it at -1.")]
-        [SerializeField] private float seaLevelY = -1f;
+        [Tooltip("World height of the water surface inside the tube. The ship's deck is 4.5 m above the sea (ShipStubBuilder.SeaLevelY), so the top anchor at 0 puts it at -4.5.")]
+        [SerializeField] private float seaLevelY = -4.5f;
         [Tooltip("Metres between the car's glass and the tube's glass.")]
         [SerializeField] private float tubeClearanceMeters = 0.5f;
         [Tooltip("Metres between the tube's ring ribs (a rider reads speed off them).")]

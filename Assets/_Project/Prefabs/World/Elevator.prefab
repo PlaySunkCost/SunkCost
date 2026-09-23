@@ -2024,7 +2024,7 @@ MonoBehaviour:
   topPosition: {x: 0, y: 0, z: 0}
   bottomPosition: {x: 0, y: 0, z: 0}
   doorSealSeconds: 1.5
-  seaLevelY: -1
+  seaLevelY: -4.5
   spanMeters: 3.5
   travelSpeed: 3
   crossingSpeed: 1

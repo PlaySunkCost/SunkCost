@@ -52,3 +52,12 @@ crashlytics-build.properties
 steam_appid.txt
 *.env
 *.slnx
+
+# Raw generator downloads (Meshy and the like): huge, and reproducible from the
+# concept pictures in docs/reference. The processed model beside them is committed.
+Assets/_Project/Models/**/Generated/
+Assets/_Project/Models/**/Generated.meta
+
+# Blender FBX export side-copies of textures; the Maps/ folder is the source
+Assets/_Project/Models/**/*.fbm/
+Assets/_Project/Models/**/*.fbm.meta
