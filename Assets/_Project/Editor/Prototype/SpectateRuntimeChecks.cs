@@ -467,7 +467,7 @@ namespace SunkCost.Editor.Prototype
             string ownShot = Path.GetFullPath("Temp/spectate-diver-own.png"), watchShot = Path.GetFullPath("Temp/spectate-a-watching.png");
             File.Delete(ownShot); File.Delete(watchShot);
             H.CaptureScreen(ownShot);
-            yield return Send("{\"id\":{id},\"action\":\"capture\",\"item\":\"" + watchShot.Replace("\\", "/") + "\"}");
+            yield return Send("{\"id\":{id},\"action\":\"capture_play\",\"item\":\"" + watchShot.Replace("\\", "/") + "\"}");
             yield return Expect(() => File.Exists(ownShot) && File.Exists(watchShot), 5f, () => "S1b both screens captured");
             yield return Wait(0.5f); // the writers close their files
             float ownLuma = MeanLuma(ownShot, 0f, 1f, 0f, 1f), watchLuma = MeanLuma(watchShot, 0f, 1f, 0f, 1f);
@@ -532,26 +532,6 @@ namespace SunkCost.Editor.Prototype
             // September 2026: a disc of the diver's colour over the TV): shown again after.
             Check(hostTv.Diver != null && hostTv.Diver.HeadSplit != null && hostTv.Diver.HeadSplit.HeadShown, "S3/T B's head is shown to the deck again after the TV's render");
             Check(WorldLook.InScene(WorldScenes.Scene(WorldId.Dive)) != null && WorldLook.InScene(WorldScenes.Scene(WorldId.Sea)) != null, "S3/T both loaded worlds carry a WorldLook");
-            // The TV is the diver's own eyes, never a camera behind them (Dan, 23 September
-            // 2026: "does the tv show third person of him?"): its camera stands where B's
-            // own camera is on B's machine, and its picture matches B's own screen at the
-            // same moment - both saved for a look.
-            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
-            Vector3? bCam = CamPosOf(GuestPlayerLine(lastReply, idB));
-            Transform tvCam = hostTv.transform.Find("TvCamera");
-            Check(bCam is Vector3 bc && tvCam != null && Vector3.Distance(bc, tvCam.position) < 0.4f, $"S3/T the TV's camera is at B's own eyes (TV camera {(tvCam != null ? tvCam.position.ToString("F2") : "none")}, B's camera {bCam?.ToString("F2") ?? "unknown"})");
-            string bOwnShot = Path.GetFullPath("Temp/spectate-b-own.png"), bOnTv = Path.GetFullPath("Temp/spectate-b-on-tv.png");
-            File.Delete(bOwnShot);
-            yield return Send("{\"id\":{id},\"action\":\"resume\"}", GuestDirB); // no session menu over B's screen
-            yield return Wait(0.3f);
-            SunkCost.Monsters.Impostor impostorNow = UnityEngine.Object.FindAnyObjectByType<SunkCost.Monsters.Impostor>();
-            Say("the Impostor at this moment: " + (impostorNow == null ? "none" : "following " + impostorNow.TargetId + " at " + impostorNow.transform.position.ToString("F1") + " (B is " + idB + "; the TV and B see it only when it follows B)"));
-            yield return Send("{\"id\":{id},\"action\":\"capture\",\"item\":\"" + bOwnShot.Replace("\\", "/") + "\"}", GuestDirB);
-            hostTv.SavePicture(bOnTv);
-            yield return Expect(() => File.Exists(bOwnShot), 5f, () => "S3/T B's own screen captured");
-            yield return Wait(0.5f);
-            float bOwnLuma = MeanLuma(bOwnShot, 0f, 1f, 0f, 1f), bTvLuma = MeanLuma(bOnTv, 0f, 1f, 0f, 1f);
-            Check(Mathf.Abs(bOwnLuma - bTvLuma) < 0.05f, $"S3/T the TV shows B's dive as dark as B sees it (TV {bTvLuma:0.000}, B's own screen {bOwnLuma:0.000}; Temp/spectate-b-on-tv.png, Temp/spectate-b-own.png)");
             // A hold for a person to look (Dan, 23 September 2026: "get to the same point
             // and tell me to watch"): with Temp/spectate-hold.txt present, the run waits
             // here - B diving below, dead A watching B, the host on deck facing the TV live
@@ -567,6 +547,30 @@ namespace SunkCost.Editor.Prototype
                 File.AppendAllText(Log, "HOLD released\n");
                 host.TeleportLocal(keepAt, keepYaw); yield return Wait(0.5f);
             }
+            // The TV is the diver's own eyes, never a camera behind them (Dan, 23 September
+            // 2026: "does the tv show third person of him?"): its camera stands where B's
+            // own camera is on B's machine, and its picture matches B's own screen at the
+            // same moment - both saved for a look.
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            Vector3? bCam = CamPosOf(GuestPlayerLine(lastReply, idB));
+            Transform tvCam = hostTv.transform.Find("TvCamera");
+            Check(bCam is Vector3 bc && tvCam != null && Vector3.Distance(bc, tvCam.position) < 0.4f, $"S3/T the TV's camera is at B's own eyes (TV camera {(tvCam != null ? tvCam.position.ToString("F2") : "none")}, B's camera {bCam?.ToString("F2") ?? "unknown"})");
+            string bOwnShot = Path.GetFullPath("Temp/spectate-b-own.png"), bOnTv = Path.GetFullPath("Temp/spectate-b-on-tv.png");
+            File.Delete(bOwnShot);
+            SunkCost.Monsters.Impostor impostorNow = UnityEngine.Object.FindAnyObjectByType<SunkCost.Monsters.Impostor>();
+            foreach (HQPlayerController p in UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None))
+            {
+                int drawn = 0, all = 0;
+                foreach (Renderer r in p.GetComponentsInChildren<Renderer>(true)) { if (r is ParticleSystemRenderer) continue; all++; if (r.enabled && r.gameObject.activeInHierarchy) drawn++; }
+                Say("on the host, player " + p.OwnerId + (p.IsOwner ? " (host)" : "") + " dead=" + p.IsDead + " at " + p.transform.position.ToString("F1") + ": " + drawn + " of " + all + " renderers drawn");
+            }
+            Say("the Impostor at this moment: " + (impostorNow == null ? "none" : "following " + impostorNow.TargetId + " at " + impostorNow.transform.position.ToString("F1") + " (B is " + idB + "; the TV and B see it only when it follows B)"));
+            yield return Send("{\"id\":{id},\"action\":\"capture_play\",\"item\":\"" + bOwnShot.Replace("\\", "/") + "\"}", GuestDirB);
+            hostTv.SavePicture(bOnTv);
+            yield return Expect(() => File.Exists(bOwnShot), 5f, () => "S3/T B's own screen captured");
+            yield return Wait(0.5f);
+            float bOwnLuma = MeanLuma(bOwnShot, 0f, 1f, 0f, 1f), bTvLuma = MeanLuma(bOnTv, 0f, 1f, 0f, 1f);
+            Check(Mathf.Abs(bOwnLuma - bTvLuma) < 0.05f, $"S3/T the TV shows B's dive as dark as B sees it (TV {bTvLuma:0.000}, B's own screen {bOwnLuma:0.000}; Temp/spectate-b-on-tv.png, Temp/spectate-b-own.png)");
             // The TV is a second render: half resolution, every other frame, nobody near → nothing.
             int before = hostTv.RenderedFrames;
             host.TeleportLocal(sea.FromShipLocal(new Vector3(40f, 0.05f, 0f)), 0f);
