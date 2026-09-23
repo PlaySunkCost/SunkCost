@@ -239,6 +239,13 @@ namespace SunkCost.Editor.Look
             if (room != null) room.transform.localScale = new Vector3(ShipStubBuilder.StorageWidth / 2.8f, ShipStubBuilder.StorageHeight / 2.2f, ShipStubBuilder.StorageDepth / 3.0f);
             GameObject sill = Place(look, "StorageSill", new Vector3(sx - ShipStubBuilder.StorageWidth / 2f, 0f, sz), Quaternion.Euler(0f, 90f, 0f), 1f, false);
             if (sill != null) sill.transform.localScale = Vector3.one * (ShipStubBuilder.StorageDoor / 1.4f);
+            // The crew screen hangs on the tower's face as thin panels: solid, so a face
+            // pressed to its edge stops at the edge (ShipShellAudit found it).
+            foreach (string panel in new[] { "Crew Screen Frame", "Crew Screen" })
+            {
+                Transform t = root.Find(panel);
+                if (t != null && t.GetComponent<Collider>() == null) t.gameObject.AddComponent<BoxCollider>();
+            }
             // The console on the tower's forward face is the panel the crew press to
             // sail: the game's monitor screen, its three buttons and its status line
             // move onto the model's front face (Dan, 23 September 2026: "replace the

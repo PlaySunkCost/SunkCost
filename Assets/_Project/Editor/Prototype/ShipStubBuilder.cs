@@ -150,19 +150,23 @@ namespace SunkCost.Editor.Prototype
         // and moved a step to starboard so the doorway keeps its place by the centre
         // line. The generated room model is fitted to these numbers (ShipDeckDressing).
         public const float StorageCentreX = 3.9f, StorageCentreZ = -12.5f;
-        public const float StorageWidth = 4.2f, StorageDepth = 4.5f, StorageHeight = 3.3f, StorageDoor = 2.1f;
+        public const float StorageWidth = 4.2f, StorageDepth = 4.5f, StorageHeight = 3.3f, StorageDoor = 1.85f; // the doorway the model's jambs leave (measured 1.87 m)
 
         private static void BuildStorageRoom(Transform root, Material wall, Material tape)
         {
             const float cx = StorageCentreX, cz = StorageCentreZ; // centre on the deck
             const float w = StorageWidth, d = StorageDepth, h = StorageHeight; // outer width (x), depth (z), height
-            const float t = 0.1f;                    // wall thickness
+            // The walls and roof as thick as the generated model's, measured (30 cm and
+            // 60 cm): a thinner collider let the camera stand inside the model's wall
+            // (Dan, 23 September 2026, inside the room).
+            const float t = 0.32f;                   // wall thickness
+            const float roofT = 0.6f;                // roof thickness
             const float door = StorageDoor;          // doorway width along z, in the port wall; full height (Dan: "I want to go inside")
             Block(ShipParts.StorageAreaName, root, new Vector3(cx, 0.02f, cz), new Vector3(w, 0.04f, d), tape);
             Block("StorageWallStarboard", root, new Vector3(cx + w / 2f - t / 2f, h / 2f, cz), new Vector3(t, h, d), wall);
             Block("StorageWallStern", root, new Vector3(cx, h / 2f, cz - d / 2f + t / 2f), new Vector3(w, h, t), wall);
             Block("StorageWallBow", root, new Vector3(cx, h / 2f, cz + d / 2f - t / 2f), new Vector3(w, h, t), wall);
-            Block("StorageRoof", root, new Vector3(cx, h - t / 2f, cz), new Vector3(w, t, d), wall);
+            Block("StorageRoof", root, new Vector3(cx, h - roofT / 2f, cz), new Vector3(w, roofT, d), wall);
             float side = (d - door) / 2f;            // the port wall's two pieces either side of the doorway
             Block("StorageWallPortStern", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz - d / 2f + side / 2f), new Vector3(t, h, side), wall);
             Block("StorageWallPortBow", root, new Vector3(cx - w / 2f + t / 2f, h / 2f, cz + d / 2f - side / 2f), new Vector3(t, h, side), wall);
@@ -173,7 +177,7 @@ namespace SunkCost.Editor.Prototype
             Block("StorageSill", root, new Vector3(cx - w / 2f + t / 2f, sill / 2f, cz), new Vector3(t + 0.06f, sill, door), tape);
             // The inside, reaching under the deck: a flat item's pivot lies a few
             // centimetres up, right at a floor-level bottom (Dan: "an item stays after the sell").
-            Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, h / 2f - 0.25f, cz), new Vector3(w - 2f * t, h + 0.5f - t, d - 2f * t));
+            Trigger(ShipParts.StorageVolumeName, root, new Vector3(cx, (h - roofT) / 2f - 0.25f, cz), new Vector3(w - 2f * t, h - roofT + 0.5f, d - 2f * t));
             // The readout on a plate on the port wall's face, on the doorway's header,
             // read from the deck's centre line (not floating over the roof: Dan).
             TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Storage Sign", ShipParts.StorageReadoutName, new Vector3(cx - w / 2f - 0.06f, h - 0.4f, cz), Quaternion.Euler(0f, -90f, 0f), 1.8f, 0.6f, 0.16f, new Color(0.95f, 0.85f, 0.4f));
