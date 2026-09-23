@@ -196,7 +196,7 @@ namespace SunkCost.Editor.Look
             Place(look, "Crate", new Vector3(-6.4f, 0f, tv - 12f), Quaternion.Euler(0f, 22f, 0f));
             Place(look, "Barrel", new Vector3(6.2f, 0f, tv - 11.5f));
             Place(look, "Barrel", new Vector3(7.4f, 0f, tv - 12.8f));
-            Place(look, "Signs", new Vector3(-W(tv - 10f) + 1.0f, 3.0f, tv - 10f), Quaternion.Euler(0f, 90f, 0f));
+            Place(look, "Signs", new Vector3(-W(tv - 6f) + 1.0f, 0.6f, tv - 6f), Quaternion.Euler(0f, 90f, 0f)); // on the side's inner face, below its top
 
             // ---- the working stern ------------------------------------------------
 
@@ -209,7 +209,7 @@ namespace SunkCost.Editor.Look
             Place(look, "Barrel", new Vector3(7.4f, 0f, -13.2f));
             Place(look, "Barrel", new Vector3(7.0f, 0f, -14.8f));
             Place(look, "CableCoil", new Vector3(3.4f, 0f, -18.2f));
-            Place(look, "Signs", new Vector3(W(-11f) - 0.9f, 3.0f, -11f), Quaternion.Euler(0f, -90f, 0f));
+            Place(look, "Signs", new Vector3(W(-11f) - 0.9f, 0.6f, -11f), Quaternion.Euler(0f, -90f, 0f));
 
             // Port side, the cargo: a stack of two containers against the rail, the
             // plant and pipework, barrels, a second coil.
@@ -259,14 +259,14 @@ namespace SunkCost.Editor.Look
             Place(look, "Barrel", new Vector3(-towerHalf - 2.8f, 0f, -halfL + 3.2f));
             Place(look, "Barrel", new Vector3(-towerHalf - 4.2f, 0f, -halfL + 3.8f));
             Place(look, "Toolbox", new Vector3(towerHalf + 2.6f, 0f, towerZ - 2.4f), Quaternion.Euler(0f, -14f, 0f));
-            Place(look, "Signs", new Vector3(0f, 4.6f, towerFront + 0.12f), Quaternion.identity);
+            Place(look, "Signs", new Vector3(-2.4f, 2.6f, towerFront + 0.6f), Quaternion.identity); // beside the crew screen, on the tower's face
             Place(look, "Signs", new Vector3(sx, ShipStubBuilder.StorageHeight * 0.55f, sz + ShipStubBuilder.StorageDepth / 2f + 0.06f), Quaternion.identity, 1f, true);
 
             // The models bring no colliders of their own; every prop then gets one
             // (a box round its mesh, or the mesh itself where the shape matters), and
             // the hull's own mesh is the deck and the walls.
             foreach (Collider c in look.GetComponentsInChildren<Collider>(true))
-                if (c.gameObject.name != "Bulwark") Object.DestroyImmediate(c);
+                if (!c.gameObject.name.StartsWith("Bulwark")) Object.DestroyImmediate(c); // the side and its guard keep theirs
             // Nothing stands off the deck (Dan: "I dont want anything floating weird"):
             // a prop whose footprint reaches past the hull's outline is removed and
             // named, rather than left hanging over the sea.
@@ -279,6 +279,7 @@ namespace SunkCost.Editor.Look
                 solid.RemoveAt(i);
             }
             foreach ((GameObject prop, bool byMesh) in solid) Solidify(prop, byMesh);
+            MountSigns(root, look);
             MeshFilter hullMesh = hull.GetComponentInChildren<MeshFilter>();
             hullMesh.gameObject.AddComponent<MeshCollider>().sharedMesh = hullMesh.sharedMesh;
         }
@@ -362,6 +363,53 @@ namespace SunkCost.Editor.Look
             return true;
         }
 
+        // Every sign flat against something (Dan: "most of the signs are floating in
+        // the air"). A sign reads along its +Z; from just in front of it, a ray goes
+        // back through it to the first surface of the ship behind, and the sign is
+        // moved so its back touches that surface. A sign with nothing within reach
+        // behind it is removed and named rather than left hanging.
+        private static void MountSigns(Transform root, GameObject look)
+        {
+            Physics.SyncTransforms();
+            foreach (Transform t in look.transform.Cast<Transform>().Where(t => t.name == "Signs").ToArray())
+            {
+                MeshFilter mf = t.GetComponentInChildren<MeshFilter>();
+                Renderer r = t.GetComponentInChildren<Renderer>();
+                if (mf == null || r == null) continue;
+                Vector3 back = -t.forward;
+                // Its half-thickness along the way it faces, in world space: the mesh
+                // inside the prefab is Z-up, so its own axes do not say which is depth.
+                Vector3 e = r.bounds.extents, f = t.forward;
+                float depth = Mathf.Abs(f.x) * e.x + Mathf.Abs(f.y) * e.y + Mathf.Abs(f.z) * e.z;
+                Vector3 centre = r.bounds.center;
+                Vector3 from = centre - back * 0.6f;
+                float best = float.PositiveInfinity;
+                foreach (RaycastHit h in Physics.RaycastAll(from, back, 2.5f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (h.collider.transform.IsChildOf(t) || !h.collider.transform.IsChildOf(root) || !IsStructure(h.collider.transform)) continue;
+                    if (h.distance < best) best = h.distance;
+                }
+                if (float.IsInfinity(best))
+                {
+                    Debug.LogWarning("Ship dressing: a sign at " + t.localPosition + " has nothing behind it; removed");
+                    Object.DestroyImmediate(t.gameObject);
+                    continue;
+                }
+                // Its back face to the surface, a centimetre off it.
+                float move = best - 0.6f - depth - 0.01f;
+                t.position += back * move;
+            }
+            Physics.SyncTransforms();
+        }
+
+        // What a sign may hang on: the ship's side, the tower, the storage room's walls.
+        private static bool IsStructure(Transform t)
+        {
+            for (Transform p = t; p != null; p = p.parent)
+                if (p.name.StartsWith("Bulwark") || p.name == "Tower" || p.name.StartsWith("StorageWall") || p.name == "StorageRoom") return true;
+            return false;
+        }
+
         // A collider on the prop's mesh object, in the mesh's own space so it turns
         // and scales with the prop.
         private static void Solidify(GameObject prop, bool byMesh)
@@ -406,38 +454,7 @@ namespace SunkCost.Editor.Look
                 inward[i] = nrm;
             }
 
-            var verts = new List<Vector3>(); var uvs = new List<Vector2>(); var tris = new List<int>();
-            float along = 0f;
-            for (int i = 0; i < count; i++)
-            {
-                int j = (i + 1) % count;
-                Vector3 ao = loop[i], bo = loop[j];
-                Vector3 ai = ao + inward[i] * WallThickness, bi = bo + inward[j] * WallThickness;
-                float len = Vector3.Distance(ao, bo);
-                Vector3 up = Vector3.up * Bulwark;
-                int v = verts.Count;
-                // Outer face, inner face, top: four corners each, UVs in metres.
-                verts.AddRange(new[] { ao, ao + up, bo + up, bo, ai, ai + up, bi + up, bi, ao + up, ai + up, bi + up, bo + up });
-                uvs.AddRange(new[] {
-                    new Vector2(along, 0f), new Vector2(along, Bulwark), new Vector2(along + len, Bulwark), new Vector2(along + len, 0f),
-                    new Vector2(along, 0f), new Vector2(along, Bulwark), new Vector2(along + len, Bulwark), new Vector2(along + len, 0f),
-                    new Vector2(along, 0f), new Vector2(along, WallThickness), new Vector2(along + len, WallThickness), new Vector2(along + len, 0f) });
-                tris.AddRange(new[] { v, v + 2, v + 1, v, v + 3, v + 2 });                 // outer: faces away from the ship
-                tris.AddRange(new[] { v + 4, v + 5, v + 6, v + 4, v + 6, v + 7 });         // inner: faces the deck
-                tris.AddRange(new[] { v + 8, v + 10, v + 9, v + 8, v + 11, v + 10 });      // top: faces up
-                along += len;
-            }
-
-            // A saved asset: a mesh made on the fly is lost when the prefab is saved.
-            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(BulwarkMeshPath);
-            bool fresh = mesh == null;
-            if (fresh) mesh = new Mesh { name = "ShipBulwark" };
-            mesh.Clear();
-            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
-            mesh.RecalculateNormals(); mesh.RecalculateBounds();
-            if (fresh) AssetDatabase.CreateAsset(mesh, BulwarkMeshPath); else EditorUtility.SetDirty(mesh);
-
+            Mesh mesh = StripMesh(loop, inward, 0f, Bulwark, -1, BulwarkMeshPath, "ShipBulwark");
             GameObject wall = new("Bulwark");
             wall.transform.SetParent(parent.transform, false);
             wall.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -445,6 +462,64 @@ namespace SunkCost.Editor.Look
             renderer.sharedMaterial = ShipModelSetup.HullMaterial();
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             wall.AddComponent<MeshCollider>().sharedMesh = mesh;
+
+            // The guard: an unseen wall on top of the side, up to GuardHeight, so nobody
+            // goes over - not from a crate, a barrel or a container by the rail (Dan, 23
+            // September 2026: "invisible walls above the sides of the ship, so no one
+            // can fall"). Open across the transom where the tower stands - the way from
+            // the rig's bridge comes in over the stern - and closed either side of it.
+            Mesh guardMesh = StripMesh(loop, inward, Bulwark, GuardHeight, n - 1, GuardMeshPath, "ShipGuard");
+            GameObject guard = new("Bulwark Guard");
+            guard.transform.SetParent(parent.transform, false);
+            guard.AddComponent<MeshCollider>().sharedMesh = guardMesh;
+            float towerHalf = ShipStubBuilder.TowerWidth / 2f, sternW = W(-halfL + 0.25f);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                BoxCollider box = guard.AddComponent<BoxCollider>();
+                box.center = new Vector3(side * (towerHalf + sternW) / 2f, GuardHeight / 2f, -halfL + WallThickness / 2f);
+                box.size = new Vector3(sternW - towerHalf, GuardHeight, WallThickness);
+            }
+        }
+
+        private const float GuardHeight = 8f; // over the tower's roof and anything stacked by the rail
+        private const string GuardMeshPath = "Assets/_Project/Art/HQ/Meshes/ShipGuard.asset";
+
+        // A wall strip on the outline from bottom to top, WallThickness deep: outer face,
+        // inner face and top for every segment but `skip`; UVs in metres. Saved as an
+        // asset: a mesh made on the fly is lost when the prefab is saved.
+        private static Mesh StripMesh(List<Vector3> loop, Vector3[] inward, float bottom, float top, int skip, string path, string name)
+        {
+            int count = loop.Count;
+            var verts = new List<Vector3>(); var uvs = new List<Vector2>(); var tris = new List<int>();
+            float along = 0f, h = top - bottom;
+            for (int i = 0; i < count; i++)
+            {
+                int j = (i + 1) % count;
+                Vector3 lift = Vector3.up * bottom, up = Vector3.up * h;
+                Vector3 ao = loop[i] + lift, bo = loop[j] + lift;
+                Vector3 ai = ao + inward[i] * WallThickness, bi = bo + inward[j] * WallThickness;
+                float len = Vector3.Distance(ao, bo);
+                if (i == skip) { along += len; continue; }
+                int v = verts.Count;
+                verts.AddRange(new[] { ao, ao + up, bo + up, bo, ai, ai + up, bi + up, bi, ao + up, ai + up, bi + up, bo + up });
+                uvs.AddRange(new[] {
+                    new Vector2(along, 0f), new Vector2(along, h), new Vector2(along + len, h), new Vector2(along + len, 0f),
+                    new Vector2(along, 0f), new Vector2(along, h), new Vector2(along + len, h), new Vector2(along + len, 0f),
+                    new Vector2(along, 0f), new Vector2(along, WallThickness), new Vector2(along + len, WallThickness), new Vector2(along + len, 0f) });
+                tris.AddRange(new[] { v, v + 2, v + 1, v, v + 3, v + 2 });                 // outer: faces away from the ship
+                tris.AddRange(new[] { v + 4, v + 5, v + 6, v + 4, v + 6, v + 7 });         // inner: faces the deck
+                tris.AddRange(new[] { v + 8, v + 10, v + 9, v + 8, v + 11, v + 10 });      // top: faces up
+                along += len;
+            }
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            bool fresh = mesh == null;
+            if (fresh) mesh = new Mesh { name = name };
+            mesh.Clear();
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            if (fresh) AssetDatabase.CreateAsset(mesh, path); else EditorUtility.SetDirty(mesh);
+            return mesh;
         }
 
         // ---- the hull's outline -----------------------------------------------------
