@@ -69,11 +69,11 @@ TABLE = {
 # Decimation that keeps fewer than one face in four gets its maps baked afresh.
 BAKE_RATIO = 4
 
-# The hull's rules, in metres: the bulwark stands one centimetre over the jump
-# (PlayerMovementSettings.baseJumpHeight 0.65; Dan, 23 September 2026: "so players
-# cant jump over the ship walls - the ship itself"), and the well is the game's
-# WellRadius plus the wall's own thickness.
-HULL_BULWARK = 0.66
+# The hull's rules, in metres: the bulwark is chest high, well over the 65 cm
+# jump (Dan, 23 September 2026: no fences, "the sides of the ship tall enough so
+# players cant jump over them"), and the well is the game's WellRadius plus the
+# wall's own thickness.
+HULL_BULWARK = 1.2
 HULL_WELL_RADIUS = 3.74
 
 
@@ -89,9 +89,11 @@ def hull_measure(data):
     return deck, top
 
 
-# How far over the deck plane still counts as deck: the generation raised its
-# foredeck 60 cm, and a step that size trips the walk and the furniture.
-HULL_DECK_BAND = 0.75
+# How far over the deck plane still counts as deck: everything. The generation's
+# raised foredeck and its ragged bulwark both come down to the deck plane; the
+# ship's side is built in Unity from the hull's outline (ShipDeckDressing), a
+# clean wall of HULL_BULWARK, which a scaled generated wall never was.
+HULL_DECK_BAND = 6.0
 
 
 def hull_flatten(data, deck, top):

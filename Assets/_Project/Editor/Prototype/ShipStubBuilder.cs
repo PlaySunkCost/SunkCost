@@ -174,7 +174,7 @@ namespace SunkCost.Editor.Prototype
             root.gameObject.AddComponent<StorageReadout>();
         }
 
-        // The deck TV (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 3): a 2.6 m × 1.4625 m
+        // The deck TV (docs/SPECTATING_IMPLEMENTATION_PLAN.md card 3): a 5.2 m × 2.925 m
         // screen against the port rail, midships, facing the deck — a quad ShipTV
         // renders the channel diver's view onto, in a frame on a post, the caption
         // over it and the speaker point on it. E on the screen is the next channel.
@@ -184,23 +184,25 @@ namespace SunkCost.Editor.Prototype
         // lounge in front of it (Dan: "move the tv and couch to the front of the ship").
         private static void BuildTv(Transform root, Material frame, Material screenMaterial)
         {
-            const float x = 0f, y = 1.5f, z = DeckLength / 2f - 2.5f;
+            // Doubled with the rest of the deck furniture (Dan: "everything 2x"): 5.2 x
+            // 2.925 m, its foot 1.1 m up so the couches in front do not hide it.
+            const float x = 0f, y = 2.6f, z = DeckLength / 2f - 5f;
             Block("TvPost", root, new Vector3(x, 0.5f, z + 0.1f), new Vector3(0.12f, 1.0f, 0.12f), frame);
-            Block("TvFrame", root, new Vector3(x, y, z + 0.08f), new Vector3(2.2f, 1.4f, 0.1f), frame);
+            Block("TvFrame", root, new Vector3(x, y, z + 0.08f), new Vector3(4.6f, 2.7f, 0.1f), frame);
             // A quad is seen from its -Z side, which already looks aft down the deck.
             GameObject screen = GameObject.CreatePrimitive(PrimitiveType.Quad);
             screen.name = ShipParts.TvScreenName;
             screen.transform.SetParent(root, false);
             screen.transform.localPosition = new Vector3(x, y, z);
             screen.transform.localRotation = Quaternion.identity;
-            screen.transform.localScale = new Vector3(2.6f, 1.4625f, 1f);
+            screen.transform.localScale = new Vector3(5.2f, 2.925f, 1f);
             screen.GetComponent<Renderer>().sharedMaterial = screenMaterial;
             Object.DestroyImmediate(screen.GetComponent<MeshCollider>());
             BoxCollider box = screen.AddComponent<BoxCollider>(); // what E targets; a quad's own collider has no thickness
             box.size = new Vector3(1f, 1f, 0.05f);
             // The caption over the screen, read by someone on the deck looking forward
             // (along +Z): a TextMesh reads along its +Z, so it is turned to face aft.
-            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Tv Caption Sign", ShipParts.TvCaptionName, new Vector3(x, y + 1.0f, z + 0.02f), Quaternion.Euler(0f, 180f, 0f), 2.8f, 0.4f, 0.18f, new Color(1f, 0.35f, 0.3f));
+            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(root.gameObject, "Tv Caption Sign", ShipParts.TvCaptionName, new Vector3(x, y + 1.8f, z + 0.02f), Quaternion.Euler(0f, 180f, 0f), 5.2f, 0.6f, 0.3f, new Color(1f, 0.35f, 0.3f));
             mesh.text = "NO SIGNAL";
             GameObject speaker = new(ShipParts.TvSpeakerName);
             speaker.transform.SetParent(root, false);
