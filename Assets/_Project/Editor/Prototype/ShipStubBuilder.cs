@@ -71,6 +71,12 @@ namespace SunkCost.Editor.Prototype
             // The same transparent glass as the seafloor car: it is the same cabin (Dan, 15 September 2026).
             Material glass = SunkCost.Sites.DiveSiteBuilder.GetOrCreateGlassMaterial();
             Material screen = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipScreen.mat", new Color(0.08f, 0.16f, 0.22f));
+            // A screen gives its own light: unlit, so the deck's sun, ambient and sky
+            // reflections never lift the diver's picture. Lit and half glossy, it showed
+            // the dark below brighter than the diver saw it (Dan, 23 September 2026:
+            // "in the TV you can see what down you cant").
+            Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
+            if (unlit != null && screen.shader != unlit) { screen.shader = unlit; EditorUtility.SetDirty(screen); }
             Material button = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipButton.mat", new Color(0.9f, 0.75f, 0.2f));
             Material tape = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipTape.mat", new Color(0.85f, 0.65f, 0.1f));
 
