@@ -516,6 +516,53 @@ numbers are serialized (`MonsterSettings`) and provisional until a playtest.
 The dash is built (§3, 21 September 2026); the site vote's effect on the
 roster and the conditions (infestation = a fourth monster) are their own cards.
 
+### Monster polish (decided by Dan, 24 September 2026; built on `dan/monster-look`)
+
+The Impostor is outside this pass and unchanged.
+
+- **The Long Walker grabs.** It catches you when it reaches you, lifts you
+  toward its face for about 2 s, then you die the ordinary death. When a wall
+  stands between it and a diver it has seen, it keeps to one side and walks
+  round the wall rather than pressing into it. This is local wall-following,
+  not pathfinding.
+- **The Weeping Angel embraces.** Its hands leave its face and take your head.
+  A beat of stillness follows, then death at about 2.2 s. There is no lift; the
+  style is its own.
+- **The victim's view is the same for both.** The victim stays in first person,
+  controls locked, the view turned to the monster's face with a small shake.
+  Spectators and the TV show the same hold.
+- **A dash never saves a held diver.** A dash is refused once the hold is on.
+  One pressed in the instant before the hold reaches a guest is cut off, and
+  the kill lands wherever the capsule went. A held diver rides no elevator car
+  and cannot use Unstuck.
+- **The Charger's charge.**
+  - **Hit:** 35 HP and a leak, plus a knock-back of about 3 m along its path
+    and a hard view jolt. The jolt snaps about 15°, swings back once and
+    settles within 0.6 s.
+  - **Aim:** the line is aimed during the 1.5 s tell and locked for its last
+    0.2 s, then the rush runs straight and never homes. Stepping aside or
+    dashing dodges it.
+  - **Grab:** a held diver is never knocked back.
+- **The lasers: bigger, and dash to dodge.**
+  - **Size:** both beams are drawn 0.7 m wide (a half-width of 0.35 m), and a
+    hit is exactly the drawn beam touching the body.
+  - **Tracking:** the beam tracks its diver, so running alone never escapes
+    it; a diver in the open is hit the instant the beam lights.
+  - **The dodge:** a dash during the 1 s charge or the burn breaks the lock,
+    and the beam holds its heading through the dash. For the rest of that
+    beam it only trails at 2.5 m/s, so a diver who keeps moving escapes and
+    one who stops is caught. A Charger's knock-back is not a dash.
+  - One hit per beam.
+- **The Lure's light beam lights the dark site.** Its charge glows, and the
+  burn lights the Lure, the seabed along the path and the diver, with a splash
+  where it meets a wall.
+- **The Listener's dark beam eats light.** A dark haze runs along it and a dark
+  patch shows on the wall it hits. Lights near it, headlamps included, are
+  dimmed while it burns. All of this is looks only: no lamp switches off, and
+  the Lure's sense of lamps is unaffected.
+- **Parked (Dan):** the monsters make no movement or footstep sounds, and the
+  Angel is silent while it moves. "Leave it like that for now."
+
 ## 7. Crew and spectating
 
 | System | Decision |
