@@ -387,7 +387,8 @@ namespace SunkCost.Editor.Prototype
             r.HalfWidth = bolts.HalfWidth;
             r.HitsBefore = bolts.ServerHits; r.FiredBefore = bolts.ServerFired; r.HealthBefore = host.Vitals.Health;
             r.LanternIdle = lantern != null ? lantern.LanternIntensity : 0f;
-            r.RentedBefore = MonsterBeamLight.PoolRented;
+            // What others hold (a beam of this Lure's already charging holds its own set, which comes back at the end).
+            r.RentedBefore = MonsterBeamLight.PoolRented - (beamLight != null && beamLight.Holding ? beamLight.PathCapacity + 1 : 0);
             yield return Expect(() => bolts.ServerCharging, 6f, () => "the Lure charges (" + lure.ServerStatus + ")");
             r.ChargedAt = bolts.ServerChargedAt;
             Vector3 planted = lure.transform.position;
