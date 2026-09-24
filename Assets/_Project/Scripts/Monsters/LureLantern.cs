@@ -19,8 +19,8 @@ namespace SunkCost.Monsters
         [Tooltip("The lantern's intensity idle; the states scale it.")]
         [SerializeField] private float baseIntensity = 0.9f;
         [SerializeField] private float drawnScale = 1.4f;
-        [SerializeField] private float chargePeakScale = 4f;
-        [SerializeField] private float firingScale = 5f;
+        [SerializeField] private float chargePeakScale = 6f;
+        [SerializeField] private float firingScale = 7f;
         [SerializeField] private float spentScale = 0.35f;
 
         private Creature creature;

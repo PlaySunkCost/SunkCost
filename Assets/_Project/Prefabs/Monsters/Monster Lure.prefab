@@ -327,8 +327,8 @@ MonoBehaviour:
   range: 6
   baseIntensity: 0.9
   drawnScale: 1.4
-  chargePeakScale: 4
-  firingScale: 5
+  chargePeakScale: 6
+  firingScale: 7
   spentScale: 0.35
 --- !u!114 &5866096195013168792
 MonoBehaviour:
@@ -345,11 +345,11 @@ MonoBehaviour:
   colour: {r: 1, g: 0.87, b: 0.58, a: 1}
   pathLights: 6
   pathSpacing: 3
-  pathRange: 4.5
-  pathIntensity: 3
+  pathRange: 5.5
+  pathIntensity: 7
   chargeFraction: 0.12
   splashRange: 5
-  splashIntensity: 6
+  splashIntensity: 10
   flashBoost: 0.8
   hitBoost: 1.5
 --- !u!1001 &861764441461812502

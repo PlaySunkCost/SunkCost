@@ -33,13 +33,13 @@ namespace SunkCost.Monsters
         [Tooltip("One path light about every this many metres of drawn beam, up to pathLights.")]
         [SerializeField] private float pathSpacing = 3f;
         [Tooltip("Each path light's reach at least, metres. It grows with the spacing on a long beam so the pools of light meet.")]
-        [SerializeField] private float pathRange = 4.5f;
-        [SerializeField] private float pathIntensity = 3f;
+        [SerializeField] private float pathRange = 5.5f;
+        [SerializeField] private float pathIntensity = 7f;
         [Tooltip("In the charge's last third, the path glows this fraction of the burn: the seabed shows where it aims.")]
         [SerializeField, Range(0f, 1f)] private float chargeFraction = 0.12f;
         [Tooltip("The splash where the beam meets a wall: reach (metres) and brightness.")]
         [SerializeField] private float splashRange = 5f;
-        [SerializeField] private float splashIntensity = 6f;
+        [SerializeField] private float splashIntensity = 10f;
         [Tooltip("Extra brightness as the beam lights (falls off over 0.12 s) and when the hit lands (over 0.25 s).")]
         [SerializeField] private float flashBoost = 0.8f;
         [SerializeField] private float hitBoost = 1.5f;

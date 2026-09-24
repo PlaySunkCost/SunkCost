@@ -285,6 +285,9 @@ namespace SunkCost.Editor.Prototype
             return null;
         }
 
+        // Visibly lit: the whole view's mean brightness up by at least 15 % and by 0.015 (about 4 grey levels over every pixel).
+        private static bool Lit((float on, float off) m) => m.on >= m.off * 1.15f && m.on - m.off >= 0.015f;
+
         // On and off in the same frame: (lit, unlit).
         private static (float on, float off) LitAgainstUnlit(Meter meter, List<Light> lights, Vector3 from, Vector3 at)
         {
@@ -631,7 +634,7 @@ namespace SunkCost.Editor.Prototype
                 // on against off in the same frame. The charge at 0.85 s (the lantern's swell), the burn at +1 s.
                 Light lanternLight = LanternLight(lure);
                 Vector3 body = lure.transform.position + Vector3.up * 1.1f;
-                Vector3 lureCam = body + right * 3.2f + fwd * 1.2f + Vector3.up * 0.4f;
+                Vector3 lureCam = body + right * 2.2f + fwd * 1.0f + Vector3.up * 2.2f; // looking down on it: no horizon, no sky in the meter
                 if (!meteredCharge && bolts.ServerCharging && Time.time - bolts.ServerChargedAt > 0.85f && lanternLight != null)
                 {
                     meteredCharge = true;
@@ -651,9 +654,9 @@ namespace SunkCost.Editor.Prototype
                         Vector3 side = Vector3.Cross(Vector3.up, dir);
                         float mid = Mathf.Min(Flat(view.ShownFrom, host.transform.position) * 0.5f, 8f);
                         Vector3 floor = Ground(lure.transform.position + dir * mid);
-                        glowFloor = LitAgainstUnlit(meter, lights, floor + side * 3.5f + Vector3.up * 2.5f, floor);
+                        glowFloor = LitAgainstUnlit(meter, lights, floor + side * 2.5f + Vector3.up * 3.5f, floor);
                         Vector3 chest = CreatureSenses.Chest(host);
-                        glowDiver = LitAgainstUnlit(meter, lights, chest - dir * 1.2f + side * 2.4f + Vector3.up * 0.3f, chest - Vector3.up * 0.3f);
+                        glowDiver = LitAgainstUnlit(meter, lights, chest - dir * 1.0f + side * 2.0f + Vector3.up * 1.6f, chest - Vector3.up * 0.6f);
                     }
                 }
             });
@@ -661,10 +664,10 @@ namespace SunkCost.Editor.Prototype
             hitFilm.End();
             closeFilm.End();
             Say($"G1 brightness off → on (0–1): the Lure in the charge {chargeLure.off:0.000} → {chargeLure.on:0.000}; burning: the Lure {glowLure.off:0.000} → {glowLure.on:0.000}, the seabed along the path {glowFloor.off:0.000} → {glowFloor.on:0.000}, the diver {glowDiver.off:0.000} → {glowDiver.on:0.000}");
-            Check(meteredCharge && chargeLure.on > chargeLure.off * 1.2f + 0.003f, $"G1 the charge's glow lights the Lure ({chargeLure.off:0.000} → {chargeLure.on:0.000})");
-            Check(meteredBurn && glowLure.on > glowLure.off * 1.2f + 0.003f, $"G1 the burn lights the Lure ({glowLure.off:0.000} → {glowLure.on:0.000})");
-            Check(glowFloor.on > glowFloor.off * 1.3f + 0.005f, $"G1 the burn lights the seabed along its path ({glowFloor.off:0.000} → {glowFloor.on:0.000})");
-            Check(glowDiver.on > glowDiver.off * 1.2f + 0.003f, $"G1 the burn lights the diver and the ground round him ({glowDiver.off:0.000} → {glowDiver.on:0.000})");
+            Check(meteredCharge && Lit(chargeLure), $"G1 the charge's glow lights the Lure ({chargeLure.off:0.000} → {chargeLure.on:0.000})");
+            Check(meteredBurn && Lit(glowLure), $"G1 the burn lights the Lure ({glowLure.off:0.000} → {glowLure.on:0.000})");
+            Check(Lit(glowFloor), $"G1 the burn lights the seabed along its path ({glowFloor.off:0.000} → {glowFloor.on:0.000})");
+            Check(Lit(glowDiver), $"G1 the burn lights the diver and the ground round him ({glowDiver.off:0.000} → {glowDiver.on:0.000})");
             Say($"A1 filmed {hitFilm.Frames} frames into Temp/lure-film/beam-hit-{tag}");
             Say($"A1 it began the charge {lure.ServerAimStartYawError:0.0}° off the lamp");
             Check(lure.ServerAimStartYawError <= 12.5f, $"A1 it turned onto the lamp before charging ({lure.ServerAimStartYawError:0.0}° off)");
