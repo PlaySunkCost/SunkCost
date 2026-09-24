@@ -71,8 +71,9 @@ revision under test. **This is not a Steam run across two machines**; that
 transport check is still owed.
 
 Matrices: **loop** 62 rows, **cabin** 288 and **save** 57 on aeadab0; **noise**
-69 on aeadab0; **fullrun** 231 on e7dccc7; **spectate** 239 on 6586123. Every
-job ended MATRIX_PASS.
+69 on aeadab0; **fullrun** 231 on e7dccc7; **spectate** 239 on 6586123. After
+merging main (the dash tuning, #83) at e8c9970: **dash** 81, **cabin** 288 and
+**spectate** 239. Every job ended MATRIX_PASS.
 
 | Job / check | What is new since the last run | Result |
 |---|---|---|
