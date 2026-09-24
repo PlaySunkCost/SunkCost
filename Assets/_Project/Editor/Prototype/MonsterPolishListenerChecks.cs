@@ -228,8 +228,7 @@ namespace SunkCost.Editor.Prototype
         }
 
         // A recorder driven frame by frame (for rows that are already driving the keys): a
-        // third-person camera 5 m behind the diver and 2.6 m up, looking past the diver at the
-        // Listener, so the frame holds the diver, the beam and the monster; 15 frames a second
+        // wide fixed third-person shot from the side, holding the Listener, the beam and the diver; 15 frames a second
         // into Temp/polish-Listener-gifs/<name>. A temporary camera (HideAndDontSave), destroyed after.
         private sealed class Recorder
         {
@@ -239,7 +238,7 @@ namespace SunkCost.Editor.Prototype
             private readonly string dir;
             private readonly Transform monster;
             private float next;
-            private Vector3 camAt;
+            private Vector3 camAt, look;
             private bool placed;
             public int Frames { get; private set; }
 
@@ -252,7 +251,7 @@ namespace SunkCost.Editor.Prototype
                 var go = new GameObject("Listener checks follow camera") { hideFlags = HideFlags.HideAndDontSave };
                 cam = go.AddComponent<Camera>();
                 cam.enabled = false;
-                cam.fieldOfView = 60f;
+                cam.fieldOfView = 62f;
                 cam.nearClipPlane = 0.05f; cam.farClipPlane = 200f;
                 rt = new RenderTexture(640, 360, 24) { hideFlags = HideFlags.HideAndDontSave };
                 tex = new Texture2D(640, 360, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
@@ -262,12 +261,20 @@ namespace SunkCost.Editor.Prototype
             {
                 if (Time.unscaledTime < next || cam == null) return;
                 next = Time.unscaledTime + 1f / 15f;
-                Vector3 away = Flat(diver.transform.position - monster.position).normalized;
-                Vector3 want = diver.transform.position + away * 5f + Vector3.up * 2.6f;
-                camAt = placed ? Vector3.Lerp(camAt, want, 0.35f) : want; // a smooth follow, not a snap
-                placed = true;
+                // Wide: from the side of the line between them and above, far enough back that the
+                // Listener, the beam and the diver are all in frame; the camera stays where it
+                // started (a fixed shot reads the dodge better than a moving one).
+                Vector3 line = Flat(diver.transform.position - monster.position);
+                Vector3 mid = (diver.transform.position + monster.position) * 0.5f;
+                if (!placed)
+                {
+                    Vector3 across = Vector3.Cross(Vector3.up, line.normalized);
+                    camAt = mid - across * (line.magnitude * 0.9f + 6f) + Vector3.up * 5f;
+                    look = mid + Vector3.up * 0.8f;
+                    placed = true;
+                }
                 cam.transform.position = camAt;
-                cam.transform.LookAt(Vector3.Lerp(diver.transform.position, monster.position, 0.4f) + Vector3.up * 1.0f);
+                cam.transform.LookAt(look);
                 cam.targetTexture = rt;
                 cam.Render();
                 cam.targetTexture = null;
