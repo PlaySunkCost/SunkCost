@@ -583,6 +583,9 @@ namespace SunkCost.Editor.Prototype
             Check(host.PlayerCamera.transform.localPosition.magnitude < 0.3f, "G2 case 9: the camera is back on its pivot");
 
             Heading("G3 — case 7: repeated catches, kills refused: one hold at a time, each let go of cleanly");
+            // Out on open seabed first: G2's sprint away from the Walker ran toward the shaft's safe ground.
+            stand = Seabed(car, 140f, 22f);
+            yield return HostAt(stand, Seabed(car, 140f, 30f));
             walker.ServerPlaceForChecks(host.transform.position + host.transform.forward * 1.2f, YawTo(host.transform.position + host.transform.forward * 1.2f, host.transform.position));
             int startGrabs = walker.ServerGrabsStarted;
             float lastEnd = -1f; int overlaps = 0;
