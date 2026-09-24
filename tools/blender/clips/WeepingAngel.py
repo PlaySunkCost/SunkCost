@@ -119,6 +119,9 @@ def free_hands(mesh, height):
     edges = [e for e in bm.edges if e.is_boundary]
     bmesh.ops.holes_fill(bm, edges=edges, sides=0)
     caps = [f for f in bm.faces if f not in before]
+    # an n-gon cap over a curved hole is not flat, and Unity discards a self-intersecting
+    # polygon on import (a hole again): cap with triangles
+    caps = bmesh.ops.triangulate(bm, faces=caps, quad_method="BEAUTY", ngon_method="EAR_CLIP")["faces"]
     uv = bm.loops.layers.uv.active
     for f in caps:
         f.smooth = True
@@ -398,7 +401,7 @@ SIDES = (("L", -1), ("R", 1))
 # diver's standing eye height.
 HOLD_METERS = 0.70
 VICTIM_EYE = 1.60
-EMBRACE_FRAMES = 90      # 3 s: longer than the hold, so the loop never shows
+EMBRACE_FRAMES = 96      # 3.17 s: longer than the hold and the release (3.0 s), so the loop never shows
 KILL_FRAME = 66          # 2.2 s: the squeeze at the end of the stillness
 
 # Hunting: an in-place sprint, the feet swept back at the ground's speed in stance.
