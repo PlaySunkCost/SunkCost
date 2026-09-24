@@ -283,6 +283,9 @@ namespace SunkCost.Player
             dashUntil = now + settings.DashSeconds;
             dashReadyAt = now + settings.DashCooldownSeconds;
             dashStartedAt = now;
+            // The little lift (Dan: "like a dash in water"): a kick upward that gravity
+            // takes back; from the floor or mid-jump, never less than the speed you had.
+            if (settings.DashLiftSpeed > 0f) { verticalSpeed = Mathf.Max(verticalSpeed, settings.DashLiftSpeed); grounded = false; }
             Dashes++;
             DashRefusal = string.Empty;
             DashStarted?.Invoke(dashDirection);
