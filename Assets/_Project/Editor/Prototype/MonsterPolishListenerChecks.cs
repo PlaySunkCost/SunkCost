@@ -77,6 +77,7 @@ namespace SunkCost.Editor.Prototype
             stack.Clear();
             if (wall != null) UnityEngine.Object.Destroy(wall);
             MonsterBeamShade.OffForChecks = false;
+            if (recorder != null) { recorder.Close(); recorder = null; }
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
@@ -152,8 +153,9 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator Cooled(Listener ears, CreatureBolts bolts, string row)
         {
             MonsterSettings s = Settings;
-            float ready = bolts.ServerEndedAt + s.ListenerShotCooldownSeconds + 0.2f;
-            yield return Expect(() => !bolts.ServerAiming && Time.time >= ready && ears.Pose != CreaturePose.Recovering, s.BeamChargeSeconds + s.BeamSeconds + s.ListenerShotCooldownSeconds + 2f, () => row + " ready to shoot again (" + ears.ServerStatus + ")");
+            // From the LAST beam's end, read each frame: it may fire again at an old sound while this waits.
+            yield return Expect(() => !bolts.ServerAiming && Time.time >= bolts.ServerEndedAt + s.ListenerShotCooldownSeconds + 0.2f && ears.Pose != CreaturePose.Recovering && ears.Pose != CreaturePose.Shooting, 2f * (s.BeamChargeSeconds + s.BeamSeconds + s.ListenerShotCooldownSeconds) + 2f, () => row + " ready to shoot again (" + ears.ServerStatus + ")");
+            ears.ServerForgetForChecks(); // no old sound fires the next beam: each row draws its own
         }
         private static IEnumerator BeamOver(CreatureBolts bolts, string row)
         {
@@ -219,6 +221,67 @@ namespace SunkCost.Editor.Prototype
             }
             Say($"filmed {name}: {n} frames in {dir}");
         }
+
+        // A recorder driven frame by frame (for rows that are already driving the keys): a
+        // third-person camera 5 m behind the diver and 2.6 m up, looking past the diver at the
+        // Listener, so the frame holds the diver, the beam and the monster; 15 frames a second
+        // into Temp/polish-Listener-gifs/<name>. A temporary camera (HideAndDontSave), destroyed after.
+        private sealed class Recorder
+        {
+            private readonly Camera cam;
+            private readonly RenderTexture rt;
+            private readonly Texture2D tex;
+            private readonly string dir;
+            private readonly Transform monster;
+            private float next;
+            private Vector3 camAt;
+            private bool placed;
+            public int Frames { get; private set; }
+
+            public Recorder(string name, Transform monster)
+            {
+                this.monster = monster;
+                dir = Path.Combine("Temp/polish-Listener-gifs", name);
+                if (Directory.Exists(dir)) Directory.Delete(dir, true);
+                Directory.CreateDirectory(dir);
+                var go = new GameObject("Listener checks follow camera") { hideFlags = HideFlags.HideAndDontSave };
+                cam = go.AddComponent<Camera>();
+                cam.enabled = false;
+                cam.fieldOfView = 60f;
+                cam.nearClipPlane = 0.05f; cam.farClipPlane = 200f;
+                rt = new RenderTexture(640, 360, 24) { hideFlags = HideFlags.HideAndDontSave };
+                tex = new Texture2D(640, 360, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
+            }
+
+            public void Tick(HQPlayerController diver, string label)
+            {
+                if (Time.unscaledTime < next || cam == null) return;
+                next = Time.unscaledTime + 1f / 15f;
+                Vector3 away = Flat(diver.transform.position - monster.position).normalized;
+                Vector3 want = diver.transform.position + away * 5f + Vector3.up * 2.6f;
+                camAt = placed ? Vector3.Lerp(camAt, want, 0.35f) : want; // a smooth follow, not a snap
+                placed = true;
+                cam.transform.position = camAt;
+                cam.transform.LookAt(Vector3.Lerp(diver.transform.position, monster.position, 0.4f) + Vector3.up * 1.0f);
+                cam.targetTexture = rt;
+                cam.Render();
+                cam.targetTexture = null;
+                RenderTexture.active = rt;
+                tex.ReadPixels(new Rect(0, 0, 640, 360), 0, 0);
+                tex.Apply();
+                RenderTexture.active = null;
+                File.WriteAllBytes(Path.Combine(dir, Frames.ToString("000") + "-" + label + ".png"), tex.EncodeToPNG());
+                Frames++;
+            }
+
+            public void Close()
+            {
+                if (cam != null) UnityEngine.Object.Destroy(cam.gameObject);
+                if (rt != null) { rt.Release(); UnityEngine.Object.Destroy(rt); }
+                if (tex != null) UnityEngine.Object.Destroy(tex);
+            }
+        }
+        private static Recorder recorder;
 
         // One dash to the host's left on the virtual keyboard (Alt + A).
         private static IEnumerator DashLeft()
@@ -506,7 +569,7 @@ namespace SunkCost.Editor.Prototype
                 yield return Wait(0.5f);
             }
 
-            // L3b: a dash in the charge, then walking on round it: the lock breaks, it trails, it misses.
+            // L3b: a dash as the charge is about to light, then walking on round it: the lock breaks, it trails, it misses (filmed for Dan).
             {
                 const string row = "L3b";
                 yield return Cooled(ears, bolts, row);
@@ -517,10 +580,17 @@ namespace SunkCost.Editor.Prototype
                 yield return Wait(0.3f);
                 hits0 = bolts.ServerHits; int dashes = host.Dashes;
                 closest = float.PositiveInfinity;
+                recorder = new Recorder("Listener-dash-dodge", centre);
+                void MeasureAndFilm() { Measure(); recorder?.Tick(host, bolts.ServerPhase + (bolts.ServerLockBroken ? "-broken" : "")); }
+                for (int f = 0; f < 8; f++) { recorder.Tick(host, "before"); yield return Wait(1f / 15f); }
                 yield return Provoke(ears, bolts, host, row, 1f);
                 float t0 = bolts.ServerChargedAt;
-                while (Time.time < t0 + 0.3f) yield return null;
-                yield return DashThenCircle(centre, () => bolts.ServerAiming, Measure);
+                // Dashing out as it is about to light (0.75 s into the 1 s charge): the flash lands beside the diver.
+                while (Time.time < t0 + 0.75f) { recorder.Tick(host, "Charging"); yield return null; }
+                yield return DashThenCircle(centre, () => bolts.ServerAiming, MeasureAndFilm);
+                for (float until = Time.unscaledTime + 0.5f; Time.unscaledTime < until;) { recorder.Tick(host, "after"); yield return null; }
+                Say($"{row} filmed {recorder.Frames} frames (Temp/polish-Listener-gifs/Listener-dash-dodge)");
+                recorder.Close(); recorder = null;
                 Say($"{row} dash {bolts.ServerLockBrokenAt - t0:0.00} s into the charge, then walking: hits {bolts.ServerHits - hits0}, broken {bolts.ServerLockBroken}, closest {closest:0.00} m past the edge, health {vitals.Health}");
                 Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
                 Check(bolts.ServerLockBroken && bolts.ServerLockBrokenAt < bolts.ServerFiredAt, $"{row} the dash broke the lock during the charge");

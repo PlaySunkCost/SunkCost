@@ -41,6 +41,15 @@ namespace SunkCost.Monsters
         public Vector3 ServerHeardAt => heardAt;
         public float RecoverSeconds => recoverSeconds;
 
+        // A test seam (the checks): forget every sound heard so far, so no old sound draws a
+        // shot the check did not ask for. Server only; nothing in play calls it.
+        public void ServerForgetForChecks()
+        {
+            if (!IsServerStarted) return;
+            unshot = false;
+            heardTime = float.NegativeInfinity;
+        }
+
         protected override void Awake()
         {
             base.Awake();

@@ -37,7 +37,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6804654725871020717}
+  - {fileID: 275955028750019759}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8531746342306775878
@@ -184,6 +184,8 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 8531746342306775878}
   _networkObjectCache: {fileID: 0}
   halfWidth: 0.35
+  reacquireMetresPerSecond: 2.5
+  dashBreakMetresPerSecond: 11
 --- !u!114 &8850602413960344642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -215,7 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0501c66a29428d24983f466b6889aeb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureLook
-  body: {fileID: 6804654725871020717}
+  body: {fileID: 275955028750019759}
   eyes: []
   eyeColour: {r: 1, g: 0.85, b: 0.25, a: 1}
 --- !u!114 &4168595763039031
@@ -242,9 +244,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd2e517a666fb2045adabc00837bcc3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureRig
-  animator: {fileID: 2687654037139336299}
-  beamOrigin: {fileID: 7636147234220137911}
-  voice: {fileID: 8684868621425079285}
+  animator: {fileID: 8010858688026263890}
+  beamOrigin: {fileID: 3766018342869851061}
+  voice: {fileID: 2683097777153734135}
   animatedPoses:
   - Idle
   - Drawn
@@ -301,7 +303,7 @@ MonoBehaviour:
   randomStart: 1
   alwaysAnimate: 1
   maxBeamOriginFromEye: 1.5
---- !u!1001 &6477377028902669638
+--- !u!1001 &314929677558729540
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -471,21 +473,26 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2687654037139336299}
+      addedObject: {fileID: 8010858688026263890}
   m_SourcePrefab: {fileID: 100100000, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
---- !u!1 &6135360400889868311 stripped
+--- !u!4 &275955028750019759 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
+  m_PrefabInstance: {fileID: 314929677558729540}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &621412148124382741 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
-  m_PrefabInstance: {fileID: 6477377028902669638}
+  m_PrefabInstance: {fileID: 314929677558729540}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &2687654037139336299
+--- !u!95 &8010858688026263890
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6135360400889868311}
+  m_GameObject: {fileID: 621412148124382741}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: a2c8b10a39a050845a43babf79f8bcce, type: 2}
@@ -500,18 +507,13 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!4 &6804654725871020717 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
-  m_PrefabInstance: {fileID: 6477377028902669638}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7636147234220137911 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
-  m_PrefabInstance: {fileID: 6477377028902669638}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &8684868621425079285 stripped
+--- !u!4 &2683097777153734135 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
-  m_PrefabInstance: {fileID: 6477377028902669638}
+  m_PrefabInstance: {fileID: 314929677558729540}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3766018342869851061 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: aeaf832c0c8bbef4b86b27384cb83801, type: 3}
+  m_PrefabInstance: {fileID: 314929677558729540}
   m_PrefabAsset: {fileID: 0}
