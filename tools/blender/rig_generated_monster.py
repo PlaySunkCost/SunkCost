@@ -168,6 +168,10 @@ def main():
         bpy.ops.import_scene.fbx(filepath=src)
     else:
         bpy.ops.import_scene.gltf(filepath=src)
+    # The import sets the scene to the generated file's frame rate (Meshy's 24):
+    # the clips are keyed at make_listener's 30, so they played 25 % slow in Unity.
+    bpy.context.scene.render.fps = L.FPS
+    bpy.context.scene.render.fps_base = 1.0
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
     if not meshes:
         raise SystemExit("no mesh in " + src)
