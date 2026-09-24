@@ -44,7 +44,8 @@ namespace SunkCost.Player
             SubmersionChanged?.Invoke(now);
         }
 
-        // Only used when the site is loaded without its car (never in a ride).
-        private const float SeaLevelFallback = -1f;
+        // Only used when the site is loaded without its car (never in a ride). The
+        // sea is 4.5 m under the deck (ShipStubBuilder.SeaLevelY, DiveSiteSettings).
+        private const float SeaLevelFallback = -4.5f;
     }
 }

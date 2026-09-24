@@ -57,21 +57,49 @@ board is the ship's only control: it lists every site and HQ, and choosing a
 destination on it sails the ship — if everyone is aboard; otherwise it names who
 is missing. No wheel, no lever. From HQ, choosing a site sails to sea; at sea,
 choosing another site keeps the ship at sea with a new destination; choosing HQ
-sails home. The monitor doubles as the TV surfaced players watch divers on. A
+sails home. Surfaced players watch divers on the deck TV, its own screen since 17
+September 2026 (the monitor doubled as it until then; the TV card in §4). A
 storage room holds everything you've hauled up, as physical objects. A readout of
 what you have against what you owe. A low sill across its doorway keeps a dropped
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
+**The ship** (rebuilt 23 September 2026 around Dan's generated models; the
+sizes, the lounge and the fixes below decided by Dan the same day, being built
+on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
+tower** stands at the stern, with the sailing console on its forward face (the
+buttons **SITE 01 · HQ · END DAY**, left to right as the player reads them) and
+the crew's screen beside it; the storage room is forward of it, to starboard. The
+**glass elevator** stands amidships in its well, open to the sea, with a **low
+visible rail** round the well, open only at the grate; the rail's collider is
+1.2 m high so nobody jumps it (a jump is 0.65 m). The deck's side is a **1.2 m
+bulwark** with an unseen guard above it. The crane and the winch stand by the
+well, one container, and deck gear along the sides. The **lounge**
+is at the bow: the **TV** in its big cabinet facing aft, two couches in front of
+it, and a table between two benches that face each other across it, clear of
+the couches. There is no ladder; the tower model has its own. **Sizes** (Dan):
+the player stays as is (1.8 m, eyes at 1.6 m) and the props come to it —
+furniture (couch, table, bench, toolbox) at 1×, the models being made at a
+person's size; deck gear (barrel, crate, lamp, bollard, lifebuoy, pipes, coil,
+signs) at 1.25×; the container a real 20-ft box (6 × 2.6 × 2.6 m); the crane
+and the winch at 2×. The TV keeps its size but stands lower, its screen's centre
+at about the eye height of someone sitting on the couch. **Sitting on a couch**
+zooms the view onto the TV, and the TV's channel can be switched from **6 m**, so
+from the couch (both in §4: "The couch" and the TV card). The elevator car's light is **warm white** in both worlds, on both
+cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
+heard across the deck. The name plates read **BLACK TIDE**, with SALVAGE under it.
+
 **Sailing** (decided 15 September 2026; the way aboard changed 18 September
-2026). The ship carries nothing that reaches the base: the way aboard belongs
-to the HQ — a railed bridge off the west rim that meets, level, the roof of
-the ship's bridge tower at its stern; the ship's own stair comes down the
-tower's side to its deck, 6 m below the platform (Dan, 19 September: "the
-stairs near the tower lead to the top of the tower, connected through a bridge
-to the HQ — no staircase down from the HQ, only the bridge"). Someone standing
-on the HQ's bridge or its landing is not aboard; on the tower's roof or its
-stair they are. When
+2026, and again 23 September 2026). The ship carries nothing that reaches the
+base: the way aboard belongs to the HQ — a railed bridge off the west rim to a
+landing at the aft face of the ship's bridge tower, 6 m over the deck (the tower
+model's roof is about 3.7 m over the deck, so the landing stands about 2.3 m above
+it; measured 23 September 2026).
+The ship's own stair down the tower's side (Dan, 19 September) came off on 23
+September 2026 (Dan: no stairs on the ship); how the crew gets from the landing
+down to the deck, 6 m below the platform, is an open card ("The way aboard from
+the HQ", [ROADMAP.md](ROADMAP.md)). Someone standing on the HQ's bridge or its
+landing is not aboard; on the tower or the deck they are. When
 the monitor accepts a destination everyone is held where they stand — you can
 look around and talk, not walk or use items — the ship casts off (a short
 still moment), the engine starts and the ship visibly pulls away for about
@@ -288,7 +316,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
-| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing that meets the roof of the moored ship's bridge tower (the **ship**, after Dan's second picture: a 44 × 16 m barge, the glass elevator dead centre in its round rail, the two-storey captain's tower at the stern with the sailing console, the BRIDGE door and the crew's screen on its face, radar, funnels and beacons on its roof, the crane at the bow, the helipad, cargo, the company's name painted on the hull, red fenders; its own stair down the tower's side) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
+| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing at the aft face of the moored ship's bridge tower, 6 m over its deck (the **ship** as §1 "The ship" describes it since 23 September 2026: a 48 × 20 m deck, the tower at the stern, the elevator amidships, the lounge and its TV at the bow; no stair of its own, so the way down from the landing is a later card) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
 
 ---
 
@@ -391,9 +419,12 @@ close. If the diver below dies or leaves while the car is on its way down, the c
 comes straight back and the site closes as at the end of a dive.
 
 **Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
-screen on the deck (port rail, midships) shows **one diver at a time** from their
+screen on the deck (since 23 September 2026 at the bow, in its cabinet facing aft
+over the lounge's couches, §1 "The ship") shows **one diver at a time** from their
 eyes — whoever surfaced early watches the others. The channel is the first living
-diver below; **E on the screen is the next channel**, wrapping; only divers below
+diver below; **E on the screen is the next channel**, wrapping (the screen answers E
+from up to 6 m, so from the couch; every other control keeps 3.5 m: decided 23
+September 2026, Dan); only divers below
 are channels (a diver who surfaces or dies leaves them); nobody below → **NO
 SIGNAL**. The caption over the screen reads `LIVE · <name>`. The channel diver's
 voice — and the voices they can hear — play **from the TV**, as loud as the diver
@@ -405,6 +436,20 @@ The picture is a second render of the site, kept cheap (Dan, 17 September 2026:
 within 30 m of the screen; it renders under the site's own fog and ambient
 (`WorldLook`, which every world scene carries), so the seafloor is as dark on the
 TV as it is for the diver — the same swap serves a dead diver's eyes on the deck.
+
+**The couch (decided 23 September 2026, Dan; built the same day, not yet
+play-tested):** E on either couch in front of the TV sits you on the seat nearest
+the dot (four seats). Sitting turns you to the screen and zooms until the picture
+fills 95 % of the screen's width or height, with the TV's frame and what is behind
+it round the edge. E, Space, Ctrl or a movement key stands you up in front of the
+couch; left click while seated is the next channel (the implementer's choice of
+keys, for Dan to confirm). Friends see you on the couch (the body is squashed to a
+sitting height until the model has a rig), and a dead crewmate spectating you sees
+your zoomed view. A sail keeps you seated; Unstuck, the plank and a revival stand
+you up. **What can be used shows it** (built 23 September 2026 for the ship audit,
+SHIP-054; not yet play-tested): what the dot rests on and E would act on gets a soft
+warm rim, and the TV screen a thin gold frame. Only you see it, and decoration
+never gets it.
 
 ---
 

@@ -41,8 +41,20 @@ namespace SunkCost.World
         // Departure parts (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md section 7).
         public const string SafeDeckVolumeName = "SafeDeckVolume";           // the deck proper: where a passenger must stand
         public const string DepartureDirectionName = "DepartureDirection";   // its forward is the straight way out
-        // No gangway on the ship (Dan, 18 September 2026): the HQ's bridge and stair
-        // reach the stern; the ship carries nothing that touches the base.
+        // No gangway on the ship (Dan, 18 September 2026): the HQ's bridge reaches the
+        // stern; the ship carries nothing that touches the base.
+        // The ship's areas (SHIP-076, 23 September 2026): the build groups every part
+        // under the area it belongs to, each model with the parts that sit on it, so
+        // moving an area moves its buttons and screens too (Editor ShipHierarchy).
+        // Find searches at any depth, so nothing reads these to find a part.
+        public const string WellGroupName = "Well";
+        public const string TowerGroupName = "Tower";
+        public const string ConsoleGroupName = "Console"; // under Tower: the console model, the monitor, its buttons and its displays
+        public const string TvGroupName = "Tv";
+        public const string StorageGroupName = "Storage";
+        public const string CabinGroupName = "Cabin";
+        public const string VolumesGroupName = "Volumes";
+        public const string PointsGroupName = "Points";
         public const int SpawnPointCount = 4;
 
         public static readonly string[] RequiredChildren =
@@ -85,6 +97,15 @@ namespace SunkCost.World
             return null;
         }
 
+        // How many parts carry the name: a name Find is asked for must be unique.
+        public int CountNamed(string childName)
+        {
+            int count = 0;
+            foreach (Transform child in GetComponentsInChildren<Transform>(true))
+                if (child.name == childName) count++;
+            return count;
+        }
+
         // Inside the ship: the aboard volume, a box trigger. Tested in the box's own
         // space so it holds for a rotated ship and in the editor before physics has
         // synced transforms (Collider.bounds would lag there).
@@ -94,7 +115,7 @@ namespace SunkCost.World
 
         public bool IsInStorageRoom(Vector3 worldPosition) => Contains(StorageVolume, worldPosition);
 
-        // Standing on the deck proper (the HQ's stair foot over the stern is not the
+        // Standing on the deck proper (the HQ's landing over the stern is not the
         // ship): what a passenger needs before the ship may move. Falls back to the
         // aboard volume on a ship without the departure parts.
         public bool IsSafelyAboard(Vector3 worldPosition)
@@ -112,6 +133,14 @@ namespace SunkCost.World
                 Vector3 local = box.transform.InverseTransformPoint(worldPosition) - box.center;
                 Vector3 half = box.size * 0.5f;
                 return Mathf.Abs(local.x) <= half.x && Mathf.Abs(local.y) <= half.y && Mathf.Abs(local.z) <= half.z;
+            }
+            // A round room (the deck cabin, SHIP-086): an upright capsule tested as the
+            // cylinder it stands for, in its own space like the box - inside the radius
+            // across, within the height up and down. The rounded ends are not cut off.
+            if (volume is CapsuleCollider capsule && capsule.direction == 1)
+            {
+                Vector3 local = capsule.transform.InverseTransformPoint(worldPosition) - capsule.center;
+                return Mathf.Abs(local.y) <= capsule.height * 0.5f && local.x * local.x + local.z * local.z <= capsule.radius * capsule.radius;
             }
             return volume.bounds.Contains(worldPosition);
         }

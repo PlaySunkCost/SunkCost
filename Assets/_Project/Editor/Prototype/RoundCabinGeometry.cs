@@ -54,7 +54,10 @@ namespace SunkCost.Editor.Prototype
         // same ring of angles so the doorway gap in what you SEE and what BLOCKS you can never
         // drift apart. Segmented panes (rather than one smooth cylinder) are the tradeoff that
         // buys an exact, provably-matching opening. Returns the doorway's half-angle in degrees.
-        public static float CreateShell(Transform parent, float glassRadius, float wallRadius, float height, Material glass, float doorwayCenterAngleDeg, float panelAngleDeg, float doorwayWidthMeters, float panelWidthMeters, string shellRootName, string wallsRootName)
+        // The panel's arc is open only over the button's own band, panelBottomY to
+        // panelTopY: above and below it the wall stands (a full-height slot behind the
+        // button let carried items slide out into the well; ship audit SHIP-023).
+        public static float CreateShell(Transform parent, float glassRadius, float wallRadius, float height, Material glass, float doorwayCenterAngleDeg, float panelAngleDeg, float doorwayWidthMeters, float panelWidthMeters, float panelBottomY, float panelTopY, string shellRootName, string wallsRootName)
         {
             const int segmentCount = 24;
             const float wallThickness = 0.15f;
@@ -96,7 +99,24 @@ namespace SunkCost.Editor.Prototype
                 Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
 
                 if (inPanel)
-                    continue; // the control panel's own collider covers this arc instead
+                {
+                    // The control panel's own collider covers its band; the wall above and
+                    // below it is kept. Under its own root, not the wall ring: the site's
+                    // validator refuses a wall segment at the panel's bearing, which these
+                    // pieces are, but they stand clear of the band a press aims at.
+                    GameObject backing = new(PanelBackingName);
+                    backing.transform.SetParent(parent, false);
+                    backing.transform.localPosition = direction * wallRadius;
+                    backing.transform.localRotation = rotation;
+                    foreach ((float from, float to) in new[] { (0f, panelBottomY), (panelTopY, height) })
+                    {
+                        if (to - from < 0.01f) continue;
+                        BoxCollider piece = backing.AddComponent<BoxCollider>();
+                        piece.center = new Vector3(0f, (from + to) / 2f, 0f);
+                        piece.size = new Vector3(wallSegmentArcLength, to - from, wallThickness);
+                    }
+                    continue;
+                }
 
                 GameObject wallSegment = new("Wall Segment " + (i + 1), typeof(BoxCollider));
                 wallSegment.transform.SetParent(wallsRoot.transform, false);
@@ -106,6 +126,29 @@ namespace SunkCost.Editor.Prototype
             }
 
             return doorwayHalfAngleDeg;
+        }
+
+        public const string PanelBackingName = "Panel Backing";
+
+        // What holds the button (ship audit SHIP-049: it floated against the glass): a
+        // slim pillar from the floor to the roof between the button's back and the
+        // glass, in the caller's material, and a plate over the button that says what
+        // it does. Visual only; the wall behind is CreateShell's.
+        public static void CreateButtonMount(Transform parent, float wallRadius, float bearingDeg, float widthMeters, float bottomY, float topY, float plateY, string plateText, Material material)
+        {
+            float angleRad = bearingDeg * Mathf.Deg2Rad;
+            Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
+            Quaternion facingIn = Quaternion.LookRotation(-direction, Vector3.up);
+            const float depth = 0.06f;
+            float back = wallRadius + 0.04f; // just behind the button's bezel
+            GameObject pillar = new("Button Mount");
+            pillar.transform.SetParent(parent, false);
+            pillar.transform.localPosition = direction * (back + depth / 2f) + new Vector3(0f, bottomY, 0f);
+            pillar.transform.localRotation = facingIn;
+            pillar.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Box(new Vector3(widthMeters, topY - bottomY, depth));
+            pillar.AddComponent<MeshRenderer>().sharedMaterial = material;
+            TextMesh text = SunkCost.Editor.Look.PropBuilder.SignPlate(parent.gameObject, "Button Plate", "Text", direction * (back - 0.05f) + new Vector3(0f, plateY, 0f), facingIn, widthMeters - 0.1f, 0.2f, 0.1f, new Color(0.95f, 0.85f, 0.4f));
+            text.text = plateText;
         }
 
         // A leaf is a pivot at the car's own local origin carrying panelCount small flat

@@ -186,6 +186,10 @@ namespace SunkCost.Net
                 case "snapshot": break;
                 // The guest's own screen, HUD and visor included, to a file (the item field is the path).
                 case "capture": ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
+                // The screen as a player sees it: every command opens the session menu (above),
+                // so this closes it for the frame the capture reads - visor on, no menu
+                // panel - and the next command opens it again.
+                case "capture_play": SunkCost.Net.SessionInputGate.Resume(); ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
                 case "voice_tone": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().StartLocalTestTone(); break;
                 case "voice_off": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetMicrophone(false); break;
                 case "voice_peer_mute": FindFirstObjectByType<SunkCost.Audio.ProximityVoice>().SetPeer(command.slot, true, 1); break;

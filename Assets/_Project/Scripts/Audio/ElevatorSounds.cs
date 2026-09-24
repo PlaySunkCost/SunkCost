@@ -41,21 +41,26 @@ namespace SunkCost.Audio
         {
             Instance = this;
             AudioLibrary library = AudioLibrary.Get();
-            carWinch = Make("Winch at the car", library.ElevatorWinch, true, spatial: true, library.WinchVolumeAtCar);
+            carWinch = Make("Winch at the car", library.ElevatorWinch, true, 1f, library.WinchVolumeAtCar);
             carWinch.maxDistance = library.WinchReachMetres; // the whole site: heard from very far, quietly
-            shipWinch = Make("Winch through the deck", library.ElevatorWinch, true, spatial: false, library.WinchVolumeOnShip);
-            carBell = Make("Bell at the car", library.ElevatorDing, false, spatial: true, library.DingVolume);
-            shipBell = Make("Bell on the deck", library.ElevatorDing, false, spatial: false, library.DingVolume);
+            // On the ship, "mostly 3D" (Dan, 23 September 2026; ship audit SHIP-036): loud
+            // near the cabin, still faintly heard across the deck. They were 2D, as loud in
+            // the storage room and at the bow as at the cabin.
+            shipWinch = Make("Winch through the deck", library.ElevatorWinch, true, library.ShipCabinSpatialBlend, library.WinchVolumeOnShip);
+            carBell = Make("Bell at the car", library.ElevatorDing, false, 1f, library.DingVolume);
+            shipBell = Make("Bell on the deck", library.ElevatorDing, false, library.ShipCabinSpatialBlend, library.DingVolume);
+            shipWinch.minDistance = shipBell.minDistance = library.ShipCabinNearMetres;
+            shipWinch.maxDistance = shipBell.maxDistance = library.ShipCabinFarMetres;
         }
 
-        private AudioSource Make(string name, AudioClip clip, bool loop, bool spatial, float volume)
+        private AudioSource Make(string name, AudioClip clip, bool loop, float spatialBlend, float volume)
         {
             var go = new GameObject(name);
             go.transform.SetParent(transform, false);
             AudioSource source = go.AddComponent<AudioSource>();
             source.clip = clip; source.loop = loop; source.playOnAwake = false;
             source.volume = volume;
-            source.spatialBlend = spatial ? 1f : 0f;
+            source.spatialBlend = spatialBlend;
             source.rolloffMode = AudioRolloffMode.Linear;
             source.minDistance = 4f; source.maxDistance = 80f;
             source.dopplerLevel = 0f;

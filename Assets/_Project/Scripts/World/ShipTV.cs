@@ -25,13 +25,17 @@ namespace SunkCost.World
     // the screen. It renders with the site's own fog and ambient (WorldLook) and
     // the diver camera's post-processing, so the seafloor looks as dark on the
     // TV as it does to the diver.
+    //
+    // Round the picture (TvDisplay, ship audit SHIP-046, 23 September 2026): a
+    // "● LIVE — NAME" chip while it broadcasts, and while nobody is below an idle
+    // channel - the ship's name over faint static - instead of a dead field.
     [DefaultExecutionOrder(500)] // after the divers' NetworkTransforms have moved
     public sealed class ShipTV : MonoBehaviour
     {
         public const float ViewerMetres = 30f;
         public const int ResolutionDivisor = 2;
         public const int FrameStep = 2; // every other frame
-        private static readonly Color DarkScreen = new(0.02f, 0.03f, 0.04f);
+        private static readonly Color DarkScreen = SunkCost.Look.ScreenStyle.Back; // the ship's one screen glass (SHIP-059)
 
         private ShipParts ship;
         private Renderer screen;
@@ -42,12 +46,14 @@ namespace SunkCost.World
         // the quad never sees a half-drawn frame.
         private RenderTexture picture, shown;
         private Camera cam;
+        private Transform volumeTrigger;
         private HQPlayerController diver;
         private HQPlayerController cameraSource; // whose camera the TV camera was copied from
         private Transform speaker;
         private PlayerHudUI hud;
         private readonly PlayerHudUI.VisorFrame frame = new();
         private bool renderedThisFrame;
+        private TvDisplay display;
 
         // What the screen shows this frame (for the checks and the peer snapshot).
         public int Channel { get; private set; } = -1;
@@ -59,6 +65,9 @@ namespace SunkCost.World
         // Someone stands close enough to see the screen: the picture is rendered.
         public bool ViewerNear { get; private set; }
         public int RenderedFrames { get; private set; }
+        // For the checks: the underwater grade's weight and colour filter in the last picture's volume stack.
+        public float PictureGradeWeight { get; private set; }
+        public Color PictureColorFilter { get; private set; }
 
         private void Awake()
         {
@@ -69,12 +78,20 @@ namespace SunkCost.World
             speaker = ship != null ? ship.TvSpeaker : null;
             if (screen == null) return;
             material = screen.material; // an instance: the shared asset keeps its colour
+            display = TvDisplay.Ensure(ship);
             GameObject go = new("TvCamera");
             go.transform.SetParent(transform, false);
             cam = go.AddComponent<Camera>();
             cam.fieldOfView = 70f;
             cam.nearClipPlane = 0.05f;
             cam.enabled = false; // rendered by hand (LateUpdate), never by the loop
+            // Its own volume stack, worked out right before each of its renders (below).
+            cam.SetVolumeFrameworkUpdateMode(VolumeFrameworkUpdateMode.ViaScripting);
+            // The volumes are judged from a plain point at the camera: with a Camera on the
+            // trigger, the editor's VolumeManager also filters volumes by what that camera
+            // renders (StageUtility), and the TV lives in the ship's scene, the grade in the site's.
+            volumeTrigger = new GameObject("TvVolumeTrigger").transform;
+            volumeTrigger.SetParent(go.transform, false);
             EnsureTextures();
             ShowNoSignal();
         }
@@ -87,7 +104,7 @@ namespace SunkCost.World
             picture = new RenderTexture(w, h, 16) { name = "TvPicture" };
             shown = new RenderTexture(w, h, 0) { name = "TvShown" };
             if (cam != null) cam.targetTexture = picture;
-            if (material != null && diver != null) material.mainTexture = shown;
+            if (material != null && diver != null) TvDisplay.ShowPicture(material, shown);
         }
 
         private void ReleaseTextures()
@@ -99,6 +116,7 @@ namespace SunkCost.World
         private void OnDestroy()
         {
             ReleaseTextures();
+            display?.Release();
             if (material != null) Destroy(material);
         }
 
@@ -123,7 +141,7 @@ namespace SunkCost.World
                 data.volumeLayerMask = referenceData.volumeLayerMask;
                 data.antialiasing = referenceData.antialiasing;
             }
-            data.volumeTrigger = cam.transform; // the grade is a volume around the seafloor: judged where the TV camera stands
+            data.volumeTrigger = volumeTrigger != null ? volumeTrigger : cam.transform; // the grade is a volume around the seafloor: judged where the TV camera stands
         }
 
         private void LateUpdate()
@@ -140,7 +158,7 @@ namespace SunkCost.World
                 if (diver == null) ShowNoSignal();
                 else ShowLive(diver);
             }
-            if (diver == null) return;
+            if (diver == null) { display?.AnimateIdle(material); return; }
             HQPlayerController local = WorldSceneFlow.LocalPlayer();
             ViewerNear = local != null && Vector3.Distance(local.transform.position, SpeakerPosition) <= ViewerMetres;
             if (!ViewerNear || Time.frameCount % FrameStep != 0) return;
@@ -155,11 +173,26 @@ namespace SunkCost.World
             // camera saw the inside of it (Dan, 18 September 2026: a disc of the
             // diver's colour over half the screen).
             WorldLook.Snapshot? previous = WorldLook.Begin(WorldScenes.Scene(WorldId.Dive));
-            PlayerHeadSplit head = diver.HeadSplit;
-            bool headShown = head != null && head.HeadShown;
-            if (headShown) head.SetHeadShown(false);
+            // Under water there is no sky: the diver's own camera clears to the fog
+            // colour (WorldSceneFlow.PresentSky), and so does the TV. Copied from the
+            // diver's copy on this machine, which is never switched, it cleared to the
+            // deck's sky - a bright backdrop the fog never darkens, the seafloor
+            // silhouetted against it (Dan, 23 September 2026: "still not good").
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = RenderSettings.fogColor;
+            // The underwater grade for this render, in the TV camera's own volume stack,
+            // worked out from where it stands just before it renders (spectate S3/T, 24
+            // September 2026: the host's picture read 0.073 - the seafloor ungraded, fog
+            // (6, 12, 13) - against B's own graded 0.205, while the diver's and a
+            // spectator's cameras were graded). The picture no longer depends on the
+            // shared stack the loop's cameras update in between.
+            PictureGradeWeight = SunkCost.Sites.UnderwaterGrade.PrepareAll(cam);
+            UniversalAdditionalCameraData data = cam.GetUniversalAdditionalCameraData();
+            cam.UpdateVolumeStack(data);
+            PictureColorFilter = data.volumeStack != null && data.volumeStack.GetComponent<ColorAdjustments>() is ColorAdjustments grade ? grade.colorFilter.value : Color.clear;
+            diver.BeginWatchedRender(); // none of the diver's own figure, as on the diver's own screen
             cam.Render();
-            if (headShown) head.SetHeadShown(true);
+            diver.EndWatchedRender();
             WorldLook.Restore(previous);
             renderedThisFrame = true;
             RenderedFrames++;
@@ -173,7 +206,15 @@ namespace SunkCost.World
             if (!renderedThisFrame || diver == null || hud == null || shown == null || Event.current.type != EventType.Repaint) return;
             RenderTexture previous = RenderTexture.active;
             Matrix4x4 matrix = GUI.matrix;
+            // IMGUI repaints with sRGB writes off in this linear project, so the copy lost the
+            // picture's gamma: the graded seafloor (0.237) landed in TvShown at 0.070, fog
+            // (43.9, 61.0, 63.0) as (6.4, 11.9, 12.7) - the TV's "darker floor" (qa-technical,
+            // 24 September 2026). The copy writes sRGB; the visor is drawn as IMGUI draws it on
+            // every screen (writes off), so it looks the same here as on the diver's own.
+            bool srgbWrite = GL.sRGBWrite;
+            GL.sRGBWrite = true;
             Graphics.Blit(picture, shown);
+            GL.sRGBWrite = srgbWrite;
             RenderTexture.active = shown;
             GUI.matrix = Matrix4x4.Scale(new Vector3((float)shown.width / Screen.width, (float)shown.height / Screen.height, 1f));
             hud.DrawVisor(frame, diver.Inventory, maskOn: frame.Readout.On, readoutsOn: frame.Readout.On && !diver.TravelLocked, onAir: true);
@@ -191,16 +232,19 @@ namespace SunkCost.World
         private void ShowLive(HQPlayerController who)
         {
             PlayerIdentity identity = who.GetComponent<PlayerIdentity>();
-            Caption = "LIVE · " + (identity != null ? identity.DisplayName : PlayerIdentity.Fallback(who.OwnerId));
-            if (caption != null) { caption.text = Caption; caption.color = new Color(1f, 0.35f, 0.3f); }
-            if (material != null) { material.mainTexture = shown; material.color = Color.white; }
+            string name = identity != null ? identity.DisplayName : PlayerIdentity.Fallback(who.OwnerId);
+            Caption = "LIVE · " + name;
+            if (caption != null) caption.text = Caption; // hidden behind the chip; its colour is the chip's
+            display?.ShowLive(name);
+            TvDisplay.ShowPicture(material, shown);
         }
 
         private void ShowNoSignal()
         {
             Caption = "NO SIGNAL";
-            if (caption != null) { caption.text = Caption; caption.color = new Color(0.7f, 0.7f, 0.7f); }
-            if (material != null) { material.mainTexture = null; material.color = DarkScreen; }
+            if (caption != null) caption.text = Caption;
+            display?.ShowIdleCard();
+            if (material != null) { material.mainTexture = null; material.color = DarkScreen; material.mainTextureOffset = Vector2.zero; }
         }
 
         // For the checks: the shown picture as a PNG, and how much is in it (the

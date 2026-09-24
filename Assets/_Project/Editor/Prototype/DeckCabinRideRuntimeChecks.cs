@@ -537,10 +537,11 @@ namespace SunkCost.Editor.Prototype
             float[] bandSeconds = new float[3], bandSpeed = new float[3];
             for (int b = 0; b < 3; b++) { bandSeconds[b] = (float)(bandEndT[b] - bandStartT[b]); bandSpeed[b] = bandMoved[b] && bandSeconds[b] > 0f ? Mathf.Abs(bandEndY[b] - bandStartY[b]) / bandSeconds[b] : 0f; }
             Note($"{label} bands: above {bandSpeed[0]:0.00} m/s over {bandSeconds[0]:0.00} s, crossing {bandSpeed[1]:0.00} m/s over {bandSeconds[1]:0.00} s, below {bandSpeed[2]:0.00} m/s over {bandSeconds[2]:0.00} s; moving {measured:0.00} s (expected {expectedTravel:0.00}); waterError {waterError:0.000}; deepest {deepestWater:0.00}; end {waterAtEnd:0.00}; dry at floor y {floorYWhenDry:0.00}; submersion streak {worstSubmersionStreak}");
-            // The stretch above the surface is 1 m (seaLevelY -1): a 0.2 s window, where one
-            // tick's step of the driven car is 0.35 m/s of the average, and a single hitched
-            // frame at the start of the ride is another 0.5. A loose band there; the two
-            // long bands below carry the real measurement.
+            // The stretch above the surface is short (4.5 m at seaLevelY -4.5, and it was
+            // 1 m before 23 September 2026): a window where one tick's step of the driven
+            // car and a single hitched frame at the start of the ride each move the
+            // average by half a metre a second. A loose band there; the two long bands
+            // below carry the real measurement.
             Check(bandSeconds[0] > 0.1f && Mathf.Abs(bandSpeed[0] - 3f) < 1.2f, $"{label} about 3 m/s above the surface band ({bandSpeed[0]:0.00} m/s over {bandSeconds[0]:0.00} s)");
             Check(bandSeconds[1] > 1f && Mathf.Abs(bandSpeed[1] - 1f) < 0.1f, $"{label} about 1 m/s through the surface band ({bandSpeed[1]:0.00} m/s)");
             Check(bandSeconds[2] > 5f && Mathf.Abs(bandSpeed[2] - 3f) < 0.3f, $"{label} about 3 m/s below the band ({bandSpeed[2]:0.00} m/s)");

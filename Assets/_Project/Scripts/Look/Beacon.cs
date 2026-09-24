@@ -4,7 +4,8 @@ namespace SunkCost.Look
 {
     // A pulsing lamp (the tower's beacon, the pier's edge markers): the emission
     // and an optional light swell and fade on a slow cycle. Presentation only;
-    // every peer runs its own clock, nobody cares if they differ.
+    // every peer runs its own clock, nobody cares if they differ. The emission
+    // pulses in the editor too (a property block, never saved); the light does not.
     [ExecuteAlways]
     public sealed class Beacon : MonoBehaviour
     {
@@ -46,7 +47,9 @@ namespace SunkCost.Look
                 block.SetColor(EmissionColor, baseEmission * f);
                 lamp.SetPropertyBlock(block);
             }
-            if (glow != null) glow.intensity = lightIntensity * pulse;
+            // The light only in Play Mode: written in the editor, the saved intensity was
+            // whatever the pulse stood at when the scene was saved (0 in the ship audit, SHIP-084).
+            if (glow != null && Application.isPlaying) glow.intensity = lightIntensity * pulse;
         }
 
         private static double UnityEditor_Time()

@@ -102,6 +102,10 @@ namespace SunkCost.Editor.Prototype
                 target = target,
                 options = BuildOptions.Development
             };
+            // A missing override in any volume profile makes URP's shader preprocessor throw
+            // while the build sets up, and the whole build then compiles unstripped (1 h 53 min,
+            // 7,776 Lit variants per pass; 24 September 2026). Clean them first.
+            SunkCost.Editor.Look.VolumeProfileAssets.RemoveMissingOverrides();
             BuildReport report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result != BuildResult.Succeeded)
                 throw new InvalidOperationException($"HQ build failed: {report.summary.result} ({report.summary.totalErrors} errors).");
