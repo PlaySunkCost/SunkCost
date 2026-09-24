@@ -909,7 +909,9 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(off - s.ShooterStandoffMeters) < 0.5f, $"L6 it stopped {off:0.00} m short of the sound (standoff {s.ShooterStandoffMeters})");
             // A diver's sound: after the shot it stalks there in Hunting.
             Vector3 hunter = ears.transform.position;
-            Vector3 diverAt = Vector3.MoveTowards(hunter, Seabed(car, Bearing, 20f), 14f);
+            // 9 m back out along the rows' bearing (open ground), wherever the last walk left it: never
+            // within the 1.5 m it ignores (run 8 put the diver 1 m from it).
+            Vector3 diverAt = Vector3.MoveTowards(hunter, Seabed(car, Bearing, 40f), 9f);
             yield return Cooled(ears, bolts, "L6");
             yield return HostAt(diverAt, hunter);
             vitals.ServerHealForChecks();
