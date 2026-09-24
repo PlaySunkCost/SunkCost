@@ -650,13 +650,16 @@ namespace SunkCost.Editor.Prototype
             Heading("R3 — the kill on the guest");
             Creature.RefuseGrabKillForChecks = false;
             yield return GuestLook(copy.transform.position + (copy.transform.position - angel.transform.position) * 3f + Vector3.up * 1.6f, copy.transform.position);
-            yield return Expect(() => angel.ServerGrabbing || Flat(angel.transform.position, copy.transform.position) < 4.0f, 6f, () => "R3 the guest looked away: it closes (" + angel.ServerStatus + ")");
-            Vector3 intoIt = angel.transform.position - copy.transform.position; intoIt.y = 0f;
-            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(intoIt) + "}");
-            Say("R3 the guest dashes as it is caught: " + lastReply.Split('\n')[0]);
-            yield return Expect(() => angel.ServerGrabsStarted == 2, 3f, () => "R3 caught again (" + angel.ServerStatus + ")");
+            // Wait on the server's catch, then the guest's Alt at once (the guest has not yet seen the
+            // hold, or just has): whichever, the dash must not carry it out of the embrace.
+            float lookedAwayAt = Time.unscaledTime;
+            while (!angel.ServerGrabbing && Time.unscaledTime - lookedAwayAt < 6f) yield return null;
+            Check(angel.ServerGrabbing && angel.ServerGrabsStarted == 2 && angel.ServerGrabVictim == copy, "R3 the guest looked away: caught again (" + angel.ServerStatus + ")");
+            Vector3 away = copy.transform.position - angel.transform.position; away.y = 0f;
+            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(away) + "}");
+            Say($"R3 the guest dashes away as it is caught (server hold t={angel.ServerGrabSeconds:0.00} s): " + lastReply.Split('\n')[0]);
             yield return Expect(() => angel.ServerGrabSeconds > grab.GripSeconds + 0.2f, 3f, () => "R3 past the grip");
-            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(-intoIt) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(away) + "}");
             string inHold = lastReply.Split('\n')[0];
             Check(inHold.Contains("dash=False") && inHold.Contains("Not now"), "R3 the guest's dash in the hold is refused 'Not now': " + inHold);
             yield return Snapshot();
