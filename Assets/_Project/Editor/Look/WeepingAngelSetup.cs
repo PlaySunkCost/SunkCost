@@ -18,7 +18,7 @@ namespace SunkCost.Editor.Look
     // - CreatureRig: the sprint plays at the ground speed over the clip's 11.25 m/s;
     //   the rig drives the blends (a quick one into a statue); no head look-at, no
     //   breathing, no lean: anything the layer moves on a frozen Angel would be a
-    //   movement under a look.
+    //   movement under a look. Frozen and Grabbing are still poses (the clip alone, at 1×).
     public static class WeepingAngelSetup
     {
         public const float HunterClipSpeed = 11.25f;      // clips/WeepingAngel.py RUN_SPEED
@@ -85,6 +85,12 @@ namespace SunkCost.Editor.Look
                     off.arraySize = 2;
                     off.GetArrayElementAtIndex(0).intValue = (int)CreaturePose.Frozen;
                     off.GetArrayElementAtIndex(1).intValue = (int)CreaturePose.Grabbing;
+                    // Frozen and the embrace: the layer adds nothing and the clip plays at 1×
+                    // (a statue under a look, and the stillness of the embrace, keyed to the hold).
+                    SerializedProperty still = s.FindProperty("stillPoses");
+                    still.arraySize = 2;
+                    still.GetArrayElementAtIndex(0).intValue = (int)CreaturePose.Frozen;
+                    still.GetArrayElementAtIndex(1).intValue = (int)CreaturePose.Grabbing;
                     s.FindProperty("aimAtBeam").boolValue = false;
                     s.FindProperty("leanMaxDegrees").floatValue = 0f;
                     s.FindProperty("breathDegrees").floatValue = 0f;
