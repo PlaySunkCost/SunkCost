@@ -427,6 +427,7 @@ namespace SunkCost.Editor.Prototype
             Vector3 angelFwd = angel.transform.forward; angelFwd.y = 0f;
             Say($"G4 feet {feetGap * 100f:0.0} cm from the hold point, {bodyGap:0.00} m from the Angel; hands left the face at {handsLeftFaceBy:0.00} s, on the diver's head at {handsOnHeadBy:0.00} s; the face {faceAt:0.00} m from the diver's eyes");
             Check(feetGap < 0.08f, "G4 the diver stands at the embrace's hold point");
+            Check(host.Dashes == dashesBeforeCatchPress + (dashAtCatch ? 1 : 0) && feetGap < 0.08f && host.IsGrabbed, $"D0 a dash on the frame of the catch ({(dashAtCatch ? "started, then cancelled by the hold" : "refused '" + host.DashRefusal + "'")}) did not move the held diver: at the hold point, still held");
             Check(bodyGap > 0.55f && bodyGap < 0.85f, $"G4 close, not inside it ({bodyGap:0.00} m apart; the diver's capsule is 0.3 m)");
             Check(Vector3.Angle(hostFwd, toAngelFlat) < 10f && Vector3.Angle(angelFwd, -toAngelFlat) < 12f, "G4 face to face: the diver faces the Angel and the Angel the diver");
             Check(handsLeftFaceBy > 0.2f && handsLeftFaceBy < grab.GripSeconds + 0.1f, $"G5 its hands leave its face before the grip ({handsLeftFaceBy:0.00} s)");
@@ -449,48 +450,17 @@ namespace SunkCost.Editor.Prototype
             Check(angel.ServerGrabsStarted == 1, "G7 still one catch: no re-grab spam");
             yield return StillUnderLook(angel, 1f, "G9 after the hold");
 
-            Heading("D1 — a dash does not save the caught (Dan): the diver dashes into its reach, is caught mid-dash and held the full hold");
-            {
-                Creature.RefuseGrabKillForChecks = true;
-                int grabs0 = angel.ServerGrabsStarted, dashes0 = host.Dashes;
-                LookAway(angel);
-                yield return Expect(() => angel.Pose == CreaturePose.Hunting, 2f, () => "D1 its back turned, it hunts (" + angel.ServerStatus + ")");
-                yield return Expect(() => angel.ServerGrabbing || Flat(angel.transform.position, host.transform.position) < 4.0f, 3f, () => "D1 it closes to 4 m (" + angel.ServerStatus + ")");
-                Keys(Key.S, Key.LeftAlt); yield return null; Keys(Key.S); // dash backwards, into it
-                yield return Expect(() => angel.ServerGrabbing, 2f, () => "D1 caught (" + angel.ServerStatus + ")");
-                Keys();
-                bool dashed = host.Dashes > dashes0;
-                Say($"D1 the dash {(dashed ? "started (" + host.Dashes + ")" : "did not start ('" + host.DashRefusal + "')")}; caught at {Flat(angel.transform.position, host.Grab.CaughtAt):0.00} m");
-                float worstFeet = 0f; bool heldThrough = true; bool refusedInHold = false, triedInHold = false;
-                while (angel.ServerGrabbing && angel.ServerGrabSeconds < grab.HoldSeconds - 0.05f)
-                {
-                    float t = angel.ServerGrabSeconds;
-                    if (!host.IsGrabbed) heldThrough = false;
-                    if (t > grab.GripSeconds + 0.1f) worstFeet = Mathf.Max(worstFeet, Flat(host.transform.position, angel.transform.TransformPoint(grab.GripPoint)));
-                    if (!triedInHold && t > 0.5f) { triedInHold = true; refusedInHold = !host.TryDash(Vector2.down) && host.DashRefusal == "Not now"; Say("D1 a dash 0.5 s into the hold: '" + host.DashRefusal + "'"); }
-                    yield return null;
-                }
-                Check(dashed, "D1 the dash was under way when the hold landed");
-                Check(heldThrough, "D1 held the whole hold: the dash did not carry the diver out of it");
-                Check(worstFeet < 0.08f, $"D1 at the hold point from the grip on ({worstFeet * 100f:0.0} cm at worst): the dash's push was cancelled");
-                Check(refusedInHold, "D1 a second dash inside the hold is refused 'Not now'");
-                yield return Expect(() => !host.IsGrabbed, 1.5f, () => "D1 let go at the hold's end (" + angel.ServerStatus + ")");
-                Check(angel.ServerGrabOutcome.StartsWith("kill refused"), "D1 the hold ran to its kill (refused for the checks), not lost: '" + angel.ServerGrabOutcome + "'");
-                Check(angel.ServerGrabsStarted == grabs0 + 1, "D1 one catch");
-                yield return Expect(() => !angel.ServerGrabbing, grab.ReleaseSeconds + 1f, () => "D1 the hold ended (" + angel.ServerStatus + ")");
-                LookAtAngel(angel);
-                yield return Expect(() => angel.Pose == CreaturePose.Frozen, 1.5f, () => "D1 looked at, a statue again (" + angel.ServerStatus + ")");
-                yield return Wait(1.2f); // the dash's recharge
-            }
-
-            Heading("G8 — a diver walking away is caught, dashes in the hold; the kill and a clean end");
+            Heading("G8 — a diver walking away is caught and dashes at the catch and in the hold; the kill and a clean end");
             Creature.RefuseGrabKillForChecks = false;
             Vector3 away = host.transform.position + (host.transform.position - angel.transform.position).normalized * 20f;
             M.ClientLookAt(away + Vector3.up * 1.6f);
             Keys(Key.W); // walking away, back turned
             yield return Expect(() => angel.ServerGrabbing, 4f, () => "G8 the walking host was caught (" + angel.ServerStatus + ")");
+            int dashesBefore8 = host.Dashes;
+            bool dashAtCatch8 = host.TryDash(Vector2.up); // Alt on the frame of the catch, the kill on
+            Say($"G8 a dash on the frame of the catch: {(dashAtCatch8 ? "started (the owner had not yet seen the hold)" : "refused '" + host.DashRefusal + "'")}; dashes {dashesBefore8} → {host.Dashes}");
             Keys();
-            Check(angel.ServerGrabsStarted == 3, "G8 a third catch after the others let go: it returned to valid behaviour");
+            Check(angel.ServerGrabsStarted == 2, "G8 a second catch after the first let go: it returned to valid behaviour");
             float caughtWalking = Flat(angel.transform.position, host.Grab.CaughtAt);
             Check(caughtWalking <= s.ReachMeters + 0.3f, $"G8 caught walking at {caughtWalking:0.00} m");
             {
@@ -521,7 +491,7 @@ namespace SunkCost.Editor.Prototype
             Check(!host.IsGrabbed, "G8 the hold let go of the dead diver");
             Check(PlayerBody.FindFor(host.OwnerId, WorldScenes.Scene(WorldId.Dive)) != null, "G8 the ordinary death: a body where the diver was held");
             yield return Expect(() => !angel.ServerGrabbing && angel.Pose != CreaturePose.Grabbing, grab.ReleaseSeconds + 1f, () => "G8 the release ran out and the Angel's brain is back (" + angel.ServerStatus + ")");
-            Check(angel.ServerGrabsStarted == 3, "G7 no catch of the dead");
+            Check(angel.ServerGrabsStarted == 2, "G7 no catch of the dead");
             Say("G8 after the kill: " + angel.ServerStatus);
             MonsterSettings.RosterOverrideForTests = null;
             MonsterSettings.GhostChanceOverrideForTests = null;

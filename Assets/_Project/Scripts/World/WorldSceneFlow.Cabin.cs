@@ -660,7 +660,7 @@ namespace SunkCost.World
             {
                 if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
-                if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) riders.Add(conn.ClientId);
+                if (player != null && !player.IsGrabbed && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) riders.Add(conn.ClientId);
             }
             Debug.Log("Cabin ride: down with " + string.Join(",", riders) + " requested by " + DisplayName(sender) + "\n" + System.Environment.StackTrace);
             ride = StartCoroutine(DiveRoutine(riders, ship));
@@ -684,7 +684,7 @@ namespace SunkCost.World
                 // rider (its client would not send Arrived and would be kicked).
                 if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
-                if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(player.transform.position)) riders.Add(conn.ClientId);
+                if (player != null && !player.IsGrabbed && player.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && car.IsInsideCar(player.transform.position)) riders.Add(conn.ClientId);
             }
             ride = StartCoroutine(SurfaceRoutine(riders, car));
             return true;

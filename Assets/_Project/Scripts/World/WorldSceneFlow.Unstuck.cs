@@ -29,6 +29,7 @@ namespace SunkCost.World
             if (player == null) { why = "No player."; return false; }
             int id = conn.ClientId;
             if (player.IsDead || dayState.IsDead(id)) { why = "The dead stay where they are"; return false; }
+            if (player.IsGrabbed) { why = "Held"; return false; } // a monster's hold ends in its kill, not a teleport
             if ((riding && cohort.Contains(id)) || dayState.IsRider(id)) { why = "Not during a ride"; return false; }
             if (dayState.Phase == DayPhase.Plank && dayState.Plank.Active && dayState.Plank.Jumper == id) { why = "Walk the plank"; return false; }
             if (lastUnstuck.TryGetValue(id, out float last) && Time.unscaledTime - last < UnstuckCooldownSeconds) { why = "Just did"; return false; }
