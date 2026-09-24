@@ -104,8 +104,6 @@ namespace SunkCost.Editor.Prototype
             PlayerVitalsSettings.TankSecondsOverrideForTests = null;
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
-            Time.captureDeltaTime = 0f;
-            DropFilm();
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
             if (inputBehaviorChanged) { InputSystem.settings.editorInputBehaviorInPlayMode = savedInputBehavior; InputSystem.settings.backgroundBehavior = savedBackgroundBehavior; inputBehaviorChanged = false; }
             EditorApplication.update -= Tick;
@@ -258,6 +256,26 @@ namespace SunkCost.Editor.Prototype
             Check(bodyN >= 8, $"the feet were sampled on screen ({bodyN} frames)");
         }
 
+        // How far the skinned body reaches ahead of the middle along a flat direction, this
+        // frame (the mesh as posed now, not the bind pose): where the snout really is.
+        private static Mesh snoutMesh;
+        private static float SnoutAhead(Charger c, Vector3 dir)
+        {
+            SkinnedMeshRenderer smr = c.GetComponentInChildren<SkinnedMeshRenderer>();
+            if (smr == null) return float.NaN;
+            if (snoutMesh == null) snoutMesh = new Mesh { hideFlags = HideFlags.HideAndDontSave };
+            smr.BakeMesh(snoutMesh, true);
+            Matrix4x4 m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+            Vector3 mid = c.transform.position;
+            float best = float.NegativeInfinity;
+            foreach (Vector3 v in snoutMesh.vertices)
+            {
+                Vector3 w = m.MultiplyPoint3x4(v) - mid; w.y = 0f;
+                best = Mathf.Max(best, Vector3.Dot(w, dir));
+            }
+            return best;
+        }
+
         private static GameObject Wall(Vector3 centre, Vector3 across, Vector3 size)
         {
             GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -390,84 +408,6 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => GuestMonsterLine(r) == string.Empty, 6f, "G1 the guest's copy went with it");
         }
 
-        // ---- the film for Dan -------------------------------------------------------------
-
-        // Two temporary cameras (HideAndDontSave, destroyed after): one beside the lane,
-        // one at the struck diver's EyePose (the eyes a spectator and the deck TV render,
-        // the jolt included). Game time steps a fixed 1/30 s a frame while filming, so the
-        // frames play back at the real pace whatever the capture costs. A temporary key
-        // light shows the shapes in the dark site; nothing in play reads it (a Light, not a lamp).
-        private const int FilmW = 640, FilmH = 360;
-        private static GameObject filmRig;
-        private static RenderTexture filmRt;
-        private static Texture2D filmTex;
-
-        private static void DropFilm()
-        {
-            if (filmRig != null) Object.Destroy(filmRig);
-            filmRig = null;
-            if (filmRt != null) { filmRt.Release(); Object.Destroy(filmRt); filmRt = null; }
-            if (filmTex != null) { Object.Destroy(filmTex); filmTex = null; }
-        }
-
-        private static void Shoot(Camera cam, string path)
-        {
-            cam.targetTexture = filmRt;
-            cam.Render();
-            cam.targetTexture = null;
-            RenderTexture.active = filmRt;
-            filmTex.ReadPixels(new Rect(0, 0, FilmW, FilmH), 0, 0);
-            filmTex.Apply();
-            RenderTexture.active = null;
-            File.WriteAllBytes(path, filmTex.EncodeToPNG());
-        }
-
-        private static IEnumerator Film(Charger c, string take, Vector3 sideFrom, Vector3 sideAt, Func<bool> done, float maxSeconds)
-        {
-            string dir = Path.Combine("Temp/polish-Charger-film", take);
-            if (Directory.Exists(dir)) Directory.Delete(dir, true);
-            Directory.CreateDirectory(dir);
-            DropFilm();
-            filmRig = new GameObject("Charger checks film") { hideFlags = HideFlags.HideAndDontSave };
-            var side = new GameObject("side") { hideFlags = HideFlags.HideAndDontSave };
-            side.transform.SetParent(filmRig.transform, false);
-            Camera sideCam = side.AddComponent<Camera>();
-            sideCam.enabled = false; sideCam.fieldOfView = 50f; sideCam.nearClipPlane = 0.05f; sideCam.farClipPlane = 200f;
-            side.transform.position = sideFrom; side.transform.LookAt(sideAt);
-            var eye = new GameObject("eye") { hideFlags = HideFlags.HideAndDontSave };
-            eye.transform.SetParent(filmRig.transform, false);
-            Camera eyeCam = eye.AddComponent<Camera>();
-            eyeCam.enabled = false; eyeCam.nearClipPlane = 0.03f; eyeCam.farClipPlane = 200f;
-            Camera own = Host().EyeAnchor.GetComponent<Camera>();
-            eyeCam.fieldOfView = own != null ? own.fieldOfView : 70f;
-            var keyGo = new GameObject("key light") { hideFlags = HideFlags.HideAndDontSave };
-            keyGo.transform.SetParent(filmRig.transform, false);
-            keyGo.transform.rotation = Quaternion.Euler(50f, Quaternion.LookRotation(sideAt - sideFrom).eulerAngles.y - 35f, 0f);
-            Light key = keyGo.AddComponent<Light>();
-            key.type = LightType.Directional; key.intensity = 0.9f; key.shadows = LightShadows.Soft; key.color = new Color(0.8f, 0.88f, 1f);
-            filmRt = new RenderTexture(FilmW, FilmH, 24) { hideFlags = HideFlags.HideAndDontSave, antiAliasing = 4 };
-            filmTex = new Texture2D(FilmW, FilmH, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
-            Time.captureDeltaTime = 1f / 30f;
-            int n = 0;
-            float t0 = Time.time, until = float.PositiveInfinity;
-            try
-            {
-                while (Time.time - t0 < maxSeconds && Time.time < until)
-                {
-                    if (float.IsPositiveInfinity(until) && done()) until = Time.time + 1.0f;
-                    Host().EyePose(out Vector3 ep, out Quaternion er);
-                    eye.transform.SetPositionAndRotation(ep, er);
-                    string tag = n.ToString("000") + "-" + c.Phase;
-                    Shoot(sideCam, Path.Combine(dir, "side-" + tag + ".png"));
-                    Shoot(eyeCam, Path.Combine(dir, "eye-" + tag + ".png"));
-                    n++;
-                    yield return null;
-                }
-            }
-            finally { Time.captureDeltaTime = 0f; DropFilm(); }
-            Say($"filmed {take}: {n} frames a camera at 30 fps in {dir}");
-        }
-
         // One dash to the host's left on the virtual keyboard (Alt + A), as the Listener's checks do.
         private static IEnumerator DashLeft()
         {
@@ -593,13 +533,14 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => InState(c, "Windup"), 0.4f, () => "C1 the Animator plays the wind-up");
             var rush = new List<Sample>();
             int strikes0 = c.StrikeSerial, hits0 = c.ServerRushHits, felt0 = host.KnockbacksFelt, cue0 = host.LastKnockback.Serial;
+            float snoutAtHit = float.NaN, hostAlongAtHit = float.NaN;
             float jolt = 0f, hitAt = -1f, joltPeakAt = -1f, joltUp = 0f, joltBack = 0f, settledAt = -1f;
             Vector3 hostAtHit = Vector3.zero;
             int healthDrops = 0, lastHealth = host.Vitals.Health;
             Transform cam = host.EyeAnchor;
             yield return SampleRush(c, rush, t =>
             {
-                if (host.Vitals.Health < lastHealth) { healthDrops++; lastHealth = host.Vitals.Health; if (hitAt < 0f) { hitAt = t; hostAtHit = host.transform.position; } }
+                if (host.Vitals.Health < lastHealth) { healthDrops++; lastHealth = host.Vitals.Health; if (hitAt < 0f) { hitAt = t; hostAtHit = host.transform.position; snoutAtHit = SnoutAhead(c, c.RushDirection); hostAlongAtHit = Vector3.Dot(FlatDir(Vector3.zero) + Vector3.ProjectOnPlane(host.transform.position - c.transform.position, Vector3.up), c.RushDirection); } }
                 if (hitAt < 0f) return;
                 Quaternion rel = Quaternion.Inverse(Quaternion.Euler(host.LookPitch, 0f, 0f)) * cam.localRotation;
                 float a = Quaternion.Angle(Quaternion.identity, rel);
@@ -634,7 +575,8 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.8f);
             Check(c.ServerRushHits == hits0 + 1 && c.StrikeSerial == strikes0 + 1 && healthDrops == 1, $"C1 one hit, one strike, one health drop (hits {c.ServerRushHits - hits0}, strikes {c.StrikeSerial - strikes0}, drops {healthDrops})");
             Check(host.Vitals.Health == health0 - (int)s.ChargerDamage && host.Vitals.Leaking, $"C1 35 HP and a leak (health {health0} → {host.Vitals.Health}, leaking {host.Vitals.Leaking})");
-            Say($"C1 struck {c.LastHitFaceMeters:0.00} m ahead of its middle (face at {c.FrontReach:0.00})");
+            Say($"C1 struck {c.LastHitFaceMeters:0.00} m ahead of its middle (face at {c.FrontReach:0.00}); at the hit's frame the skinned snout reached {snoutAtHit:0.00} m and the host's middle stood {hostAlongAtHit:0.00} m ahead, so the snout was {hostAlongAtHit - 0.35f - snoutAtHit:0.00} m short of the capsule's front (negative: inside it)");
+            Check(!float.IsNaN(snoutAtHit) && hostAlongAtHit - 0.35f - snoutAtHit < 0.45f, "C1 the snout is at the diver when the hit lands (no hit from afar)");
             Check(c.LastHitFaceMeters > c.FrontReach - 0.7f && c.LastHitFaceMeters <= c.FrontReach + 0.4f, "C1 the hit lands at the ram's face, not before it and not after the head passed through");
             Check(host.KnockbacksFelt == felt0 + 1 && host.LastKnockback.Serial == cue0 + 1, "C1 one knock-back, told to the owner and in the replicated cue");
             Vector3 shove = host.transform.position - hostAtHit; shove.y = 0f;
@@ -778,7 +720,9 @@ namespace SunkCost.Editor.Prototype
             var wallRush = new List<Sample>();
             yield return SampleRush(c, wallRush);
             float faceGap = Vector3.Dot(wallAt - c.transform.position, lane) - 0.3f; // from its middle to the wall's near face
-            Say($"C5 stopped {faceGap:0.00} m from the wall (its face reaches {c.FrontReach:0.00})");
+            float snoutAtWall = SnoutAhead(c, lane);
+            Say($"C5 stopped {faceGap:0.00} m from the wall (its face reaches {c.FrontReach:0.00}); the skinned snout reaches {snoutAtWall:0.00} m, {snoutAtWall - faceGap:0.00} m into the wall (positive: through its face)");
+            Check(snoutAtWall - faceGap < 0.3f, "C5 the snout does not bury itself in the wall");
             Check(c.ServerWallStops == walls0 + 1, "C5 the wall stopped it");
             Check(faceGap > c.FrontReach - 0.25f && faceGap < c.FrontReach + 0.8f, "C5 its face at the wall: no head through the wall, no stop short of it");
             Check(host.Vitals.Health == health0, "C5 the host behind the wall is untouched");
@@ -863,34 +807,6 @@ namespace SunkCost.Editor.Prototype
             Check(c.ServerRushHits == d1Hits && host.Vitals.Health == d1Health, "D1 the dash dodged it: no hit, no damage");
             Check(YawDelta(d1Yaw, Yaw(c.transform)) < 0.5f, "D1 it never turned after the dashing diver");
 
-            // ---------------------------------------------------------------------------
-            Heading("F1 — the film for Dan: a hit (side and the victim's eyes), then a dash dodge");
-            M.ServerDespawnMonsters();
-            Heal(host);
-            yield return HostAt(P(7f), P(-8f));
-            c = SpawnCharger(P(-9f), P(7f));
-            M.ClientLookAt(c.EyePoint + Vector3.up * 0.2f);
-            int f1Hits = c.ServerRushHits;
-            Vector3 sideAt = P(1f) + Vector3.up * 0.7f;
-            Vector3 sideFrom = sideAt + outward * 9.5f + lane * 1.5f + Vector3.up * 1.6f;
-            yield return Film(c, "hit", sideFrom, sideAt, () => c.Phase == Charger.ChargePhase.Recovering && Time.time - c.LastStopAt > 1.2f, 9f);
-            Check(c.ServerRushHits == f1Hits + 1, "F1 the filmed charge hit the host");
-            M.ServerDespawnMonsters();
-            Heal(host);
-            yield return Wait(3.2f);
-            yield return HostAt(P(7f), P(-8f));
-            c = SpawnCharger(P(-9f), P(7f));
-            M.ClientLookAt(c.EyePoint + Vector3.up * 0.2f);
-            f1Hits = c.ServerRushHits;
-            bool dashed = false;
-            IEnumerator dashRun = null;
-            yield return Film(c, "dodge", sideFrom, sideAt, () =>
-            {
-                if (!dashed && c.Phase == Charger.ChargePhase.Rushing) { dashed = true; dashRun = DashLeft(); }
-                if (dashRun != null && !dashRun.MoveNext()) dashRun = null;
-                return c.Phase == Charger.ChargePhase.Recovering && Time.time - c.LastStopAt > 1.0f;
-            }, 9f);
-            Check(dashed && c.ServerRushHits == f1Hits, "F1 the filmed dash dodged it");
 
             M.ServerDespawnMonsters();
             Heal(host);

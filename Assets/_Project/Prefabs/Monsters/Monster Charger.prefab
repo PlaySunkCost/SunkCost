@@ -36,7 +36,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7648864056308076123}
+  - {fileID: 4414499488484310998}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7696592414742249092
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0501c66a29428d24983f466b6889aeb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureLook
-  body: {fileID: 7648864056308076123}
+  body: {fileID: 4414499488484310998}
   eyes: []
   eyeColour: {r: 1, g: 0.85, b: 0.25, a: 1}
 --- !u!114 &4542502625511444092
@@ -237,9 +237,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd2e517a666fb2045adabc00837bcc3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureRig
-  animator: {fileID: 7697170976711692935}
-  beamOrigin: {fileID: 6751405247324977473}
-  voice: {fileID: 5534393710965217027}
+  animator: {fileID: 2026342867430848129}
+  beamOrigin: {fileID: 780395958972991692}
+  voice: {fileID: 1993783406475077262}
   animatedPoses:
   - Idle
   - Hunting
@@ -293,7 +293,7 @@ MonoBehaviour:
   randomStart: 1
   alwaysAnimate: 0
   maxBeamOriginFromEye: 1.5
---- !u!1001 &7902832355646269872
+--- !u!1001 &4236139679490857021
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -447,31 +447,31 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7697170976711692935}
+      addedObject: {fileID: 2026342867430848129}
   m_SourcePrefab: {fileID: 100100000, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
---- !u!4 &5534393710965217027 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 7902832355646269872}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6751405247324977473 stripped
+--- !u!4 &780395958972991692 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 7902832355646269872}
+  m_PrefabInstance: {fileID: 4236139679490857021}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7020524653719278817 stripped
+--- !u!4 &1993783406475077262 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
+  m_PrefabInstance: {fileID: 4236139679490857021}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3893541415194486124 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 7902832355646269872}
+  m_PrefabInstance: {fileID: 4236139679490857021}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &7697170976711692935
+--- !u!95 &2026342867430848129
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7020524653719278817}
+  m_GameObject: {fileID: 3893541415194486124}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 5db76b52c3da7fd4c93ce4526d27c47a, type: 2}
@@ -486,8 +486,8 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!4 &7648864056308076123 stripped
+--- !u!4 &4414499488484310998 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 7902832355646269872}
+  m_PrefabInstance: {fileID: 4236139679490857021}
   m_PrefabAsset: {fileID: 0}
