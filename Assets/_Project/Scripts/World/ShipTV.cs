@@ -206,7 +206,15 @@ namespace SunkCost.World
             if (!renderedThisFrame || diver == null || hud == null || shown == null || Event.current.type != EventType.Repaint) return;
             RenderTexture previous = RenderTexture.active;
             Matrix4x4 matrix = GUI.matrix;
+            // IMGUI repaints with sRGB writes off in this linear project, so the copy lost the
+            // picture's gamma: the graded seafloor (0.237) landed in TvShown at 0.070, fog
+            // (43.9, 61.0, 63.0) as (6.4, 11.9, 12.7) - the TV's "darker floor" (qa-technical,
+            // 24 September 2026). The copy writes sRGB; the visor is drawn as IMGUI draws it on
+            // every screen (writes off), so it looks the same here as on the diver's own.
+            bool srgbWrite = GL.sRGBWrite;
+            GL.sRGBWrite = true;
             Graphics.Blit(picture, shown);
+            GL.sRGBWrite = srgbWrite;
             RenderTexture.active = shown;
             GUI.matrix = Matrix4x4.Scale(new Vector3((float)shown.width / Screen.width, (float)shown.height / Screen.height, 1f));
             hud.DrawVisor(frame, diver.Inventory, maskOn: frame.Readout.On, readoutsOn: frame.Readout.On && !diver.TravelLocked, onAir: true);
