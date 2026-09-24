@@ -27,9 +27,22 @@ namespace SunkCost.Editor.Prototype
     // that escapes it, an early dash and a late one that do not; a wall between; three
     // shots running; its walks to a thing's sound and a diver's, and home after the
     // silence. Log: Temp/polish-Listener-matrix.log. Job "polish-Listener".
+    //
+    // With Temp/polish-Listener-guest.flag present the same job runs the guest rows
+    // instead (G1–G3, both beams): a guest build (Builds/HQPrototypeLocal) joins, and
+    // its snapshot must show the dark beam drawn on the host's judged line with its
+    // shade up, the Lure's beam lights up while it burns and out after, and the hit
+    // serials the host wrote.
     public static class MonsterPolishListenerChecks
     {
         private const string Log = "Temp/polish-Listener-matrix.log";
+        private const string GuestFlag = "Temp/polish-Listener-guest.flag";
+        private const string GuestDir = "Temp/polish-Listener-guest";
+        private const string BuildExe = "Builds/HQPrototypeLocal/SunkCostHQ.exe";
+        private static bool guestMode;
+        private static System.Diagnostics.Process guest;
+        private static int guestCommand = 3400;
+        private static string lastReply = string.Empty;
 
         private static readonly Stack<IEnumerator> stack = new();
         private static bool running;
@@ -48,7 +61,9 @@ namespace SunkCost.Editor.Prototype
         {
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode and start the Local host first.");
             if (running) throw new InvalidOperationException("Already running");
-            File.WriteAllText(Log, "Listener polish checks started " + DateTime.Now + "\n");
+            guestMode = File.Exists(GuestFlag);
+            if (guestMode && !File.Exists(BuildExe)) throw new InvalidOperationException("Build " + BuildExe + " first (the guest rows).");
+            File.WriteAllText(Log, "Listener polish checks started " + DateTime.Now + (guestMode ? " (the guest rows)" : string.Empty) + "\n");
             Status = "Running";
             running = true;
             stack.Clear();
@@ -78,6 +93,8 @@ namespace SunkCost.Editor.Prototype
             if (wall != null) UnityEngine.Object.Destroy(wall);
             MonsterBeamShade.OffForChecks = false;
             if (recorder != null) { recorder.Close(); recorder = null; }
+            try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
+            guest = null;
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
@@ -228,6 +245,159 @@ namespace SunkCost.Editor.Prototype
                 UnityEngine.Object.Destroy(tex);
             }
             Say($"filmed {name}: {n} frames in {dir}");
+        }
+
+        // ---- the guest ------------------------------------------------------------------
+
+        private static System.Diagnostics.Process LaunchGuest()
+        {
+            Directory.CreateDirectory(GuestDir);
+            foreach (string stale in new[] { "command.json", "reply.txt" })
+                if (File.Exists(Path.Combine(GuestDir, stale))) File.Delete(Path.Combine(GuestDir, stale));
+            var tugboat = UnityEngine.Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
+            string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
+            var info = new System.Diagnostics.ProcessStartInfo(Path.GetFullPath(BuildExe),
+                "-screen-width 960 -screen-height 540 -screen-fullscreen 0 -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
+            { UseShellExecute = false, CreateNoWindow = true };
+            return System.Diagnostics.Process.Start(info);
+        }
+        private static IEnumerator Send(string json)
+        {
+            string text = json.Replace("{id}", (++guestCommand).ToString());
+            for (int attempt = 0; ; attempt++)
+            {
+                bool written = false;
+                try { File.WriteAllText(Path.Combine(GuestDir, "command.json"), text); written = true; }
+                catch (IOException) when (attempt < 20) { }
+                if (written) break;
+                yield return null;
+            }
+            float deadline = Time.unscaledTime + 10f;
+            while (Time.unscaledTime < deadline)
+            {
+                string reply = Reply();
+                if (reply.StartsWith("id=" + guestCommand + ";")) { lastReply = reply; yield break; }
+                yield return null;
+            }
+            throw new Exception("guest did not answer command " + guestCommand + ": " + json);
+        }
+        private static string Reply()
+        {
+            try { string p = Path.Combine(GuestDir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
+            catch (IOException) { return string.Empty; }
+        }
+        private static IEnumerator Snapshot() { yield return Send("{\"id\":{id},\"action\":\"snapshot\"}"); }
+        private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label)
+        {
+            float deadline = Time.unscaledTime + seconds;
+            while (Time.unscaledTime < deadline)
+            {
+                yield return Snapshot();
+                if (predicate(lastReply)) { Check(true, label); yield break; }
+                yield return Wait(0.2f);
+            }
+            throw new Exception(label + "\n" + lastReply);
+        }
+        private static string Vec(Vector3 v) => "{\"x\":" + F(v.x) + ",\"y\":" + F(v.y) + ",\"z\":" + F(v.z) + "}";
+        private static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        private static string GuestPlayerLine(string reply, int ownerId) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("player=" + ownerId + ";")) ?? string.Empty;
+        private static string GuestMonsterLine(string reply, MonsterKind kind) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("monster=" + kind + ";")) ?? string.Empty;
+        private static string Text(string line, string key)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(line, "(?:^|; )" + key + "=([^;]*)");
+            return m.Success ? m.Groups[1].Value.Trim() : string.Empty;
+        }
+        private static float Num(string line, string key) => float.TryParse(Text(line, key), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v) ? v : float.NaN;
+        private static Vector3 VecField(string line, string key)
+        {
+            string[] parts = Text(line, key).Trim('(', ')').Split(',');
+            if (parts.Length != 3) return new Vector3(float.NaN, float.NaN, float.NaN);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            return new Vector3(float.Parse(parts[0], inv), float.Parse(parts[1], inv), float.Parse(parts[2], inv));
+        }
+        private static HQPlayerController GuestCopy() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
+        private static IEnumerator GuestMove(Vector3 to) { yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(to) + "}"); }
+        private static IEnumerator GuestLook(Vector3 aim) { yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(aim) + "}"); }
+        private static IEnumerator GuestLamp(bool on) { yield return Send("{\"id\":{id},\"action\":\"lamp\",\"slot\":" + (on ? 1 : 0) + "}"); }
+
+        // G1–G3: what the guest sees of both beams. The host is the target; the guest
+        // stands 10 m to the side, its lamp off, looking at the monster.
+        private static IEnumerator GuestRows(HQPlayerController host, int guestId, Listener ears, ElevatorController car, Vector3 lAt, Vector3 stand)
+        {
+            MonsterSettings s = Settings;
+            PlayerVitals vitals = host.Vitals;
+            CreatureBolts bolts = ears.GetComponent<CreatureBolts>();
+            Vector3 hostSpot = Vector3.MoveTowards(lAt, stand, 9f);
+            Vector3 side = Vector3.Cross(Vector3.up, Flat(hostSpot - lAt).normalized);
+            Vector3 guestSpot = lAt + side * 10f + Vector3.up * 0.15f;
+
+            Heading("G1 — the dark beam on the guest: drawn on the host's judged line, its shade up while it burns, gone after");
+            yield return GuestLamp(false);
+            yield return GuestMove(guestSpot);
+            yield return GuestLook(lAt + Vector3.up * 1.2f);
+            yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position") - guestSpot).magnitude < 1.5f, 8f, "G1 the guest stands 10 m to the side, its lamp off");
+            yield return GuestEventually(r => GuestMonsterLine(r, MonsterKind.Listener) != string.Empty, 6f, "G1 the guest holds a copy of the Listener");
+            yield return Cooled(ears, bolts, "G1");
+            ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(hostSpot - lAt)).eulerAngles.y);
+            yield return HostAt(hostSpot, lAt);
+            vitals.ServerHealForChecks();
+            yield return Wait(0.5f);
+            int hitSerial0 = bolts.HitSerial;
+            yield return Provoke(ears, bolts, host, "G1", 1f);
+            Check(bolts.ServerTargetOwnerId == host.OwnerId, "G1 the beam follows the host");
+            yield return Expect(() => bolts.ServerFiring, s.BeamChargeSeconds + 0.5f, () => "G1 it burns");
+            // While it burns (the host stands still, so the judged line holds): the guest's drawn line on it, its shade up.
+            float worstFrom = 0f, worstTo = 0f, shadeMin = float.PositiveInfinity;
+            int samples = 0;
+            while (bolts.ServerFiring && Time.time < bolts.ServerFiredAt + s.BeamSeconds - 0.4f)
+            {
+                yield return Snapshot();
+                string line = GuestMonsterLine(lastReply, MonsterKind.Listener);
+                if (Text(line, "beamPhase") != "Firing" || !bolts.ServerFiring) { yield return Wait(0.1f); continue; }
+                Vector3 from = VecField(line, "beamFrom"), to = VecField(line, "beamTo");
+                worstFrom = Mathf.Max(worstFrom, Vector3.Distance(from, bolts.ServerFrom));
+                worstTo = Mathf.Max(worstTo, Vector3.Distance(to, bolts.ServerTo));
+                shadeMin = Mathf.Min(shadeMin, Num(line, "shade"));
+                Check(Text(line, "beamDark") == "True" && Mathf.Abs(Num(line, "beamHalf") - bolts.HalfWidth) < 0.01f, $"G1 sample {samples + 1}: the guest draws it dark and {Num(line, "beamHalf") * 2f:0.00} m across (the host's {bolts.HalfWidth * 2f:0.00})");
+                samples++;
+                yield return Wait(0.15f);
+            }
+            Say($"G1 {samples} guest snapshots while it burned: the guest's drawn line off the host's judged one by at most {worstFrom:0.000} m at the mouth and {worstTo:0.000} m at the end (the line {Vector3.Distance(bolts.ServerFrom, bolts.ServerTo):0.0} m long); shade at least {shadeMin:0.00}");
+            Check(samples >= 3, $"G1 the guest saw it burn ({samples} snapshots)");
+            Check(worstFrom < 0.25f && worstTo < 0.25f, $"G1 the guest draws the beam on the host's judged line (mouth {worstFrom:0.000} m, end {worstTo:0.000} m; the guest's own animation places its mouth)");
+            Check(shadeMin > 0.5f, $"G1 the guest's screen darkens round it while it burns (shade ≥ {shadeMin:0.00})");
+            yield return BeamOver(bolts, "G1");
+            Check(bolts.HitSerial == hitSerial0 + 1, $"G1 the host was hit once (serial {hitSerial0} → {bolts.HitSerial})");
+            yield return GuestEventually(r => Text(GuestMonsterLine(r, MonsterKind.Listener), "hitSerial") == bolts.HitSerial.ToString(), 3f, $"G2 the guest reads the dark beam's hit serial ({bolts.HitSerial})");
+            yield return GuestEventually(r => { string l = GuestMonsterLine(r, MonsterKind.Listener); return Text(l, "beamPhase") == "None" && Num(l, "shade") == 0f; }, 3f, "G1 after the fade the guest's beam and shade are gone (beamPhase=None, shade=0)");
+            vitals.ServerHealForChecks();
+
+            Heading("G3 — the Lure's beam on the guest: its lights on while it burns, out after; the hit serial");
+            ears.DeafForChecks = true;
+            M.ServerDespawnMonsters();
+            yield return Expect(() => Creature.All.Count == 0, 5f, () => "G3 the Listener despawned");
+            Creature lure = MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, lAt);
+            Check(lure != null, "G3 a Lure spawned");
+            CreatureBolts lureBolts = lure.GetComponent<CreatureBolts>();
+            lure.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(hostSpot - lAt)).eulerAngles.y);
+            yield return HostAt(hostSpot, lAt);
+            if (!host.LampOn) host.RequestLamp(true);
+            yield return Expect(() => host.LampOn, 2f, () => "G3 the host's lamp is on (the Lure's lure)");
+            vitals.ServerHealForChecks();
+            yield return GuestEventually(r => GuestMonsterLine(r, MonsterKind.Lure) != string.Empty && Num(GuestMonsterLine(r, MonsterKind.Lure), "beamLights") == 0f, 6f, "G3 the guest holds a copy of the Lure, its beam lights out");
+            int lureSerial0 = lureBolts.HitSerial;
+            yield return Expect(() => lureBolts.ServerCharging, 12f, () => "G3 the Lure saw the host's lamp and charges: " + lure.ServerStatus);
+            Check(lureBolts.ServerTargetOwnerId == host.OwnerId, "G3 its beam follows the host");
+            yield return Expect(() => lureBolts.ServerFiring, s.BeamChargeSeconds + 0.5f, () => "G3 it burns");
+            yield return GuestEventually(r => { string l = GuestMonsterLine(r, MonsterKind.Lure); return Text(l, "beamPhase") == "Firing" && Text(l, "beamDark") == "False" && Num(l, "beamLights") > 0f; }, 2.5f, "G3 while it burns the guest's beam lights are on (beamLights > 0), a light beam");
+            Say("G3 the guest's Lure line while it burned: " + GuestMonsterLine(lastReply, MonsterKind.Lure));
+            yield return Expect(() => !lureBolts.ServerAiming, s.BeamSeconds + 1f, () => "G3 the Lure's beam is over");
+            Check(lureBolts.HitSerial == lureSerial0 + 1, $"G3 the host was hit once (serial {lureSerial0} → {lureBolts.HitSerial})");
+            yield return GuestEventually(r => Text(GuestMonsterLine(r, MonsterKind.Lure), "hitSerial") == lureBolts.HitSerial.ToString(), 3f, $"G3 the guest reads the Lure beam's hit serial ({lureBolts.HitSerial})");
+            yield return GuestEventually(r => { string l = GuestMonsterLine(r, MonsterKind.Lure); return Text(l, "beamPhase") == "None" && Num(l, "beamLights") == 0f; }, 3f, "G3 after the fade the guest's beam lights are out (beamLights=0)");
+            vitals.ServerHealForChecks();
+            M.ServerDespawnMonsters();
+            yield return Expect(() => Creature.All.Count == 0, 5f, () => "despawned");
         }
 
         // A recorder driven frame by frame (for rows that are already driving the keys): a
@@ -384,7 +554,20 @@ namespace SunkCost.Editor.Prototype
             Check(H.ServerSail("Sea").StartsWith("sailing"), "sailing to sea");
             yield return Expect(() => Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.Sea, 45f, () => "arrived at sea");
             yield return Expect(() => WorldSceneFlow.LocalRider() != null && !WorldSceneFlow.LocalRider().Locked, 5f, () => "controls back");
+            int guestId = -1;
+            if (guestMode)
+            {
+                guest = LaunchGuest();
+                yield return Expect(() => GuestCopy() != null, 40f, () => "the guest's copy is here");
+                guestId = GuestCopy().OwnerId;
+                yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=Sea"), 20f, "the guest joined at sea");
+                ShipParts sea = ShipParts.InWorld(WorldId.Sea);
+                H.MoveLocalIntoDeckCabin("Sea");
+                yield return GuestMove(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f));
+                yield return Wait(0.5f);
+            }
             yield return Descend(1);
+            if (guestMode) yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "the guest is in the site");
             ElevatorController car = WorldSceneFlow.FindCar();
             const float Bearing = 240f;
             Vector3 home = Seabed(car, Bearing, 34f);
@@ -393,6 +576,12 @@ namespace SunkCost.Editor.Prototype
             Listener ears = (Listener)creature;
             CreatureBolts bolts = ears.GetComponent<CreatureBolts>();
             CreatureRig rig = ears.GetComponent<CreatureRig>();
+            if (guestMode)
+            {
+                yield return GuestRows(host, guestId, ears, car, Seabed(car, Bearing, 30f), Seabed(car, Bearing, 21f));
+                Say("done (the guest rows): " + M.MonstersText());
+                yield break;
+            }
             Check(bolts != null && rig != null && rig.HasAnimator && rig.BeamOrigin != null, "L0 it carries CreatureBolts and a CreatureRig with an Animator and a BeamOrigin");
             foreach (CreaturePose pose in new[] { CreaturePose.Idle, CreaturePose.Drawn, CreaturePose.Hunting, CreaturePose.Aiming, CreaturePose.Shooting, CreaturePose.Recovering })
                 Check(rig.Animated(pose), "L0 the model has a clip for " + pose);

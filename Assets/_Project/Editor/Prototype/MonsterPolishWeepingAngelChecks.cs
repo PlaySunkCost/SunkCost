@@ -566,7 +566,13 @@ namespace SunkCost.Editor.Prototype
         }
         private static HQPlayerController GuestCopy() => Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
         private static IEnumerator GuestMove(Vector3 to) { yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(to) + "}"); }
-        private static IEnumerator GuestLook(Vector3 aim) { yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(aim) + "}"); }
+        // The peer's "look" takes a direction (its aim vector), not a point: turn the guest standing at
+        // `feet` so its eyes look at `target`.
+        private static IEnumerator GuestLook(Vector3 target, Vector3 feet)
+        {
+            Vector3 aim = target - (feet + Vector3.up * 1.6f);
+            yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(aim) + "}");
+        }
 
         // R1-R3: a remote diver's eyes freeze it; a guest embraced, seen from the guest's own
         // screen and from the host (a spectator's and the TV's source: the guest's EyePose);
@@ -583,7 +589,7 @@ namespace SunkCost.Editor.Prototype
             Vector3 guestSpot = Seabed(car, 78f, 29f);
             yield return HostAt(hostSpot, Seabed(car, 60f, 10f) + Vector3.up * 1.6f);
             yield return GuestMove(guestSpot);
-            yield return GuestLook(angelAt + Vector3.up * 1.6f);
+            yield return GuestLook(angelAt + Vector3.up * 1.6f, guestSpot);
             yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), guestSpot) < 1.5f, 8f, "R1 the guest stands about 11 m from the Angel's spot, looking at it");
             WeepingAngel angel = Spawn(angelAt);
             yield return Expect(() => angel.Pose == CreaturePose.Frozen && angel.ServerWatcherId == guestId, 3f, () => "R1 frozen, watched by the guest (" + angel.ServerStatus + ")");
@@ -596,7 +602,7 @@ namespace SunkCost.Editor.Prototype
             }
             Check(Flat(angel.transform.position, frozenAt) < 0.01f && !host.IsGrabbed, $"R1 1.5 s under the guest's look alone, it did not move ({Flat(angel.transform.position, frozenAt) * 1000f:0.0} mm)");
             yield return GuestEventually(r => Text(GuestMonsterLine(r), "pose") == "Frozen", 3f, "R1 the guest's copy shows it Frozen");
-            yield return GuestLook(guestSpot + (guestSpot - angelAt) + Vector3.up * 1.6f);
+            yield return GuestLook(guestSpot + (guestSpot - angelAt) + Vector3.up * 1.6f, guestSpot);
             yield return Expect(() => angel.Pose == CreaturePose.Hunting, 3f, () => "R1 the guest looks away: it hunts (" + angel.ServerStatus + ")");
             LookAtAngel(angel);
             yield return Expect(() => angel.Pose == CreaturePose.Frozen, 1.5f, () => "R1 the host turns and looks: frozen again (" + angel.ServerStatus + ")");
@@ -610,7 +616,7 @@ namespace SunkCost.Editor.Prototype
             angelAt = Seabed(car, 165f, 33f);
             yield return HostAt(hostSpot, Seabed(car, 140f, 5f) + Vector3.up * 1.6f);
             yield return GuestMove(guestSpot);
-            yield return GuestLook(Seabed(car, 165f, 8f) + Vector3.up * 1.6f);
+            yield return GuestLook(Seabed(car, 165f, 8f) + Vector3.up * 1.6f, guestSpot);
             yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), guestSpot) < 1.5f, 8f, "R2 the guest stands with its back to the Angel's spot");
             angel = Spawn(angelAt);
             yield return Expect(() => angel.ServerGrabbing, 5f, () => "R2 it came and caught (" + angel.ServerStatus + ")");
@@ -637,13 +643,13 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !copy.IsGrabbed, grab.HoldSeconds + 1f, () => "R2 let go at the hold's end, the kill refused (" + angel.ServerStatus + ")");
             yield return GuestEventually(r => { string l = GuestPlayerLine(r, guestId); return Text(l, "grabbed") == "False" && Text(l, "dead") == "False" && Text(l, "controllerOn") == "True" && Text(l, "grabsFelt") == "1"; }, 3f, "R2 the guest is let go: alive, its capsule back, one hold felt");
             yield return Expect(() => !angel.ServerGrabbing, grab.ReleaseSeconds + 1f, () => "R2 the hold ended (" + angel.ServerStatus + ")");
-            yield return GuestLook(angel.transform.position + Vector3.up * angel.EyeHeight);
+            yield return GuestLook(angel.transform.position + Vector3.up * angel.EyeHeight, copy.transform.position);
             yield return Expect(() => angel.Pose == CreaturePose.Frozen && angel.ServerWatcherId == guestId, 2f, () => "R2 the guest looks at it after the hold: frozen by the guest (" + angel.ServerStatus + ")");
             Check(angel.ServerGrabsStarted == 1, "R2 one catch");
 
             Heading("R3 — the kill on the guest");
             Creature.RefuseGrabKillForChecks = false;
-            yield return GuestLook(guestSpot + (guestSpot - angel.transform.position) * 3f + Vector3.up * 1.6f);
+            yield return GuestLook(copy.transform.position + (copy.transform.position - angel.transform.position) * 3f + Vector3.up * 1.6f, copy.transform.position);
             yield return Expect(() => angel.ServerGrabbing || Flat(angel.transform.position, copy.transform.position) < 4.0f, 6f, () => "R3 the guest looked away: it closes (" + angel.ServerStatus + ")");
             Vector3 intoIt = angel.transform.position - copy.transform.position; intoIt.y = 0f;
             yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(intoIt) + "}");
