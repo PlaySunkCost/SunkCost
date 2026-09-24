@@ -341,6 +341,11 @@ namespace SunkCost.Editor.Prototype
             Creature walker = Spawn(MonsterKind.LongWalker, walkerAt, YawTo(walkerAt, guestSpot));
             yield return Expect(() => walker.Pose == CreaturePose.Hunting && walker.TargetId == guestId, 4f, () => "R1 it hunts the lit guest: " + walker.ServerStatus);
             yield return Expect(() => walker.ServerGrabbing && walker.ServerGrabVictim == guestCopy, 12f, () => "R1 it caught the guest: " + walker.ServerStatus);
+            // Dan: a dash does not save the caught. The guest presses its dash the moment the
+            // server has caught it (its hold still on the wire), away from the Walker.
+            Vector3 awayFromWalker = guestCopy.transform.position - walker.transform.position; awayFromWalker.y = 0f;
+            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(awayFromWalker.normalized) + "}");
+            Say("R1 the guest's dash as it was caught: " + lastReply.Split('\n')[0]);
             int holderId = walker.NetworkObject.ObjectId;
             yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "grabbed") == "True" && Text(GuestPlayerLine(r, guestId), "grabHolder") == holderId.ToString(), 1.5f, $"R1 the guest reads itself held by the Walker (object {holderId})");
             CreatureGrab core = walker.GrabCore;
@@ -380,6 +385,59 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !host.IsGrabbed && !walker.ServerGrabbing, core.HoldSeconds + core.ReleaseSeconds + 1f, () => "R2 the kill refused: let go: " + walker.ServerStatus);
             yield return GuestEventually(r => Text(GuestPlayerLine(r, host.OwnerId), "grabbed") == "False" && Text(GuestPlayerLine(r, host.OwnerId), "dead") == "False", 3f, "R2 the guest reads the host let go of, alive");
             Creature.RefuseGrabKillForChecks = false;
+            yield return Despawn();
+        }
+
+        // Dan (24 September 2026): "make sure that dashing does not save a player that
+        // should be dead (grabbed)". A guest's owner learns of its hold a round trip after
+        // the server's catch and may dash in between; the host plays that guest here:
+        // HQPlayerController.GrabApplyDelayForChecks holds the owner's side of the hold back
+        // (as the wire would), the dash is pressed on the catch frame and then Alt every
+        // other frame to the end. The Walker comes from behind (`behind`), the dash goes
+        // toward `dashToward`. The hold must win: the dash cut when the hold lands, on the
+        // hold point from the grip on, no dash started while held, no dash judged by the
+        // server, killed, and the body on the hold point, not where the dash went.
+        private static IEnumerator DashCaught(string row, HQPlayerController host, ElevatorController car, Vector3 stand, Vector3 dashToward, Vector3 behind, float wireDelay, bool intoSafe)
+        {
+            yield return HostAt(stand, dashToward);
+            if (!host.LampOn) { yield return Press(Key.F); yield return Expect(() => host.LampOn, 2f, () => row + " lamp on"); }
+            yield return Wait(Mathf.Max(0f, (1f - host.DashReady) * host.Movement.DashCooldownSeconds) + 0.1f);
+            Vector3 back = behind - stand; back.y = 0f; back.Normalize();
+            Vector3 walkerAt = stand + back * 3f;
+            int dashes0 = host.Dashes, serverDashes0 = host.ServerDashes;
+            HQPlayerController.GrabApplyDelayForChecks = wireDelay;
+            Creature walker = Spawn(MonsterKind.LongWalker, walkerAt, YawTo(walkerAt, stand));
+            yield return Expect(() => walker.ServerGrabbing, 6f, () => $"{row} it came up behind the diver and caught them: " + walker.ServerStatus);
+            bool dashed = host.TryDash(Vector2.up); // the catch frame: the owner has not had the hold yet
+            Say($"{row} caught {Flat(walker.transform.position, host.transform.position):0.00} m from the Walker, {Flat(host.transform.position, car.BottomPosition):0.00} m from the shaft (safe within {Settings.TubeSafeMeters:0.0}); the owner's hold {wireDelay * 1000f:0} ms behind the server's; the dash on the catch frame {(dashed ? "started" : "refused '" + host.DashRefusal + "'")}");
+            CreatureGrab core = walker.GrabCore;
+            float maxOffHold = 0f, farthest = 0f, appliedAt = -1f; int safeFrames = 0, frame = 0, dashesAtApply = -1;
+            while (host.IsGrabbed && !host.IsDead)
+            {
+                frame++;
+                if (frame % 2 == 1) Keys(Key.LeftAlt, Key.W); else Keys(Key.W);
+                yield return null;
+                if (!host.IsGrabbed || host.IsDead) break;
+                if (host.GrabbedLocal && appliedAt < 0f) { appliedAt = walker.ServerGrabSeconds; dashesAtApply = host.Dashes; }
+                farthest = Mathf.Max(farthest, Flat(host.transform.position, host.Grab.CaughtAt));
+                if (CreatureSenses.Safe(host, Settings)) safeFrames++;
+                if (walker.ServerGrabSeconds > core.GripSeconds + 0.05f)
+                    maxOffHold = Mathf.Max(maxOffHold, Vector3.Distance(host.transform.position, core.HoldPose(host.Grab.CaughtAt, host.GrabSeconds).Feet));
+            }
+            Keys(); yield return null;
+            HQPlayerController.GrabApplyDelayForChecks = 0f;
+            int started = host.Dashes - dashes0;
+            Say($"{row} held {frame} frames, Alt every other frame; the owner took the hold at {appliedAt:0.00} s; dashes started {started} ({dashesAtApply - dashes0} before the hold took, {host.Dashes - dashesAtApply} after); the dash carried the diver {farthest:0.00} m from the catch, {safeFrames} frames on safe ground; ≤ {maxOffHold:0.000} m off the hold after the grip; server-judged dashes +{host.ServerDashes - serverDashes0}");
+            if (intoSafe) Check(safeFrames > 0, $"{row} the case happened: the dash put the diver's capsule on the safe ground ({safeFrames} frames) before the hold took");
+            Check(appliedAt >= 0f && host.Dashes == dashesAtApply, $"{row} once the hold took, no dash started ({host.Dashes - dashesAtApply})");
+            Check(maxOffHold < 0.05f, $"{row} the hold cut the dash: on the hold point from the grip on ({maxOffHold:0.000} m)");
+            Check(host.ServerDashes == serverDashes0, $"{row} the server judged no dash while it held (+{host.ServerDashes - serverDashes0})");
+            yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 1f, () => $"{row} killed at the end of the hold: " + walker.ServerStatus);
+            Check(walker.ServerGrabKills == 1 && walker.ServerGrabOutcome == "killed", $"{row} one kill, outcome '{walker.ServerGrabOutcome}'");
+            PlayerBody body = PlayerBody.FindFor(host.OwnerId, WorldScenes.Scene(WorldId.Dive));
+            Vector3 lift = walker.transform.TransformPoint(core.LiftPoint);
+            Check(body != null && Flat(body.transform.position, lift) < 0.6f, $"{row} the body is where it was held ({(body != null ? Flat(body.transform.position, lift) : -1f):0.00} m from the hold point), not where the dash went");
+            yield return Expect(() => !walker.ServerGrabbing, core.ReleaseSeconds + 1f, () => $"{row} the Walker let go: " + walker.ServerStatus);
             yield return Despawn();
         }
 
@@ -673,8 +731,29 @@ namespace SunkCost.Editor.Prototype
             yield return Despawn();
             vitals.ServerHealForChecks();
 
+            Heading("G5 — Dan: a dash at the catch frame and all through the hold saves nobody");
+            vitals.ServerHealForChecks();
+            stand = Seabed(car, 300f, 24f);
+            Vector3 awayFrom = Seabed(car, 300f, 34f);
+            yield return DashCaught("G5", host, car, stand, stand + (stand - awayFrom).normalized * 10f, awayFrom, 0.15f, false);
+
+            Heading("E2 — End day again: revived for G6");
+            yield return Expect(() => host.gameObject.scene == WorldScenes.Scene(WorldId.Sea), 90f, () => "E2 the dead host was carried to the ship");
+            yield return Expect(() => WorldSceneFlow.FindCar() == null, 30f, () => "E2 the site closed");
+            Check(flow.ServerEndDay(host.Owner, out string endWhy2), "E2 End day accepted: " + endWhy2);
+            yield return Expect(() => !host.IsDead, 5f, () => "E2 revived");
+            yield return Wait(1f);
+            yield return Descend(3);
+            car = WorldSceneFlow.FindCar();
+            yield return Wait(s.WakeDelaySeconds + 0.5f);
+
+            Heading("G6 — Dan: caught 3 m from the shaft's safe ground, dashing into it: still killed");
+            float safeEdge = s.TubeSafeMeters;
+            stand = Seabed(car, 30f, safeEdge + 3f);
+            yield return DashCaught("G6", host, car, stand, car.BottomPosition, Seabed(car, 30f, safeEdge + 12f), 0.15f, true);
+
             Heading("done");
-            Say("the host lives below; stop with CameraClearanceMatrixDriver.StopCleanly()");
+            Say("the host is dead below (G6); stop with CameraClearanceMatrixDriver.StopCleanly()");
         }
     }
 }

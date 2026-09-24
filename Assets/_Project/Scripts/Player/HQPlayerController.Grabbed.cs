@@ -19,6 +19,12 @@ namespace SunkCost.Player
         // A lost release never leaves a diver locked: the owner lets go by itself this long after the catch.
         private const float GrabGiveUpSeconds = 20f;
 
+        // The checks play a guest on the host: the owner's side of a new hold waits this
+        // long after the catch, as the wire would make it (reset on every Play Mode entry).
+        public static float GrabApplyDelayForChecks;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetGrabChecks() => GrabApplyDelayForChecks = 0f;
+
         private readonly SyncVar<GrabHold> grabHold = new(new GrabHold { HolderId = -1 });
         private bool grabbedLocal;           // owner: the lock is applied
         private int grabbedLocalSerial = -1;
@@ -136,6 +142,7 @@ namespace SunkCost.Player
                 want = false;
             }
             if (want && grabbedLocalSerial == hold.Serial && !grabbedLocal) want = false; // let go locally: wait for a new hold
+            if (want && !grabbedLocal && GrabApplyDelayForChecks > 0f && TicksSince(hold.StartTick) < GrabApplyDelayForChecks) return; // the checks' wire delay
             if (want == grabbedLocal) return;
             if (want) BeginGrabbedLocal(hold.Serial); else EndGrabbedLocal();
         }

@@ -94,9 +94,13 @@ namespace SunkCost.Monsters
                     if (t < core.GripSeconds + 0.3f) FaceToward(grabFacing, core.TurnDegPerSec);
                     if (t >= core.HoldSeconds)
                     {
+                        // The kill judges the catch, not the capsule: a dash pressed before the
+                        // hold reached the diver, or a stale position, cannot save them (Dan,
+                        // 24 September 2026). The body lies on the hold's point.
                         WorldSceneFlow flow = WorldSceneFlow.Instance;
                         string why = "refused for the checks";
-                        bool killed = !RefuseGrabKillForChecks && flow != null && flow.ServerKill(victim.Owner, out why, "taken by " + name);
+                        Vector3 heldAt = core.HoldPose(victim.Grab.CaughtAt, t).Feet;
+                        bool killed = !RefuseGrabKillForChecks && flow != null && flow.ServerKillHeld(victim.Owner, heldAt, out why, "taken by " + name);
                         if (killed)
                         {
                             ServerGrabKills++;

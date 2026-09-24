@@ -322,6 +322,9 @@ namespace SunkCost.Player
         {
             float now = Time.unscaledTime;
             Vector3 position = transform.position;
+            // Held by a monster: the hold moves the body, and a dash pressed before the
+            // hold reached the owner was cut by it; neither is a dash (no air, no noise, no cue).
+            if (grabHold.Value.Active) { dashTrail.Clear(); serverDashing = false; return; }
             if (dashTrail.Count > 0 && (position - dashTrail[dashTrail.Count - 1].position).sqrMagnitude > 9f) dashTrail.Clear(); // a teleport
             dashTrail.Add((now, position));
             while (dashTrail.Count > 1 && now - dashTrail[0].time > DashJudgeWindow) dashTrail.RemoveAt(0);
