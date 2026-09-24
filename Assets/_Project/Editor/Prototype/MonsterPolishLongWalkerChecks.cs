@@ -430,7 +430,9 @@ namespace SunkCost.Editor.Prototype
             Say($"{row} held {frame} frames, Alt every other frame; the owner took the hold at {appliedAt:0.00} s; dashes started {started} ({dashesAtApply - dashes0} before the hold took, {host.Dashes - dashesAtApply} after); the dash carried the diver {farthest:0.00} m from the catch, {safeFrames} frames on safe ground; ≤ {maxOffHold:0.000} m off the hold after the grip; server-judged dashes +{host.ServerDashes - serverDashes0}");
             if (intoSafe) Check(safeFrames > 0, $"{row} the case happened: the dash put the diver's capsule on the safe ground ({safeFrames} frames) before the hold took");
             Check(appliedAt >= 0f && host.Dashes == dashesAtApply, $"{row} once the hold took, no dash started ({host.Dashes - dashesAtApply})");
-            Check(maxOffHold < 0.05f, $"{row} the hold cut the dash: on the hold point from the grip on ({maxOffHold:0.000} m)");
+            // 0.1 m: the probe reads the hold's clock (whole ticks and the part of this one, in
+            // real time) a moment after the owner placed the body, while the lift moves ~1.5 m/s.
+            Check(maxOffHold < 0.1f, $"{row} the hold cut the dash: on the hold point from the grip on ({maxOffHold:0.000} m)");
             Check(host.ServerDashes == serverDashes0, $"{row} the server judged no dash while it held (+{host.ServerDashes - serverDashes0})");
             yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 1f, () => $"{row} killed at the end of the hold: " + walker.ServerStatus);
             Check(walker.ServerGrabKills == 1 && walker.ServerGrabOutcome == "killed", $"{row} one kill, outcome '{walker.ServerGrabOutcome}'");
@@ -748,9 +750,12 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(s.WakeDelaySeconds + 0.5f);
 
             Heading("G6 — Dan: caught 3 m from the shaft's safe ground, dashing into it: still killed");
+            // On the car's doorway line (run 6: at another bearing the tube's own wall stops a
+            // dash 3.4 m out, short of the safe ground; only the open doorway lets one in).
             float safeEdge = s.TubeSafeMeters;
-            stand = Seabed(car, 30f, safeEdge + 3f);
-            yield return DashCaught("G6", host, car, stand, car.BottomPosition, Seabed(car, 30f, safeEdge + 12f), 0.15f, true);
+            float doorBearing = Quaternion.LookRotation(Vector3.ProjectOnPlane(car.transform.right, Vector3.up), Vector3.up).eulerAngles.y;
+            stand = Seabed(car, doorBearing, safeEdge + 3f);
+            yield return DashCaught("G6", host, car, stand, car.BottomPosition, Seabed(car, doorBearing, safeEdge + 12f), 0.2f, true); // 200 ms: the 6 m dash reaches the safe ground 3 m away
 
             Heading("done");
             Say("the host is dead below (G6); stop with CameraClearanceMatrixDriver.StopCleanly()");
