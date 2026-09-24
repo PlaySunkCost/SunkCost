@@ -64,6 +64,10 @@ Assets/_Project/Models/**/Generated~/
 Assets/_Project/Models/**/Generated/
 Assets/_Project/Models/**/Generated.meta
 
+# Python bytecode from the art tools (tools/art, tools/blender)
+__pycache__/
+*.pyc
+
 # Blender FBX export side-copies of textures; the Maps/ folder is the source
 Assets/_Project/Models/**/*.fbm/
 Assets/_Project/Models/**/*.fbm.meta

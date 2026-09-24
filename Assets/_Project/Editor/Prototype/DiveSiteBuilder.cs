@@ -233,7 +233,10 @@ namespace SunkCost.Sites
         // the water through its rendering layer instead (WorldLightLayers, 23 September 2026).
         private static ElevatorController CreateElevator(Vector3 topAnchorPosition, Vector3 bottomAnchorPosition, Vector3 playerSpawnPosition, Material floor, Material frame, Material glass, Material panelAccent, DiveSiteSettings settings, out float doorwayBearingDegOut)
         {
-            GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, panelAccent, settings); // the tube's look (Dan, 19 September 2026)
+            // The floor in the kit's worn steel, tiled over the disc, as the ship's car has it
+            // (SHIP-060, 24 September 2026: the two cars are the same cabin).
+            Material carFloor = SunkCost.Editor.Look.ShipKitMaterials.Tiled(SunkCost.Editor.Look.ShipKitMaterials.Steel(), new Vector2(settings.CarDiameterMeters, settings.CarDiameterMeters));
+            GameObject prefab = ElevatorCabinBuilder.EnsurePrefab(carFloor, SunkCost.Editor.Look.LookMaterials.Ink(), glass, panelAccent, settings); // the tube's look (Dan, 19 September 2026)
 
             // The doorway must face the spawn the dev player actually uses, not a fixed
             // bearing — otherwise moving the spawn silently strands the door on the wrong
@@ -517,15 +520,15 @@ namespace SunkCost.Sites
             // The overrides live inside the profile asset, and the volume takes the asset
             // itself: `profile` is a run-time copy that is never saved, and the site had
             // no grade at all (ship audit SHIP-021, 23 September 2026).
-            foreach (VolumeComponent component in profile.components)
-                if (!AssetDatabase.Contains(component)) { component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy; AssetDatabase.AddObjectToAsset(component, profile); }
-            EditorUtility.SetDirty(profile);
-            AssetDatabase.SaveAssetIfDirty(profile);
+            SunkCost.Editor.Look.VolumeProfileAssets.SaveOverrides(profile);
 
             GameObject volumeObject = new(UnderwaterVolumeName);
             Volume volume = volumeObject.AddComponent<Volume>();
             volume.sharedProfile = profile;
             ShapeUnderwaterVolume(volumeObject, settings);
+            // Every camera under the water gets the grade by where it stands, not through
+            // URP's collider lookup (UnderwaterGrade; spectate S1b, 24 September 2026).
+            volumeObject.AddComponent<UnderwaterGrade>();
         }
 
         public static Material GetOrCreateGlassMaterial()

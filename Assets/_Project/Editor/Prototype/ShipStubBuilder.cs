@@ -83,7 +83,7 @@ namespace SunkCost.Editor.Prototype
             Material rail = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipRail.mat", new Color(0.45f, 0.42f, 0.38f));
             // The same transparent glass as the seafloor car: it is the same cabin (Dan, 15 September 2026).
             Material glass = SunkCost.Sites.DiveSiteBuilder.GetOrCreateGlassMaterial();
-            Material screen = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipScreen.mat", new Color(0.08f, 0.16f, 0.22f));
+            Material screen = HQPrototypeBuilder.GetOrCreateMaterial(HQPrototypeBuilder.MaterialPath + "/ShipScreen.mat", new Color(0.020f, 0.034f, 0.044f)); // the idle glass in the ship screens' palette (fix-ui); the live picture sets its own
             // A screen gives its own light: unlit, so the deck's sun, ambient and sky
             // reflections never lift the diver's picture. Lit and half glossy, it showed
             // the dark below brighter than the diver saw it (Dan, 23 September 2026:
@@ -125,7 +125,9 @@ namespace SunkCost.Editor.Prototype
                 glass.SetColor("_BaseColor", new Color(0.6f, 0.88f, 0.92f, 0.18f)); // clear: two layers (car and tube) must still read as glass from inside (Dan, 19 September 2026)
                 if (glass.HasProperty("_Color")) glass.SetColor("_Color", new Color(0.6f, 0.88f, 0.92f, 0.18f));
                 EditorUtility.SetDirty(glass);
-                GameObject cabin = DeckCabinBuilder.Build(root.transform, Vector3.zero, SunkCost.Editor.Look.LookMaterials.PanelDark(), SunkCost.Editor.Look.LookMaterials.Ink(), glass, button); // dead centre, like the picture
+                // The floor in the kit's worn steel, tiled over the primitive disc's 5 m cap (SHIP-060).
+                Material cabinFloor = SunkCost.Editor.Look.ShipKitMaterials.Tiled(SunkCost.Editor.Look.ShipKitMaterials.Steel(), new Vector2(5f, 5f));
+                GameObject cabin = DeckCabinBuilder.Build(root.transform, Vector3.zero, cabinFloor, SunkCost.Editor.Look.LookMaterials.Ink(), glass, button); // dead centre, like the picture
                 DressCabin(cabin.transform);
 
                 BuildStorageRoom(root.transform, SunkCost.Editor.Look.LookMaterials.PanelDark(), tape);
@@ -416,10 +418,16 @@ namespace SunkCost.Editor.Prototype
         // The rail round the well: the Meshy railing (0.7 m high) as straight pieces
         // round a circle of RingRadius, open across the grate, its ends meeting the
         // grate's own side rails, which run from the pedestal to them. Behind every
-        // piece an unseen wall of RailWallHeight, over a 65 cm jump: it cannot be
-        // climbed, and nothing thrown goes over it (Dan, 23 September 2026).
-        private const float RailWallHeight = 1.2f;
+        // piece an unseen wall of RailWallHeight: 1.2 m was over a 65 cm jump from the
+        // deck (Dan, 23 September 2026), but the crane's round base stands 0.88 m high a
+        // metre outside the rail, and a sprint jump off it cleared 1.2 m (QA, 24
+        // September 2026). The props by the well stand higher still: the winch's top is
+        // 2.12 m and the crane's highest standable part 3.98 m, and a 0.65 m jump from
+        // there clears 4.63 m. 5 m is over all of it; the rail looks the same, and
+        // nothing thrown goes over it.
+        private const float RailWallHeight = 5f;
         private const float RailingLength = 1.843f; // the railing model at scale 1
+        private const float RailingPostSpan = 1.70f; // between its two end posts' centres (each 0.14 m wide, 0.07 m in from its ends)
 
         private static void BuildWellRail(Transform root, float grateRailX)
         {
@@ -427,8 +435,9 @@ namespace SunkCost.Editor.Prototype
             if (railing == null) Debug.LogWarning("Ship stub: no Railing prefab (run the ship model setup); the well rail is its walls only");
             GameObject rail = new("Well Rail");
             rail.transform.SetParent(root, false);
-            // The ring, from just outboard of one grate rail round to the other.
-            float endX = grateRailX + 0.1f;
+            // The ring, from one grate rail round to the other: its end posts stand on the
+            // grate rails' outer ends.
+            float endX = grateRailX;
             float gapHalf = Mathf.Asin(endX / RingRadius) * Mathf.Rad2Deg;
             float from = 90f + gapHalf, span = 360f - 2f * gapHalf;
             int pieces = Mathf.CeilToInt(span / (2f * Mathf.Asin(RailingLength / 2f / RingRadius) * Mathf.Rad2Deg));
@@ -446,7 +455,9 @@ namespace SunkCost.Editor.Prototype
         private static Vector3 Around(float bearingDeg) => new Vector3(Mathf.Cos(bearingDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(bearingDeg * Mathf.Deg2Rad)) * RingRadius;
 
         // One straight piece of rail from a to b on the deck: its wall (reaching on past
-        // a by wallPastA), and the railing stretched to its length.
+        // a by wallPastA), and the railing stretched so its end posts stand on a and b.
+        // The next piece's end post stands on the same spot: one post at every joint,
+        // not two side by side (QA, 24 September 2026).
         private static void RailPiece(Transform parent, GameObject railing, string name, Vector3 a, Vector3 b, float wallPastA = 0f)
         {
             Vector3 along = b - a;
@@ -462,7 +473,7 @@ namespace SunkCost.Editor.Prototype
             GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(railing);
             model.name = "Railing";
             model.transform.SetParent(piece.transform, false);
-            model.transform.localScale = new Vector3(length / RailingLength, 1f, 1f);
+            model.transform.localScale = new Vector3(length / RailingPostSpan, 1f, 1f);
         }
 
         // The tube's dressing over the shared round cabin: the cap ring over the glass's

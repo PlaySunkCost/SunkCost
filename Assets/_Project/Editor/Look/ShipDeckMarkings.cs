@@ -10,8 +10,9 @@ namespace SunkCost.Editor.Look
     // walkways, zones or focal points). Walkways, a pair of worn edge lines each:
     // from the spawn points to the cabin's door on the well's +z side and on to the
     // lounge at the bow; from the well aft to the console on the tower's face, with a
-    // branch into the storage room's doorway in its port wall. Hazard-striped zones
-    // round the well's rail and round the crane's foot. A lounge zone round its seats.
+    // branch into the storage room's doorway in its port wall. A hazard-striped zone
+    // round the crane's foot, a lounge zone round its seats. The paint is the ship
+    // kit's worn orange and black (ShipKitMaterials.Hazard): one stripe style.
     //
     // One thin mesh, no collider, no shadow: each vertex sits 3 mm over whatever deck
     // is under it (the hull's deck, or the well's rim a centimetre up), found by a
@@ -44,7 +45,6 @@ namespace SunkCost.Editor.Look
         // the built ship without changing it (an unsaved stand-in).
         public static GameObject Build(Transform shipRoot, Transform parent)
         {
-            Transform look = shipRoot.Find(ShipDeckDressing.LookName);
             Transform old = parent.Find(Name);
             if (old != null) Object.DestroyImmediate(old.gameObject);
             Physics.SyncTransforms();
@@ -53,26 +53,23 @@ namespace SunkCost.Editor.Look
             var hazard = new Strip(shipRoot);
             float halfL = ShipStubBuilder.DeckLength / 2f;
 
-            // Round the well's rail, open where the grate and the door are (+z).
+            // No painted ring round the well: its rim's kit band and the rail's own
+            // orange panels already mark it, and a third stripe beside them broke the
+            // one stripe style (QA round 2, SHIP-059). The walkways start at the rail.
             float ring = ShipStubBuilder.RingRadius + 0.35f;
-            float gap = Mathf.Asin(Mathf.Min(1f, (Walk + Line) / ring)) * Mathf.Rad2Deg;
-            var arc = new List<Vector2>();
-            for (float a = gap; a <= 360f - gap + 0.01f; a += 2f)
-                arc.Add(new Vector2(Mathf.Sin(a * Mathf.Deg2Rad), Mathf.Cos(a * Mathf.Deg2Rad)) * ring);
-            hazard.Add(arc, Stripe, false);
 
             // The crane's foot, a round base: a circle round what of the crane stands
-            // within half a metre of the deck, kept clear of the well's ring.
-            foreach (Rect foot in Footprints(shipRoot, look, "Crane", 0.5f))
+            // within half a metre of the deck, kept a clear hand's width off the rail.
+            foreach (Rect foot in Footprints(shipRoot, new[] { "Crane" }, 0.5f))
             {
                 float radius = Mathf.Max(foot.width, foot.height) / 2f + Margin;
-                radius = Mathf.Min(radius, foot.center.magnitude - ring - Stripe - 0.1f);
+                radius = Mathf.Min(radius, foot.center.magnitude - ring - Stripe);
                 if (radius > 0.5f) hazard.Add(Circle(foot.center, radius), Stripe, true);
             }
 
             // Forward: the door, between the spawn points, to the lounge's seats.
             float door = ring + Stripe / 2f + 0.05f;
-            List<Rect> seats = Footprints(shipRoot, look, new[] { "Couch", "Table", "Bench" }, 10f);
+            List<Rect> seats = Footprints(shipRoot, new[] { "Couch", "Table", "Bench" }, 10f);
             float loungeAft = halfL - 6f;
             if (seats.Count > 0)
             {
@@ -83,17 +80,25 @@ namespace SunkCost.Editor.Look
             Walkway(paint, new Vector2(0f, door), new Vector2(0f, loungeAft - Line / 2f));
 
             // Aft: the well to the console on the tower's face, and the storage room's
-            // doorway on the way, entered from port.
-            float consoleFront = -halfL + ShipStubBuilder.TowerDepth;
-            foreach (Rect c in Footprints(shipRoot, look, "Console", 10f)) consoleFront = Mathf.Max(consoleFront, c.yMax);
+            // doorway on the way, entered from port. The console stands port of the
+            // tower's door (SHIP-039), so past the storage branch the walk turns across
+            // to end at the console's front, not at the door (QA round 2).
+            float consoleFront = -halfL + ShipStubBuilder.TowerDepth, consoleX = 0f;
+            List<Rect> consoles = Footprints(shipRoot, new[] { "Console Model" }, 10f);
+            if (consoles.Count == 0) consoles = Footprints(shipRoot, new[] { "Console" }, 10f);
+            foreach (Rect c in consoles) { consoleFront = Mathf.Max(consoleFront, c.yMax); consoleX = c.center.x; }
             float storageZ = ShipStubBuilder.StorageCentreZ;
             float storageDoorX = ShipStubBuilder.StorageCentreX - ShipStubBuilder.StorageWidth / 2f;
             float spineEnd = consoleFront + 0.35f;
             // The spine's starboard line is broken where the branch leaves it.
             float branchLo = storageZ - Walk - Line / 2f, branchHi = storageZ + Walk + Line / 2f;
-            paint.Add(new List<Vector2> { new(-Walk, -door), new(-Walk, spineEnd) }, Line, false);
+            float turnFrom = branchLo - 0.25f, turnTo = Mathf.Max(turnFrom - Mathf.Abs(consoleX), spineEnd + 0.3f);
+            var centre = new List<Vector2> { new(0f, -door), new(0f, turnFrom), new(consoleX, turnTo), new(consoleX, spineEnd) };
+            if (Mathf.Abs(consoleX) < 0.05f) centre.RemoveRange(1, 2);
+            paint.Add(Offset(centre, -Walk), Line, false);
             paint.Add(new List<Vector2> { new(Walk, -door), new(Walk, branchHi) }, Line, false);
-            paint.Add(new List<Vector2> { new(Walk, branchLo), new(Walk, spineEnd) }, Line, false);
+            var lower = new List<Vector2>(centre) { [0] = new Vector2(0f, branchLo) };
+            paint.Add(Offset(lower, Walk), Line, false);
             foreach (float z in new[] { storageZ + Walk, storageZ - Walk })
                 paint.Add(new List<Vector2> { new(Walk - Line / 2f, z), new(storageDoorX - 0.1f, z) }, Line, false);
 
@@ -116,6 +121,23 @@ namespace SunkCost.Editor.Look
             Vector2 d = (to - from).normalized, side = new(d.y, -d.x);
             foreach (float s in new[] { -Walk, Walk })
                 strip.Add(new List<Vector2> { from + side * s, to + side * s }, Line, false);
+        }
+
+        // A walk's centre line moved sideways by `by` (positive to the left of the way
+        // it runs), mitred at its turns, so both edge lines keep the walk's width.
+        private static List<Vector2> Offset(List<Vector2> centre, float by)
+        {
+            var pts = new List<Vector2>();
+            for (int i = 0; i < centre.Count; i++)
+            {
+                Vector2 din = (centre[i] - centre[Mathf.Max(0, i - 1)]).normalized, dout = (centre[Mathf.Min(centre.Count - 1, i + 1)] - centre[i]).normalized;
+                if (din == Vector2.zero) din = dout;
+                if (dout == Vector2.zero) dout = din;
+                Vector2 nin = new(-din.y, din.x), nout = new(-dout.y, dout.x);
+                Vector2 miter = (nin + nout).normalized;
+                pts.Add(centre[i] + miter * (by / Mathf.Max(0.35f, Vector2.Dot(miter, nin))));
+            }
+            return pts;
         }
 
         // A rectangle as a closed outline that keeps inboard of the hull where the
@@ -156,15 +178,16 @@ namespace SunkCost.Editor.Look
         private static Rect Grow(Rect r, float by) => Rect.MinMaxRect(r.xMin - by, r.yMin - by, r.xMax + by, r.yMax + by);
         private static Rect Union(Rect a, Rect b) => Rect.MinMaxRect(Mathf.Min(a.xMin, b.xMin), Mathf.Min(a.yMin, b.yMin), Mathf.Max(a.xMax, b.xMax), Mathf.Max(a.yMax, b.yMax));
 
-        private static List<Rect> Footprints(Transform shipRoot, Transform look, string part, float below) => Footprints(shipRoot, look, new[] { part }, below);
-
         // Each placed prop's footprint on the deck in ship space (x, z): the extent of
-        // its mesh's vertices lower than `below` over the deck.
-        private static List<Rect> Footprints(Transform shipRoot, Transform look, string[] parts, float below)
+        // its mesh's vertices lower than `below` over the deck. Props are found by name
+        // anywhere under the ship (the console now stands in the Tower group), a prop
+        // inside another of the same name counted once.
+        private static List<Rect> Footprints(Transform shipRoot, string[] parts, float below)
         {
             var found = new List<Rect>();
-            if (look == null) return found;
-            foreach (Transform prop in look.Cast<Transform>().Where(t => parts.Contains(t.name)))
+            var props = shipRoot.GetComponentsInChildren<Transform>(true).Where(t => parts.Contains(t.name) && t.name != Name).ToList();
+            props.RemoveAll(t => props.Any(o => o != t && t.IsChildOf(o)));
+            foreach (Transform prop in props)
             {
                 bool any = false;
                 Vector2 lo = new(float.PositiveInfinity, float.PositiveInfinity), hi = new(float.NegativeInfinity, float.NegativeInfinity);

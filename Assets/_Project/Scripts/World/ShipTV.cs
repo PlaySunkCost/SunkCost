@@ -35,7 +35,7 @@ namespace SunkCost.World
         public const float ViewerMetres = 30f;
         public const int ResolutionDivisor = 2;
         public const int FrameStep = 2; // every other frame
-        private static readonly Color DarkScreen = new(0.02f, 0.03f, 0.04f);
+        private static readonly Color DarkScreen = SunkCost.Look.ScreenStyle.Back; // the ship's one screen glass (SHIP-059)
 
         private ShipParts ship;
         private Renderer screen;

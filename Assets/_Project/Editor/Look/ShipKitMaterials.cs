@@ -34,6 +34,7 @@ namespace SunkCost.Editor.Look
         public static Material DropZone()
         {
             Material m = Get("StorageDropZone");
+            var before = new Material(m);
             Texture2D tex = Texture("StorageDropZone_BaseColor", false, TextureWrapMode.Clamp);
             m.SetTexture("_BaseMap", tex);
             m.SetColor("_BaseColor", Color.white);
@@ -48,8 +49,7 @@ namespace SunkCost.Editor.Look
             m.SetFloat("_Surface", 0f);
             m.SetOverrideTag("RenderType", "TransparentCutout");
             m.renderQueue = (int)RenderQueue.AlphaTest;
-            EditorUtility.SetDirty(m);
-            return m;
+            return Settle(m, before);
         }
 
         // A kit material tiled for a Unity primitive whose face is `metres` across (a
@@ -60,16 +60,20 @@ namespace SunkCost.Editor.Look
         {
             string name = kit.name + "_" + F(metres.x) + "x" + F(metres.y);
             string path = MaterialFolder + "/Tiled/" + name + ".mat";
+            var want = new Material(kit) { name = name };
+            want.SetTextureScale("_BaseMap", Vector2.Scale(kit.GetTextureScale("_BaseMap"), metres));
+            MainTexInStep(want);
             Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (m == null)
             {
                 System.IO.Directory.CreateDirectory(MaterialFolder + "/Tiled");
-                m = new Material(kit) { name = name };
-                AssetDatabase.CreateAsset(m, path);
+                AssetDatabase.CreateAsset(want, path);
+                return want;
             }
-            else m.CopyPropertiesFromMaterial(kit);
-            m.SetTextureScale("_BaseMap", Vector2.Scale(kit.GetTextureScale("_BaseMap"), metres));
-            EditorUtility.SetDirty(m);
+            // Only a real change is written: every build calls this, and a material
+            // re-saved with the same values still churned the tree (round 2, 24 Sep).
+            if (!Same(m, want)) { m.CopyPropertiesFromMaterial(want); EditorUtility.SetDirty(m); }
+            Object.DestroyImmediate(want);
             return m;
         }
 
@@ -78,6 +82,7 @@ namespace SunkCost.Editor.Look
         private static Material Lit(string name, float metresPerTile, float smoothness)
         {
             Material m = Get(name);
+            var before = new Material(m);
             m.SetTexture("_BaseMap", Texture(name + "_BaseColor", false, TextureWrapMode.Repeat));
             m.SetColor("_BaseColor", Color.white);
             Texture2D normal = Texture(name + "_Normal", true, TextureWrapMode.Repeat);
@@ -98,8 +103,54 @@ namespace SunkCost.Editor.Look
             m.SetFloat("_Surface", 0f);
             m.SetOverrideTag("RenderType", "Opaque");
             m.renderQueue = -1;
-            EditorUtility.SetDirty(m);
+            return Settle(m, before);
+        }
+
+        // URP keeps the legacy _MainTex in step with _BaseMap and re-saves a material
+        // whose two differ (the guest build did, for every tiled twin, SHIP round 2):
+        // set them the same here, so there is nothing left for it to change.
+        private static void MainTexInStep(Material m)
+        {
+            if (!m.HasProperty("_MainTex")) return;
+            m.SetTexture("_MainTex", m.GetTexture("_BaseMap"));
+            m.SetTextureScale("_MainTex", m.GetTextureScale("_BaseMap"));
+            m.SetTextureOffset("_MainTex", m.GetTextureOffset("_BaseMap"));
+        }
+
+        // Marks the material for saving only if this run changed it; `before` is a
+        // throwaway copy taken before the changes.
+        private static Material Settle(Material m, Material before)
+        {
+            MainTexInStep(m);
+            if (!Same(m, before)) EditorUtility.SetDirty(m);
+            Object.DestroyImmediate(before);
             return m;
+        }
+
+        // Whether two materials would serialise the same: shader, queue, keywords,
+        // tags that matter here, and every property the shader declares.
+        private static bool Same(Material a, Material b)
+        {
+            if (a.shader != b.shader || a.renderQueue != b.renderQueue || a.enableInstancing != b.enableInstancing) return false;
+            if (a.GetTag("RenderType", false) != b.GetTag("RenderType", false)) return false;
+            if (!new System.Collections.Generic.HashSet<string>(a.shaderKeywords).SetEquals(b.shaderKeywords)) return false;
+            Shader shader = a.shader;
+            for (int i = 0; i < shader.GetPropertyCount(); i++)
+            {
+                string p = shader.GetPropertyName(i);
+                switch (shader.GetPropertyType(i))
+                {
+                    case UnityEngine.Rendering.ShaderPropertyType.Color: if (a.GetColor(p) != b.GetColor(p)) return false; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Vector: if (a.GetVector(p) != b.GetVector(p)) return false; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Float:
+                    case UnityEngine.Rendering.ShaderPropertyType.Range: if (a.GetFloat(p) != b.GetFloat(p)) return false; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Int: if (a.GetInteger(p) != b.GetInteger(p)) return false; break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                        if (a.GetTexture(p) != b.GetTexture(p) || a.GetTextureScale(p) != b.GetTextureScale(p) || a.GetTextureOffset(p) != b.GetTextureOffset(p)) return false;
+                        break;
+                }
+            }
+            return true;
         }
 
         private static Material Get(string name)

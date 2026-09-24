@@ -55,15 +55,16 @@ namespace SunkCost.World
             idleRoot.localScale = Vector3.one;
             Vector3 size = screen.lossyScale;
             float h = Mathf.Abs(size.y), w = Mathf.Abs(size.x);
-            TextMesh name = ScreenStyle.Line(idleRoot, "Idle Name", new Vector3(0f, h * 0.06f, 0f), h * 0.2f, Color.Lerp(ScreenStyle.Back, ScreenStyle.Accent, 0.55f), TextAnchor.MiddleCenter, textMaterial);
+            // Sized to read from the couch (fix round 2: the hint was about 7 px tall there at 1080p).
+            TextMesh name = ScreenStyle.Line(idleRoot, "Idle Name", new Vector3(0f, h * 0.08f, 0f), h * 0.3f, Color.Lerp(ScreenStyle.Back, ScreenStyle.Accent, 0.55f), TextAnchor.MiddleCenter, textMaterial);
             name.text = HQSigns.Resolve().Get("company");
-            TextFit.Fit(name, new Vector2(w * 0.7f, h * 0.24f), h * 0.02f);
-            TextMesh sub = ScreenStyle.Line(idleRoot, "Idle Sub", new Vector3(0f, -h * 0.1f, 0f), h * 0.07f, ScreenStyle.Dim, TextAnchor.MiddleCenter, textMaterial);
+            TextFit.Fit(name, new Vector2(w * 0.8f, h * 0.32f), h * 0.03f);
+            TextMesh sub = ScreenStyle.Line(idleRoot, "Idle Sub", new Vector3(0f, -h * 0.12f, 0f), h * 0.11f, ScreenStyle.Dim, TextAnchor.MiddleCenter, textMaterial);
             sub.text = HQSigns.Resolve().Get("ship.tv.idle");
-            TextFit.Fit(sub, new Vector2(w * 0.7f, h * 0.1f), h * 0.007f);
-            TextMesh hint = ScreenStyle.Line(idleRoot, "Idle Hint", new Vector3(0f, -h * 0.2f, 0f), h * 0.05f, Color.Lerp(ScreenStyle.Back, ScreenStyle.Dim, 0.7f), TextAnchor.MiddleCenter, textMaterial);
+            TextFit.Fit(sub, new Vector2(w * 0.8f, h * 0.14f), h * 0.011f);
+            TextMesh hint = ScreenStyle.Line(idleRoot, "Idle Hint", new Vector3(0f, -h * 0.27f, 0f), h * 0.09f, Color.Lerp(ScreenStyle.Back, ScreenStyle.Dim, 0.75f), TextAnchor.MiddleCenter, textMaterial);
             hint.text = HQSigns.Resolve().Get("ship.tv.idle.hint");
-            TextFit.Fit(hint, new Vector2(w * 0.7f, h * 0.08f), h * 0.005f);
+            TextFit.Fit(hint, new Vector2(w * 0.8f, h * 0.11f), h * 0.009f);
             var display = new TvDisplay(caption, chipText, chipRoot, idleRoot, line);
             display.ShowIdleCard();
             return display;
@@ -110,7 +111,7 @@ namespace SunkCost.World
                 noise.Apply();
             }
             if (screen.mainTexture != noise) screen.mainTexture = noise;
-            screen.color = Color.Lerp(ScreenStyle.Back, ScreenStyle.Dim, 0.22f);
+            screen.color = Color.Lerp(ScreenStyle.Back, ScreenStyle.Dim, 0.16f); // on average barely above the ship's screen glass
             screen.mainTextureOffset = new Vector2(Random.value, Random.value);
         }
 

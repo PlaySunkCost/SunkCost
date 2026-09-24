@@ -830,7 +830,9 @@ namespace SunkCost.Editor.Look
             colour.saturation.overrideState = true; colour.saturation.value = 22f;
             if (!profile.TryGet(out Vignette vignette)) vignette = profile.Add<Vignette>(true);
             vignette.active = false; // crisp, like the picture
-            EditorUtility.SetDirty(profile);
+            // The overrides saved inside the asset: made only in memory, they were null on
+            // disk and the grade never persisted (and URP's build step threw on them).
+            SunkCost.Editor.Look.VolumeProfileAssets.SaveOverrides(profile);
             return profile;
         }
 

@@ -58,7 +58,7 @@ namespace SunkCost.Editor.Look
             ["Crane"] = MachineScale, ["Winch"] = MachineScale,
             ["TvCabinet"] = MachineScale, // the big screen Dan asked for (5107627), lowered rather than shrunk (SHIP-026)
             ["Console"] = 1.5f,           // its desk at 0.8-1.1 m and its display at eye height
-            ["NamePlate"] = 4f,           // 4.9 x 0.9 m: the ship's name read from the sea (SHIP-020)
+            ["NamePlate"] = 6f,           // 7.3 x 1.3 m: the ship's name read from 45 m at sea (SHIP-020); a plate, so its depth is halved at the hull
         };
         private static float ScaleOf(string part)
         {
@@ -113,6 +113,10 @@ namespace SunkCost.Editor.Look
         private const float WellClear = 0.8f;       // a walk round the well's rail, outside it
         private const float TvScreenCentreY = 2.0f; // seated eyes at about 1.15 m, standing 1.6 m (SHIP-026)
         private const float ConsoleX = -2.2f;       // port of the tower model's door and ladder, which it hid (SHIP-039)
+        // A patch of open, flat deck starboard of the well's rail that no prop may take:
+        // where WorldLoopRuntimeChecks drops the ball that must ride the trip at its spot
+        // (row D7; its old spot became the crane's base with SHIP-012).
+        public static readonly Vector3 OpenDeck = new(5.5f, 0f, 1.0f);
         private const float CaptionCharacterSize = 0.042f;
 
         private static Transform shipRoot;
@@ -180,6 +184,7 @@ namespace SunkCost.Editor.Look
             }
             Vector3 unstuck = ShipStubBuilder.UnstuckPoint;
             Keep("the Unstuck point", new Vector2(unstuck.x, unstuck.z), 0.8f);
+            Keep("the loop test's open deck", new Vector2(OpenDeck.x, OpenDeck.z), 0.6f);
             float door = sx - ShipStubBuilder.StorageWidth / 2f;
             Keep("the storage doorway", new Vector2(door - 2.4f, sz - 1.3f), new Vector2(door, sz + 1.3f));
 
@@ -293,7 +298,20 @@ namespace SunkCost.Editor.Look
             // its doors against the rail (SHIP-042: its hatch read as the way to the
             // storage room) and no slot beside it (SHIP-040), and aft of it the barrels,
             // the crate, the pipework and a coil.
-            Hand(look, "Container", new Vector3(0f, 0f, -11f), 180f, rail: -1f); // the model's hatch is its +x end
+            GameObject box = Hand(look, "Container", new Vector3(0f, 0f, -11f), 180f, rail: -1f);
+            if (box != null)
+            {
+                // The model has a round hatch at both ends; the inboard one faced the aft
+                // walkway and the storage doorway and read as the way in (SHIP-042). The
+                // plant stands against it, its pipework across the hatch.
+                Bounds cb = ShipBounds(box);
+                GameObject plant = Put(look, "Pipes", new Vector3(cb.max.x + 0.3f, 0f, cb.center.z), 90f);
+                if (plant != null)
+                {
+                    plant.transform.localPosition += Vector3.right * (cb.max.x + 0.02f - ShipBounds(plant).min.x);
+                    Settle(plant, false);
+                }
+            }
             GameObject drum = Hand(look, "Barrel", new Vector3(0f, 0f, -13.0f), 0f, rail: -1f);
             if (drum != null) Hand(look, "Barrel", drum.transform.localPosition + new Vector3(0.64f, 0f, 0.05f), 0f);
             Hand(look, "Crate", new Vector3(-5.2f, 0f, -13.2f), 12f);
@@ -440,9 +458,12 @@ namespace SunkCost.Editor.Look
                 // it would cut the diver's visor readouts that spectators rely on.
                 screen.localPosition = centre + new Vector3(0f, 0f, -0.005f);
                 screen.localScale = new Vector3(size.x, size.y, 1f);
-                // What E finds: the whole panel, reaching 30 cm out past the frame toward
-                // the viewer, so the crosshair meets the screen before the cabinet's own shape.
-                if (screen.TryGetComponent(out BoxCollider press)) { press.center = new Vector3(0f, 0f, -0.15f); press.size = new Vector3(1f, 1f, 0.3f); }
+                // What E finds: the whole picture, 2 cm thick, its face 5 mm in front of the
+                // picture and its back in the panel, so the crosshair meets the screen
+                // before the cabinet's own shape and a thrown item stops at the glass, not
+                // on air in front of it (SHIP-038: it stood 29 cm proud). A trigger would
+                // not do: the interact ray ignores triggers (InteractionTargeting).
+                if (screen.TryGetComponent(out BoxCollider press)) { press.center = new Vector3(0f, 0f, 0.005f); press.size = new Vector3(1f, 1f, 0.02f); }
             }
             // The channel's name is the screen's own line of text, top centre, no plate.
             Transform caption = root.Find("Tv Caption Sign");
@@ -1150,6 +1171,7 @@ namespace SunkCost.Editor.Look
         {
             if (plate == null) return;
             float side = Mathf.Sign(plate.transform.localPosition.x);
+            plate.transform.localScale = Vector3.Scale(plate.transform.localScale, new Vector3(1f, 1f, 0.5f)); // a plate stands off the hull by a plate's depth, not a block's
             Bounds b = ShipBounds(plate);
             float length = b.size.z, low = b.min.y, high = b.max.y;
             float bestZ = plate.transform.localPosition.z, bestOut = 0f, bestSpread = float.PositiveInfinity;
@@ -1187,56 +1209,93 @@ namespace SunkCost.Editor.Look
             panel.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w, h, 0.02f), h / 2f);
             panel.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.SignBoard();
             Color letters = new(0.86f, 0.88f, 0.9f);
-            GameObject title = PropBuilder.Text(name, "Name", new Vector3(0f, h * 0.14f, 0.03f), h * 0.8f, letters, TextAnchor.MiddleCenter);
+            // The name as big as the panel holds (at 45 m it was a few pixels high), the
+            // line under it smaller.
+            GameObject title = PropBuilder.Text(name, "Name", new Vector3(0f, h * 0.13f, 0.03f), h * 1.2f, letters, TextAnchor.MiddleCenter);
             SunkCost.Look.SignText titleText = title.AddComponent<SunkCost.Look.SignText>();
-            titleText.Fit(w * 0.9f, h * 0.56f);
+            titleText.Fit(w * 0.94f, h * 0.66f);
             titleText.Configure("company");
-            GameObject sub = PropBuilder.Text(name, "Sub", new Vector3(0f, -h * 0.3f, 0.03f), h * 0.4f, letters, TextAnchor.MiddleCenter);
+            GameObject sub = PropBuilder.Text(name, "Sub", new Vector3(0f, -h * 0.33f, 0.03f), h * 0.5f, letters, TextAnchor.MiddleCenter);
             SunkCost.Look.SignText subText = sub.AddComponent<SunkCost.Look.SignText>();
-            subText.Fit(w * 0.5f, h * 0.28f);
+            subText.Fit(w * 0.6f, h * 0.25f);
             subText.Configure("ship.name.sub");
         }
 
         // ---- the deck's holes and the tower's top -----------------------------------
 
         // Where the hull's deck has a hole inside the side (SHIP-032: either side of
-        // the tower at the transom, items fell through to the water): a row of deck
-        // plate just under the deck's level, so the hole reads as deck, and a collider
-        // under it. Found by rays down the whole deck, so a hole anywhere is closed.
+        // the tower at the transom, items fell through to the water; slots at the
+        // bulwark's foot): deck plate just under the deck's level, so the hole reads as
+        // deck, and a collider under it. Found by rays down the whole deck, right up
+        // under the bulwark, so a hole anywhere is closed. The plate is one mesh over
+        // the holes and a cell round them - under the deck where the deck is there, so
+        // a hole's ragged edge shows plate, not a notch - with the deck's own metre UVs,
+        // so it lines up with the plating round it and no two pieces overlap.
+        private const string DeckPatchPath = "Assets/_Project/Art/HQ/Meshes/ShipDeckPatch.asset";
+
         private static void FillDeckHoles(Transform root, GameObject look, MeshCollider hull)
         {
             const float cell = 0.1f;
             Physics.SyncTransforms();
             float well = ShipStubBuilder.WellRadius + 0.15f;
+            int nx = Mathf.CeilToInt(2f * halfW / cell), nz = Mathf.CeilToInt(2f * halfL / cell);
+            float X(int i) => -halfW + (i + 0.5f) * cell;
+            float Z(int k) => -halfL + (k + 0.5f) * cell;
+            bool Inside(int i, int k) => Mathf.Abs(X(i)) < W(Z(k)) - 0.02f && X(i) * X(i) + Z(k) * Z(k) > well * well && !UnderTower(X(i), Z(k));
+            var hole = new bool[nx, nz];
             var runs = new List<(float x0, float x1, float z)>();
-            for (float z = -halfL + cell / 2f; z < halfL; z += cell)
+            for (int k = 0; k < nz; k++)
             {
-                float start = float.NaN, last = 0f;
-                for (float x = -halfW + cell / 2f; x < halfW + cell; x += cell)
+                int start = -1;
+                for (int i = 0; i <= nx; i++)
                 {
-                    bool hole = false;
-                    if (x < halfW && Mathf.Abs(x) < W(z) - WallThickness - cell / 2f && x * x + z * z > well * well && !UnderTower(x, z))
-                        hole = !hull.Raycast(new Ray(root.TransformPoint(new Vector3(x, 0.3f, z)), -root.up), out _, 0.6f);
-                    if (hole) { if (float.IsNaN(start)) start = x; last = x; }
-                    else if (!float.IsNaN(start)) { runs.Add((start - cell / 2f, last + cell / 2f, z)); start = float.NaN; }
+                    if (i < nx && Inside(i, k) && Mathf.Abs(X(i)) < W(Z(k)) - 0.05f)
+                        hole[i, k] = !hull.Raycast(new Ray(root.TransformPoint(new Vector3(X(i), 0.3f, Z(k))), -root.up), out _, 0.6f);
+                    if (i < nx && hole[i, k]) { if (start < 0) start = i; }
+                    else if (start >= 0) { runs.Add((X(start) - cell / 2f, X(i - 1) + cell / 2f, Z(k))); start = -1; }
                 }
             }
             if (runs.Count == 0) return;
             var filler = new GameObject("Deck Filler");
             filler.transform.SetParent(look.transform, false);
-            Material deck = ShipModelSetup.DeckMaterial();
             foreach ((float x0, float x1, float z) in runs)
             {
-                float length = x1 - x0;
                 BoxCollider box = filler.AddComponent<BoxCollider>();
                 box.center = new Vector3((x0 + x1) / 2f, -0.15f, z);
-                box.size = new Vector3(length + cell, 0.3f, cell * 2f); // a cell over each way: no sliver between the rows
-                var plate = new GameObject("Deck Plate");
-                plate.transform.SetParent(filler.transform, false);
-                plate.transform.localPosition = new Vector3((x0 + x1) / 2f, -0.004f, z);
-                plate.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(Mathf.Round(length / cell) * cell, 0.02f, cell), 0.02f); // edge to edge, no two plates over each other
-                plate.AddComponent<MeshRenderer>().sharedMaterial = deck;
+                box.size = new Vector3(x1 - x0 + cell, 0.3f, cell * 2f); // a cell over each way: no sliver between the rows
             }
+            var verts = new List<Vector3>(); var uvs = new List<Vector2>(); var tris = new List<int>();
+            for (int k = 0; k < nz; k++)
+                for (int i = 0; i < nx; i++)
+                {
+                    bool near = false;
+                    for (int dk = -1; dk <= 1 && !near; dk++)
+                        for (int di = -1; di <= 1 && !near; di++)
+                        {
+                            int a = i + di, b = k + dk;
+                            near = a >= 0 && b >= 0 && a < nx && b < nz && hole[a, b];
+                        }
+                    if (!near || !Inside(i, k)) continue;
+                    float x0 = X(i) - cell / 2f, x1 = X(i) + cell / 2f, z0 = Z(k) - cell / 2f, z1 = Z(k) + cell / 2f;
+                    int v = verts.Count;
+                    verts.AddRange(new[] { new Vector3(x0, -0.004f, z0), new Vector3(x0, -0.004f, z1), new Vector3(x1, -0.004f, z1), new Vector3(x1, -0.004f, z0) });
+                    uvs.AddRange(new[] { new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0) });
+                    tris.AddRange(new[] { v, v + 1, v + 2, v, v + 2, v + 3 });
+                }
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(DeckPatchPath);
+            bool fresh = mesh == null;
+            if (fresh) mesh = new Mesh { name = "ShipDeckPatch" };
+            mesh.Clear();
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds(); mesh.RecalculateTangents();
+            if (fresh) AssetDatabase.CreateAsset(mesh, DeckPatchPath); else EditorUtility.SetDirty(mesh);
+            var plate = new GameObject("Deck Plate");
+            plate.transform.SetParent(filler.transform, false);
+            plate.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer = plate.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = ShipModelSetup.DeckMaterial();
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             Debug.Log("Ship dressing: closed " + runs.Count + " holes in the deck");
         }
 
@@ -1288,6 +1347,7 @@ namespace SunkCost.Editor.Look
         // ---- the ship's side --------------------------------------------------------
 
         private const float WallThickness = 0.35f;
+        private const float BulwarkFoot = 0.12f; // how far the side reaches under the deck
         private const string BulwarkMeshPath = "Assets/_Project/Art/HQ/Meshes/ShipBulwark.asset";
 
         // The ship's side: a wall of Bulwark height standing on the hull's outline all
@@ -1312,7 +1372,9 @@ namespace SunkCost.Editor.Look
                 inward[i] = nrm;
             }
 
-            Mesh mesh = StripMesh(loop, inward, 0f, Bulwark, -1, BulwarkMeshPath, "ShipBulwark");
+            // From just under the deck plane: a wall that started exactly on it showed
+            // slivers of light where the hull's deck dips at the edge.
+            Mesh mesh = StripMesh(loop, inward, -BulwarkFoot, Bulwark, -1, BulwarkMeshPath, "ShipBulwark");
             GameObject wall = new("Bulwark");
             wall.transform.SetParent(parent.transform, false);
             wall.AddComponent<MeshFilter>().sharedMesh = mesh;

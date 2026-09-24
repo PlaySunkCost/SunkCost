@@ -69,7 +69,7 @@ namespace SunkCost.Editor.Prototype
             SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
             // On a pillar with its plate, not floating on the glass (ship audit SHIP-049);
             // the elevator's redesign replaces it (Dan: "we will do a new one after").
-            RoundCabinGeometry.CreateButtonMount(cabin.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, FloorThicknessMeters, InteriorHeightMeters, buttonBottom + 0.56f, "DESCEND", SunkCost.Editor.Look.ShipModelSetup.HullMaterial());
+            RoundCabinGeometry.CreateButtonMount(cabin.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, FloorThicknessMeters, InteriorHeightMeters, buttonBottom + 0.56f, "DESCEND", SunkCost.Editor.Look.ShipKitMaterials.Bezel()); // the buttons' own clean bezel steel: the hull's blotched plate read as a random slab (QA, 24 September 2026)
             // The roof: a collider only. Its glass lies wholly inside the tube's opaque cap
             // ring (ShipStubBuilder.DressCabin), where nobody can ever see it.
             GameObject roof = RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);

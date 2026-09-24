@@ -132,7 +132,7 @@ namespace SunkCost.Editor.Prototype
 
         // What holds the button (ship audit SHIP-049: it floated against the glass): a
         // slim pillar from the floor to the roof between the button's back and the
-        // glass, in the ship's worn steel, and a plate over the button that says what
+        // glass, in the caller's material, and a plate over the button that says what
         // it does. Visual only; the wall behind is CreateShell's.
         public static void CreateButtonMount(Transform parent, float wallRadius, float bearingDeg, float widthMeters, float bottomY, float topY, float plateY, string plateText, Material material)
         {

@@ -42,8 +42,8 @@ TABLE = {
     "Railing":      ((2.0, 0.2, 1.2), "uniform", 4000),
     "StorageRoom":  ((2.8, 3.0, 2.2), "stretch", 12000),
     "CabinHousing": ((5.0, 5.0, 3.0), "stretch", 15000),
-    "Crane":        ((3.0, 9.0, 7.0), "uniform", 15000),
-    "Winch":        ((2.0, 1.2, 1.6), "uniform", 8000),
+    "Crane":        ((3.0, 9.0, 7.0), "uniform", 40000),   # 15000 read rough up close at twice its size (QA round 2)
+    "Winch":        ((2.0, 1.2, 1.6), "uniform", 40000),   # 8000 from 5 million faces came out crumpled (QA round 2); see REMESH
     "Container":    ((6.0, 2.6, 2.6), "stretch", 8000),
     "Console":      ((1.8, 0.8, 1.8), "uniform", 8000),
     "TvCabinet":    ((3.6, 0.4, 3.3), "uniform", 8000),
@@ -82,6 +82,11 @@ SMOOTH_ANGLE = 50.0
 # Parts the ship stands at twice their size (ShipDeckDressing.Scale): their bake
 # gets the big parts' 2048 maps, not 1024 (the winch looked rough up close).
 LARGE_ON_DECK = {"Winch"}
+
+# Parts rebuilt as a voxel surface before decimating, voxel size as a fraction of
+# the part's largest dimension (0 or absent: straight to the budget). An optional
+# fifth argument overrides it.
+REMESH = {"Winch": 0.004}  # its rope drum is noise at the millimetre: an even 6.5 mm surface decimates cleanly
 
 MODELS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Assets", "_Project", "Models", "Ship")
 
@@ -353,6 +358,24 @@ def main():
         high.data = mesh.data.copy()
         high.name = part + "_high"
         bpy.context.collection.objects.link(high)
+
+    remesh = REMESH.get(part, 0.0) if len(args) <= 4 else float(args[4])
+    if high is not None and remesh > 0.0:
+        # Rebuilt as an even voxel surface first: a noisy generation collapsed
+        # straight to its budget crumples (the winch, SHIP-062). The bake still
+        # reads the original.
+        voxel = remesh * max(size.x, size.y, size.z)
+        mod = mesh.modifiers.new("Remesh", "REMESH")
+        mod.mode = "VOXEL"
+        mod.voxel_size = voxel
+        mod.adaptivity = 0.0
+        bpy.context.view_layer.objects.active = mesh
+        mesh.select_set(True)
+        bpy.ops.object.modifier_apply(modifier="Remesh")
+        tri = mesh.modifiers.new("Triangulate", "TRIANGULATE")  # quads out of the remesh: the budget counts triangles
+        bpy.ops.object.modifier_apply(modifier="Triangulate")
+        print("remeshed at %.4f m: %d -> %d faces" % (voxel, faces, len(mesh.data.polygons)))
+        faces = len(mesh.data.polygons)
 
     if faces > budget:
         mod = mesh.modifiers.new("Decimate", "DECIMATE")

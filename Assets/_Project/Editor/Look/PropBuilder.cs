@@ -487,7 +487,7 @@ namespace SunkCost.Editor.Look
             root.transform.SetParent(parent.transform, false);
             root.transform.localPosition = localPosition;
             root.transform.localRotation = localRotation;
-            bool ship = parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null;
+            bool ship = ShipStyle(parent);
             Material bar = ship ? ShipKitMaterials.Bezel() : LookMaterials.SignGlow(); // on the ship a worn dark rail from the kit (SHIP-060), no orange glow
             Part(root, "Plate", MeshKit.Box(new Vector3(w, h, 0.1f), h / 2f), ship ? LookMaterials.ShipScreen() : LookMaterials.SignBoard(), Vector3.zero);
             Part(root, "Frame Top", MeshKit.Box(new Vector3(w, 0.05f, 0.03f), 0.025f), bar, new Vector3(0f, h / 2f - 0.04f, 0.05f));
@@ -511,6 +511,16 @@ namespace SunkCost.Editor.Look
         // destination; a lit rim round the cap, proud of the bezel, for the aimed and
         // locked states (SHIP-072: the old "Cap Edge" was buried inside the bezel);
         // the buttons side by side share one text size, the longest label's (SHIP-050).
+        // The ship's look (kit bezels, dark rails, screen glass) for anything on the
+        // ship and for the dive car, which is the same glass elevator as the ship's
+        // deck cabin (Dan, 15 September 2026: the same car), so the two cars' buttons
+        // and plates match (fix round 2, NEW-5). The car is found by its root's name,
+        // "Elevator", which ElevatorCabinBuilder and DiveSiteValidator already rely on.
+        // Everything else - the HQ - keeps the HQ's look.
+        public const string DiveCarRootName = "Elevator";
+        public static bool ShipStyle(GameObject parent) =>
+            parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null || parent.transform.root.name == DiveCarRootName;
+
         public static readonly string[] DangerKeys = { "button.endday" };
         public static GameObject PushButton(GameObject parent, string name, Vector3 localPosition, Quaternion localRotation, string textKey, float width = 0.6f)
         {
@@ -519,7 +529,7 @@ namespace SunkCost.Editor.Look
             root.transform.localPosition = localPosition;
             root.transform.localRotation = localRotation;
             SunkCost.World.ButtonLook.Role role = Array.IndexOf(DangerKeys, textKey) >= 0 ? SunkCost.World.ButtonLook.Role.Danger : SunkCost.World.ButtonLook.Role.Destination;
-            bool ship = parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null;
+            bool ship = ShipStyle(parent);
             // On the ship the bezel wears the worn kit like the models round it (SHIP-060); the HQ's stays ink.
             Part(root, "Bezel", MeshKit.Box(new Vector3(width, 0.4f, 0.06f)), ship ? ShipKitMaterials.Bezel() : LookMaterials.Ink(), Vector3.zero);
             Part(root, SunkCost.World.ButtonLook.CapName, MeshKit.Box(new Vector3(width - 0.12f, 0.28f, 0.1f)), role == SunkCost.World.ButtonLook.Role.Danger ? LookMaterials.ButtonRed() : LookMaterials.ButtonAccent(), new Vector3(0f, 0.06f, 0.03f));

@@ -68,7 +68,7 @@ namespace SunkCost.Sites
                 GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
                 panel.AddComponent<ElevatorControlPanel>();
                 // On its pillar and plate, like the deck cabin's: the same car (Dan, 15 September 2026).
-                RoundCabinGeometry.CreateButtonMount(root.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, CarFloorThickness, interiorHeight, buttonBottom + 0.56f, "SURFACE", SunkCost.Editor.Look.ShipModelSetup.HullMaterial());
+                RoundCabinGeometry.CreateButtonMount(root.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, CarFloorThickness, interiorHeight, buttonBottom + 0.56f, "SURFACE", SunkCost.Editor.Look.ShipKitMaterials.Bezel()); // the buttons' own clean bezel steel: the hull's blotched plate read as a random slab (QA, 24 September 2026)
                 // Cube's default BoxCollider is exactly what the interactor's raycast needs to
                 // hit, and it visually stands out from the frame posts via the accent material.
 

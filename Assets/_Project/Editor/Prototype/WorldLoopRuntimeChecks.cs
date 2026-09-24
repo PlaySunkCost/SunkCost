@@ -295,8 +295,10 @@ namespace SunkCost.Editor.Prototype
 
             // S3: a ball on the deck, a ball in the host's hand, everyone aboard, sail.
             CarryableItem deckBall = H.Item("Basketball (2)");
-            // Starboard of the elevator's ring rail: the well round the car is open to the sea since 19 September 2026.
-            deckBall.ServerDropAt(hqShip.FromShipLocal(new Vector3(5f, 0.5f, -3f)));
+            // Starboard of the elevator's ring rail (the well round the car is open to the sea
+            // since 19 September 2026), on open, flat deck the dressing keeps clear of props:
+            // the old spot (5, -3) is the crane's base since the ship audit (SHIP-012).
+            deckBall.ServerDropAt(hqShip.FromShipLocal(SunkCost.Editor.Look.ShipDeckDressing.OpenDeck + new Vector3(0f, 0.5f, 0f)));
             yield return null; yield return null;
             Vector3 deckBallLocalBefore = hqShip.ToShipLocal(deckBall.transform.position);
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
