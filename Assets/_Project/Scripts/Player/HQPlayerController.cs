@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -25,7 +26,7 @@ namespace SunkCost.Player
     // every frame the player is not travel-locked, whether or not input is
     // allowed: a menu never leaves a jumper hanging in the air.
     [RequireComponent(typeof(CharacterController))]
-    public sealed class HQPlayerController : NetworkBehaviour
+    public sealed partial class HQPlayerController : NetworkBehaviour
     {
         [SerializeField] private Camera playerCamera;
         [SerializeField] private Transform viewPivot;
@@ -282,6 +283,9 @@ namespace SunkCost.Player
             dashUntil = now + settings.DashSeconds;
             dashReadyAt = now + settings.DashCooldownSeconds;
             dashStartedAt = now;
+            // The little lift (Dan: "like a dash in water"): a kick upward that gravity
+            // takes back; from the floor or mid-jump, never less than the speed you had.
+            if (settings.DashLiftSpeed > 0f) { verticalSpeed = Mathf.Max(verticalSpeed, settings.DashLiftSpeed); grounded = false; }
             Dashes++;
             DashRefusal = string.Empty;
             DashStarted?.Invoke(dashDirection);
@@ -388,7 +392,13 @@ namespace SunkCost.Player
         {
             base.OnStartClient();
             SetLocalPresentation(IsOwner);
+            // This machine may set a player up again after its death: the host, when it
+            // comes back to a world it left, starts its copies there anew. The figure a
+            // death hid stays hidden (Dan, 23 September 2026: a dead diver stood upright on
+            // the TV, which the host renders, while the other diver saw only the body).
+            if (dead.Value) ApplyDead(true);
             if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
+            if (IsOwner && GetComponent<InteractHighlight>() == null) gameObject.AddComponent<InteractHighlight>(); // what the dot rests on shows it can be used (SHIP-054)
             dashClientStartFrame = Time.frameCount;
             if (GetComponent<PlayerDashEffects>() == null) gameObject.AddComponent<PlayerDashEffects>(); // the rings and the whoosh, on every peer
             // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
@@ -410,8 +420,9 @@ namespace SunkCost.Player
             // value and the applied one disagree (a client whose object was moved
             // between scenes or re-initialised can miss the change callback).
             if (appliedDead != dead.Value) ApplyDead(dead.Value);
-            if (IsServerStarted) ServerJudgeDash(); // every copy, the host's own included: one path
+            if (IsServerStarted) { ServerJudgeDash(); ServerCheckSeat(); } // every copy, the host's own included: one path
             if (!IsOwner) return; // the eyes ease in LateUpdate, after the NetworkTransform has moved
+            PollSeat();
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
             bool hasDevices = ActiveKeyboard != null && Mouse.current != null;
@@ -429,7 +440,9 @@ namespace SunkCost.Player
             // the camera, so the clearance solver stays out of it too.
             if (dead.Value)
             {
+                LeaveSeat(place: false, tellServer: true); // the body is dropped where it sat; nothing to stand
                 if (hasDevices && SessionInputGate.CanPlay && !SessionInputGate.ClickSuppressedThisFrame && Mouse.current.leftButton.wasPressedThisFrame) RequestNextSpectate();
+                CurrentSeat = null;
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentColourPanel = null;
@@ -458,8 +471,8 @@ namespace SunkCost.Player
 #if UNITY_EDITOR
                 if (!BypassInputGateForChecks) // the checks set the view themselves; the real mouse stays out
 #endif
-                    Look();
-                if (!travelLocked)
+                    if (!seatedLocal) Look(); // seated, the view is held on the TV
+                if (!travelLocked && !seatedLocal)
                 {
                     Keyboard keyboard = ActiveKeyboard;
                     if (keyboard.wKey.isPressed) moveInput.y += 1f;
@@ -481,9 +494,14 @@ namespace SunkCost.Player
                 jumpBufferedUntil = float.NegativeInfinity;
             }
 
+            // Seated (the couch): no motor, no targets; the sitter's few keys. A sail
+            // keeps the seat (the rider carries the root), so this comes first.
+            if (seatedLocal) { SeatedFrame(canPlay); return; }
+
             if (travelLocked)
             {
                 // Nothing buffered survives the trip: a fresh press is needed after the unlock.
+                CurrentSeat = null;
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentCabinControl = CabinControl.None;
@@ -505,6 +523,7 @@ namespace SunkCost.Player
             // below are what the gate stops.
             if (ViewObstructed)
             {
+                CurrentSeat = null;
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentCabinControl = CabinControl.None;
@@ -569,6 +588,11 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestTvNext();
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentSeat != null)
+            {
+                grabConsumed = true;
+                RequestSit(CurrentSeat); // the server says yes before anyone sits
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentCabinControl != CabinControl.None)
             {
@@ -749,10 +773,13 @@ namespace SunkCost.Player
         private void BlendPresentation()
         {
             PlayerMovementSettings settings = Movement;
-            float targetEye = PlayerMovementMath.EyeHeight(settings, stanceCrouched);
-            float targetScale = standingBodyScaleY * (stanceCrouched ? settings.CrouchHeight / settings.StandingHeight : 1f);
-            float eyeSpan = Mathf.Abs(settings.StandingEyeHeight - settings.CrouchEyeHeight);
-            float scaleSpan = Mathf.Abs(standingBodyScaleY * (1f - settings.CrouchHeight / settings.StandingHeight));
+            // Seated (the couch) on every peer: eyes and body from the seat point, the
+            // body squashed to a sitting height (the model has no rig to bend).
+            bool seated = SeatedPose;
+            float targetEye = seated ? settings.SeatedEyeHeight : PlayerMovementMath.EyeHeight(settings, stanceCrouched);
+            float targetScale = standingBodyScaleY * (seated ? settings.SeatedBodyHeight / settings.StandingHeight : stanceCrouched ? settings.CrouchHeight / settings.StandingHeight : 1f);
+            float eyeSpan = Mathf.Max(Mathf.Abs(settings.StandingEyeHeight - settings.CrouchEyeHeight), Mathf.Abs(settings.StandingEyeHeight - settings.SeatedEyeHeight));
+            float scaleSpan = Mathf.Abs(standingBodyScaleY * (1f - Mathf.Min(settings.CrouchHeight, settings.SeatedBodyHeight) / settings.StandingHeight));
             float step = settings.CrouchBlendSeconds <= 0f ? 1f : Time.unscaledDeltaTime / settings.CrouchBlendSeconds;
             eyeHeight = Mathf.MoveTowards(eyeHeight, targetEye, eyeSpan * step);
             bodyScaleY = Mathf.MoveTowards(bodyScaleY, targetScale, scaleSpan * step);
@@ -788,7 +815,7 @@ namespace SunkCost.Player
         {
             if (travelLocked == locked) return;
             travelLocked = locked;
-            controller.enabled = !locked;
+            controller.enabled = !locked && !seatedLocal; // a sitter sails seated: the capsule stays off until it stands
             if (!locked) clearance?.ResetView(); // a new world: no old safe point, no blend across it
             verticalSpeed = 0f;
             grabBufferedUntil = -1f;
@@ -892,6 +919,7 @@ namespace SunkCost.Player
         [TargetRpc]
         public void TargetPlace(NetworkConnection target, Vector3 position, float yawDegrees)
         {
+            LeaveSeat(place: false, tellServer: true); // Unstuck, a revival, the plank: off the couch first
             TeleportLocal(position, yawDegrees);
         }
 
@@ -907,7 +935,7 @@ namespace SunkCost.Player
             appliedDead = value;
             if (controller != null)
             {
-                bool on = !value && !travelLocked;
+                bool on = !value && !travelLocked && !seatedLocal;
                 if (on && !controller.enabled) Physics.SyncTransforms(); // see TeleportLocal: never enable the capsule over a stale pose
                 controller.enabled = on;
             }
@@ -936,7 +964,8 @@ namespace SunkCost.Player
         // head), the position and yaw eased behind the transform (see EyeSmoothSeconds).
         private void LateUpdate()
         {
-            if (IsOwner) return;
+            if (IsOwner) { UpdateZoom(); return; } // the couch's zoom, owner-local
+            UpdateRemoteSeatPose();
             float dt = Time.deltaTime;
             // A remote copy's lamp shows while its diver is listed below (its Unity
             // scene on a client is not its world) and alive; the switch does the rest.
@@ -964,27 +993,69 @@ namespace SunkCost.Player
             CurrentShopDisplay = null;
             CurrentTv = null;
             CurrentPatient = null;
+            CurrentSeat = null;
+            CurrentUsable = null;
             Transform eye = playerCamera.transform;
             CurrentTarget = InteractionTargeting.Find(eye.position, eye.forward, transform, interactReach, grabAimRadius);
             CurrentButton = null;
             CurrentCabinControl = CabinControl.None;
-            if (CurrentTarget != null) return;
+            if (CurrentTarget != null) { CurrentUsable = CurrentTarget.transform; return; }
             Transform pressed = InteractionTargeting.FindPressable(eye.position, eye.forward, transform, interactReach);
+            // Reach per target (SHIP-043, Dan: "make it so they can change from 6m"): only
+            // the TV's screen answers beyond the interact reach. Nothing solid within it,
+            // so the nearest thing on the longer ray is past it; it counts only when it is
+            // the screen. The server allows the same reach (ServerCanReachTv).
+            bool far = false;
+            if (pressed == null)
+            {
+                Transform beyond = InteractionTargeting.FindPressable(eye.position, eye.forward, transform, Movement.TvReach);
+                if (beyond != null && beyond.name == SunkCost.World.ShipParts.TvScreenName) { pressed = beyond; far = true; }
+            }
             if (pressed == null) return;
+            if (far) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) CurrentUsable = pressed; return; }
             // A living teammate's capsule under the dot (the patch; a dead one is a body, an item).
             HQPlayerController teammate = pressed.GetComponentInParent<HQPlayerController>();
             if (teammate != null && teammate != this && !teammate.IsDead) { CurrentPatient = teammate; return; }
             CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
-            if (CurrentButton != null) return;
+            if (CurrentButton != null) { CurrentUsable = CurrentButton.transform; return; }
             CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();
-            if (CurrentColourPanel != null) return;
+            if (CurrentColourPanel != null) { CurrentUsable = CurrentColourPanel.transform; return; }
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
-            if (CurrentQuotaBoard != null) return;
+            if (CurrentQuotaBoard != null) { CurrentUsable = CurrentQuotaBoard.transform; return; }
             CurrentShopDisplay = pressed.GetComponentInParent<SunkCost.Shop.ShopDisplay>();
-            if (CurrentShopDisplay != null) return;
-            if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) return; }
-            if (pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>() != null) CurrentCabinControl = CabinControl.Car;
-            else if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) CurrentCabinControl = CabinControl.DeckCabin;
+            if (CurrentShopDisplay != null) { CurrentUsable = CurrentShopDisplay.transform; return; }
+            if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) { CurrentUsable = pressed; return; } }
+            SunkCost.Diving.ElevatorControlPanel carPanel = pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>();
+            if (carPanel != null) { CurrentCabinControl = CabinControl.Car; CurrentUsable = carPanel.transform; return; }
+            if (pressed.name == SunkCost.World.ShipParts.DeckCabinButtonName && pressed.GetComponentInParent<SunkCost.World.ShipParts>() != null) { CurrentCabinControl = CabinControl.DeckCabin; CurrentUsable = pressed; return; }
+            // A couch (the seat nearest the dot; Dan, 23 September 2026).
+            CurrentSeat = SunkCost.World.ShipSeats.SeatUnder(pressed, eye.position, eye.forward);
+            if (CurrentSeat != null) CurrentUsable = CurrentSeat.parent;
+        }
+
+        // A render through this player's eyes on another machine (the deck TV, a dead
+        // player spectating): the figure as its owner sees it, which is none of it at
+        // eye level. The eyes there are eased and trail the body, so a running or
+        // jumping diver's own body and hands swung into the picture (Dan, 23 September
+        // 2026: "in my screen I dont see hands or myself while moving and jumping, and
+        // in tv and spectate I see"). The hands stay while they hold something - the
+        // owner sees them then. Pair with EndWatchedRender, same frame.
+        private readonly List<Renderer> hiddenForWatch = new();
+        public void BeginWatchedRender()
+        {
+            hiddenForWatch.Clear();
+            if (bodyVisual != null)
+                foreach (Renderer r in bodyVisual.GetComponentsInChildren<Renderer>(true))
+                    if (r.enabled) { r.enabled = false; hiddenForWatch.Add(r); }
+            PlayerHands hands = GetComponent<PlayerHands>();
+            if (hands != null && hands.HeldForHands == null)
+                foreach (Renderer r in hands.ArmRenderers)
+                    if (r.enabled) { r.enabled = false; hiddenForWatch.Add(r); }
+        }
+        public void EndWatchedRender()
+        {
+            foreach (Renderer r in hiddenForWatch) if (r != null) r.enabled = true;
+            hiddenForWatch.Clear();
         }
 
         public void SetBodyColour(Color colour)
@@ -1009,7 +1080,7 @@ namespace SunkCost.Player
             {
                 bool bodyForOwner = HeadSplit != null;
                 foreach (Renderer renderer in bodyVisual.GetComponentsInChildren<Renderer>(true))
-                    renderer.enabled = !active || bodyForOwner;
+                    renderer.enabled = (!active || bodyForOwner) && !appliedDead;
                 if (active && bodyForOwner) HeadSplit.SetHeadShown(false);
             }
         }

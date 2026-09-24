@@ -14,7 +14,8 @@ namespace SunkCost.World
         // dead player parked on the deck could end the day or start a sail with a
         // hand-made request; E itself is off while dead). Range is the existing
         // coarse test per button — aboard, in the deck cabin, inside the car —
-        // not a per-button reach; the contract records that.
+        // not a per-button reach; the contract records that. The TV alone also
+        // checks its own reach (SHIP-043, 23 September 2026).
         private bool ServerPresserAlive(NetworkConnection sender, CrewDayState day)
         {
             Player.HQPlayerController player = GetComponent<Player.HQPlayerController>();
@@ -87,6 +88,11 @@ namespace SunkCost.World
             if (!ServerPresserAlive(sender, day)) return;
             ShipParts ship = ShipParts.InWorld(flow.CurrentWorld);
             if (ship != null && !ship.IsAboard(transform.position)) { day.ServerReportRefusal("Not aboard: " + WorldSceneFlow.DisplayName(sender)); return; }
+            // The TV is the one press with a reach of its own (SHIP-043, Dan: "make it so
+            // they can change from 6m"): the presser's eyes within TvReach of the screen,
+            // plus the usual slack for a copy a tick behind.
+            Player.HQPlayerController presser = GetComponent<Player.HQPlayerController>();
+            if (ship != null && presser != null && !presser.ServerCanReachTv(ship)) { day.ServerReportRefusal("Too far from the screen: " + WorldSceneFlow.DisplayName(sender)); return; }
             if (!flow.ServerTvNext(sender, out string why)) day.ServerReportRefusal(why);
         }
 

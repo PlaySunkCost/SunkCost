@@ -42,9 +42,29 @@ namespace SunkCost.Editor.Prototype
                 if (point != null && !ship.IsAboard(point.position + Vector3.up * 0.5f)) errors.Add(label + ": " + point.name + " is outside the AboardVolume.");
             }
             if (ship.BoardingPoint != null && !ship.IsAboard(ship.BoardingPoint.position + Vector3.up * 0.5f)) errors.Add(label + ": BoardingPoint is outside the AboardVolume.");
+            // A player must fit where Unstuck and the spawns put them: the boarding point
+            // stood inside the container once the deck was dressed (ship audit SHIP-001).
+            Physics.SyncTransforms();
+            CheckClearance(ship.BoardingPoint, errors, label);
+            for (int i = 0; i < ShipParts.SpawnPointCount; i++) CheckClearance(ship.SpawnPoint(i), errors, label);
             foreach (NetworkObject nob in ship.GetComponentsInChildren<NetworkObject>(true))
                 errors.Add(label + ": the ship prefab must not contain NetworkObjects yet ('" + nob.name + "'); the cabin and monitor become scene objects in their own cards.");
             return ship;
+        }
+
+        // A standing player's body, a little slimmer than the real capsule (radius 0.3 m,
+        // 1.8 m) and clear of the deck under the feet: from 0.27 m to 1.78 m up.
+        public const float ClearanceRadius = 0.28f, ClearanceLow = 0.55f, ClearanceHigh = 1.5f;
+
+        public static void CheckClearance(Transform point, List<string> errors, string label)
+        {
+            if (point == null) return;
+            Vector3 up = point.up;
+            Collider[] hits = Physics.OverlapCapsule(point.position + up * ClearanceLow, point.position + up * ClearanceHigh, ClearanceRadius, ~0, QueryTriggerInteraction.Ignore);
+            if (hits.Length == 0) return;
+            var names = new List<string>();
+            foreach (Collider hit in hits) names.Add(hit.transform.parent != null ? hit.transform.parent.name + "/" + hit.name : hit.name);
+            errors.Add(label + ": a player does not fit at " + point.name + " (it is inside " + string.Join(", ", names) + ").");
         }
 
         public static void CheckBuildList(List<string> errors)

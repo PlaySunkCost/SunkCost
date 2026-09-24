@@ -32,7 +32,7 @@ namespace SunkCost.Diving
         // 1 m/s while the floor-to-roof span crosses the water at seaLevelY, 3 m/s
         // again. Set by DiveSiteBuilder from DiveSiteSettings; the travel time is
         // derived, not a setting.
-        [SerializeField] private float seaLevelY = -1f;
+        [SerializeField] private float seaLevelY = -4.5f;
         [SerializeField] private float spanMeters = 3.5f;
         [SerializeField] private float travelSpeed = 3f;
         [SerializeField] private float crossingSpeed = 1f;

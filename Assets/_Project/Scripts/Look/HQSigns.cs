@@ -80,7 +80,10 @@ namespace SunkCost.Look
             { "ship.year", "2300" },
             { "ship.bridge", "01 » BRIDGE" },
             { "ship.bridge.label", "CAPTAIN / NAVIGATION" },
-            { "ship.screen", "GOOD HAULS\nTODAY :)" },
+            { "ship.screen", "CREW" }, // the crew screen's title over who is where, the day and the quota (ship audit SHIP-045)
+            { "ship.cabin.idle", "DIVE CAGE — standing by" }, // the cabin's plate before there is a day state (SHIP-064)
+            { "ship.tv.idle", "SALVAGE · CREW CHANNEL" },    // the TV's idle channel, under the ship's name (SHIP-046)
+            { "ship.tv.idle.hint", "Live when a diver is below" },
             { "button.site01", "SITE 01" },
             { "button.hq", "HQ" },
             { "button.endday", "END DAY" },

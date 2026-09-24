@@ -48,6 +48,16 @@ namespace SunkCost.Editor.Look
             return signs;
         }
 
+        // The worlds' lights are kept apart by rendering layers (WorldLightLayers; ship
+        // audit SHIP-003, 23 September 2026): they must stay on in both pipeline assets.
+        private static bool KeepRenderingLayers(SerializedObject serialized)
+        {
+            SerializedProperty layers = serialized.FindProperty("m_SupportsLightLayers");
+            if (layers == null || layers.boolValue) return false;
+            layers.boolValue = true;
+            return true;
+        }
+
         // The lamps are point lights, a hundred of them: the PC pipeline asset must
         // render additional lights per pixel (LightRenderingMode.PerPixel is 1,
         // PerVertex 2). Forward+ takes the count; the per-object limit is moot.
@@ -72,7 +82,14 @@ namespace SunkCost.Editor.Look
             if (shadowMap != null && shadowMap.intValue < 4096) { shadowMap.intValue = 4096; changed = true; }
             SerializedProperty shadowDistance = serialized.FindProperty("m_ShadowDistance");
             if (shadowDistance != null && Mathf.Abs(shadowDistance.floatValue - 40f) > 0.01f) { shadowDistance.floatValue = 40f; changed = true; }
+            changed |= KeepRenderingLayers(serialized);
             if (changed) { serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(asset); AssetDatabase.SaveAssets(); }
+            var mobile = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/Mobile_RPAsset.asset");
+            if (mobile != null)
+            {
+                var mobileSerialized = new SerializedObject(mobile);
+                if (KeepRenderingLayers(mobileSerialized)) { mobileSerialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(mobile); AssetDatabase.SaveAssets(); changed = true; }
+            }
             // The occlusion feature on the PC renderer: the contact shadows that give
             // the picture its depth. Stronger and wider than the default.
             foreach (UnityEngine.Object sub in AssetDatabase.LoadAllAssetsAtPath("Assets/Settings/PC_Renderer.asset"))

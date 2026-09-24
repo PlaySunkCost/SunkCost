@@ -19,7 +19,8 @@ namespace SunkCost.Editor.Look
             var ship = GameObject.Find("Ship");
             if (ship == null) return "no ship";
             var sb = new System.Text.StringBuilder();
-            Transform rimT = ship.transform.Find("Well Rim");
+            SunkCost.World.ShipParts parts = ship.GetComponent<SunkCost.World.ShipParts>();
+            Transform rimT = parts != null ? parts.Find("Well Rim") : null; // at any depth: the rim is in the Well group (SHIP-076)
             if (rimT != null) { var mf = rimT.GetComponent<MeshFilter>(); var mr = rimT.GetComponent<MeshRenderer>(); sb.Append("rim: mesh=").Append(mf != null && mf.sharedMesh != null ? mf.sharedMesh.name + " v" + mf.sharedMesh.vertexCount : "none").Append(" mat=").Append(mr != null && mr.sharedMaterial != null ? mr.sharedMaterial.name : "none").Append(" enabled=").Append(mr != null && mr.enabled).Append(" bounds=").Append(mr != null ? mr.bounds.ToString() : "-").Append(" | "); }
             else sb.Append("no Well Rim | ");
             foreach (float y in new[] { 0.02f, -0.3f, -0.6f, -1.5f, -3f, -5f, -7f })

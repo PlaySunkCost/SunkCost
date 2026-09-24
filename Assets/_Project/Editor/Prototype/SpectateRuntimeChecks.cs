@@ -149,6 +149,24 @@ namespace SunkCost.Editor.Prototype
             try { string p = Path.Combine(dir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
             catch (IOException) { return string.Empty; }
         }
+        // Mean luminance of a saved picture over a window (fractions of its width and
+        // height), every fourth pixel.
+        private static float MeanLuma(string path, float x0, float x1, float y0, float y1)
+        {
+            if (!File.Exists(path)) return -1f;
+            var tex = new Texture2D(2, 2);
+            try
+            {
+                if (!tex.LoadImage(File.ReadAllBytes(path))) return -1f;
+                int ax = (int)(x0 * tex.width), bx = (int)(x1 * tex.width), ay = (int)(y0 * tex.height), by = (int)(y1 * tex.height);
+                double sum = 0; int n = 0;
+                for (int y = ay; y < by; y += 4)
+                    for (int x = ax; x < bx; x += 4) { Color c = tex.GetPixel(x, y); sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b; n++; }
+                return n > 0 ? (float)(sum / n) : -1f;
+            }
+            finally { UnityEngine.Object.DestroyImmediate(tex); }
+        }
+
         private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label, string dir = GuestDir)
         {
             float deadline = Time.unscaledTime + seconds;
@@ -249,6 +267,15 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the ride up completed");
             Check(Day.CabinRide.Stage == CabinRideStage.Complete && Host().gameObject.scene == WorldScenes.Scene(WorldId.Sea), "back on the deck: " + H.RideStatus());
         }
+        // Guest B to a spot within the TV's reach (SHIP-043: 6 m, checked by the server
+        // too), facing the screen, and on until the server's copy of B stands there.
+        private static IEnumerator BToTheTv(Vector3 spot, Vector3 screen, HQPlayerController remoteB)
+        {
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(spot) + "}", GuestDirB);
+            yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(screen - (spot + Vector3.up * 1.6f)) + "}", GuestDirB);
+            yield return Expect(() => Vector3.Distance(remoteB.EyePosition, screen) < 5.5f, 3f, () => "B stands within the TV's reach (" + Vector3.Distance(remoteB.EyePosition, screen).ToString("F1") + " m from the screen)");
+        }
+
         // Stand near an item on the seafloor, aim at it until the dot lands, grab it.
         private static IEnumerator GrabItem(CarryableItem item)
         {
@@ -443,6 +470,17 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => GuestPlayerLine(r, idA).Contains("spectatorActive=True") && GuestPlayerLine(r, idA).Contains("spectatorTarget=" + host.OwnerId + ";"), 6f, "S1 A's spectator view is on the host (after its second of own camera and the fade)");
             yield return GuestEventually(r => r.Contains("spectatingName=" + NameOf(host) + ";"), 4f, "S1 A's screen says SPECTATING " + NameOf(host));
             yield return GuestEventually(r => CamPosOf(GuestPlayerLine(r, idA)) is Vector3 p && Vector3.Distance(p, host.EyePosition) < 1.5f, 4f, "S1 A's camera sits on the host's eyes");
+            // A spectator sees no more than the diver it watches (Dan, 23 September 2026:
+            // the TV showed the dark below brighter than the diver saw it - "make sure it
+            // does not happen to spectators too"). Both screens as shown, the same moment.
+            string ownShot = Path.GetFullPath("Temp/spectate-diver-own.png"), watchShot = Path.GetFullPath("Temp/spectate-a-watching.png");
+            File.Delete(ownShot); File.Delete(watchShot);
+            H.CaptureScreen(ownShot);
+            yield return Send("{\"id\":{id},\"action\":\"capture_play\",\"item\":\"" + watchShot.Replace("\\", "/") + "\"}");
+            yield return Expect(() => File.Exists(ownShot) && File.Exists(watchShot), 5f, () => "S1b both screens captured");
+            yield return Wait(0.5f); // the writers close their files
+            float ownLuma = MeanLuma(ownShot, 0f, 1f, 0f, 1f), watchLuma = MeanLuma(watchShot, 0f, 1f, 0f, 1f);
+            Check(watchLuma <= ownLuma + 0.04f && Mathf.Abs(watchLuma - ownLuma) < 0.08f, $"S1b A watching the host below sees it as dark as the host does (spectator {watchLuma:0.000}, diver {ownLuma:0.000})");
             yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
             yield return Expect(() => Day.SpectateTargetOf(idA) == idB, 3f, () => "S1 left click: A now watches guest B (target " + Day.SpectateTargetOf(idA) + ")");
             yield return Expect(() => hostHud.Visor.OnAirCount == 0 && Day.WatchersOf(idB) == 1, 3f, () => "S1 the host is off air, B has one watcher");
@@ -489,10 +527,65 @@ namespace SunkCost.Editor.Prototype
             float tvContent = hostTv.SavePicture("Temp/spectate-tv-b.png");
             Check(hostTv.Frame.Readout.On && tvContent > 0.03f, $"S3/T the TV picture carries B's view and visor (brightness deviation {tvContent:0.000}; Temp/spectate-tv-b.png)");
             Check(hostTv.LastMeanBrightness < 0.35f, $"S3/T the seafloor on the TV is dark, under the site's own fog (mean brightness {hostTv.LastMeanBrightness:0.000})");
+            // And as it stands on the deck, in daylight: a camera 1.5 m in front of the
+            // screen sees the picture, not the deck's sun on it (the screen was lit and
+            // glossy until 23 September 2026 and lifted the black water to mid-blue). The
+            // same window of both: at 1.5 m the frame shows the screen's middle 59% x 75%.
+            string deckShot = Path.GetFullPath("Temp/spectate-tv-on-deck.png");
+            Transform tvQuad = sea.TvScreen;
+            H.CaptureFrom(tvQuad.position - tvQuad.forward * 1.5f, tvQuad.position, deckShot);
+            float onDeck = MeanLuma(deckShot, 0.1f, 0.9f, 0.1f, 0.9f);
+            float picture = MeanLuma(Path.GetFullPath("Temp/spectate-tv-b.png"), 0.266f, 0.734f, 0.198f, 0.802f); // the capture's 0.1-0.9 of the screen's middle 59% x 75%
+            Check(Mathf.Abs(onDeck - picture) < 0.05f, $"S3/T the TV on the deck shows the picture as rendered, not lit by the deck (on deck {onDeck:0.000}, picture {picture:0.000}; Temp/spectate-tv-on-deck.png)");
             // The diver's own head is out of its picture for the render only (Dan, 18
             // September 2026: a disc of the diver's colour over the TV): shown again after.
             Check(hostTv.Diver != null && hostTv.Diver.HeadSplit != null && hostTv.Diver.HeadSplit.HeadShown, "S3/T B's head is shown to the deck again after the TV's render");
             Check(WorldLook.InScene(WorldScenes.Scene(WorldId.Dive)) != null && WorldLook.InScene(WorldScenes.Scene(WorldId.Sea)) != null, "S3/T both loaded worlds carry a WorldLook");
+            // A hold for a person to look (Dan, 23 September 2026: "get to the same point
+            // and tell me to watch"): with Temp/spectate-hold.txt present, the run waits
+            // here - B diving below, dead A watching B, the host on deck facing the TV live
+            // on B - until the file is deleted (15 minutes at most), then goes on as before.
+            if (File.Exists("Temp/spectate-hold.txt"))
+            {
+                Vector3 keepAt = host.transform.position; float keepYaw = host.Yaw;
+                Vector3 tvAtHold = sea.ToShipLocal(sea.TvScreen.position);
+                host.TeleportLocal(sea.FromShipLocal(new Vector3(tvAtHold.x, 0.05f, tvAtHold.z - 6f)), sea.FromShipYaw(0f));
+                File.AppendAllText(Log, "HOLDING for a look: the host faces the TV (live on B), B dives, A watches B\n");
+                float until = Time.realtimeSinceStartup + 900f;
+                while (File.Exists("Temp/spectate-hold.txt") && Time.realtimeSinceStartup < until) yield return Wait(1f);
+                File.AppendAllText(Log, "HOLD released\n");
+                host.TeleportLocal(keepAt, keepYaw); yield return Wait(0.5f);
+            }
+            // The TV is the diver's own eyes, never a camera behind them (Dan, 23 September
+            // 2026: "does the tv show third person of him?"): its camera stands where B's
+            // own camera is on B's machine, and its picture matches B's own screen at the
+            // same moment - both saved for a look.
+            yield return Send("{\"id\":{id},\"action\":\"snapshot\"}", GuestDirB);
+            Vector3? bCam = CamPosOf(GuestPlayerLine(lastReply, idB));
+            Transform tvCam = hostTv.transform.Find("TvCamera");
+            Check(bCam is Vector3 bc && tvCam != null && Vector3.Distance(bc, tvCam.position) < 0.4f, $"S3/T the TV's camera is at B's own eyes (TV camera {(tvCam != null ? tvCam.position.ToString("F2") : "none")}, B's camera {bCam?.ToString("F2") ?? "unknown"})");
+            string bOwnShot = Path.GetFullPath("Temp/spectate-b-own.png"), bOnTv = Path.GetFullPath("Temp/spectate-b-on-tv.png");
+            File.Delete(bOwnShot);
+            SunkCost.Monsters.Impostor impostorNow = UnityEngine.Object.FindAnyObjectByType<SunkCost.Monsters.Impostor>();
+            foreach (HQPlayerController p in UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None))
+            {
+                int drawn = 0, all = 0;
+                foreach (Renderer r in p.GetComponentsInChildren<Renderer>(true)) { if (r is ParticleSystemRenderer) continue; all++; if (r.enabled && r.gameObject.activeInHierarchy) drawn++; }
+                Say("on the host, player " + p.OwnerId + (p.IsOwner ? " (host)" : "") + " dead=" + p.IsDead + " at " + p.transform.position.ToString("F1") + ": " + drawn + " of " + all + " renderers drawn");
+            }
+            HQPlayerController copyA = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.OwnerId == idA);
+            HQPlayerController copyB = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.OwnerId == idB);
+            string[] figureParts = { "CharacterModel", "Head", "Eye.L", "Eye.R", "UpperArm", "Forearm", "Palm" };
+            int drawnA = copyA == null ? -1 : copyA.GetComponentsInChildren<Renderer>(true).Count(r => figureParts.Contains(r.name) && r.enabled && r.gameObject.activeInHierarchy);
+            Check(copyA != null && copyA.IsDead && drawnA == 0, $"S3/T the host draws none of dead A's figure after coming back to the dive (only its body lies there; {drawnA} renderers drawn)");
+            Check(copyB != null && copyB.GetComponentsInChildren<Renderer>(true).Any(r => r.name == "CharacterModel" && r.enabled), "S3/T B's figure is drawn for everyone else again after the TV's render");
+            Say("the Impostor at this moment: " + (impostorNow == null ? "none" : "following " + impostorNow.TargetId + " at " + impostorNow.transform.position.ToString("F1") + " (B is " + idB + "; the TV and B see it only when it follows B)"));
+            yield return Send("{\"id\":{id},\"action\":\"capture_play\",\"item\":\"" + bOwnShot.Replace("\\", "/") + "\"}", GuestDirB);
+            hostTv.SavePicture(bOnTv);
+            yield return Expect(() => File.Exists(bOwnShot), 5f, () => "S3/T B's own screen captured");
+            yield return Wait(0.5f);
+            float bOwnLuma = MeanLuma(bOwnShot, 0f, 1f, 0f, 1f), bTvLuma = MeanLuma(bOnTv, 0f, 1f, 0f, 1f);
+            Check(Mathf.Abs(bOwnLuma - bTvLuma) < 0.05f, $"S3/T the TV shows B's dive as dark as B sees it (TV {bTvLuma:0.000}, B's own screen {bOwnLuma:0.000}; Temp/spectate-b-on-tv.png, Temp/spectate-b-own.png)");
             // The TV is a second render: half resolution, every other frame, nobody near → nothing.
             int before = hostTv.RenderedFrames;
             host.TeleportLocal(sea.FromShipLocal(new Vector3(40f, 0.05f, 0f)), 0f);
@@ -607,10 +700,25 @@ namespace SunkCost.Editor.Prototype
             Check(WorldSceneFlow.Instance.IsWatching(idB, out WorldId tvWorld) && tvWorld == WorldId.Dive, "T1 the server tracks B watching the site");
             yield return GuestEventually(r => r.Contains("tvLive=True") && r.Contains("tvCaption=LIVE · " + NameOf(host) + ";"), 6f, "T1 B's TV is live: LIVE · " + NameOf(host), GuestDirB);
             yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T1 the host's visor reads ON AIR · 1 watching — the TV (" + hostHud.Visor.OnAirCount + ")");
+            // The screen answers from 6 m, on the server too (SHIP-043, 23 September 2026;
+            // ShipControls → HQPlayerController.ServerCanReachTv, + 1.5 m of slack). Spots
+            // read from the screen itself, on the centre line aft of it: 12 m back is out
+            // of reach, 4 m back (in front of the couches) is in it.
+            Vector3 tvLocal = sea.ToShipLocal(sea.TvScreen.position);
+            Vector3 bFar = sea.FromShipLocal(new Vector3(tvLocal.x, 0.05f, tvLocal.z - 12f));
+            Vector3 bNear = sea.FromShipLocal(new Vector3(tvLocal.x, 0.05f, tvLocal.z - 4f));
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(bFar) + "}", GuestDirB);
+            yield return Expect(() => Vector3.Distance(remoteB.EyePosition, sea.TvScreen.position) > 10f, 3f, () => "T1r the server sees B 12 m from the screen (" + Vector3.Distance(remoteB.EyePosition, sea.TvScreen.position).ToString("F1") + " m)");
+            int farRefusals = Day.LastRefusal.Serial;
+            yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
+            yield return Expect(() => Day.LastRefusal.Serial > farRefusals && Day.LastRefusal.Text.StartsWith("Too far from the screen"), 3f, () => "T1r a press from 12 m is refused: " + Day.LastRefusal.Text);
+            Check(Day.TvChannel == host.OwnerId, "T1r the refused press left the channel on the host (" + Day.TvChannel + ")");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB);
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Expect(() => Day.TvChannel == idA, 3f, () => "T1 E on the TV: channel A (" + Day.TvChannel + ")");
             yield return GuestEventually(r => r.Contains("tvCaption=LIVE · " + NameOf(remoteA) + ";"), 6f, "T1 B's TV says LIVE · " + NameOf(remoteA), GuestDirB);
             yield return Expect(() => Day.WatchersOf(idA) == 1 && hostHud.Visor.OnAirCount == 0, 3f, () => "T1 A is on air, the host is not");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB);
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Expect(() => Day.TvChannel == host.OwnerId, 3f, () => "T1 E again wraps back to the host");
 
@@ -626,9 +734,12 @@ namespace SunkCost.Editor.Prototype
             yield return Send("{\"id\":{id},\"action\":\"die\"}");
             yield return Expect(() => Day.IsDead(idA) && Day.SpectateTargetOf(idA) == host.OwnerId, 5f, () => "T2 A died below and watches the host");
             yield return Expect(() => hostHud.Visor.OnAirCount == 2, 3f, () => "T2 the host reads ON AIR · 2 watching — the TV and dead A (" + hostHud.Visor.OnAirCount + ")");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB); // within reach, so the host stays because A is dead, not because the press was too far
+            int t2Refusals = Day.LastRefusal.Serial;
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Wait(1f);
             Check(Day.TvChannel == host.OwnerId, "T2 dead A is no channel: E keeps the host (" + Day.TvChannel + ")");
+            Check(Day.LastRefusal.Serial == t2Refusals, "T2 the press was taken, not refused (" + Day.LastRefusal.Text + ")");
 
             Heading("T3 — the last living diver surfaces: NO SIGNAL, the ship drops the dive world, E on the dark TV is refused");
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "T3 the car came back down for the host (" + Day.Elevator.State + ")");
@@ -640,8 +751,10 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(r => r.Contains("tvLive=False") && r.Contains("tvCaption=NO SIGNAL") && !Loaded(r, "DiveSite01"), 20f, "T3 B's TV says NO SIGNAL and the dive world is gone from B", GuestDirB);
             Check(!WorldSceneFlow.Instance.IsWatching(idB, out _), "T3 the server tracks no watch for B");
             yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T3 the host is still watched by dead A only (" + hostHud.Visor.OnAirCount + ")");
-            // Two metres off the screen on the port rail (the deck is 16 m wide since 19 September 2026; the old spot was out of reach).
-            host.TeleportLocal(sea.FromShipLocal(new Vector3(-ShipStubBuilder.DeckWidth / 2f + 2.5f, 0.05f, -3f)), sea.FromShipYaw(-90f)); yield return Wait(0.3f);
+            // Two metres aft of the screen, facing it: read from the screen itself, since the
+            // TV has moved (the port rail, then the bow on 23 September 2026) and may again.
+            Vector3 tvAt = sea.ToShipLocal(sea.TvScreen.position);
+            host.TeleportLocal(sea.FromShipLocal(new Vector3(tvAt.x, 0.05f, tvAt.z - 2f)), sea.FromShipYaw(0f)); yield return Wait(0.3f);
             H.ClientLookAtNamed(ShipParts.TvScreenName);
             yield return Expect(() => host.CurrentTv != null, 3f, () => "T3 the dot is on the TV screen");
             Check(H.PromptText().Contains("NO SIGNAL"), "T3 the prompt reads NO SIGNAL: " + H.PromptText());

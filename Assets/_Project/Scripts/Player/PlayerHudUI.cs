@@ -127,6 +127,9 @@ namespace SunkCost.Player
             {
                 if (inventory == null || controller == null) return string.Empty;
                 if (controller.TravelLocked || controller.IsDead) return string.Empty;
+                // On the couch (fix-player's sitting): the seat speaks first.
+                if (controller.IsSeated) return controller.SeatPrompt;
+                if (!string.IsNullOrEmpty(controller.SeatRefusal)) return controller.SeatRefusal;
                 string plank = PlankPrompt();
                 if (plank != null) return plank;
                 string refusal = inventory.Refusal;
@@ -139,6 +142,7 @@ namespace SunkCost.Player
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
                 if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
+                if (target == null && controller.CurrentSeat != null) return controller.SeatPrompt;
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
                 if (target == null && controller.CurrentPatient != null) return PatientPrompt(controller.CurrentPatient);
                 if (target == null && inventory.HeldItem != null)
@@ -891,7 +895,7 @@ namespace SunkCost.Player
                 // Above the slot row (and its "In hand" line): the bottom margin is too
                 // small for a line under the bar.
                 float slotsTop = SlotsTop(totalWidth, visorOn);
-                GUI.Label(new Rect(left - 40f, slotsTop - 48f, totalWidth + 80f, 22f), "Too heavy — drop something", promptStyle);
+                DrawPanelLabel(new Vector2(Screen.width * 0.5f, slotsTop - 37f), "Too heavy — drop something");
             }
         }
 
@@ -909,8 +913,29 @@ namespace SunkCost.Player
             string text = PlankPrompt();
             if (text == null && Time.unscaledTime < noticeUntil) text = notice;
             if (string.IsNullOrEmpty(text)) return;
-            float width = 420f;
-            GUI.Label(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.5f + 28f, width, 28f), text, promptStyle);
+            float s = Screen.height / 1080f;
+            DrawPanelLabel(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f + 46f * s), text);
+        }
+
+        // The prompt's panel in the visor's style (ship audit SHIP-053, 23 September
+        // 2026: it was the stock grey IMGUI box at a fixed 15 px): the visor's dark
+        // glass, a thin cyan edge with bracket corners, the visor's text colour,
+        // everything scaled with the screen height. Centred on `centre`, sized to the words.
+        private void DrawPanelLabel(Vector2 centre, string text)
+        {
+            float s = Screen.height / 1080f;
+            Vector2 size = promptStyle.CalcSize(new GUIContent(text));
+            float padX = 18f * s, padY = 7f * s, edge = Mathf.Max(1f, Mathf.Round(1.5f * s));
+            Rect rect = new(centre.x - size.x * 0.5f - padX, centre.y - size.y * 0.5f - padY, size.x + padX * 2f, size.y + padY * 2f);
+            Color previous = GUI.color;
+            GUI.color = VisorDim;
+            GUI.DrawTexture(new Rect(rect.x - edge, rect.y - edge, rect.width + edge * 2f, rect.height + edge * 2f), whiteTexture);
+            GUI.color = VisorDark;
+            GUI.DrawTexture(rect, whiteTexture);
+            GUI.color = VisorColor;
+            DrawBrackets(new Rect(rect.x + 2f * s, rect.y + 2f * s, rect.width - 4f * s, rect.height - 4f * s), 8f * s, Mathf.Max(1f, 1.5f * s));
+            GUI.color = previous;
+            GUI.Label(rect, text, promptStyle);
         }
 
         private void DrawSlots(PlayerInventory inventory, bool visorOn)
@@ -979,7 +1004,7 @@ namespace SunkCost.Player
             GUI.color = new Color(0f, 0f, 0f, 0.55f);
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), whiteTexture);
             GUI.color = Color.white;
-            GUI.Label(new Rect(cx - 200f * s, cy - ring - 90f * s, 400f * s, 30f * s), "Pick your colour", promptStyle);
+            DrawPanelLabel(new Vector2(cx, cy - ring - 75f * s), "Pick your colour");
             PlayerIdentity identity = GetComponent<PlayerIdentity>();
             int current = identity != null ? identity.ColourIndex : -1;
             Event e = Event.current;
@@ -1032,10 +1057,12 @@ namespace SunkCost.Player
             float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f;
             bool usable = false;
             CarryableItem target = own.Target;
-            if (controller.IsDead) usable = false;
+            if (controller.IsSeated) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
+            else if (controller.IsDead) usable = false;
             else if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
             else if (controller.CurrentButton != null) usable = CrewDayState.Instance != null && !CrewDayState.Instance.Travelling && !CrewDayState.Instance.Sailing;
             else if (controller.CurrentTv != null) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
+            else if (controller.CurrentSeat != null) usable = controller.SeatUsable;
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             else if (controller.CurrentPatient != null) usable = controller.CurrentPatient.Vitals != null && controller.CurrentPatient.Vitals.Leaking && !controller.CurrentPatient.Vitals.FriendPatchedToday;
             Color previous = GUI.color;
@@ -1049,11 +1076,15 @@ namespace SunkCost.Player
             GUI.color = previous;
         }
 
+        // Rebuilt when the screen's height changes: the text sizes follow it.
+        private int styledHeight;
         private void EnsureStyles()
         {
-            if (promptStyle != null) return;
-            promptStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 15, wordWrap = false };
-            promptStyle.normal.textColor = Color.white;
+            if (promptStyle != null && styledHeight == Screen.height) return;
+            bool first = promptStyle == null;
+            styledHeight = Screen.height;
+            promptStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = Mathf.Max(11, Mathf.RoundToInt(19f * Screen.height / 1080f)), fontStyle = FontStyle.Bold, wordWrap = false };
+            promptStyle.normal.textColor = VisorText;
             numberStyle = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold };
             numberStyle.normal.textColor = Color.white;
             labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 };
@@ -1077,6 +1108,7 @@ namespace SunkCost.Player
             whiteTexture = Texture2D.whiteTexture;
             visorBigStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 18 * s * k / 100, fontStyle = FontStyle.Bold, wordWrap = false };
             visorBigStyle.normal.textColor = Color.white;
+            if (!first) return;
             reticleTexture = PlayerVisorMask.BakeReticle(128);
             ringTexture = PlayerVisorMask.BakeReticle(128, gaps: false);
             lungsTexture = PlayerVisorMask.BakeLungs(64);

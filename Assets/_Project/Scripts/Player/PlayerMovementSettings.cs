@@ -37,10 +37,12 @@ namespace SunkCost.Player
         [SerializeField] private float standClearance = 0.05f;
 
         [Header("Dash (docs/DESIGN.md §3; Dan, 21 September 2026)")]
-        [Tooltip("Ground a dash covers with nothing carried, metres; the weight factor scales it.")]
-        [SerializeField] private float dashMeters = 4f;
+        [Tooltip("Ground a dash covers with nothing carried, metres; the weight factor scales it (Dan: 6, \"longer, like 150 %\" of the first 4).")]
+        [SerializeField] private float dashMeters = 6f;
         [Tooltip("How long the burst lasts, seconds.")]
         [SerializeField] private float dashSeconds = 0.25f;
+        [Tooltip("The kick upward at the start of a dash, metres per second — the little lift of a dash through water (Dan); gravity takes it back. 2.5 = about a third of a metre.")]
+        [SerializeField] private float dashLiftSpeed = 2.5f;
         [Tooltip("Seconds from one dash to the next (the Charger turns in about 3).")]
         [SerializeField] private float dashCooldownSeconds = 3f;
 
@@ -58,6 +60,33 @@ namespace SunkCost.Player
         [SerializeField] private float maxThrowPitchDegrees = 80f;
         [Tooltip("Seconds an accepted release may stay unapplied by its owner before the server takes the item back.")]
         [SerializeField] private float releaseTimeoutSeconds = 1f;
+
+        [Header("Reach per target (SHIP-043)")]
+        [Tooltip("Eyes to the deck TV's screen, metres: the one control with a longer reach than the controller's interact reach (Dan, 23 September 2026: \"make it so they can change from 6m\" - from the couch). The server allows the same plus its usual 1.5 m of slack.")]
+        [SerializeField] private float tvReach = 6f;
+
+        [Header("Sitting on the couch (Dan, 23 September 2026)")]
+        [Tooltip("Seat point (the hip) to the eyes while seated, metres.")]
+        [SerializeField] private float seatedEyeHeight = 0.75f;
+        [Tooltip("Seat point to the top of the head while seated, metres: the body model is squashed to it (no rig yet; presentation only).")]
+        [SerializeField] private float seatedBodyHeight = 0.95f;
+        [Tooltip("Seconds the move onto the seat, the turn to the TV and the zoom take; the zoom takes as long to go back when standing.")]
+        [SerializeField] private float seatBlendSeconds = 0.35f;
+        [Tooltip("How much of the screen's height or width, whichever fits, the TV's picture fills while seated (Dan: \"95% screen is tv\").")]
+        [SerializeField, Range(0.3f, 1f)] private float seatZoomFill = 0.95f;
+        [Tooltip("Where a player stands up: this far in front of the seat point, on the deck, metres.")]
+        [SerializeField] private float standForwardMeters = 0.85f;
+
+        [Header("Use highlight (SHIP-054)")]
+        [Tooltip("Colour of the rim drawn on what the aiming dot rests on; warm, like the usable dot.")]
+        [SerializeField] private Color highlightColor = new(1f, 0.82f, 0.5f, 1f);
+        [Tooltip("Rim strength at grazing angles (additive).")]
+        [SerializeField, Range(0f, 2f)] private float highlightRim = 0.22f;
+        [Tooltip("Even lift over the whole surface (additive).")]
+        [SerializeField, Range(0f, 0.5f)] private float highlightLift = 0.02f;
+        [Tooltip("A frame just inside a flat panel's edge (the TV screen): strength, and width in metres.")]
+        [SerializeField, Range(0f, 2f)] private float highlightEdge = 0.5f;
+        [SerializeField] private float highlightEdgeMeters = 0.06f;
 
         [Header("Aiming dot")]
         [SerializeField] private float dotDiameterPx = 4f;      // at 1080p; scaled with the screen height
@@ -83,6 +112,7 @@ namespace SunkCost.Player
         public float StandClearance => standClearance;
         public float DashMeters => dashMeters;
         public float DashSeconds => dashSeconds;
+        public float DashLiftSpeed => dashLiftSpeed;
         public float DashCooldownSeconds => dashCooldownSeconds;
         public float ReleaseClearance => releaseClearance;
         public float ReleaseMaxForward => releaseMaxForward;
@@ -91,6 +121,17 @@ namespace SunkCost.Player
         public float MinThrowPitchDegrees => minThrowPitchDegrees;
         public float MaxThrowPitchDegrees => maxThrowPitchDegrees;
         public float ReleaseTimeoutSeconds => releaseTimeoutSeconds;
+        public float TvReach => tvReach;
+        public float SeatedEyeHeight => seatedEyeHeight;
+        public float SeatedBodyHeight => seatedBodyHeight;
+        public float SeatBlendSeconds => seatBlendSeconds;
+        public float SeatZoomFill => seatZoomFill;
+        public float StandForwardMeters => standForwardMeters;
+        public Color HighlightColor => highlightColor;
+        public float HighlightRim => highlightRim;
+        public float HighlightLift => highlightLift;
+        public float HighlightEdge => highlightEdge;
+        public float HighlightEdgeMeters => highlightEdgeMeters;
         public float DotDiameterPx => dotDiameterPx;
         public float DotOutlinePx => dotOutlinePx;
         public Color DotColor => dotColor;
@@ -110,10 +151,13 @@ namespace SunkCost.Player
             crouchStepOffset >= 0f && crouchStepOffset < crouchHeight &&
             crouchBlendSeconds >= 0f && crouchSpeedFactor > 0f && crouchSpeedFactor <= 1f &&
             standRetrySeconds >= 0f && standClearance >= 0f &&
-            Finite(dashMeters) && dashMeters > 0f && dashSeconds > 0f && dashCooldownSeconds >= dashSeconds &&
+            Finite(dashMeters) && dashMeters > 0f && dashSeconds > 0f && dashCooldownSeconds >= dashSeconds && dashLiftSpeed >= 0f &&
             releaseClearance >= 0f && releaseMaxForward > 0f && dropGroundSearch >= 0f && dropSkin >= 0f &&
             minThrowPitchDegrees >= -89f && maxThrowPitchDegrees <= 89f && minThrowPitchDegrees <= maxThrowPitchDegrees &&
-            releaseTimeoutSeconds > 0f && dotDiameterPx > 0f && dotOutlinePx >= 0f;
+            releaseTimeoutSeconds > 0f && dotDiameterPx > 0f && dotOutlinePx >= 0f &&
+            Finite(tvReach) && tvReach > 0f &&
+            seatedEyeHeight > 0f && seatedBodyHeight > seatedEyeHeight && seatBlendSeconds >= 0f &&
+            seatZoomFill > 0f && seatZoomFill <= 1f && standForwardMeters >= 0f && highlightEdgeMeters >= 0f;
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 

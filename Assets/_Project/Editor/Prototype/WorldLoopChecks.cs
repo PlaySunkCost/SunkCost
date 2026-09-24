@@ -70,7 +70,7 @@ namespace SunkCost.Editor.Prototype
                 if (parts.DepartureDirection == null) errors.Add("DepartureDirection is missing.");
                 else if (Vector3.Dot(parts.DepartureDirection.forward, Vector3.up) > 0.5f) errors.Add("DepartureDirection must point along the water, not up.");
                 Transform boarding = parts.BoardingPoint;
-                if (boarding != null && !parts.IsSafelyAboard(boarding.position)) errors.Add("The boarding point must be on the deck proper (the foot of the ship's stair; Unstuck puts you there).");
+                if (boarding != null && !parts.IsSafelyAboard(boarding.position)) errors.Add("The boarding point must be on the deck proper (Unstuck puts you there).");
                 Vector3 deckMid = parts.FromShipLocal(new Vector3(0f, 0.1f, 2f));
                 if (!parts.IsSafelyAboard(deckMid)) errors.Add("The middle of the deck does not count as safely aboard.");
                 if (!parts.IsAboard(deckMid)) errors.Add("The middle of the deck does not count as aboard.");

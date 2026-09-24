@@ -13,3 +13,20 @@ MonoBehaviour:
   m_Name: DiveSite01Settings
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Sites.DiveSiteSettings
   shaftDepthMeters: 45
+  seafloorSizeMeters: 150
+  wreckOffset: {x: 35, y: 0, z: 0}
+  headlampIntensity: 15
+  headlampRange: 25
+  headlampSpotAngle: 35
+  fogDensity: 0.09
+  fogColor: {r: 0.02, g: 0.05, b: 0.045, a: 1}
+  ambientColor: {r: 0.015, g: 0.03, b: 0.028, a: 1}
+  surfaceLightIntensity: 2
+  carDiameterMeters: 5
+  carInteriorHeightMeters: 3.5
+  doorSealSeconds: 1.5
+  seaLevelY: -4.5
+  tubeClearanceMeters: 0.5
+  tubeRibSpacingMeters: 5
+  travelSpeedMetersPerSecond: 3
+  surfaceCrossingSpeedMetersPerSecond: 1

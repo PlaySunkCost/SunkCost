@@ -57,21 +57,49 @@ board is the ship's only control: it lists every site and HQ, and choosing a
 destination on it sails the ship — if everyone is aboard; otherwise it names who
 is missing. No wheel, no lever. From HQ, choosing a site sails to sea; at sea,
 choosing another site keeps the ship at sea with a new destination; choosing HQ
-sails home. The monitor doubles as the TV surfaced players watch divers on. A
+sails home. Surfaced players watch divers on the deck TV, its own screen since 17
+September 2026 (the monitor doubled as it until then; the TV card in §4). A
 storage room holds everything you've hauled up, as physical objects. A readout of
 what you have against what you owe. A low sill across its doorway keeps a dropped
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
+**The ship** (rebuilt 23 September 2026 around Dan's generated models; the
+sizes, the lounge and the fixes below decided by Dan the same day, being built
+on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
+tower** stands at the stern, with the sailing console on its forward face (the
+buttons **SITE 01 · HQ · END DAY**, left to right as the player reads them) and
+the crew's screen beside it; the storage room is forward of it, to starboard. The
+**glass elevator** stands amidships in its well, open to the sea, with a **low
+visible rail** round the well, open only at the grate; the rail's collider is
+1.2 m high so nobody jumps it (a jump is 0.65 m). The deck's side is a **1.2 m
+bulwark** with an unseen guard above it. The crane and the winch stand by the
+well, one container, and deck gear along the sides. The **lounge**
+is at the bow: the **TV** in its big cabinet facing aft, two couches in front of
+it, and a table between two benches that face each other across it, clear of
+the couches. There is no ladder; the tower model has its own. **Sizes** (Dan):
+the player stays as is (1.8 m, eyes at 1.6 m) and the props come to it —
+furniture (couch, table, bench, toolbox) at 1×, the models being made at a
+person's size; deck gear (barrel, crate, lamp, bollard, lifebuoy, pipes, coil,
+signs) at 1.25×; the container a real 20-ft box (6 × 2.6 × 2.6 m); the crane
+and the winch at 2×. The TV keeps its size but stands lower, its screen's centre
+at about the eye height of someone sitting on the couch. **Sitting on a couch**
+zooms the view onto the TV, and the TV's channel can be switched from **6 m**, so
+from the couch (both in §4: "The couch" and the TV card). The elevator car's light is **warm white** in both worlds, on both
+cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
+heard across the deck. The name plates read **BLACK TIDE**, with SALVAGE under it.
+
 **Sailing** (decided 15 September 2026; the way aboard changed 18 September
-2026). The ship carries nothing that reaches the base: the way aboard belongs
-to the HQ — a railed bridge off the west rim that meets, level, the roof of
-the ship's bridge tower at its stern; the ship's own stair comes down the
-tower's side to its deck, 6 m below the platform (Dan, 19 September: "the
-stairs near the tower lead to the top of the tower, connected through a bridge
-to the HQ — no staircase down from the HQ, only the bridge"). Someone standing
-on the HQ's bridge or its landing is not aboard; on the tower's roof or its
-stair they are. When
+2026, and again 23 September 2026). The ship carries nothing that reaches the
+base: the way aboard belongs to the HQ — a railed bridge off the west rim to a
+landing at the aft face of the ship's bridge tower, 6 m over the deck (the tower
+model's roof is about 3.7 m over the deck, so the landing stands about 2.3 m above
+it; measured 23 September 2026).
+The ship's own stair down the tower's side (Dan, 19 September) came off on 23
+September 2026 (Dan: no stairs on the ship); how the crew gets from the landing
+down to the deck, 6 m below the platform, is an open card ("The way aboard from
+the HQ", [ROADMAP.md](ROADMAP.md)). Someone standing on the HQ's bridge or its
+landing is not aboard; on the tower or the deck they are. When
 the monitor accepts a destination everyone is held where they stand — you can
 look around and talk, not walk or use items — the ship casts off (a short
 still moment), the engine starts and the ship visibly pulls away for about
@@ -288,7 +316,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
-| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing that meets the roof of the moored ship's bridge tower (the **ship**, after Dan's second picture: a 44 × 16 m barge, the glass elevator dead centre in its round rail, the two-storey captain's tower at the stern with the sailing console, the BRIDGE door and the crew's screen on its face, radar, funnels and beacons on its roof, the crane at the bow, the helipad, cargo, the company's name painted on the hull, red fenders; its own stair down the tower's side) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
+| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing at the aft face of the moored ship's bridge tower, 6 m over its deck (the **ship** as §1 "The ship" describes it since 23 September 2026: a 48 × 20 m deck, the tower at the stern, the elevator amidships, the lounge and its TV at the bow; no stair of its own, so the way down from the landing is a later card) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
 
 ---
 
@@ -302,7 +330,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Body | **Built 17 September 2026 (Dan: "I prefer to use Dor's thing"):** the player's body is Dor's `GenericCharacter` (one unrigged mesh, 1.21 m in its file), scaled ×1.49 to the 1.8 m capsule so a friend is diver-sized. **You see your own body from the shoulders down**: the editor setup cuts the model at the neck into two mesh assets (`Models/Generated`), the owner hides only the head (and the eyes) and a dark plug fills the neck so you never look down into a hollow torso; friends see it whole. Crouching squashes the model as before. **Legs do not animate** — that needs a rig (a neck, hips and knees, or an idle/walk cycle), a Blender job for Dor on the board; the cut becomes unnecessary the day the head is its own bone. The arms stay the gloved rig from the shoulders (`PlayerHands`). |
 | Air | One equipped tank per diver, available in different sizes. Base capacity targets 12–15 minutes; larger tanks are purchasable and heavier. During a dive, air can only be added by activating a carried air-restoring item. No refill stations or passive refills. Item capacity, availability and activation time remain open. **Built 17 September 2026 (Dan):** the tank counts for as long as the suit is on — the whole time the player's object stands in the dive world, from the ride down's landing to the deck, the sealed car going up included ("even above water") — and is a new, full tank on the ship. **5 minutes** for the prototype site (a serialized number, `PlayerVitalsSettings`); the design target stays 12–15 for a real site. At **0 air, health goes at 8 a second** (about twelve seconds from empty to dead — between Minecraft's 10 s and a first thought of 20), and at 0 health the ordinary death (body, scatter, spectating). The visor's O2 bar is live: red and blinking with **AIR LOW** under 20 %, **NO AIR** on empty. **L** in a development build takes 5 % off the tank, below only, so the clock can be tested. |
 | Air drain | Faster when sprinting (**1.5×**, built 17 September 2026) or damaged (leaks, later). **Carried weight does not cost air** (Dan, 17 September 2026 — reversed from the earlier "greed literally costs you air"). |
-| The dash | **Built 21 September 2026 (Dan):** **Alt** is a burst of **4 m in a quarter second** in the direction you are steering (forward with none — a sideways dash is the point: it is the Charger's dodge), **3 s** between two, only below, standing (a crouch stays the silent stance), not with both hands full; **in the air it works too** (Dan wants to try the air dash before deciding). It costs a flat **4 s of tank** (a leaking tank pays 3× on it like everything else) and it is **loud — 20 m**, more than a sprinting step (15): the Listener turns to it. A heavy diver dashes shorter, not longer (the weight factor scales the distance). **What you see:** a ring pops out of each boot, expanding and fading as it trails behind — as if the boots fired the diver forward — and a whoosh at the feet; seen by everyone near, through a spectator and on the TV. The visor says **DASH (ALT)** under the mode with a short bar that fills back over the cooldown. **A landed throw is loud too** (same day): a thrown item's landing carries **10 m** (a drop from the hands about half) — throw a coin and the Listener turns to where it fell. |
+| The dash | **Built 21 September 2026 (Dan):** **Alt** is a burst of **6 m in a quarter second** (Dan, the same evening: "longer, like 150 %") in the direction you are steering (forward with none — a sideways dash is the point: it is the Charger's dodge) **with a little lift** — a kick upward of about a third of a metre that gravity takes back, "like a dash in water" (Dan) — **3 s** between two, only below, standing (a crouch stays the silent stance), not with both hands full; **in the air it works too** (Dan wants to try the air dash before deciding). It costs a flat **4 s of tank** (a leaking tank pays 3× on it like everything else) and it is **loud — 20 m**, more than a sprinting step (15): the Listener turns to it. A heavy diver dashes shorter, not longer (the weight factor scales the distance). **What you see:** a ring pops out of each boot, expanding and fading as it trails behind — as if the boots fired the diver forward — and a whoosh at the feet; seen by everyone near, through a spectator and on the TV. The visor says **DASH (ALT)** under the mode with a short bar that fills back over the cooldown. **A landed throw is loud too** (same day): a thrown item's landing carries **10 m** (a drop from the hands about half) — throw a coin and the Listener turns to where it fell. |
 | Health | **Built 17 September 2026 (Dan):** 100 points, shown live on the visor's HP bar (red and blinking under 25 %). Lost health stays lost for the dive — no regeneration, healing is items only and none exists yet — and is full again at the next ride down; a revive at End day is a new life. **Inside the sealed car going up the tank still counts but health floors at 1** (the car saved you, barely): dying mid-ride, a body inside a moving car across a scene move, is not a path that exists. Decided for now. |
 | Damage | Attacks can open a leak. Patch it with an item or a teammate. No regeneration — healing is items only. **Decided 20 September 2026 (Dan):** a **leak** makes the tank drain **3×** until it is patched; the visor hisses and bubbles and says LEAK. Two ways to patch: a **teammate holds E on you for 3 s** — free, but **once per day per diver** (a friend can fix your leak once a day; the next one needs a kit); or the **patch kit** from the shop's Gear & Supplies (about $60, one use, left click, works anywhere the suit is on). Kit after kit is fine; friend after friend is not. |
 | Lethality | Depends on the monster, your current health, and your oxygen level. Low air makes you fragile, so a bad dive accelerates. **Decided 20 September 2026 (Dan):** three monsters kill on the spot (the Elevator Ghost, the Weeping Angel, the Long Walker — the ordinary death: body, scatter, spectating); the other four take health **and open a leak** (Charger 35, Lure 35, Listener 35, Impostor 30). **Nobody fights back**: no weapons, no shove — you avoid, distract and outlast. |
@@ -391,9 +419,12 @@ close. If the diver below dies or leaves while the car is on its way down, the c
 comes straight back and the site closes as at the end of a dive.
 
 **Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
-screen on the deck (port rail, midships) shows **one diver at a time** from their
+screen on the deck (since 23 September 2026 at the bow, in its cabinet facing aft
+over the lounge's couches, §1 "The ship") shows **one diver at a time** from their
 eyes — whoever surfaced early watches the others. The channel is the first living
-diver below; **E on the screen is the next channel**, wrapping; only divers below
+diver below; **E on the screen is the next channel**, wrapping (the screen answers E
+from up to 6 m, so from the couch; every other control keeps 3.5 m: decided 23
+September 2026, Dan); only divers below
 are channels (a diver who surfaces or dies leaves them); nobody below → **NO
 SIGNAL**. The caption over the screen reads `LIVE · <name>`. The channel diver's
 voice — and the voices they can hear — play **from the TV**, as loud as the diver
@@ -405,6 +436,20 @@ The picture is a second render of the site, kept cheap (Dan, 17 September 2026:
 within 30 m of the screen; it renders under the site's own fog and ambient
 (`WorldLook`, which every world scene carries), so the seafloor is as dark on the
 TV as it is for the diver — the same swap serves a dead diver's eyes on the deck.
+
+**The couch (decided 23 September 2026, Dan; built the same day, not yet
+play-tested):** E on either couch in front of the TV sits you on the seat nearest
+the dot (four seats). Sitting turns you to the screen and zooms until the picture
+fills 95 % of the screen's width or height, with the TV's frame and what is behind
+it round the edge. E, Space, Ctrl or a movement key stands you up in front of the
+couch; left click while seated is the next channel (the implementer's choice of
+keys, for Dan to confirm). Friends see you on the couch (the body is squashed to a
+sitting height until the model has a rig), and a dead crewmate spectating you sees
+your zoomed view. A sail keeps you seated; Unstuck, the plank and a revival stand
+you up. **What can be used shows it** (built 23 September 2026 for the ship audit,
+SHIP-054; not yet play-tested): what the dot rests on and E would act on gets a soft
+warm rim, and the TV screen a thin gold frame. Only you see it, and decoration
+never gets it.
 
 ---
 
@@ -458,7 +503,7 @@ signature sounds land; nothing about the rules reads the look.
 | **Elevator Ghost** | — (the car) | The car coming **back down for divers still below** — never the ride down, never the first arrival of the day: on a return it rolls about **one in four**, at most once a day. The car arrives and opens as always, but the light inside is **green** for about **30 s**. Nobody is ever shown inside. | **Wait.** When the light turns white the car is clean. | Step in while it is green and the doors slam: **death**. |
 | **Long Walker** | Sight | Standing in its line of sight within lamp range. From then it walks after you **until you leave the site**. | Outwalk it: it moves at **60 % of walking speed** (Dan, 20 September 2026: slower than a walk) — a heavy load or standing still lets it close. It stops at the car's doorway and never passes the tube's gate: inside the car you are safe. | Reaches you: **death**. |
 | **Weeping Angel** | Being watched | Frozen while **any part of it is on any living diver's screen** within 25 m — edge to edge, not only under the crosshair (Dan, 20 September 2026) — with a clear line of sight (fog and walls hide it; the TV and spectators do not count). | Keep it on screen — which means someone stops working to watch and cannot leave. Unwatched it moves at **2.5× sprint speed** straight at the nearest diver: a glance away is fatal (Dan: "much faster"). | Reaches you: **death**. |
-| **Charger** | Sight | Facing you it **shakes for 1.5 s** (the tell), then rushes in a straight line **20 m at three times sprint speed** (Dan, 20 September 2026: faster and longer). | **Step 2 m aside** and it passes; it needs about 3 s to turn and try again. **Alt — the dash** (§3, built 21 September 2026) is the intended dodge: 4 m sideways in a quarter second, once per rush. | A hit: **35 HP and a leak**. |
+| **Charger** | Sight | Facing you it **shakes for 1.5 s** (the tell), then rushes in a straight line **20 m at three times sprint speed** (Dan, 20 September 2026: faster and longer). | **Step 2 m aside** and it passes; it needs about 3 s to turn and try again. **Alt — the dash** (§3, built 21 September 2026) is the intended dodge: 6 m sideways in a quarter second, once per rush. | A hit: **35 HP and a leak**. |
 | **Lure** | Light | A **lit headlamp within 25 m**. It drifts toward the beam; when it sees a lamp it plants itself and **charges for 1 s** — a glow swells at its mouth and a faint thread points at you, the warning — then **burns a beam of light for 3 s** that turns after you at 160°/s, and hurts **once** per beam (Dan, 22 September 2026: "a second of loading, then 3 continuous seconds, one hit"; it should land about 95 % of the time). | **Lamps off (F)** — it loses you about 8 s after the beam goes dark; the visor still works dark. Once it is charging, only two things save you: **a wall between you** or **a dash across the beam** at the right moment. | A beam that lands: **35 HP and a leak**. |
 | **Listener** | Sound | Blind. Hears exactly what the noise system says — a walking step 6 m, a sprinting step 15 m, a landed throw 10 m, a dash 20 m (both built 21 September 2026), and the **car's 60 m scream**. When it hears something it plants itself and **charges for 1 s** at the sound — the glow at its mouth, the faint thread — then **burns a dark beam for 3 s** that turns after whoever made the sound (or the nearest diver, when a coin made it) at 160°/s, and hurts **once** per beam (Dan, 22 September 2026). | **Crouch-walk** — silent. It loses interest about 10 s after silence and drifts back to where it stood. Once it charges: **a wall between you**, or **a dash across the beam** at the right moment. The car calls it, but it does not camp the door. | A beam that lands: **35 HP and a leak**. |
 | **Impostor** | — (it picks you) | It **chooses one diver** — at random among those still underwater — and **only that diver sees it** (and the spectators and the TV watching them). It wears the **body colour and the name tag of a living crewmate** and walks at **walking speed the whole time** (Dan, 20 September 2026): it reaches you only if you stop, or walk to it as a friend. | Voice: a friend who does not answer is not a friend. Keep away from it for **30 s** and it runs off. | A touch: **30 HP and a leak**, then it **runs away** — and comes back for someone else. |
