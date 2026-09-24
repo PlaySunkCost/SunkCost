@@ -62,14 +62,14 @@ How the Listener was made, and how the rest are made:
 2. **The mesh:** crop the front and the side to squares and feed them to
    **Meshy** (Image to 3D, multi-view; realistic; ~15 k polys; **auto-rig off**;
    texture on; symmetry on). Export **FBX** (GLB works too) into
-   `Assets/_Project/Models/Monsters/<Kind>/Generated/`.
+   `Assets/_Project/Models/Monsters/<Kind>/Generated~/` (the `~` keeps Unity from importing the raw download).
 3. **The rig:** one command turns that mesh into the model the prefab wears —
    framed to the kind's height with its feet at the origin, decimated to about
    20 k triangles, skinned to the kind's armature, `BeamOrigin` and `Voice` on
    the head, the kind's clips keyed, the maps written out by role:
 
    ```bash
-   "/c/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b -P tools/blender/rig_generated_monster.py -- <Kind> "Assets/_Project/Models/Monsters/<Kind>/Generated/<generated>.fbx" "Assets/_Project/Models/Monsters/<Kind>/<Kind>.fbx" 20000
+   "/c/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b -P tools/blender/rig_generated_monster.py -- <Kind> "Assets/_Project/Models/Monsters/<Kind>/Generated~/<generated>.fbx" "Assets/_Project/Models/Monsters/<Kind>/<Kind>.fbx" 20000
    ```
 
 4. **The prefab:** the menu below (or `MonsterModelSetup.Apply`), which also

@@ -14,6 +14,7 @@ expect. The clips come from make_listener.py's library, which keys by bone name.
 import os
 import sys
 
+import math
 import bpy
 from mathutils import Vector
 
@@ -127,6 +128,33 @@ def build_quadruped(height, build, length=None):
     return arm
 
 
+def prowl(arm):
+    """The four-legged Hunting (24 September 2026): the upright monsters' Hunting
+    pitches the spine 38 degrees and drops the root to crouch, which drove a
+    horizontal body's head through the floor. The Charger stalks level instead, head
+    a little low, all four legs walking in diagonal pairs: Rushing's gait, slower."""
+    old = bpy.data.actions.get("Hunting")
+    if old is not None:
+        bpy.data.actions.remove(old)
+    keys = {n: [] for n in ("Root", "Spine", "Neck", "Head", "ThighL", "ThighR", "ShinL", "ShinR", "UpperArmL", "UpperArmR", "LowerArmL", "LowerArmR")}
+    for phase in (0.0, 0.5, 1.0):
+        frame = 1 + int(phase * 23)
+        s = math.cos(phase * 2 * math.pi)
+        keys["Root"].append((frame, L.Z3, (0, 0, -0.01 * abs(s))))
+        keys["Spine"].append((frame, L.R(2 * s, 0, 0), L.Z3))
+        keys["Neck"].append((frame, L.R(-6, 0, 0), L.Z3))
+        keys["Head"].append((frame, L.R(-6, 0, 0), L.Z3))
+        keys["ThighL"].append((frame, L.R(-22 * s, 0, 0), L.Z3))
+        keys["ThighR"].append((frame, L.R(22 * s, 0, 0), L.Z3))
+        keys["ShinL"].append((frame, L.R(28 * max(0.0, s), 0, 0), L.Z3))
+        keys["ShinR"].append((frame, L.R(28 * max(0.0, -s), 0, 0), L.Z3))
+        keys["UpperArmL"].append((frame, L.R(22 * s, 0, 0), L.Z3))
+        keys["UpperArmR"].append((frame, L.R(-22 * s, 0, 0), L.Z3))
+        keys["LowerArmL"].append((frame, L.R(-14 * max(0.0, -s), 0, 0), L.Z3))
+        keys["LowerArmR"].append((frame, L.R(-14 * max(0.0, s), 0, 0), L.Z3))
+    L.action(arm, "Hunting", 24, keys)
+
+
 def main():
     args = sys.argv[sys.argv.index("--") + 1:]
     kind, src, dst = args[0], os.path.abspath(args[1]), os.path.abspath(args[2])
@@ -175,7 +203,9 @@ def main():
         mesh.select_set(True)
         bpy.ops.object.modifier_apply(modifier="Decimate")
         print("decimated %d -> %d faces" % (faces, len(mesh.data.polygons)))
-    bpy.ops.object.shade_flat()
+    # Smooth by angle, not flat: Meshy's normal map was baked for smooth normals, and
+    # flat facets showed on every limb (24 September 2026).
+    bpy.ops.object.shade_smooth_by_angle(angle=math.radians(50))
 
     framed_lo = Vector((1e9, 1e9, 1e9)); framed_hi = Vector((-1e9, -1e9, -1e9))
     for v in mesh.data.vertices:
@@ -219,7 +249,7 @@ def main():
             print("side vertices pinned to their bones:", fixed)
 
     # The maps out under their role's name, so Unity's setup can find them.
-    map_dir = os.path.join(os.path.dirname(dst), "Generated", "maps")
+    map_dir = os.path.join(os.path.dirname(dst), "Generated~", "maps")
     os.makedirs(map_dir, exist_ok=True)
     for mat in mesh.data.materials:
         if mat is None or not mat.use_nodes:
@@ -260,6 +290,8 @@ def main():
         L.anchor("BeamOrigin", (0, -0.085 * height, 0.89 * height), arm, "Head")
         L.anchor("Voice", (0, 0, 0.93 * height), arm, "Head")
     L.animate(arm)
+    if four_legs:
+        prowl(arm)
     # Only the clips this kind uses ride along; the rest are dropped before the export.
     for act in list(bpy.data.actions):
         if act.name not in clips:

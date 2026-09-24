@@ -14,6 +14,7 @@ embedded.
 import os
 import sys
 
+import math
 import bpy
 from mathutils import Vector
 
@@ -68,7 +69,8 @@ if faces > target_faces:
     mesh.select_set(True)
     bpy.ops.object.modifier_apply(modifier="Decimate")
     print("decimated %d -> %d faces" % (faces, len(mesh.data.polygons)))
-bpy.ops.object.shade_flat()
+# Smooth by angle, not flat (24 September 2026): Meshy's normal map was baked for smooth normals.
+bpy.ops.object.shade_smooth_by_angle(angle=math.radians(50))
 
 # The armature: the Listener's own layout (it was laid out on the same concept).
 arm = L.build_armature()
@@ -125,7 +127,7 @@ for mat in mesh.data.materials:
         return node.image if node is not None and node.type == "TEX_IMAGE" else None
     # The exporter embeds a map under its *file* name, so each one is written out
     # under the role's name and the image pointed at that file before the export.
-    map_dir = os.path.join(os.path.dirname(dst), "Generated", "maps")
+    map_dir = os.path.join(os.path.dirname(dst), "Generated~", "maps")
     os.makedirs(map_dir, exist_ok=True)
     for socket, role in (("Base Color", "BaseColor"), ("Normal", "Normal"), ("Roughness", "Roughness"), ("Metallic", "Metallic")):
         image = image_on(socket)
