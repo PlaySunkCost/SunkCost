@@ -7,10 +7,10 @@ namespace SunkCost.Monsters
     // this is what makes it a beam of light rather than a line: the lantern lights the
     // seabed round it — a slow lure's pulse idle, warmer when it has seen a lamp,
     // swelling and flickering through the charge (the tell), blazing while it burns,
-    // guttering when spent — and where the beam lands it lights the wall or the
-    // diver. The Listener's dark beam casts no light; that is the difference you see
-    // in the water. Every peer, from the replicated pose and beam (the drawn line
-    // itself, MonsterBeamView.ShownFrom/ShownTo). Presentation only.
+    // guttering when spent. It is the charge's glow at the mouth: the Lure itself and
+    // the seabed round it come up with it. The beam's own light (down its path, and
+    // the splash where it lands) is MonsterBeamLight's. Every peer, from the
+    // replicated pose and beam. Presentation only; the senses never read a light.
     public sealed class LureLantern : MonoBehaviour
     {
         [SerializeField] private Color colour = new(1f, 0.86f, 0.52f);
@@ -22,20 +22,15 @@ namespace SunkCost.Monsters
         [SerializeField] private float chargePeakScale = 4f;
         [SerializeField] private float firingScale = 5f;
         [SerializeField] private float spentScale = 0.35f;
-        [Tooltip("Where the beam lands, a light this far-reaching and bright (0 = none).")]
-        [SerializeField] private float impactRange = 3.5f;
-        [SerializeField] private float impactIntensity = 3f;
 
         private Creature creature;
         private CreatureBolts bolts;
         private CreatureRig rig;
         private MonsterBeamView view;
-        private Light lantern, landing;
+        private Light lantern;
         private float shown, seed;
 
         public float LanternIntensity => lantern != null && lantern.enabled ? lantern.intensity : 0f;
-        public float LandingIntensity => landing != null && landing.enabled ? landing.intensity : 0f;
-        public Vector3 LandingPoint => landing != null ? landing.transform.position : Vector3.zero;
 
         private void Awake()
         {
@@ -44,8 +39,6 @@ namespace SunkCost.Monsters
             rig = GetComponent<CreatureRig>();
             seed = Random.value * 10f;
             lantern = MakeLight("Lantern light", range);
-            if (impactRange > 0f) landing = MakeLight("Beam landing light", impactRange);
-            if (landing != null) landing.enabled = false;
         }
 
         private Light MakeLight(string name, float reach)
@@ -102,22 +95,6 @@ namespace SunkCost.Monsters
             shown = Mathf.Lerp(shown, want, k);
             lantern.intensity = baseIntensity * shown;
             lantern.enabled = lantern.intensity > 0.01f;
-
-            if (landing != null)
-            {
-                bool lit = view != null && (phase == BeamPhase.Firing || phase == BeamPhase.Done) && view.ShownHalfWidth > 0.01f;
-                landing.enabled = lit;
-                if (lit)
-                {
-                    // Just short of the end, so it lights the face it meets rather than sitting inside it.
-                    Vector3 from = view.ShownFrom, to = view.ShownTo;
-                    Vector3 dir = to - from;
-                    float length = dir.magnitude;
-                    landing.transform.position = length > 0.3f ? to - dir / length * 0.25f : to;
-                    float fade = bolts != null && bolts.HalfWidth > 0f ? Mathf.Clamp01(view.ShownHalfWidth / bolts.HalfWidth) : 1f;
-                    landing.intensity = impactIntensity * fade * (0.85f + 0.15f * Mathf.Sin(now * 45f + seed));
-                }
-            }
         }
 
         private float chargeStartedAt = float.NegativeInfinity;

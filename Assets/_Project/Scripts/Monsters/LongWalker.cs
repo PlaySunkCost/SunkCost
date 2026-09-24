@@ -26,10 +26,15 @@ namespace SunkCost.Monsters
             }
             SetTarget(prey.OwnerId);
             SetPose(CreaturePose.Hunting);
-            FaceToward(prey.transform.position);
-            if (WithinReach(prey) && StrikeReady) { Strike(prey, 0f); return; }
+            if (WithinReach(prey) && StrikeReady) { FaceToward(prey.transform.position); Strike(prey, 0f); return; }
             MoveToward(prey.transform.position, WalkSpeed * Settings.WalkerSpeedFactor, dt, Settings.TouchStandoffMeters);
+            // It faces where it walks: its prey, or along the wall it is working round.
+            Vector3 heading = ServerSidestepHeading;
+            FaceToward(heading != Vector3.zero ? transform.position + heading : prey.transform.position, heading != Vector3.zero ? 240f : 540f);
         }
+
+        // A wall between it and its prey: it keeps to one side and works round it.
+        protected override bool FollowsWalls => true;
 
         protected override string ServerBrainStatus() =>
             (prey != null ? " prey=" + prey.OwnerId : string.Empty) + (ServerGrabbing ? $" holding={ServerGrabVictim?.OwnerId} t={ServerGrabSeconds:0.00}" : string.Empty) + (ServerGrabsStarted > 0 ? $" grabs={ServerGrabsStarted} kills={ServerGrabKills} letGo={ServerGrabsLetGo} last='{ServerGrabOutcome}'" : string.Empty);

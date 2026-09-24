@@ -32,13 +32,18 @@ namespace SunkCost.Player
         [SerializeField] private float knockbackSeconds = 0.4f;
         [Tooltip("The little lift a blow gives, metres per second upward.")]
         [SerializeField] private float knockbackLiftSpeed = 2.2f;
-        [Tooltip("How far the view snaps back on a blow, degrees of pitch.")]
-        [SerializeField] private float knockbackJoltDegrees = 9f;
-        [Tooltip("How long the jolt takes to settle, seconds.")]
-        [SerializeField] private float knockbackJoltSeconds = 0.45f;
+        [Tooltip("How hard the view snaps on a blow, degrees: the peak of the kick (about 35 ms in), before the spring swings it back.")]
+        [SerializeField] private float knockbackJoltDegrees = 14f;
+        [Tooltip("How long the jolt takes to settle completely, seconds.")]
+        [SerializeField] private float knockbackJoltSeconds = 0.6f;
+        [Tooltip("The swing back after the kick, cycles per second (one overshoot, then it settles).")]
+        [SerializeField] private float knockbackJoltSpring = 3f;
+        [Tooltip("The impact's short tremor on top of the kick, degrees.")]
+        [SerializeField] private float knockbackJoltTremor = 1.4f;
 
         private readonly SyncVar<KnockbackCue> knockbackCue = new(new KnockbackCue { Serial = 0 });
         private float knockOwnerAt = float.NegativeInfinity;
+        private Vector3 knockOwnerPush;     // the owner's own shove (the cue may land after the RPC)
         private Coroutine knockRoutine;
 
         public KnockbackCue LastKnockback => knockbackCue.Value;
@@ -65,6 +70,7 @@ namespace SunkCost.Player
         {
             if (!IsOwner || dead.Value) return;
             if (knockRoutine != null) StopCoroutine(knockRoutine);
+            knockOwnerPush = push;
             knockRoutine = StartCoroutine(Knocked(push));
         }
 
@@ -114,20 +120,42 @@ namespace SunkCost.Player
 
         // The jolt of the view, the same on every peer: timed from the cue's server
         // tick (the owner from its own shove's start, so its camera and its body move
-        // together): the head snaps back and rolls, then settles. Identity when none.
+        // together). The shape of a hit: the head snaps within 35 ms the way the blow
+        // throws it (a blow from the front kicks the view up, from behind down, from
+        // the side rolls it), then a damped spring swings it back once past centre and
+        // it settles exactly to nothing by knockbackJoltSeconds; a short tremor rides
+        // on the first 0.15 s. Identity when none.
         public Quaternion KnockbackJolt()
         {
+            bool own = IsOwner && Time.time - knockOwnerAt < 1f;
             KnockbackCue cue = knockbackCue.Value;
-            if (cue.Serial == 0 && !(IsOwner && Time.time - knockOwnerAt < 1f)) return Quaternion.identity;
-            float t = IsOwner && Time.time - knockOwnerAt < 1f ? Time.time - knockOwnerAt : KnockSince(cue.Tick);
-            float seconds = Mathf.Max(0.05f, knockbackJoltSeconds);
+            if (cue.Serial == 0 && !own) return Quaternion.identity;
+            float t = own ? Time.time - knockOwnerAt : KnockSince(cue.Tick);
+            float seconds = Mathf.Max(0.1f, knockbackJoltSeconds);
             if (t < 0f || t > seconds || knockbackJoltDegrees <= 0f) return Quaternion.identity;
-            float decay = Mathf.Exp(-5f * t / seconds) * (1f - t / seconds);
-            float snap = Mathf.Sin(Mathf.Min(1f, t / 0.05f) * Mathf.PI * 0.5f); // in over 50 ms
-            float wobble = Mathf.Cos(t * 2f * Mathf.PI * 7f);
-            float pitchDeg = -knockbackJoltDegrees * snap * decay * (0.6f + 0.4f * wobble);
-            float rollDeg = knockbackJoltDegrees * 0.5f * snap * decay * Mathf.Sin(t * 2f * Mathf.PI * 5f + 0.4f);
-            return Quaternion.Euler(pitchDeg, 0f, rollDeg);
+            // The blow in the diver's own frame: +z is the way it faces, +x its right.
+            Vector3 push = own ? knockOwnerPush : cue.Push; push.y = 0f;
+            Vector3 local = push.sqrMagnitude > 1e-6f ? Quaternion.Inverse(Quaternion.Euler(0f, Yaw, 0f)) * push.normalized : Vector3.back;
+            float back = -local.z, aside = local.x;
+            // Thrown backward (struck in the face): the view kicks up; thrown forward: down.
+            float pitchAmp = knockbackJoltDegrees * Mathf.Lerp(0.55f, 1f, Mathf.Abs(back)) * (back >= -0.2f ? -1f : 1f);
+            // Thrown to a side, the view rolls with it; a head-on blow still rolls a little.
+            float rollAmp = knockbackJoltDegrees * (0.3f + 0.4f * Mathf.Abs(aside)) * (aside >= 0f ? -1f : 1f);
+            float fade = t < seconds * 0.6f ? 1f : Mathf.Pow(Mathf.Clamp01(1f - (t - seconds * 0.6f) / (seconds * 0.4f)), 2f);
+            float pitchDeg = pitchAmp * JoltSpring(t, knockbackJoltSpring, 0.14f, 0.035f) * fade;
+            float rollDeg = rollAmp * JoltSpring(t, knockbackJoltSpring * 0.8f, 0.16f, 0.045f) * fade;
+            float tremor = knockbackJoltTremor * Mathf.Exp(-t / 0.07f) * fade;
+            pitchDeg += tremor * Mathf.Sin(t * 2f * Mathf.PI * 21f);
+            float yawDeg = tremor * 0.7f * Mathf.Sin(t * 2f * Mathf.PI * 17f + 1.1f) + aside * knockbackJoltDegrees * 0.25f * JoltSpring(t, knockbackJoltSpring, 0.12f, 0.04f) * fade;
+            return Quaternion.Euler(pitchDeg, yawDeg, rollDeg);
+        }
+
+        // A snap to 1 over riseSeconds, then a damped swing back (one overshoot past 0).
+        private static float JoltSpring(float t, float hz, float decaySeconds, float riseSeconds)
+        {
+            float rise = Mathf.Sin(Mathf.Clamp01(t / riseSeconds) * Mathf.PI * 0.5f);
+            float after = Mathf.Max(0f, t - riseSeconds);
+            return rise * Mathf.Exp(-after / decaySeconds) * Mathf.Cos(after * 2f * Mathf.PI * hz);
         }
 
         private float KnockSince(uint tick)

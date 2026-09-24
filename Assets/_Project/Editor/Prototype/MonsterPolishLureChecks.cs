@@ -11,6 +11,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.Rendering.Universal;
 using Debug = UnityEngine.Debug;
 using H = SunkCost.Editor.Prototype.HQPrototypeTestHooks;
 using M = SunkCost.Editor.Prototype.MonsterTestHooks;
@@ -202,6 +203,98 @@ namespace SunkCost.Editor.Prototype
             return Vector3.Distance(a + ab * t, p);
         }
 
+        // A temporary camera that sees the site as the diver's own does: the player camera's
+        // settings (its clear, background, mask and URP data: post-processing, volumes), not a
+        // default camera's skybox, so the dark site stays dark in the frames and the meters.
+        private static Camera GameCamera(string name)
+        {
+            var go = new GameObject(name) { hideFlags = HideFlags.HideAndDontSave };
+            Camera cam = go.AddComponent<Camera>();
+            Camera main = Camera.main;
+            if (main != null)
+            {
+                cam.CopyFrom(main);
+                UniversalAdditionalCameraData from = main.GetUniversalAdditionalCameraData(), to = cam.GetUniversalAdditionalCameraData();
+                to.renderPostProcessing = from.renderPostProcessing;
+                to.antialiasing = from.antialiasing;
+                to.volumeLayerMask = from.volumeLayerMask;
+                to.renderShadows = from.renderShadows;
+            }
+            cam.targetTexture = null;
+            cam.enabled = false;
+            cam.nearClipPlane = 0.1f; cam.farClipPlane = 200f;
+            return cam;
+        }
+
+        // How lit a view is: the mean brightness (0–1) of a small render, taken twice in the same
+        // frame, the beam's lights on and then off. The beam's own drawn line is in both, so the
+        // difference is the light it throws on what the camera sees.
+        private sealed class Meter
+        {
+            private readonly Camera cam;
+            private readonly RenderTexture rt;
+            private readonly Texture2D read;
+            public Meter()
+            {
+                cam = GameCamera("Lure check meter");
+                cam.fieldOfView = 45f;
+                rt = new RenderTexture(160, 90, 24) { hideFlags = HideFlags.HideAndDontSave };
+                read = new Texture2D(160, 90, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
+                cam.targetTexture = rt;
+            }
+            public float Luma(Vector3 from, Vector3 lookAt)
+            {
+                cam.transform.SetPositionAndRotation(from, Quaternion.LookRotation(lookAt - from, Vector3.up));
+                cam.Render();
+                RenderTexture was = RenderTexture.active;
+                RenderTexture.active = rt;
+                read.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+                read.Apply();
+                RenderTexture.active = was;
+                Color32[] px = read.GetPixels32();
+                double sum = 0;
+                foreach (Color32 c in px) sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+                return (float)(sum / (px.Length * 255.0));
+            }
+            public void End()
+            {
+                cam.targetTexture = null;
+                Object.DestroyImmediate(cam.gameObject);
+                rt.Release();
+                Object.DestroyImmediate(rt);
+                Object.DestroyImmediate(read);
+            }
+        }
+
+        // The beam's lights of one Lure (the path, the splash, and its lantern), switched for a meter's second look.
+        private static List<Light> BeamLights(Lure lure)
+        {
+            var list = new List<Light>();
+            MonsterBeamLight bl = lure.GetComponent<MonsterBeamLight>();
+            if (bl != null)
+            {
+                for (int i = 0; i < bl.PathCapacity; i++) { Light l = bl.PathLight(i); if (l != null && l.enabled) list.Add(l); }
+                if (bl.SplashLight != null && bl.SplashLight.enabled) list.Add(bl.SplashLight);
+            }
+            return list;
+        }
+
+        private static Light LanternLight(Lure lure)
+        {
+            foreach (Light l in lure.GetComponentsInChildren<Light>(true)) if (l.name == "Lantern light") return l;
+            return null;
+        }
+
+        // On and off in the same frame: (lit, unlit).
+        private static (float on, float off) LitAgainstUnlit(Meter meter, List<Light> lights, Vector3 from, Vector3 at)
+        {
+            float on = meter.Luma(from, at);
+            foreach (Light l in lights) l.enabled = false;
+            float off = meter.Luma(from, at);
+            foreach (Light l in lights) l.enabled = true;
+            return (on, off);
+        }
+
         // Frames for Dan (a GIF made from them afterwards): a temporary camera beside the
         // action, rendered into a texture every other frame and written as PNGs.
         private sealed class Film
@@ -216,11 +309,8 @@ namespace SunkCost.Editor.Prototype
                 this.dir = dir;
                 if (Directory.Exists(dir)) foreach (string f in Directory.GetFiles(dir, "*.png")) File.Delete(f);
                 Directory.CreateDirectory(dir);
-                var go = new GameObject("Lure check camera") { hideFlags = HideFlags.HideAndDontSave };
-                cam = go.AddComponent<Camera>();
-                cam.enabled = false;
+                cam = GameCamera("Lure check camera");
                 cam.fieldOfView = 50f;
-                cam.nearClipPlane = 0.1f; cam.farClipPlane = 200f;
                 rt = new RenderTexture(w, h, 24) { hideFlags = HideFlags.HideAndDontSave };
                 read = new Texture2D(w, h, TextureFormat.RGB24, false) { hideFlags = HideFlags.HideAndDontSave };
                 cam.targetTexture = rt;
@@ -276,6 +366,10 @@ namespace SunkCost.Editor.Prototype
             public int HitsBefore, HitsAfter, FiredBefore, FiredAfter;
             public int HealthBefore, HealthAfter;
             public float LanternCharge, LanternFire, LanternIdle, LandingPeak;
+            // The beam's light (MonsterBeamLight): the path, the charge's tell, the splash, the diver, and after.
+            public int PathLitMax, RentedBefore = -1, RentedAfter = -1, PoolLitAfter = -1, LitAfter = -1;
+            public float PathOffLine, ChargePathPeak, BurnPathPeak, DiverReach = float.PositiveInfinity, BeamLength;
+            public bool HoldingAfter = true, HadLight;
         }
 
         private static IEnumerator RecordBeam(Lure lure, BeamRecord r, Action<float> perFrame = null)
@@ -284,10 +378,13 @@ namespace SunkCost.Editor.Prototype
             CreatureBolts bolts = lure.GetComponent<CreatureBolts>();
             CreatureRig rig = lure.GetComponent<CreatureRig>();
             LureLantern lantern = lure.GetComponent<LureLantern>();
+            MonsterBeamLight beamLight = lure.GetComponent<MonsterBeamLight>();
+            r.HadLight = beamLight != null;
             Transform head = Named(lure, "Head");
             r.HalfWidth = bolts.HalfWidth;
             r.HitsBefore = bolts.ServerHits; r.FiredBefore = bolts.ServerFired; r.HealthBefore = host.Vitals.Health;
             r.LanternIdle = lantern != null ? lantern.LanternIntensity : 0f;
+            r.RentedBefore = MonsterBeamLight.PoolRented;
             yield return Expect(() => bolts.ServerCharging, 6f, () => "the Lure charges (" + lure.ServerStatus + ")");
             r.ChargedAt = bolts.ServerChargedAt;
             Vector3 planted = lure.transform.position;
@@ -333,9 +430,29 @@ namespace SunkCost.Editor.Prototype
                         r.FiringFrames++;
                         if (Time.time - bolts.ServerFiredAt > 0.3f)
                             r.WorstBodyYaw = Mathf.Max(r.WorstBodyYaw, Vector3.Angle(FlatDir(lure.transform.forward), FlatDir(bolts.ServerAimDirection)));
-                        if (lantern != null) { r.LanternFire = Mathf.Max(r.LanternFire, lantern.LanternIntensity); r.LandingPeak = Mathf.Max(r.LandingPeak, lantern.LandingIntensity); }
+                        if (lantern != null) r.LanternFire = Mathf.Max(r.LanternFire, lantern.LanternIntensity);
+                        if (beamLight != null && view != null && view.Phase == BeamPhase.Firing)
+                        {
+                            r.LandingPeak = Mathf.Max(r.LandingPeak, beamLight.SplashIntensityShown);
+                            r.BurnPathPeak = Mathf.Max(r.BurnPathPeak, beamLight.PathIntensityShown);
+                            r.PathLitMax = Mathf.Max(r.PathLitMax, beamLight.PathLitCount);
+                            r.BeamLength = Mathf.Max(r.BeamLength, Vector3.Distance(view.ShownFrom, view.ShownTo));
+                            Vector3 chest = CreatureSenses.Chest(host);
+                            for (int i = 0; i < beamLight.PathCapacity; i++)
+                            {
+                                Light l = beamLight.PathLight(i);
+                                if (l == null || !l.enabled) continue;
+                                r.PathOffLine = Mathf.Max(r.PathOffLine, SegmentToPoint(view.ShownFrom, view.ShownTo, l.transform.position));
+                                // How far into a light's reach the diver stands (under 1 = lit by it).
+                                r.DiverReach = Mathf.Min(r.DiverReach, Vector3.Distance(l.transform.position, chest) / l.range);
+                            }
+                        }
                     }
-                    else if (lantern != null) r.LanternCharge = Mathf.Max(r.LanternCharge, lantern.LanternIntensity);
+                    else
+                    {
+                        if (lantern != null) r.LanternCharge = Mathf.Max(r.LanternCharge, lantern.LanternIntensity);
+                        if (beamLight != null) r.ChargePathPeak = Mathf.Max(r.ChargePathPeak, beamLight.PathIntensityShown);
+                    }
                     if (bolts.ServerHits > hits && view != null)
                     {
                         hits = bolts.ServerHits;
@@ -350,14 +467,23 @@ namespace SunkCost.Editor.Prototype
                 }
                 else if (bolts.ServerEndedAt > r.ChargedAt && Time.time - bolts.ServerEndedAt > 1.2f) break;
             }
+            // After the beam: the view out, then its lights back in the pool and off.
+            MonsterBeamView after = lure.GetComponentInChildren<MonsterBeamView>();
+            float outBy = Time.unscaledTime + 1.5f;
+            while (after != null && after.Phase != BeamPhase.None && Time.unscaledTime < outBy) yield return null;
+            yield return null; // the light's LateUpdate has seen the view go out
+            if (beamLight != null) { r.HoldingAfter = beamLight.Holding; r.LitAfter = beamLight.LitCount; }
+            r.RentedAfter = MonsterBeamLight.PoolRented;
+            r.PoolLitAfter = MonsterBeamLight.PoolLit;
             r.FiredAt = bolts.ServerFiredAt; r.EndedAt = bolts.ServerEndedAt; r.HitAt = bolts.ServerHitAt;
             r.HitsAfter = bolts.ServerHits; r.FiredAfter = bolts.ServerFired; r.HealthAfter = host.Vitals.Health;
             r.FromGaps.Sort();
             Say($"beam: drawn-vs-damage origin median {(r.FromGaps.Count > 0 ? r.FromGaps[r.FromGaps.Count / 2] * 100f : 0f):0.0} cm, worst {r.WorstFrom * 100f:0.0} cm at +{r.WorstFromAt:0.00} s from the charge");
             Say($"beam: charged {r.ChargedAt:0.00}, fired +{r.FiredAt - r.ChargedAt:0.00} s, ended +{r.EndedAt - r.FiredAt:0.00} s, hit {(r.HitsAfter > r.HitsBefore ? "+" + (r.HitAt - r.FiredAt).ToString("0.00") + " s into the burn" : "none")}; drawn-vs-damage from {r.WorstFrom * 100f:0.0} cm, end {r.WorstTo * 100f:0.0} cm; origin-vs-lantern {r.WorstOriginToAnchor * 100f:0.0} cm; lantern off the beam {r.WorstLanternAim:0.0}°; body off the beam {r.WorstBodyYaw:0.0}°; moved {r.Moved * 100f:0.0} cm; poses {string.Join("→", r.Poses)}; Aiming entered {r.AimingEntries}×; lantern idle {r.LanternIdle:0.0} charge {r.LanternCharge:0.0} fire {r.LanternFire:0.0}, landing {r.LandingPeak:0.0}");
+            Say($"beam light: {r.PathLitMax} path lights over {r.BeamLength:0.0} m (worst {r.PathOffLine * 100f:0.0} cm off the drawn line), path {r.ChargePathPeak:0.00} in the charge → {r.BurnPathPeak:0.00} burning, splash {r.LandingPeak:0.00}, the diver at {r.DiverReach:0.00} of the nearest light's reach; after: holding {r.HoldingAfter}, lit {r.LitAfter}, pool rented {r.RentedBefore} → {r.RentedAfter}, pool lights on {r.PoolLitAfter}");
         }
 
-        private static void CheckBeam(BeamRecord r, string row, bool expectHit)
+        private static void CheckBeam(BeamRecord r, string row, bool expectHit, bool expectSplash = false)
         {
             MonsterSettings s = Settings;
             Check(r.FiredAfter == r.FiredBefore + 1, $"{row} one beam fired ({r.FiredAfter - r.FiredBefore})");
@@ -385,13 +511,22 @@ namespace SunkCost.Editor.Prototype
                 Check(r.HealthBefore - r.HealthAfter >= s.LureDamage - 1 && r.HealthBefore - r.HealthAfter <= s.LureDamage + 1, $"{row} {s.LureDamage} HP gone ({r.HealthBefore} → {r.HealthAfter})");
                 Check(Host().Vitals.Leaking, $"{row} and a leak");
                 Check(!float.IsNaN(r.HitLineGap) && r.HitLineGap <= r.HalfWidth + 0.02f, $"{row} the drawn beam touched the body when it hurt (its axis {r.HitLineGap * 100f:0.0} cm past the skin; the drawn half-width is {r.HalfWidth * 100f:0} cm)");
-                Check(r.LandingPeak > 0.1f, $"{row} the beam's light lands where it ends ({r.LandingPeak:0.0})");
+                Check(r.DiverReach < 0.6f, $"{row} the beam's light falls on the diver it passes (the chest at {r.DiverReach:0.00} of the nearest path light's reach)");
             }
             else
             {
                 Check(hits == 0, $"{row} no hit ({hits})");
                 Check(r.HealthAfter == r.HealthBefore, $"{row} health untouched ({r.HealthBefore} → {r.HealthAfter})");
             }
+            // The light (Dan, 24 September 2026: the LIGHT beam lights up the dark site round it).
+            Check(r.HadLight, $"{row} the Lure carries a MonsterBeamLight");
+            int expectLights = Mathf.Clamp(Mathf.CeilToInt(r.BeamLength / 3f - 0.01f), 1, 6);
+            Check(r.PathLitMax >= Mathf.Min(expectLights, 2) && r.PathLitMax <= 6, $"{row} the burn lights its path: {r.PathLitMax} lights along {r.BeamLength:0.0} m");
+            Check(r.PathOffLine < 0.05f, $"{row} the path lights sit on the drawn beam (worst {r.PathOffLine * 100f:0.0} cm off it)");
+            Check(r.ChargePathPeak > 0.01f && r.ChargePathPeak < r.BurnPathPeak * 0.5f, $"{row} in the charge the path comes up faintly, the tell ({r.ChargePathPeak:0.00} against {r.BurnPathPeak:0.00} burning)");
+            if (expectSplash) Check(r.LandingPeak > 0.5f, $"{row} a splash of light where it meets the wall ({r.LandingPeak:0.00})");
+            Check(!r.HoldingAfter && r.LitAfter == 0, $"{row} after the beam its lights are off and given back (holding {r.HoldingAfter}, lit {r.LitAfter})");
+            Check(r.RentedAfter == r.RentedBefore && (r.RentedBefore != 0 || r.PoolLitAfter == 0), $"{row} the pool has them all again (rented {r.RentedBefore} → {r.RentedAfter}, pool lights on {r.PoolLitAfter})");
         }
 
         // ---- the run ------------------------------------------------------------------
@@ -483,15 +618,53 @@ namespace SunkCost.Editor.Prototype
             string tag = "hw" + Mathf.RoundToInt(bolts.HalfWidth * 100f);
             var hitFilm = new Film("Temp/lure-film/beam-hit-" + tag);
             var closeFilm = new Film("Temp/lure-film/beam-close-" + tag);
+            var meter = new Meter();
+            (float on, float off) glowLure = default, glowFloor = default, glowDiver = default, chargeLure = default;
+            bool meteredBurn = false, meteredCharge = false;
             yield return RecordBeam(lure, hit, t =>
             {
                 FilmSide(hitFilm, lure, host.transform.position);
                 // Over its shoulder, close: the lantern, the pose and the beam's thickness.
                 Vector3 fwd = FlatDir(lure.transform.forward), right = Vector3.Cross(Vector3.up, fwd);
                 closeFilm.Shot(lure.transform.position - fwd * 2.6f + right * 2.2f + Vector3.up * 2.3f, lure.transform.position + fwd * 3f + Vector3.up * 1.4f);
+                // G1: how much the beam's light brightens the Lure, the seabed along the path and the diver,
+                // on against off in the same frame. The charge at 0.85 s (the lantern's swell), the burn at +1 s.
+                Light lanternLight = LanternLight(lure);
+                Vector3 body = lure.transform.position + Vector3.up * 1.1f;
+                Vector3 lureCam = body + right * 3.2f + fwd * 1.2f + Vector3.up * 0.4f;
+                if (!meteredCharge && bolts.ServerCharging && Time.time - bolts.ServerChargedAt > 0.85f && lanternLight != null)
+                {
+                    meteredCharge = true;
+                    var only = new List<Light> { lanternLight };
+                    chargeLure = LitAgainstUnlit(meter, only, lureCam, body);
+                }
+                if (!meteredBurn && bolts.ServerFiring && Time.time - bolts.ServerFiredAt > 1.0f)
+                {
+                    MonsterBeamView view = lure.GetComponentInChildren<MonsterBeamView>();
+                    List<Light> lights = BeamLights(lure);
+                    if (lanternLight != null) lights.Add(lanternLight);
+                    if (view != null && lights.Count > 0)
+                    {
+                        meteredBurn = true;
+                        glowLure = LitAgainstUnlit(meter, lights, lureCam, body);
+                        Vector3 dir = FlatDir(view.ShownTo - view.ShownFrom);
+                        Vector3 side = Vector3.Cross(Vector3.up, dir);
+                        float mid = Mathf.Min(Flat(view.ShownFrom, host.transform.position) * 0.5f, 8f);
+                        Vector3 floor = Ground(lure.transform.position + dir * mid);
+                        glowFloor = LitAgainstUnlit(meter, lights, floor + side * 3.5f + Vector3.up * 2.5f, floor);
+                        Vector3 chest = CreatureSenses.Chest(host);
+                        glowDiver = LitAgainstUnlit(meter, lights, chest - dir * 1.2f + side * 2.4f + Vector3.up * 0.3f, chest - Vector3.up * 0.3f);
+                    }
+                }
             });
+            meter.End();
             hitFilm.End();
             closeFilm.End();
+            Say($"G1 brightness off → on (0–1): the Lure in the charge {chargeLure.off:0.000} → {chargeLure.on:0.000}; burning: the Lure {glowLure.off:0.000} → {glowLure.on:0.000}, the seabed along the path {glowFloor.off:0.000} → {glowFloor.on:0.000}, the diver {glowDiver.off:0.000} → {glowDiver.on:0.000}");
+            Check(meteredCharge && chargeLure.on > chargeLure.off * 1.2f + 0.003f, $"G1 the charge's glow lights the Lure ({chargeLure.off:0.000} → {chargeLure.on:0.000})");
+            Check(meteredBurn && glowLure.on > glowLure.off * 1.2f + 0.003f, $"G1 the burn lights the Lure ({glowLure.off:0.000} → {glowLure.on:0.000})");
+            Check(glowFloor.on > glowFloor.off * 1.3f + 0.005f, $"G1 the burn lights the seabed along its path ({glowFloor.off:0.000} → {glowFloor.on:0.000})");
+            Check(glowDiver.on > glowDiver.off * 1.2f + 0.003f, $"G1 the burn lights the diver and the ground round him ({glowDiver.off:0.000} → {glowDiver.on:0.000})");
             Say($"A1 filmed {hitFilm.Frames} frames into Temp/lure-film/beam-hit-{tag}");
             Say($"A1 it began the charge {lure.ServerAimStartYawError:0.0}° off the lamp");
             Check(lure.ServerAimStartYawError <= 12.5f, $"A1 it turned onto the lamp before charging ({lure.ServerAimStartYawError:0.0}° off)");
@@ -524,7 +697,7 @@ namespace SunkCost.Editor.Prototype
             wallFilm.End();
             Say($"W1 the beam's end against the wall's face: worst {worstOnWall * 100f:0.0} cm over {onWallFrames} frames");
             Check(onWallFrames > 10 && worstOnWall < 0.35f, $"W1 the beam ends on the wall ({worstOnWall * 100f:0.0} cm off its face)");
-            CheckBeam(walled, "W1", expectHit: false);
+            CheckBeam(walled, "W1", expectHit: false, expectSplash: true);
             foreach (GameObject p in props) if (p != null) Object.Destroy(p);
             props.Clear();
             Physics.SyncTransforms();
@@ -561,9 +734,50 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => bolts.ServerCharging, s.LureShotCooldownSeconds + 6f, () => "D1 the next charge (" + lure.ServerStatus + ")");
             var dark = new BeamRecord();
             bool off = false;
-            yield return RecordBeam(lure, dark, t => { if (!off && t > 0.2f) { host.RequestLamp(false); off = true; } });
+            // N1: once the lamp is off, a second Lure beside the beam's path, 2.5 m off it, in its light.
+            // The beam's light must never draw a Lure (its senses read the lamp bit, not a Light).
+            Lure bystander = null;
+            MonsterBeamLight darkLight = lure.GetComponent<MonsterBeamLight>();
+            float bystanderLitReach = float.PositiveInfinity;
+            bool bystanderStirred = false;
+            string bystanderNote = string.Empty;
+            yield return RecordBeam(lure, dark, t =>
+            {
+                if (!off && t > 0.2f) { host.RequestLamp(false); off = true; }
+                if (off && bystander == null && !host.LampOn && bolts.ServerCharging)
+                {
+                    Vector3 a = lure.transform.position, b = host.transform.position;
+                    Vector3 across = Vector3.Cross(Vector3.up, FlatDir(b - a));
+                    Vector3 at = Ground(Vector3.Lerp(a, b, 0.5f) + across * 2.5f);
+                    bystander = (Lure)MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, at);
+                    bystander.ServerPlaceForChecks(at, YawTo(at, Vector3.Lerp(a, b, 0.5f)));
+                }
+                if (bystander != null)
+                {
+                    if (bystander.TargetId != -1 || bystander.ServerAims > 0 || bystander.Pose != CreaturePose.Idle)
+                    {
+                        if (!bystanderStirred) bystanderNote = $"at +{t:0.00} s: {bystander.ServerStatus}";
+                        bystanderStirred = true;
+                    }
+                    if (darkLight != null && bolts.ServerFiring)
+                        for (int i = 0; i < darkLight.PathCapacity; i++)
+                        {
+                            Light l = darkLight.PathLight(i);
+                            if (l != null && l.enabled) bystanderLitReach = Mathf.Min(bystanderLitReach, Vector3.Distance(l.transform.position, bystander.EyePoint) / l.range);
+                        }
+                }
+            });
             Check(!host.LampOn, "D1 the host's lamp went off during the charge");
             CheckBeam(dark, "D1", expectHit: true);
+            Check(bystander != null, "N1 a second Lure stood beside the beam's path");
+            Say($"N1 the second Lure stood at {bystanderLitReach:0.00} of a lit path light's reach; {(bystanderStirred ? "it stirred " + bystanderNote : "it never stirred")}");
+            Check(bystanderLitReach < 0.8f, $"N1 it stood in the beam's light ({bystanderLitReach:0.00} of a path light's reach)");
+            // (Short: the first Lure must still remember the lamp for F1, LureForgetSeconds after it last saw it.)
+            yield return Wait(1.0f);
+            Check(!bystanderStirred && bystander.TargetId == -1 && bystander.ServerAims == 0 && bystander.GetComponent<CreatureBolts>().ServerFired == 0 && bystander.Pose == CreaturePose.Idle,
+                $"N1 the beam's light drew no Lure: the second stayed idle, no target, no beam ({bystander.ServerStatus}) {bystanderNote}");
+            if (bystander != null && bystander.IsSpawned) bystander.NetworkObject.Despawn();
+            yield return Wait(0.3f);
 
             // ---------------------------------------------------------------------------
             Heading("F1 — lamps off: it drifts to where it last saw the lamp, then loses you; the drift eases, weaves and walks where it faces, feet planted");
@@ -665,6 +879,86 @@ namespace SunkCost.Editor.Prototype
                     Check(gap >= least - 0.05f && gap < least + 1.5f, $"R1.{cycle} the next beam came {gap:0.00} s after the last (≥ {least:0.00}, the cooldown kept, no stall)");
                 }
                 lastCharge = r.ChargedAt;
+            }
+
+            // ---------------------------------------------------------------------------
+            Heading("T2 — two beams at once: two Lures burn together; the pool lends each its own lights and has them all back, and again when both are despawned mid-burn");
+            yield return Lamp(false);
+            M.ServerDespawnMonsters();
+            yield return Wait(0.5f);
+            int per = 0;
+            {
+                Check(MonsterBeamLight.PoolRented == 0 && MonsterBeamLight.PoolLit == 0, $"T2 the pool starts with nothing lent and nothing lit (rented {MonsterBeamLight.PoolRented}, lit {MonsterBeamLight.PoolLit})");
+                Heal();
+                Lure one = (Lure)MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, P(-8f, -2.5f));
+                Lure two = (Lure)MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, P(-8f, 2.5f));
+                one.ServerPlaceForChecks(P(-8f, -2.5f), YawTo(P(-8f, -2.5f), P(4f)));
+                two.ServerPlaceForChecks(P(-8f, 2.5f), YawTo(P(-8f, 2.5f), P(4f)));
+                CreatureBolts b1 = one.GetComponent<CreatureBolts>(), b2 = two.GetComponent<CreatureBolts>();
+                MonsterBeamLight l1 = one.GetComponent<MonsterBeamLight>(), l2 = two.GetComponent<MonsterBeamLight>();
+                per = l1.PathCapacity + 1;
+                yield return HostAt(P(4f), P(-8f));
+                yield return Lamp(true);
+                yield return Expect(() => b1.ServerFiring && b2.ServerFiring, 8f, () => $"T2 both burn at once ({one.ServerStatus} | {two.ServerStatus})");
+                yield return null; yield return null;
+                int rentedBoth = MonsterBeamLight.PoolRented, litBoth = MonsterBeamLight.PoolLit;
+                Say($"T2 both burning: pool rented {rentedBoth}, lit {litBoth} (the first {l1.LitCount}, the second {l2.LitCount}), created {MonsterBeamLight.PoolCreated}");
+                Check(l1.Holding && l2.Holding && rentedBoth == 2 * per, $"T2 each beam holds its own lights ({rentedBoth} lent = 2 × {per})");
+                Check(l1.PathLitCount >= 2 && l2.PathLitCount >= 2 && litBoth == l1.LitCount + l2.LitCount, $"T2 both paths are lit ({l1.PathLitCount} and {l2.PathLitCount} path lights; {litBoth} on in the pool)");
+                yield return Lamp(false);
+                yield return Expect(() => !b1.ServerAiming && !b2.ServerAiming, s.BeamSeconds + 1f, () => "T2 both beams end");
+                yield return Expect(() => MonsterBeamLight.PoolRented == 0, 1.5f, () => $"T2 all lights back when both are out (rented {MonsterBeamLight.PoolRented})");
+                Check(MonsterBeamLight.PoolLit == 0 && !l1.Holding && !l2.Holding, $"T2 and all off (pool lights on {MonsterBeamLight.PoolLit})");
+                Check(MonsterBeamLight.PoolFree >= 2 * per && MonsterBeamLight.PoolCreated <= 2 * per, $"T2 the pool grew only to the most lit at once (created {MonsterBeamLight.PoolCreated}, free {MonsterBeamLight.PoolFree})");
+                // Again, and despawned while both burn.
+                Heal();
+                yield return Lamp(true);
+                yield return Expect(() => b1.ServerFiring && b2.ServerFiring, s.LureShotCooldownSeconds + 6f, () => $"T2 both burn again ({one.ServerStatus} | {two.ServerStatus})");
+                yield return null;
+                Check(MonsterBeamLight.PoolRented == 2 * per, $"T2 lent again from the pool, none new (rented {MonsterBeamLight.PoolRented}, created {MonsterBeamLight.PoolCreated})");
+                M.ServerDespawnMonsters();
+                yield return null; yield return null;
+                Check(MonsterBeamLight.PoolRented == 0 && MonsterBeamLight.PoolLit == 0, $"T2 despawned mid-burn: every light back and off (rented {MonsterBeamLight.PoolRented}, lit {MonsterBeamLight.PoolLit})");
+                Check(MonsterBeamLight.PoolCreated <= 2 * per, $"T2 still no light made beyond the two beams' ({MonsterBeamLight.PoolCreated})");
+                yield return Lamp(false);
+            }
+
+            // ---------------------------------------------------------------------------
+            Heading("V1 — filmed in the dark: the same beam without its light (before) and with it (after), a wall behind the diver for the splash");
+            Heal();
+            {
+                Vector3 lureSpot = P(-8f), diverSpot = P(5f);
+                Wall(Ground(P(9f)) + Vector3.up * 1.5f, -lane, new Vector3(8f, 3.4f, 0.4f));
+                Lure film = SpawnLure(lureSpot, YawTo(lureSpot, diverSpot));
+                MonsterBeamLight light = film.GetComponent<MonsterBeamLight>();
+                CreatureBolts fb = film.GetComponent<CreatureBolts>();
+                yield return HostAt(diverSpot, lureSpot);
+                Vector3 side = Vector3.Cross(Vector3.up, lane);
+                // A three-quarter view from behind the Lure's shoulder: the Lure, the path, the diver and the wall.
+                Vector3 camAt = lureSpot - lane * 3.5f + side * 5.5f + Vector3.up * 2.6f;
+                Vector3 camLook = Vector3.Lerp(lureSpot, diverSpot, 0.45f) + Vector3.up * 0.6f;
+                foreach (bool lit in new[] { false, true })
+                {
+                    Heal();
+                    light.enabled = lit;
+                    var clip = new Film("Temp/lure-film/light-" + (lit ? "after" : "before"), 640, 360);
+                    yield return Lamp(true);
+                    yield return Expect(() => fb.ServerCharging, s.LureShotCooldownSeconds + 6f, () => "V1 it charges (" + film.ServerStatus + ")");
+                    float began = Time.time;
+                    while (Time.time - began < s.BeamChargeSeconds + s.BeamSeconds + 1.2f)
+                    {
+                        clip.Shot(camAt, camLook);
+                        if (fb.ServerFiring && Time.time - fb.ServerFiredAt > 0.3f && host.LampOn) host.RequestLamp(false); // one beam per film
+                        yield return null;
+                    }
+                    clip.End();
+                    Say($"V1 {(lit ? "after" : "before")}: {clip.Frames} frames in Temp/lure-film/light-{(lit ? "after" : "before")}");
+                    Check(clip.Frames > 20, $"V1 filmed the {(lit ? "after" : "before")} beam ({clip.Frames} frames)");
+                    yield return Expect(() => !fb.ServerAiming, 3f, () => "V1 the beam ends");
+                }
+                light.enabled = true;
+                foreach (GameObject p in props) if (p != null) Object.Destroy(p);
+                props.Clear();
             }
             yield return Lamp(false);
             M.ServerDespawnMonsters();

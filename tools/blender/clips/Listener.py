@@ -32,9 +32,14 @@ the thigh and the shin reach the ankle behind it, so the feet do not slide at
 that speed (CreatureRig scales the playback to the real speed).
 """
 import math
+import os
+import sys
 
 import bpy
 from mathutils import Euler, Matrix, Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ik_kit as K  # noqa: E402
 
 FPS = 30
 CLIPS = ("Aiming", "Recovering")
@@ -94,11 +99,13 @@ def mesh_of(arm):
 
 
 def refit(arm, mesh, L):
-    # The shared clips leave the pose at their last key: back to rest before anything is measured or placed.
+    # The shared clips leave the pose at their last key, and the last action stays assigned (it would
+    # pose the bones again at the next update): back to rest, action off, before anything is measured
+    # or placed (ik_kit.rest_pose; the anchor gotcha).
+    K.rest_pose(arm)
     for p in arm.pose.bones:
         p.rotation_mode = "XYZ"
         p.rotation_euler = (0, 0, 0)
-        p.location = (0, 0, 0)
     bpy.context.view_layer.update()
     bpy.ops.object.select_all(action="DESELECT")
     bpy.context.view_layer.objects.active = arm
@@ -170,6 +177,7 @@ def refit(arm, mesh, L):
     REPORT["weights"] = counts
 
     # The anchors back on the head: the beam's origin just off the lower face, the voice in the skull.
+    K.rest_pose(arm)
     for name, world in (("BeamOrigin", (0.0, -0.285, 1.57)), ("Voice", (0.0, -0.13, 1.72))):
         o = bpy.data.objects.get(name)
         if o is None:
@@ -180,11 +188,13 @@ def refit(arm, mesh, L):
         bpy.context.view_layer.update()
         o.matrix_world = Matrix.Translation(Vector(world))
     bpy.context.view_layer.update()
-    # The planted points, on each foot's tip (what CreatureRigStrides measures, as ik_kit.add_toe_anchors).
-    for s in "LR":
-        if bpy.data.objects.get("Toe" + s) is None:
-            L.anchor("Toe" + s, tuple(arm.data.bones["Foot" + s].tail_local), arm, "Foot" + s)
+    # The planted points, on each foot's tip (what CreatureRigStrides measures), placed at rest.
+    K.add_toe_anchors(arm, L)
     bpy.context.view_layer.update()
+    # Proof for the report: each anchor where it was meant to be, at rest.
+    REPORT["anchors_at_rest"] = {n: [round(c, 3) for c in bpy.data.objects[n].matrix_world.translation]
+                                 for n in ("BeamOrigin", "Voice", "ToeL", "ToeR") if bpy.data.objects.get(n) is not None}
+    REPORT["toe_targets"] = {s: [round(c, 3) for c in arm.matrix_world @ arm.data.bones["Foot" + s].tail_local] for s in "LR"}
 
 
 # ---- posing -----------------------------------------------------------------------------

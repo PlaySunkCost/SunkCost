@@ -351,15 +351,30 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => InState(c, "Windup"), 0.4f, () => "C1 the Animator plays the wind-up");
             var rush = new List<Sample>();
             int strikes0 = c.StrikeSerial, hits0 = c.ServerRushHits, felt0 = host.KnockbacksFelt, cue0 = host.LastKnockback.Serial;
-            float jolt = 0f, hitAt = -1f;
+            float jolt = 0f, hitAt = -1f, joltPeakAt = -1f, joltUp = 0f, joltBack = 0f, settledAt = -1f;
             Vector3 hostAtHit = Vector3.zero;
             int healthDrops = 0, lastHealth = host.Vitals.Health;
             Transform cam = host.EyeAnchor;
             yield return SampleRush(c, rush, t =>
             {
                 if (host.Vitals.Health < lastHealth) { healthDrops++; lastHealth = host.Vitals.Health; if (hitAt < 0f) { hitAt = t; hostAtHit = host.transform.position; } }
-                if (hitAt >= 0f) jolt = Mathf.Max(jolt, Quaternion.Angle(cam.localRotation, Quaternion.Euler(host.LookPitch, 0f, 0f)));
+                if (hitAt < 0f) return;
+                Quaternion rel = Quaternion.Inverse(Quaternion.Euler(host.LookPitch, 0f, 0f)) * cam.localRotation;
+                float a = Quaternion.Angle(Quaternion.identity, rel);
+                if (a > jolt) { jolt = a; joltPeakAt = t - hitAt; }
+                float up = (rel * Vector3.forward).y;                       // + the view kicked up
+                joltUp = Mathf.Max(joltUp, up); joltBack = Mathf.Min(joltBack, up);
             });
+            // The jolt outlasts the rush's stop: follow it to the end.
+            for (float t = 0f; t < 1f; t += Time.deltaTime)
+            {
+                Quaternion rel = Quaternion.Inverse(Quaternion.Euler(host.LookPitch, 0f, 0f)) * cam.localRotation;
+                float up = (rel * Vector3.forward).y;
+                joltUp = Mathf.Max(joltUp, up); joltBack = Mathf.Min(joltBack, up);
+                if (settledAt < 0f && Quaternion.Angle(Quaternion.identity, rel) < 0.3f && joltPeakAt >= 0f) settledAt = Time.time - launchedAt - hitAt;
+                if (settledAt >= 0f && Quaternion.Angle(Quaternion.identity, rel) >= 0.3f) settledAt = -1f;
+                yield return null;
+            }
             float windup = launchedAt - windupAt;
             Say($"C1 the tell lasted {windup:0.00} s (target {s.ChargerWindupSeconds})");
             Check(Mathf.Abs(windup - s.ChargerWindupSeconds) < 0.12f, $"C1 the tell lasts {s.ChargerWindupSeconds} s");
@@ -382,14 +397,31 @@ namespace SunkCost.Editor.Prototype
             Check(host.KnockbacksFelt == felt0 + 1 && host.LastKnockback.Serial == cue0 + 1, "C1 one knock-back, told to the owner and in the replicated cue");
             Vector3 shove = host.transform.position - hostAtHit; shove.y = 0f;
             float along = Vector3.Dot(shove, dir);
-            Say($"C1 knocked {along:0.00} m along the path ({Vector3.Cross(dir, shove).magnitude:0.00} m aside), the capsule moved {host.LastKnockbackMoved:0.00} m; the view jolted {jolt:0.0}°");
+            float kickUp = Mathf.Asin(Mathf.Clamp(joltUp, -1f, 1f)) * Mathf.Rad2Deg, swingDown = -Mathf.Asin(Mathf.Clamp(joltBack, -1f, 1f)) * Mathf.Rad2Deg;
+            Say($"C1 knocked {along:0.00} m along the path ({Vector3.Cross(dir, shove).magnitude:0.00} m aside), the capsule moved {host.LastKnockbackMoved:0.00} m; the view jolted {jolt:0.0}° at its peak, {joltPeakAt * 1000f:0} ms after the blow (up {kickUp:0.0}°, back down past level {swingDown:0.0}°), settled {settledAt:0.00} s after it");
             Check(along > 2.3f && along < 3.8f, "C1 a knock-back of about 3 m along its path");
-            Check(jolt > 3f, "C1 the host's view jolts");
+            Check(jolt > 10f && jolt < 25f, $"C1 the host's view jolts hard ({jolt:0.0}°, target about 14°)");
+            Check(joltPeakAt >= 0f && joltPeakAt < 0.12f, $"C1 the jolt snaps at once ({joltPeakAt * 1000f:0} ms after the health drop)");
+            Check(kickUp > 6f, $"C1 struck in the face, the view kicks up ({kickUp:0.0}°)");
+            Check(swingDown > 1f, $"C1 the view swings back past level before it settles ({swingDown:0.0}°): a spring, not a fade");
+            Check(settledAt > 0f && settledAt < 0.8f, $"C1 the jolt settles within 0.8 s ({settledAt:0.00} s)");
             Check(Quaternion.Angle(cam.localRotation, Quaternion.Euler(host.LookPitch, 0f, 0f)) < 0.5f, "C1 the view settles after the jolt");
             Sample hitSample = rush.LastOrDefault(r => r.T <= hitAt + 0.001f);
             float stopAfterHit = Flat(rush[rush.Count - 1].Pos, hitSample.Pos);
             Check(stopAfterHit < 2.2f, $"C1 the blow stops it: {stopAfterHit:0.00} m on after the hit");
             Check(Flat(c.transform.position, host.transform.position) > 0.8f, $"C1 it does not end up standing in the diver ({Flat(c.transform.position, host.transform.position):0.0} m)");
+
+            // ---------------------------------------------------------------------------
+            Heading("K1 — a diver held by a monster is never knocked back (ServerKnockback skips IsGrabbed)");
+            int k1Serial = host.LastKnockback.Serial, k1Server = host.ServerKnockbacks, k1Felt = host.KnockbacksFelt;
+            Vector3 k1At = host.transform.position;
+            host.ServerGrab(c.NetworkObject, k1At);
+            Check(host.IsGrabbed, "K1 the host is marked held (the server's hold, set directly)");
+            host.ServerKnockback(c.transform.forward * 3f);
+            Check(host.LastKnockback.Serial == k1Serial && host.ServerKnockbacks == k1Server, "K1 no knock-back cue for a held diver");
+            host.ServerReleaseGrab(); // the same frame: the owner never applies this test hold
+            yield return Wait(0.3f);
+            Check(!host.IsGrabbed && host.KnockbacksFelt == k1Felt && Flat(host.transform.position, k1At) < 0.3f, $"K1 released, no shove felt, not moved ({Flat(host.transform.position, k1At):0.00} m)");
 
             // ---------------------------------------------------------------------------
             Heading("C8 — the charge animation matches the movement: the rush clip on, feet planted at 18 m/s, the tell's and the recovery's clips on time");

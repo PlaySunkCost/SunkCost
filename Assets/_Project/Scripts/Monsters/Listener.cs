@@ -122,6 +122,6 @@ namespace SunkCost.Monsters
             SetPose(there ? CreaturePose.Idle : heardDiver ? CreaturePose.Hunting : CreaturePose.Drawn);
         }
 
-        protected override string ServerBrainStatus() => $" heard={ServerHeard} last={heardKind} ago={(float.IsInfinity(heardTime) ? -1f : Now - heardTime):0.0}s fired={bolts.ServerFired} hits={bolts.ServerHits} phase={bolts.ServerPhase} held={bolts.ServerHeld}";
+        protected override string ServerBrainStatus() => $" heard={ServerHeard} last={heardKind} ago={(float.IsInfinity(heardTime) ? -1f : Now - heardTime):0.0}s fired={bolts.ServerFired} hits={bolts.ServerHits} phase={bolts.ServerPhase} held={bolts.ServerHeld} broken={bolts.ServerLockBroken}";
     }
 }

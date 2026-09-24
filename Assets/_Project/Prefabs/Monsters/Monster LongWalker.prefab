@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 5505250024208674557}
   - component: {fileID: 6922586230859855306}
   - component: {fileID: 2969978536074740027}
+  - component: {fileID: 4970244820803460455}
   m_Layer: 11
   m_Name: Monster LongWalker
   m_TagString: Untagged
@@ -36,7 +37,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 119770729905258262}
+  - {fileID: 8398466291031394597}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &962078085943536272
@@ -196,7 +197,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0501c66a29428d24983f466b6889aeb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureLook
-  body: {fileID: 119770729905258262}
+  body: {fileID: 8398466291031394597}
   eyes: []
   eyeColour: {r: 1, g: 0.85, b: 0.25, a: 1}
 --- !u!114 &6922586230859855306
@@ -223,14 +224,109 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd2e517a666fb2045adabc00837bcc3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureRig
-  animator: {fileID: 4119217699955064458}
-  beamOrigin: {fileID: 3908689895064963084}
-  voice: {fileID: 2828724889068643918}
+  animator: {fileID: 284740087996347648}
+  beamOrigin: {fileID: 4835369014747774527}
+  voice: {fileID: 5937288077847761021}
   animatedPoses:
   - Idle
   - Drawn
   - Hunting
---- !u!1001 &442262769824209149
+  - Grabbing
+  matchSpeed: 0
+  strides:
+  - pose: 2
+    metresPerSecond: 2.326
+  - pose: 1
+    metresPerSecond: 2.326
+  playbackRange: {x: 0.45, y: 1.8}
+  standBelow: 0
+  standPose: 0
+  driveTransitions: 0
+  blendSeconds: 0.2
+  blends: []
+  keepStridePhase: 1
+  lookWeight: 0
+  lookBones: []
+  lookShares:
+  - 0.15
+  - 0.3
+  - 0.55
+  lookMaxYaw: 70
+  lookMaxPitch: 35
+  lookDegPerSec: 240
+  lookHeight: 1.5
+  lookOffPoses: 03y
+  stillPoses: 03y
+  aimAtBeam: 0
+  aimMaxDegrees: 75
+  leanMaxDegrees: 0
+  leanStrength: 0.6
+  leanPivot: {fileID: 0}
+  breathDegrees: 0
+  breathSeconds: 3.4
+  breathBone: {fileID: 0}
+  rateVariation: 0
+  randomStart: 1
+  alwaysAnimate: 0
+  maxBeamOriginFromEye: 1.5
+--- !u!114 &4970244820803460455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4016256783773274087}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 941b72321753fe747b566b5d92c9b0c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureGrab
+  gripSeconds: 0.35
+  liftSeconds: 1.3
+  holdSeconds: 2
+  releaseSeconds: 0.8
+  gripPoint: {x: 0, y: 0, z: 0.85}
+  liftPoint: {x: 0, y: 1.35, z: 0.85}
+  liftEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.72
+      value: 1.04
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  faceTarget: {x: 0.04, y: 2.9, z: 0.38}
+  shakeStartDegrees: 1.2
+  shakeDegrees: 3
+  shakeHz: 7
+  gripJoltDegrees: 5
+  turnDegPerSec: 360
+--- !u!1001 &8288842013965135566
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -278,11 +374,23 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8673062649098221144, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: -8575001416930330891, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: -7954314212387794172, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
     - target: {fileID: -7654290624033612645, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: -5340579303799203903, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
@@ -384,26 +492,36 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4119217699955064458}
+      addedObject: {fileID: 284740087996347648}
   m_SourcePrefab: {fileID: 100100000, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
---- !u!4 &119770729905258262 stripped
+--- !u!4 &4835369014747774527 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
+  m_PrefabInstance: {fileID: 8288842013965135566}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5937288077847761021 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
+  m_PrefabInstance: {fileID: 8288842013965135566}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8398466291031394597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
-  m_PrefabInstance: {fileID: 442262769824209149}
+  m_PrefabInstance: {fileID: 8288842013965135566}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &784279946386056620 stripped
+--- !u!1 &9207196247905309599 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
-  m_PrefabInstance: {fileID: 442262769824209149}
+  m_PrefabInstance: {fileID: 8288842013965135566}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &4119217699955064458
+--- !u!95 &284740087996347648
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 784279946386056620}
+  m_GameObject: {fileID: 9207196247905309599}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 8dcb3329f8d732d48b8df2192674afba, type: 2}
@@ -418,13 +536,3 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!4 &2828724889068643918 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
-  m_PrefabInstance: {fileID: 442262769824209149}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3908689895064963084 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: 7d1318d8282bad74b8abf69abef47082, type: 3}
-  m_PrefabInstance: {fileID: 442262769824209149}
-  m_PrefabAsset: {fileID: 0}

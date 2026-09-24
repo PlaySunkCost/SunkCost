@@ -76,6 +76,7 @@ namespace SunkCost.Editor.Prototype
             running = false;
             stack.Clear();
             if (wall != null) UnityEngine.Object.Destroy(wall);
+            MonsterBeamShade.OffForChecks = false;
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
@@ -228,6 +229,55 @@ namespace SunkCost.Editor.Prototype
             Keys(); yield return null;
         }
 
+        // Strafe left round the Listener, facing it every frame (so the strafe is a circle at a
+        // steady range), walking or sprinting, while `go` holds; `each` runs every frame.
+        private static IEnumerator Circle(Transform centre, bool sprint, Func<bool> go, Action each = null)
+        {
+            while (go())
+            {
+                M.ClientLookAt(centre.position + Vector3.up * 1.2f);
+                if (sprint) Keys(Key.A, Key.LeftShift); else Keys(Key.A);
+                each?.Invoke();
+                yield return null;
+            }
+            Keys(); yield return null;
+        }
+
+        // A dash to the left, then walking on round the Listener while `go` holds.
+        private static IEnumerator DashThenCircle(Transform centre, Func<bool> go, Action each = null)
+        {
+            M.ClientLookAt(centre.position + Vector3.up * 1.2f);
+            Keys(Key.A); yield return null;
+            Keys(Key.A, Key.LeftAlt); each?.Invoke(); yield return null;
+            each?.Invoke(); yield return null;
+            yield return Circle(centre, false, go, each);
+        }
+
+        // A dash to the left, then standing still (no keys) while `go` holds.
+        private static IEnumerator DashThenStop(Func<bool> go, Action each = null)
+        {
+            Keys(Key.A); yield return null;
+            Keys(Key.A, Key.LeftAlt); each?.Invoke(); yield return null;
+            each?.Invoke(); yield return null;
+            Keys(Key.A);
+            float until = Time.unscaledTime + Host().Movement.DashSeconds;
+            while (Time.unscaledTime < until) { each?.Invoke(); yield return null; }
+            Keys();
+            while (go()) { each?.Invoke(); yield return null; }
+        }
+
+        // A wall 4 m wide and 4 m tall half way between the Listener and the diver.
+        private static void Cover(ElevatorController car, Vector3 monster, Vector3 diver)
+        {
+            Vector3 mid = Vector3.MoveTowards(monster, diver, Vector3.Distance(Flat(monster), Flat(diver)) * 0.5f);
+            wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "Listener checks wall";
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(wall, WorldScenes.Scene(WorldId.Dive));
+            wall.transform.SetPositionAndRotation(new Vector3(mid.x, car.BottomPosition.y + 1.5f, mid.z), Quaternion.LookRotation(Flat(diver - monster)));
+            wall.transform.localScale = new Vector3(4f, 4f, 0.4f);
+            Physics.SyncTransforms();
+        }
+
         // ---- the run ------------------------------------------------------------------
 
         private static IEnumerator Run()
@@ -354,7 +404,7 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(health0 - s.ListenerDamage - vitals.Health) < 0.5f && vitals.Leaking, $"L2 35 HP and a leak, once: health {health0} → {vitals.Health}, leaking {vitals.Leaking}");
             CharacterController body = host.GetComponent<CharacterController>();
             Check(bolts.ServerHitGap <= body.radius + bolts.HalfWidth + 0.001f, $"L2 the beam touched the body it hurt ({bolts.ServerHitGap:0.000} m ≤ {body.radius + bolts.HalfWidth:0.000})");
-            Check(maxFromGap < 0.08f && maxToGap < 0.05f && widthGap < 0.001f, $"L2 the drawn beam is the judged one on the host (from {maxFromGap:0.000} m, to {maxToGap:0.000} m, width {widthGap:0.000})");
+            Check(maxFromGap < 0.01f && maxToGap < 0.01f && widthGap < 0.001f, $"L2 the drawn beam is the judged one on the host (from {maxFromGap:0.000} m, to {maxToGap:0.000} m, width {widthGap:0.000})");
             Check(maxTurn <= s.BeamSweepDegPerSec * 1.05f + 1f && maxTurn >= s.BeamSweepDegPerSec * 0.8f, $"L2 the beam turned after the diver at its rate ({maxTurn:0} °/s)");
             Check(worstFacing < 12f, $"L2 its body faced along the beam from the end of the charge ({worstFacing:0.0}°)");
             Check(poseRight, "L2 Aiming while it charged, Shooting while it burned " + poseSeen);
@@ -407,39 +457,182 @@ namespace SunkCost.Editor.Prototype
             }
             vitals.ServerHealForChecks();
 
-            Heading("L3 — the dash on the flash escapes; an early dash and a late one do not");
-            // Each: the Listener re-placed 6 m off, the host still and facing it, a new beam.
-            foreach ((string row, string when) in new[] { ("L3a", "flash"), ("L3b", "early"), ("L3c", "late") })
+            Heading("L3 — tracking and the dash (Dan): running is tracked and hit; a dash in the charge or the burn breaks the lock and a diver who keeps moving escapes; one who stops after a dash is caught");
+            Say($"L3 after a dash the beam trails at {bolts.ReacquireMetresPerSecond} m/s; the diver walks {host.WalkSpeed} m/s, sprints {host.SprintSpeed} m/s, dashes {host.Movement.DashMeters} m in {host.Movement.DashSeconds} s every {host.Movement.DashCooldownSeconds} s");
+            CharacterController hostBody = host.GetComponent<CharacterController>();
+            float hitEdge = hostBody.radius + bolts.HalfWidth;
+            // The closest the burning beam came to the host's body, minus the edge (negative = touching).
+            float closest = float.PositiveInfinity;
+            void Measure()
             {
+                if (!bolts.ServerFiring) return;
+                bolts.Touches(host, bolts.ServerFrom, bolts.ServerTo, out _, out _, out float g);
+                closest = Mathf.Min(closest, g - hitEdge);
+            }
+            Transform centre = ears.transform;
+            const float Range = 9f;
+
+            // L3a: sprinting round it the whole time: the beam keeps up, touches, and hits once.
+            {
+                const string row = "L3a";
                 yield return Cooled(ears, bolts, row);
                 ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
-                Vector3 near = Vector3.MoveTowards(lAt, stand, 6f);
-                yield return HostAt(near, lAt);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, Range), lAt);
+                vitals.ServerHealForChecks();
+                yield return Wait(0.3f);
+                hits0 = bolts.ServerHits; int breaks0 = bolts.ServerLockBreaks;
+                closest = float.PositiveInfinity;
+                Vector3 pC = host.transform.position; float t0 = Time.time, tC = t0, runSpeed = float.NaN, nextSound = 0f;
+                bool provoked = false;
+                yield return Circle(centre, true, () => !provoked || bolts.ServerAiming, () =>
+                {
+                    if (!provoked)
+                    {
+                        if (bolts.ServerCharging) { provoked = true; pC = host.transform.position; tC = Time.time; }
+                        else if (Time.time - t0 > 0.3f && Time.unscaledTime >= nextSound) { Sound(host); nextSound = Time.unscaledTime + 0.5f; }
+                        if (Time.time - t0 > 12f) provoked = true; // never more than a beam's worth
+                    }
+                    // How fast the diver ran through the charge, measured at the flash.
+                    if (provoked && float.IsNaN(runSpeed) && bolts.ServerFiring && Time.time > tC + 0.2f) runSpeed = CreatureSenses.Flat(pC, host.transform.position) / (Time.time - tC);
+                    Measure();
+                });
+                Say($"{row} running at {runSpeed:0.0} m/s round it at {Range} m: hits {bolts.ServerHits - hits0}, hit {bolts.ServerHitAt - bolts.ServerFiredAt:0.00} s after the flash, lock breaks {bolts.ServerLockBreaks - breaks0}, closest {closest:0.00} m past the edge");
+                Check(runSpeed > host.WalkSpeed * 1.2f, $"{row} the diver was sprinting ({runSpeed:0.0} m/s)");
+                Check(bolts.ServerHits == hits0 + 1 && bolts.ServerHitOwnerId == host.OwnerId, $"{row} running alone does not escape it: hit once (hits {bolts.ServerHits - hits0})");
+                Check(bolts.ServerLockBreaks == breaks0 && !bolts.ServerLockBroken, $"{row} no dash, no broken lock");
+                Check(bolts.ServerHitAt - bolts.ServerFiredAt < 0.1f, $"{row} it hit as it lit, the beam already on the runner ({bolts.ServerHitAt - bolts.ServerFiredAt:0.00} s)");
+                Check(bolts.ServerHitGap <= hitEdge + 0.001f, $"{row} the beam touched the body it hurt ({bolts.ServerHitGap:0.000} m ≤ {hitEdge:0.000})");
+                vitals.ServerHealForChecks();
+                yield return Wait(0.5f);
+            }
+
+            // L3b: a dash in the charge, then walking on round it: the lock breaks, it trails, it misses.
+            {
+                const string row = "L3b";
+                yield return Cooled(ears, bolts, row);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, Range), lAt);
+                vitals.ServerHealForChecks();
+                yield return Expect(() => host.DashReady >= 1f, 4f, () => row + " the dash is ready");
+                yield return Wait(0.3f);
+                hits0 = bolts.ServerHits; int dashes = host.Dashes;
+                closest = float.PositiveInfinity;
+                yield return Provoke(ears, bolts, host, row, 1f);
+                float t0 = bolts.ServerChargedAt;
+                while (Time.time < t0 + 0.3f) yield return null;
+                yield return DashThenCircle(centre, () => bolts.ServerAiming, Measure);
+                Say($"{row} dash {bolts.ServerLockBrokenAt - t0:0.00} s into the charge, then walking: hits {bolts.ServerHits - hits0}, broken {bolts.ServerLockBroken}, closest {closest:0.00} m past the edge, health {vitals.Health}");
+                Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
+                Check(bolts.ServerLockBroken && bolts.ServerLockBrokenAt < bolts.ServerFiredAt, $"{row} the dash broke the lock during the charge");
+                Check(bolts.ServerHits == hits0 && vitals.Health >= vitals.Settings.MaxHealth - 0.5f, $"{row} a dash in the charge, then moving: it missed (hits {bolts.ServerHits - hits0})");
+                Check(closest > 0f, $"{row} the burning beam never touched the diver ({closest:0.00} m clear at the closest)");
+                vitals.ServerHealForChecks();
+                yield return Wait(0.5f);
+            }
+
+            // L3c: from cover. Walking out while it burns is tracked and hit; dashing out escapes.
+            foreach (bool dash in new[] { false, true })
+            {
+                string row = dash ? "L3c dash" : "L3c walk";
+                yield return Cooled(ears, bolts, row);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                Vector3 hide = Vector3.MoveTowards(lAt, stand, 8f);
+                Cover(car, lAt, hide);
+                yield return HostAt(hide, lAt);
+                vitals.ServerHealForChecks();
+                Check(!CreatureSenses.ClearLine(ears.EyePoint, CreatureSenses.Chest(host)), row + " the wall stands between them");
+                yield return Expect(() => host.DashReady >= 1f, 4f, () => row + " the dash is ready");
+                yield return Wait(0.3f);
+                hits0 = bolts.ServerHits; int breaks0 = bolts.ServerLockBreaks;
+                closest = float.PositiveInfinity;
+                yield return Provoke(ears, bolts, host, row, 1f);
+                yield return Expect(() => bolts.ServerFiring, s.BeamChargeSeconds + 0.5f, () => row + " it fires into the wall");
+                float fired = bolts.ServerFiredAt;
+                while (Time.time < fired + 0.4f) yield return null;
+                Check(bolts.ServerHits == hits0, row + " nothing through the wall");
+                if (dash) yield return DashThenCircle(centre, () => bolts.ServerAiming, Measure);
+                else yield return Circle(centre, false, () => bolts.ServerAiming, Measure);
+                Say($"{row} out from cover 0.4 s into the burn: hits {bolts.ServerHits - hits0} ({bolts.ServerHitAt - fired:0.00} s into the burn), lock breaks {bolts.ServerLockBreaks - breaks0}, closest {closest:0.00} m past the edge");
+                if (dash)
+                {
+                    Check(bolts.ServerLockBroken && bolts.ServerLockBrokenAt >= fired, $"{row} the dash broke the lock during the burn");
+                    Check(bolts.ServerHits == hits0 && vitals.Health >= vitals.Settings.MaxHealth - 0.5f, $"{row} a dash in the burn, then moving: it missed (hits {bolts.ServerHits - hits0})");
+                    Check(closest > 0f, $"{row} the beam never touched the diver ({closest:0.00} m clear)");
+                }
+                else
+                {
+                    Check(bolts.ServerHits == hits0 + 1 && !bolts.ServerLockBroken, $"{row} walking out without a dash: tracked and hit (hits {bolts.ServerHits - hits0})");
+                }
+                UnityEngine.Object.Destroy(wall); wall = null;
+                vitals.ServerHealForChecks();
+                yield return Wait(0.5f);
+            }
+
+            // L3d: a dash in the charge, then standing still: it trails after and catches the diver.
+            {
+                const string row = "L3d";
+                yield return Cooled(ears, bolts, row);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, Range), lAt);
+                vitals.ServerHealForChecks();
+                yield return Expect(() => host.DashReady >= 1f, 4f, () => row + " the dash is ready");
+                yield return Wait(0.3f);
+                hits0 = bolts.ServerHits; int dashes = host.Dashes;
+                yield return Provoke(ears, bolts, host, row, 1f);
+                float t0 = bolts.ServerChargedAt;
+                while (Time.time < t0 + 0.3f) yield return null;
+                yield return DashThenStop(() => bolts.ServerAiming);
+                float caughtAfter = bolts.ServerHitAt - bolts.ServerLockBrokenAt;
+                Say($"{row} dash {bolts.ServerLockBrokenAt - t0:0.00} s into the charge, then still: hits {bolts.ServerHits - hits0}, caught {caughtAfter:0.00} s after the dash ({bolts.ServerHitAt - bolts.ServerFiredAt:0.00} s into the burn), gap {bolts.ServerHitGap:0.000} m");
+                Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
+                Check(bolts.ServerLockBroken, $"{row} the dash broke the lock");
+                Check(bolts.ServerHits == hits0 + 1, $"{row} standing still after the dash: caught (hits {bolts.ServerHits - hits0})");
+                Check(caughtAfter > 1f && bolts.ServerHitAt > bolts.ServerFiredAt + 0.1f, $"{row} caught by the slow trail, not at once ({caughtAfter:0.00} s after the dash)");
+                Check(bolts.ServerHitGap <= hitEdge + 0.001f, $"{row} the beam touched the body it hurt ({bolts.ServerHitGap:0.000} m)");
+                vitals.ServerHealForChecks();
+                yield return Wait(0.5f);
+            }
+
+            // L3e: a dash with the beam already on the diver as it lights: hit as it lit (one hit, then nothing).
+            {
+                const string row = "L3e";
+                yield return Cooled(ears, bolts, row);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, 6f), lAt);
                 vitals.ServerHealForChecks();
                 yield return Expect(() => host.DashReady >= 1f, 4f, () => row + " the dash is ready");
                 yield return Wait(0.3f);
                 hits0 = bolts.ServerHits;
                 yield return Provoke(ears, bolts, host, row, 1f);
                 float t0 = bolts.ServerChargedAt;
-                float at = when == "flash" ? t0 + s.BeamChargeSeconds - 0.16f : when == "early" ? t0 + 0.2f : t0 + s.BeamChargeSeconds + 0.3f;
-                while (Time.time < at) yield return null;
-                int dashes = host.Dashes;
+                while (Time.time < t0 + s.BeamChargeSeconds + 0.3f) yield return null;
                 yield return DashLeft();
-                Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
                 yield return BeamOver(bolts, row);
-                Say($"{row} dash at {at - t0:0.00} s into the charge: hits {bolts.ServerHits - hits0}, held {bolts.ServerHeld}, health {vitals.Health}");
-                if (when == "flash")
-                {
-                    Check(bolts.ServerHits == hits0 && bolts.ServerHeld && vitals.Health >= vitals.Settings.MaxHealth - 0.5f, $"{row} dashed across as it lit: missed, and it held its heading");
-                }
-                else if (when == "early")
-                {
-                    Check(bolts.ServerHits == hits0 + 1 && !bolts.ServerHeld, $"{row} dashed early: the charge turned after the diver and the beam hit");
-                }
-                else
-                {
-                    Check(bolts.ServerHits == hits0 + 1 && bolts.ServerHitAt - bolts.ServerFiredAt < 0.1f, $"{row} dashed with the beam already on the diver: hit as it lit");
-                }
+                Check(bolts.ServerHits == hits0 + 1 && bolts.ServerHitAt - bolts.ServerFiredAt < 0.1f && !bolts.ServerLockBroken, $"{row} a dash too late (the beam already on the diver): hit as it lit, once (hits {bolts.ServerHits - hits0})");
+                vitals.ServerHealForChecks();
+                yield return Wait(0.5f);
+            }
+
+            // L3f: a Charger's knock-back in the charge is a shove, not a dash: the lock holds and it hits.
+            {
+                const string row = "L3f";
+                yield return Cooled(ears, bolts, row);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, Range), lAt);
+                vitals.ServerHealForChecks();
+                yield return Wait(0.3f);
+                hits0 = bolts.ServerHits; int breaks0 = bolts.ServerLockBreaks, knocks0 = host.KnockbacksFelt;
+                yield return Provoke(ears, bolts, host, row, 1f);
+                float t0 = bolts.ServerChargedAt;
+                while (Time.time < t0 + 0.3f) yield return null;
+                Vector3 side = Vector3.Cross(Vector3.up, Flat(host.transform.position - lAt)).normalized;
+                host.ServerKnockback(side * 3f);
+                yield return BeamOver(bolts, row);
+                Say($"{row} shoved {host.LastKnockbackMoved:0.00} m in the charge: lock breaks {bolts.ServerLockBreaks - breaks0}, hits {bolts.ServerHits - hits0} ({bolts.ServerHitAt - bolts.ServerFiredAt:0.00} s after the flash)");
+                Check(host.KnockbacksFelt == knocks0 + 1 && host.LastKnockbackMoved > 2f, $"{row} the host was knocked {host.LastKnockbackMoved:0.00} m");
+                Check(bolts.ServerLockBreaks == breaks0 && !bolts.ServerLockBroken, $"{row} a knock-back does not break the lock (breaks {bolts.ServerLockBreaks - breaks0})");
+                Check(bolts.ServerHits == hits0 + 1 && bolts.ServerHitAt - bolts.ServerFiredAt < 0.1f, $"{row} the beam kept on the shoved diver and hit as it lit");
+                vitals.ServerHealForChecks();
                 yield return Wait(0.5f);
             }
 
@@ -538,22 +731,98 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => ears.Pose == CreaturePose.Idle && CreatureSenses.Flat(ears.transform.position, ears.Home) < 2f, 30f, () => "L6 home, idle: " + ears.ServerStatus);
             Check(!bolts.ServerAiming && bolts.ServerHits >= 1, "L6 back to rest");
 
-            Heading("L7 — captures for Dan: both beams at the old width and the new (Temp/polish-Listener-gifs)");
-            float bigWidth = bolts.HalfWidth;
-            foreach (float w in new[] { 0.12f, bigWidth })
+            Heading("L8 — the dark beam eats the light: the haze, the sink on a wall, the lights near it turned down for the render only and put back exactly");
             {
-                yield return Cooled(ears, bolts, "L7");
-                SetHalfWidth(bolts, w);
+                yield return Cooled(ears, bolts, "L8");
+                Light lamp = host.GetComponentsInChildren<Light>(true).FirstOrDefault(l => l.type == LightType.Spot) ?? host.GetComponentInChildren<Light>(true);
+                Check(lamp != null && lamp.isActiveAndEnabled && host.LampOn, "L8 the host's headlamp is on");
                 Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
                 ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
                 yield return HostAt(spot, lAt);
                 vitals.ServerHealForChecks();
-                yield return Wait(0.4f);
-                yield return Provoke(ears, bolts, host, "L7", 1f);
-                yield return Film(bolts, lAt, spot, "Listener-" + (w < 0.2f ? "before" : "after") + "-" + (w * 2f).ToString("0.00") + "m");
+                yield return Wait(0.3f);
+                float before = lamp.intensity;
+                // A beam that passes 0.6 m clear of the diver's body, beside the lamp.
+                CharacterController capsule = host.GetComponent<CharacterController>();
+                Vector3 chest = CreatureBolts.AimPoint(host);
+                Vector3 across = Vector3.Cross(Vector3.up, Flat(chest - lAt)).normalized;
+                Vector3 aim = chest + across * (capsule.radius + bolts.HalfWidth + 0.6f) + Vector3.up * 0.4f;
+                for (int k = 0; k < 2; k++) { ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(aim - bolts.Origin)).eulerAngles.y); yield return null; }
+                hits0 = bolts.ServerHits;
+                float rendered = float.NaN, renderedMin = float.PositiveInfinity, afterMax = 0f, afterMin = float.PositiveInfinity;
+                int renders = 0;
+                void OnRender(UnityEngine.Rendering.ScriptableRenderContext _, Camera __) { if (lamp != null) { rendered = lamp.intensity; renderedMin = Mathf.Min(renderedMin, rendered); renders++; } }
+                // Every light's intensity before the beam (twice, a second apart: a light that changes by itself is left out).
+                Light[] all = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+                float[] first = all.Select(l => l.intensity).ToArray();
+                yield return Wait(1f);
+                var steady = new List<(Light light, float value)>();
+                for (int i = 0; i < all.Length; i++) if (all[i] != null && all[i].intensity == first[i]) steady.Add((all[i], first[i]));
+                bool hooked = false;
+                bool lampLitAlways = true, shadeSeen = false;
+                float hazeMax = 0f, dimAtLamp = 1f;
+                try
+                {
+                    bolts.ServerAim(bolts.Origin, aim, true, s.ListenerDamage, "the Listener (checks)", -1);
+                    Check(bolts.ServerCharging, "L8 a dark beam aimed past the diver charges");
+                    while (bolts.ServerAiming)
+                    {
+                        yield return null;
+                        // Between frames (after the render ended): the lamp is back exactly, its switch untouched.
+                        afterMax = Mathf.Max(afterMax, lamp.intensity); afterMin = Mathf.Min(afterMin, lamp.intensity);
+                        lampLitAlways &= host.LampOn && CreatureSenses.LampLit(host);
+                        // Hooked after the shade (the events run in order), so the lamp is read as that camera draws it.
+                        if (!hooked && view.Shade != null && view.Shade.Shown) { UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += OnRender; hooked = true; }
+                        if (bolts.ServerFiring && view.Shade != null && view.Shade.Shown)
+                        {
+                            shadeSeen = true;
+                            hazeMax = Mathf.Max(hazeMax, view.Shade.HazeDarknessShown);
+                            dimAtLamp = Mathf.Min(dimAtLamp, view.Shade.DimAt(lamp.transform.position));
+                        }
+                    }
+                    yield return Wait(0.5f);
+                }
+                finally { if (hooked) UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= OnRender; }
+                int changed = steady.Count(p => p.light != null && p.light.intensity != p.value);
+                Say($"L8 the lamp: {before:0.###} before; drawn at {renderedMin:0.###} at the darkest ({renders} renders); between frames {afterMin:0.###}–{afterMax:0.###}; the shade's factor at the lamp {dimAtLamp:0.00}; haze darkness up to {hazeMax:0.00}; {MonsterBeamShade.LastDimmedCount} light(s) dimmed in the last render");
+                Check(bolts.ServerHits == hits0, "L8 the beam passed the diver without touching (no hit)");
+                Check(shadeSeen && hazeMax > 0.4f, $"L8 every screen draws the shadow haze along the burning dark beam (darkness {hazeMax:0.00})");
+                Check(renders > 0 && renderedMin < before * 0.6f, $"L8 the diver's lamp beside the beam was drawn dimmer ({renderedMin:0.###} of {before:0.###})");
+                Check(afterMin == before && afterMax == before, $"L8 and put back exactly between frames ({afterMin:0.######}–{afterMax:0.######} vs {before:0.######})");
+                Check(lampLitAlways, "L8 the lamp's switch and the Lure's sense of it never changed (LampOn, CreatureSenses.LampLit)");
+                Check(view.Shade != null && !view.Shade.Shown && MonsterBeamShade.ActiveCount == 0 && MonsterBeamShade.DimmedNow == 0 && lamp.intensity == before, "L8 after the fade the shade is gone and the lamp is as it was");
+                Check(changed == 0, $"L8 every light in the scene is exactly its original intensity after the beam ({steady.Count} steady lights, {changed} changed)");
+                // On a wall: the sink blot where it lands.
+                yield return Cooled(ears, bolts, "L8 wall");
+                Cover(car, lAt, spot);
+                bolts.ServerAim(bolts.Origin, chest, true, s.ListenerDamage, "the Listener (checks)", -1);
+                yield return Expect(() => bolts.ServerFiring, s.BeamChargeSeconds + 0.5f, () => "L8 wall it fires into the wall");
+                yield return Wait(0.3f);
+                Check(view.ShownImpact && view.Shade.SinkShown, "L8 wall a dark sink where the beam meets the wall, under the violet impact");
+                yield return BeamOver(bolts, "L8 wall");
+                UnityEngine.Object.Destroy(wall); wall = null;
                 vitals.ServerHealForChecks();
             }
-            SetHalfWidth(bolts, bigWidth);
+
+            Heading("L7 — captures for Dan: the dark beam without its shade and with it; the Lure's beam at the old width and the new (Temp/polish-Listener-gifs)");
+            float bigWidth = bolts.HalfWidth;
+            try
+            {
+                foreach (bool shaded in new[] { false, true })
+                {
+                    yield return Cooled(ears, bolts, "L7");
+                    MonsterBeamShade.OffForChecks = !shaded;
+                    Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
+                    ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
+                    yield return HostAt(spot, lAt);
+                    vitals.ServerHealForChecks();
+                    yield return Wait(0.4f);
+                    yield return Provoke(ears, bolts, host, "L7", 1f);
+                    yield return Film(bolts, lAt, spot, "Listener-" + (shaded ? "after-shade" : "before-shade"));
+                    vitals.ServerHealForChecks();
+                }
+            }
+            finally { MonsterBeamShade.OffForChecks = false; }
             M.ServerDespawnMonsters();
             yield return Expect(() => Creature.All.Count == 0, 5f, () => "L7 the Listener despawned");
             Creature lure = MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, lAt);

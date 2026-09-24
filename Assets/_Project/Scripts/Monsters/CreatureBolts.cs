@@ -36,13 +36,28 @@ namespace SunkCost.Monsters
     // model's BeamOrigin (the mouth, the lamp — CreatureRig keeps it animating on the
     // server), runs to the first wall, and is `halfWidth` thick on every peer; it
     // hurts a diver whose body (the capsule) it touches, with nothing solid between.
-    // A dash breaks its turn (lead, 24 September 2026, to Dan as a design note):
-    // while it burns, a target who is dashing makes it stop turning after them and
-    // hold its heading for the rest of the burn — the dash on the flash.
+    //
+    // Tracking and the dash (Dan, 24 September 2026): the beam follows the diver it
+    // is aimed at, tightly (BeamSweepDegPerSec), so running or strafing alone never
+    // escapes it — it hits when the drawn beam touches. The only dodge is a dash:
+    // a dash that starts while it charges or burns breaks the lock, and the beam
+    // holds its heading for as long as the diver is dashing. For the rest of that
+    // beam it trails the diver at `reacquireMetresPerSecond` (measured at the
+    // diver's distance): a diver who keeps moving stays clear, one who stops is
+    // caught. One hit per beam, as before.
+    //
+    // The judgement runs in LateUpdate after CreatureRig has posed the bones and
+    // before MonsterBeamView draws, so the line judged and the line drawn leave the
+    // same mouth in the same frame.
+    [DefaultExecutionOrder(-30)] // after CreatureRig (-40), before MonsterBeamView (0)
     public sealed class CreatureBolts : NetworkBehaviour
     {
         [Tooltip("The beam's radius in metres (Dan, 24 September 2026: much bigger, about 70 cm across): drawn this thick, and it hurts a diver whose body it touches.")]
         [SerializeField] private float halfWidth = 0.35f;
+        [Tooltip("After a dash breaks its lock, the beam trails the diver at this speed for the rest of that beam, metres per second at the diver's distance (Dan, 24 September 2026: a diver who keeps moving stays clear, one who stops is caught). Keep it under a walk (4 m/s).")]
+        [SerializeField] private float reacquireMetresPerSecond = 2.5f;
+        [Tooltip("The target counts as dashing (the lock breaks) from the moment it covers ground faster than this, metres per second: sooner than the server's own dash judgement, which comes about 0.15 s into the dash. A sprint is 6 m/s, a dash 24.")]
+        [SerializeField] private float dashBreakMetresPerSecond = 11f;
 
         private readonly SyncVar<BeamCue> cue = new(new BeamCue { Serial = 0 });
         // The live aim point while charging and firing, at up to 60 a second so a guest's sweep is a turn, not steps.
@@ -56,7 +71,16 @@ namespace SunkCost.Monsters
         private string cause;
         private int targetOwnerId = -1;
         private Vector3 aimDir;
-        private bool hitThisBeam, held;
+        private bool hitThisBeam, held, broken, targetWasDashing;
+        // The target's recent flat positions (a small ring, no allocation) for the early dash sense.
+        private const int TrailLength = 32;
+        private readonly Vector3[] trailAt = new Vector3[TrailLength];
+        private readonly float[] trailTime = new float[TrailLength];
+        private int trailCount, trailHead;
+        // A shove is not a dash (the Charger's knock-back moves a diver fast too): the speed sense sleeps after one.
+        private const float KnockQuietSeconds = 0.6f;
+        private int knockSerial;
+        private float knockSeenAt = float.NegativeInfinity;
         private static readonly RaycastHit[] Hits = new RaycastHit[16];
 
         public float HalfWidth => halfWidth;
@@ -72,7 +96,11 @@ namespace SunkCost.Monsters
         // The server's view for the brains and the checks.
         public Vector3 ServerAimDirection => aimDir;       // where the beam points now (the brain faces it)
         public int ServerTargetOwnerId => targetOwnerId;
-        public bool ServerHeld => held;                    // a dash broke its turn this burn
+        public bool ServerHeld => held;                    // the target is dashing: the beam holds its heading
+        public bool ServerLockBroken => broken;            // a dash broke the lock this beam: it trails slowly
+        public int ServerLockBreaks { get; private set; }  // dashes that broke a lock, all beams
+        public float ServerLockBrokenAt { get; private set; } = float.NegativeInfinity;
+        public float ReacquireMetresPerSecond => reacquireMetresPerSecond;
         public Vector3 ServerFrom { get; private set; }    // the line it judged last frame
         public Vector3 ServerTo { get; private set; }
         public float ServerChargedAt { get; private set; } = float.NegativeInfinity;
@@ -128,6 +156,13 @@ namespace SunkCost.Monsters
             this.cause = cause;
             hitThisBeam = false;
             held = false;
+            broken = false;
+            trailCount = 0;
+            // A dash already under way when the charge begins does not break it; a new one does.
+            HQPlayerController target = targetOwnerId >= 0 ? CreatureSenses.DiverOf(targetOwnerId) : null;
+            targetWasDashing = target != null && target.ServerDashing;
+            knockSerial = target != null ? target.LastKnockback.Serial : 0;
+            knockSeenAt = float.NegativeInfinity;
             phase = BeamPhase.Charging;
             phaseEndsAt = Time.time + settings.BeamChargeSeconds;
             ServerChargedAt = Time.time;
@@ -147,20 +182,35 @@ namespace SunkCost.Monsters
             return diver.transform.position + Vector3.up * Mathf.Min(1.1f, body.center.y + body.height * 0.5f - body.radius - 0.1f);
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (!IsServerStarted || !ServerAiming) return;
             MonsterSettings settings = MonsterSettings.Get();
             float dt = Time.deltaTime;
             Vector3 from = Origin;
-            // Turn after the target, charging and firing alike, at the sweep rate —
-            // until a dash breaks the turn while it burns (the dash on the flash).
+            // Turn after the target, charging and firing alike: tightly at the sweep
+            // rate; not at all while a dash that began during this beam lasts; slowly
+            // (reacquireMetresPerSecond at the diver) for the rest of the beam after one.
             HQPlayerController target = targetOwnerId >= 0 ? CreatureSenses.DiverOf(targetOwnerId) : null;
-            if (phase == BeamPhase.Firing && !held && !hitThisBeam && target != null && target.ServerDashing) held = true;
-            if (target != null && !held)
+            if (target != null)
             {
-                Vector3 want = (AimPoint(target) - from).normalized;
-                aimDir = Vector3.RotateTowards(aimDir, want, settings.BeamSweepDegPerSec * Mathf.Deg2Rad * dt, 0f);
+                bool dashing = Dashing(target);
+                if (dashing && !targetWasDashing && !hitThisBeam)
+                {
+                    held = true;
+                    if (!broken) ServerLockBrokenAt = Time.time;
+                    broken = true;
+                    ServerLockBreaks++;
+                }
+                if (!dashing) held = false;
+                targetWasDashing = dashing;
+                if (!held)
+                {
+                    Vector3 toTarget = AimPoint(target) - from;
+                    float rate = settings.BeamSweepDegPerSec * Mathf.Deg2Rad;
+                    if (broken) rate = Mathf.Min(rate, reacquireMetresPerSecond / Mathf.Max(0.5f, toTarget.magnitude));
+                    aimDir = Vector3.RotateTowards(aimDir, toTarget.normalized, rate * dt, 0f);
+                }
             }
             float range = BeamEnd(from, aimDir, settings.BeamRangeMeters);
             Vector3 end = from + aimDir * range;
@@ -209,6 +259,34 @@ namespace SunkCost.Monsters
             ServerEndedAt = Time.time;
             BeamCue f = cue.Value;
             cue.Value = new BeamCue { Serial = f.Serial + 1, From = from, To = end, StartTick = f.StartTick, Dark = f.Dark, Phase = BeamPhase.Done };
+        }
+
+        // Is the target dashing: the server's own judgement, or already covering ground
+        // faster than any run (the first tenth of a second of a dash, before that judgement)
+        // — unless a knock-back shoved it just now (HQPlayerController.ServerKnockback).
+        private bool Dashing(HQPlayerController target)
+        {
+            float now = Time.time;
+            Vector3 at = target.transform.position; at.y = 0f;
+            int last = (trailHead - 1 + TrailLength) % TrailLength;
+            if (trailCount > 0 && (at - trailAt[last]).sqrMagnitude > 9f) trailCount = 0; // a teleport, not a dash
+            trailAt[trailHead] = at; trailTime[trailHead] = now;
+            trailHead = (trailHead + 1) % TrailLength;
+            trailCount = Mathf.Min(trailCount + 1, TrailLength);
+            bool fast = false;
+            int serial = target.LastKnockback.Serial;
+            if (serial != knockSerial) { knockSerial = serial; knockSeenAt = now; }
+            bool shoved = now - knockSeenAt < KnockQuietSeconds;
+            // The speed over the last ~0.06 s: the newest sample at least that old, within the ring.
+            for (int k = 1; !shoved && k < trailCount; k++)
+            {
+                int i = (trailHead - 1 - k + 2 * TrailLength) % TrailLength;
+                float span = now - trailTime[i];
+                if (span < 0.06f) continue;
+                fast = (at - trailAt[i]).magnitude / span > dashBreakMetresPerSecond;
+                break;
+            }
+            return fast || target.ServerDashing;
         }
 
         // The drawn beam touches the diver's body: the beam's axis comes within its

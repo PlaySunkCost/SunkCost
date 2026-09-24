@@ -22,7 +22,11 @@ namespace SunkCost.Monsters
     // glow — scales with the beam's width, and in the charge's last third a faint
     // shell the beam's full width shows how big it will be. The glows at the mouth
     // are capped (a disc wider than the head hid its body language, mon-lure) and
-    // fall off from the centre in nested shells. Presentation only.
+    // fall off from the centre in nested shells. The dark beam also eats the light
+    // round it (Dan, 24 September 2026): this view drives its MonsterBeamShade every
+    // frame from the same drawn line. The Lure's light (MonsterBeamLight, mon-lure)
+    // reads the public Shown* state below; keep those names and meanings.
+    // Presentation only.
     public sealed class MonsterBeamView : MonoBehaviour
     {
         private const float FadeSeconds = 0.3f, AimEaseSeconds = 0.03f, HitFlareSeconds = 0.25f, FireFlashSeconds = 0.12f;
@@ -33,6 +37,7 @@ namespace SunkCost.Monsters
         private Renderer knotRenderer;
         private Renderer[] hazeShells, impactShells; // soft glows: nested shells, brightest at the centre, seen alike from every camera
         private MaterialPropertyBlock block;
+        private MonsterBeamShade shade;
         private CreatureBolts bolts;
         private bool dark;
         private BeamPhase phase = BeamPhase.None;
@@ -47,6 +52,7 @@ namespace SunkCost.Monsters
         public Vector3 ShownTo => shownAim;
         public float ShownHalfWidth { get; private set; }
         public bool ShownImpact => impact != null && impact.gameObject.activeSelf;
+        public MonsterBeamShade Shade => shade;
 
         private static readonly Color DarkViolet = new(0.45f, 0.15f, 0.75f), DarkCore = new(0.035f, 0.0f, 0.06f);
         private static readonly Color LightGold = new(1f, 0.92f, 0.55f), LightCore = new(1f, 0.98f, 0.9f);
@@ -64,6 +70,7 @@ namespace SunkCost.Monsters
             view.knot = Ball(go.transform, "Charge knot", out view.knotRenderer);
             view.haze = Soft(go.transform, "Charge haze", out view.hazeShells);
             view.impact = Soft(go.transform, "Impact", out view.impactShells);
+            view.shade = MonsterBeamShade.Make(go.transform);
             if (bolts != null) bolts.Hit += view.OnHit;
             return view;
         }
@@ -171,6 +178,7 @@ namespace SunkCost.Monsters
             knot.gameObject.SetActive(on);
             haze.gameObject.SetActive(on);
             if (!on) impact.gameObject.SetActive(false);
+            if (!on && shade != null) shade.Hide();
         }
 
         private void Paint(Renderer r, Color c)
@@ -240,6 +248,7 @@ namespace SunkCost.Monsters
                     }
                     impact.gameObject.SetActive(false);
                     ShownHalfWidth = thread;
+                    DriveShade(from, false, 0.45f * t * t);
                     break;
                 }
                 case BeamPhase.Firing:
@@ -264,6 +273,7 @@ namespace SunkCost.Monsters
                         SoftGlow(impactShells, glow, (dark ? 1.4f : 1.8f) * lift);
                     }
                     ShownHalfWidth = half;
+                    DriveShade(from, onWall, Mathf.Min(1f, 0.9f + 0.1f * flash) * (0.92f + 0.08f * throb));
                     break;
                 }
                 case BeamPhase.Done:
@@ -282,9 +292,17 @@ namespace SunkCost.Monsters
                     impact.gameObject.SetActive(onWall && fade > 0.3f);
                     if (onWall) { impact.position = shownAim; SoftGlow(impactShells, glow, fade); }
                     ShownHalfWidth = half * fade;
+                    DriveShade(from, onWall, fade * fade);
                     break;
                 }
             }
+        }
+
+        // The dark beam's darkness round it, from the line drawn this frame; the light beam has none.
+        private void DriveShade(Vector3 from, bool onWall, float amount)
+        {
+            if (shade == null) return;
+            if (dark) shade.Show(from, shownAim, amount, onWall); else shade.Hide();
         }
 
         // URP Unlit made transparent by hand (the dash rings' recipe): an additive glow, and a blended darkness.

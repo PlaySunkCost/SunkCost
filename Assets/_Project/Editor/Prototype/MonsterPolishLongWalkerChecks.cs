@@ -308,11 +308,23 @@ namespace SunkCost.Editor.Prototype
             wall.transform.localScale = new Vector3(5f, 4f, 0.25f);
             Physics.SyncTransforms();
             walker.ServerPlaceForChecks(host.transform.position - toHost * 1.35f, YawTo(host.transform.position - toHost * 1.35f, host.transform.position));
+            yield return null;
+            Say($"O1 placed {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, {wall.transform.InverseTransformPoint(walker.transform.position).z * 0.25f:+0.00;-0.00} m off the wall's middle");
             yield return Wait(2.5f);
             Check(!host.IsGrabbed && walker.ServerGrabsStarted == 0, $"O1 {Flat(walker.transform.position, host.transform.position):0.00} m away behind the wall: no grab ({walker.ServerStatus})");
             Check(walker.Pose == CreaturePose.Hunting, "O1 it still hunts the diver it saw");
             Creature.RefuseGrabKillForChecks = true; // the diver lives through this row's grab
-            yield return Expect(() => walker.ServerGrabsStarted >= 1, 25f, () => $"O1 it worked round the wall and caught the diver ({walker.ServerStatus})");
+            float roundFrom = Time.unscaledTime, nextTrace = 0f;
+            while (walker.ServerGrabsStarted < 1 && Time.unscaledTime - roundFrom < 25f)
+            {
+                yield return null;
+                float since = Time.unscaledTime - roundFrom;
+                if (since < nextTrace) continue;
+                nextTrace = since + 0.5f;
+                Vector3 local = wall.transform.InverseTransformPoint(walker.transform.position);
+                Say($"O1 t={since:0.0} walker along the wall {local.x * wall.transform.localScale.x:+0.00;-0.00} m, off it {local.z * wall.transform.localScale.z:+0.00;-0.00} m, {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, sidestepping={walker.ServerSidestepping}, facing {walker.transform.eulerAngles.y:0}");
+            }
+            Check(walker.ServerGrabsStarted >= 1, $"O1 it worked round the wall and caught the diver in {Time.unscaledTime - roundFrom:0.0} s ({walker.ServerStatus})");
             Check(CreatureSenses.ClearLine(walker.EyePoint, CreatureSenses.Chest(host)), "O1 caught with a clear line from its eyes to the chest");
             yield return Expect(() => !host.IsGrabbed && !walker.ServerGrabbing, 5f, () => "O1 refused kill: let go");
             UnityEngine.Object.Destroy(wall); wall = null;
