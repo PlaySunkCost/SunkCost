@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SunkCost.Diving;
@@ -12,6 +13,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 using H = SunkCost.Editor.Prototype.HQPrototypeTestHooks;
 using M = SunkCost.Editor.Prototype.MonsterTestHooks;
 
@@ -38,6 +40,15 @@ namespace SunkCost.Editor.Prototype
         private static InputSettings.EditorInputBehaviorInPlayMode savedInputBehavior;
         private static InputSettings.BackgroundBehavior savedBackgroundBehavior;
         private static bool inputBehaviorChanged;
+        // The guest's rows (R1-R3): with Temp/polish-WeepingAngel-guest.flag present the same
+        // job runs them instead of the host's, with a guest build joined (Builds/HQPrototypeLocal).
+        private const string GuestFlag = "Temp/polish-WeepingAngel-guest.flag";
+        private const string GuestDir = "Temp/polish-WeepingAngel-guest";
+        private const string BuildExe = "Builds/HQPrototypeLocal/SunkCostHQ.exe";
+        private static bool guestMode;
+        private static Process guest;
+        private static int guestCommand = 2600;
+        private static string lastReply = string.Empty;
         public static string Status { get; private set; } = "Not run";
 
         private static CrewDayState Day => CrewDayState.Instance;
@@ -55,7 +66,9 @@ namespace SunkCost.Editor.Prototype
         {
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode and start the Local host first.");
             if (steps != null) throw new InvalidOperationException("Already running");
-            File.WriteAllText(Log, "Weeping Angel polish checks started " + DateTime.Now + "\n");
+            guestMode = File.Exists(GuestFlag);
+            if (guestMode && !File.Exists(BuildExe)) throw new InvalidOperationException("Build " + BuildExe + " first (the guest rows).");
+            File.WriteAllText(Log, "Weeping Angel polish checks started " + DateTime.Now + (guestMode ? " (the guest rows)" : string.Empty) + "\n");
             Directory.CreateDirectory(Shots);
             Status = "Running";
             steps = Run();
@@ -84,6 +97,10 @@ namespace SunkCost.Editor.Prototype
             steps = null;
             stack.Clear();
             Creature.RefuseGrabKillForChecks = false;
+            try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
+            guest = null;
+            MonsterSettings.RosterOverrideForTests = null;
+            MonsterSettings.GhostChanceOverrideForTests = null;
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
             if (keyboard != null) { InputSystem.RemoveDevice(keyboard); keyboard = null; }
@@ -224,7 +241,7 @@ namespace SunkCost.Editor.Prototype
             foreach (string need in new[] { "Idle", "Hunting", "Frozen", "Grabbing" })
                 Check(ac.animationClips.Any(c => c.name == need), "the controller has the " + need + " clip");
             AnimationClip grabbing = ac.animationClips.First(c => c.name == "Grabbing");
-            Check(grabbing.length >= grabDef.HoldSeconds + grabDef.ReleaseSeconds - 0.05f, $"the embrace clip ({grabbing.length:0.00} s) outlasts the hold and the release ({grabDef.HoldSeconds + grabDef.ReleaseSeconds:0.00} s): its loop never shows");
+            Check(grabbing.length >= grabDef.HoldSeconds + grabDef.ReleaseSeconds + 0.05f, $"the embrace clip ({grabbing.length:0.00} s) outlasts the hold and the release ({grabDef.HoldSeconds + grabDef.ReleaseSeconds:0.00} s): its loop never shows");
             Check(rigDef.AuthoredSpeed(CreaturePose.Hunting) > 5f && rigDef.AuthoredSpeed(CreaturePose.Frozen) <= 0f, $"the sprint is speed-matched ({rigDef.AuthoredSpeed(CreaturePose.Hunting)} m/s), the statue is not");
 
             Heading("M0 — to sea, down on day 1 (the roster empty: the rows spawn the Angel)");
@@ -232,7 +249,25 @@ namespace SunkCost.Editor.Prototype
             Check(H.ServerSail("Sea").StartsWith("sailing"), "sailing to sea");
             yield return Expect(() => Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.Sea, 45f, () => "arrived at sea");
             yield return Expect(() => WorldSceneFlow.LocalRider() != null && !WorldSceneFlow.LocalRider().Locked, 5f, () => "controls back");
+            int guestId = -1;
+            if (guestMode)
+            {
+                guest = LaunchGuest();
+                yield return Expect(() => GuestCopy() != null, 40f, () => "the guest's copy is here");
+                guestId = GuestCopy().OwnerId;
+                yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=Sea"), 20f, "the guest joined at sea");
+                ShipParts sea = ShipParts.InWorld(WorldId.Sea);
+                H.MoveLocalIntoDeckCabin("Sea");
+                yield return GuestMove(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f));
+                yield return Wait(0.5f);
+            }
             yield return Descend(1);
+            if (guestMode)
+            {
+                yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "the guest is in the site");
+                yield return GuestRows(WorldSceneFlow.FindCar(), guestId);
+                yield break;
+            }
             ElevatorController car = WorldSceneFlow.FindCar();
             host = Host();
 
@@ -324,6 +359,9 @@ namespace SunkCost.Editor.Prototype
             yield return HostAt(stand, ahead + Vector3.up * 1.6f);
             angel = Spawn(behind);
             yield return Expect(() => angel.ServerGrabbing, 4f, () => "G1 it came and caught the host (" + angel.ServerStatus + ")");
+            int dashesBeforeCatchPress = host.Dashes;
+            bool dashAtCatch = host.TryDash(Vector2.up); // the diver's Alt on the frame the hold lands (G4 then checks the hold was not moved)
+            Say($"G1 a dash on the frame of the catch: {(dashAtCatch ? "started, before the hold reached the owner" : "refused ('" + host.DashRefusal + "')")}; dashes {dashesBeforeCatchPress} → {host.Dashes}");
             CreatureGrab grab = angel.GetComponent<CreatureGrab>();
             rig = angel.GetComponent<CreatureRig>(); // this Angel's rig (F1's went with its Angel)
             Vector3 angelHold = angel.transform.position;
@@ -338,7 +376,7 @@ namespace SunkCost.Editor.Prototype
             float sampleUntil = Time.unscaledTime + grab.HoldSeconds - 0.25f;
             float worstMove = 0f, worstLookOff = 0f; bool alwaysGrabbing = true; int grabsDuring = angel.ServerGrabsStarted;
             bool shot03 = false, shot09 = false, shot14 = false, shot20 = false, sideShot = false;
-            float faceAt = -1f; float handsLeftFaceBy = -1f; float handsOnHeadBy = -1f;
+            float faceAt = -1f; float handsLeftFaceBy = -1f; float handsOnHeadBy = -1f; float joltMax = 0f, stillShake = 0f;
             Transform head = Bone(angel, "Head"), handL = Bone(angel, "HandL"), handR = Bone(angel, "HandR");
             while (Time.unscaledTime < sampleUntil && angel.ServerGrabbing)
             {
@@ -348,7 +386,11 @@ namespace SunkCost.Editor.Prototype
                 // the diver's eyes are on the Angel: it is watched the whole embrace
                 host.EyePose(out Vector3 eye, out Quaternion look);
                 Vector3 toFace = angel.transform.TransformPoint(grab.FaceTarget) - eye;
-                worstLookOff = t > grab.GripSeconds ? Mathf.Max(worstLookOff, Vector3.Angle(look * Vector3.forward, toFace)) : worstLookOff;
+                float off = Vector3.Angle(look * Vector3.forward, toFace);
+                worstLookOff = t > grab.GripSeconds ? Mathf.Max(worstLookOff, off) : worstLookOff;
+                float roll = Mathf.Abs(Mathf.DeltaAngle(0f, (Quaternion.Inverse(Quaternion.LookRotation(toFace, Vector3.up)) * look).eulerAngles.z));
+                if (Mathf.Abs(t - grab.GripSeconds) < 0.2f) joltMax = Mathf.Max(joltMax, Mathf.Max(off, roll));
+                if (t > grab.GripSeconds + 0.3f) stillShake = Mathf.Max(stillShake, Mathf.Max(off, roll));
                 if (head != null && handL != null && handR != null)
                 {
                     float handsFromFace = Mathf.Min(Vector3.Distance(handL.position, head.position), Vector3.Distance(handR.position, head.position));
@@ -374,6 +416,8 @@ namespace SunkCost.Editor.Prototype
             Check(worstMove < 0.05f, $"G3 its sprint stopped: it stood still in the hold (moved {worstMove * 100f:0.0} cm)");
             Check(worstLookOff < 12f, $"G3 the diver looks at its face through the hold (at most {worstLookOff:0.0}° off): watched, and the embrace goes on");
             Check(angel.ServerGrabsStarted == grabsDuring, "G7 no second catch during the hold");
+            Say($"G3 the held view: the jolt as the hands close peaks at {joltMax:0.0}° (pitch/yaw off the face, or roll), the stillness trembles up to {stillShake:0.0}°");
+            Check(joltMax > 1f && stillShake > 0.1f && stillShake < 6f, "G3 the view shakes a little: a jolt at the grip, a tremor in the stillness");
 
             Heading("G4/G5 — aligned with the diver; it looks like the embrace");
             float feetGap = Flat(host.transform.position, angel.transform.TransformPoint(grab.GripPoint));
@@ -405,26 +449,249 @@ namespace SunkCost.Editor.Prototype
             Check(angel.ServerGrabsStarted == 1, "G7 still one catch: no re-grab spam");
             yield return StillUnderLook(angel, 1f, "G9 after the hold");
 
-            Heading("G8 — a diver walking away is caught; the kill and a clean end");
+            Heading("D1 — a dash does not save the caught (Dan): the diver dashes into its reach, is caught mid-dash and held the full hold");
+            {
+                Creature.RefuseGrabKillForChecks = true;
+                int grabs0 = angel.ServerGrabsStarted, dashes0 = host.Dashes;
+                LookAway(angel);
+                yield return Expect(() => angel.Pose == CreaturePose.Hunting, 2f, () => "D1 its back turned, it hunts (" + angel.ServerStatus + ")");
+                yield return Expect(() => angel.ServerGrabbing || Flat(angel.transform.position, host.transform.position) < 4.0f, 3f, () => "D1 it closes to 4 m (" + angel.ServerStatus + ")");
+                Keys(Key.S, Key.LeftAlt); yield return null; Keys(Key.S); // dash backwards, into it
+                yield return Expect(() => angel.ServerGrabbing, 2f, () => "D1 caught (" + angel.ServerStatus + ")");
+                Keys();
+                bool dashed = host.Dashes > dashes0;
+                Say($"D1 the dash {(dashed ? "started (" + host.Dashes + ")" : "did not start ('" + host.DashRefusal + "')")}; caught at {Flat(angel.transform.position, host.Grab.CaughtAt):0.00} m");
+                float worstFeet = 0f; bool heldThrough = true; bool refusedInHold = false, triedInHold = false;
+                while (angel.ServerGrabbing && angel.ServerGrabSeconds < grab.HoldSeconds - 0.05f)
+                {
+                    float t = angel.ServerGrabSeconds;
+                    if (!host.IsGrabbed) heldThrough = false;
+                    if (t > grab.GripSeconds + 0.1f) worstFeet = Mathf.Max(worstFeet, Flat(host.transform.position, angel.transform.TransformPoint(grab.GripPoint)));
+                    if (!triedInHold && t > 0.5f) { triedInHold = true; refusedInHold = !host.TryDash(Vector2.down) && host.DashRefusal == "Not now"; Say("D1 a dash 0.5 s into the hold: '" + host.DashRefusal + "'"); }
+                    yield return null;
+                }
+                Check(dashed, "D1 the dash was under way when the hold landed");
+                Check(heldThrough, "D1 held the whole hold: the dash did not carry the diver out of it");
+                Check(worstFeet < 0.08f, $"D1 at the hold point from the grip on ({worstFeet * 100f:0.0} cm at worst): the dash's push was cancelled");
+                Check(refusedInHold, "D1 a second dash inside the hold is refused 'Not now'");
+                yield return Expect(() => !host.IsGrabbed, 1.5f, () => "D1 let go at the hold's end (" + angel.ServerStatus + ")");
+                Check(angel.ServerGrabOutcome.StartsWith("kill refused"), "D1 the hold ran to its kill (refused for the checks), not lost: '" + angel.ServerGrabOutcome + "'");
+                Check(angel.ServerGrabsStarted == grabs0 + 1, "D1 one catch");
+                yield return Expect(() => !angel.ServerGrabbing, grab.ReleaseSeconds + 1f, () => "D1 the hold ended (" + angel.ServerStatus + ")");
+                LookAtAngel(angel);
+                yield return Expect(() => angel.Pose == CreaturePose.Frozen, 1.5f, () => "D1 looked at, a statue again (" + angel.ServerStatus + ")");
+                yield return Wait(1.2f); // the dash's recharge
+            }
+
+            Heading("G8 — a diver walking away is caught, dashes in the hold; the kill and a clean end");
             Creature.RefuseGrabKillForChecks = false;
             Vector3 away = host.transform.position + (host.transform.position - angel.transform.position).normalized * 20f;
             M.ClientLookAt(away + Vector3.up * 1.6f);
             Keys(Key.W); // walking away, back turned
             yield return Expect(() => angel.ServerGrabbing, 4f, () => "G8 the walking host was caught (" + angel.ServerStatus + ")");
             Keys();
-            Check(angel.ServerGrabsStarted == 2, "G8 a second catch after the first let go: it returned to valid behaviour");
+            Check(angel.ServerGrabsStarted == 3, "G8 a third catch after the others let go: it returned to valid behaviour");
             float caughtWalking = Flat(angel.transform.position, host.Grab.CaughtAt);
             Check(caughtWalking <= s.ReachMeters + 0.3f, $"G8 caught walking at {caughtWalking:0.00} m");
+            {
+                // Alt (the key and the call it makes) at 0.1, 0.6 and 1.5 s into the embrace: refused, and the kill lands
+                int dashesAtCatch = host.Dashes, pressed = 0, notNow = 0, started = 0;
+                float[] pressAt = { 0.1f, 0.6f, 1.5f };
+                float worstFeet = 0f;
+                while (!host.IsDead && angel.ServerGrabbing && angel.ServerGrabSeconds < grab.HoldSeconds + 1f)
+                {
+                    float t = angel.ServerGrabSeconds;
+                    if (pressed < pressAt.Length && t >= pressAt[pressed])
+                    {
+                        Keys(Key.W, Key.LeftAlt);
+                        if (host.TryDash(Vector2.up)) started++; else if (host.DashRefusal == "Not now") notNow++;
+                        pressed++;
+                        yield return null;
+                        Keys();
+                    }
+                    if (host.IsGrabbed && t > grab.GripSeconds + 0.1f) worstFeet = Mathf.Max(worstFeet, Flat(host.transform.position, angel.transform.TransformPoint(grab.GripPoint)));
+                    yield return null;
+                }
+                Check(pressed == 3 && started == 0 && notNow == 3 && host.Dashes == dashesAtCatch, $"G8 three dashes in the embrace, all refused 'Not now' (pressed {pressed}, started {started}, 'Not now' {notNow}, dashes {dashesAtCatch} → {host.Dashes})");
+                Check(worstFeet < 0.08f, $"G8 the diver stayed at the hold point through the dashes ({worstFeet * 100f:0.0} cm at worst)");
+            }
             yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), grab.HoldSeconds + 1.5f, () => "G8 death after the hold (" + angel.ServerStatus + ")");
             Check(Mathf.Abs(angel.ServerGrabSeconds - grab.HoldSeconds) < 0.4f || !angel.ServerGrabbing, $"G8 the kill came at the hold's end ({angel.ServerGrabSeconds:0.00} s ≈ {grab.HoldSeconds} s)");
             Check(angel.ServerGrabKills == 1 && angel.ServerGrabOutcome == "killed", "G8 one kill: " + angel.ServerGrabOutcome);
             Check(!host.IsGrabbed, "G8 the hold let go of the dead diver");
             Check(PlayerBody.FindFor(host.OwnerId, WorldScenes.Scene(WorldId.Dive)) != null, "G8 the ordinary death: a body where the diver was held");
             yield return Expect(() => !angel.ServerGrabbing && angel.Pose != CreaturePose.Grabbing, grab.ReleaseSeconds + 1f, () => "G8 the release ran out and the Angel's brain is back (" + angel.ServerStatus + ")");
-            Check(angel.ServerGrabsStarted == 2, "G7 no catch of the dead");
+            Check(angel.ServerGrabsStarted == 3, "G7 no catch of the dead");
             Say("G8 after the kill: " + angel.ServerStatus);
             MonsterSettings.RosterOverrideForTests = null;
             MonsterSettings.GhostChanceOverrideForTests = null;
+        }
+
+        // ---- the guest ------------------------------------------------------------------
+
+        private static Process LaunchGuest()
+        {
+            Directory.CreateDirectory(GuestDir);
+            foreach (string stale in new[] { "command.json", "reply.txt" })
+                if (File.Exists(Path.Combine(GuestDir, stale))) File.Delete(Path.Combine(GuestDir, stale));
+            var tugboat = Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
+            string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
+            var info = new ProcessStartInfo(Path.GetFullPath(BuildExe),
+                "-screen-width 960 -screen-height 540 -screen-fullscreen 0 -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
+            { UseShellExecute = false, CreateNoWindow = true };
+            return Process.Start(info);
+        }
+        private static IEnumerator Send(string json)
+        {
+            string text = json.Replace("{id}", (++guestCommand).ToString());
+            for (int attempt = 0; ; attempt++)
+            {
+                bool written = false;
+                try { File.WriteAllText(Path.Combine(GuestDir, "command.json"), text); written = true; }
+                catch (IOException) when (attempt < 20) { }
+                if (written) break;
+                yield return null;
+            }
+            float deadline = Time.unscaledTime + 10f;
+            while (Time.unscaledTime < deadline)
+            {
+                string reply = Reply();
+                if (reply.StartsWith("id=" + guestCommand + ";")) { lastReply = reply; yield break; }
+                yield return null;
+            }
+            throw new Exception("guest did not answer command " + guestCommand + ": " + json);
+        }
+        private static string Reply()
+        {
+            try { string p = Path.Combine(GuestDir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
+            catch (IOException) { return string.Empty; }
+        }
+        private static IEnumerator Snapshot() { yield return Send("{\"id\":{id},\"action\":\"snapshot\"}"); }
+        private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label)
+        {
+            float deadline = Time.unscaledTime + seconds;
+            while (Time.unscaledTime < deadline)
+            {
+                yield return Snapshot();
+                if (predicate(lastReply)) { Check(true, label); yield break; }
+                yield return Wait(0.2f);
+            }
+            throw new Exception(label + "\n" + lastReply);
+        }
+        private static string Vec(Vector3 v) => "{\"x\":" + F(v.x) + ",\"y\":" + F(v.y) + ",\"z\":" + F(v.z) + "}";
+        private static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        private static string GuestPlayerLine(string reply, int ownerId) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("player=" + ownerId + ";")) ?? string.Empty;
+        private static string GuestMonsterLine(string reply) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("monster=" + MonsterKind.WeepingAngel + ";")) ?? string.Empty;
+        private static string Text(string line, string key)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(line, "(?:^|; )" + key + "=([^;]*)");
+            return m.Success ? m.Groups[1].Value.Trim() : string.Empty;
+        }
+        private static Vector3 VecField(string line, string key)
+        {
+            string[] parts = Text(line, key).Trim('(', ')').Split(',');
+            if (parts.Length != 3) return new Vector3(float.NaN, float.NaN, float.NaN);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            return new Vector3(float.Parse(parts[0], inv), float.Parse(parts[1], inv), float.Parse(parts[2], inv));
+        }
+        private static HQPlayerController GuestCopy() => Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
+        private static IEnumerator GuestMove(Vector3 to) { yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(to) + "}"); }
+        private static IEnumerator GuestLook(Vector3 aim) { yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(aim) + "}"); }
+
+        // R1-R3: a remote diver's eyes freeze it; a guest embraced, seen from the guest's own
+        // screen and from the host (a spectator's and the TV's source: the guest's EyePose);
+        // the release and the kill on the guest.
+        private static IEnumerator GuestRows(ElevatorController car, int guestId)
+        {
+            HQPlayerController host = Host();
+            HQPlayerController copy = GuestCopy();
+            Check(copy != null && copy.OwnerId == guestId, "the host holds the guest's copy");
+
+            Heading("R1 — the guest's eyes alone freeze it (the host's back is turned)");
+            Vector3 angelAt = Seabed(car, 60f, 38f);
+            Vector3 hostSpot = Seabed(car, 60f, 26f);
+            Vector3 guestSpot = Seabed(car, 78f, 29f);
+            yield return HostAt(hostSpot, Seabed(car, 60f, 10f) + Vector3.up * 1.6f);
+            yield return GuestMove(guestSpot);
+            yield return GuestLook(angelAt + Vector3.up * 1.6f);
+            yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), guestSpot) < 1.5f, 8f, "R1 the guest stands about 11 m from the Angel's spot, looking at it");
+            WeepingAngel angel = Spawn(angelAt);
+            yield return Expect(() => angel.Pose == CreaturePose.Frozen && angel.ServerWatcherId == guestId, 3f, () => "R1 frozen, watched by the guest (" + angel.ServerStatus + ")");
+            Vector3 frozenAt = angel.transform.position;
+            float until = Time.unscaledTime + 1.5f;
+            while (Time.unscaledTime < until)
+            {
+                Check(angel.Pose == CreaturePose.Frozen, "R1 the guest's look holds it (" + angel.ServerStatus + ")");
+                yield return null;
+            }
+            Check(Flat(angel.transform.position, frozenAt) < 0.01f && !host.IsGrabbed, $"R1 1.5 s under the guest's look alone, it did not move ({Flat(angel.transform.position, frozenAt) * 1000f:0.0} mm)");
+            yield return GuestEventually(r => Text(GuestMonsterLine(r), "pose") == "Frozen", 3f, "R1 the guest's copy shows it Frozen");
+            yield return GuestLook(guestSpot + (guestSpot - angelAt) + Vector3.up * 1.6f);
+            yield return Expect(() => angel.Pose == CreaturePose.Hunting, 3f, () => "R1 the guest looks away: it hunts (" + angel.ServerStatus + ")");
+            LookAtAngel(angel);
+            yield return Expect(() => angel.Pose == CreaturePose.Frozen, 1.5f, () => "R1 the host turns and looks: frozen again (" + angel.ServerStatus + ")");
+            Check(!host.IsGrabbed && !copy.IsGrabbed, "R1 nobody caught");
+            yield return Despawn();
+
+            Heading("R2 — the guest embraced: its own screen, the host's copy of its eyes, the release");
+            Creature.RefuseGrabKillForChecks = true;
+            hostSpot = Seabed(car, 140f, 20f);
+            guestSpot = Seabed(car, 165f, 26f);
+            angelAt = Seabed(car, 165f, 33f);
+            yield return HostAt(hostSpot, Seabed(car, 140f, 5f) + Vector3.up * 1.6f);
+            yield return GuestMove(guestSpot);
+            yield return GuestLook(Seabed(car, 165f, 8f) + Vector3.up * 1.6f);
+            yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), guestSpot) < 1.5f, 8f, "R2 the guest stands with its back to the Angel's spot");
+            angel = Spawn(angelAt);
+            yield return Expect(() => angel.ServerGrabbing, 5f, () => "R2 it came and caught (" + angel.ServerStatus + ")");
+            Check(angel.ServerGrabVictim == copy, "R2 it caught the guest, the nearer diver (" + angel.ServerStatus + ")");
+            CreatureGrab grab = angel.GetComponent<CreatureGrab>();
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "grabbed") == "True" && Text(GuestPlayerLine(r, guestId), "grabHolder") == angel.ObjectId.ToString(), 2f, $"R2 the guest reads itself held by the Angel (holder {angel.ObjectId})");
+            yield return Expect(() => angel.ServerGrabSeconds > grab.GripSeconds + 0.35f, 3f, () => "R2 past the grip");
+            // the host's copy of the guest: where a spectator's and the TV's view comes from
+            copy.EyePose(out Vector3 eye, out Quaternion look);
+            Vector3 face = angel.transform.TransformPoint(grab.FaceTarget);
+            float hostOff = Vector3.Angle(look * Vector3.forward, face - eye);
+            float feetOff = Flat(copy.transform.position, angel.transform.TransformPoint(grab.GripPoint));
+            Say($"R2 on the host the guest's eyes are {hostOff:0.0}° off the Angel's face, {Vector3.Distance(eye, face):0.00} m from it; the guest's copy stands {feetOff * 100f:0.0} cm from the hold point");
+            Check(hostOff < 12f && feetOff < 0.15f, "R2 on the host (spectators, the TV) the held guest looks into the Angel's face from the hold point");
+            yield return Snapshot();
+            string me = GuestPlayerLine(lastReply, guestId);
+            Vector3 camPos = VecField(me, "camPos"), camFwd = VecField(me, "camFwd"), guestFeet = VecField(me, "position");
+            float guestOff = Vector3.Angle(camFwd, face - camPos);
+            float guestFeetOff = Flat(guestFeet, angel.transform.TransformPoint(grab.GripPoint));
+            Say($"R2 on the guest's own screen: {guestOff:0.0}° off the face, the camera {Vector3.Distance(camPos, face):0.00} m from it, the feet {guestFeetOff * 100f:0.0} cm from the hold point; grabT={Text(me, "grabT")} (server {angel.ServerGrabSeconds:0.00})");
+            Check(guestOff < 15f && guestFeetOff < 0.3f, "R2 the guest's own first-person view is turned into the Angel's face, held at the hold point");
+            Check(Text(me, "controllerOn") == "False", "R2 the guest's capsule is off while held");
+            yield return GuestEventually(r => Text(GuestMonsterLine(r), "pose") == "Grabbing", 2f, "R2 the guest's copy of the Angel plays the embrace (pose=Grabbing)");
+            yield return Expect(() => !copy.IsGrabbed, grab.HoldSeconds + 1f, () => "R2 let go at the hold's end, the kill refused (" + angel.ServerStatus + ")");
+            yield return GuestEventually(r => { string l = GuestPlayerLine(r, guestId); return Text(l, "grabbed") == "False" && Text(l, "dead") == "False" && Text(l, "controllerOn") == "True" && Text(l, "grabsFelt") == "1"; }, 3f, "R2 the guest is let go: alive, its capsule back, one hold felt");
+            yield return Expect(() => !angel.ServerGrabbing, grab.ReleaseSeconds + 1f, () => "R2 the hold ended (" + angel.ServerStatus + ")");
+            yield return GuestLook(angel.transform.position + Vector3.up * angel.EyeHeight);
+            yield return Expect(() => angel.Pose == CreaturePose.Frozen && angel.ServerWatcherId == guestId, 2f, () => "R2 the guest looks at it after the hold: frozen by the guest (" + angel.ServerStatus + ")");
+            Check(angel.ServerGrabsStarted == 1, "R2 one catch");
+
+            Heading("R3 — the kill on the guest");
+            Creature.RefuseGrabKillForChecks = false;
+            yield return GuestLook(guestSpot + (guestSpot - angel.transform.position) * 3f + Vector3.up * 1.6f);
+            yield return Expect(() => angel.ServerGrabbing || Flat(angel.transform.position, copy.transform.position) < 4.0f, 6f, () => "R3 the guest looked away: it closes (" + angel.ServerStatus + ")");
+            Vector3 intoIt = angel.transform.position - copy.transform.position; intoIt.y = 0f;
+            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(intoIt) + "}");
+            Say("R3 the guest dashes as it is caught: " + lastReply.Split('\n')[0]);
+            yield return Expect(() => angel.ServerGrabsStarted == 2, 3f, () => "R3 caught again (" + angel.ServerStatus + ")");
+            yield return Expect(() => angel.ServerGrabSeconds > grab.GripSeconds + 0.2f, 3f, () => "R3 past the grip");
+            yield return Send("{\"id\":{id},\"action\":\"dash\",\"aim\":" + Vec(-intoIt) + "}");
+            string inHold = lastReply.Split('\n')[0];
+            Check(inHold.Contains("dash=False") && inHold.Contains("Not now"), "R3 the guest's dash in the hold is refused 'Not now': " + inHold);
+            yield return Snapshot();
+            string held = GuestPlayerLine(lastReply, guestId);
+            float heldGap = Flat(VecField(held, "position"), angel.transform.TransformPoint(grab.GripPoint));
+            Check(Text(held, "grabbed") == "True" && heldGap < 0.3f, $"R3 still held at the hold point on the guest's own screen ({heldGap * 100f:0.0} cm)");
+            yield return Expect(() => angel.ServerGrabKills == 1, grab.HoldSeconds + 1.5f, () => "R3 the kill at the hold's end (" + angel.ServerStatus + ")");
+            yield return GuestEventually(r => { string l = GuestPlayerLine(r, guestId); return Text(l, "dead") == "True" && Text(l, "grabbed") == "False"; }, 4f, "R3 the guest reads itself dead and let go");
+            Check(!host.IsDead && !host.IsGrabbed, "R3 the host untouched");
+            yield return Despawn();
+            yield return GuestEventually(r => GuestMonsterLine(r) == string.Empty, 6f, "R3 the guest's copy went with it");
         }
     }
 }
