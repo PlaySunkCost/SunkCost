@@ -292,6 +292,18 @@ def main():
     L.animate(arm)
     if four_legs:
         prowl(arm)
+    # A kind's own clips (tools/blender/clips/<Kind>.py, 24 September 2026): its
+    # animate(arm, height, L) replaces or adds actions, its CLIPS names the extra
+    # ones to keep. One file per monster, so each can be reworked on its own.
+    own = os.path.join(HERE, "clips", kind + ".py")
+    if os.path.exists(own):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("clips_" + kind, own)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.animate(arm, height, L)
+        clips = tuple(clips) + tuple(getattr(module, "CLIPS", ()))
+        print("own clips from", own)
     # Only the clips this kind uses ride along; the rest are dropped before the export.
     for act in list(bpy.data.actions):
         if act.name not in clips:

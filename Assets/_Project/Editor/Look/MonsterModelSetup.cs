@@ -25,7 +25,7 @@ namespace SunkCost.Editor.Look
         public const string ModelFolder = "Assets/_Project/Models/Monsters";
         public const string ControllerFolder = "Assets/_Project/Animation/Monsters";
         // Poses whose clips loop; Shooting plays once and holds its last frame.
-        private static readonly CreaturePose[] Loops = { CreaturePose.Idle, CreaturePose.Drawn, CreaturePose.Hunting, CreaturePose.Frozen, CreaturePose.Windup, CreaturePose.Rushing, CreaturePose.Fleeing };
+        private static readonly CreaturePose[] Loops = { CreaturePose.Idle, CreaturePose.Drawn, CreaturePose.Hunting, CreaturePose.Frozen, CreaturePose.Windup, CreaturePose.Rushing, CreaturePose.Fleeing, CreaturePose.Grabbing, CreaturePose.Aiming };
         private static readonly string[] EyeNodeNames = { "Eye", "Eyes", "EyePoint", "EyeHeight" };
 
         [MenuItem("Sunk Cost/Look/Apply monster models (every kind with an FBX)")]
