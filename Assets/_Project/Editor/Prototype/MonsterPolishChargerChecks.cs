@@ -576,7 +576,7 @@ namespace SunkCost.Editor.Prototype
             Check(c.ServerRushHits == hits0 + 1 && c.StrikeSerial == strikes0 + 1 && healthDrops == 1, $"C1 one hit, one strike, one health drop (hits {c.ServerRushHits - hits0}, strikes {c.StrikeSerial - strikes0}, drops {healthDrops})");
             Check(host.Vitals.Health == health0 - (int)s.ChargerDamage && host.Vitals.Leaking, $"C1 35 HP and a leak (health {health0} → {host.Vitals.Health}, leaking {host.Vitals.Leaking})");
             Say($"C1 struck {c.LastHitFaceMeters:0.00} m ahead of its middle (face at {c.FrontReach:0.00}); at the hit's frame the skinned snout reached {snoutAtHit:0.00} m and the host's middle stood {hostAlongAtHit:0.00} m ahead, so the snout was {hostAlongAtHit - 0.35f - snoutAtHit:0.00} m short of the capsule's front (negative: inside it)");
-            Check(!float.IsNaN(snoutAtHit) && hostAlongAtHit - 0.35f - snoutAtHit < 0.45f, "C1 the snout is at the diver when the hit lands (no hit from afar)");
+            Check(!float.IsNaN(snoutAtHit) && Mathf.Abs(hostAlongAtHit - 0.35f - snoutAtHit) < 0.3f, "C1 the snout meets the diver when the hit lands: not from afar, not deep inside");
             Check(c.LastHitFaceMeters > c.FrontReach - 0.7f && c.LastHitFaceMeters <= c.FrontReach + 0.4f, "C1 the hit lands at the ram's face, not before it and not after the head passed through");
             Check(host.KnockbacksFelt == felt0 + 1 && host.LastKnockback.Serial == cue0 + 1, "C1 one knock-back, told to the owner and in the replicated cue");
             Vector3 shove = host.transform.position - hostAtHit; shove.y = 0f;
@@ -722,7 +722,7 @@ namespace SunkCost.Editor.Prototype
             float faceGap = Vector3.Dot(wallAt - c.transform.position, lane) - 0.3f; // from its middle to the wall's near face
             float snoutAtWall = SnoutAhead(c, lane);
             Say($"C5 stopped {faceGap:0.00} m from the wall (its face reaches {c.FrontReach:0.00}); the skinned snout reaches {snoutAtWall:0.00} m, {snoutAtWall - faceGap:0.00} m into the wall (positive: through its face)");
-            Check(snoutAtWall - faceGap < 0.3f, "C5 the snout does not bury itself in the wall");
+            Check(Mathf.Abs(snoutAtWall - faceGap) < 0.1f, "C5 the snout stops at the wall: not in it, not short of it");
             Check(c.ServerWallStops == walls0 + 1, "C5 the wall stopped it");
             Check(faceGap > c.FrontReach - 0.25f && faceGap < c.FrontReach + 0.8f, "C5 its face at the wall: no head through the wall, no stop short of it");
             Check(host.Vitals.Health == health0, "C5 the host behind the wall is untouched");

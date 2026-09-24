@@ -194,7 +194,7 @@ MonoBehaviour:
   recoverSeconds: 1.8
   wallDazeSeconds: 0.6
   knockbackMeters: 3
-  frontReach: 1.55
+  frontReach: 1.72
   backReach: 1.7
   diverRadius: 0.35
   prowlStopMeters: 2.4
