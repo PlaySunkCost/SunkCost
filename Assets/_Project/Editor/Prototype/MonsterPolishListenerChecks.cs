@@ -788,74 +788,6 @@ namespace SunkCost.Editor.Prototype
             UnityEngine.Object.Destroy(wall); wall = null;
             yield return null;
 
-            Heading("L5 — three shots running: each charges, burns, hits once and recovers; nothing sticks");
-            for (int i = 1; i <= 3; i++)
-            {
-                yield return Cooled(ears, bolts, "L5." + i);
-                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
-                yield return HostAt(Vector3.MoveTowards(lAt, stand, 7f), lAt);
-                vitals.ServerHealForChecks();
-                hits0 = bolts.ServerHits; fired0 = bolts.ServerFired;
-                yield return Provoke(ears, bolts, host, "L5." + i, 1f);
-                yield return Expect(() => ears.Pose == CreaturePose.Aiming, 0.3f, () => $"L5.{i} Aiming");
-                yield return Expect(() => bolts.ServerFiring && ears.Pose == CreaturePose.Shooting, s.BeamChargeSeconds + 0.3f, () => $"L5.{i} Shooting");
-                yield return BeamOver(bolts, "L5." + i);
-                yield return Expect(() => ears.Pose == CreaturePose.Recovering, 0.3f, () => $"L5.{i} Recovering");
-                Check(bolts.ServerFired == fired0 + 1 && bolts.ServerHits == hits0 + 1, $"L5.{i} one beam, one hit ({bolts.ServerFired - fired0}, {bolts.ServerHits - hits0})");
-                yield return Expect(() => ears.Pose != CreaturePose.Recovering, ears.RecoverSeconds + 0.5f, () => $"L5.{i} out of the recovery: {ears.Pose}");
-            }
-            Check(!bolts.ServerAiming, "L5 no beam left up after the three");
-
-            Heading("L6 — its walks: to a thing's sound (Drawn), to a diver's (Hunting), standing when there, home after the silence");
-            // A thing's sound with no diver within the beam's reach: it charges at the spot, then walks there.
-            yield return HostAt(Seabed(car, Bearing - 70f, 30f) + Flat(Seabed(car, Bearing - 70f, 30f) - car.BottomPosition).normalized * 25f, lAt);
-            vitals.ServerHealForChecks();
-            Check(CreatureSenses.Flat(host.transform.position, lAt) > s.BeamRangeMeters, $"L6 the host is out of the beam's reach ({CreatureSenses.Flat(host.transform.position, lAt):0} m)");
-            yield return Cooled(ears, bolts, "L6");
-            ears.ServerPlaceForChecks(lAt, 0f);
-            Vector3 thing = Vector3.MoveTowards(lAt, Seabed(car, Bearing + 40f, 30f), 12f);
-            ears.DeafForChecks = false;
-            NoiseSystem.Emit(thing, 15f, NoiseKind.Impact, 0);
-            yield return Expect(() => bolts.ServerCharging, 0.5f, () => "L6 a coin's landing drew a charge at the spot");
-            Check(bolts.ServerTargetOwnerId == -1, "L6 no diver near enough to follow: the beam stays on the spot");
-            yield return BeamOver(bolts, "L6");
-            yield return Expect(() => ears.Pose == CreaturePose.Drawn, ears.RecoverSeconds + 0.5f, () => "L6 it walks Drawn toward the sound: " + ears.ServerStatus);
-            Vector3 p0 = ears.transform.position; float t0w = Time.time;
-            yield return Wait(1.0f);
-            float speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
-            float approach = host.WalkSpeed * s.ListenerApproachSpeedFactor;
-            Say($"L6 Drawn at {speed:0.00} m/s (the brain's {approach:0.00}); the rig reads {rig.Speed:0.00}; facing the sound within {FlatAngle(ears.transform.forward, thing - ears.transform.position):0}°");
-            Check(Mathf.Abs(speed - approach) < approach * 0.15f, $"L6 Drawn at the approach speed ({speed:0.00} m/s of {approach:0.00})");
-            Check(FlatAngle(ears.transform.forward, thing - ears.transform.position) < 10f, "L6 it walks facing where it goes");
-            yield return Expect(() => ears.Pose == CreaturePose.Idle, 10f, () => "L6 it stands when there: " + ears.ServerStatus);
-            float off = CreatureSenses.Flat(ears.transform.position, thing);
-            Check(Mathf.Abs(off - s.ShooterStandoffMeters) < 0.5f, $"L6 it stopped {off:0.00} m short of the sound (standoff {s.ShooterStandoffMeters})");
-            // A diver's sound: after the shot it stalks there in Hunting.
-            Vector3 hunter = ears.transform.position;
-            Vector3 diverAt = Vector3.MoveTowards(hunter, Seabed(car, Bearing, 20f), 14f);
-            yield return Cooled(ears, bolts, "L6");
-            yield return HostAt(diverAt, hunter);
-            vitals.ServerHealForChecks();
-            yield return Provoke(ears, bolts, host, "L6", 1f);
-            yield return BeamOver(bolts, "L6");
-            vitals.ServerHealForChecks();
-            yield return Expect(() => ears.Pose == CreaturePose.Hunting, ears.RecoverSeconds + 0.5f, () => "L6 it stalks Hunting toward a diver's sound: " + ears.ServerStatus);
-            p0 = ears.transform.position; t0w = Time.time;
-            yield return Wait(0.8f);
-            speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
-            Say($"L6 Hunting at {speed:0.00} m/s; the rig reads {rig.Speed:0.00}");
-            Check(Mathf.Abs(speed - approach) < approach * 0.15f, $"L6 Hunting at the approach speed ({speed:0.00} m/s)");
-            yield return Expect(() => ears.Pose == CreaturePose.Idle, 10f, () => "L6 it stands at the standoff: " + ears.ServerStatus);
-            // The silence: the host crouches still; after ListenerForgetSeconds it drifts home, Drawn, and stands there.
-            yield return Expect(() => ears.Pose == CreaturePose.Drawn, s.ListenerForgetSeconds + 6f, () => "L6 after the silence it walks home: " + ears.ServerStatus);
-            p0 = ears.transform.position; t0w = Time.time;
-            yield return Wait(1.0f);
-            speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
-            Say($"L6 home at {speed:0.00} m/s");
-            Check(Mathf.Abs(speed - host.WalkSpeed * 0.35f) < host.WalkSpeed * 0.35f * 0.2f, $"L6 home at the drift speed ({speed:0.00} m/s)");
-            yield return Expect(() => ears.Pose == CreaturePose.Idle && CreatureSenses.Flat(ears.transform.position, ears.Home) < 2f, 30f, () => "L6 home, idle: " + ears.ServerStatus);
-            Check(!bolts.ServerAiming && bolts.ServerHits >= 1, "L6 back to rest");
-
             Heading("L8 — the dark beam eats the light: the haze, the sink on a wall, the lights near it turned down for the render only and put back exactly");
             {
                 yield return Cooled(ears, bolts, "L8");
@@ -930,6 +862,76 @@ namespace SunkCost.Editor.Prototype
                 ears.DeafForChecks = false;
                 vitals.ServerHealForChecks();
             }
+
+            Heading("L5 — three shots running: each charges, burns, hits once and recovers; nothing sticks");
+            for (int i = 1; i <= 3; i++)
+            {
+                yield return Cooled(ears, bolts, "L5." + i);
+                ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(stand - lAt)).eulerAngles.y);
+                yield return HostAt(Vector3.MoveTowards(lAt, stand, 7f), lAt);
+                vitals.ServerHealForChecks();
+                hits0 = bolts.ServerHits; fired0 = bolts.ServerFired;
+                yield return Provoke(ears, bolts, host, "L5." + i, 1f);
+                yield return Expect(() => ears.Pose == CreaturePose.Aiming, 0.3f, () => $"L5.{i} Aiming");
+                yield return Expect(() => bolts.ServerFiring && ears.Pose == CreaturePose.Shooting, s.BeamChargeSeconds + 0.3f, () => $"L5.{i} Shooting");
+                yield return BeamOver(bolts, "L5." + i);
+                yield return Expect(() => ears.Pose == CreaturePose.Recovering, 0.3f, () => $"L5.{i} Recovering");
+                Check(bolts.ServerFired == fired0 + 1 && bolts.ServerHits == hits0 + 1, $"L5.{i} one beam, one hit ({bolts.ServerFired - fired0}, {bolts.ServerHits - hits0})");
+                yield return Expect(() => ears.Pose != CreaturePose.Recovering, ears.RecoverSeconds + 0.5f, () => $"L5.{i} out of the recovery: {ears.Pose}");
+            }
+            Check(!bolts.ServerAiming, "L5 no beam left up after the three");
+
+            Heading("L6 — its walks: to a thing's sound (Drawn), to a diver's (Hunting), standing when there, home after the silence");
+            // A thing's sound with no diver within the beam's reach: it charges at the spot, then walks there.
+            yield return HostAt(Seabed(car, Bearing - 70f, 30f) + Flat(Seabed(car, Bearing - 70f, 30f) - car.BottomPosition).normalized * 25f, lAt);
+            vitals.ServerHealForChecks();
+            Check(CreatureSenses.Flat(host.transform.position, lAt) > s.BeamRangeMeters, $"L6 the host is out of the beam's reach ({CreatureSenses.Flat(host.transform.position, lAt):0} m)");
+            yield return Cooled(ears, bolts, "L6");
+            ears.ServerPlaceForChecks(lAt, 0f);
+            // Toward the car along the bearing the rows stand on (open ground; run 7's sideways spot had
+            // something in its way and it forgot the sound before it arrived).
+            Vector3 thing = Vector3.MoveTowards(lAt, Seabed(car, Bearing, 14f), 12f);
+            ears.DeafForChecks = false;
+            NoiseSystem.Emit(thing, 15f, NoiseKind.Impact, 0);
+            yield return Expect(() => bolts.ServerCharging, 0.5f, () => "L6 a coin's landing drew a charge at the spot");
+            Check(bolts.ServerTargetOwnerId == -1, "L6 no diver near enough to follow: the beam stays on the spot");
+            yield return BeamOver(bolts, "L6");
+            yield return Expect(() => ears.Pose == CreaturePose.Drawn, ears.RecoverSeconds + 0.5f, () => "L6 it walks Drawn toward the sound: " + ears.ServerStatus);
+            Vector3 p0 = ears.transform.position; float t0w = Time.time;
+            yield return Wait(1.0f);
+            float speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
+            float approach = host.WalkSpeed * s.ListenerApproachSpeedFactor;
+            Say($"L6 Drawn at {speed:0.00} m/s (the brain's {approach:0.00}); the rig reads {rig.Speed:0.00}; facing the sound within {FlatAngle(ears.transform.forward, thing - ears.transform.position):0}°");
+            Check(Mathf.Abs(speed - approach) < approach * 0.15f, $"L6 Drawn at the approach speed ({speed:0.00} m/s of {approach:0.00})");
+            Check(FlatAngle(ears.transform.forward, thing - ears.transform.position) < 10f, "L6 it walks facing where it goes");
+            yield return Expect(() => ears.Pose == CreaturePose.Idle, 10f, () => $"L6 it stands when there (the sound at {thing:F1}): " + ears.ServerStatus);
+            float off = CreatureSenses.Flat(ears.transform.position, thing);
+            Check(Mathf.Abs(off - s.ShooterStandoffMeters) < 0.5f, $"L6 it stopped {off:0.00} m short of the sound (standoff {s.ShooterStandoffMeters})");
+            // A diver's sound: after the shot it stalks there in Hunting.
+            Vector3 hunter = ears.transform.position;
+            Vector3 diverAt = Vector3.MoveTowards(hunter, Seabed(car, Bearing, 20f), 14f);
+            yield return Cooled(ears, bolts, "L6");
+            yield return HostAt(diverAt, hunter);
+            vitals.ServerHealForChecks();
+            yield return Provoke(ears, bolts, host, "L6", 1f);
+            yield return BeamOver(bolts, "L6");
+            vitals.ServerHealForChecks();
+            yield return Expect(() => ears.Pose == CreaturePose.Hunting, ears.RecoverSeconds + 0.5f, () => "L6 it stalks Hunting toward a diver's sound: " + ears.ServerStatus);
+            p0 = ears.transform.position; t0w = Time.time;
+            yield return Wait(0.8f);
+            speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
+            Say($"L6 Hunting at {speed:0.00} m/s; the rig reads {rig.Speed:0.00}");
+            Check(Mathf.Abs(speed - approach) < approach * 0.15f, $"L6 Hunting at the approach speed ({speed:0.00} m/s)");
+            yield return Expect(() => ears.Pose == CreaturePose.Idle, 10f, () => "L6 it stands at the standoff: " + ears.ServerStatus);
+            // The silence: the host crouches still; after ListenerForgetSeconds it drifts home, Drawn, and stands there.
+            yield return Expect(() => ears.Pose == CreaturePose.Drawn, s.ListenerForgetSeconds + 6f, () => "L6 after the silence it walks home: " + ears.ServerStatus);
+            p0 = ears.transform.position; t0w = Time.time;
+            yield return Wait(1.0f);
+            speed = CreatureSenses.Flat(p0, ears.transform.position) / (Time.time - t0w);
+            Say($"L6 home at {speed:0.00} m/s");
+            Check(Mathf.Abs(speed - host.WalkSpeed * 0.35f) < host.WalkSpeed * 0.35f * 0.2f, $"L6 home at the drift speed ({speed:0.00} m/s)");
+            yield return Expect(() => ears.Pose == CreaturePose.Idle && CreatureSenses.Flat(ears.transform.position, ears.Home) < 2f, 30f, () => "L6 home, idle: " + ears.ServerStatus);
+            Check(!bolts.ServerAiming && bolts.ServerHits >= 1, "L6 back to rest");
 
             if (Films)
             {
