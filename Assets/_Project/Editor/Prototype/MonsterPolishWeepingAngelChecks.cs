@@ -172,7 +172,8 @@ namespace SunkCost.Editor.Prototype
                 yield return null;
             }
             float moved = Vector3.Distance(angel.transform.position, at);
-            Check(moved < 0.01f && worst < 0.004f, $"{label}: nothing moves under the look for {seconds:0.0} s (body {moved * 1000f:0.0} mm, worst bone {worstBone} {worst * 1000f:0.0} mm)");
+            Check(before.Count == WatchedBones.Length, $"{label}: all {WatchedBones.Length} watched bones found ({before.Count})");
+            Check(moved < 0.01f && worst < 0.004f, $"{label}: nothing moves under the look for {seconds:0.0} s (body {moved * 1000f:0.0} mm, worst of {before.Count} bones {worstBone} {worst * 1000f:0.0} mm)");
         }
 
         private static IEnumerator Descend(int day)
@@ -324,6 +325,7 @@ namespace SunkCost.Editor.Prototype
             angel = Spawn(behind);
             yield return Expect(() => angel.ServerGrabbing, 4f, () => "G1 it came and caught the host (" + angel.ServerStatus + ")");
             CreatureGrab grab = angel.GetComponent<CreatureGrab>();
+            rig = angel.GetComponent<CreatureRig>(); // this Angel's rig (F1's went with its Angel)
             Vector3 angelHold = angel.transform.position;
             float catchDistance = Flat(angelHold, host.Grab.CaughtAt);
             Check(catchDistance <= s.ReachMeters + 0.05f && catchDistance >= 0.5f, $"G2 caught at {catchDistance:0.00} m (reach {s.ReachMeters} m): not from afar, not from inside the diver");
