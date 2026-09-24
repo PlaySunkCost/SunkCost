@@ -155,7 +155,10 @@ namespace SunkCost.Editor.Prototype
         private static IEnumerator Cooled(Listener ears, CreatureBolts bolts, string row)
         {
             MonsterSettings s = Settings;
-            // From the LAST beam's end, read each frame: it may fire again at an old sound while this waits.
+            // Deaf from the start of the wait (the car's scream and other world sounds kept it
+            // shooting through the whole wait, L4 run 6), and ready counted from the LAST beam's end.
+            ears.ServerForgetForChecks();
+            ears.DeafForChecks = true;
             yield return Expect(() => !bolts.ServerAiming && Time.time >= bolts.ServerEndedAt + s.ListenerShotCooldownSeconds + 0.2f && ears.Pose != CreaturePose.Recovering && ears.Pose != CreaturePose.Shooting, 2f * (s.BeamChargeSeconds + s.BeamSeconds + s.ListenerShotCooldownSeconds) + 2f, () => row + " ready to shoot again (" + ears.ServerStatus + ")");
             // No old sound fires the next beam, and none while the row sets up (a teleported
             // diver's landing is a sound): each row draws its own (Provoke hears again).
@@ -294,6 +297,8 @@ namespace SunkCost.Editor.Prototype
             }
         }
         private static Recorder recorder;
+        // Dan, 24 September 2026: no more GIFs. The film rows stay in the file but are skipped.
+        private const bool Films = false;
 
         // One dash to the host's left on the virtual keyboard (Alt + A).
         private static IEnumerator DashLeft()
@@ -616,18 +621,21 @@ namespace SunkCost.Editor.Prototype
                 yield return Wait(0.3f);
                 hits0 = bolts.ServerHits; int dashes = host.Dashes;
                 closest = float.PositiveInfinity;
-                recorder = new Recorder("Listener-dash-dodge", centre);
+                recorder = Films ? new Recorder("Listener-dash-dodge", centre) : null;
                 void MeasureAndFilm() { Measure(); TraceTick(); recorder?.Tick(host, bolts.ServerPhase + (bolts.ServerLockBroken ? "-broken" : "")); }
-                for (int f = 0; f < 8; f++) { recorder.Tick(host, "before"); yield return Wait(1f / 15f); }
+                for (int f = 0; Films && f < 8; f++) { recorder.Tick(host, "before"); yield return Wait(1f / 15f); }
                 yield return Provoke(ears, bolts, host, row, 1f);
                 float t0 = bolts.ServerChargedAt;
                 TraceStart();
                 // Dashing out as it is about to light (0.75 s into the 1 s charge): the flash lands beside the diver.
-                while (Time.time < t0 + 0.75f) { TraceTick(); recorder.Tick(host, "Charging"); yield return null; }
+                while (Time.time < t0 + 0.75f) { TraceTick(); recorder?.Tick(host, "Charging"); yield return null; }
                 yield return DashThenCircle(centre, () => bolts.ServerAiming, MeasureAndFilm);
-                for (float until = Time.unscaledTime + 0.5f; Time.unscaledTime < until;) { recorder.Tick(host, "after"); yield return null; }
-                Say($"{row} filmed {recorder.Frames} frames (Temp/polish-Listener-gifs/Listener-dash-dodge)");
-                recorder.Close(); recorder = null;
+                if (recorder != null)
+                {
+                    for (float until = Time.unscaledTime + 0.5f; Time.unscaledTime < until;) { recorder.Tick(host, "after"); yield return null; }
+                    Say($"{row} filmed {recorder.Frames} frames (Temp/polish-Listener-gifs/Listener-dash-dodge)");
+                    recorder.Close(); recorder = null;
+                }
                 TraceSay(row);
                 Check(dashJump > 4.5f, $"{row} the dash really moved the diver ({dashJump:0.00} m)");
                 Check(bolts.ServerLockBrokenAt - dashAt < 0.15f, $"{row} the lock broke at the dash ({bolts.ServerLockBrokenAt - dashAt:0.00} s after the press)");
@@ -923,47 +931,51 @@ namespace SunkCost.Editor.Prototype
                 vitals.ServerHealForChecks();
             }
 
-            Heading("L7 — captures for Dan: the dark beam without its shade and with it; the Lure's beam at the old width and the new (Temp/polish-Listener-gifs)");
-            float bigWidth = bolts.HalfWidth;
-            try
+            if (Films)
             {
-                foreach (bool shaded in new[] { false, true })
+                Heading("L7 — captures for Dan: the dark beam without its shade and with it; the Lure's beam at the old width and the new (Temp/polish-Listener-gifs)");
+                float bigWidth = bolts.HalfWidth;
+                try
                 {
-                    yield return Cooled(ears, bolts, "L7");
-                    MonsterBeamShade.OffForChecks = !shaded;
-                    Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
-                    ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
-                    yield return HostAt(spot, lAt);
-                    vitals.ServerHealForChecks();
-                    yield return Wait(0.4f);
-                    yield return Provoke(ears, bolts, host, "L7", 1f);
-                    yield return Film(bolts, lAt, spot, "Listener-" + (shaded ? "after-shade" : "before-shade"));
-                    vitals.ServerHealForChecks();
+                    foreach (bool shaded in new[] { false, true })
+                    {
+                        yield return Cooled(ears, bolts, "L7");
+                        MonsterBeamShade.OffForChecks = !shaded;
+                        Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
+                        ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
+                        yield return HostAt(spot, lAt);
+                        vitals.ServerHealForChecks();
+                        yield return Wait(0.4f);
+                        yield return Provoke(ears, bolts, host, "L7", 1f);
+                        yield return Film(bolts, lAt, spot, "Listener-" + (shaded ? "after-shade" : "before-shade"));
+                        vitals.ServerHealForChecks();
+                    }
                 }
+                finally { MonsterBeamShade.OffForChecks = false; }
+                M.ServerDespawnMonsters();
+                yield return Expect(() => Creature.All.Count == 0, 5f, () => "L7 the Listener despawned");
+                Creature lure = MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, lAt);
+                Check(lure != null, "L7 a Lure for its beam");
+                CreatureBolts lureBolts = lure.GetComponent<CreatureBolts>();
+                float lureWidth = lureBolts.HalfWidth;
+                Say($"L7 the Lure's prefab halfWidth {lureWidth}");
+                foreach (float w in new[] { 0.12f, Mathf.Max(lureWidth, bigWidth) })
+                {
+                    SetHalfWidth(lureBolts, w);
+                    Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
+                    lure.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
+                    yield return HostAt(spot, lAt);
+                    Check(host.LampOn, "L7 the host's lamp is on");
+                    vitals.ServerHealForChecks();
+                    yield return Expect(() => lureBolts.ServerCharging, 12f, () => "L7 the Lure saw the lamp and charges: " + lure.ServerStatus);
+                    yield return Film(lureBolts, lAt, spot, "Lure-" + (w < 0.2f ? "before" : "after") + "-" + (w * 2f).ToString("0.00") + "m");
+                    vitals.ServerHealForChecks();
+                    yield return Expect(() => !lureBolts.ServerAiming, 1f, () => "L7 the Lure's beam is over");
+                    yield return Wait(Settings.LureShotCooldownSeconds + 0.3f);
+                }
+                SetHalfWidth(lureBolts, lureWidth);
             }
-            finally { MonsterBeamShade.OffForChecks = false; }
-            M.ServerDespawnMonsters();
-            yield return Expect(() => Creature.All.Count == 0, 5f, () => "L7 the Listener despawned");
-            Creature lure = MonsterRoster.ServerSpawnForChecks(MonsterKind.Lure, lAt);
-            Check(lure != null, "L7 a Lure for its beam");
-            CreatureBolts lureBolts = lure.GetComponent<CreatureBolts>();
-            float lureWidth = lureBolts.HalfWidth;
-            Say($"L7 the Lure's prefab halfWidth {lureWidth}");
-            foreach (float w in new[] { 0.12f, Mathf.Max(lureWidth, bigWidth) })
-            {
-                SetHalfWidth(lureBolts, w);
-                Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
-                lure.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
-                yield return HostAt(spot, lAt);
-                Check(host.LampOn, "L7 the host's lamp is on");
-                vitals.ServerHealForChecks();
-                yield return Expect(() => lureBolts.ServerCharging, 12f, () => "L7 the Lure saw the lamp and charges: " + lure.ServerStatus);
-                yield return Film(lureBolts, lAt, spot, "Lure-" + (w < 0.2f ? "before" : "after") + "-" + (w * 2f).ToString("0.00") + "m");
-                vitals.ServerHealForChecks();
-                yield return Expect(() => !lureBolts.ServerAiming, 1f, () => "L7 the Lure's beam is over");
-                yield return Wait(Settings.LureShotCooldownSeconds + 0.3f);
-            }
-            SetHalfWidth(lureBolts, lureWidth);
+            else Say("L7 captures skipped (Dan: no more GIFs)");
 
             M.ServerDespawnMonsters();
             yield return Expect(() => Creature.All.Count == 0, 5f, () => "despawned");
