@@ -649,7 +649,15 @@ namespace SunkCost.Editor.Prototype
 
             Heading("R3 — the kill on the guest");
             Creature.RefuseGrabKillForChecks = false;
-            yield return GuestLook(copy.transform.position + (copy.transform.position - angel.transform.position) * 3f + Vector3.up * 1.6f, copy.transform.position);
+            // Step back out of the statue first: at 0.7 m the reaching statue's bounds reach past the
+            // guest's eyes, so a diver standing in them is "watching" whichever way it faces
+            // (CreatureSenses.Watched reads the renderer bounds' corners).
+            Vector3 backOff = copy.transform.position - angel.transform.position; backOff.y = 0f;
+            Vector3 r3Spot = copy.transform.position + backOff.normalized * 4f;
+            yield return GuestMove(r3Spot);
+            yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), r3Spot) < 1.0f, 6f, "R3 the guest steps back 4 m, still watching it");
+            Check(angel.Pose == CreaturePose.Frozen, "R3 still frozen under the guest's look (" + angel.ServerStatus + ")");
+            yield return GuestLook(r3Spot + backOff.normalized * 10f + Vector3.up * 1.6f, r3Spot);
             // Wait on the server's catch, then the guest's Alt at once (the guest has not yet seen the
             // hold, or just has): whichever, the dash must not carry it out of the embrace.
             float lookedAwayAt = Time.unscaledTime;
