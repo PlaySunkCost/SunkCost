@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SunkCost.Diving;
@@ -28,11 +29,21 @@ namespace SunkCost.Editor.Prototype
     //   7 repeated triggers (G3)                    8 the end state (G1)
     //   9 controls and physics back (E1 after the revive, G2/G3 after a refused kill)
     // and the Impostor's touch unchanged (I1). Log Temp/polish-LongWalker-matrix.log;
-    // captures in Temp/polish-LongWalker/. Job "polish-LongWalker".
+    // captures in Temp/polish-LongWalker/. Job "polish-LongWalker". With
+    // Temp/polish-LongWalker-guest.flag present the same job runs the guest's rows
+    // instead (R1, R2): a guest build (Builds/HQPrototypeLocal) joins; held, its own
+    // screen shows the hold (R1), and dead, its spectator view shows the host's (R2).
     public static class MonsterPolishLongWalkerChecks
     {
         private const string Log = "Temp/polish-LongWalker-matrix.log";
         private const string Shots = "Temp/polish-LongWalker";
+        private const string GuestFlag = "Temp/polish-LongWalker-guest.flag";
+        private const string GuestDir = "Temp/polish-LongWalker-guest";
+        private const string BuildExe = "Builds/HQPrototypeLocal/SunkCostHQ.exe";
+        private static bool guestMode;
+        private static Process guest;
+        private static int guestCommand = 3100;
+        private static string lastReply = string.Empty;
 
         private static IEnumerator steps;
         private static readonly Stack<IEnumerator> stack = new();
@@ -52,7 +63,9 @@ namespace SunkCost.Editor.Prototype
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode and start the Local host first.");
             if (steps != null) throw new InvalidOperationException("Already running");
             Directory.CreateDirectory(Shots);
-            File.WriteAllText(Log, "Long Walker polish checks started " + DateTime.Now + "\n");
+            guestMode = File.Exists(GuestFlag);
+            if (guestMode && !File.Exists(BuildExe)) throw new InvalidOperationException("Build " + BuildExe + " first (the guest rows).");
+            File.WriteAllText(Log, "Long Walker polish checks started " + DateTime.Now + (guestMode ? " (the guest rows)" : string.Empty) + "\n");
             Status = "Running";
             steps = Run();
             stack.Clear();
@@ -80,6 +93,8 @@ namespace SunkCost.Editor.Prototype
             steps = null;
             stack.Clear();
             Creature.RefuseGrabKillForChecks = false;
+            try { if (guest != null && !guest.HasExited) guest.Kill(); } catch (Exception) { }
+            guest = null;
             if (wall != null) UnityEngine.Object.Destroy(wall);
             HQPlayerController.KeyboardForChecks = null;
             HQPlayerController.BypassInputGateForChecks = false;
@@ -224,6 +239,150 @@ namespace SunkCost.Editor.Prototype
             if (pressKeys) Keys();
         }
 
+        // ---- the guest (the replication rows) ---------------------------------------------
+
+        private static Process LaunchGuest()
+        {
+            Directory.CreateDirectory(GuestDir);
+            foreach (string stale in new[] { "command.json", "reply.txt" })
+                if (File.Exists(Path.Combine(GuestDir, stale))) File.Delete(Path.Combine(GuestDir, stale));
+            var tugboat = UnityEngine.Object.FindAnyObjectByType<FishNet.Transporting.Tugboat.Tugboat>(FindObjectsInactive.Include);
+            string port = tugboat != null ? " -hq-local-port " + tugboat.GetPort() : string.Empty;
+            var info = new ProcessStartInfo(Path.GetFullPath(BuildExe),
+                "-screen-width 960 -screen-height 540 -screen-fullscreen 0 -hq-auto-join-local 127.0.0.1" + port + " -hq-inventory-test-dir \"" + Path.GetFullPath(GuestDir) + "\" -logFile \"" + Path.GetFullPath(GuestDir + "/player.log") + "\"")
+            { UseShellExecute = false, CreateNoWindow = true };
+            return Process.Start(info);
+        }
+        private static IEnumerator Send(string json)
+        {
+            string text = json.Replace("{id}", (++guestCommand).ToString());
+            for (int attempt = 0; ; attempt++)
+            {
+                bool written = false;
+                try { File.WriteAllText(Path.Combine(GuestDir, "command.json"), text); written = true; }
+                catch (IOException) when (attempt < 20) { }
+                if (written) break;
+                yield return null;
+            }
+            float deadline = Time.unscaledTime + 10f;
+            while (Time.unscaledTime < deadline)
+            {
+                string reply = Reply();
+                if (reply.StartsWith("id=" + guestCommand + ";")) { lastReply = reply; yield break; }
+                yield return null;
+            }
+            throw new Exception("guest did not answer command " + guestCommand + ": " + json);
+        }
+        private static string Reply()
+        {
+            try { string p = Path.Combine(GuestDir, "reply.txt"); return File.Exists(p) ? File.ReadAllText(p) : string.Empty; }
+            catch (IOException) { return string.Empty; }
+        }
+        private static IEnumerator Snapshot() { yield return Send("{\"id\":{id},\"action\":\"snapshot\"}"); }
+        private static IEnumerator GuestEventually(Func<string, bool> predicate, float seconds, string label)
+        {
+            float deadline = Time.unscaledTime + seconds;
+            while (Time.unscaledTime < deadline)
+            {
+                yield return Snapshot();
+                if (predicate(lastReply)) { Check(true, label); yield break; }
+                yield return Wait(0.2f);
+            }
+            throw new Exception(label + "\n" + lastReply);
+        }
+        private static string Vec(Vector3 v) => "{\"x\":" + F(v.x) + ",\"y\":" + F(v.y) + ",\"z\":" + F(v.z) + "}";
+        private static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        private static string GuestPlayerLine(string reply, int ownerId) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("player=" + ownerId + ";")) ?? string.Empty;
+        private static string Text(string line, string key)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(line, "(?:^|; )" + key + "=([^;]*)");
+            return m.Success ? m.Groups[1].Value.Trim() : string.Empty;
+        }
+        private static Vector3 VecField(string line, string key)
+        {
+            string[] parts = Text(line, key).Trim('(', ')').Split(',');
+            if (parts.Length != 3) return new Vector3(float.NaN, float.NaN, float.NaN);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            return new Vector3(float.Parse(parts[0], inv), float.Parse(parts[1], inv), float.Parse(parts[2], inv));
+        }
+        private static HQPlayerController GuestCopy() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
+        private static IEnumerator GuestMove(Vector3 to) { yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(to) + "}"); }
+        private static IEnumerator GuestLook(Vector3 aim) { yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(aim) + "}"); }
+        private static IEnumerator GuestLamp(bool on) { yield return Send("{\"id\":{id},\"action\":\"lamp\",\"slot\":" + (on ? 1 : 0) + "}"); }
+
+        // What another screen shows of a hold: the camera the guest's snapshot reports (its
+        // own eyes when alive, its spectator view when dead) against the held diver's eye
+        // pose as the host computes it, and against the Walker's Face anchor on the host.
+        private static void CompareView(string row, string line, HQPlayerController held, Creature walker, float maxMetres, float maxDegrees)
+        {
+            Vector3 cam = VecField(line, "camPos"), fwd = VecField(line, "camFwd");
+            held.EyePose(out Vector3 eye, out Quaternion _);
+            Transform face = Named(walker, "Face");
+            Vector3 toFace = (face != null ? face.position : walker.EyePoint) - cam;
+            float gap = Vector3.Distance(cam, eye), angle = Vector3.Angle(fwd, toFace);
+            Say($"{row} the guest's camera at {cam:F2} looking {fwd:F2}; the held eyes on the host {eye:F2}: {gap:0.00} m apart; the face {toFace.magnitude:0.00} m off, {angle:0.0} deg from the view");
+            Check(gap < maxMetres, $"{row} the guest's camera is at the held diver's eyes ({gap:0.00} m)");
+            Check(angle < maxDegrees && toFace.magnitude < 0.9f, $"{row} and it looks into the Walker's face ({angle:0.0} deg, {toFace.magnitude:0.00} m)");
+        }
+
+        private static IEnumerator GuestRows(HQPlayerController host, int guestId, ElevatorController car)
+        {
+            HQPlayerController guestCopy = GuestCopy();
+            Heading("R1 — the guest is caught: its own screen is lifted to the Walker's face, the host sees it held, then it dies");
+            if (host.LampOn) yield return Press(Key.F);
+            yield return Expect(() => !host.LampOn, 2f, () => "R1 the host's lamp is off");
+            yield return HostAt(Seabed(car, 300f, 34f), Seabed(car, 300f, 36f));
+            Vector3 guestSpot = Seabed(car, 60f, 24f), walkerAt = Seabed(car, 60f, 30f);
+            yield return GuestLamp(true);
+            yield return GuestMove(guestSpot);
+            yield return GuestLook(walkerAt + Vector3.up * 2.5f);
+            yield return GuestEventually(r => Flat(VecField(GuestPlayerLine(r, guestId), "position"), guestSpot) < 1.5f && Text(GuestPlayerLine(r, guestId), "lamp") == "True", 8f, "R1 the guest stands lit on the seabed");
+            int felt0 = int.TryParse(Text(GuestPlayerLine(lastReply, guestId), "grabsFelt"), out int f0) ? f0 : 0;
+            Creature walker = Spawn(MonsterKind.LongWalker, walkerAt, YawTo(walkerAt, guestSpot));
+            yield return Expect(() => walker.Pose == CreaturePose.Hunting && walker.TargetId == guestId, 4f, () => "R1 it hunts the lit guest: " + walker.ServerStatus);
+            yield return Expect(() => walker.ServerGrabbing && walker.ServerGrabVictim == guestCopy, 12f, () => "R1 it caught the guest: " + walker.ServerStatus);
+            int holderId = walker.NetworkObject.ObjectId;
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "grabbed") == "True" && Text(GuestPlayerLine(r, guestId), "grabHolder") == holderId.ToString(), 1.5f, $"R1 the guest reads itself held by the Walker (object {holderId})");
+            CreatureGrab core = walker.GrabCore;
+            yield return Expect(() => walker.ServerGrabSeconds > core.LiftSeconds + 0.1f, core.LiftSeconds + 1f, () => "R1 past the lift");
+            yield return Snapshot();
+            string line = GuestPlayerLine(lastReply, guestId);
+            Check(int.TryParse(Text(line, "grabsFelt"), out int felt) && felt == felt0 + 1, $"R1 the guest's owner applied the hold once ({felt0} → {Text(line, "grabsFelt")})");
+            Check(Text(line, "controllerOn") == "False", "R1 the guest's capsule is off while held");
+            CompareView("R1", line, guestCopy, walker, 0.15f, 16f);
+            GrabPose pose = core.HoldPose(guestCopy.Grab.CaughtAt, walker.ServerGrabSeconds);
+            Check(Vector3.Distance(guestCopy.transform.position, pose.Feet) < 0.3f, $"R1 the host sees the guest's copy lifted on the hold point ({Vector3.Distance(guestCopy.transform.position, pose.Feet):0.00} m off, {guestCopy.transform.position.y - walker.transform.position.y:0.00} m up)");
+            H.CaptureFrom(walker.transform.position + walker.transform.right * 4.5f + walker.transform.forward * 1.5f + Vector3.up * 2.2f, walker.transform.position + walker.transform.forward * 0.6f + Vector3.up * 2.4f, Shots + "/R1-guest-held-seen-by-host.png");
+            yield return Expect(() => guestCopy.IsDead, core.HoldSeconds + 1f, () => "R1 the hold ended in the guest's death: " + walker.ServerStatus);
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "dead") == "True" && Text(GuestPlayerLine(r, guestId), "grabbed") == "False", 3f, "R1 the guest reads itself dead and let go of");
+            yield return Expect(() => !walker.ServerGrabbing, core.ReleaseSeconds + 1f, () => "R1 the Walker let go: " + walker.ServerStatus);
+            yield return Despawn();
+
+            Heading("R2 — the dead guest spectates the host; the host is caught (the kill refused): the spectator's view is the host's held eyes");
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "spectatorActive") == "True", 15f, "R2 the dead guest spectates");
+            if (Text(GuestPlayerLine(lastReply, guestId), "spectatorTarget") != host.OwnerId.ToString())
+                yield return Send("{\"id\":{id},\"action\":\"spectate_next\"}");
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, guestId), "spectatorTarget") == host.OwnerId.ToString(), 5f, "R2 it watches the host");
+            Creature.RefuseGrabKillForChecks = true;
+            Vector3 stand = Seabed(car, 110f, 22f);
+            walkerAt = Seabed(car, 110f, 28f);
+            yield return HostAt(stand, walkerAt);
+            yield return Press(Key.F);
+            yield return Expect(() => host.LampOn, 2f, () => "R2 the host's lamp is on");
+            walker = Spawn(MonsterKind.LongWalker, walkerAt, YawTo(walkerAt, stand));
+            yield return Expect(() => walker.ServerGrabbing && walker.ServerGrabVictim == host, 12f, () => "R2 it caught the host: " + walker.ServerStatus);
+            core = walker.GrabCore;
+            yield return Expect(() => walker.ServerGrabSeconds > core.LiftSeconds + 0.1f, core.LiftSeconds + 1f, () => "R2 past the lift");
+            yield return Snapshot();
+            line = GuestPlayerLine(lastReply, guestId);
+            Check(Text(GuestPlayerLine(lastReply, host.OwnerId), "grabbed") == "True", "R2 the guest reads the host held");
+            CompareView("R2", line, host, walker, 0.15f, 16f);
+            yield return Expect(() => !host.IsGrabbed && !walker.ServerGrabbing, core.HoldSeconds + core.ReleaseSeconds + 1f, () => "R2 the kill refused: let go: " + walker.ServerStatus);
+            yield return GuestEventually(r => Text(GuestPlayerLine(r, host.OwnerId), "grabbed") == "False" && Text(GuestPlayerLine(r, host.OwnerId), "dead") == "False", 3f, "R2 the guest reads the host let go of, alive");
+            Creature.RefuseGrabKillForChecks = false;
+            yield return Despawn();
+        }
+
         // ---- the run ------------------------------------------------------------------
 
         private static IEnumerator Run()
@@ -256,10 +415,28 @@ namespace SunkCost.Editor.Prototype
             Check(H.ServerSail("Sea").StartsWith("sailing"), "sailing to sea");
             yield return Expect(() => Day.Departure.Stage == DepartureStage.Complete && Day.World == WorldId.Sea, 45f, () => "arrived at sea");
             yield return Expect(() => WorldSceneFlow.LocalRider() != null && !WorldSceneFlow.LocalRider().Locked, 5f, () => "controls back");
+            int guestId = -1;
+            if (guestMode)
+            {
+                guest = LaunchGuest();
+                yield return Expect(() => GuestCopy() != null, 40f, () => "the guest's copy is here");
+                guestId = GuestCopy().OwnerId;
+                yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=Sea"), 20f, "the guest joined at sea");
+                ShipParts sea = ShipParts.InWorld(WorldId.Sea);
+                yield return GuestMove(sea.DeckCabin.position - sea.DeckCabin.right * 1.0f + Vector3.up * (DeckCabinBuilder.FloorThicknessMeters + 0.05f));
+                yield return Wait(0.5f);
+            }
             yield return Descend(1);
+            if (guestMode) yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && r.Contains("ride=Complete"), 20f, "the guest is in the site");
             ElevatorController car = WorldSceneFlow.FindCar();
             yield return Wait(s.WakeDelaySeconds + 0.5f);
             Check(Creature.All.Count == 0, "no roster monster on the seabed");
+            if (guestMode)
+            {
+                yield return GuestRows(host, guestId, car);
+                Say("done (the guest rows): " + M.MonstersText());
+                yield break;
+            }
 
             Heading("I0 — idle: a diver in the dark and far away is not seen; it stands and breathes");
             Vector3 stand = Seabed(car, 20f, 26f);
@@ -297,40 +474,7 @@ namespace SunkCost.Editor.Prototype
             Say($"C1 animator speed {playback:0.00} (the stride match), state {AnimState(walker)}");
             H.CaptureFrom(walker.transform.position + walker.transform.right * 6f + Vector3.up * 1.8f, walker.transform.position + Vector3.up * 1.6f, Shots + "/C1-chase-side.png");
 
-            Heading("O1 — a wall between: no grab through it; it works round it");
-            // A wall 4 m high and 5 m wide, 1.1 m in front of the diver, across the Walker's line.
-            Vector3 toHost = host.transform.position - walker.transform.position; toHost.y = 0f; toHost.Normalize();
-            Vector3 wallAt = host.transform.position - toHost * 0.75f + Vector3.up * 2f;
-            wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            wall.name = "Walker check wall";
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(wall, WorldScenes.Scene(WorldId.Dive));
-            wall.transform.SetPositionAndRotation(wallAt, Quaternion.LookRotation(toHost, Vector3.up));
-            wall.transform.localScale = new Vector3(5f, 4f, 0.25f);
-            Physics.SyncTransforms();
-            walker.ServerPlaceForChecks(host.transform.position - toHost * 1.35f, YawTo(host.transform.position - toHost * 1.35f, host.transform.position));
-            yield return null;
-            Say($"O1 placed {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, {wall.transform.InverseTransformPoint(walker.transform.position).z * 0.25f:+0.00;-0.00} m off the wall's middle");
-            yield return Wait(2.5f);
-            Check(!host.IsGrabbed && walker.ServerGrabsStarted == 0, $"O1 {Flat(walker.transform.position, host.transform.position):0.00} m away behind the wall: no grab ({walker.ServerStatus})");
-            Check(walker.Pose == CreaturePose.Hunting, "O1 it still hunts the diver it saw");
-            Creature.RefuseGrabKillForChecks = true; // the diver lives through this row's grab
-            float roundFrom = Time.unscaledTime, nextTrace = 0f;
-            while (walker.ServerGrabsStarted < 1 && Time.unscaledTime - roundFrom < 25f)
-            {
-                yield return null;
-                float since = Time.unscaledTime - roundFrom;
-                if (since < nextTrace) continue;
-                nextTrace = since + 0.5f;
-                Vector3 local = wall.transform.InverseTransformPoint(walker.transform.position);
-                Say($"O1 t={since:0.0} walker along the wall {local.x * wall.transform.localScale.x:+0.00;-0.00} m, off it {local.z * wall.transform.localScale.z:+0.00;-0.00} m, {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, sidestepping={walker.ServerSidestepping}, facing {walker.transform.eulerAngles.y:0}");
-            }
-            Check(walker.ServerGrabsStarted >= 1, $"O1 it worked round the wall and caught the diver in {Time.unscaledTime - roundFrom:0.0} s ({walker.ServerStatus})");
-            Check(CreatureSenses.ClearLine(walker.EyePoint, CreatureSenses.Chest(host)), "O1 caught with a clear line from its eyes to the chest");
-            yield return Expect(() => !host.IsGrabbed && !walker.ServerGrabbing, 5f, () => "O1 refused kill: let go");
-            UnityEngine.Object.Destroy(wall); wall = null;
             yield return Despawn();
-            vitals.ServerHealForChecks();
-            Creature.RefuseGrabKillForChecks = false;
 
             Heading("G1 — cases 1, 3, 4, 5, 6, 8: a diver standing still is caught at reach, held at its face, and dies at the end of the hold");
             stand = Seabed(car, 60f, 24f);
@@ -469,6 +613,48 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !host.IsGrabbed && !host.GrabbedLocal && host.Controller.enabled, 2f, () => "D1 let go when the holder went: " + host.GrabStatus);
             Check(!host.IsDead, "D1 alive");
             yield return Expect(() => host.IsGrounded, 2f, () => "D1 back on the seabed");
+
+            Heading("O1 — a wall between: no grab through it; it works round it (day 2, after the grab rows)");
+            vitals.ServerHealForChecks();
+            stand = Seabed(car, 200f, 22f);
+            walkerAt = Seabed(car, 200f, 28f);
+            yield return HostAt(stand, walkerAt);
+            if (!host.LampOn) { yield return Press(Key.F); yield return Expect(() => host.LampOn, 2f, () => "O1 lamp on"); }
+            walker = Spawn(MonsterKind.LongWalker, walkerAt, YawTo(walkerAt, stand));
+            yield return Expect(() => walker.Pose == CreaturePose.Hunting && walker.TargetId == host.OwnerId, 3f, () => "O1 hunting: " + walker.ServerStatus);
+            // A wall 4 m high and 5 m wide, 1.1 m in front of the diver, across the Walker's line.
+            Vector3 toHost = host.transform.position - walker.transform.position; toHost.y = 0f; toHost.Normalize();
+            Vector3 wallAt = host.transform.position - toHost * 0.75f + Vector3.up * 2f;
+            wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "Walker check wall";
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(wall, WorldScenes.Scene(WorldId.Dive));
+            wall.transform.SetPositionAndRotation(wallAt, Quaternion.LookRotation(toHost, Vector3.up));
+            wall.transform.localScale = new Vector3(5f, 4f, 0.25f);
+            Physics.SyncTransforms();
+            walker.ServerPlaceForChecks(host.transform.position - toHost * 1.35f, YawTo(host.transform.position - toHost * 1.35f, host.transform.position));
+            yield return null;
+            Say($"O1 placed {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, {wall.transform.InverseTransformPoint(walker.transform.position).z * 0.25f:+0.00;-0.00} m off the wall's middle");
+            yield return Wait(2.5f);
+            Check(!host.IsGrabbed && walker.ServerGrabsStarted == 0, $"O1 {Flat(walker.transform.position, host.transform.position):0.00} m away behind the wall: no grab ({walker.ServerStatus})");
+            Check(walker.Pose == CreaturePose.Hunting, "O1 it still hunts the diver it saw");
+            Creature.RefuseGrabKillForChecks = true; // the diver lives through this row's grab
+            float roundFrom = Time.unscaledTime, nextTrace = 0f;
+            while (walker.ServerGrabsStarted < 1 && Time.unscaledTime - roundFrom < 25f)
+            {
+                yield return null;
+                float since = Time.unscaledTime - roundFrom;
+                if (since < nextTrace) continue;
+                nextTrace = since + 0.5f;
+                Vector3 local = wall.transform.InverseTransformPoint(walker.transform.position);
+                Say($"O1 t={since:0.0} walker along the wall {local.x * wall.transform.localScale.x:+0.00;-0.00} m, off it {local.z * wall.transform.localScale.z:+0.00;-0.00} m, {Flat(walker.transform.position, host.transform.position):0.00} m from the diver, sidestepping={walker.ServerSidestepping}, facing {walker.transform.eulerAngles.y:0}");
+            }
+            Check(walker.ServerGrabsStarted >= 1, $"O1 it worked round the wall and caught the diver in {Time.unscaledTime - roundFrom:0.0} s ({walker.ServerStatus})");
+            Check(CreatureSenses.ClearLine(walker.EyePoint, CreatureSenses.Chest(host)), "O1 caught with a clear line from its eyes to the chest");
+            yield return Expect(() => !host.IsGrabbed && !walker.ServerGrabbing, 5f, () => "O1 refused kill: let go");
+            UnityEngine.Object.Destroy(wall); wall = null;
+            yield return Despawn();
+            vitals.ServerHealForChecks();
+            Creature.RefuseGrabKillForChecks = false;
 
             Heading("I1 — the Impostor is unchanged: a touch is 30 HP and a leak, then it runs; no hold");
             vitals.ServerHealForChecks();
