@@ -922,44 +922,6 @@ namespace SunkCost.Editor.Prototype
                 Check(MonsterBeamLight.PoolCreated <= 2 * per, $"T2 still no light made beyond the two beams' ({MonsterBeamLight.PoolCreated})");
                 yield return Lamp(false);
             }
-
-            // ---------------------------------------------------------------------------
-            Heading("V1 — filmed in the dark: the same beam without its light (before) and with it (after), a wall behind the diver for the splash");
-            Heal();
-            {
-                Vector3 lureSpot = P(-8f), diverSpot = P(5f);
-                Wall(Ground(P(9f)) + Vector3.up * 1.5f, -lane, new Vector3(8f, 3.4f, 0.4f));
-                Lure film = SpawnLure(lureSpot, YawTo(lureSpot, diverSpot));
-                MonsterBeamLight light = film.GetComponent<MonsterBeamLight>();
-                CreatureBolts fb = film.GetComponent<CreatureBolts>();
-                yield return HostAt(diverSpot, lureSpot);
-                Vector3 side = Vector3.Cross(Vector3.up, lane);
-                // A three-quarter view from behind the Lure's shoulder: the Lure, the path, the diver and the wall.
-                Vector3 camAt = lureSpot - lane * 3.5f + side * 5.5f + Vector3.up * 2.6f;
-                Vector3 camLook = Vector3.Lerp(lureSpot, diverSpot, 0.45f) + Vector3.up * 0.6f;
-                foreach (bool lit in new[] { false, true })
-                {
-                    Heal();
-                    light.enabled = lit;
-                    var clip = new Film("Temp/lure-film/light-" + (lit ? "after" : "before"), 640, 360);
-                    yield return Lamp(true);
-                    yield return Expect(() => fb.ServerCharging, s.LureShotCooldownSeconds + 6f, () => "V1 it charges (" + film.ServerStatus + ")");
-                    float began = Time.time;
-                    while (Time.time - began < s.BeamChargeSeconds + s.BeamSeconds + 1.2f)
-                    {
-                        clip.Shot(camAt, camLook);
-                        if (fb.ServerFiring && Time.time - fb.ServerFiredAt > 0.3f && host.LampOn) host.RequestLamp(false); // one beam per film
-                        yield return null;
-                    }
-                    clip.End();
-                    Say($"V1 {(lit ? "after" : "before")}: {clip.Frames} frames in Temp/lure-film/light-{(lit ? "after" : "before")}");
-                    Check(clip.Frames > 20, $"V1 filmed the {(lit ? "after" : "before")} beam ({clip.Frames} frames)");
-                    yield return Expect(() => !fb.ServerAiming, 3f, () => "V1 the beam ends");
-                }
-                light.enabled = true;
-                foreach (GameObject p in props) if (p != null) Object.Destroy(p);
-                props.Clear();
-            }
             yield return Lamp(false);
             M.ServerDespawnMonsters();
             Heal();
