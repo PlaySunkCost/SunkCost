@@ -150,6 +150,15 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "monsters") MonsterRuntimeChecks.RunAsHost();
                         else if (job == "dash") DashRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
+                        // A monster's own polish checks (24 September 2026): "polish-<Kind>" runs
+                        // MonsterPolish<Kind>Checks.RunAsHost, one file per monster, found by name so
+                        // no one edits this list to add one. They spawn their own creatures.
+                        else if (job.StartsWith("polish-"))
+                        {
+                            System.Type checks = typeof(CameraClearanceMatrixDriver).Assembly.GetType("SunkCost.Editor.Prototype.MonsterPolish" + job.Substring(7) + "Checks");
+                            if (checks == null) throw new System.InvalidOperationException("No MonsterPolish" + job.Substring(7) + "Checks");
+                            checks.GetMethod("RunAsHost").Invoke(null, null);
+                        }
                         File.AppendAllText(Marker, "matrix started (" + job + ")\n");
                     }
                     catch (System.Exception e) { File.AppendAllText(Marker, "start failed: " + e.Message + "\n"); }

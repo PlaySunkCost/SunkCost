@@ -504,8 +504,8 @@ signature sounds land; nothing about the rules reads the look.
 | **Long Walker** | Sight | Standing in its line of sight within lamp range. From then it walks after you **until you leave the site**. | Outwalk it: it moves at **60 % of walking speed** (Dan, 20 September 2026: slower than a walk) — a heavy load or standing still lets it close. It stops at the car's doorway and never passes the tube's gate: inside the car you are safe. | Reaches you: **death**. |
 | **Weeping Angel** | Being watched | Frozen while **any part of it is on any living diver's screen** within 25 m — edge to edge, not only under the crosshair (Dan, 20 September 2026) — with a clear line of sight (fog and walls hide it; the TV and spectators do not count). | Keep it on screen — which means someone stops working to watch and cannot leave. Unwatched it moves at **2.5× sprint speed** straight at the nearest diver: a glance away is fatal (Dan: "much faster"). | Reaches you: **death**. |
 | **Charger** | Sight | Facing you it **shakes for 1.5 s** (the tell), then rushes in a straight line **20 m at three times sprint speed** (Dan, 20 September 2026: faster and longer). | **Step 2 m aside** and it passes; it needs about 3 s to turn and try again. **Alt — the dash** (§3, built 21 September 2026) is the intended dodge: 6 m sideways in a quarter second, once per rush. | A hit: **35 HP and a leak**. |
-| **Lure** | Light | A **lit headlamp within 25 m**. It drifts toward the beam; when it sees a lamp it **fires a laser of light** at it — the line is fixed at the aim and shows as a faint thread for **0.4 s**, then the beam hits at once along it (Dan, 20 September 2026: "a laser, not a shot" — bolts were too easy to dodge). | **Lamps off (F)** — it loses you about 8 s after the beam goes dark; the visor still works dark. The whole dodge is the aim: **off the line in under half a second** and it passes where you were. | A beam that lands: **35 HP and a leak**. |
-| **Listener** | Sound | Blind. Hears exactly what the noise system says — a walking step 6 m, a sprinting step 15 m, a landed throw 10 m, a dash 20 m (both built 21 September 2026), and the **car's 60 m scream**. When it hears something it **fires a dark laser** at the sound: a faint thread for **0.4 s**, then the beam along it. | **Crouch-walk** — silent. It loses interest about 10 s after silence and drifts back to where it stood. The beam is aimed at where the sound was: **a step after the sound** and it passes where you were. The car calls it, but it does not camp the door. | A beam that lands: **35 HP and a leak**. |
+| **Lure** | Light | A **lit headlamp within 25 m**. It drifts toward the beam; when it sees a lamp it plants itself and **charges for 1 s** — a glow swells at its mouth and a faint thread points at you, the warning — then **burns a beam of light for 3 s** that turns after you at 160°/s, and hurts **once** per beam (Dan, 22 September 2026: "a second of loading, then 3 continuous seconds, one hit"; it should land about 95 % of the time). | **Lamps off (F)** — it loses you about 8 s after the beam goes dark; the visor still works dark. Once it is charging, only two things save you: **a wall between you** or **a dash across the beam** at the right moment. | A beam that lands: **35 HP and a leak**. |
+| **Listener** | Sound | Blind. Hears exactly what the noise system says — a walking step 6 m, a sprinting step 15 m, a landed throw 10 m, a dash 20 m (both built 21 September 2026), and the **car's 60 m scream**. When it hears something it plants itself and **charges for 1 s** at the sound — the glow at its mouth, the faint thread — then **burns a dark beam for 3 s** that turns after whoever made the sound (or the nearest diver, when a coin made it) at 160°/s, and hurts **once** per beam (Dan, 22 September 2026). | **Crouch-walk** — silent. It loses interest about 10 s after silence and drifts back to where it stood. Once it charges: **a wall between you**, or **a dash across the beam** at the right moment. The car calls it, but it does not camp the door. | A beam that lands: **35 HP and a leak**. |
 | **Impostor** | — (it picks you) | It **chooses one diver** — at random among those still underwater — and **only that diver sees it** (and the spectators and the TV watching them). It wears the **body colour and the name tag of a living crewmate** and walks at **walking speed the whole time** (Dan, 20 September 2026): it reaches you only if you stop, or walk to it as a friend. | Voice: a friend who does not answer is not a friend. Keep away from it for **30 s** and it runs off. | A touch: **30 HP and a leak**, then it **runs away** — and comes back for someone else. |
 
 Underneath all seven: one **creature skeleton** on the server — idle, drawn (to
@@ -515,6 +515,53 @@ the clients smooth. Deaths are the ordinary death; a leak is §3's; the hit
 numbers are serialized (`MonsterSettings`) and provisional until a playtest.
 The dash is built (§3, 21 September 2026); the site vote's effect on the
 roster and the conditions (infestation = a fourth monster) are their own cards.
+
+### Monster polish (decided by Dan, 24 September 2026; built on `dan/monster-look`)
+
+The Impostor is outside this pass and unchanged.
+
+- **The Long Walker grabs.** It catches you when it reaches you, lifts you
+  toward its face for about 2 s, then you die the ordinary death. When a wall
+  stands between it and a diver it has seen, it keeps to one side and walks
+  round the wall rather than pressing into it. This is local wall-following,
+  not pathfinding.
+- **The Weeping Angel embraces.** Its hands leave its face and take your head.
+  A beat of stillness follows, then death at about 2.2 s. There is no lift; the
+  style is its own.
+- **The victim's view is the same for both.** The victim stays in first person,
+  controls locked, the view turned to the monster's face with a small shake.
+  Spectators and the TV show the same hold.
+- **A dash never saves a held diver.** A dash is refused once the hold is on.
+  One pressed in the instant before the hold reaches a guest is cut off, and
+  the kill lands wherever the capsule went. A held diver rides no elevator car
+  and cannot use Unstuck.
+- **The Charger's charge.**
+  - **Hit:** 35 HP and a leak, plus a knock-back of about 3 m along its path
+    and a hard view jolt. The jolt snaps about 15°, swings back once and
+    settles within 0.6 s.
+  - **Aim:** the line is aimed during the 1.5 s tell and locked for its last
+    0.2 s, then the rush runs straight and never homes. Stepping aside or
+    dashing dodges it.
+  - **Grab:** a held diver is never knocked back.
+- **The lasers: bigger, and dash to dodge.**
+  - **Size:** both beams are drawn 0.7 m wide (a half-width of 0.35 m), and a
+    hit is exactly the drawn beam touching the body.
+  - **Tracking:** the beam tracks its diver, so running alone never escapes
+    it; a diver in the open is hit the instant the beam lights.
+  - **The dodge:** a dash during the 1 s charge or the burn breaks the lock,
+    and the beam holds its heading through the dash. For the rest of that
+    beam it only trails at 2.5 m/s, so a diver who keeps moving escapes and
+    one who stops is caught. A Charger's knock-back is not a dash.
+  - One hit per beam.
+- **The Lure's light beam lights the dark site.** Its charge glows, and the
+  burn lights the Lure, the seabed along the path and the diver, with a splash
+  where it meets a wall.
+- **The Listener's dark beam eats light.** A dark haze runs along it and a dark
+  patch shows on the wall it hits. Lights near it, headlamps included, are
+  dimmed while it burns. All of this is looks only: no lamp switches off, and
+  the Lure's sense of lamps is unaffected.
+- **Parked (Dan):** the monsters make no movement or footstep sounds, and the
+  Angel is silent while it moves. "Leave it like that for now."
 
 ## 7. Crew and spectating
 

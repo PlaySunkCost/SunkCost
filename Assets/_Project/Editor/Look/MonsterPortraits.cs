@@ -51,6 +51,10 @@ namespace SunkCost.Editor.Look
                 {
                     r.enabled = true;
                     if (r.name.StartsWith("Eye")) r.SetPropertyBlock(block);
+                    // A modelled monster is a skinned mesh: a camera rendered by hand in edit
+                    // mode reuses the last bone matrices, so every sampled pose comes out the
+                    // same picture. These two make it re-skin for each render.
+                    if (r is SkinnedMeshRenderer skinned) { skinned.updateWhenOffscreen = true; skinned.forceMatrixRecalculationPerRender = true; }
                 }
                 // The Impostor is seen wearing a crewmate's colour; a light so the suit reads.
                 Renderer suit = instance.transform.Find("Body/Suit")?.GetComponent<Renderer>();
@@ -63,7 +67,36 @@ namespace SunkCost.Editor.Look
                 lampObject.transform.LookAt(look);
                 lamp.type = LightType.Spot; lamp.intensity = 15f; lamp.range = 25f; lamp.spotAngle = 35f; lamp.color = new Color(1f, 0.93f, 0.82f); lamp.shadows = LightShadows.None;
                 LookCapture.Shoot("monster-" + kind, from, look, 50f);
-                return kind + " -> " + LookCapture.Folder + "/monster-" + kind + ".png";
+                string made = kind + " -> " + LookCapture.Folder + "/monster-" + kind + ".png";
+                // A modelled monster (docs/MONSTER_MODELS.md): a pose sheet — one frame per
+                // clip, sampled in edit mode from a three-quarter view, so Dan sees each
+                // pose before anything goes in the game.
+                CreatureRig rig = instance.GetComponent<CreatureRig>();
+                if (rig != null && rig.HasAnimator)
+                {
+                    GameObject animated = rig.Animator.gameObject;
+                    Vector3 quarter = at + Quaternion.Euler(0f, 200f + 35f, 0f) * new Vector3(0f, height * 0.55f, 5.5f + height * 0.8f);
+                    lampObject.transform.position = quarter;
+                    lampObject.transform.LookAt(look);
+                    var poses = new System.Collections.Generic.List<string>();
+                    UnityEditor.AnimationMode.StartAnimationMode();
+                    try
+                    {
+                        foreach (AnimationClip clip in rig.Animator.runtimeAnimatorController.animationClips)
+                        {
+                            if (clip == null || clip.name.StartsWith("__preview")) continue;
+                            float t = clip.name == CreaturePose.Shooting.ToString() ? clip.length * 0.25f : clip.length * 0.35f;
+                            UnityEditor.AnimationMode.BeginSampling();
+                            UnityEditor.AnimationMode.SampleAnimationClip(animated, clip, t);
+                            UnityEditor.AnimationMode.EndSampling();
+                            LookCapture.Shoot("monster-" + kind + "-" + clip.name, quarter, look, 50f);
+                            poses.Add(clip.name);
+                        }
+                    }
+                    finally { UnityEditor.AnimationMode.StopAnimationMode(); }
+                    made += " (poses: " + string.Join(", ", poses) + ")";
+                }
+                return made;
             }
             finally
             {

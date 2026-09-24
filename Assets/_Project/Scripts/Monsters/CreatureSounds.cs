@@ -26,9 +26,12 @@ namespace SunkCost.Monsters
             bolts = GetComponent<CreatureBolts>();
             impostor = GetComponent<ImpostorLook>();
             library = AudioLibrary.Get();
-            var go = new GameObject("Voice");
-            go.transform.SetParent(transform, false);
-            go.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            var go = new GameObject("Voice source");
+            // A modelled monster's voice sits on its Voice anchor (it moves with the head); the placeholders' at chest height.
+            CreatureRig rig = GetComponent<CreatureRig>();
+            Transform anchor = rig != null ? rig.VoiceAnchor : null;
+            go.transform.SetParent(anchor != null ? anchor : transform, false);
+            go.transform.localPosition = anchor != null ? Vector3.zero : new Vector3(0f, 1.2f, 0f);
             voice = go.AddComponent<AudioSource>();
             voice.playOnAwake = false; voice.loop = false;
             voice.spatialBlend = 1f; voice.rolloffMode = AudioRolloffMode.Linear;
@@ -40,18 +43,47 @@ namespace SunkCost.Monsters
         private void OnEnable()
         {
             if (creature != null) { creature.PoseChanged += OnPose; creature.Struck += OnStruck; }
-            if (bolts != null) { bolts.Fired += OnBolt; bolts.Hit += OnStruck; }
+            if (bolts != null) { bolts.Aimed += OnCharge; bolts.Fired += OnBolt; bolts.Ended += OnBeamEnd; bolts.Hit += OnStruck; }
+        }
+        // The beam (Dan, 22 September 2026): a rising charge for the second before it
+        // fires, then the beam's own hum for as long as it burns, from the voice's spot.
+        private AudioSource beamLoop;
+        private AudioSource BeamLoop
+        {
+            get
+            {
+                if (beamLoop != null) return beamLoop;
+                beamLoop = voice.gameObject.AddComponent<AudioSource>();
+                beamLoop.playOnAwake = false; beamLoop.loop = true;
+                beamLoop.spatialBlend = 1f; beamLoop.rolloffMode = AudioRolloffMode.Linear;
+                beamLoop.minDistance = 3f; beamLoop.maxDistance = 45f; beamLoop.dopplerLevel = 0f;
+                beamLoop.clip = library.BeamLoop; beamLoop.volume = library.BeamLoopVolume;
+                AudioDeviceService devices = FindAnyObjectByType<AudioDeviceService>();
+                if (devices != null) devices.Route(beamLoop);
+                return beamLoop;
+            }
+        }
+        private void OnCharge(BeamCue cue)
+        {
+            if (!Audible) return;
+            voice.PlayOneShot(library.BeamCharge, library.BeamChargeVolume);
         }
         private void OnBolt(BeamCue cue)
         {
             if (!Audible) return;
             voice.PlayOneShot(library.BoltShot, library.BoltShotVolume);
+            BeamLoop.Play();
+        }
+        private void OnBeamEnd(BeamCue cue)
+        {
+            if (beamLoop != null && beamLoop.isPlaying) beamLoop.Stop();
         }
 
         private void OnDisable()
         {
             if (creature != null) { creature.PoseChanged -= OnPose; creature.Struck -= OnStruck; }
-            if (bolts != null) { bolts.Fired -= OnBolt; bolts.Hit -= OnStruck; }
+            if (bolts != null) { bolts.Aimed -= OnCharge; bolts.Fired -= OnBolt; bolts.Ended -= OnBeamEnd; bolts.Hit -= OnStruck; }
+            if (beamLoop != null && beamLoop.isPlaying) beamLoop.Stop();
         }
 
 
@@ -59,9 +91,11 @@ namespace SunkCost.Monsters
 
         private void OnPose(CreaturePose pose)
         {
-            bool starts = (pose == CreaturePose.Hunting || pose == CreaturePose.Windup) && lastPose != CreaturePose.Hunting && lastPose != CreaturePose.Windup && lastPose != CreaturePose.Rushing;
+            // The Charger's tell always calls, cooldown or not: the call is the warning (24 September 2026).
+            bool windup = pose == CreaturePose.Windup && lastPose != CreaturePose.Windup;
+            bool starts = (pose == CreaturePose.Hunting || pose == CreaturePose.Windup) && lastPose != CreaturePose.Hunting && lastPose != CreaturePose.Windup && lastPose != CreaturePose.Rushing && lastPose != CreaturePose.Recovering;
             lastPose = pose;
-            if (!starts || Time.unscaledTime < nextCallAt || !Audible) return;
+            if (!(starts || windup) || (!windup && Time.unscaledTime < nextCallAt) || !Audible) return;
             nextCallAt = Time.unscaledTime + 3f;
             voice.PlayOneShot(library.MonsterCall, library.MonsterCallVolume);
             CallsPlayed++;

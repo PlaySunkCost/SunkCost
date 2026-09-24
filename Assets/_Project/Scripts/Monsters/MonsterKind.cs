@@ -25,7 +25,10 @@ namespace SunkCost.Monsters
         Windup = 4,    // the Charger's shake
         Rushing = 5,   // the Charger's rush
         Shooting = 6,  // the Lure and the Listener: a bolt just left
-        Fleeing = 7    // the Impostor after a touch
+        Fleeing = 7,   // the Impostor after a touch
+        Grabbing = 8,  // the Long Walker and the Angel holding a caught diver (24 September 2026)
+        Recovering = 9, // the Charger after a rush, hit or miss
+        Aiming = 10    // the Lure and the Listener charging a beam, before it burns
     }
 
     public static class MonsterCatalog

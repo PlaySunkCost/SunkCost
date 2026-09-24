@@ -24,7 +24,7 @@ namespace SunkCost.Monsters
     // shaft, never strikes a diver in the car or on the tube's floor, and every
     // death goes through WorldSceneFlow.ServerKill, which refuses anyone not below.
     [RequireComponent(typeof(CharacterController))]
-    public abstract class Creature : NetworkBehaviour, INoiseListener
+    public abstract partial class Creature : NetworkBehaviour, INoiseListener
     {
         // Every spawned creature on this peer (server and client), for the roster and the checks.
         public static readonly List<Creature> All = new();
@@ -64,6 +64,7 @@ namespace SunkCost.Monsters
         protected static float Now => Time.time;
         // The server's view for the checks.
         public bool ServerAwake => awake;
+        public bool ServerSidestepping => Now < sidestepUntil;
         public string ServerStatus => $"{kind} pose={Pose} target={TargetId} at={transform.position:F1}{ServerBrainStatus()}";
         protected virtual string ServerBrainStatus() => string.Empty;
 
@@ -109,6 +110,7 @@ namespace SunkCost.Monsters
         {
             base.OnStopServer();
             NoiseSystem.Unregister(this);
+            ServerGrabStopped();
         }
 
         public override void OnStartClient()
@@ -132,6 +134,8 @@ namespace SunkCost.Monsters
             if (!awake) { if (Now < wakeAt) { Fall(dt); return; } awake = true; }
             wantedMove = Vector3.zero;
             wantedToMove = false;
+            // Holding a catch (Creature.Grab.cs): no brain, no step, only the hold and gravity.
+            if (ServerGrabbing) { ServerTickGrab(); Fall(dt); stuckSince = -1f; return; }
             ServerThink(dt);
             Vector3 before = transform.position;
             Fall(dt, wantedMove);
@@ -153,11 +157,69 @@ namespace SunkCost.Monsters
             if (stuckSince < 0f) { stuckSince = Now; stuckFrom = now; return; }
             if (CreatureSenses.Flat(stuckFrom, now) > 0.6f) { stuckSince = Now; stuckFrom = now; return; }
             if (Now - stuckSince < 1f) return;
+            if (FollowsWalls) { FollowWall(); stuckSince = Now; stuckFrom = now; return; }
             Vector3 dir = wantedMove; dir.y = 0f;
             if (dir.sqrMagnitude < 0.0001f) dir = transform.forward;
             sidestep = Vector3.Cross(Vector3.up, dir.normalized) * (UnityEngine.Random.value < 0.5f ? 1f : -1f);
             sidestepUntil = Now + 1.5f;
             stuckSince = Now; stuckFrom = now;
+        }
+
+        // ---- following a wall (a kind that overrides FollowsWalls: the Long Walker) -------
+        // The plain sidestep above picks a side at random for a second and a half, then
+        // walks straight at the goal again, which slides it back along a wide wall to
+        // where it stood (the Walker's polish check O1, 24 September 2026). A wall
+        // follower keeps its side while it stays stuck, heads along the wall rather
+        // than into it, and stops sidestepping as soon as its body has a clear way to
+        // the goal; stuck during a sidestep (a corner), it turns to the other side.
+        protected virtual bool FollowsWalls => false;
+        private float wallSide;
+        private int wallTries;
+        private float wallLastAt = -99f;
+        private Vector3 goalDirection = Vector3.forward;
+        private float goalDistance;
+        // The flat way it is sidestepping this frame (zero when not), for a brain that faces its walk.
+        public Vector3 ServerSidestepHeading => Now < sidestepUntil ? wantedMove.sqrMagnitude > 0.0001f ? new Vector3(wantedMove.x, 0f, wantedMove.z).normalized : sidestep : Vector3.zero;
+
+        private void FollowWall()
+        {
+            bool cornered = Now < sidestepUntil;              // stuck while sidestepping: that side is shut
+            bool again = Now - wallLastAt < 3f;
+            if (!again || wallSide == 0f)
+            {
+                wallSide = UnityEngine.Random.value < 0.5f ? 1f : -1f;
+                wallTries = 0;
+            }
+            else if (cornered) { wallSide = -wallSide; wallTries = 0; }
+            wallTries++;
+            sidestep = Vector3.Cross(Vector3.up, goalDirection) * wallSide;
+            sidestepUntil = Now + Mathf.Min(6f, 2f * wallTries);
+            wallLastAt = Now;
+        }
+
+        // A wall follower mid-sidestep: once the body could walk straight to the goal, a
+        // few more steps (to clear the edge) and it goes.
+        private void CheckWallCleared()
+        {
+            if (!FollowsWalls || Now >= sidestepUntil || mover == null) return;
+            float radius = Mathf.Max(0.05f, mover.radius - mover.skinWidth);
+            Vector3 centre = transform.position + mover.center;
+            float half = Mathf.Max(0f, mover.height * 0.5f - mover.radius);
+            Vector3 low = centre - Vector3.up * (half - mover.stepOffset * 0.5f), high = centre + Vector3.up * half;
+            float reach = Mathf.Clamp(goalDistance, 0.1f, 4f);
+            if (!Physics.CapsuleCast(low, high, radius, goalDirection, reach, WorldMask(), QueryTriggerInteraction.Ignore))
+                sidestepUntil = Mathf.Min(sidestepUntil, Now + 0.3f);
+            wallLastAt = Now;
+        }
+
+        private int worldMask = -1;
+        private int WorldMask()
+        {
+            if (worldMask != -1) return worldMask;
+            int mask = 0, layer = gameObject.layer;
+            for (int i = 0; i < 32; i++) if (!Physics.GetIgnoreLayerCollision(layer, i)) mask |= 1 << i;
+            mask &= ~(1 << layer);
+            return worldMask = mask;
         }
 
         // ---- the brain's vocabulary --------------------------------------------------
@@ -211,7 +273,9 @@ namespace SunkCost.Monsters
             float distance = delta.magnitude;
             if (distance <= Mathf.Max(0.3f, stopWithin)) return true;
             Vector3 dir = delta / distance;
-            if (Now < sidestepUntil) dir = (dir + sidestep).normalized;
+            goalDirection = dir; goalDistance = distance - stopWithin;
+            CheckWallCleared();
+            if (Now < sidestepUntil) dir = FollowsWalls ? (dir * 0.35f + sidestep).normalized : (dir + sidestep).normalized;
             float step = Mathf.Min(distance - stopWithin, speed * dt);
             Vector3 move = dir * step;
             // Never a step onto the safe ground.
@@ -226,11 +290,11 @@ namespace SunkCost.Monsters
         }
 
         // Turn to face a point, flat.
-        protected void FaceToward(Vector3 point)
+        protected void FaceToward(Vector3 point, float degreesPerSecond = 540f)
         {
             Vector3 to = point - transform.position; to.y = 0f;
             if (to.sqrMagnitude < 0.0001f) return;
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(to, Vector3.up), 540f * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(to, Vector3.up), degreesPerSecond * Time.deltaTime);
         }
 
         protected bool StrikeReady => Now >= strikeReadyAt;
@@ -271,15 +335,22 @@ namespace SunkCost.Monsters
         }
 
         // The strike this kind makes: death for the killers (the ordinary death
-        // through WorldSceneFlow.ServerKill, which keeps the deck safe), health and a
-        // leak for the rest. True when it landed.
+        // through WorldSceneFlow.ServerKill, which keeps the deck safe) — held first
+        // for a kind that grabs (a CreatureGrab on its prefab: the Long Walker, 24
+        // September 2026; Creature.Grab.cs), at once for the rest — health and a leak
+        // for the others. A diver already held by a monster cannot be struck. True
+        // when it landed (for a grab: the catch).
         protected bool Strike(HQPlayerController diver, float damage)
         {
-            if (diver == null || !StrikeReady || diver.IsDead || CreatureSenses.Safe(diver, Settings)) return false;
+            if (diver == null || !StrikeReady || diver.IsDead || diver.IsGrabbed || CreatureSenses.Safe(diver, Settings)) return false;
             strikeReadyAt = Now + Settings.StrikeCooldownSeconds;
             string name = MonsterCatalog.DisplayName(kind);
             bool landed;
-            if (MonsterCatalog.Kills(kind))
+            if (MonsterCatalog.Kills(kind) && Grabs)
+            {
+                landed = ServerBeginGrab(diver, name);
+            }
+            else if (MonsterCatalog.Kills(kind))
             {
                 WorldSceneFlow flow = WorldSceneFlow.Instance;
                 landed = flow != null && flow.ServerKill(diver.Owner, out string why, "taken by " + name);

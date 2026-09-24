@@ -28,6 +28,22 @@ namespace SunkCost.World
         public bool ServerKill(NetworkConnection conn, out string why) => ServerKill(conn, out why, "killed");
         public bool ServerKill(NetworkConnection conn, out string why, string cause)
         {
+            if (!ServerCanKill(conn, out why)) return false;
+            ServerKillNow(conn, PlayerOf(conn).transform.position, cause);
+            return true;
+        }
+
+        // The end of a monster's hold (Creature.Grab.cs; Dan, 24 September 2026: "make
+        // sure that dashing does not save a player that should be dead"). The diver was
+        // judged killable at the catch (ServerCanKill, and not on safe ground); what the
+        // owner's capsule did since — a dash pressed before the hold reached it, a
+        // stale position — must not undo that. Only the refusals no position decides
+        // remain: the server or the day gone, the player gone (left) or already dead,
+        // off the site (the site closed). A held diver is never a rider (the cabin's
+        // rider lists skip the held), so "Riding" cannot follow from where the capsule
+        // was. The body lies at the hold's own point, not at the capsule.
+        public bool ServerKillHeld(NetworkConnection conn, Vector3 heldAt, out string why, string cause)
+        {
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null || conn == null) { why = "No day state."; return false; }
@@ -35,10 +51,17 @@ namespace SunkCost.World
             if (player == null) { why = "No player."; return false; }
             int id = conn.ClientId;
             if (player.IsDead || dayState.IsDead(id)) { why = "Already dead"; return false; }
-            if (!dayState.IsBelow(id) || player.gameObject.scene != WorldScenes.Scene(WorldId.Dive)) { why = "You can only die below"; return false; }
+            if (!dayState.IsBelow(id) || player.gameObject.scene != WorldScenes.Scene(WorldId.Dive)) { why = "Not below any more"; return false; }
             if (riding && cohort.Contains(id)) { why = "Riding"; return false; }
+            ServerKillNow(conn, heldAt, cause);
+            return true;
+        }
 
-            Vector3 at = player.transform.position;
+        private void ServerKillNow(NetworkConnection conn, Vector3 at, string cause)
+        {
+            HQPlayerController player = PlayerOf(conn);
+            int id = conn.ClientId;
+
             PlayerInventory inventory = player.Inventory;
             if (inventory != null) inventory.ServerDropEverything(); // the four slots and the hands scatter (design §4)
             PlayerIdentity identity = player.GetComponent<PlayerIdentity>();
@@ -50,6 +73,22 @@ namespace SunkCost.World
             Debug.Log($"[WorldSceneFlow] {name} {cause} below at {at:F1}; body {(body != null ? body.name : "none")}; living below: {dayState.Below.Count}");
             ServerUpdateSpectators(); // the nearest living player, now (card 2)
             ServerAfterDeath();
+        }
+
+        // Whether ServerKill would take this player now, without killing: a monster
+        // that holds a diver before the kill (the Long Walker's grab, 24 September
+        // 2026) asks first, so a hold never ends in a refusal it could have seen.
+        public bool ServerCanKill(NetworkConnection conn, out string why)
+        {
+            why = string.Empty;
+            if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
+            if (dayState == null || conn == null) { why = "No day state."; return false; }
+            HQPlayerController player = PlayerOf(conn);
+            if (player == null) { why = "No player."; return false; }
+            int id = conn.ClientId;
+            if (player.IsDead || dayState.IsDead(id)) { why = "Already dead"; return false; }
+            if (!dayState.IsBelow(id) || player.gameObject.scene != WorldScenes.Scene(WorldId.Dive)) { why = "You can only die below"; return false; }
+            if (riding && cohort.Contains(id)) { why = "Riding"; return false; }
             return true;
         }
 
