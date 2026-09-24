@@ -49,6 +49,9 @@ namespace SunkCost.Monsters
             unshot = false;
             heardTime = float.NegativeInfinity;
         }
+        // A test seam (the checks): deaf while set, for rows that aim the beam themselves (a
+        // teleported diver's landing is a sound it would shoot at first).
+        public bool DeafForChecks { get; set; }
 
         protected override void Awake()
         {
@@ -58,7 +61,7 @@ namespace SunkCost.Monsters
 
         public override void OnNoise(in NoiseEvent noise)
         {
-            if (!IsServerStarted || !ServerAwake) return;
+            if (!IsServerStarted || !ServerAwake || DeafForChecks) return;
             if (Vector3.Distance(noise.Position, transform.position) > noise.Radius) return;
             heardAt = noise.Position; heardTime = Now; heardKind = noise.Kind; heardSource = noise.SourceId;
             heardDiver = DiverBySource(heardSource) != null;

@@ -141,6 +141,8 @@ namespace SunkCost.Editor.Prototype
         // A new beam: sound the host until the Listener charges (a shot waits out the last beam's cooldown).
         private static IEnumerator Provoke(Listener ears, CreatureBolts bolts, HQPlayerController host, string row, float within = 10f)
         {
+            ears.ServerForgetForChecks();
+            ears.DeafForChecks = false;
             float deadline = Time.unscaledTime + within, next = 0f;
             while (Time.unscaledTime < deadline && !bolts.ServerCharging)
             {
@@ -155,7 +157,10 @@ namespace SunkCost.Editor.Prototype
             MonsterSettings s = Settings;
             // From the LAST beam's end, read each frame: it may fire again at an old sound while this waits.
             yield return Expect(() => !bolts.ServerAiming && Time.time >= bolts.ServerEndedAt + s.ListenerShotCooldownSeconds + 0.2f && ears.Pose != CreaturePose.Recovering && ears.Pose != CreaturePose.Shooting, 2f * (s.BeamChargeSeconds + s.BeamSeconds + s.ListenerShotCooldownSeconds) + 2f, () => row + " ready to shoot again (" + ears.ServerStatus + ")");
-            ears.ServerForgetForChecks(); // no old sound fires the next beam: each row draws its own
+            // No old sound fires the next beam, and none while the row sets up (a teleported
+            // diver's landing is a sound): each row draws its own (Provoke hears again).
+            ears.ServerForgetForChecks();
+            ears.DeafForChecks = true;
         }
         private static IEnumerator BeamOver(CreatureBolts bolts, string row)
         {
@@ -485,6 +490,7 @@ namespace SunkCost.Editor.Prototype
             {
                 string row = margin > 0f ? "L2b outside" : "L2b inside";
                 yield return Cooled(ears, bolts, row);
+                ears.DeafForChecks = true; // the check aims this beam itself
                 Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
                 ears.ServerPlaceForChecks(lAt, Quaternion.LookRotation(Flat(spot - lAt)).eulerAngles.y);
                 yield return HostAt(spot, lAt);
@@ -503,7 +509,7 @@ namespace SunkCost.Editor.Prototype
                 }
                 hits0 = bolts.ServerHits;
                 bolts.ServerAim(bolts.Origin, aim, true, s.ListenerDamage, "the Listener (checks)", -1);
-                Check(bolts.ServerCharging, row + " a beam aimed beside the diver charges");
+                Check(bolts.ServerCharging && bolts.ServerTargetOwnerId == -1, row + " a beam aimed beside the diver charges (the check's own, following no one)");
                 float minGap = float.PositiveInfinity;
                 while (bolts.ServerAiming)
                 {
@@ -517,6 +523,7 @@ namespace SunkCost.Editor.Prototype
                 Check(hit == (minGap <= edge), $"{row} the hit agrees with what is drawn (gap {minGap:0.000} vs edge {edge:0.000}, hit {hit})");
                 if (margin > 0f) Check(!hit && minGap > edge && minGap < edge + 0.16f, $"{row} a beam {minGap - edge:0.000} m clear of the body misses it");
                 else Check(hit && minGap <= edge && minGap > edge - 0.16f, $"{row} a beam overlapping the body by {edge - minGap:0.000} m hits it");
+                ears.DeafForChecks = false;
             }
             vitals.ServerHealForChecks();
 
@@ -534,6 +541,27 @@ namespace SunkCost.Editor.Prototype
             }
             Transform centre = ears.transform;
             const float Range = 9f;
+            // A trace every 0.1 s from the charge: time, phase (C/F/D), lock (H held, b broken, - locked),
+            // the beam's axis to the body's surface past the edge (negative = touching); and the dash itself.
+            var trace = new System.Text.StringBuilder();
+            float traceNext = 0f, traceT0 = 0f, dashAt = float.NaN, dashJump = float.NaN;
+            Vector3 dashFrom = default;
+            int traceDashes = 0;
+            void TraceStart() { trace.Clear(); traceNext = 0f; traceT0 = bolts.ServerChargedAt; traceDashes = host.Dashes; dashAt = float.NaN; dashJump = float.NaN; }
+            void TraceTick()
+            {
+                if (float.IsNaN(dashAt) && host.Dashes > traceDashes) { dashAt = Time.time; dashFrom = host.transform.position; }
+                if (!float.IsNaN(dashAt) && float.IsNaN(dashJump) && Time.time >= dashAt + host.Movement.DashSeconds + 0.05f) dashJump = CreatureSenses.Flat(dashFrom, host.transform.position);
+                if (Time.time < traceNext || !bolts.ServerAiming) return;
+                traceNext = Time.time + 0.1f;
+                bolts.Touches(host, bolts.ServerFrom, bolts.ServerTo, out _, out _, out float trGap);
+                trace.Append($"{Time.time - traceT0:0.0}s {bolts.ServerPhase.ToString()[0]}{(bolts.ServerHeld ? "H" : bolts.ServerLockBroken ? "b" : "-")} {trGap - hitEdge:+0.00;-0.00} | ");
+            }
+            void TraceSay(string row)
+            {
+                Say($"{row} dash pressed at {dashAt - traceT0:0.00} s, moved {dashJump:0.00} m in {host.Movement.DashSeconds + 0.05f:0.00} s; lock broken at {bolts.ServerLockBrokenAt - traceT0:0.00} s; the flash at {bolts.ServerFiredAt - traceT0:0.00} s; hit at {(bolts.ServerHitAt > traceT0 ? (bolts.ServerHitAt - traceT0).ToString("0.00") + " s" : "none")}");
+                Say($"{row} every 0.1 s (s, phase+lock, m past the edge): {trace}");
+            }
 
             // L3a: sprinting round it the whole time: the beam keeps up, touches, and hits once.
             {
@@ -545,6 +573,7 @@ namespace SunkCost.Editor.Prototype
                 yield return Wait(0.3f);
                 hits0 = bolts.ServerHits; int breaks0 = bolts.ServerLockBreaks;
                 closest = float.PositiveInfinity;
+                ears.DeafForChecks = false; // this row sounds the host itself, while it runs
                 Vector3 pC = host.transform.position; float t0 = Time.time, tC = t0, runSpeed = float.NaN, nextSound = 0f;
                 bool provoked = false;
                 yield return Circle(centre, true, () => !provoked || bolts.ServerAiming, () =>
@@ -581,16 +610,20 @@ namespace SunkCost.Editor.Prototype
                 hits0 = bolts.ServerHits; int dashes = host.Dashes;
                 closest = float.PositiveInfinity;
                 recorder = new Recorder("Listener-dash-dodge", centre);
-                void MeasureAndFilm() { Measure(); recorder?.Tick(host, bolts.ServerPhase + (bolts.ServerLockBroken ? "-broken" : "")); }
+                void MeasureAndFilm() { Measure(); TraceTick(); recorder?.Tick(host, bolts.ServerPhase + (bolts.ServerLockBroken ? "-broken" : "")); }
                 for (int f = 0; f < 8; f++) { recorder.Tick(host, "before"); yield return Wait(1f / 15f); }
                 yield return Provoke(ears, bolts, host, row, 1f);
                 float t0 = bolts.ServerChargedAt;
+                TraceStart();
                 // Dashing out as it is about to light (0.75 s into the 1 s charge): the flash lands beside the diver.
-                while (Time.time < t0 + 0.75f) { recorder.Tick(host, "Charging"); yield return null; }
+                while (Time.time < t0 + 0.75f) { TraceTick(); recorder.Tick(host, "Charging"); yield return null; }
                 yield return DashThenCircle(centre, () => bolts.ServerAiming, MeasureAndFilm);
                 for (float until = Time.unscaledTime + 0.5f; Time.unscaledTime < until;) { recorder.Tick(host, "after"); yield return null; }
                 Say($"{row} filmed {recorder.Frames} frames (Temp/polish-Listener-gifs/Listener-dash-dodge)");
                 recorder.Close(); recorder = null;
+                TraceSay(row);
+                Check(dashJump > 4.5f, $"{row} the dash really moved the diver ({dashJump:0.00} m)");
+                Check(bolts.ServerLockBrokenAt - dashAt < 0.15f, $"{row} the lock broke at the dash ({bolts.ServerLockBrokenAt - dashAt:0.00} s after the press)");
                 Say($"{row} dash {bolts.ServerLockBrokenAt - t0:0.00} s into the charge, then walking: hits {bolts.ServerHits - hits0}, broken {bolts.ServerLockBroken}, closest {closest:0.00} m past the edge, health {vitals.Health}");
                 Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
                 Check(bolts.ServerLockBroken && bolts.ServerLockBrokenAt < bolts.ServerFiredAt, $"{row} the dash broke the lock during the charge");
@@ -616,12 +649,16 @@ namespace SunkCost.Editor.Prototype
                 hits0 = bolts.ServerHits; int breaks0 = bolts.ServerLockBreaks;
                 closest = float.PositiveInfinity;
                 yield return Provoke(ears, bolts, host, row, 1f);
-                yield return Expect(() => bolts.ServerFiring, s.BeamChargeSeconds + 0.5f, () => row + " it fires into the wall");
+                TraceStart();
+                yield return Expect(() => { TraceTick(); return bolts.ServerFiring; }, s.BeamChargeSeconds + 0.5f, () => row + " it fires into the wall");
                 float fired = bolts.ServerFiredAt;
-                while (Time.time < fired + 0.4f) yield return null;
+                while (Time.time < fired + 0.4f) { TraceTick(); yield return null; }
                 Check(bolts.ServerHits == hits0, row + " nothing through the wall");
-                if (dash) yield return DashThenCircle(centre, () => bolts.ServerAiming, Measure);
-                else yield return Circle(centre, false, () => bolts.ServerAiming, Measure);
+                void MeasureAndTrace() { Measure(); TraceTick(); }
+                if (dash) yield return DashThenCircle(centre, () => bolts.ServerAiming, MeasureAndTrace);
+                else yield return Circle(centre, false, () => bolts.ServerAiming, MeasureAndTrace);
+                TraceSay(row);
+                if (dash) Check(dashJump > 4.5f && bolts.ServerLockBrokenAt - dashAt < 0.15f, $"{row} the dash moved {dashJump:0.00} m and broke the lock {bolts.ServerLockBrokenAt - dashAt:0.00} s after the press");
                 Say($"{row} out from cover 0.4 s into the burn: hits {bolts.ServerHits - hits0} ({bolts.ServerHitAt - fired:0.00} s into the burn), lock breaks {bolts.ServerLockBreaks - breaks0}, closest {closest:0.00} m past the edge");
                 if (dash)
                 {
@@ -650,8 +687,10 @@ namespace SunkCost.Editor.Prototype
                 hits0 = bolts.ServerHits; int dashes = host.Dashes;
                 yield return Provoke(ears, bolts, host, row, 1f);
                 float t0 = bolts.ServerChargedAt;
-                while (Time.time < t0 + 0.3f) yield return null;
-                yield return DashThenStop(() => bolts.ServerAiming);
+                TraceStart();
+                while (Time.time < t0 + 0.3f) { TraceTick(); yield return null; }
+                yield return DashThenStop(() => bolts.ServerAiming, TraceTick);
+                TraceSay(row);
                 float caughtAfter = bolts.ServerHitAt - bolts.ServerLockBrokenAt;
                 Say($"{row} dash {bolts.ServerLockBrokenAt - t0:0.00} s into the charge, then still: hits {bolts.ServerHits - hits0}, caught {caughtAfter:0.00} s after the dash ({bolts.ServerHitAt - bolts.ServerFiredAt:0.00} s into the burn), gap {bolts.ServerHitGap:0.000} m");
                 Check(host.Dashes == dashes + 1, $"{row} the host dashed ({host.DashRefusal})");
@@ -760,6 +799,7 @@ namespace SunkCost.Editor.Prototype
             yield return Cooled(ears, bolts, "L6");
             ears.ServerPlaceForChecks(lAt, 0f);
             Vector3 thing = Vector3.MoveTowards(lAt, Seabed(car, Bearing + 40f, 30f), 12f);
+            ears.DeafForChecks = false;
             NoiseSystem.Emit(thing, 15f, NoiseKind.Impact, 0);
             yield return Expect(() => bolts.ServerCharging, 0.5f, () => "L6 a coin's landing drew a charge at the spot");
             Check(bolts.ServerTargetOwnerId == -1, "L6 no diver near enough to follow: the beam stays on the spot");
@@ -804,6 +844,7 @@ namespace SunkCost.Editor.Prototype
             Heading("L8 — the dark beam eats the light: the haze, the sink on a wall, the lights near it turned down for the render only and put back exactly");
             {
                 yield return Cooled(ears, bolts, "L8");
+                ears.DeafForChecks = true; // the check aims these beams itself
                 Light lamp = host.GetComponentsInChildren<Light>(true).FirstOrDefault(l => l.type == LightType.Spot) ?? host.GetComponentInChildren<Light>(true);
                 Check(lamp != null && lamp.isActiveAndEnabled && host.LampOn, "L8 the host's headlamp is on");
                 Vector3 spot = Vector3.MoveTowards(lAt, stand, 8f);
@@ -834,7 +875,7 @@ namespace SunkCost.Editor.Prototype
                 try
                 {
                     bolts.ServerAim(bolts.Origin, aim, true, s.ListenerDamage, "the Listener (checks)", -1);
-                    Check(bolts.ServerCharging, "L8 a dark beam aimed past the diver charges");
+                    Check(bolts.ServerCharging && bolts.ServerTargetOwnerId == -1, "L8 a dark beam aimed past the diver charges (the check's own)");
                     while (bolts.ServerAiming)
                     {
                         yield return null;
@@ -871,6 +912,7 @@ namespace SunkCost.Editor.Prototype
                 Check(view.ShownImpact && view.Shade.SinkShown, "L8 wall a dark sink where the beam meets the wall, under the violet impact");
                 yield return BeamOver(bolts, "L8 wall");
                 UnityEngine.Object.Destroy(wall); wall = null;
+                ears.DeafForChecks = false;
                 vitals.ServerHealForChecks();
             }
 
