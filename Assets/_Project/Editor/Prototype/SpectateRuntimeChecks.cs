@@ -267,6 +267,15 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !Day.CabinRide.Active, 70f, () => "the ride up completed");
             Check(Day.CabinRide.Stage == CabinRideStage.Complete && Host().gameObject.scene == WorldScenes.Scene(WorldId.Sea), "back on the deck: " + H.RideStatus());
         }
+        // Guest B to a spot within the TV's reach (SHIP-043: 6 m, checked by the server
+        // too), facing the screen, and on until the server's copy of B stands there.
+        private static IEnumerator BToTheTv(Vector3 spot, Vector3 screen, HQPlayerController remoteB)
+        {
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(spot) + "}", GuestDirB);
+            yield return Send("{\"id\":{id},\"action\":\"look\",\"aim\":" + Vec(screen - (spot + Vector3.up * 1.6f)) + "}", GuestDirB);
+            yield return Expect(() => Vector3.Distance(remoteB.EyePosition, screen) < 5.5f, 3f, () => "B stands within the TV's reach (" + Vector3.Distance(remoteB.EyePosition, screen).ToString("F1") + " m from the screen)");
+        }
+
         // Stand near an item on the seafloor, aim at it until the dot lands, grab it.
         private static IEnumerator GrabItem(CarryableItem item)
         {
@@ -691,10 +700,25 @@ namespace SunkCost.Editor.Prototype
             Check(WorldSceneFlow.Instance.IsWatching(idB, out WorldId tvWorld) && tvWorld == WorldId.Dive, "T1 the server tracks B watching the site");
             yield return GuestEventually(r => r.Contains("tvLive=True") && r.Contains("tvCaption=LIVE · " + NameOf(host) + ";"), 6f, "T1 B's TV is live: LIVE · " + NameOf(host), GuestDirB);
             yield return Expect(() => hostHud.Visor.OnAirCount == 1, 3f, () => "T1 the host's visor reads ON AIR · 1 watching — the TV (" + hostHud.Visor.OnAirCount + ")");
+            // The screen answers from 6 m, on the server too (SHIP-043, 23 September 2026;
+            // ShipControls → HQPlayerController.ServerCanReachTv, + 1.5 m of slack). Spots
+            // read from the screen itself, on the centre line aft of it: 12 m back is out
+            // of reach, 4 m back (in front of the couches) is in it.
+            Vector3 tvLocal = sea.ToShipLocal(sea.TvScreen.position);
+            Vector3 bFar = sea.FromShipLocal(new Vector3(tvLocal.x, 0.05f, tvLocal.z - 12f));
+            Vector3 bNear = sea.FromShipLocal(new Vector3(tvLocal.x, 0.05f, tvLocal.z - 4f));
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(bFar) + "}", GuestDirB);
+            yield return Expect(() => Vector3.Distance(remoteB.EyePosition, sea.TvScreen.position) > 10f, 3f, () => "T1r the server sees B 12 m from the screen (" + Vector3.Distance(remoteB.EyePosition, sea.TvScreen.position).ToString("F1") + " m)");
+            int farRefusals = Day.LastRefusal.Serial;
+            yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
+            yield return Expect(() => Day.LastRefusal.Serial > farRefusals && Day.LastRefusal.Text.StartsWith("Too far from the screen"), 3f, () => "T1r a press from 12 m is refused: " + Day.LastRefusal.Text);
+            Check(Day.TvChannel == host.OwnerId, "T1r the refused press left the channel on the host (" + Day.TvChannel + ")");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB);
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Expect(() => Day.TvChannel == idA, 3f, () => "T1 E on the TV: channel A (" + Day.TvChannel + ")");
             yield return GuestEventually(r => r.Contains("tvCaption=LIVE · " + NameOf(remoteA) + ";"), 6f, "T1 B's TV says LIVE · " + NameOf(remoteA), GuestDirB);
             yield return Expect(() => Day.WatchersOf(idA) == 1 && hostHud.Visor.OnAirCount == 0, 3f, () => "T1 A is on air, the host is not");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB);
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Expect(() => Day.TvChannel == host.OwnerId, 3f, () => "T1 E again wraps back to the host");
 
@@ -710,9 +734,12 @@ namespace SunkCost.Editor.Prototype
             yield return Send("{\"id\":{id},\"action\":\"die\"}");
             yield return Expect(() => Day.IsDead(idA) && Day.SpectateTargetOf(idA) == host.OwnerId, 5f, () => "T2 A died below and watches the host");
             yield return Expect(() => hostHud.Visor.OnAirCount == 2, 3f, () => "T2 the host reads ON AIR · 2 watching — the TV and dead A (" + hostHud.Visor.OnAirCount + ")");
+            yield return BToTheTv(bNear, sea.TvScreen.position, remoteB); // within reach, so the host stays because A is dead, not because the press was too far
+            int t2Refusals = Day.LastRefusal.Serial;
             yield return Send("{\"id\":{id},\"action\":\"tv_next\"}", GuestDirB);
             yield return Wait(1f);
             Check(Day.TvChannel == host.OwnerId, "T2 dead A is no channel: E keeps the host (" + Day.TvChannel + ")");
+            Check(Day.LastRefusal.Serial == t2Refusals, "T2 the press was taken, not refused (" + Day.LastRefusal.Text + ")");
 
             Heading("T3 — the last living diver surfaces: NO SIGNAL, the ship drops the dive world, E on the dark TV is refused");
             yield return Expect(() => Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "T3 the car came back down for the host (" + Day.Elevator.State + ")");
