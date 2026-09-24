@@ -1241,6 +1241,8 @@ namespace SunkCost.Editor.Look
             int nx = Mathf.CeilToInt(2f * halfW / cell), nz = Mathf.CeilToInt(2f * halfL / cell);
             float X(int i) => -halfW + (i + 0.5f) * cell;
             float Z(int k) => -halfL + (k + 0.5f) * cell;
+            // Out to the side's outer face: under the wall a hole is hidden by its top,
+            // past it is the hull's own outside.
             bool Inside(int i, int k) => Mathf.Abs(X(i)) < W(Z(k)) - 0.02f && X(i) * X(i) + Z(k) * Z(k) > well * well && !UnderTower(X(i), Z(k));
             var hole = new bool[nx, nz];
             var runs = new List<(float x0, float x1, float z)>();
@@ -1249,8 +1251,10 @@ namespace SunkCost.Editor.Look
                 int start = -1;
                 for (int i = 0; i <= nx; i++)
                 {
-                    if (i < nx && Inside(i, k) && Mathf.Abs(X(i)) < W(Z(k)) - 0.05f)
-                        hole[i, k] = !hull.Raycast(new Ray(root.TransformPoint(new Vector3(X(i), 0.3f, Z(k))), -root.up), out _, 0.6f);
+                    // A hole: no hull within 3 cm under the deck's level (its side falling away
+                    // at a notch counts; a 3 cm ball found them).
+                    if (i < nx && Inside(i, k))
+                        hole[i, k] = !hull.Raycast(new Ray(root.TransformPoint(new Vector3(X(i), 0.3f, Z(k))), -root.up), out _, 0.33f);
                     if (i < nx && hole[i, k]) { if (start < 0) start = i; }
                     else if (start >= 0) { runs.Add((X(start) - cell / 2f, X(i - 1) + cell / 2f, Z(k))); start = -1; }
                 }
@@ -1367,9 +1371,12 @@ namespace SunkCost.Editor.Look
             for (int i = 0; i < count; i++)
             {
                 Vector3 t = loop[(i + 1) % count] - loop[(i - 1 + count) % count];
-                Vector3 nrm = new Vector3(-t.z, 0f, t.x).normalized;
-                if (Vector3.Dot(nrm, -loop[i]) < 0f) nrm = -nrm; // toward the ship's centre line
-                inward[i] = nrm;
+                // The loop runs one way round (starboard aft, the transom, port forward, the
+                // point), so the inside is always the same side of it. Choosing the side
+                // that faced the ship's middle turned the wall inside out at the sharp kinks
+                // aft (x 8.8, z -18.8): its top faced down, and small items fell through the
+                // folded wall into the hull (SHIP-032).
+                inward[i] = new Vector3(t.z, 0f, -t.x).normalized;
             }
 
             // From just under the deck plane: a wall that started exactly on it showed

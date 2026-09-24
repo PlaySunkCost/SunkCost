@@ -46,6 +46,7 @@ namespace SunkCost.World
         // the quad never sees a half-drawn frame.
         private RenderTexture picture, shown;
         private Camera cam;
+        private Transform volumeTrigger;
         private HQPlayerController diver;
         private HQPlayerController cameraSource; // whose camera the TV camera was copied from
         private Transform speaker;
@@ -64,6 +65,9 @@ namespace SunkCost.World
         // Someone stands close enough to see the screen: the picture is rendered.
         public bool ViewerNear { get; private set; }
         public int RenderedFrames { get; private set; }
+        // For the checks: the underwater grade's weight and colour filter in the last picture's volume stack.
+        public float PictureGradeWeight { get; private set; }
+        public Color PictureColorFilter { get; private set; }
 
         private void Awake()
         {
@@ -81,6 +85,13 @@ namespace SunkCost.World
             cam.fieldOfView = 70f;
             cam.nearClipPlane = 0.05f;
             cam.enabled = false; // rendered by hand (LateUpdate), never by the loop
+            // Its own volume stack, worked out right before each of its renders (below).
+            cam.SetVolumeFrameworkUpdateMode(VolumeFrameworkUpdateMode.ViaScripting);
+            // The volumes are judged from a plain point at the camera: with a Camera on the
+            // trigger, the editor's VolumeManager also filters volumes by what that camera
+            // renders (StageUtility), and the TV lives in the ship's scene, the grade in the site's.
+            volumeTrigger = new GameObject("TvVolumeTrigger").transform;
+            volumeTrigger.SetParent(go.transform, false);
             EnsureTextures();
             ShowNoSignal();
         }
@@ -130,7 +141,7 @@ namespace SunkCost.World
                 data.volumeLayerMask = referenceData.volumeLayerMask;
                 data.antialiasing = referenceData.antialiasing;
             }
-            data.volumeTrigger = cam.transform; // the grade is a volume around the seafloor: judged where the TV camera stands
+            data.volumeTrigger = volumeTrigger != null ? volumeTrigger : cam.transform; // the grade is a volume around the seafloor: judged where the TV camera stands
         }
 
         private void LateUpdate()
@@ -169,6 +180,16 @@ namespace SunkCost.World
             // silhouetted against it (Dan, 23 September 2026: "still not good").
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = RenderSettings.fogColor;
+            // The underwater grade for this render, in the TV camera's own volume stack,
+            // worked out from where it stands just before it renders (spectate S3/T, 24
+            // September 2026: the host's picture read 0.073 - the seafloor ungraded, fog
+            // (6, 12, 13) - against B's own graded 0.205, while the diver's and a
+            // spectator's cameras were graded). The picture no longer depends on the
+            // shared stack the loop's cameras update in between.
+            PictureGradeWeight = SunkCost.Sites.UnderwaterGrade.PrepareAll(cam);
+            UniversalAdditionalCameraData data = cam.GetUniversalAdditionalCameraData();
+            cam.UpdateVolumeStack(data);
+            PictureColorFilter = data.volumeStack != null && data.volumeStack.GetComponent<ColorAdjustments>() is ColorAdjustments grade ? grade.colorFilter.value : Color.clear;
             diver.BeginWatchedRender(); // none of the diver's own figure, as on the diver's own screen
             cam.Render();
             diver.EndWatchedRender();

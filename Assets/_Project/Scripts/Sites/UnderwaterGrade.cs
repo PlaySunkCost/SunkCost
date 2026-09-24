@@ -54,6 +54,15 @@ namespace SunkCost.Sites
             foreach (UnderwaterGrade grade in active) grade.PrepareCamera(camera);
         }
 
+        // Every grade's weight for a camera about to render by hand (the deck TV works
+        // out its own volume stack before Camera.Render); the highest weight.
+        public static float PrepareAll(Camera camera)
+        {
+            float highest = 0f;
+            foreach (UnderwaterGrade grade in active) highest = Mathf.Max(highest, grade.PrepareCamera(camera));
+            return highest;
+        }
+
         // The weight this camera renders the grade with (the edit-mode checks call it too).
         public float PrepareCamera(Camera camera)
         {
