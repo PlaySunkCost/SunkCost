@@ -192,9 +192,11 @@ namespace SunkCost.Player
         // path): the owner's own eyes exactly, a remote copy's eased ones.
         public void EyePose(out Vector3 position, out Quaternion rotation)
         {
-            if (IsOwner || !eyesPrimed) { position = EyeAnchor.position; rotation = Quaternion.Euler(LookPitch, Yaw, 0f); return; }
+            // Held by a monster: the hold's eyes, from the same numbers on every peer (Grabbed partial).
+            if (GrabbedPose(out _, out position, out rotation)) return;
+            if (IsOwner || !eyesPrimed) { position = EyeAnchor.position; rotation = Quaternion.Euler(LookPitch, Yaw, 0f) * KnockbackJolt(); return; } // the Charger's jolt (Knockback partial)
             position = eyePosition;
-            rotation = Quaternion.Euler(remotePitch, eyeYaw, 0f);
+            rotation = Quaternion.Euler(remotePitch, eyeYaw, 0f) * KnockbackJolt();
         }
         public float EyeYaw => IsOwner || !eyesPrimed ? Yaw : eyeYaw;
         // The owner's spectator view, created at OnStartClient (card 2).
@@ -264,7 +266,7 @@ namespace SunkCost.Player
         // owner's own rings and whoosh play now; the server's cue reaches the others.
         public bool TryDash(Vector2 input)
         {
-            if (!IsOwner || dead.Value || travelLocked) return RefuseDash("Not now");
+            if (!IsOwner || dead.Value || travelLocked || grabbedLocal) return RefuseDash("Not now");
             float now = Time.unscaledTime;
             if (now < dashUntil) return RefuseDash("Already dashing");
             if (now < dashReadyAt) return RefuseDash($"Dash in {dashReadyAt - now:0.0} s");
@@ -420,8 +422,9 @@ namespace SunkCost.Player
             // value and the applied one disagree (a client whose object was moved
             // between scenes or re-initialised can miss the change callback).
             if (appliedDead != dead.Value) ApplyDead(dead.Value);
-            if (IsServerStarted) { ServerJudgeDash(); ServerCheckSeat(); } // every copy, the host's own included: one path
+            if (IsServerStarted) { ServerJudgeDash(); ServerCheckSeat(); ServerCheckGrab(); } // every copy, the host's own included: one path
             if (!IsOwner) return; // the eyes ease in LateUpdate, after the NetworkTransform has moved
+            SyncGrabbedLocal(); // held by a monster: the lock follows the server's hold (Grabbed partial)
             PollSeat();
             // No keyboard or mouse (a headless peer): no commands, but the motor
             // still runs so gravity, grounding and the stance keep working.
@@ -457,6 +460,10 @@ namespace SunkCost.Player
                 return;
             }
             SendPitchIfDue();
+
+            // Held by a monster: no look, move, items or targets; the hold places the
+            // root and the camera in LateUpdate (Grabbed partial).
+            if (grabbedLocal) { GrabbedFrame(); return; }
 
             // Menu open, Steam overlay up, or window unfocused: no look, move or
             // item input. Gravity keeps running below; only commands stop.
@@ -724,6 +731,7 @@ namespace SunkCost.Player
             input = Vector2.ClampMagnitude(input, 1f);
             float speed = (sprint && !stanceCrouched ? sprintSpeed : walkSpeed) * (stanceCrouched ? settings.CrouchSpeedFactor : 1f) * SpeedFactor;
             Vector3 planar = (transform.forward * input.y + transform.right * input.x) * speed;
+            planar *= KnockbackInputScale(); // a blow's shove is the blow's, not the keys' (Knockback partial)
             if (now < dashUntil) planar = dashDirection * dashSpeed; // the burst: steering and sprint do not matter for a quarter second; gravity goes on (an air dash is allowed — Dan wants to try it)
             lastFlags = controller.Move((planar + Vector3.up * verticalSpeed) * Mathf.Min(Time.deltaTime, 0.1f));
             if ((lastFlags & CollisionFlags.Above) != 0 && verticalSpeed > 0f) verticalSpeed = 0f; // head hit: the ascent ends now
@@ -733,7 +741,7 @@ namespace SunkCost.Player
         // from the replicated item, not from the slot selection.
         public bool CanJump()
         {
-            if (travelLocked || stanceCrouched) return false;
+            if (travelLocked || grabbedLocal || stanceCrouched) return false;
             if (stance != null && stance.DesiredCrouch) return false;
             CarryableItem held = inventory != null ? inventory.HeldItem : null;
             return held == null || held.Grip != CarryGrip.TwoHands;
@@ -881,7 +889,11 @@ namespace SunkCost.Player
         }
 
         [Server]
-        public void ServerSetDead(bool value) => dead.Value = value;
+        public void ServerSetDead(bool value)
+        {
+            dead.Value = value;
+            if (value) ServerReleaseGrab(); // a death ends any hold (the hold's own kill, a beam, an empty tank)
+        }
 
         // The menu's Unstuck (Dan, 18 September 2026): the server puts you back on
         // a known spot of the world you are in (WorldSceneFlow.ServerUnstuck).
@@ -935,7 +947,7 @@ namespace SunkCost.Player
             appliedDead = value;
             if (controller != null)
             {
-                bool on = !value && !travelLocked && !seatedLocal;
+                bool on = !value && !travelLocked && !seatedLocal && !grabbedLocal;
                 if (on && !controller.enabled) Physics.SyncTransforms(); // see TeleportLocal: never enable the capsule over a stale pose
                 controller.enabled = on;
             }
@@ -964,7 +976,7 @@ namespace SunkCost.Player
         // head), the position and yaw eased behind the transform (see EyeSmoothSeconds).
         private void LateUpdate()
         {
-            if (IsOwner) { UpdateZoom(); return; } // the couch's zoom, owner-local
+            if (IsOwner) { HoldGrabbedOwner(); UpdateZoom(); return; } // a monster's hold, then the couch's zoom, owner-local
             UpdateRemoteSeatPose();
             float dt = Time.deltaTime;
             // A remote copy's lamp shows while its diver is listed below (its Unity

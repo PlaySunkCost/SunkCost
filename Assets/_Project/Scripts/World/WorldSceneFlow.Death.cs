@@ -28,15 +28,9 @@ namespace SunkCost.World
         public bool ServerKill(NetworkConnection conn, out string why) => ServerKill(conn, out why, "killed");
         public bool ServerKill(NetworkConnection conn, out string why, string cause)
         {
-            why = string.Empty;
-            if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
-            if (dayState == null || conn == null) { why = "No day state."; return false; }
+            if (!ServerCanKill(conn, out why)) return false;
             HQPlayerController player = PlayerOf(conn);
-            if (player == null) { why = "No player."; return false; }
             int id = conn.ClientId;
-            if (player.IsDead || dayState.IsDead(id)) { why = "Already dead"; return false; }
-            if (!dayState.IsBelow(id) || player.gameObject.scene != WorldScenes.Scene(WorldId.Dive)) { why = "You can only die below"; return false; }
-            if (riding && cohort.Contains(id)) { why = "Riding"; return false; }
 
             Vector3 at = player.transform.position;
             PlayerInventory inventory = player.Inventory;
@@ -50,6 +44,23 @@ namespace SunkCost.World
             Debug.Log($"[WorldSceneFlow] {name} {cause} below at {at:F1}; body {(body != null ? body.name : "none")}; living below: {dayState.Below.Count}");
             ServerUpdateSpectators(); // the nearest living player, now (card 2)
             ServerAfterDeath();
+            return true;
+        }
+
+        // Whether ServerKill would take this player now, without killing: a monster
+        // that holds a diver before the kill (the Long Walker's grab, 24 September
+        // 2026) asks first, so a hold never ends in a refusal it could have seen.
+        public bool ServerCanKill(NetworkConnection conn, out string why)
+        {
+            why = string.Empty;
+            if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
+            if (dayState == null || conn == null) { why = "No day state."; return false; }
+            HQPlayerController player = PlayerOf(conn);
+            if (player == null) { why = "No player."; return false; }
+            int id = conn.ClientId;
+            if (player.IsDead || dayState.IsDead(id)) { why = "Already dead"; return false; }
+            if (!dayState.IsBelow(id) || player.gameObject.scene != WorldScenes.Scene(WorldId.Dive)) { why = "You can only die below"; return false; }
+            if (riding && cohort.Contains(id)) { why = "Riding"; return false; }
             return true;
         }
 

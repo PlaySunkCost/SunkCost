@@ -128,33 +128,6 @@ def build_quadruped(height, build, length=None):
     return arm
 
 
-def prowl(arm):
-    """The four-legged Hunting (24 September 2026): the upright monsters' Hunting
-    pitches the spine 38 degrees and drops the root to crouch, which drove a
-    horizontal body's head through the floor. The Charger stalks level instead, head
-    a little low, all four legs walking in diagonal pairs: Rushing's gait, slower."""
-    old = bpy.data.actions.get("Hunting")
-    if old is not None:
-        bpy.data.actions.remove(old)
-    keys = {n: [] for n in ("Root", "Spine", "Neck", "Head", "ThighL", "ThighR", "ShinL", "ShinR", "UpperArmL", "UpperArmR", "LowerArmL", "LowerArmR")}
-    for phase in (0.0, 0.5, 1.0):
-        frame = 1 + int(phase * 23)
-        s = math.cos(phase * 2 * math.pi)
-        keys["Root"].append((frame, L.Z3, (0, 0, -0.01 * abs(s))))
-        keys["Spine"].append((frame, L.R(2 * s, 0, 0), L.Z3))
-        keys["Neck"].append((frame, L.R(-6, 0, 0), L.Z3))
-        keys["Head"].append((frame, L.R(-6, 0, 0), L.Z3))
-        keys["ThighL"].append((frame, L.R(-22 * s, 0, 0), L.Z3))
-        keys["ThighR"].append((frame, L.R(22 * s, 0, 0), L.Z3))
-        keys["ShinL"].append((frame, L.R(28 * max(0.0, s), 0, 0), L.Z3))
-        keys["ShinR"].append((frame, L.R(28 * max(0.0, -s), 0, 0), L.Z3))
-        keys["UpperArmL"].append((frame, L.R(22 * s, 0, 0), L.Z3))
-        keys["UpperArmR"].append((frame, L.R(-22 * s, 0, 0), L.Z3))
-        keys["LowerArmL"].append((frame, L.R(-14 * max(0.0, -s), 0, 0), L.Z3))
-        keys["LowerArmR"].append((frame, L.R(-14 * max(0.0, s), 0, 0), L.Z3))
-    L.action(arm, "Hunting", 24, keys)
-
-
 def main():
     args = sys.argv[sys.argv.index("--") + 1:]
     kind, src, dst = args[0], os.path.abspath(args[1]), os.path.abspath(args[2])
@@ -294,8 +267,6 @@ def main():
         L.anchor("BeamOrigin", (0, -0.085 * height, 0.89 * height), arm, "Head")
         L.anchor("Voice", (0, 0, 0.93 * height), arm, "Head")
     L.animate(arm)
-    if four_legs:
-        prowl(arm)
     # A kind's own clips (tools/blender/clips/<Kind>.py, 24 September 2026): its
     # animate(arm, height, L) replaces or adds actions, its CLIPS names the extra
     # ones to keep. One file per monster, so each can be reworked on its own.

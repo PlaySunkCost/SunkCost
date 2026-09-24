@@ -24,7 +24,7 @@ namespace SunkCost.Monsters
     // shaft, never strikes a diver in the car or on the tube's floor, and every
     // death goes through WorldSceneFlow.ServerKill, which refuses anyone not below.
     [RequireComponent(typeof(CharacterController))]
-    public abstract class Creature : NetworkBehaviour, INoiseListener
+    public abstract partial class Creature : NetworkBehaviour, INoiseListener
     {
         // Every spawned creature on this peer (server and client), for the roster and the checks.
         public static readonly List<Creature> All = new();
@@ -109,6 +109,7 @@ namespace SunkCost.Monsters
         {
             base.OnStopServer();
             NoiseSystem.Unregister(this);
+            ServerGrabStopped();
         }
 
         public override void OnStartClient()
@@ -132,6 +133,8 @@ namespace SunkCost.Monsters
             if (!awake) { if (Now < wakeAt) { Fall(dt); return; } awake = true; }
             wantedMove = Vector3.zero;
             wantedToMove = false;
+            // Holding a catch (Creature.Grab.cs): no brain, no step, only the hold and gravity.
+            if (ServerGrabbing) { ServerTickGrab(); Fall(dt); stuckSince = -1f; return; }
             ServerThink(dt);
             Vector3 before = transform.position;
             Fall(dt, wantedMove);
@@ -226,11 +229,11 @@ namespace SunkCost.Monsters
         }
 
         // Turn to face a point, flat.
-        protected void FaceToward(Vector3 point)
+        protected void FaceToward(Vector3 point, float degreesPerSecond = 540f)
         {
             Vector3 to = point - transform.position; to.y = 0f;
             if (to.sqrMagnitude < 0.0001f) return;
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(to, Vector3.up), 540f * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(to, Vector3.up), degreesPerSecond * Time.deltaTime);
         }
 
         protected bool StrikeReady => Now >= strikeReadyAt;
@@ -271,15 +274,22 @@ namespace SunkCost.Monsters
         }
 
         // The strike this kind makes: death for the killers (the ordinary death
-        // through WorldSceneFlow.ServerKill, which keeps the deck safe), health and a
-        // leak for the rest. True when it landed.
+        // through WorldSceneFlow.ServerKill, which keeps the deck safe) — held first
+        // for a kind that grabs (a CreatureGrab on its prefab: the Long Walker, 24
+        // September 2026; Creature.Grab.cs), at once for the rest — health and a leak
+        // for the others. A diver already held by a monster cannot be struck. True
+        // when it landed (for a grab: the catch).
         protected bool Strike(HQPlayerController diver, float damage)
         {
-            if (diver == null || !StrikeReady || diver.IsDead || CreatureSenses.Safe(diver, Settings)) return false;
+            if (diver == null || !StrikeReady || diver.IsDead || diver.IsGrabbed || CreatureSenses.Safe(diver, Settings)) return false;
             strikeReadyAt = Now + Settings.StrikeCooldownSeconds;
             string name = MonsterCatalog.DisplayName(kind);
             bool landed;
-            if (MonsterCatalog.Kills(kind))
+            if (MonsterCatalog.Kills(kind) && Grabs)
+            {
+                landed = ServerBeginGrab(diver, name);
+            }
+            else if (MonsterCatalog.Kills(kind))
             {
                 WorldSceneFlow flow = WorldSceneFlow.Instance;
                 landed = flow != null && flow.ServerKill(diver.Owner, out string why, "taken by " + name);

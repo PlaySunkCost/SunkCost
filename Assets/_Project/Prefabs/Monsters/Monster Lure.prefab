@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 3476910718474835429}
   - component: {fileID: 7436333490191998998}
   - component: {fileID: 1227131896799275522}
+  - component: {fileID: 1101504816799685086}
   m_Layer: 11
   m_Name: Monster Lure
   m_TagString: Untagged
@@ -37,7 +38,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5552457970246451533}
+  - {fileID: 900477263778777853}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5858233546774328497
@@ -183,6 +184,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 5858233546774328497}
   _networkObjectCache: {fileID: 0}
+  halfWidth: 0.35
 --- !u!114 &6176126179358451591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -199,7 +201,15 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 5858233546774328497}
   _networkObjectCache: {fileID: 0}
   kind: 4
-  eyeHeight: 1.5
+  eyeHeight: 1.7638578
+  aimStartDegrees: 12
+  driftTurnDegPerSec: 200
+  aimTurnDegPerSec: 360
+  driftAcceleration: 2.5
+  plantDeceleration: 8
+  weaveMetres: 0.2
+  weaveSeconds: 3.2
+  recoverSeconds: 0.9
 --- !u!114 &3476910718474835429
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,7 +222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0501c66a29428d24983f466b6889aeb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureLook
-  body: {fileID: 5552457970246451533}
+  body: {fileID: 900477263778777853}
   eyes: []
   eyeColour: {r: 1, g: 0.85, b: 0.25, a: 1}
 --- !u!114 &7436333490191998998
@@ -239,15 +249,87 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd2e517a666fb2045adabc00837bcc3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureRig
-  animator: {fileID: 5257875905685653231}
-  beamOrigin: {fileID: 8834299965387830871}
-  voice: {fileID: 7775024469165234197}
+  animator: {fileID: 8650961410347962889}
+  beamOrigin: {fileID: 4316934803164626407}
+  voice: {fileID: 3068930297209443237}
   animatedPoses:
   - Idle
   - Drawn
   - Hunting
   - Shooting
---- !u!1001 &5369683177452267174
+  - Recovering
+  - Aiming
+  matchSpeed: 1
+  strides:
+  - pose: 2
+    metresPerSecond: 2.018
+  - pose: 1
+    metresPerSecond: 2.014
+  playbackRange: {x: 0.45, y: 1.8}
+  standBelow: 0.25
+  standPose: 0
+  driveTransitions: 1
+  blendSeconds: 0.2
+  blends:
+  - pose: 10
+    seconds: 0.3
+  - pose: 6
+    seconds: 0.08
+  - pose: 9
+    seconds: 0.18
+  - pose: 0
+    seconds: 0.35
+  - pose: 1
+    seconds: 0.25
+  - pose: 2
+    seconds: 0.22
+  keepStridePhase: 1
+  lookWeight: 0.8
+  lookBones: []
+  lookShares:
+  - 0.15
+  - 0.3
+  - 0.55
+  lookMaxYaw: 70
+  lookMaxPitch: 35
+  lookDegPerSec: 200
+  lookHeight: 1.5
+  lookOffPoses: 03y
+  stillPoses: 03y
+  aimAtBeam: 1
+  aimMaxDegrees: 60
+  leanMaxDegrees: 8
+  leanStrength: 0.8
+  leanPivot: {fileID: 0}
+  breathDegrees: 0.6
+  breathSeconds: 3.1
+  breathBone: {fileID: 0}
+  rateVariation: 0.06
+  randomStart: 1
+  alwaysAnimate: 0
+  maxBeamOriginFromEye: 1.5
+--- !u!114 &1101504816799685086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7120860160158814152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ad4160655e1d9346b7f9d48a1a46216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.LureLantern
+  colour: {r: 1, g: 0.86, b: 0.52, a: 1}
+  range: 6
+  baseIntensity: 0.9
+  drawnScale: 1.4
+  chargePeakScale: 4
+  firingScale: 5
+  spentScale: 0.35
+  impactRange: 3.5
+  impactIntensity: 3
+--- !u!1001 &861764441461812502
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -295,11 +377,23 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8503101060444009947, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: -7954314212387794172, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
     - target: {fileID: -7654290624033612645, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: -7535225835745601375, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: -7042127475749054945, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
@@ -359,6 +453,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 3164298219220652511, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: 5094554025558780596, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
       propertyPath: m_Layer
       value: 11
@@ -383,7 +481,19 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 7875710711360438710, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 8161682034054838088, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
     - target: {fileID: 8530050387732381985, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 8662295855011672817, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
       propertyPath: m_Layer
       value: 11
       objectReference: {fileID: 0}
@@ -409,21 +519,21 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5257875905685653231}
+      addedObject: {fileID: 8650961410347962889}
   m_SourcePrefab: {fileID: 100100000, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
---- !u!1 &5063624568617556983 stripped
+--- !u!1 &519308002355433543 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
-  m_PrefabInstance: {fileID: 5369683177452267174}
+  m_PrefabInstance: {fileID: 861764441461812502}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &5257875905685653231
+--- !u!95 &8650961410347962889
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5063624568617556983}
+  m_GameObject: {fileID: 519308002355433543}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 77dc22fbf8cfda94cb2e6f8afa124568, type: 2}
@@ -438,18 +548,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!4 &5552457970246451533 stripped
+--- !u!4 &900477263778777853 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
-  m_PrefabInstance: {fileID: 5369683177452267174}
+  m_PrefabInstance: {fileID: 861764441461812502}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &7775024469165234197 stripped
+--- !u!4 &3068930297209443237 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
-  m_PrefabInstance: {fileID: 5369683177452267174}
+  m_PrefabInstance: {fileID: 861764441461812502}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8834299965387830871 stripped
+--- !u!4 &4316934803164626407 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: 550a2204047f5034bb6821b3e8821edb, type: 3}
-  m_PrefabInstance: {fileID: 5369683177452267174}
+  m_PrefabInstance: {fileID: 861764441461812502}
   m_PrefabAsset: {fileID: 0}

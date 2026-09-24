@@ -36,7 +36,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2734005809070896229}
+  - {fileID: 7648864056308076123}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7696592414742249092
@@ -184,6 +184,20 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 0}
   kind: 3
   eyeHeight: 0.9
+  prowlTurnDegPerSec: 200
+  aimTurnDegPerSec: 150
+  windupFacingDegrees: 25
+  aimLockSeconds: 0.2
+  accelerationSeconds: 0.25
+  missBrakeMeters: 3
+  hitBrakeMeters: 1.2
+  recoverSeconds: 1.8
+  wallDazeSeconds: 0.6
+  knockbackMeters: 3
+  frontReach: 1.55
+  backReach: 1.7
+  diverRadius: 0.35
+  prowlStopMeters: 2.4
 --- !u!114 &7031037128883331703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,7 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0501c66a29428d24983f466b6889aeb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureLook
-  body: {fileID: 2734005809070896229}
+  body: {fileID: 7648864056308076123}
   eyes: []
   eyeColour: {r: 1, g: 0.85, b: 0.25, a: 1}
 --- !u!114 &4542502625511444092
@@ -223,15 +237,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd2e517a666fb2045adabc00837bcc3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Monsters.CreatureRig
-  animator: {fileID: 8869119741008504941}
-  beamOrigin: {fileID: 1325982248855012223}
-  voice: {fileID: 223217734321024317}
+  animator: {fileID: 7697170976711692935}
+  beamOrigin: {fileID: 6751405247324977473}
+  voice: {fileID: 5534393710965217027}
   animatedPoses:
   - Idle
   - Hunting
   - Windup
   - Rushing
---- !u!1001 &2484749705385022350
+  - Recovering
+  matchSpeed: 1
+  strides:
+  - pose: 2
+    metresPerSecond: 3.2
+  - pose: 5
+    metresPerSecond: 18
+  playbackRange: {x: 0.45, y: 1.6}
+  standBelow: 0.35
+  standPose: 0
+  driveTransitions: 1
+  blendSeconds: 0.2
+  blends:
+  - pose: 0
+    seconds: 0.35
+  - pose: 2
+    seconds: 0.25
+  - pose: 4
+    seconds: 0.15
+  - pose: 5
+    seconds: 0.06
+  - pose: 9
+    seconds: 0.08
+  keepStridePhase: 1
+  lookWeight: 0.6
+  lookBones: []
+  lookShares:
+  - 0.15
+  - 0.3
+  - 0.55
+  lookMaxYaw: 45
+  lookMaxPitch: 15
+  lookDegPerSec: 240
+  lookHeight: 1.5
+  lookOffPoses: 03040509y
+  stillPoses: 03y
+  aimAtBeam: 0
+  aimMaxDegrees: 75
+  leanMaxDegrees: 5
+  leanStrength: 0.6
+  leanPivot: {fileID: 0}
+  breathDegrees: 0
+  breathSeconds: 3.4
+  breathBone: {fileID: 0}
+  rateVariation: 0
+  randomStart: 1
+  alwaysAnimate: 0
+  maxBeamOriginFromEye: 1.5
+--- !u!1001 &7902832355646269872
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -385,36 +447,31 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8869119741008504941}
+      addedObject: {fileID: 7697170976711692935}
   m_SourcePrefab: {fileID: 100100000, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
---- !u!4 &223217734321024317 stripped
+--- !u!4 &5534393710965217027 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2405658779199651507, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 2484749705385022350}
+  m_PrefabInstance: {fileID: 7902832355646269872}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &1325982248855012223 stripped
+--- !u!4 &6751405247324977473 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3467014584433447153, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 2484749705385022350}
+  m_PrefabInstance: {fileID: 7902832355646269872}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &2734005809070896229 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 2484749705385022350}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &3367271268766592735 stripped
+--- !u!1 &7020524653719278817 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
-  m_PrefabInstance: {fileID: 2484749705385022350}
+  m_PrefabInstance: {fileID: 7902832355646269872}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &8869119741008504941
+--- !u!95 &7697170976711692935
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3367271268766592735}
+  m_GameObject: {fileID: 7020524653719278817}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 5db76b52c3da7fd4c93ce4526d27c47a, type: 2}
@@ -429,3 +486,8 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &7648864056308076123 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f3f49bb58384eae46a92b6478d2bde98, type: 3}
+  m_PrefabInstance: {fileID: 7902832355646269872}
+  m_PrefabAsset: {fileID: 0}

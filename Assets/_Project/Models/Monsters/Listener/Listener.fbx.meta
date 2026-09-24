@@ -37,11 +37,40 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
+      name: Aiming
+      takeName: Armature|Aiming
+      internalID: 5161195400769134623
+      firstFrame: 0
+      lastFrame: 38
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000u
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
       name: Drawn
       takeName: Armature|Drawn
       internalID: -965195295151537483
       firstFrame: 0
-      lastFrame: 29
+      lastFrame: 23
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -99,7 +128,7 @@ ModelImporter:
       takeName: Armature|Idle
       internalID: -8945691123924629249
       firstFrame: 0
-      lastFrame: 71
+      lastFrame: 96
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -124,11 +153,40 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
+      name: Recovering
+      takeName: Armature|Recovering
+      internalID: 1844378693951375475
+      firstFrame: 0
+      lastFrame: 27
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000u
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
       name: Shooting
       takeName: Armature|Shooting
       internalID: 2126547105437587583
       firstFrame: 0
-      lastFrame: 14
+      lastFrame: 99
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

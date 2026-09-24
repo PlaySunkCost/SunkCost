@@ -96,7 +96,7 @@ namespace SunkCost.Monsters
         [SerializeField] private float beamSeconds = 3f;
         [Tooltip("How fast the beam turns after its target, degrees per second, charging and firing alike. Fast enough that only a wall or a dash across it at the right moment saves you (Dan: it should hit about 95 % of the time).")]
         [SerializeField] private float beamSweepDegPerSec = 160f;
-        [Tooltip("The beam hits a diver within this many metres of its line.")]
+        [Tooltip("Fallback only: a diver without a CharacterController capsule")]
         [SerializeField] private float beamHitRadius = 0.7f;
         [Tooltip("How far the beam reaches before the water takes it.")]
         [SerializeField] private float beamRangeMeters = 40f;

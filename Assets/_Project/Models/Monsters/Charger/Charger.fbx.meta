@@ -41,7 +41,7 @@ ModelImporter:
       takeName: Armature|Hunting
       internalID: -6058285500679984963
       firstFrame: 0
-      lastFrame: 23
+      lastFrame: 32
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -70,7 +70,7 @@ ModelImporter:
       takeName: Armature|Idle
       internalID: -8945691123924629249
       firstFrame: 0
-      lastFrame: 71
+      lastFrame: 192
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -95,11 +95,40 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
+      name: Recovering
+      takeName: Armature|Recovering
+      internalID: 1844378693951375475
+      firstFrame: 0
+      lastFrame: 132
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000u
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
       name: Rushing
       takeName: Armature|Rushing
       internalID: 5852591799121312990
       firstFrame: 0
-      lastFrame: 11
+      lastFrame: 24
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -128,14 +157,14 @@ ModelImporter:
       takeName: Armature|Windup
       internalID: -4435252492879038639
       firstFrame: 0
-      lastFrame: 45
+      lastFrame: 126
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 1
+      loopTime: 0
       loopBlend: 0
       loopBlendOrientation: 1
       loopBlendPositionY: 1

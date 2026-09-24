@@ -91,9 +91,11 @@ namespace SunkCost.Monsters
 
         private void OnPose(CreaturePose pose)
         {
-            bool starts = (pose == CreaturePose.Hunting || pose == CreaturePose.Windup) && lastPose != CreaturePose.Hunting && lastPose != CreaturePose.Windup && lastPose != CreaturePose.Rushing;
+            // The Charger's tell always calls, cooldown or not: the call is the warning (24 September 2026).
+            bool windup = pose == CreaturePose.Windup && lastPose != CreaturePose.Windup;
+            bool starts = (pose == CreaturePose.Hunting || pose == CreaturePose.Windup) && lastPose != CreaturePose.Hunting && lastPose != CreaturePose.Windup && lastPose != CreaturePose.Rushing && lastPose != CreaturePose.Recovering;
             lastPose = pose;
-            if (!starts || Time.unscaledTime < nextCallAt || !Audible) return;
+            if (!(starts || windup) || (!windup && Time.unscaledTime < nextCallAt) || !Audible) return;
             nextCallAt = Time.unscaledTime + 3f;
             voice.PlayOneShot(library.MonsterCall, library.MonsterCallVolume);
             CallsPlayed++;

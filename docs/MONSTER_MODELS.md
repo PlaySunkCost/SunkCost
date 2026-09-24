@@ -28,8 +28,9 @@ the pipeline end to end; it is not the look.
    skinned to it. Keep the root bone at the feet.
 5. **Anchors** — empties, parented to a bone, named exactly:
    - `BeamOrigin` (the Lure and the Listener): where the beam visibly leaves —
-     the mouth, the lamp. The server's line still starts at the eye point; only
-     the drawn line moves.
+     the mouth, the lamp. The server's judgement and the drawn beam both start
+     here (`CreatureBolts.Origin` through `CreatureRig.BeamOriginPoint`, which
+     falls back to the eye point when the anchor is missing or implausible).
    - `Voice`: where the call comes from (the head).
    - `Eye` (optional): its height becomes the creature's eye height (where it
      looks from and where the Angel is looked at). Without it the setup keeps the
