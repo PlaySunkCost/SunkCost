@@ -184,6 +184,7 @@ namespace SunkCost.Editor.Look
             }
             Vector3 unstuck = ShipStubBuilder.UnstuckPoint;
             Keep("the Unstuck point", new Vector2(unstuck.x, unstuck.z), 0.8f);
+            Keep("HQ boarding lane", new Vector2(-11f, -8f), new Vector2(-5f, -4f));
             Keep("the loop test's open deck", new Vector2(OpenDeck.x, OpenDeck.z), 0.6f);
             float door = sx - ShipStubBuilder.StorageWidth / 2f;
             Keep("the storage doorway", new Vector2(door - 2.4f, sz - 1.3f), new Vector2(door, sz + 1.3f));
@@ -355,8 +356,8 @@ namespace SunkCost.Editor.Look
                 float stagger = side > 0f ? 6f : 0f;
                 float inboard = side > 0f ? -90f : 90f;
                 for (float z = -halfL + 5f + stagger; z < tv - 4f; z += 12f)
-                    AddLampLight(Rail(look, "DeckLamp", side, z, inboard));
-                foreach (float z in side > 0f ? new[] { 15f, 1.2f } : new[] { 16f, -6f })
+                    if (!(side < 0 && z > -8.5f && z < -3.5f)) AddLampLight(Rail(look, "DeckLamp", side, z, inboard));
+                foreach (float z in side > 0f ? new[] { 15f, 1.2f } : new[] { 16f, -8.8f })
                     Rail(look, "Lifebuoy", side, z, inboard);
             }
 
@@ -394,6 +395,7 @@ namespace SunkCost.Editor.Look
             // The walkways and zones painted on the deck, round the props where they now
             // stand (fix-models' SHIP-055); last, on the hull's collider.
             ShipDeckMarkings.Build(root);
+            HQGeneratedLayout.ShipBoarding(look);
         }
 
         // ---- the stubs the models replace ---------------------------------------------
@@ -1432,7 +1434,8 @@ namespace SunkCost.Editor.Look
                 Vector3 ao = loop[i] + lift, bo = loop[j] + lift;
                 Vector3 ai = ao + inward[i] * WallThickness, bi = bo + inward[j] * WallThickness;
                 float len = Vector3.Distance(ao, bo);
-                if (i == skip) { along += len; continue; }
+                bool boarding = ao.x < 0f && bo.x < 0f && (ao.z + bo.z) / 2f > -8f && (ao.z + bo.z) / 2f < -4f;
+                if (i == skip || boarding) { along += len; continue; }
                 int v = verts.Count;
                 verts.AddRange(new[] { ao, ao + up, bo + up, bo, ai, ai + up, bi + up, bi, ao + up, ai + up, bi + up, bo + up });
                 uvs.AddRange(new[] {

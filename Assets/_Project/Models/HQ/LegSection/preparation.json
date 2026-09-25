@@ -1,0 +1,15 @@
+{
+  "part": "LegSection",
+  "source_archive": "Meshy_AI_Octagonal_Metal_Crate_0925103400_texture_fbx.zip",
+  "source_sha256": "fd2b5d359f0929297a783766277d3b5d20a08eb820a4240481fe6fdc8afc6ed9",
+  "original_triangles": 243042,
+  "triangles": 3000,
+  "unity_dimensions": [
+    2.4,
+    3,
+    2.4
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

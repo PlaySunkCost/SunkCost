@@ -1,0 +1,15 @@
+{
+  "part": "ArrivalGantry",
+  "source_archive": "Meshy_AI_Industrial_Sci_Fi_Arc_0925103222_texture_fbx.zip",
+  "source_sha256": "92726fdffc2e3d495ab17c5a4e68359e82453ce1ff47a8010c6025249bc6d230",
+  "original_triangles": 482506,
+  "triangles": 6000,
+  "unity_dimensions": [
+    4,
+    3,
+    0.6
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

@@ -281,11 +281,11 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => H.MonitorText().StartsWith("Docked at HQ"), 6f, "refusal cleared after refusalDisplaySeconds");
             string refusal;
 
-            // D3: the HQ's landing behind the tower's roof is not the ship. Host on the landing, guest on the deck.
+            // D3: the fixed HQ bridge is not the ship. Host on the bridge, guest on deck.
             Vector3 guestDeckEarly = hqShip.FromShipLocal(new Vector3(2.5f, 0f, 4f));
             Command(GuestDir, "{\"id\":{id},\"action\":\"move\",\"position\":{\"x\":" + guestDeckEarly.x + ",\"y\":" + guestDeckEarly.y + ",\"z\":" + guestDeckEarly.z + "}}");
             yield return AwaitReply(GuestDir);
-            Vector3 stairSpot = hqShip.FromShipLocal(new Vector3(0f, ShipStubBuilder.TowerHeight, -ShipStubBuilder.DeckLength / 2f - 1.5f));
+            Vector3 stairSpot = new Vector3(-43.75f, 0f, -12f);
             Check(!hqShip.IsSafelyAboard(stairSpot), "D3 the HQ's landing is not safely aboard");
             H.ClientMoveLocalPlayerTo(stairSpot); yield return null; yield return null; yield return null;
             refusal = H.ServerSail("Sea");
@@ -294,6 +294,8 @@ namespace SunkCost.Editor.Prototype
             Check(Phase() == "AtHQ" && !LoadedOnHost(WorldScenes.SeaName), "D3 nothing moved: " + H.ShipStatus("HQ"));
 
             // S3: a ball on the deck, a ball in the host's hand, everyone aboard, sail.
+            CarryableItem bridgeBall = H.Item("Basketball (3)");
+            bridgeBall.ServerDropAt(new Vector3(-43.8f, .5f, -12f));
             CarryableItem deckBall = H.Item("Basketball (2)");
             // Starboard of the elevator's ring rail (the well round the car is open to the sea
             // since 19 September 2026), on open, flat deck the dressing keeps clear of props:
@@ -323,8 +325,9 @@ namespace SunkCost.Editor.Prototype
             // D1/D4/D7 during the trip: everyone locked, the ship visibly moving, the
             // fade not yet started, items refused, the deck ball riding along.
             yield return WaitUntil(() => Stage() == DepartureStage.PullingAway, 8f, "the ship pulls away");
+            Check(UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsSortMode.None).All(g => g.Closed), "HQ and ship boarding gates close before pull-away");
             Check(HostPlayer().TravelLocked && !ScreenFade.Instance.IsBlack, "D1 host locked in place, screen still visible while the ship moves");
-            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("travelLocked=True") && GuestLine(r, "server=").Contains("trip=PullingAway/"), 4f, "D1 guest locked and sees PullingAway");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("travelLocked=True") && GuestLine(r, "server=").Contains("trip=PullingAway/") && r.Contains("boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=True") && r.Contains("boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=True"), 4f, "D1 guest locked, sees PullingAway and both boarding gates closed");
             double untilMoved = EditorApplication.timeSinceStartup + 3.0;
             while (EditorApplication.timeSinceStartup < untilMoved && Stage() == DepartureStage.PullingAway) yield return null;
             float travelled = Vector3.Distance(hqShip.transform.position, hqShipRest);
@@ -339,6 +342,8 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.HQName), 10f, "HQ unloaded on host");
             ShipParts seaShip = ShipParts.InWorld(WorldId.Sea);
             Check(seaShip != null, "S3 sea ship present");
+            Check(bridgeBall == null || bridgeBall.gameObject.scene.name != WorldScenes.SeaName, "Fixed-bridge cargo is not carried to sea");
+            Check(seaShip.GetComponentInChildren<DockBoardingGate>().Closed, "Boarding opening stays closed at sea");
             Check(HostPlayer().gameObject.scene.name == WorldScenes.SeaName, "S3 host player in ShipAtSea");
             Check(Vector3.Distance(seaShip.ToShipLocal(HostPlayer().transform.position), hostLocalBefore) < 0.15f, "S3 host at the same spot on the new deck");
             Check(heldBall.gameObject.scene.name == WorldScenes.SeaName && heldBall.State == ItemState.Held, "S3 held ball travelled with the host");
@@ -416,6 +421,7 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => !LoadedOnHost(WorldScenes.SeaName), 10f, "sea unloaded on host");
             hqShip = ShipParts.InWorld(WorldId.HQ);
             Check(hqShip != null && HostPlayer().gameObject.scene.name == WorldScenes.HQName, "S13 host back in HQ");
+            yield return WaitUntil(() => UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsSortMode.None).All(g => !g.Closed), 3f, "Boarding gates reopen after docking");
             Check(Vector3.Distance(hqShip.ToShipLocal(HostPlayer().transform.position), hostLocalBefore) < 0.15f, "S13 host at the same deck spot at HQ");
             // The fresh HQ fixture reuses the names, so the travelled balls are held by reference.
             Check(heldBall.State == ItemState.Held && heldBall.gameObject.scene.name == WorldScenes.HQName, "S13 held ball came home");
@@ -424,7 +430,7 @@ namespace SunkCost.Editor.Prototype
             yield return GuestEventually(GuestDir, r =>
                 GuestLine(r, "server=").Contains("loaded=HQPrototype+Session") && GuestLine(r, "server=").Contains("phase=AtHQ") &&
                 r.Split('\n').Where(l => l.StartsWith("player=")).All(l => l.Contains("scene=HQPrototype")) &&
-                r.Split('\n').Count(l => l.StartsWith("item=")) == HQPrototypeLootSetup.SceneItemCount + 2,
+                r.Split('\n').Count(l => l.StartsWith("item=")) == HQPrototypeLootSetup.SceneItemCount + 2 && r.Contains("boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False") && r.Contains("boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False"),
                 8f, "S13 guest back at HQ only, both players in HQ, sees the fresh fixture plus the two balls that travelled");
 
             // S14: a passenger who leaves during the pull-away drops what they held; it

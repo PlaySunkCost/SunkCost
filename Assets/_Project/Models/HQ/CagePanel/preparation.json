@@ -1,0 +1,15 @@
+{
+  "part": "CagePanel",
+  "source_archive": "Meshy_AI_Industrial_Gate_Panel_0925103337_texture_fbx.zip",
+  "source_sha256": "c8af5479ba108acdda6424a6452781d9d302408185d89a917fe1121f079e9e08",
+  "original_triangles": 174048,
+  "triangles": 3000,
+  "unity_dimensions": [
+    1,
+    2,
+    0.08
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

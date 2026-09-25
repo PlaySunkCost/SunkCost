@@ -1,0 +1,15 @@
+{
+  "part": "WallPanel",
+  "source_archive": "Meshy_AI_Weathered_Sci_Fi_Wall_0925103238_texture_fbx.zip",
+  "source_sha256": "a1dba45f0d0b6d15f5697b4fbe5e2dc01e392c35a8bd3ec2abb8fc60b5e146dc",
+  "original_triangles": 75080,
+  "triangles": 2000,
+  "unity_dimensions": [
+    4,
+    4,
+    0.2
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

@@ -1,0 +1,15 @@
+{
+  "part": "Fascia",
+  "source_archive": "Meshy_AI_Industrial_Cargo_Modu_0925103318_texture_fbx.zip",
+  "source_sha256": "33e06b249fa4f04d2ada17236ec72c7227a3496c8d485e8b42394707b8cd6a67",
+  "original_triangles": 221124,
+  "triangles": 2500,
+  "unity_dimensions": [
+    4,
+    1,
+    0.25
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

@@ -500,6 +500,17 @@ the sailing part true, the elevator and deck-cabin cards the rest.
   a moment of making fast, unload the source scene; only then `ServerArrive`,
   `Complete`. FishNet raises load-end twice on a host (server pass, client
   pass); placement runs on the client pass only.
+- **25 September 2026 HQ art branch - derived boarding barriers (teammate
+  review pending):** `DockBoardingGate` opens only in the HQ world while
+  `CrewDayState.World == HQ` and `Travelling == false`. The fixed bridge barrier
+  and the ship opening close from the existing replicated departure state,
+  before pull-away; the ship gate remains closed at sea. This adds no RPC,
+  SyncVar, writer or ownership exception. The bridge stays outside the existing
+  safe-deck boarding test. The HQ ship has a scene-only `fixedDockBridge`
+  exclusion collider: both `IsAboard` and `IsSafelyAboard` exclude it so the
+  broad rectangular ship volume cannot capture bridge passengers or cargo.
+  The sea prefab has no exclusion reference. Runtime and two-process results are recorded in
+  [HQ_GENERATED_ART_HANDOFF.md](HQ_GENERATED_ART_HANDOFF.md).
 - Writers during a trip: the server writes the trip state, the cohort, the
   cargo poses and the day state; the owning client writes its own player root
   (`ShipDepartureRider` keeps the captured ship-relative spot every frame,

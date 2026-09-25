@@ -1,0 +1,15 @@
+{
+  "part": "UtilityCabinet",
+  "source_archive": "Meshy_AI_Rustbound_Utility_Loc_0925103312_texture_fbx.zip",
+  "source_sha256": "df1389cadf0224b7f46e2b524b63bca0fe3b125ad302a540b8557366ab2f6353",
+  "original_triangles": 420504,
+  "triangles": 5000,
+  "unity_dimensions": [
+    1,
+    2,
+    0.6
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

@@ -89,17 +89,13 @@ from the couch (both in §4: "The couch" and the TV card). The elevator car's li
 cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
 heard across the deck. The name plates read **BLACK TIDE**, with SALVAGE under it.
 
-**Sailing** (decided 15 September 2026; the way aboard changed 18 September
-2026, and again 23 September 2026). The ship carries nothing that reaches the
-base: the way aboard belongs to the HQ — a railed bridge off the west rim to a
-landing at the aft face of the ship's bridge tower, 6 m over the deck (the tower
-model's roof is about 3.7 m over the deck, so the landing stands about 2.3 m above
-it; measured 23 September 2026).
-The ship's own stair down the tower's side (Dan, 19 September) came off on 23
-September 2026 (Dan: no stairs on the ship); how the crew gets from the landing
-down to the deck, 6 m below the platform, is an open card ("The way aboard from
-the HQ", [ROADMAP.md](ROADMAP.md)). Someone standing on the HQ's bridge or its
-landing is not aboard; on the tower or the deck they are. When
+**Sailing** (departure decided 15 September 2026; level boarding approved
+for the generated HQ on 25 September 2026). HQ and ship decks are at the
+same height, 4.5 m above the sea. The fixed, railed bridge belongs to HQ
+and reaches an opening in the ship's port bulwark. No tower access or stairs
+are required to board. A barrier at each end of the connection closes during
+travel; the ship's opening stays closed at sea. Being on the fixed HQ bridge
+does not count as aboard. When
 the monitor accepts a destination everyone is held where they stand — you can
 look around and talk, not walk or use items — the ship casts off (a short
 still moment), the engine starts and the ship visibly pulls away for about
@@ -316,7 +312,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
-| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing at the aft face of the moored ship's bridge tower, 6 m over its deck (the **ship** as §1 "The ship" describes it since 23 September 2026: a 48 × 20 m deck, the tower at the stern, the elevator amidships, the lounge and its TV at the bow; no stair of its own, so the way down from the landing is a later card) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
+| HQ | **Generated-model layout, approved 25 September 2026:** a 60 x 36 m offshore platform at the ship's deck height (4.5 m over the sea). Six legs, lower south catwalk and warm work lights. A single connected **32 x 8 m equipment depot** along the north edge includes the office, upgrade and gear displays, and a clear interior aisle. The separate **pickup chute** discharges onto a marked deck-level pad; the intake console still settles the quota from ship storage. **No save-station prop:** saving remains automatic. The south-west **crew arrival pad** has four spawn positions and the colour panel. The 20 x 12 m basketball court has two scoring hoops and backstop fences; cargo gear and the crane are east, crew rest space south, and the gated punishment plank remains at the south-east edge. A level, HQ-owned bridge reaches a gated opening in the ship's port side. Art uses 24 prepared Meshy HQ models, existing ship props and materials, plus simple Unity floors/markings/collision. `HQGeneratedSetup` rebuilds it; [HQ build handoff](HQ_GENERATED_ART_HANDOFF.md) records assets, layout and validation. No new shop, save, quota or carry rules. |
 
 ---
 

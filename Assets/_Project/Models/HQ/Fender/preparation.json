@@ -1,0 +1,15 @@
+{
+  "part": "Fender",
+  "source_archive": "Meshy_AI_Industrial_Power_Core_0925103259_texture_fbx.zip",
+  "source_sha256": "5b4278e7964e07583775b50a6569d4de074dcbac2c5220f6780dc86b3cf94225",
+  "original_triangles": 372426,
+  "triangles": 11092,
+  "unity_dimensions": [
+    1,
+    1.5,
+    0.5
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

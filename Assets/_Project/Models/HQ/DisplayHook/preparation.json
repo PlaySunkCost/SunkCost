@@ -1,0 +1,15 @@
+{
+  "part": "DisplayHook",
+  "source_archive": "Meshy_AI_Industrial_Wall_Hook_0925103229_texture_fbx.zip",
+  "source_sha256": "d002c00de95eb20ecf47fe20b05bb94ec7b737404c6e926cfd4dbfa20f72508a",
+  "original_triangles": 191574,
+  "triangles": 1500,
+  "unity_dimensions": [
+    0.12,
+    0.18,
+    0.3
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

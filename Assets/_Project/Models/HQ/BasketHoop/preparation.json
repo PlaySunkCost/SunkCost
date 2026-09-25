@@ -1,0 +1,15 @@
+{
+  "part": "BasketHoop",
+  "source_archive": "Meshy_AI_Industrial_Hoop_0925103153_texture_fbx.zip",
+  "source_sha256": "a8c06e44b7583ef704a042d51b43d646b8cb3cafb2b8350fdafc327c436b7236",
+  "original_triangles": 287190,
+  "triangles": 8000,
+  "unity_dimensions": [
+    1.672,
+    3.95,
+    2.79
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

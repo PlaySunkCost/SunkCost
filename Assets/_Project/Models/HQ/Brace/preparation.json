@@ -1,0 +1,15 @@
+{
+  "part": "Brace",
+  "source_archive": "Meshy_AI_Sci_Fi_Structural_Bea_0925103341_texture_fbx.zip",
+  "source_sha256": "4726829f93239dac07b23cc53df892148ffe712203f041463231eb58c44a73cb",
+  "original_triangles": 201568,
+  "triangles": 2000,
+  "unity_dimensions": [
+    4,
+    0.4,
+    0.3
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

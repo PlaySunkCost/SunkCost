@@ -1,0 +1,15 @@
+{
+  "part": "CourtFence",
+  "source_archive": "Meshy_AI_Industrial_Grid_Gate_0925103322_texture_fbx.zip",
+  "source_sha256": "2aebaa51a1397176818abbf56e5c4ee34dd65b77e264184e6714bc0c245ad29b",
+  "original_triangles": 128296,
+  "triangles": 3000,
+  "unity_dimensions": [
+    2,
+    3,
+    0.12
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

@@ -1,0 +1,15 @@
+{
+  "part": "Portal",
+  "source_archive": "Meshy_AI_Industrial_Gateway_0925103216_texture_fbx.zip",
+  "source_sha256": "04de1499d58b84a0549744e077f4d709793a8ce30a7935372aaa2f4fe0a458ef",
+  "original_triangles": 80386,
+  "triangles": 2500,
+  "unity_dimensions": [
+    4,
+    4,
+    0.4
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

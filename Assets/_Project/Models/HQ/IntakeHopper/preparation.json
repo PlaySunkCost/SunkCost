@@ -1,0 +1,15 @@
+{
+  "part": "IntakeHopper",
+  "source_archive": "Meshy_AI_Industrial_Cargo_Bay_0925103254_texture_fbx.zip",
+  "source_sha256": "6c5aad82a1f94600ab01129b4f205e2d09fcb3b1d81d2822d19f7790c5c67a87",
+  "original_triangles": 605814,
+  "triangles": 7000,
+  "unity_dimensions": [
+    2,
+    1.1,
+    1.5
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

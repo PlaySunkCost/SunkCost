@@ -42,9 +42,9 @@ namespace SunkCost.Editor.Prototype
         public static readonly FixtureEntry[] Manifest =
         {
             // On the platform (18 September 2026): the basketballs by the court's west hoop, the heavy balls by the crew's mark.
-            Ball("Basketball", new Vector3(-20f, 1f, -8f)),
-            Ball("Basketball (2)", new Vector3(-18.5f, 1f, -8.6f)),
-            Ball("Basketball (3)", new Vector3(-21f, 1f, -0.4f)),
+            Ball("Basketball", new Vector3(-16f, 1f, -6f)),
+            Ball("Basketball (2)", new Vector3(-14.5f, 1f, -6f)),
+            Ball("Basketball (3)", new Vector3(-16f, 1f, -4.5f)),
             // Blue is heavy but one-handed and slot-able (Dan, 14/09): two of them so
             // the slots can be loaded past the 25 kg capacity for the overload test.
             Heavy("HeavyBallBlue", "HeavyBallBlue", "Blue ball", 0.40f, 6f, new Color(0.16f, 0.40f, 0.95f), CarryGrip.OneHand, new Vector3(12f, 1f, -7f)),

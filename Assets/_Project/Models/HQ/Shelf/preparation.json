@@ -1,0 +1,15 @@
+{
+  "part": "Shelf",
+  "source_archive": "Meshy_AI_Industrial_Metal_Wall_0925103350_texture_fbx.zip",
+  "source_sha256": "aece2a741a3ced08fa18dd0208a8032e0f6f7870247b9af1ccbe5a7749703467",
+  "original_triangles": 18470,
+  "triangles": 1498,
+  "unity_dimensions": [
+    1,
+    0.08,
+    0.45
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

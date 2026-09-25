@@ -304,10 +304,11 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => BoughtTank() != null, 3f, () => "S2 an air tank was spawned");
             CarryableItem bought = BoughtTank();
             yield return Wait(1.2f);
-            // From the chute in the ceiling (Dan, 18 September 2026) down onto the landing mark, somewhere on it.
-            Vector3 spot = tankStand.DeliveryPoint.transform.position;
-            float off = Vector3.Distance(new Vector3(bought.transform.position.x, 0f, bought.transform.position.z), new Vector3(spot.x, 0f, spot.z));
-            Check(spot.y - bought.transform.position.y > 2f && off < 1.2f, $"S2 it fell from the chute (y={spot.y:0.0}) onto the floor under it ({off:0.00} m off the mark, y={bought.transform.position.y:0.00})"); // the chute is in the pickup room upstairs (18 September 2026)
+            // The generated HQ chute discharges onto its clear deck-level pickup pad.
+            yield return Expect(() => bought.transform.position.y < .6f, 4f, () => "S2 purchase reaches the pickup floor");
+            Vector3 landed = bought.transform.position;
+            Check(landed.x > 8f && landed.x < 12f && landed.z > 10f && landed.z < 14f && landed.y > -.1f,
+                $"S2 purchase landed inside the marked pickup pad: {landed}");
             Check(bought.CanGrabFromWorld && bought.HolderClientId < 0 && bought.gameObject.scene == WorldScenes.Scene(WorldId.HQ), "S2 loose in the HQ scene, grabbable (" + bought.State + ")");
             Check(bought.DisplayName == AirTankItem.FullName && bought.UseAction == ItemUseAction.Breathe, "S2 it is a " + bought.DisplayName);
             // Breathing is for underwater (Dan, 18 September 2026): in hand at HQ the

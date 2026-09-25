@@ -9,6 +9,9 @@ namespace SunkCost.World
     // prefab share these names; code never hard-codes a position on the ship.
     public sealed class ShipParts : MonoBehaviour
     {
+        [Tooltip("HQ scene only: the fixed bridge is not cargo or passenger space, even where the broad ship volume overlaps it.")]
+        [SerializeField] private Collider fixedDockBridge;
+        public void ConfigureDockBridge(Collider bridge) => fixedDockBridge = bridge;
         public const string RootName = "Ship";
         public const string AboardVolumeName = "AboardVolume";
         public const string MonitorName = "Monitor";
@@ -109,7 +112,7 @@ namespace SunkCost.World
         // Inside the ship: the aboard volume, a box trigger. Tested in the box's own
         // space so it holds for a rotated ship and in the editor before physics has
         // synced transforms (Collider.bounds would lag there).
-        public bool IsAboard(Vector3 worldPosition) => Contains(AboardVolume, worldPosition);
+        public bool IsAboard(Vector3 worldPosition) => !Contains(fixedDockBridge, worldPosition) && Contains(AboardVolume, worldPosition);
 
         public bool IsInDeckCabin(Vector3 worldPosition) => Contains(DeckCabinVolume, worldPosition);
 
@@ -120,6 +123,7 @@ namespace SunkCost.World
         // aboard volume on a ship without the departure parts.
         public bool IsSafelyAboard(Vector3 worldPosition)
         {
+            if (Contains(fixedDockBridge, worldPosition)) return false;
             Collider deck = SafeDeckVolume;
             if (deck == null) return IsAboard(worldPosition);
             return Contains(deck, worldPosition);
