@@ -246,8 +246,10 @@ namespace SunkCost.Editor.Prototype
             Check(ears.Count(NoiseKind.Sprint) == 0, "N2 none of them a sprint");
             Check(ears.Heard.Where(e => e.Kind == NoiseKind.Footstep).All(e => Mathf.Approximately(e.Radius, settings.WalkRadius)), $"N2 at the walk radius ({settings.WalkRadius} m)");
             Check(ears.Heard.All(e => Vector3.Distance(e.Position, host.transform.position) < walked + 1f), "N2 at the diver's feet");
+            // The sound walks at its own human pace (AudioLibrary), not one sound per noise stride.
             int heard = feet.StepsPlayed - soundsBefore;
-            Check(heard >= steps - 2 && heard <= steps + 2, $"N2 and the steps were heard: {heard} footstep sounds for {steps} noise events");
+            int expectedSounds = Mathf.FloorToInt(walked / AudioLibrary.Get().FootstepWalkMetres);
+            Check(heard >= expectedSounds - 1 && heard <= expectedSounds + 1 && heard >= 1, $"N2 and the steps were heard: {heard} footstep sounds over {walked:0.0} m (about {expectedSounds} at the sound's pace)");
 
             Heading("N3 — sprinting: fewer, louder steps");
             host.TeleportLocal(new Vector3(25f, floorY, -25f), 90f); yield return Wait(0.5f);
@@ -259,7 +261,8 @@ namespace SunkCost.Editor.Prototype
             Check(sprints >= Mathf.FloorToInt(walked / settings.SprintStepMetres) - 2 && sprints > 3, $"N3 {sprints} sprint steps over {walked:0.0} m");
             Check(ears.Heard.Where(e => e.Kind == NoiseKind.Sprint).All(e => Mathf.Approximately(e.Radius, settings.SprintRadius)), $"N3 at the sprint radius ({settings.SprintRadius} m)");
             Check(ears.Count(NoiseKind.Footstep) <= 2, "N3 the run's first strides at most read as walking");
-            Check(feet.StepsPlayed - soundsBefore >= sprints - 2, $"N3 sprint steps were heard ({feet.StepsPlayed - soundsBefore} sounds for {sprints} events)");
+            int sprintSounds = feet.StepsPlayed - soundsBefore, expectedSprintSounds = Mathf.FloorToInt(walked / AudioLibrary.Get().FootstepSprintMetres);
+            Check(sprintSounds >= expectedSprintSounds - 2 && sprintSounds >= 1, $"N3 sprint steps were heard ({sprintSounds} sounds over {walked:0.0} m, about {expectedSprintSounds} at the sound's pace)");
             int landingsBefore = feet.LandingsPlayed, stepsBeforeJump = feet.StepsPlayed;
             Keys(Key.Space); yield return Wait(0.06f); Keys(); yield return Wait(1.2f);
             Check(feet.LandingsPlayed == landingsBefore + 1, $"N3 a jump makes one sound, the landing ({feet.LandingsPlayed})");

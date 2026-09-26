@@ -6,8 +6,9 @@ namespace SunkCost.Audio
 {
     // What a diver's feet sound like (Dan, 18 September 2026: "there are no
     // footsteps sound at all… add jump sound"): a step every stride of ground
-    // covered — the same strides the server uses for the ocean's ears
-    // (NoiseSettings), louder and quicker sprinting, none crouched — plus a
+    // covered — the sound's own human pace (AudioLibrary, Dan 26 September 2026;
+    // the ocean's ears keep NoiseSettings' shorter strides), a recorded set of
+    // steps in turn, louder and higher sprinting, none crouched — plus a
     // thud on landing (a takeoff makes no sound: Dan, 18 September 2026).
     // Presentation on every peer from
     // the same transform: the owner from its own motor (grounded, vertical
@@ -24,6 +25,7 @@ namespace SunkCost.Audio
         private Vector3 lastPosition;
         private float sinceStep, lastY, airborneSince = -1f;
         private bool primed, wasGrounded = true, left;
+        private int stepIndex;
 
         // For the checks.
         public int StepsPlayed { get; private set; }
@@ -86,14 +88,14 @@ namespace SunkCost.Audio
             float speed = moved / dt;
             float factor = controller.SpeedFactor;
             bool sprinting = speed > 0.5f * (controller.WalkSpeed + controller.SprintSpeed) * factor;
-            NoiseSettings strides = NoiseSettings.Get();
+            // The sound's own pace (a human's, Dan 26 September 2026), not the noise's strides.
             sinceStep += moved;
-            float stride = sprinting ? strides.SprintStepMetres : strides.WalkStepMetres;
+            float stride = sprinting ? library.FootstepSprintMetres : library.FootstepWalkMetres;
             if (sinceStep < stride) return;
             sinceStep -= stride;
             left = !left;
             float pitch = (left ? 0.96f : 1.04f) * (sprinting ? 1.08f : 1f);
-            Play(library.Footstep, (sprinting ? library.SprintFootstepVolume : library.FootstepVolume) * ownScale, pitch, ref StepsPlayedBacking);
+            Play(library.FootstepAt(stepIndex++), (sprinting ? library.SprintFootstepVolume : library.FootstepVolume) * ownScale, pitch, ref StepsPlayedBacking);
         }
 
         private int StepsPlayedBacking, LandingsPlayedBacking;

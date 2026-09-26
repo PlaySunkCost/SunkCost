@@ -59,6 +59,12 @@ namespace SunkCost.Audio
         [Header("Feet")]
         [Tooltip("A footstep on the seafloor; pitched a little differently left and right, higher sprinting.")]
         [SerializeField] private AudioClip footstep;
+        [Tooltip("Several recorded steps, played in turn so no two neighbours are the same (Dan, 26 September 2026). Empty: the single footstep above.")]
+        [SerializeField] private AudioClip[] footsteps;
+        [Tooltip("Metres of ground per footstep SOUND while walking: a human pace, about 2 steps a second at walk speed (Dan, 26 September 2026). The noise the monsters hear keeps NoiseSettings' strides.")]
+        [SerializeField] private float footstepWalkMetres = 2f;
+        [Tooltip("Metres of ground per footstep sound while sprinting: about 2.7 steps a second at sprint speed.")]
+        [SerializeField] private float footstepSprintMetres = 2.2f;
         [Tooltip("The thud of a landing.")]
         [SerializeField] private AudioClip land;
         [Range(0f, 1f)] [SerializeField] private float footstepVolume = 0.07f;   // "way lower" (Dan, 18 September 2026): a fifth of the first cut
@@ -109,6 +115,15 @@ namespace SunkCost.Audio
         public float WinchReachMetres => winchReachMetres;
         public float WinchVolumeOnShip => winchVolumeOnShip;
         public AudioClip Footstep => footstep != null ? footstep : PlaceholderSounds.Step;
+        // The n-th step of a walk: the recorded set in turn, or the single footstep.
+        public AudioClip FootstepAt(int n)
+        {
+            if (footsteps == null || footsteps.Length == 0) return Footstep;
+            AudioClip clip = footsteps[((n % footsteps.Length) + footsteps.Length) % footsteps.Length];
+            return clip != null ? clip : Footstep;
+        }
+        public float FootstepWalkMetres => footstepWalkMetres;
+        public float FootstepSprintMetres => footstepSprintMetres;
         public AudioClip Land => land != null ? land : PlaceholderSounds.Land;
         public float FootstepVolume => footstepVolume;
         public float SprintFootstepVolume => sprintFootstepVolume;

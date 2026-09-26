@@ -21,9 +21,47 @@ MonoBehaviour:
   winchVolumeInCar: 0.06
   winchVolumeOnShip: 0.15
   dingVolume: 0.8
+  shipCabinSpatialBlend: 0.7
+  shipCabinNearMetres: 6
+  shipCabinFarMetres: 40
+  seaWash: {fileID: 8300000, guid: 22230a18617495b4bbce49da19b0adc0, type: 3}
+  seaWashVolume: 0.14
+  wind: {fileID: 0}
+  windVolume: 0.035
+  windVolumeHigh: 0.1
+  windHighMetres: 6
+  engineHum: {fileID: 0}
+  engineVolume: 0.3
+  tvHiss: {fileID: 0}
+  tvHissVolume: 0.04
   footstep: {fileID: 0}
+  footsteps:
+  - {fileID: 8300000, guid: 76b8e76d4f938054e8319784c16da148, type: 3}
+  - {fileID: 8300000, guid: 843baf608ee15764e9479108af782f58, type: 3}
+  - {fileID: 8300000, guid: 1cd33be059d7a004eada7f5c91f2de11, type: 3}
+  - {fileID: 8300000, guid: f97aa23c9ab954a458847cb6debdccb5, type: 3}
+  footstepWalkMetres: 2
+  footstepSprintMetres: 2.2
   land: {fileID: 0}
   footstepVolume: 0.07
   sprintFootstepVolume: 0.11
   landVolume: 0.3
   ownFootstepScale: 0.6
+  leakHiss: {fileID: 0}
+  leakHissVolume: 0.35
+  dashWhoosh: {fileID: 0}
+  dashWhooshVolume: 0.5
+  monsterCall: {fileID: 0}
+  monsterCallVolume: 0.7
+  monsterHit: {fileID: 0}
+  monsterHitVolume: 0.8
+  boltShot: {fileID: 0}
+  boltShotVolume: 0.6
+  beamCharge: {fileID: 0}
+  beamChargeVolume: 0.6
+  beamLoop: {fileID: 0}
+  beamLoopVolume: 0.45
+  ghostHum: {fileID: 0}
+  ghostHumVolume: 0.5
+  doorSlam: {fileID: 0}
+  doorSlamVolume: 0.9
