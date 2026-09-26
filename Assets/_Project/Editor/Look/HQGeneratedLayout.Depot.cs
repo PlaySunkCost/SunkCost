@@ -86,9 +86,10 @@ namespace SunkCost.Editor.Look
             for(float z=14;z<=17;z++) Model(depot,"CagePanel",new Vector3(7.5f,0,z),90);
             // The east end wall is the first face of the depot the arrivals walk toward:
             // it says what the building is (HQ polish, 27 September 2026: it was blank).
-            Label(depot,"depot.end",new Vector3(8.22f,2.95f,14),6,.6f,90);
-            Label(depot,"depot.end.sub",new Vector3(8.22f,2.42f,14),6,.34f,90);
-            Lamp(depot,new Vector3(9.2f,3.3f,14),6,2.5f);
+            // On the wall's south half, high: the pickup chute stands before the north half.
+            Label(depot,"depot.end",new Vector3(8.22f,3.3f,12.2f),4.4f,.6f,90);
+            Label(depot,"depot.end.sub",new Vector3(8.22f,2.82f,12.2f),4.4f,.34f,90);
+            Lamp(depot,new Vector3(9.2f,3.5f,12.2f),6,2.5f);
 
             var chuteArt=Model(root,"PickupChute",new Vector3(10,0,15));
             // Use a mesh collision surface for the chute so purchases slide out.
