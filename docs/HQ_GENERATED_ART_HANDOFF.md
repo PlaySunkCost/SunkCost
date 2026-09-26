@@ -121,3 +121,19 @@ These were local Tugboat/loopback runs, without injected latency or packet loss.
 They do not prove Steam transport on two computers or four-player performance.
 Teammate review of `ShipParts`, `DockBoardingGate` and the contract change remains
 required before merging. No human approval is claimed.
+
+## Polish pass, 27 September 2026
+
+Presentation only, on `dan/hq-polish`; see the
+[polish test report](test-runs/2026-09-27-hq-polish/RESULT.md).
+
+- Every plate on the platform now reads an `HQSigns` line: `HQGeneratedLayout.Label`
+  takes a key (`depot.title`, `depot.end`, `counter`, `counter.sub`, `pickup.sub`,
+  `intake`/`intake.sub`, `arrival`, `arrival.colour`, `cargo`, `way.*`, `boarding`).
+  Change the words in `Resources/HQSigns.asset`; no rebuild needed.
+- The catalogue counter carries the depot's largest plate after the fascia, a lamp and
+  a marked square; the east end wall names the depot for the arrivals; PICKUP sits
+  above the chute's lip; the quota board's runtime text is fitted by `PlateText`.
+- The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
+- The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
+  the browser is the same IMGUI in the ship's `ScreenStyle` palette.
