@@ -820,13 +820,36 @@ namespace SunkCost.Player
         // upgrade already bought (one each).
         private string ShopPrompt(SunkCost.Shop.ShopDisplay display)
         {
-            if (display.BrowsesCatalog) return "Equipment catalogue — Press E to browse";
+            if (display.BrowsesCatalog) return "Equipment catalogue — Press E to browse and buy";
             SunkCost.Shop.ShopItem item = display.Item;
             if (item == null) return "Nothing for sale here";
             SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
-            string pot = day != null ? $" (pot ${day.Balance})" : string.Empty;
+            string pot = day != null ? $" · crew pot ${day.Balance}" : string.Empty;
             if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return $"{item.Name} · owned";
             return $"{item.Name} · ${item.Price} — Press E to buy{pot}";
+        }
+
+        // The shop's displays and its counter name what they sell while aimed at
+        // (docs/DESIGN.md §8, the shop, 26 September 2026: "aim-only name/price
+        // prompts"; the stands carry no signs). Everything else keeps the rule of
+        // 19 September 2026: no prompt for merely looking, a notice after a press.
+        private string ShopAimPrompt()
+        {
+            if (controller == null || controller.IsDead || controller.TravelLocked || controller.IsSeated) return null;
+            if (controller.CurrentTarget != null || controller.CurrentShopDisplay == null || !SessionInputGate.CanPlay) return null;
+            return ShopPrompt(controller.CurrentShopDisplay);
+        }
+
+        // Whether E would do something at this display: the counter always opens;
+        // a stand sells what the pot can pay for and you do not already own.
+        private bool ShopUsable(SunkCost.Shop.ShopDisplay display)
+        {
+            if (display.BrowsesCatalog) return true;
+            SunkCost.Shop.ShopItem item = display.Item;
+            CrewDayState day = CrewDayState.Instance;
+            if (item == null || day == null) return false;
+            if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return false;
+            return day.Balance >= item.Price;
         }
 
         private static string UpgradeMarksOf(PlayerUpgrades upgrades)
@@ -910,9 +933,11 @@ namespace SunkCost.Player
 
         private void DrawPrompt()
         {
-            // The plank's turn is the one line that stays up; everything else is a notice after a press.
+            // The plank's turn is the one line that stays up; everything else is a notice
+            // after a press — except the shop, whose displays say what they sell (ShopAimPrompt).
             string text = PlankPrompt();
             if (text == null && Time.unscaledTime < noticeUntil) text = notice;
+            if (string.IsNullOrEmpty(text)) text = ShopAimPrompt();
             if (string.IsNullOrEmpty(text)) return;
             float s = Screen.height / 1080f;
             DrawPanelLabel(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f + 46f * s), text);
@@ -1066,6 +1091,10 @@ namespace SunkCost.Player
             else if (controller.CurrentSeat != null) usable = controller.SeatUsable;
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             else if (controller.CurrentPatient != null) usable = controller.CurrentPatient.Vitals != null && controller.CurrentPatient.Vitals.Leaking && !controller.CurrentPatient.Vitals.FriendPatchedToday;
+            // The HQ's own pressables were left out (HQ polish, 27 September 2026): the dot never went gold on them.
+            else if (controller.CurrentShopDisplay != null) usable = ShopUsable(controller.CurrentShopDisplay);
+            else if (controller.CurrentColourPanel != null) usable = true;
+            else if (controller.CurrentQuotaBoard != null) usable = PayPrompt().StartsWith("Press E");
             Color previous = GUI.color;
             if (outline > 0f)
             {

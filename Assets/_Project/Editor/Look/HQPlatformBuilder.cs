@@ -311,19 +311,23 @@ namespace SunkCost.Editor.Look
 
         // ---- the sky ------------------------------------------------------------------
 
-        // Six in the morning: the sun still under the horizon with its glow in the
-        // east, the sky a deep blue, the lamps doing the work; a bloom volume for
-        // the glow.
+        // Six in the morning: the sun still under the horizon with its glow low on
+        // one side, the sky a deep blue lightening toward the horizon, the lamps
+        // doing the work; a bloom volume for the glow. The glow sits in the
+        // south-east (HQ polish, 27 September 2026: it read as full night, and the
+        // old east-north-east band was behind the arrivals, who face south — now
+        // it is in the spawn view, the depot's outlook and the plank's).
+        private static readonly Vector3 DawnDirection = new Vector3(0.7f, 0f, -0.7f).normalized; // where the sun is coming up
         private static void Sky(Scene scene)
         {
             GameObject sky = new("Sky");
             GameObject sunGo = new("Sun", typeof(Light));
             sunGo.transform.SetParent(sky.transform);
-            sunGo.transform.rotation = Quaternion.Euler(2f, -60f, 0f); // at the horizon, east-north-east
+            sunGo.transform.rotation = Quaternion.Euler(4f, Mathf.Atan2(-DawnDirection.x, -DawnDirection.z) * Mathf.Rad2Deg, 0f); // light from the glow's side, 4 degrees over the horizon
             Light sun = sunGo.GetComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.55f, 0.30f);
-            sun.intensity = 0.35f;
+            sun.color = new Color(1f, 0.62f, 0.38f);
+            sun.intensity = 0.6f;
             sun.shadows = LightShadows.None;
             // A dim blue fill from above so the tops read.
             GameObject fillGo = new("Sky Fill", typeof(Light));
@@ -335,12 +339,12 @@ namespace SunkCost.Editor.Look
             RenderSettings.skybox = SkyboxMaterial();
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.50f, 0.56f, 0.80f);
-            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.40f, 0.34f);
+            RenderSettings.ambientSkyColor = new Color(0.50f, 0.57f, 0.82f);
+            RenderSettings.ambientEquatorColor = new Color(0.58f, 0.43f, 0.35f);
             RenderSettings.ambientGroundColor = new Color(0.18f, 0.17f, 0.22f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.07f, 0.11f, 0.24f);
+            RenderSettings.fogColor = new Color(0.14f, 0.22f, 0.42f); // the sky's horizon band: the far sea and the ship fade into it
             RenderSettings.fogStartDistance = 60f;
             RenderSettings.fogEndDistance = 380f;
             sky.AddComponent<SkyEnvironment>();
@@ -363,13 +367,16 @@ namespace SunkCost.Editor.Look
                 AssetDatabase.CreateAsset(m, SkyboxPath);
             }
             if (m.shader != shader) m.shader = shader;
-            m.SetColor("_Zenith", new Color(0.03f, 0.05f, 0.15f));
-            m.SetColor("_Horizon", new Color(0.09f, 0.15f, 0.36f));
-            m.SetColor("_Glow", new Color(0.95f, 0.42f, 0.14f));
-            m.SetVector("_GlowDirection", new Vector4(0.85f, 0f, 0.5f, 0f)); // east-north-east: the sun is on its way
-            m.SetFloat("_GlowWidth", 0.3f);
-            m.SetFloat("_GlowHeight", 0.14f);
-            m.SetFloat("_HorizonSharpness", 2.2f);
+            // Dawn, not night: a navy zenith over a steel-blue horizon band, a wide warm
+            // glow where the sun is coming up, the stars mostly gone.
+            m.SetColor("_Zenith", new Color(0.04f, 0.06f, 0.18f));
+            m.SetColor("_Horizon", new Color(0.16f, 0.26f, 0.50f));
+            m.SetColor("_Glow", new Color(1.0f, 0.52f, 0.20f));
+            m.SetVector("_GlowDirection", new Vector4(DawnDirection.x, 0f, DawnDirection.z, 0f)); // south-east: in the arrivals' view
+            m.SetFloat("_GlowWidth", 0.6f);
+            m.SetFloat("_GlowHeight", 0.30f);
+            m.SetFloat("_HorizonSharpness", 3.0f);
+            m.SetFloat("_Stars", 0.35f);
             m.SetColor("_Ground", new Color(0.09f, 0.24f, 0.56f)); // the sea as it renders: the horizon joins it
             EditorUtility.SetDirty(m);
             return m;
