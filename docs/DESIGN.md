@@ -630,7 +630,7 @@ The Impostor is outside this pass and unchanged.
 ### First playable HQ harness
 
 Basketball polish (user request, 26 September 2026): the orange basketballs use
-an original leather-grain surface with black seams, 26 cm diameter and 0.62 kg
+an original leather-grain surface with black seams, 26 cm diameter and 1.24 kg
 mass. A rubber physics material provides diminishing rebounds; throws have
 backspin. Tuning targets roughly 1.06 m underside rebound from a 1.8 m underside
 drop on the court, informed by the [FIBA 2024 equipment drop test](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf).
@@ -646,6 +646,8 @@ are deliberate game-friendly proportions; see [basketball tuning](BASKETBALL.md)
 Scoring feedback (27 September 2026): a small, short world-space confetti burst,
 a brief score-label pulse and a spatial scoring chime at the hoop. Every current
 observer sees/hears the celebration; joining later does not replay past baskets.
+Weight follow-up (27 September 2026): double basketball mass from 0.62 to 1.24 kg;
+the existing carried-weight and mass-scaled throwing rules apply.
 
 The original first implemented slice was a grey-box HQ where players could walk,
 look, carry basketballs, drop them and throw them. It exists to verify the basic
@@ -660,7 +662,7 @@ is server state and drives a grey meter under the slots and a linear slowdown
 10 % crawl until something is dropped. Holding a two-handed ball, E on a
 slot-able item stores it straight into a free slot. Two-handed items are held centred and low,
 never stowed, and throw shorter the heavier they are. The fixture is three
-basketballs (0.62 kg, one hand), two blue balls (6 kg, one hand, slot-able) and
+basketballs (now 1.24 kg, one hand), two blue balls (6 kg, one hand, slot-able) and
 two two-handed heavy balls (purple 12 kg, black 20 kg); the tuning numbers
 (decided 14 September 2026) live in
 `Assets/_Project/Settings/Prototype/WeightSettings.asset` and are provisional

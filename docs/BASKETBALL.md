@@ -10,10 +10,13 @@ plain orange sphere. The slot icon is rendered from the same prefab. All players
 spectators and world cameras see the same mesh/material.
 
 Physics tuning is on `Art/Prototype/Basketball/Basketball.physicMaterial` and the
-basketball prefab: 0.62 kg, restitution 0.795 with Maximum combine, friction
+basketball prefab: **1.24 kg** (doubled from 0.62 kg at the user's request on
+27 September 2026), restitution 0.795 with Maximum combine, friction
 0.55/0.65, linear/angular damping 0.02/0.18, continuous dynamic collision and
 12 rad/s throw backspin. Other carryables default to zero backspin. No extra
 force is added on impact; energy diminishes naturally through Unity physics.
+The existing weight rules apply: a basketball now fills 4.96% of the 25 kg
+inventory meter, and its launch speed is about 7.18 m/s instead of 8 m/s.
 The original 24 cm ball's measured first rebound on the actual court was **1.057 m** (ball
 underside) from a **1.800 m** underside drop. The reference target is 1.035–1.085 m
 in the [FIBA 2024 equipment specification](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf),

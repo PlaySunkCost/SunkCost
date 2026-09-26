@@ -215,7 +215,7 @@ namespace SunkCost.Editor.Prototype
                 SphereCollider collider = root.GetComponent<SphereCollider>();
                 collider.radius = 0.5f;
                 Rigidbody body = root.AddComponent<Rigidbody>();
-                body.mass = 0.62f;
+                body.mass = 1.24f;
                 body.linearDamping = 0.05f;
                 body.angularDamping = 0.1f;
                 body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;

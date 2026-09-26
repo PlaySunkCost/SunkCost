@@ -48,7 +48,7 @@ namespace SunkCost.Editor.Prototype
                 root.GetComponent<Renderer>().sharedMaterial = material;
                 root.GetComponent<Collider>().sharedMaterial = rubber;
                 Rigidbody body = root.GetComponent<Rigidbody>();
-                body.mass = .62f; body.linearDamping = .02f; body.angularDamping = .18f;
+                body.mass = 1.24f; body.linearDamping = .02f; body.angularDamping = .18f;
                 body.maxAngularVelocity = 40f; body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 using var so = new SerializedObject(root.GetComponent<CarryableItem>());
                 so.FindProperty("throwBackspin").floatValue = 12f;
@@ -58,7 +58,7 @@ namespace SunkCost.Editor.Prototype
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
             ItemIconGenerator.Generate(new[] { HQPrototypeBuilder.BallPrefabPath });
-            Debug.Log("Basketball: leather/seams, 0.26 m / 0.62 kg, rubber rebound and throw backspin applied.");
+            Debug.Log("Basketball: leather/seams, 0.26 m / 1.24 kg, rubber rebound and throw backspin applied.");
         }
 
         private static Vector3 Sphere(float u, float v)

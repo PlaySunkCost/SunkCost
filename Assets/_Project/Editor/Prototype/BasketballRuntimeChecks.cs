@@ -70,6 +70,7 @@ namespace SunkCost.Editor.Prototype
         {
             Host.TeleportLocal(new Vector3(-8, 0, -5), 0);
             var rb = Ball.GetComponent<Rigidbody>();
+            Check(Mathf.Abs(Ball.MassKg - 1.24f) < .001f, "basketball weighs 1.24 kg");
             Check(Ball.GetComponent<Collider>().sharedMaterial != null, "rubber physics material assigned");
             Check(Ball.GetComponent<Renderer>().sharedMaterial.GetTexture("_BaseMap") != null, "leather texture assigned");
             // Bottom of ball 1.8 m above the actual painted court; measure the first rebound.
@@ -164,6 +165,7 @@ namespace SunkCost.Editor.Prototype
             if (remote) yield return Send("\"action\":\"grab\",\"item\":\"#" + Ball.ObjectId + "\"");
             else player.Inventory.RequestGrab(Ball);
             yield return Until(() => Ball.IsHeld && Ball.HolderClientId == player.OwnerId, 5f, "shooter holds ball");
+            Check(Mathf.Abs(player.Inventory.CarriedMassKg - 1.24f) < .001f, "held basketball contributes 1.24 kg to inventory");
             int before = Day.Baskets;
             if (remote) yield return Send("\"action\":\"basketball_shot\",\"position\":" + Vec(target));
             else reply = SunkCost.Net.BasketballShotProbe.Shoot(player, target);

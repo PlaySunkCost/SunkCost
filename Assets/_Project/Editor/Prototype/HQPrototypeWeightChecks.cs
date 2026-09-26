@@ -39,18 +39,18 @@ namespace SunkCost.Editor.Prototype
             Expect(WeightMath.Fill(0f, Capacity) == 0f, "empty meter is 0");
             Expect(WeightMath.SpeedFactor(0f, Capacity, MinSpeed, Crawl) == 1f, "empty speed factor is 1");
             Expect(!WeightMath.IsOverloaded(0f, Capacity), "empty is not overloaded");
-            Near(WeightMath.Fill(0.62f, Capacity), 0.0248f, "basketball fill");
-            Near(WeightMath.SpeedFactor(0.62f, Capacity, MinSpeed, Crawl), 0.9839f, "basketball speed");
+            Near(WeightMath.Fill(1.24f, Capacity), 0.0496f, "basketball fill");
+            Near(WeightMath.SpeedFactor(1.24f, Capacity, MinSpeed, Crawl), 0.96776f, "basketball speed");
             Near(WeightMath.Fill(6f, Capacity), 0.24f, "blue fill");
             Near(WeightMath.SpeedFactor(6f, Capacity, MinSpeed, Crawl), 0.844f, "blue speed");
-            Near(WeightMath.Fill(6.62f, Capacity), 0.2648f, "basketball + blue fill");
-            Near(WeightMath.SpeedFactor(6.62f, Capacity, MinSpeed, Crawl), 0.8279f, "basketball + blue speed");
+            Near(WeightMath.Fill(7.24f, Capacity), 0.2896f, "basketball + blue fill");
+            Near(WeightMath.SpeedFactor(7.24f, Capacity, MinSpeed, Crawl), 0.81176f, "basketball + blue speed");
             Near(WeightMath.Fill(12f, Capacity), 0.48f, "purple fill");
             Near(WeightMath.SpeedFactor(12f, Capacity, MinSpeed, Crawl), 0.688f, "purple speed");
             Near(WeightMath.Fill(20f, Capacity), 0.8f, "black fill");
             Near(WeightMath.SpeedFactor(20f, Capacity, MinSpeed, Crawl), 0.48f, "black speed");
-            Near(WeightMath.Fill(21.86f, Capacity), 0.8744f, "three basketballs + black fill");
-            Near(WeightMath.SpeedFactor(21.86f, Capacity, MinSpeed, Crawl), 0.4316f, "three basketballs + black speed");
+            Near(WeightMath.Fill(23.72f, Capacity), 0.9488f, "three basketballs + black fill");
+            Near(WeightMath.SpeedFactor(23.72f, Capacity, MinSpeed, Crawl), 0.38328f, "three basketballs + black speed");
             Near(WeightMath.SpeedFactor(24.99f, Capacity, MinSpeed, Crawl), 0.3503f, "just under full is the floor");
             Expect(WeightMath.IsOverloaded(25f, Capacity), "exactly capacity is overloaded");
             Expect(WeightMath.SpeedFactor(25f, Capacity, MinSpeed, Crawl) == Crawl, "full meter is a crawl, not a stop");
@@ -82,7 +82,7 @@ namespace SunkCost.Editor.Prototype
 
         private static void ThrowFactors()
         {
-            Near(WeightMath.ThrowFactor(0.62f, Reference, MinThrow), 1f, "basketball throws at full speed");
+            Near(WeightMath.ThrowFactor(1.24f, Reference, MinThrow), 0.8980265f, "heavier basketball throw factor");
             Near(WeightMath.ThrowFactor(6f, Reference, MinThrow), 0.40825f, "blue throw factor");
             Near(WeightMath.ThrowFactor(12f, Reference, MinThrow), 0.28868f, "purple throw factor");
             Near(WeightMath.ThrowFactor(20f, Reference, MinThrow), 0.22361f, "black throw factor");
