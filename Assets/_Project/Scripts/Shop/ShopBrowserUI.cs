@@ -31,7 +31,7 @@ namespace SunkCost.Shop
         private string search = string.Empty;
         private int category;
         private float nextRequest;
-        private GUIStyle titleStyle, subtitleStyle, nameStyle, bodyStyle, hintStyle, priceStyle, potStyle, chipStyle, buttonStyle, ghostStyle, tabStyle, searchStyle, emptyStyle;
+        private GUIStyle titleStyle, subtitleStyle, nameStyle, bodyStyle, hintStyle, priceStyle, potStyle, chipStyle, buttonStyle, ghostStyle, tabStyle, searchStyle, emptyStyle, scrollbarStyle, thumbStyle;
         private Texture2D white, accentFill, accentHover, trackFill, trackHover;
         public bool IsOpen => counter != null && SessionInputGate.ShopOpen;
 
@@ -159,10 +159,12 @@ namespace SunkCost.Shop
                 if (selected != category) { category = selected; scroll = Vector2.zero; }
                 // The list.
                 int count = VisibleItemCount;
-                Rect listRect = new(32, 160, PanelW - 64, 402);
+                Rect listRect = new(32, 160, PanelW - 64, 4 * CardH + 3 * CardGap); // four cards without a scrollbar; more scroll
                 float contentH = Mathf.Max(listRect.height, count * (CardH + CardGap) - CardGap);
-                float contentW = listRect.width - (contentH > listRect.height ? 16f : 0f);
-                scroll = GUI.BeginScrollView(listRect, scroll, new Rect(0, 0, contentW, contentH), false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+                float contentW = listRect.width - (contentH > listRect.height ? 18f : 0f);
+                GUIStyle savedThumb = GUI.skin.verticalScrollbarThumb;
+                GUI.skin.verticalScrollbarThumb = thumbStyle; // the thumb is a skin-level style: swapped for the list, put back after
+                scroll = GUI.BeginScrollView(listRect, scroll, new Rect(0, 0, contentW, contentH), false, false, GUIStyle.none, scrollbarStyle);
                 int row = 0;
                 foreach (ShopItem item in ShopCatalog.Resolve().Items)
                 {
@@ -171,12 +173,13 @@ namespace SunkCost.Shop
                 }
                 if (count == 0) GUI.Label(new Rect(0, 24, contentW, 40), "Nothing in the catalogue matches that.", emptyStyle);
                 GUI.EndScrollView();
+                GUI.skin.verticalScrollbarThumb = savedThumb;
                 // The status line: the server's last refusal, or how buying works.
-                Rule(new Rect(32, 574, PanelW - 64, 1));
+                Rule(new Rect(32, 588, PanelW - 64, 1));
                 string refusal = player.Upgrades != null ? player.Upgrades.Refusal : string.Empty;
                 bool refused = !string.IsNullOrEmpty(refusal);
                 GUI.color = refused ? ScreenStyle.Warn : ScreenStyle.Dim;
-                GUI.Label(new Rect(32, 586, PanelW - 64, 40), refused ? refusal : "BUY spends the crew pot.  Supplies drop at the PICKUP chute outside; upgrades are fitted to you at once.", bodyStyle);
+                GUI.Label(new Rect(32, 598, PanelW - 64, 36), refused ? refusal : "BUY spends the crew pot.  Supplies drop at the PICKUP chute outside; upgrades are fitted to you at once.", bodyStyle);
                 GUI.color = Color.white;
                 GUI.EndGroup();
             }
@@ -320,6 +323,11 @@ namespace SunkCost.Shop
             searchStyle.active.background = trackHover; searchStyle.active.textColor = ScreenStyle.Text;
             buttonStyle.onNormal = buttonStyle.normal;
             ghostStyle.onNormal = ghostStyle.normal;
+            // The list's scrollbar: a dark track, an accent thumb, no stock bevels.
+            scrollbarStyle = new GUIStyle(GUI.skin.verticalScrollbar) { fixedWidth = 10, border = new RectOffset(0, 0, 0, 0), padding = new RectOffset(0, 0, 0, 0), margin = new RectOffset(0, 0, 0, 0) };
+            scrollbarStyle.normal.background = trackFill;
+            thumbStyle = new GUIStyle(GUI.skin.verticalScrollbarThumb) { fixedWidth = 10, border = new RectOffset(0, 0, 0, 0), padding = new RectOffset(0, 0, 0, 0), margin = new RectOffset(0, 0, 0, 0), overflow = new RectOffset(0, 0, 0, 0) };
+            thumbStyle.normal.background = accentFill; thumbStyle.hover.background = accentHover; thumbStyle.active.background = accentHover;
         }
     }
 }

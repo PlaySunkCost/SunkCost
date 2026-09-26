@@ -129,9 +129,10 @@ namespace SunkCost.Editor.Look
             // The counter is the shop's front door: the biggest plate in the depot after
             // the fascia, lit, a marked square on the floor (HQ polish, 27 September 2026:
             // a 2.4 m plate over a ship console was lost between the four pedestals).
-            Slab(catalogueCounter,"Catalogue sign mast",new Vector3(0,1.2f,-.1f),new Vector3(.1f,2.4f,.1f),ShipKitMaterials.Steel());
-            Label(catalogueCounter,"counter",new Vector3(0,2.6f,0),3.4f,.5f,0);
-            Label(catalogueCounter,"counter.sub",new Vector3(0,2.16f,0),3.4f,.3f,0);
+            // The mast stands behind the console's monitor, not through it.
+            Slab(catalogueCounter,"Catalogue sign mast",new Vector3(0,1.2f,-.62f),new Vector3(.1f,2.4f,.1f),ShipKitMaterials.Steel());
+            Label(catalogueCounter,"counter",new Vector3(0,2.6f,-.55f),3.4f,.5f,0);
+            Label(catalogueCounter,"counter.sub",new Vector3(0,2.16f,-.55f),3.4f,.3f,0);
             Frame(catalogueCounter,Vector3.zero,2.8f,2.4f);
             Lamp(catalogueCounter,new Vector3(0,2.4f,.9f),5,2.5f);
 
