@@ -47,8 +47,8 @@ MonoBehaviour:
   sprintFootstepVolume: 0.2
   landVolume: 0.18
   ownFootstepScale: 0.6
-  leakHiss: {fileID: 0}
-  leakHissVolume: 0.35
+  leakHiss: {fileID: 8300000, guid: 07266644e379d3247acdc42ebb6702a9, type: 3}
+  leakHissVolume: 0.15
   dashWhoosh: {fileID: 8300000, guid: 9ff87a710bc555e47b7888e54bf211b4, type: 3}
   dashWhooshVolume: 0.5
   monsterCall: {fileID: 0}
