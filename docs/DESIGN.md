@@ -629,11 +629,23 @@ The Impostor is outside this pass and unchanged.
 
 ### First playable HQ harness
 
-The first implemented slice is a grey-box HQ where players can walk,
+Basketball polish (user request, 26 September 2026): the orange basketballs use
+an original leather-grain surface with black seams, 24 cm diameter and 0.62 kg
+mass. A rubber physics material provides diminishing rebounds; throws have
+backspin. Tuning targets roughly 1.06 m underside rebound from a 1.8 m underside
+drop on the court, informed by the [FIBA 2024 equipment drop test](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf).
+This is game tuning, not a claim of equipment certification. Each downward
+pass through either hoop adds **one shared basket**, shown on both backboards;
+normal host/client throws count, upward passes and misses do not. No personal
+teams, two/three-point rules or auto-aim added. `BasketballSetup.Apply` rebuilds
+the surface/physics assets; values remain editable on the material and prefab.
+
+The original first implemented slice was a grey-box HQ where players could walk,
 look, carry basketballs, drop them and throw them. It exists to verify the basic
 FishNet ownership loop and Steam P2P transport before underwater gameplay begins.
-It has four inventory slots plus hands, but no scoring, economy, saving, combat or
-finished art. E grabs, Q drops at the feet, left click uses/throws, and 1–4 equip
+It initially had four inventory slots plus hands, without scoring, economy, saving, combat or
+finished art. The current HQ includes these later systems as described above.
+E grabs, Q drops safely in front, left click uses/throws, and 1–4 equip
 or put away slot items. Held items stay rigidly at the camera's hold point;
 stowed items are hidden. Every item weighs its Rigidbody mass; the carried total
 is server state and drives a grey meter under the slots and a linear slowdown

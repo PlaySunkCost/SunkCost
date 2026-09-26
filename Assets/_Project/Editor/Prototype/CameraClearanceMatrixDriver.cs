@@ -143,6 +143,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "air") AirRuntimeChecks.RunAsHost();
                         else if (job == "shop") ShopRuntimeChecks.RunAsHost();
                         else if (job == "hq") HQArtRuntimeChecks.RunAsHost();
+                        else if (job == "basketball") BasketballRuntimeChecks.RunAsHost();
                         else if (job == "save") SaveRuntimeChecks.RunAsHost();
                         else if (job == "photo") TwoDiversPhoto.RunAsHost();
                         else if (job == "plank") PlankRuntimeChecks.RunAsHost();

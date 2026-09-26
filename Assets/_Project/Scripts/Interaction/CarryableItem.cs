@@ -32,6 +32,8 @@ namespace SunkCost.Interaction
         [SerializeField] private float holdDistanceOffset = 0f;
         [SerializeField] private WeightSettings weightSettings;
         [SerializeField] private float throwSpeed = 8f;
+        [SerializeField, Min(0f), Tooltip("Backspin in radians/second on a throw; zero for ordinary cargo.")]
+        private float throwBackspin;
         [SerializeField] private float releaseHandoffTimeout = 4f;
         [SerializeField] private Vector3 resetPosition = new(0f, 1f, 0f);
         // Loot value in dollars, rolled once by the server when the item spawns
@@ -824,6 +826,7 @@ namespace SunkCost.Interaction
                 // Launch speed scales with this item's own mass; a heavy ball lobs.
                 LastLaunchSpeed = throwSpeed * Weight.ThrowFactor(MassKg);
                 body.linearVelocity = pendingReleaseDirection * LastLaunchSpeed;
+                body.angularVelocity = Vector3.Cross(pendingReleaseDirection, Vector3.up).normalized * throwBackspin;
             }
             else
             {

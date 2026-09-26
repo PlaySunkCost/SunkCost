@@ -1,0 +1,5 @@
+id=1806; requested leave
+server=False; client=False; clientId=-1; loaded=Session; active=Session; phase=none; day=-1; payday=False; box=-1; balance=-1; world=none; fade=0; message=Left the room. Host or join again.; monitor=; trip=none; ride=none; car=none; carPos=none; below=; travelLocked=False; underwater=none; cabinWater=none; tv=none; spawned=; winch=none; ghost=none; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=none; coins=
+mic=False; test=False; tone=False; world=-1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=286; output=494; status=Microphone OFF
+heard=
+baskets=-1;

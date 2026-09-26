@@ -124,6 +124,7 @@ namespace SunkCost.Net
                 case "equip": player.Inventory.RequestEquip(command.slot); break;
                 case "drop": player.Inventory.RequestDrop(); break;
                 case "throw": player.Inventory.RequestUse(command.aim); break;
+                case "basketball_shot": return BasketballShotProbe.Shoot(player, command.position);
                 case "leave": FindFirstObjectByType<PrototypeSessionUI>().LeaveSession(); break;
                 case "die": player.RequestDebugDeath(); break;
                 case "air_down": if (player.Vitals != null) player.Vitals.RequestDebugAirDown(); break; // L: a step off the tank
@@ -380,6 +381,9 @@ namespace SunkCost.Net
             tvLine += ghostLight == null ? "; ghost=none" : $"; ghostGreen={ghostLight.IsGreen}; ghostActive={(day != null && day.Ghost.Active)}; ghostSerial={(day == null ? 0 : day.Ghost.Serial)}; slamsHeard={ghostLight.SlamsHeard}";
             string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {tvLine}; {CarLine()}; {VisorLine()}\n";
             if (voice != null) text += voice.Diagnostics + "\n";
+            text += $"baskets={(day == null ? -1 : day.Baskets)};\n";
+            foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
+                text += $"hoop={hoop.transform.parent.name}; board={hoop.transform.parent.Find("Score")?.GetComponent<TextMesh>()?.text}\n";
             var localShop=SunkCost.World.WorldSceneFlow.LocalPlayer()?.GetComponent<SunkCost.Shop.ShopBrowserUI>();
             if(localShop!=null)text += $"shopBrowser={localShop.IsOpen}; entries={localShop.VisibleItemCount}\n";
             foreach (var gate in FindObjectsByType<SunkCost.World.DockBoardingGate>(FindObjectsSortMode.None))

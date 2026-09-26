@@ -110,7 +110,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6262863972986464730}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4300000, guid: be1553d818f30e64fbbab5dc18f1fb5c, type: 2}
 --- !u!135 &7217451160011440525
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -118,7 +118,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6262863972986464730}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 4a2b409b329ba104faef7b0165d2653b, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -157,7 +157,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3f6ba24d1b4a347479e4017f06790388, type: 2}
+  - {fileID: 2100000, guid: 13e3af665ded75d49917ce382299490d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -190,8 +190,8 @@ Rigidbody:
   m_GameObject: {fileID: 6262863972986464730}
   serializedVersion: 5
   m_Mass: 0.62
-  m_LinearDamping: 0.05
-  m_AngularDamping: 0.1
+  m_LinearDamping: 0.02
+  m_AngularDamping: 0.18
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -334,8 +334,11 @@ MonoBehaviour:
   holdDistanceOffset: 0
   weightSettings: {fileID: 11400000, guid: d72a81ba5b8429f459440ec55d185040, type: 2}
   throwSpeed: 8
+  throwBackspin: 12
   releaseHandoffTimeout: 4
   resetPosition: {x: 0, y: 1, z: 0}
+  valueMin: 0
+  valueMax: 0
 --- !u!114 &259683316800095650
 MonoBehaviour:
   m_ObjectHideFlags: 0
