@@ -630,7 +630,7 @@ The Impostor is outside this pass and unchanged.
 ### First playable HQ harness
 
 Basketball polish (user request, 26 September 2026): the orange basketballs use
-an original leather-grain surface with black seams, 24 cm diameter and 0.62 kg
+an original leather-grain surface with black seams, 26 cm diameter and 0.62 kg
 mass. A rubber physics material provides diminishing rebounds; throws have
 backspin. Tuning targets roughly 1.06 m underside rebound from a 1.8 m underside
 drop on the court, informed by the [FIBA 2024 equipment drop test](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf).
@@ -639,6 +639,10 @@ pass through either hoop adds **one shared basket**, shown on both backboards;
 normal host/client throws count, upward passes and misses do not. No personal
 teams, two/three-point rules or auto-aim added. `BasketballSetup.Apply` rebuilds
 the surface/physics assets; values remain editable on the material and prefab.
+Follow-up request: make the ball more substantial and scoring easier. The ball
+grew from 24 to 26 cm; the physical rim and matching scoring opening are 40%
+wider, with unchanged backboards/posts and the same downward-pass rule. These
+are deliberate game-friendly proportions; see [basketball tuning](BASKETBALL.md).
 
 The original first implemented slice was a grey-box HQ where players could walk,
 look, carry basketballs, drop them and throw them. It exists to verify the basic

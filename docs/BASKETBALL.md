@@ -2,7 +2,9 @@
 
 Implemented on `codex/basketball-physics-scoring`, from the completed HQ branch.
 
-The existing basketball prefab/GUID and 24 cm sphere collider remain. A smooth
+The existing basketball prefab/GUID remains. The ball and matching sphere collider
+are now **26 cm** across (user's follow-up: make it bigger and easier to score).
+This is a modest game-readability enlargement over the original 24 cm ball. A smooth
 sphere mesh and original generated leather albedo/normal textures replace the
 plain orange sphere. The slot icon is rendered from the same prefab. All players,
 spectators and world cameras see the same mesh/material.
@@ -12,7 +14,7 @@ basketball prefab: 0.62 kg, restitution 0.795 with Maximum combine, friction
 0.55/0.65, linear/angular damping 0.02/0.18, continuous dynamic collision and
 12 rad/s throw backspin. Other carryables default to zero backspin. No extra
 force is added on impact; energy diminishes naturally through Unity physics.
-The measured first rebound on the actual court is about **1.057 m** (ball
+The original 24 cm ball's measured first rebound on the actual court was **1.057 m** (ball
 underside) from a **1.800 m** underside drop. The reference target is 1.035–1.085 m
 in the [FIBA 2024 equipment specification](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf),
 used as a tuning reference rather than a certification claim.
@@ -29,6 +31,21 @@ motion do not score. A pass latch/repeat delay prevents duplicate counts.
 No new RPC/SyncVar, no change to who simulates a released item, no new personal
 score or two/three-point rules. Human review of the authority-related correction
 and contract update is required before merge; no sign-off is claimed.
+
+## More forgiving court
+
+The imported rims and their brackets are widened horizontally by **40%** using
+a derived mesh; the original source model, posts and backboards stay unchanged.
+Both renderers and MeshColliders use that mesh. The cosmetic net and scoring
+radius match the wider opening (0.315 m configured rim radius). With the 0.13 m
+ball radius and existing 0.015 m tolerance, the permitted centre offset grows
+from 0.12 m to 0.20 m. This is intentionally more forgiving than a regulation
+hoop. Shots still have to pass downward through the visible opening.
+
+`HQBasketballCourtTuning.Apply` updates the authored HQ; the same tuning is called
+by `HQGeneratedCourt.Apply`, so scene regeneration keeps it. The runtime matrix
+also drops balls 0.16 m either side of centre at both hoops, testing physical
+clearance and scoring together rather than only testing perfect-centre shots.
 
 ## Regenerate and test
 
