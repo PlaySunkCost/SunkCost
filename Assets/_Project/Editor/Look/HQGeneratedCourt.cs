@@ -43,6 +43,7 @@ namespace SunkCost.Editor.Look
                     float a=i*Mathf.PI*2/10;
                     var thread=HQGeneratedLayout.Slab(hoop.gameObject,"Net",new Vector3(Mathf.Cos(a)*.2f,2.64f,.27f+Mathf.Sin(a)*.2f),new Vector3(.012f,.38f,.012f),LookMaterials.Net());
                 }
+                HQBasketballCourtTuning.ApplyTo(hoop);
             }
         }
     }

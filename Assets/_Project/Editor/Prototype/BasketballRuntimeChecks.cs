@@ -98,6 +98,13 @@ namespace SunkCost.Editor.Prototype
                 yield return Wait(2f);
                 Check(Day.Baskets == before + 1, name + " clean downward basket counts once");
                 Check(hoop.Find("Score").GetComponent<TextMesh>().text == "BASKETS " + Day.Baskets, "backboard shows shared score");
+                foreach (float offset in new[] { -.16f, .16f })
+                {
+                    before = Day.Baskets;
+                    Ball.ServerDropAt(trigger.position + hoop.right * offset + Vector3.up * .85f);
+                    yield return Wait(2f);
+                    Check(Day.Baskets == before + 1, name + " off-centre basket at " + offset + " m clears physical rim and scores");
+                }
                 before = Day.Baskets;
                 Ball.ServerDropAt(trigger.position + hoop.right * .42f + Vector3.up * .5f);
                 yield return Wait(1.2f);
@@ -129,6 +136,7 @@ namespace SunkCost.Editor.Prototype
             yield return Shoot(other, true);
             yield return Send("\"action\":\"snapshot\"");
             Check(reply.Contains("baskets=" + Day.Baskets + ";") && reply.Contains("BASKETS " + Day.Baskets), "guest receives updated count and backboard text");
+            File.WriteAllText(GuestDir + "/scoring-snapshot.txt", reply);
             yield return Send("\"action\":\"leave\"");
         }
 

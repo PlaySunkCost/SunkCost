@@ -60,7 +60,7 @@ namespace SunkCost.Editor.Prototype
         private static FixtureEntry Ball(string sceneName, Vector3 reset) => new()
         {
             SceneName = sceneName, PrefabName = "Basketball", PrefabPath = HQPrototypeBuilder.BallPrefabPath, DisplayName = "Basketball",
-            ResetPosition = reset, Diameter = 0.24f, MassKg = 0.62f, Colour = new Color(0.95f, 0.28f, 0.035f), Grip = CarryGrip.OneHand
+            ResetPosition = reset, Diameter = 0.26f, MassKg = 0.62f, Colour = new Color(0.95f, 0.28f, 0.035f), Grip = CarryGrip.OneHand
         };
 
         private static FixtureEntry Heavy(string sceneName, string prefabName, string displayName, float diameter, float mass, Color colour, CarryGrip grip, Vector3 reset) => new()

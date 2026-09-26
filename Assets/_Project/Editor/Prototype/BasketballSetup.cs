@@ -43,6 +43,7 @@ namespace SunkCost.Editor.Prototype
             GameObject root = PrefabUtility.LoadPrefabContents(HQPrototypeBuilder.BallPrefabPath);
             try
             {
+                root.transform.localScale = Vector3.one * .26f;
                 root.GetComponent<MeshFilter>().sharedMesh = saved;
                 root.GetComponent<Renderer>().sharedMaterial = material;
                 root.GetComponent<Collider>().sharedMaterial = rubber;
@@ -57,7 +58,7 @@ namespace SunkCost.Editor.Prototype
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
             ItemIconGenerator.Generate(new[] { HQPrototypeBuilder.BallPrefabPath });
-            Debug.Log("Basketball: leather/seams, 0.24 m / 0.62 kg, rubber rebound and throw backspin applied.");
+            Debug.Log("Basketball: leather/seams, 0.26 m / 0.62 kg, rubber rebound and throw backspin applied.");
         }
 
         private static Vector3 Sphere(float u, float v)
