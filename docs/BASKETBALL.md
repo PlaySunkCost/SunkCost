@@ -36,6 +36,12 @@ and contract update is required before merge; no sign-off is claimed.
 
 The imported rims and their brackets are widened horizontally by **40%** using
 a derived mesh; the original source model, posts and backboards stay unchanged.
+Correction after visual feedback: the first widening mask mistakenly assumed
+the board stopped at Z=.72 and stretched its lower corners. The prepared board
+actually extends to about Z=.869. The corrected mask protects everything at
+Z<=.88 and outside the central rim area, preserving original board vertices
+and normals. Only the projecting bracket/rim is widened. The original asset's
+irregular/trapezoidal outline remains; this is not a newly rectangular board.
 Both renderers and MeshColliders use that mesh. The cosmetic net and scoring
 radius match the wider opening (0.315 m configured rim radius). With the 0.13 m
 ball radius and existing 0.015 m tolerance, the permitted centre offset grows

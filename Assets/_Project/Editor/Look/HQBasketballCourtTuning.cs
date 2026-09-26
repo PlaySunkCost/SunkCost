@@ -23,18 +23,26 @@ namespace SunkCost.Editor.Look
             Mesh mesh = UnityEngine.Object.Instantiate(original);
             mesh.name = "ForgivingHoop";
             Vector3[] vertices = mesh.vertices;
+            Vector3[] originalVertices = original.vertices;
+            Vector3[] originalNormals = original.normals;
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 p = vertices[i];
                 // This prepared model is in metres, with its rim centred at
-                // (0,3.05,1.13). The backboard is behind Z=.72.
-                if (p.y < 2.8f || p.y > 3.22f) continue;
-                float blend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.72f, .85f, p.z));
+                // (0,3.05,1.13). The board/frame extends to Z=.869, not .72!
+                // Keep it byte-for-byte in place. Blend the projecting bracket
+                // into the wider ring without pulling the board's lower corners.
+                if (p.y < 2.8f || p.y > 3.22f || Mathf.Abs(p.x) > .4f || p.z <= .88f) continue;
+                float blend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.88f, 1f, p.z));
                 float scale = Mathf.Lerp(1f, RimScale, blend);
                 p.x *= scale; p.z = 1.13f + (p.z - 1.13f) * scale;
                 vertices[i] = p;
             }
-            mesh.vertices = vertices; mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds();
+            mesh.vertices = vertices; mesh.RecalculateNormals();
+            Vector3[] normals = mesh.normals;
+            for (int i = 0; i < vertices.Length; i++)
+                if (vertices[i] == originalVertices[i]) normals[i] = originalNormals[i];
+            mesh.normals = normals; mesh.RecalculateTangents(); mesh.RecalculateBounds();
             Mesh saved = AssetDatabase.LoadAssetAtPath<Mesh>(MeshPath);
             if (saved == null) { AssetDatabase.CreateAsset(mesh, MeshPath); saved = mesh; }
             else { EditorUtility.CopySerialized(mesh, saved); UnityEngine.Object.DestroyImmediate(mesh); }

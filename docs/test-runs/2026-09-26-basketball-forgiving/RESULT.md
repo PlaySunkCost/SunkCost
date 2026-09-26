@@ -7,6 +7,13 @@ no injected network latency/loss. Build identity saved in `test-build.json`.
 `matrix.log`: **MATRIX_PASS**. Ball diameter is 0.26 m; rims/brackets are 40%
 wider with matching derived render/collision mesh and scoring radius. Original
 post/backboard placement is unchanged. Visually inspected `hoop.png` and ball art.
+**Later correction:** placement was unchanged, but the first widening mask did
+deform 481 outer board vertices. User visual feedback caught this. The corrected
+mask preserves all protected board/frame positions and original normals (zero
+changed vertices), verified against the source mesh; `backboard-corrected.png`
+shows the repair. The original asset still has an irregular/trapezoidal outline.
+`backboard-retest.log` records a complete **MATRIX_PASS** after that repair,
+including off-centre physical clearance at both rims and host/client throws.
 
 - Clean centre baskets and drops offset **-0.16 m and +0.16 m** pass through
   the actual collision opening and score at **both** hoops.
