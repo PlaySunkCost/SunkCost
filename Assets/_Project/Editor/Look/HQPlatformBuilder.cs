@@ -165,6 +165,9 @@ namespace SunkCost.Editor.Look
             mesh.alignment = TextAlignment.Center;
             mesh.color = new Color(0.55f, 0.95f, 0.85f);
             text.AddComponent<DepthText>().Configure(LookMaterials.DepthText());
+            // The runtime lines ("quota $0 / $500 · balance $0") ran off both edges of the
+            // plate (HQ polish, 27 September 2026): fitted to it, refitted whenever they change.
+            text.AddComponent<PlateText>().Configure(new Vector2(2.7f, 0.78f), PlateText.Mode.Fit, null);
             BoxCollider box = board.AddComponent<BoxCollider>();
             box.center = new Vector3(0f, 0f, 0.02f);
             box.size = new Vector3(3.0f, 0.9f, 0.12f);
