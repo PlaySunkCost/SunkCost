@@ -91,6 +91,11 @@ Just want to play? See [Play the latest build](#%EF%B8%8F-play-the-latest-build)
 3. Choose **Local / LAN** and **Host**. Up to three other players can choose
    **Join** with `127.0.0.1` on the same computer, or the host's LAN IP on another
    computer. Four players total, including the host.
+   At HQ, aim at **BROWSE ALL EQUIPMENT** in the depot and press **E** for
+   the searchable catalogue. **Buy** spends shared crew funds; consumables
+   arrive at **PICKUP**, and upgrades apply to the buyer. **Escape** closes it.
+   New merchandise needs a catalogue entry, not another stand; see
+   [shop authoring](docs/SHOP_CATALOGUE_AUTHORING.md).
 4. Move with WASD, sprint with Shift, look with the mouse. **Space** jumps
    (lower the more you carry; not with a two-handed ball), **hold Ctrl** to
    crouch (half height, half speed; you stay down under a shelf until it is

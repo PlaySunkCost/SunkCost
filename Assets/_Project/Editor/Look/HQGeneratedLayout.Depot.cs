@@ -108,6 +108,16 @@ namespace SunkCost.Editor.Look
                 Box(counter,new Vector3(0,.5f,0),new Vector3(2,1,.8f));
             }
 
+            // One catalogue counter makes new merchandise independent of scene
+            // space. The four existing displays are optional featured samples.
+            var catalogueCounter=Group(depot,"Equipment catalogue counter",new Vector3(-6,0,14),180);
+            Model(catalogueCounter,"Console",Vector3.zero,0,default,true);
+            Box(catalogueCounter,new Vector3(0,.7f,0),new Vector3(1.8f,1.4f,.8f));
+            catalogueCounter.AddComponent<ShopDisplay>().ConfigureCatalog(delivery);
+            Slab(catalogueCounter,"Catalogue sign mast",new Vector3(0,1,-.1f),new Vector3(.1f,1.5f,.1f),ShipKitMaterials.Steel());
+            Label(catalogueCounter,"BROWSE ALL EQUIPMENT",new Vector3(0,2.1f,0),2.4f,.4f,0);
+            Lamp(catalogueCounter,new Vector3(0,2,.8f),4,1.5f);
+
             var intake=Group(root,"Intake and quota");
             Model(intake,"IntakeHopper",new Vector3(20,0,15));
             Box(intake,new Vector3(20,.55f,15),new Vector3(2,1.1f,1.5f));
@@ -119,6 +129,8 @@ namespace SunkCost.Editor.Look
             Label(intake,"INTAKE / SHIP STORAGE",new Vector3(18,2.7f,16.5f),5);
             Frame(intake,new Vector3(18,0,15),8,5);
             Lamp(intake,new Vector3(18,3.5f,15),8,3);
+            // Quota moves to the former arrival pad; face inward from the south.
+            intake.transform.SetPositionAndRotation(new Vector3(7,0,1),Quaternion.Euler(0,180,0));
         }
 
         private static void Stand(GameObject root,ShopDeliveryPoint delivery,string id,Vector3 at,Material material,PrimitiveType shape,Vector3 size)
@@ -128,12 +140,30 @@ namespace SunkCost.Editor.Look
             Box(stand,new Vector3(0,.4f,0),new Vector3(1,.8f,1));
             var display=GameObject.CreatePrimitive(shape);display.name="Display";
             display.transform.SetParent(stand.transform,false);display.transform.localPosition=new Vector3(0,.83f+size.y/2,0);
-            display.transform.localScale=size;display.GetComponent<Renderer>().sharedMaterial=material;
-            var label=PropBuilder.SignPlate(stand,"Price plate","",new Vector3(0,1.85f,0),Quaternion.identity,1.8f,.5f,.28f,new Color(1,.85f,.6f));
-            stand.AddComponent<ShopDisplay>().Configure(id,label,delivery);
-            label.GetComponent<SunkCost.Look.PlateText>().Refresh();
-            foreach(Renderer r in label.transform.parent.GetComponentsInChildren<Renderer>())
-                if(r.name.StartsWith("Frame "))r.sharedMaterial=ShipKitMaterials.Bezel();
+            display.transform.localScale=shape==PrimitiveType.Capsule?new Vector3(size.x,size.y/2,size.z):size;
+            display.GetComponent<Renderer>().sharedMaterial=material;
+            // Give the four merchandise silhouettes readable details instead of
+            // leaving bare prototype primitives on otherwise finished pedestals.
+            if(shape==PrimitiveType.Capsule)
+            {
+                foreach(float y in new[]{.83f+size.y*.25f,.83f+size.y*.75f})
+                    Slab(stand,"Tank strap",new Vector3(0,y,-size.z/2),new Vector3(size.x,.055f,.035f),ShipKitMaterials.Steel());
+                Slab(stand,"Tank valve",new Vector3(0,.83f+size.y,0),new Vector3(.07f,.09f,.07f),ShipKitMaterials.Steel());
+                Slab(stand,"Valve handle",new Vector3(0,.90f+size.y,0),new Vector3(.15f,.035f,.045f),ShipKitMaterials.Hazard());
+            }
+            else if(shape==PrimitiveType.Sphere)
+            {
+                Slab(stand,"Headlamp housing",new Vector3(0,.83f,-.06f),new Vector3(.38f,.28f,.15f),ShipKitMaterials.Steel());
+                Slab(stand,"Headlamp lens",new Vector3(0,.91f,.15f),new Vector3(.20f,.12f,.02f),LookMaterials.ScreenTeal());
+            }
+            else
+            {
+                Slab(stand,"Kit clasp",new Vector3(0,.84f,.16f),new Vector3(.045f,.12f,.02f),ShipKitMaterials.Steel());
+                Slab(stand,"Kit handle",new Vector3(0,1.04f,0),new Vector3(.16f,.025f,.03f),ShipKitMaterials.Steel());
+            }
+            // PlayerHudUI already shows this catalogue item's name, price and
+            // purchase status while aimed at. No permanent floating item labels.
+            stand.AddComponent<ShopDisplay>().Configure(id,null,delivery);
         }
     }
 }

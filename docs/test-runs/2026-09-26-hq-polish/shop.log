@@ -1,0 +1,115 @@
+Shop matrix started 26/09/2026 09:27:17
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerUpgrades (run the shop setup)
+PASS the catalogue includes the four baseline items and permits expansion
+  · prices: Air tank $40, Large tank $300, Bright headlamp $150; large tank ×1.5; lamp range ×1.6
+
+== S0 — four shop stands, aim-based names/prices and a delivery spot
+PASS S0 the shop room stands at HQ
+PASS S0 a stand for each item
+PASS S0 merchandise has no permanent floating label; S1 checks the aim prompt
+PASS S0 the stand knows its delivery spot
+
+== S1 — look at a stand: the prompt; E with an empty pot is refused
+PASS the dot is on the air-tank stand
+PASS S1 the prompt: Air tank · $40 — Press E to buy (pot $0)
+PASS S1 the pot is empty
+PASS S1 E with no money is refused: Not enough money: $40 needed, $0 in the pot
+PASS S1 the refusal shows in the prompt: Not enough money: $40 needed, $0 in the pot
+PASS S1 nothing was sold
+
+== S2 — with money: the air tank falls at the delivery spot, anyone's to take
+PASS the dot is on the air-tank stand
+PASS S2 an air tank was spawned
+PASS S2 purchase reaches the pickup floor
+PASS S2 purchase landed inside the marked pickup pad: (9.91, 0.21, 13.50)
+PASS S2 loose in the HQ scene, grabbable (Free)
+PASS S2 it is a Full air tank
+PASS S2 the dot is on the bought tank
+PASS S2 picked up
+PASS S2 in hand on land the prompt says: Full air tank — breathe from it underwater
+PASS S2 a breath on land is refused: Breathe from the tank underwater
+PASS S2 dropped again
+PASS S2 the pot paid $40: $460 left
+
+== S3 — the large tank: an upgrade on the buyer, one only
+PASS the dot is on the large-tank stand
+PASS S3 the large tank is owned
+PASS S3 the pot paid $300: $160 left
+PASS S3 the stand now says owned: Large tank · owned
+PASS S3 buying it again is refused: You already have a large tank
+PASS S3 nothing charged for the refused buy
+
+== S4 — the bright headlamp: a longer beam; then the pot runs dry
+PASS the dot is on the bright-headlamp stand
+PASS S4 the bright headlamp is owned
+PASS S4 the beam reaches ×1.6: 25.0 → 40.0 m
+PASS S4 $10 left in the pot
+PASS the dot is on the air-tank stand
+PASS S4 a second air tank is refused on money: Not enough money: $40 needed, $10 in the pot
+
+== S5 — a request from across the room is refused
+PASS S5 refused from 12 m: Step up to the shop counter or display
+PASS S5 nothing sold
+
+== S6 — below, the large tank counts and the visor marks what was bought
+PASS sailing to Sea
+PASS arrived at Sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 1
+PASS S6 the tank holds 450 s (plain 300); 429 s in it
+PASS S6 the visor's O2 reads the fraction of the large tank (96%)
+PASS S6 the visor marks: L-TANK  LAMP
+
+== S7 — dying with the body left below costs the upgrades
+PASS S7 dead below
+PASS S7 the site closed with the dead (the body stayed below)
+PASS S7 the dead host is on the ship
+PASS S7 still owned while dead (nothing decided yet)
+PASS S7 End day accepted: 
+PASS S7 revived with nothing: the body was not brought up (None)
+PASS S7 the plain beam again (25.0 m)
+PASS S7 the pot is untouched by the death
+
+== G1 — a guest buys from the pot at HQ; its upgrade replicates
+PASS sailing to HQ
+PASS arrived at HQ
+PASS G1 the shop is there again at HQ
+PASS guest player spawned
+PASS G1 guest joined at HQ
+PASS G1 guest browses the full catalogue at the counter
+PASS G1 $100 in the pot: the guest's large tank is refused, and the guest sees why
+PASS G1 the guest bought the large tank; the host's copy shows it
+PASS G1 the pot paid $300: $100 left
+PASS G1 the guest reads its own upgrade
+PASS G1 the host has none of it (upgrades are per player)
+
+== G2 — the guest dies below; the host brings the body up; End day: the guest keeps its upgrade
+PASS sailing to Sea
+PASS arrived at Sea
+PASS the deck cabin took the press (refusal: )
+PASS the ride down completed
+PASS down in the dive site: ride=Complete/Down/5 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS the car is at the bottom
+PASS dive in progress on day 2
+PASS G2 both below
+PASS G2 the guest is in the site
+PASS G2 the guest's tank holds 450 s on the server
+PASS G2 the guest died below
+PASS G2 the guest's body lies below
+PASS the dot is on Mate bof the's body
+PASS Mate bof the's body grabbed (Held)
+PASS the car took the press
+PASS the ride up completed
+PASS back on the deck: ride=Complete/Up/6 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.15, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
+PASS G2 the site closed
+PASS G2 the dead guest is on the ship
+PASS G2 the body is set down on the deck
+PASS G2 End day accepted: 
+PASS G2 the guest is revived next to its body
+PASS G2 the body came up: the guest keeps the large tank (LargeTank)
+PASS G2 the guest reads itself alive with the upgrade
+MATRIX_PASS

@@ -260,7 +260,7 @@ namespace SunkCost.Editor.Prototype
             Check(host != null && host.IsServerStarted, "editor is the host with a spawned player");
             Check(host.Upgrades != null, "the player prefab carries PlayerUpgrades (run the shop setup)");
             ShopCatalog catalog = ShopCatalog.Resolve();
-            Check(catalog.Items.Count == 4 && catalog.Find(ShopCatalog.AirTankId) != null && catalog.Find(ShopCatalog.LargeTankId) != null && catalog.Find(ShopCatalog.BrightHeadlampId) != null && catalog.Find(ShopCatalog.PatchKitId) != null, "the catalogue lists the four items (the patch kit since the monsters)");
+            Check(catalog.Items.Count >= 4 && catalog.Find(ShopCatalog.AirTankId) != null && catalog.Find(ShopCatalog.LargeTankId) != null && catalog.Find(ShopCatalog.BrightHeadlampId) != null && catalog.Find(ShopCatalog.PatchKitId) != null, "the catalogue includes the four baseline items and permits expansion");
             ShopItem airTank = catalog.Find(ShopCatalog.AirTankId), largeTank = catalog.Find(ShopCatalog.LargeTankId), lamp = catalog.Find(ShopCatalog.BrightHeadlampId);
             Say($"prices: {airTank.Name} ${airTank.Price}, {largeTank.Name} ${largeTank.Price}, {lamp.Name} ${lamp.Price}; large tank ×{catalog.LargeTankMultiplier}; lamp range ×{catalog.BrightHeadlampRange}");
             WorldSceneFlow flow = WorldSceneFlow.Instance;
@@ -278,12 +278,12 @@ namespace SunkCost.Editor.Prototype
             PlayerUpgrades upgrades = host.Upgrades;
             float plainRange = host.HeadlampRange;
 
-            Heading("S0 — the shop room at HQ: three stands with a name and a price, a delivery spot");
+            Heading("S0 — four shop stands, aim-based names/prices and a delivery spot");
             Check(GameObject.Find(HQPrototypeBuilder.ShopRoomName) != null, "S0 the shop room stands at HQ");
             ShopDisplay tankStand = Stand(ShopCatalog.AirTankId), largeStand = Stand(ShopCatalog.LargeTankId), lampStand = Stand(ShopCatalog.BrightHeadlampId);
             Check(tankStand != null && largeStand != null && lampStand != null && Stand(ShopCatalog.PatchKitId) != null, "S0 a stand for each item");
             TextMesh tankLabel = tankStand.GetComponentInChildren<TextMesh>();
-            Check(tankLabel != null && tankLabel.text == $"{airTank.Name}\n${airTank.Price}", "S0 the air tank's label reads its name and price: " + (tankLabel == null ? "none" : tankLabel.text.Replace("\n", " / ")));
+            Check(tankLabel == null, "S0 merchandise has no permanent floating label; S1 checks the aim prompt");
             Check(tankStand.DeliveryPoint != null, "S0 the stand knows its delivery spot");
 
             Heading("S1 — look at a stand: the prompt; E with an empty pot is refused");
@@ -354,7 +354,7 @@ namespace SunkCost.Editor.Prototype
             Day.ServerSetBalanceForChecks(100);
             host.TeleportLocal(new Vector3(0f, 0.05f, 0f), 0f); yield return Wait(0.3f);
             upgrades.RequestBuy(ShopCatalog.AirTankId);
-            yield return Expect(() => upgrades.Refusal.Contains("Step up to the shelf"), 3f, () => "S5 refused from 12 m: " + upgrades.Refusal);
+            yield return Expect(() => upgrades.Refusal.Contains("Step up to the shop"), 3f, () => "S5 refused from 12 m: " + upgrades.Refusal);
             Check(Day.Balance == 100 && BoughtTank() != null && CarryableItem.Spawned.Count(c => c != null && c.name.StartsWith("Air tank (bought)")) == 1, "S5 nothing sold");
 
             Heading("S6 — below, the large tank counts and the visor marks what was bought");
@@ -387,14 +387,17 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController remote = GuestCopy();
             int guestId = remote.OwnerId;
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=HQ"), 20f, "G1 guest joined at HQ");
-            Vector3 guestSpot = largeStand.transform.position + largeStand.transform.forward * 1.6f; guestSpot.y = 0.05f;
+            var catalogCounter=UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsSortMode.None).First(d=>d.BrowsesCatalog);
+            Vector3 guestSpot = catalogCounter.transform.position + catalogCounter.transform.forward * 1.6f; guestSpot.y = 0.05f;
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
             yield return Wait(0.5f);
-            yield return Send("{\"id\":{id},\"action\":\"buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
+            yield return Send("{\"id\":{id},\"action\":\"shop_open\"}");
+            yield return GuestEventually(r=>r.Contains("shopBrowser=True; entries="+catalog.Items.Count),5f,"G1 guest browses the full catalogue at the counter");
+            yield return Send("{\"id\":{id},\"action\":\"shop_buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("shopRefusal='Not enough money"), 5f, "G1 $100 in the pot: the guest's large tank is refused, and the guest sees why");
             Day.ServerSetBalanceForChecks(400);
             yield return Wait(0.2f);
-            yield return Send("{\"id\":{id},\"action\":\"buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
+            yield return Send("{\"id\":{id},\"action\":\"shop_buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
             yield return Expect(() => remote.Upgrades != null && remote.Upgrades.Has(PlayerUpgrade.LargeTank), 5f, () => "G1 the guest bought the large tank; the host's copy shows it");
             Check(Day.Balance == 400 - largeTank.Price, $"G1 the pot paid ${largeTank.Price}: ${Day.Balance} left");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("upgrades=LargeTank"), 5f, "G1 the guest reads its own upgrade");

@@ -1,0 +1,514 @@
+Mono path[0] = 'C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Managed'
+Mono config path = 'C:/Dev/SunkCost/Builds/HQPrototypeLocal/MonoBleedingEdge/etc'
+CodeReloadManager initialized
+Found 1 interfaces on host : 0) 192.168.1.106
+Player connection [28764]  Target information:
+
+Player connection [28764]  * "[IP] 192.168.1.106 [Port] 55000 [Flags] 2 [Guid] 959770812 [EditorId] 3965172941 [Version] 1048832 [Id] WindowsPlayer(2,DESKTOP-ANGIEAB) [Debug] 0 [PackageName] WindowsPlayer [ProjectName] SunkCost" 
+
+Player connection [28764] Started UDP target info broadcast (1) on [225.0.0.222:54997].
+
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.6.0f1 (f7f8ed4d1e24)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeClientWorkerJobs
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3070 (ID=0x2484)
+    Vendor:   NVIDIA
+    VRAM:     8018 MB
+    Driver:   32.0.16.1692
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+- Finished resetting the current domain, in  0.013 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+<RI> Initializing input.
+Using Windows.Gaming.Input
+UnloadTime: 4.687300 ms
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+Curl error 6: Could not resolve host: config.uca.cloud.unity3d.com
+NetworkManager not found in any open scenes.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+FishNet.InstanceFinder:get_NetworkManager () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/InstanceFinder.cs:49)
+SunkCost.Net.InventoryVerificationPeer:Update () (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/InventoryVerificationPeer.cs:51)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+Shader 'Hidden/Universal Render Pipeline/GaussianDepthOfField' is not supported or has been stripped from the build (in 'GaussianDepthOfField'). PostProcessing render passes will not execute.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Rendering.Universal.PostProcessUtils:LoadShader (UnityEngine.Shader,string,UnityEngine.LogType) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs:28)
+UnityEngine.Rendering.Universal.DepthOfFieldGaussianPostProcessPass:.ctor (UnityEngine.Shader) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Passes/PostProcess/DepthOfFieldGaussianPostProcessPass.cs:24)
+UnityEngine.Rendering.Universal.PostProcess:.ctor (UnityEngine.Rendering.Universal.PostProcessData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcess.cs:56)
+UnityEngine.Rendering.Universal.UniversalRenderer:.ctor (UnityEngine.Rendering.Universal.UniversalRendererData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRenderer.cs:427)
+UnityEngine.Rendering.Universal.UniversalRendererData:Create () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRendererData.cs:166)
+UnityEngine.Rendering.Universal.ScriptableRendererData:InternalCreateRenderer () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/ScriptableRendererData.cs:67)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreateRenderers () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:862)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreatePipeline () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:809)
+UnityEngine.Rendering.RenderPipelineAsset:InternalCreatePipeline () (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineAsset.cs:15)
+UnityEngine.Rendering.RenderPipelineManager:TryPrepareRenderPipeline (UnityEngine.Rendering.RenderPipelineAsset) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:172)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,object) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:146)
+
+(Filename: ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs Line: 28)
+
+Shader 'Hidden/Universal Render Pipeline/GaussianDepthOfField' is not supported or has been stripped from the build (in 'GaussianDepthOfField'). PostProcessing render passes will not execute.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Rendering.Universal.PostProcessUtils:LoadShader (UnityEngine.Shader,string,UnityEngine.LogType) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs:28)
+UnityEngine.Rendering.Universal.DepthOfFieldGaussianPostProcessPass:.ctor (UnityEngine.Shader) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Passes/PostProcess/DepthOfFieldGaussianPostProcessPass.cs:25)
+UnityEngine.Rendering.Universal.PostProcess:.ctor (UnityEngine.Rendering.Universal.PostProcessData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcess.cs:56)
+UnityEngine.Rendering.Universal.UniversalRenderer:.ctor (UnityEngine.Rendering.Universal.UniversalRendererData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRenderer.cs:427)
+UnityEngine.Rendering.Universal.UniversalRendererData:Create () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRendererData.cs:166)
+UnityEngine.Rendering.Universal.ScriptableRendererData:InternalCreateRenderer () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/ScriptableRendererData.cs:67)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreateRenderers () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:862)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreatePipeline () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:809)
+UnityEngine.Rendering.RenderPipelineAsset:InternalCreatePipeline () (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineAsset.cs:15)
+UnityEngine.Rendering.RenderPipelineManager:TryPrepareRenderPipeline (UnityEngine.Rendering.RenderPipelineAsset) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:172)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,object) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:146)
+
+(Filename: ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs Line: 28)
+
+Shader 'Hidden/Universal Render Pipeline/BokehDepthOfField' is not supported or has been stripped from the build (in 'BokehDepthOfField'). PostProcessing render passes will not execute.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Rendering.Universal.PostProcessUtils:LoadShader (UnityEngine.Shader,string,UnityEngine.LogType) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs:28)
+UnityEngine.Rendering.Universal.DepthOfFieldBokehPostProcessPass:.ctor (UnityEngine.Shader) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Passes/PostProcess/DepthOfFieldBokehProcessPass.cs:26)
+UnityEngine.Rendering.Universal.PostProcess:.ctor (UnityEngine.Rendering.Universal.PostProcessData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcess.cs:57)
+UnityEngine.Rendering.Universal.UniversalRenderer:.ctor (UnityEngine.Rendering.Universal.UniversalRendererData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRenderer.cs:427)
+UnityEngine.Rendering.Universal.UniversalRendererData:Create () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRendererData.cs:166)
+UnityEngine.Rendering.Universal.ScriptableRendererData:InternalCreateRenderer () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/ScriptableRendererData.cs:67)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreateRenderers () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:862)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreatePipeline () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:809)
+UnityEngine.Rendering.RenderPipelineAsset:InternalCreatePipeline () (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineAsset.cs:15)
+UnityEngine.Rendering.RenderPipelineManager:TryPrepareRenderPipeline (UnityEngine.Rendering.RenderPipelineAsset) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:172)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,object) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:146)
+
+(Filename: ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs Line: 28)
+
+Shader 'Hidden/Universal Render Pipeline/PaniniProjection' is not supported or has been stripped from the build (in 'PaniniProjection'). PostProcessing render passes will not execute.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Rendering.Universal.PostProcessUtils:LoadShader (UnityEngine.Shader,string,UnityEngine.LogType) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs:28)
+UnityEngine.Rendering.Universal.PaniniProjectionPostProcessPass:.ctor (UnityEngine.Shader) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Passes/PostProcess/PaniniProjectionPostProcessPass.cs:19)
+UnityEngine.Rendering.Universal.PostProcess:.ctor (UnityEngine.Rendering.Universal.PostProcessData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcess.cs:64)
+UnityEngine.Rendering.Universal.UniversalRenderer:.ctor (UnityEngine.Rendering.Universal.UniversalRendererData) (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRenderer.cs:427)
+UnityEngine.Rendering.Universal.UniversalRendererData:Create () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/UniversalRendererData.cs:166)
+UnityEngine.Rendering.Universal.ScriptableRendererData:InternalCreateRenderer () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/ScriptableRendererData.cs:67)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreateRenderers () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:862)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset:CreatePipeline () (at ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/Data/UniversalRenderPipelineAsset.cs:809)
+UnityEngine.Rendering.RenderPipelineAsset:InternalCreatePipeline () (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineAsset.cs:15)
+UnityEngine.Rendering.RenderPipelineManager:TryPrepareRenderPipeline (UnityEngine.Rendering.RenderPipelineAsset) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:172)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,object) (at C:/build/output/unity/unity/Runtime/Export/RenderPipeline/RenderPipelineManager.cs:146)
+
+(Filename: ./Library/PackageCache/com.unity.render-pipelines.universal@8457e85b8184/Runtime/PostProcessUtils.cs Line: 28)
+
+NetworkManager not found in any open scenes.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+FishNet.InstanceFinder:get_NetworkManager () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/InstanceFinder.cs:49)
+SunkCost.Net.InventoryVerificationPeer:Update () (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/InventoryVerificationPeer.cs:51)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+[2026.09.26 09:25:45] Local client is starting for Tugboat. Server IP is 127.0.0.1, port is 7771.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+FishNet.Managing.Logging.LevelLoggingConfiguration:Log (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Logging/LevelLoggingConfiguration.cs:130)
+FishNet.Managing.NetworkManager:InternalLog (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/NetworkManager.Logging.cs:53)
+FishNet.Managing.NetworkManagerExtensions:Log (FishNet.Managing.NetworkManager,string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/NetworkManager.Logging.cs:118)
+FishNet.Managing.Client.ClientManager:Transport_OnClientConnectionState (FishNet.Transporting.ClientConnectionStateArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:383)
+FishNet.Transporting.Tugboat.Tugboat:HandleClientConnectionState (FishNet.Transporting.ClientConnectionStateArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:184)
+FishNet.Transporting.Tugboat.CommonSocket:SetConnectionState (FishNet.Transporting.LocalConnectionState,bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/CommonSocket.cs:41)
+FishNet.Transporting.Tugboat.Client.ClientSocket:IterateIncoming () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/ClientSocket.cs:233)
+FishNet.Transporting.Tugboat.Client.ClientSocket:StartConnection (string,uint16) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/ClientSocket.cs:113)
+FishNet.Transporting.Tugboat.Tugboat:StartClient (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:536)
+FishNet.Transporting.Tugboat.Tugboat:StartConnection (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:457)
+FishNet.Managing.Client.ClientManager:StartConnection () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:325)
+FishNet.Managing.Client.ClientManager:StartConnection (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:334)
+SunkCost.Net.PrototypeSessionController/<GuestFlow>d__82:MoveNext () (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/PrototypeSessionController.cs:439)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+UnityEngine.MonoBehaviour:StartCoroutineManaged2 (System.Collections.IEnumerator)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator) (at C:/build/output/unity/unity/Runtime/Export/Scripting/MonoBehaviour.bindings.cs:114)
+SunkCost.Net.PrototypeSessionController:JoinLocal (string) (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/PrototypeSessionController.cs:201)
+SunkCost.Net.PrototypeSessionUI:JoinLocal (string) (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/PrototypeSessionUI.cs:171)
+SunkCost.Net.PrototypeSessionUI/<Start>d__29:MoveNext () (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/PrototypeSessionUI.cs:85)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+[2026.09.26 09:25:45] Local client is started for Tugboat.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+FishNet.Managing.Logging.LevelLoggingConfiguration:Log (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Logging/LevelLoggingConfiguration.cs:130)
+FishNet.Managing.NetworkManager:InternalLog (string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/NetworkManager.Logging.cs:53)
+FishNet.Managing.NetworkManagerExtensions:Log (FishNet.Managing.NetworkManager,string) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/NetworkManager.Logging.cs:118)
+FishNet.Managing.Client.ClientManager:Transport_OnClientConnectionState (FishNet.Transporting.ClientConnectionStateArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:383)
+FishNet.Transporting.Tugboat.Tugboat:HandleClientConnectionState (FishNet.Transporting.ClientConnectionStateArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:184)
+FishNet.Transporting.Tugboat.CommonSocket:SetConnectionState (FishNet.Transporting.LocalConnectionState,bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/CommonSocket.cs:41)
+FishNet.Transporting.Tugboat.Client.ClientSocket:IterateIncoming () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/ClientSocket.cs:233)
+FishNet.Transporting.Tugboat.Tugboat:IterateIncoming (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:225)
+FishNet.Managing.Transporting.TransportManager:IterateIncoming (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Transporting/TransportManager.cs:636)
+FishNet.Managing.Timing.TimeManager:TryIterateData (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:1116)
+FishNet.Managing.Timing.TimeManager:IncreaseTick () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:734)
+FishNet.Managing.Timing.TimeManager:<TickUpdate>g__MethodLogic|112_0 () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:393)
+FishNet.Managing.Timing.TimeManager:TickUpdate () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:381)
+FishNet.Transporting.NetworkReaderLoop:Update () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/NetworkReaderLoop.cs:29)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+HQ runtime: server=False, client=True, players=0, itemsSpawned=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+SunkCost.Net.PrototypeSessionUI:Update () (at C:/Dev/SunkCost/Assets/_Project/Scripts/Net/PrototypeSessionUI.cs:112)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+[Scenes] client loads HQPrototype moving nothing
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:23)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:130)
+SunkCost.World.WorldSceneFlow:LogLoadStart (FishNet.Managing.Scened.SceneLoadStartEventArgs) (at C:/Dev/SunkCost/Assets/_Project/Scripts/World/WorldSceneFlow.cs:168)
+FishNet.Managing.Scened.SceneManager:InvokeOnSceneLoadStart (FishNet.Managing.Scened.LoadQueueData) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:751)
+FishNet.Managing.Scened.SceneManager/<__LoadScenes>d__109:MoveNext () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:1225)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+UnityEngine.MonoBehaviour:StartCoroutineManaged2 (System.Collections.IEnumerator)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator) (at C:/build/output/unity/unity/Runtime/Export/Scripting/MonoBehaviour.bindings.cs:114)
+FishNet.Managing.Scened.SceneManager/<__ProcessSceneQueue>d__100:MoveNext () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:834)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+UnityEngine.MonoBehaviour:StartCoroutineManaged2 (System.Collections.IEnumerator)
+UnityEngine.MonoBehaviour:StartCoroutine (System.Collections.IEnumerator) (at C:/build/output/unity/unity/Runtime/Export/Scripting/MonoBehaviour.bindings.cs:114)
+FishNet.Managing.Scened.SceneManager:QueueOperation (object) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:816)
+FishNet.Managing.Scened.SceneManager:LoadGlobalScenes_Internal (FishNet.Managing.Scened.SceneLoadData,string[],bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:912)
+FishNet.Managing.Scened.SceneManager:OnServerLoadedScenes (FishNet.Managing.Scened.LoadScenesBroadcast,FishNet.Transporting.Channel) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Scened/SceneManager.cs:1560)
+FishNet.Broadcast.Helping.ServerBroadcastHandler`1<FishNet.Managing.Scened.LoadScenesBroadcast>:InvokeHandlers (FishNet.Serializing.PooledReader,FishNet.Transporting.Channel) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Serializing/Helping/Broadcasts.cs:168)
+FishNet.Managing.Client.ClientManager:ParseBroadcast (FishNet.Serializing.PooledReader,FishNet.Transporting.Channel) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.Broadcast.cs:83)
+FishNet.Managing.Client.ClientManager:ParseReader (FishNet.Serializing.PooledReader,FishNet.Transporting.Channel,bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:572)
+FishNet.Managing.Client.ClientManager:ParseReceived (FishNet.Transporting.ClientReceivedDataArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:450)
+FishNet.Managing.Client.ClientManager:Transport_OnClientReceivedData (FishNet.Transporting.ClientReceivedDataArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Client/ClientManager.cs:398)
+FishNet.Transporting.Tugboat.Tugboat:HandleClientReceivedDataArgs (FishNet.Transporting.ClientReceivedDataArgs) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:278)
+FishNet.Transporting.Tugboat.Client.ClientSocket:IterateIncoming () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Core/ClientSocket.cs:252)
+FishNet.Transporting.Tugboat.Tugboat:IterateIncoming (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/Transports/Tugboat/Tugboat.cs:225)
+FishNet.Managing.Transporting.TransportManager:IterateIncoming (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Transporting/TransportManager.cs:636)
+FishNet.Managing.Timing.TimeManager:TryIterateData (bool) (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:1116)
+FishNet.Managing.Timing.TimeManager:IncreaseTick () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:734)
+FishNet.Managing.Timing.TimeManager:<TickUpdate>g__MethodLogic|112_0 () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:393)
+FishNet.Managing.Timing.TimeManager:TickUpdate () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Managing/Timing/TimeManager.cs:381)
+FishNet.Transporting.NetworkReaderLoop:Update () (at ./Library/PackageCache/com.firstgeargames.fishnet@382980e7eed4/Runtime/Transporting/NetworkReaderLoop.cs:29)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 130)
+
+Detected one or more triangles where the distance between any 2 vertices is greater than 500 units. The resulting Triangle Mesh can impact simulation and query stability. It is recommended to tessellate meshes that have large triangles. Source mesh name: Box_600x1x600_p0
+Curl error 6: Could not resolve host: cdp.cloud.unity3d.com
+
+=================================================================
+	Native Crash Reporting
+=================================================================
+Got a UNKNOWN while executing native code. This usually indicates
+a fatal error in the mono runtime or one of the native libraries 
+used by your application.
+=================================================================
+
+=================================================================
+	Managed Stacktrace:
+=================================================================
+=================================================================
+Crash!!!
+SymInit: Symbol-SearchPath: '.;C:\Dev\SunkCost;C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Plugins\x86_64;C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Plugins;C:\Dev\SunkCost\Builds\HQPrototypeLocal;C:\Windows;C:\Windows\system32;', symOptions: 534, UserName: 'Owner'
+OS-Version: 10.0.0
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ.exe:SunkCostHQ.exe (00007FF7017F0000), size: 679936 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.6.0.63725
+C:\Windows\SYSTEM32\ntdll.dll:ntdll.dll (00007FF9F51E0000), size: 2519040 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\KERNEL32.DLL:KERNEL32.DLL (00007FF9F4010000), size: 831488 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\KERNELBASE.dll:KERNELBASE.dll (00007FF9F2AF0000), size: 4202496 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\UnityPlayer.dll:UnityPlayer.dll (00007FF8C5B40000), size: 98750464 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.6.0.63725
+C:\Windows\System32\CRYPT32.dll:CRYPT32.dll (00007FF9F2740000), size: 1564672 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\dwmapi.dll:dwmapi.dll (00007FF9EF750000), size: 192512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\ucrtbase.dll:ucrtbase.dll (00007FF9F25E0000), size: 1359872 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\Secur32.dll:Secur32.dll (00007FF9EF230000), size: 53248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7705
+C:\Windows\System32\win32u.dll:win32u.dll (00007FF9F28D0000), size: 159744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\ole32.dll:ole32.dll (00007FF9F31A0000), size: 1679360 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\USER32.dll:USER32.dll (00007FF9F4F30000), size: 1896448 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\DSTORAGE.dll:DSTORAGE.dll (00007FF9CCD00000), size: 217088 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.3.2506.2501
+C:\Windows\System32\msvcp_win.dll:msvcp_win.dll (00007FF9F2470000), size: 667648 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\VERSION.dll:VERSION.dll (00007FF9EC7F0000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\Windows\System32\GDI32.dll:GDI32.dll (00007FF9F3170000), size: 176128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8328
+C:\Windows\System32\msvcrt.dll:msvcrt.dll (00007FF9F42A0000), size: 692224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 7.0.26100.9444
+C:\Windows\System32\combase.dll:combase.dll (00007FF9F4AF0000), size: 3690496 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\gdi32full.dll:gdi32full.dll (00007FF9F2900000), size: 1216512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\RPCRT4.dll:RPCRT4.dll (00007FF9F35F0000), size: 1146880 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SHLWAPI.dll:SHLWAPI.dll (00007FF9F3710000), size: 417792 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SETUPAPI.dll:SETUPAPI.dll (00007FF9F3860000), size: 4747264 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\shcore.dll:shcore.dll (00007FF9F3420000), size: 1028096 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SHELL32.dll:SHELL32.dll (00007FF9F4350000), size: 7962624 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\OLEAUT32.dll:OLEAUT32.dll (00007FF9F3E50000), size: 888832 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\OPENGL32.dll:OPENGL32.dll (00007FF948AF0000), size: 1097728 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\WINMM.dll:WINMM.dll (00007FF9E39F0000), size: 221184 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\IMM32.dll:IMM32.dll (00007FF9F3F60000), size: 200704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\ADVAPI32.dll:ADVAPI32.dll (00007FF9F3520000), size: 770048 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\WS2_32.dll:WS2_32.dll (00007FF9F4EA0000), size: 524288 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\sechost.dll:sechost.dll (00007FF9F41E0000), size: 692224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\IPHLPAPI.DLL:IPHLPAPI.DLL (00007FF9F0A20000), size: 208896 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\WINHTTP.dll:WINHTTP.dll (00007FF9EB820000), size: 1220608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\bcrypt.dll:bcrypt.dll (00007FF9F22D0000), size: 172032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\HID.DLL:HID.DLL (00007FF9F06E0000), size: 61440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\Windows\SYSTEM32\d3d11.dll:d3d11.dll (00007FF9EE540000), size: 2490368 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\UIAutomationCore.DLL:UIAutomationCore.DLL (00007FF9B7BB0000), size: 4325376 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 7.2.26100.9278
+C:\Windows\SYSTEM32\dxgi.dll:dxgi.dll (00007FF9EF5A0000), size: 1290240 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\GLU32.dll:GLU32.dll (00007FF94F770000), size: 184320 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\Windows\SYSTEM32\SSPICLI.DLL:SSPICLI.DLL (00007FF9F1370000), size: 299008 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\powrprof.dll:powrprof.dll (00007FF9F2080000), size: 385024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.3912
+C:\Windows\SYSTEM32\dxcore.dll:dxcore.dll (00007FF9EF6E0000), size: 278528 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\UMPDC.dll:UMPDC.dll (00007FF9F2060000), size: 86016 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8972
+C:\Windows\SYSTEM32\kernel.appcore.dll:kernel.appcore.dll (00007FF9F1080000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\bcryptPrimitives.dll:bcryptPrimitives.dll (00007FF9F2A30000), size: 704512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\system32\uxtheme.dll:uxtheme.dll (00007FF9EF4A0000), size: 688128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\clbcatq.dll:clbcatq.dll (00007FF9F37A0000), size: 712704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2001.12.10941.16384
+C:\Windows\system32\wbem\wbemprox.dll:wbemprox.dll (00007FF9D83C0000), size: 73728 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\wbemcomn.dll:wbemcomn.dll (00007FF9D8340000), size: 499712 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7920
+C:\Windows\system32\wbem\wbemsvc.dll:wbemsvc.dll (00007FF9CA050000), size: 86016 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\system32\wbem\fastprox.dll:fastprox.dll (00007FF9C8E20000), size: 1003520 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\amsi.dll:amsi.dll (00007FF9C79D0000), size: 118784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7309
+C:\Windows\SYSTEM32\USERENV.dll:USERENV.dll (00007FF9F1720000), size: 212992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\profapi.dll:profapi.dll (00007FF9F2300000), size: 167936 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.26080.4-0\MpOav.dll:MpOav.dll (00007FF9C78F0000), size: 671744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 4.18.26080.4
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\WinPixEventRuntime.dll:WinPixEventRuntime.dll (00007FF9EF130000), size: 57344 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.0.2403.8001
+C:\Windows\SYSTEM32\VCRUNTIME140.dll:VCRUNTIME140.dll (00007FF9D7F60000), size: 180224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\Windows\SYSTEM32\MSVCP140.dll:MSVCP140.dll (00007FF9D80E0000), size: 643072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\Windows\SYSTEM32\VCRUNTIME140_1.dll:VCRUNTIME140_1.dll (00007FF9D8FB0000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll:mono-2.0-bdwgc.dll (00007FF9161D0000), size: 10760192 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Windows\system32\mswsock.dll:mswsock.dll (00007FF9F1670000), size: 442368 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\NSI.dll:NSI.dll (00007FF9F3790000), size: 40960 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dhcpcsvc6.DLL:dhcpcsvc6.DLL (00007FF9EBB20000), size: 118784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dhcpcsvc.DLL:dhcpcsvc.DLL (00007FF9EB5A0000), size: 151552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\DNSAPI.dll:DNSAPI.dll (00007FF9F0A60000), size: 1409024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\DSPARSE.dll:DSPARSE.dll (00007FF9F1450000), size: 53248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1
+C:\Windows\SYSTEM32\windows.storage.dll:windows.storage.dll (00007FF9EFE20000), size: 9101312 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\system32\napinsp.dll:napinsp.dll (00007FF9C01E0000), size: 98304 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\Windows\System32\winrnr.dll:winrnr.dll (00007FF9C0200000), size: 77824 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\system32\nlansp_c.dll:nlansp_c.dll (00007FF9C0220000), size: 159744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\system32\wshbth.dll:wshbth.dll (00007FF9C0250000), size: 90112 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8875
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AudioPluginSunkCostAudio.dll:AudioPluginSunkCostAudio.dll (000000005A6D0000), size: 1597440 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AppUINativePlugin.dll:AppUINativePlugin.dll (00007FF9EEF80000), size: 61440 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.9278_none_3e0d1ba8e3303201\COMCTL32.dll:COMCTL32.dll (00007FF9CB820000), size: 2686976 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6.10.26100.9278
+C:\Windows\System32\Windows.UI.dll:Windows.UI.dll (00007FF9D30F0000), size: 1421312 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\MSCTF.dll:MSCTF.dll (00007FF9F3CF0000), size: 1421312 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\directxdatabasehelper.dll:directxdatabasehelper.dll (00007FF9EC990000), size: 385024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\cfgmgr32.dll:cfgmgr32.dll (00007FF9F1FD0000), size: 335872 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvldumdx.dll:nvldumdx.dll (00007FF9EB5D0000), size: 843776 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1692
+C:\Windows\SYSTEM32\msasn1.dll:msasn1.dll (00007FF9F1AB0000), size: 77824 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\cryptnet.dll:cryptnet.dll (00007FF9EB430000), size: 241664 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\cryptbase.dll:cryptbase.dll (00007FF9F1960000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\wldp.dll:wldp.dll (00007FF9F1A40000), size: 434176 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\drvstore.dll:drvstore.dll (00007FF9EB2B0000), size: 1548288 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\devobj.dll:devobj.dll (00007FF9F1F90000), size: 192512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\wintrust.dll:wintrust.dll (00007FF9F23E0000), size: 532480 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\imagehlp.dll:imagehlp.dll (00007FF9F3F30000), size: 131072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.4202
+C:\Windows\SYSTEM32\CRYPTSP.dll:CRYPTSP.dll (00007FF9F1980000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\system32\rsaenh.dll:rsaenh.dll (00007FF9F0FE0000), size: 233472 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7705
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvgpucomp64.dll:nvgpucomp64.dll (00007FF9E3BC0000), size: 110788608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1692
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\NvMemMapStoragex.dll:NvMemMapStoragex.dll (00007FF9E3A30000), size: 1421312 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvwgf2umx.dll:nvwgf2umx.dll (00007FF9DE280000), size: 90284032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1692
+C:\Windows\system32\nvspcap64.dll:nvspcap64.dll (00007FF9B1BF0000), size: 1495040 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 11.0.9.251
+C:\Windows\SYSTEM32\ntmarta.dll:ntmarta.dll (00007FF9F11C0000), size: 221184 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7019
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvppex.dll:nvppex.dll (00007FF9B3870000), size: 7499776 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1692
+C:\Windows\System32\MMDevApi.dll:MMDevApi.dll (00007FF9DDC30000), size: 675840 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\AUDIOSES.DLL:AUDIOSES.DLL (00007FF9CD880000), size: 1798144 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\resourcepolicyclient.dll:resourcepolicyclient.dll (00007FF9EFAD0000), size: 81920 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8115
+C:\Windows\System32\Windows.Gaming.Input.dll:Windows.Gaming.Input.dll (00007FF9EAE40000), size: 884736 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\inputhost.dll:inputhost.dll (00007FF9C5840000), size: 1978368 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\CoreMessaging.dll:CoreMessaging.dll (00007FF9EEE30000), size: 1224704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\twinapi.appcore.dll:twinapi.appcore.dll (00007FF9EABE0000), size: 2424832 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\WinTypes.dll:WinTypes.dll (00007FF9EBDA0000), size: 1482752 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dcomp.dll:dcomp.dll (00007FF9EE7B0000), size: 2248704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\Microsoft.Internal.WarpPal.dll:Microsoft.Internal.WarpPal.dll (00007FF9EDA30000), size: 106496 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Windows\SYSTEM32\textinputframework.dll:textinputframework.dll (00007FF9C55B0000), size: 1318912 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Windows\System32\fwpuclnt.dll:fwpuclnt.dll (00007FF9EB160000), size: 548864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\System32\rasadhlp.dll:rasadhlp.dll (00007FF9EBB10000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7920
+C:\Windows\SYSTEM32\gpapi.dll:gpapi.dll (00007FF9F16F0000), size: 151552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\avrt.dll:avrt.dll (00007FF9EC7E0000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8972
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\lib_burst_generated.dll:lib_burst_generated.dll (00007FF967DB0000), size: 1548288 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Windows\SYSTEM32\dbghelp.dll:dbghelp.dll (00007FF9DA440000), size: 2408448 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9444
+
+========== OUTPUTTING STACK TRACE ==================
+
+0x00007FF8C7AC45FE (UnityPlayer) UnityMain
+0x00007FF8C7AC571D (UnityPlayer) UnityMain
+0x00007FF8C7C58F8B (UnityPlayer) UnityMain
+0x00007FF8C7C54518 (UnityPlayer) UnityMain
+0x00007FF8C7C75B4B (UnityPlayer) UnityMain
+0x00007FF8C7C75C6F (UnityPlayer) UnityMain
+0x00007FF8C7C7ADC7 (UnityPlayer) UnityMain
+SymInit: Symbol-SearchPath: '.;C:\Dev\SunkCost;C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Plugins\x86_64;C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Plugins;C:\Dev\SunkCost\Builds\HQPrototypeLocal;C:\Windows;C:\Windows\system32;', symOptions: 534, UserName: 'Owner'
+OS-Version: 10.0.0
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ.exe:SunkCostHQ.exe (00007FF7017F0000), size: 679936 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ.exe', fileVersion: 6000.6.0.63725
+C:\Windows\SYSTEM32\ntdll.dll:ntdll.dll (00007FF9F51E0000), size: 2519040 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\ntdll.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\KERNEL32.DLL:KERNEL32.DLL (00007FF9F4010000), size: 831488 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\KERNEL32.DLL', fileVersion: 10.0.26100.9444
+C:\Windows\System32\KERNELBASE.dll:KERNELBASE.dll (00007FF9F2AF0000), size: 4202496 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\KERNELBASE.dll', fileVersion: 10.0.26100.9444
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\UnityPlayer.dll:UnityPlayer.dll (00007FF8C5B40000), size: 98750464 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\UnityPlayer.dll', fileVersion: 6000.6.0.63725
+C:\Windows\System32\CRYPT32.dll:CRYPT32.dll (00007FF9F2740000), size: 1564672 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\CRYPT32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\dwmapi.dll:dwmapi.dll (00007FF9EF750000), size: 192512 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dwmapi.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\ucrtbase.dll:ucrtbase.dll (00007FF9F25E0000), size: 1359872 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\ucrtbase.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\Secur32.dll:Secur32.dll (00007FF9EF230000), size: 53248 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\Secur32.dll', fileVersion: 10.0.26100.7705
+C:\Windows\System32\win32u.dll:win32u.dll (00007FF9F28D0000), size: 159744 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\win32u.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\ole32.dll:ole32.dll (00007FF9F31A0000), size: 1679360 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\ole32.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\USER32.dll:USER32.dll (00007FF9F4F30000), size: 1896448 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\USER32.dll', fileVersion: 10.0.26100.9444
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\DSTORAGE.dll:DSTORAGE.dll (00007FF9CCD00000), size: 217088 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\DSTORAGE.dll', fileVersion: 1.3.2506.2501
+C:\Windows\System32\msvcp_win.dll:msvcp_win.dll (00007FF9F2470000), size: 667648 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\msvcp_win.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\VERSION.dll:VERSION.dll (00007FF9EC7F0000), size: 45056 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\VERSION.dll', fileVersion: 10.0.26100.1150
+C:\Windows\System32\GDI32.dll:GDI32.dll (00007FF9F3170000), size: 176128 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\GDI32.dll', fileVersion: 10.0.26100.8328
+C:\Windows\System32\msvcrt.dll:msvcrt.dll (00007FF9F42A0000), size: 692224 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\msvcrt.dll', fileVersion: 7.0.26100.9444
+C:\Windows\System32\combase.dll:combase.dll (00007FF9F4AF0000), size: 3690496 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\combase.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\gdi32full.dll:gdi32full.dll (00007FF9F2900000), size: 1216512 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\gdi32full.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\RPCRT4.dll:RPCRT4.dll (00007FF9F35F0000), size: 1146880 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\RPCRT4.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SHLWAPI.dll:SHLWAPI.dll (00007FF9F3710000), size: 417792 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\SHLWAPI.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SETUPAPI.dll:SETUPAPI.dll (00007FF9F3860000), size: 4747264 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\SETUPAPI.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\shcore.dll:shcore.dll (00007FF9F3420000), size: 1028096 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\shcore.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\SHELL32.dll:SHELL32.dll (00007FF9F4350000), size: 7962624 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\SHELL32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\OLEAUT32.dll:OLEAUT32.dll (00007FF9F3E50000), size: 888832 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\OLEAUT32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\OPENGL32.dll:OPENGL32.dll (00007FF948AF0000), size: 1097728 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\OPENGL32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\WINMM.dll:WINMM.dll (00007FF9E39F0000), size: 221184 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\WINMM.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\IMM32.dll:IMM32.dll (00007FF9F3F60000), size: 200704 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\IMM32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\ADVAPI32.dll:ADVAPI32.dll (00007FF9F3520000), size: 770048 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\ADVAPI32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\WS2_32.dll:WS2_32.dll (00007FF9F4EA0000), size: 524288 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\WS2_32.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\sechost.dll:sechost.dll (00007FF9F41E0000), size: 692224 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\sechost.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\IPHLPAPI.DLL:IPHLPAPI.DLL (00007FF9F0A20000), size: 208896 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\IPHLPAPI.DLL', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\WINHTTP.dll:WINHTTP.dll (00007FF9EB820000), size: 1220608 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\WINHTTP.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\bcrypt.dll:bcrypt.dll (00007FF9F22D0000), size: 172032 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\bcrypt.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\HID.DLL:HID.DLL (00007FF9F06E0000), size: 61440 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\HID.DLL', fileVersion: 10.0.26100.1150
+C:\Windows\SYSTEM32\d3d11.dll:d3d11.dll (00007FF9EE540000), size: 2490368 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\d3d11.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\UIAutomationCore.DLL:UIAutomationCore.DLL (00007FF9B7BB0000), size: 4325376 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\UIAutomationCore.DLL', fileVersion: 7.2.26100.9278
+C:\Windows\SYSTEM32\dxgi.dll:dxgi.dll (00007FF9EF5A0000), size: 1290240 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dxgi.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\GLU32.dll:GLU32.dll (00007FF94F770000), size: 184320 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\GLU32.dll', fileVersion: 10.0.26100.1150
+C:\Windows\SYSTEM32\SSPICLI.DLL:SSPICLI.DLL (00007FF9F1370000), size: 299008 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\SSPICLI.DLL', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\powrprof.dll:powrprof.dll (00007FF9F2080000), size: 385024 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\powrprof.dll', fileVersion: 10.0.26100.3912
+C:\Windows\SYSTEM32\dxcore.dll:dxcore.dll (00007FF9EF6E0000), size: 278528 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dxcore.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\UMPDC.dll:UMPDC.dll (00007FF9F2060000), size: 86016 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\UMPDC.dll', fileVersion: 10.0.26100.8972
+C:\Windows\SYSTEM32\kernel.appcore.dll:kernel.appcore.dll (00007FF9F1080000), size: 110592 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\kernel.appcore.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\bcryptPrimitives.dll:bcryptPrimitives.dll (00007FF9F2A30000), size: 704512 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\bcryptPrimitives.dll', fileVersion: 10.0.26100.9444
+C:\Windows\system32\uxtheme.dll:uxtheme.dll (00007FF9EF4A0000), size: 688128 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\uxtheme.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\clbcatq.dll:clbcatq.dll (00007FF9F37A0000), size: 712704 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\clbcatq.dll', fileVersion: 2001.12.10941.16384
+C:\Windows\system32\wbem\wbemprox.dll:wbemprox.dll (00007FF9D83C0000), size: 73728 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\wbem\wbemprox.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\wbemcomn.dll:wbemcomn.dll (00007FF9D8340000), size: 499712 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\wbemcomn.dll', fileVersion: 10.0.26100.7920
+C:\Windows\system32\wbem\wbemsvc.dll:wbemsvc.dll (00007FF9CA050000), size: 86016 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\wbem\wbemsvc.dll', fileVersion: 10.0.26100.9278
+C:\Windows\system32\wbem\fastprox.dll:fastprox.dll (00007FF9C8E20000), size: 1003520 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\wbem\fastprox.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\amsi.dll:amsi.dll (00007FF9C79D0000), size: 118784 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\amsi.dll', fileVersion: 10.0.26100.7309
+C:\Windows\SYSTEM32\USERENV.dll:USERENV.dll (00007FF9F1720000), size: 212992 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\USERENV.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\profapi.dll:profapi.dll (00007FF9F2300000), size: 167936 (result: 0), SymType: '-nosymbols-', PDB: 'C:\Windows\SYSTEM32\profapi.dll', fileVersion: 10.0.26100.9444
+C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.26080.4-0\MpOav.dll:MpOav.dll (00007FF9C78F0000), size: 671744 (result: 0), SymType: '-exported-', PDB: 'C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.26080.4-0\MpOav.dll', fileVersion: 4.18.26080.4
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\WinPixEventRuntime.dll:WinPixEventRuntime.dll (00007FF9EF130000), size: 57344 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\WinPixEventRuntime.dll', fileVersion: 1.0.2403.8001
+C:\Windows\SYSTEM32\VCRUNTIME140.dll:VCRUNTIME140.dll (00007FF9D7F60000), size: 180224 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\VCRUNTIME140.dll', fileVersion: 14.51.36247.0
+C:\Windows\SYSTEM32\MSVCP140.dll:MSVCP140.dll (00007FF9D80E0000), size: 643072 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\MSVCP140.dll', fileVersion: 14.51.36247.0
+C:\Windows\SYSTEM32\VCRUNTIME140_1.dll:VCRUNTIME140_1.dll (00007FF9D8FB0000), size: 49152 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\VCRUNTIME140_1.dll', fileVersion: 14.51.36247.0
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll:mono-2.0-bdwgc.dll (00007FF9161D0000), size: 10760192 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll'
+C:\Windows\system32\mswsock.dll:mswsock.dll (00007FF9F1670000), size: 442368 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\mswsock.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\NSI.dll:NSI.dll (00007FF9F3790000), size: 40960 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\NSI.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dhcpcsvc6.DLL:dhcpcsvc6.DLL (00007FF9EBB20000), size: 118784 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dhcpcsvc6.DLL', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dhcpcsvc.DLL:dhcpcsvc.DLL (00007FF9EB5A0000), size: 151552 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dhcpcsvc.DLL', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\DNSAPI.dll:DNSAPI.dll (00007FF9F0A60000), size: 1409024 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\DNSAPI.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\DSPARSE.dll:DSPARSE.dll (00007FF9F1450000), size: 53248 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\DSPARSE.dll', fileVersion: 10.0.26100.1
+C:\Windows\SYSTEM32\windows.storage.dll:windows.storage.dll (00007FF9EFE20000), size: 9101312 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\windows.storage.dll', fileVersion: 10.0.26100.9444
+C:\Windows\system32\napinsp.dll:napinsp.dll (00007FF9C01E0000), size: 98304 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\napinsp.dll', fileVersion: 10.0.26100.1150
+C:\Windows\System32\winrnr.dll:winrnr.dll (00007FF9C0200000), size: 77824 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\winrnr.dll', fileVersion: 10.0.26100.9278
+C:\Windows\system32\nlansp_c.dll:nlansp_c.dll (00007FF9C0220000), size: 159744 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\nlansp_c.dll', fileVersion: 10.0.26100.9278
+C:\Windows\system32\wshbth.dll:wshbth.dll (00007FF9C0250000), size: 90112 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\wshbth.dll', fileVersion: 10.0.26100.8875
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AudioPluginSunkCostAudio.dll:AudioPluginSunkCostAudio.dll (000000005A6D0000), size: 1597440 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AudioPluginSunkCostAudio.dll'
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AppUINativePlugin.dll:AppUINativePlugin.dll (00007FF9EEF80000), size: 61440 (result: 0), SymType: '-exported-', PDB: 'C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\AppUINativePlugin.dll'
+C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.9278_none_3e0d1ba8e3303201\COMCTL32.dll:COMCTL32.dll (00007FF9CB820000), size: 2686976 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.9278_none_3e0d1ba8e3303201\COMCTL32.dll', fileVersion: 6.10.26100.9278
+C:\Windows\System32\Windows.UI.dll:Windows.UI.dll (00007FF9D30F0000), size: 1421312 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\Windows.UI.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\MSCTF.dll:MSCTF.dll (00007FF9F3CF0000), size: 1421312 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\MSCTF.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\directxdatabasehelper.dll:directxdatabasehelper.dll (00007FF9EC990000), size: 385024 (result: 0), SymType: '-nosymbols-', PDB: 'C:\Windows\SYSTEM32\directxdatabasehelper.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\cfgmgr32.dll:cfgmgr32.dll (00007FF9F1FD0000), size: 335872 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\cfgmgr32.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvldumdx.dll:nvldumdx.dll (00007FF9EB5D0000), size: 843776 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvldumdx.dll', fileVersion: 32.0.16.1692
+C:\Windows\SYSTEM32\msasn1.dll:msasn1.dll (00007FF9F1AB0000), size: 77824 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\msasn1.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\cryptnet.dll:cryptnet.dll (00007FF9EB430000), size: 241664 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\cryptnet.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\cryptbase.dll:cryptbase.dll (00007FF9F1960000), size: 49152 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\cryptbase.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\wldp.dll:wldp.dll (00007FF9F1A40000), size: 434176 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\wldp.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\drvstore.dll:drvstore.dll (00007FF9EB2B0000), size: 1548288 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\drvstore.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\devobj.dll:devobj.dll (00007FF9F1F90000), size: 192512 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\devobj.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\wintrust.dll:wintrust.dll (00007FF9F23E0000), size: 532480 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\wintrust.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\imagehlp.dll:imagehlp.dll (00007FF9F3F30000), size: 131072 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\imagehlp.dll', fileVersion: 10.0.26100.4202
+C:\Windows\SYSTEM32\CRYPTSP.dll:CRYPTSP.dll (00007FF9F1980000), size: 110592 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\CRYPTSP.dll', fileVersion: 10.0.26100.9444
+C:\Windows\system32\rsaenh.dll:rsaenh.dll (00007FF9F0FE0000), size: 233472 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\rsaenh.dll', fileVersion: 10.0.26100.7705
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvgpucomp64.dll:nvgpucomp64.dll (00007FF9E3BC0000), size: 110788608 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvgpucomp64.dll', fileVersion: 32.0.16.1692
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\NvMemMapStoragex.dll:NvMemMapStoragex.dll (00007FF9E3A30000), size: 1421312 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\NvMemMapStoragex.dll'
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvwgf2umx.dll:nvwgf2umx.dll (00007FF9DE280000), size: 90284032 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvwgf2umx.dll', fileVersion: 32.0.16.1692
+C:\Windows\system32\nvspcap64.dll:nvspcap64.dll (00007FF9B1BF0000), size: 1495040 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\system32\nvspcap64.dll', fileVersion: 11.0.9.251
+C:\Windows\SYSTEM32\ntmarta.dll:ntmarta.dll (00007FF9F11C0000), size: 221184 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\ntmarta.dll', fileVersion: 10.0.26100.7019
+C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvppex.dll:nvppex.dll (00007FF9B3870000), size: 7499776 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_b20cc8aeaed64fc2\nvppex.dll', fileVersion: 32.0.16.1692
+C:\Windows\System32\MMDevApi.dll:MMDevApi.dll (00007FF9DDC30000), size: 675840 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\MMDevApi.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\AUDIOSES.DLL:AUDIOSES.DLL (00007FF9CD880000), size: 1798144 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\AUDIOSES.DLL', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\resourcepolicyclient.dll:resourcepolicyclient.dll (00007FF9EFAD0000), size: 81920 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\resourcepolicyclient.dll', fileVersion: 10.0.26100.8115
+C:\Windows\System32\Windows.Gaming.Input.dll:Windows.Gaming.Input.dll (00007FF9EAE40000), size: 884736 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\Windows.Gaming.Input.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\inputhost.dll:inputhost.dll (00007FF9C5840000), size: 1978368 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\inputhost.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\CoreMessaging.dll:CoreMessaging.dll (00007FF9EEE30000), size: 1224704 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\CoreMessaging.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\twinapi.appcore.dll:twinapi.appcore.dll (00007FF9EABE0000), size: 2424832 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\twinapi.appcore.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\WinTypes.dll:WinTypes.dll (00007FF9EBDA0000), size: 1482752 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\WinTypes.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\dcomp.dll:dcomp.dll (00007FF9EE7B0000), size: 2248704 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dcomp.dll', fileVersion: 10.0.26100.9278
+C:\Windows\SYSTEM32\Microsoft.Internal.WarpPal.dll:Microsoft.Internal.WarpPal.dll (00007FF9EDA30000), size: 106496 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\Microsoft.Internal.WarpPal.dll'
+C:\Windows\SYSTEM32\textinputframework.dll:textinputframework.dll (00007FF9C55B0000), size: 1318912 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\textinputframework.dll', fileVersion: 10.0.26100.9278
+C:\Windows\System32\fwpuclnt.dll:fwpuclnt.dll (00007FF9EB160000), size: 548864 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\fwpuclnt.dll', fileVersion: 10.0.26100.9444
+C:\Windows\System32\rasadhlp.dll:rasadhlp.dll (00007FF9EBB10000), size: 45056 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\System32\rasadhlp.dll', fileVersion: 10.0.26100.7920
+C:\Windows\SYSTEM32\gpapi.dll:gpapi.dll (00007FF9F16F0000), size: 151552 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\gpapi.dll', fileVersion: 10.0.26100.9444
+C:\Windows\SYSTEM32\avrt.dll:avrt.dll (00007FF9EC7E0000), size: 45056 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\avrt.dll', fileVersion: 10.0.26100.8972
+C:\Dev\SunkCost\Builds\HQPrototypeLocal\SunkCostHQ_Data\Plugins\x86_64\lib_burst_generated.dll:lib_burst_generated.dll (00007FF967DB0000), size: 1548288 (result: 0), SymType: 'PDB', PDB: 'C:/Dev/SunkCost/Builds/HQPrototypeLocal/SunkCostHQ_Data/Plugins\x86_64\lib_burst_generated.pdb'
+C:\Windows\SYSTEM32\dbghelp.dll:dbghelp.dll (00007FF9DA440000), size: 2408448 (result: 0), SymType: '-exported-', PDB: 'C:\Windows\SYSTEM32\dbghelp.dll', fileVersion: 10.0.26100.9444
+  ERROR: SymGetSymFromAddr64, GetLastError: 'Attempt to access invalid address.' (Address: 00007FF8C76A7383)
+0x00007FF8C76A7383 (UnityPlayer) (function-name not available)
+  ERROR: SymGetSymFromAddr64, GetLastError: 'Attempt to access invalid address.' (Address: 00007FF8C76A637D)
+0x00007FF8C76A637D (UnityPlayer) (function-name not available)
+  ERROR: SymGetSymFromAddr64, GetLastError: 'Attempt to access invalid address.' (Address: 00007FF8C76AB876)
+0x00007FF8C76AB876 (UnityPlayer) (function-name not available)
+0x00007FF8C76AC91B (UnityPlayer) UnityMain
+  ERROR: SymGetSymFromAddr64, GetLastError: 'Attempt to access invalid address.' (Address: 00007FF7017F11F6)
+0x00007FF7017F11F6 (SunkCostHQ) (function-name not available)
+0x00007FF9F403CD87 (KERNEL32) BaseThreadInitThunk
+0x00007FF9F528CAEC (ntdll) RtlUserThreadStart
+
+========== END OF STACKTRACE ===========
+
+A crash has been intercepted by the crash handler. For call stack and other details, see the latest crash report generated in:
+ * C:/Users/Owner/AppData/Local/Temp/DefaultCompany/SunkCost/Crashes

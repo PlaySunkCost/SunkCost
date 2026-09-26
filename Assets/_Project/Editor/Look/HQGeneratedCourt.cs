@@ -30,9 +30,10 @@ namespace SunkCost.Editor.Look
                     var t=hoop.GetChild(i);
                     if(t.name!="Score" && t.name!="Score Trigger") Object.DestroyImmediate(t.gameObject);
                 }
-                // Calibrated source rim: local Z=1.13, Y=3.05. Place that over
-                // the game's rim centre (Z=.27) so visual and scoring agree.
-                var visual=HQGeneratedLayout.Model(hoop.gameObject,"BasketHoop",new Vector3(0,0,-.86f),180);
+                // The imported rim projects towards +Z. Both hoop roots already
+                // face the court: don't rotate the art away from its score trigger.
+                // Native rim centre Z=1.13, Y=3.05 -> gameplay rim Z=.27.
+                var visual=HQGeneratedLayout.Model(hoop.gameObject,"BasketHoop",new Vector3(0,0,-.86f));
                 foreach(var mf in visual.GetComponentsInChildren<MeshFilter>())
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh=mf.sharedMesh;
                 var score=hoop.Find("Score");score.localPosition=new Vector3(0,3.8f,-.04f);

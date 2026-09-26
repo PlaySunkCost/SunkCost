@@ -12,11 +12,26 @@ namespace SunkCost.Net
         public static bool MenuOpen { get; private set; }
         public static bool OverlayOpen { get; private set; }
         public static bool PickerOpen { get; private set; }   // the colour panel's wheel, cursor free
+        public static bool ShopOpen { get; private set; }
         public static bool ApplicationFocused { get; private set; } = true;
 
         private static int suppressedFrame = -1;
 
-        public static bool CanPlay => !MenuOpen && !OverlayOpen && !PickerOpen && ApplicationFocused;
+        public static bool CanPlay => !MenuOpen && !OverlayOpen && !PickerOpen && !ShopOpen && ApplicationFocused;
+
+        public static void OpenShop()
+        {
+            ShopOpen = true;
+            ReleaseCursor();
+        }
+
+        public static void CloseShop()
+        {
+            if (!ShopOpen) return;
+            ShopOpen = false;
+            suppressedFrame = Time.frameCount;
+            if (!MenuOpen && !OverlayOpen && !PickerOpen && ApplicationFocused) CaptureCursor();
+        }
 
         public static void OpenPicker()
         {
@@ -49,6 +64,7 @@ namespace SunkCost.Net
         // Entering a room starts with the cursor captured; leaving it releases.
         public static void EnterRoom()
         {
+            ShopOpen = false;
             MenuOpen = false;
             suppressedFrame = Time.frameCount;
             if (!OverlayOpen && ApplicationFocused) CaptureCursor();
@@ -56,6 +72,7 @@ namespace SunkCost.Net
 
         public static void ExitRoom()
         {
+            ShopOpen = false;
             MenuOpen = false;
             ReleaseCursor();
         }

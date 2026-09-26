@@ -33,20 +33,37 @@ is 60 × 36 m and the ship remains the same 48 × 20 m gameplay prefab.
 | Depot | X -24 to 8, Z 10 to 18; one 32 × 8 m building, 4 m interior height |
 | Office | West end of the connected depot; no separate save station |
 | Shop stands | Large tank (-13,14), bright lamp (-9,14), air tank (-3,14), patch kit (1,14), X/Z |
+| Catalogue counter | (-6,14): E opens all catalogue items; search/filter/scroll, shared-pot purchases, no stand required for new merchandise |
 | Pickup | Chute at (10,15), discharge just ahead of its lip; clear 4 × 4 m pad centred at (10,12) |
-| Intake / quota | Console at (16,15), decorative hopper at (20,15); sells ship storage as before |
+| Intake / quota | Former arrival area: console (-9,-14), hopper (-13,-14), facing inward; sells ship storage as before |
 | Court | X -18 to 2, Z -8 to 4, 20 × 12 m; west/east hoop and backstop |
-| Arrival | Centre (-11,-14), 6 × 4 m pad; four clear spawn positions facing the depot |
-| Colour panel | Beside arrival at X -7.5; existing colour-selection behaviour |
+| Arrival | Centre (18,14), 6 × 4 m pad; four clear spawn positions facing south into the HQ |
+| Colour panel | Directly ahead of arrivals at (18,11.35); existing colour-selection behaviour |
 | Cargo apron | East side; crane around (24,4), container around (20,-10) |
 | Crew rest | South side, clear of the arrival pad and plank |
-| Bridge | X -30 to -44, centred Z -12, 3 m wide; flush deck, protected sides |
+| Bridge | Fixed X -30 to -41; hinged leaf to -44.2, centred Z -12, 3 m wide; leaf top 4 cm above the deck avoids coplanar overlap |
 | Ship boarding | Port opening at ship-local Z -6; ship aligned using its measured hull outline |
 | Plank | Existing south-east board, gate, jumper markers and reset rules; water now 4.5 m below |
 
+The entire lower exterior catwalk, lamps, rails, supports and access ladders
+are removed. The ship tower is preserved: the earlier tower-ladder cover was
+an incorrect interpretation of the screenshot and has been undone.
+Both hoop meshes face inward and their real rims align with the score triggers.
+Shop names/prices use the existing aim-based HUD prompt; permanent item signs
+are removed. Merchandise detailing, arrival wayfinding and seating light reuse
+the existing kit. The crane and winch use mesh surfaces instead of oversized,
+misplaced collision boxes on empty floor.
+
+The catalogue counter makes the shop expandable independently of these four
+featured displays. [Shop authoring](SHOP_CATALOGUE_AUTHORING.md) explains how to
+add merchandise and distinguishes data additions from new gameplay effects.
+
 The bridge remains HQ-owned. Both gates close during departure; the ship gate
 stays closed at sea. The shared ship prefab keeps the same boarding opening at
-HQ and sea. Its fixed HQ bridge is outside the safe-deck volume.
+HQ and sea. Its fixed HQ bridge and hinged tip are outside the safe-deck volume.
+`DockGangway` raises during `RaisingGangway`, stays raised during departure,
+and lowers during HQ `Arriving`. It uses the existing synchronized trip clock;
+there is no new replicated state. The old overlapping ship threshold is removed.
 
 ## Build and run
 
@@ -76,6 +93,11 @@ continues after its command reply; inspect its log for `MATRIX_PASS` or `FAIL`.
 Stop Play Mode before modifying scripts or rebuilding the scene.
 
 ## Verification record
+
+The 26 September corrections and expandable catalogue are recorded separately
+in the [HQ polish test report](test-runs/2026-09-26-hq-polish/RESULT.md).
+The earlier scoring test below checked score increments, but did not catch the
+backward art. The corrected version also checks the visible rim orientation.
 
 Verified on 25 September 2026 with Unity 6000.6.0f1. Full evidence:
 [test report](test-runs/2026-09-25-hq-generated/RESULT.md).

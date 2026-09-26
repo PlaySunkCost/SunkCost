@@ -262,15 +262,16 @@ namespace SunkCost.Editor.Prototype
         internal static Transform[] CreateSpawnPoints()
         {
             GameObject root = new("Spawn Points");
-            // On the crew's mark (HQPlatformBuilder.CrewMark), facing the booths.
+            // Match the arrival station's local slots and face its colour panel.
             Vector3 c = SunkCost.Editor.Look.HQGeneratedLayout.Arrival;
-            Vector3[] positions = { c + new Vector3(-.75f, 0f, -.5f), c + new Vector3(.75f, 0f, -.5f), c + new Vector3(-.75f, 0f, 1f), c + new Vector3(.75f, 0f, 1f) };
+            Quaternion facing = SunkCost.Editor.Look.HQGeneratedLayout.ArrivalFacing;
+            Vector3[] positions = { c + facing * new Vector3(-.75f, 0f, -.5f), c + facing * new Vector3(.75f, 0f, -.5f), c + facing * new Vector3(-.75f, 0f, 1f), c + facing * new Vector3(.75f, 0f, 1f) };
             Transform[] result = new Transform[positions.Length];
             for (int i = 0; i < positions.Length; i++)
             {
                 GameObject marker = new("Spawn " + (i + 1));
                 marker.transform.SetParent(root.transform);
-                marker.transform.SetPositionAndRotation(positions[i], Quaternion.identity);
+                marker.transform.SetPositionAndRotation(positions[i], facing);
                 result[i] = marker.transform;
             }
             return result;

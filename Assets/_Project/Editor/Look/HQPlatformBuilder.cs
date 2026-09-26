@@ -62,6 +62,7 @@ namespace SunkCost.Editor.Look
                 if (r.GetComponentInParent<ShipParts>() != null) continue;
                 if (r.GetComponentInParent<HQPlank>() != null) continue;
                 if (r.GetComponentInParent<DockBoardingGate>() != null) continue;
+                if (r.GetComponentInParent<DockGangway>() != null) continue;
                 if (r.GetComponentInParent<SunkCost.Look.WaveSurface>() != null) continue;
                 if (r.GetComponentInParent<SunkCost.Look.Beacon>() != null) continue;
                 if (r.GetComponent<TextMesh>() != null) continue;
@@ -96,26 +97,6 @@ namespace SunkCost.Editor.Look
                 Part(root, "Beam", MeshKit.Box(new Vector3(DeckW, 1.0f, 0.6f)), ShipKitMaterials.Steel(), new Vector3(0f, -DeckThick - 1.0f, z));
             foreach (float x in new[] { -24f, 0f, 24f })
                 Part(root, "Beam", MeshKit.Box(new Vector3(0.6f, 1.0f, DeckD)), ShipKitMaterials.Steel(), new Vector3(x, -DeckThick - 1.0f, 0f));
-            // A catwalk under the rim on the south and the east, railed and lit: the
-            // picture's lower walkway.
-            float walkY = -DeckThick - 2.6f;
-            // South only, and it stops short of the plank corner: nothing to land on
-            // off the board (Dan, 18 September 2026).
-            const float walkX0 = -DeckW / 2f - 1.6f, walkX1 = 20f;
-            float walkW = walkX1 - walkX0, walkCx = (walkX0 + walkX1) / 2f;
-            Part(root, "Catwalk S", MeshKit.Box(new Vector3(walkW, 0.3f, 1.6f)), ShipModelSetup.DeckMaterial(), new Vector3(walkCx, walkY, -DeckD / 2f - 1.1f), withCollider: true);
-            Part(root, "Catwalk Lip S", MeshKit.Box(new Vector3(walkW, 0.02f, 0.3f)), ShipKitMaterials.Hazard(), new Vector3(walkCx, walkY + 0.3f, -DeckD / 2f - 1.75f));
-            GameObject rail = PropBuilder.Rail(), lamp = PropBuilder.RailLamp();
-            for (float x = walkX0 + 1f; x < walkX1; x += 2f)
-            {
-                PropBuilder.Place(root, rail, new Vector3(x, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Rail";
-                if (((int)((x - walkX0) / 2f)) % 3 == 0) PropBuilder.Place(root, lamp, new Vector3(x - 1f, walkY + 0.3f, -DeckD / 2f - 1.75f)).name = "Catwalk Lamp";
-            }
-            PropBuilder.Place(root, rail, new Vector3(walkX1 - 0.8f, walkY + 0.3f, -DeckD / 2f - 1.1f), Quaternion.Euler(0f, 90f, 0f)).name = "Catwalk Rail End";
-            for (float x = -24f; x <= 12f; x += 12f)
-                Part(root, "Catwalk Strut", MeshKit.Box(new Vector3(0.3f, 2.6f, 0.3f)), ShipKitMaterials.Steel(), new Vector3(x, walkY, -DeckD / 2f - 1.6f), withCollider: true);
-            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(-DeckW / 2f + 2f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
-            PropBuilder.Place(root, PropBuilder.Ladder(2.9f), new Vector3(16f, walkY + 0.3f, -DeckD / 2f - 0.35f)).name = "Catwalk Ladder";
             GameObject number = PropBuilder.Place(root, PropBuilder.SignBoard(5f, 2.4f), new Vector3(0f, -DeckThick - 2.3f, -DeckD / 2f - 0.05f), Quaternion.Euler(0f, 180f, 0f));
             number.name = "HQ Number";
             Sign(number, "hq.number", "hq.number.sub");

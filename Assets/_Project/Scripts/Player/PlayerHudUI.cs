@@ -532,7 +532,7 @@ namespace SunkCost.Player
 
         private void OnGUI()
         {
-            if (inventory == null || !inventory.IsOwner || SessionInputGate.MenuOpen)
+            if (inventory == null || !inventory.IsOwner || SessionInputGate.MenuOpen || SessionInputGate.ShopOpen)
                 return;
             EnsureStyles();
             if (controller != null && controller.ViewObstructed && !controller.IsDead) { DrawObstructionCover(); return; }
@@ -820,6 +820,7 @@ namespace SunkCost.Player
         // upgrade already bought (one each).
         private string ShopPrompt(SunkCost.Shop.ShopDisplay display)
         {
+            if (display.BrowsesCatalog) return "Equipment catalogue — Press E to browse";
             SunkCost.Shop.ShopItem item = display.Item;
             if (item == null) return "Nothing for sale here";
             SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;

@@ -326,8 +326,9 @@ namespace SunkCost.Editor.Prototype
             // fade not yet started, items refused, the deck ball riding along.
             yield return WaitUntil(() => Stage() == DepartureStage.PullingAway, 8f, "the ship pulls away");
             Check(UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsSortMode.None).All(g => g.Closed), "HQ and ship boarding gates close before pull-away");
+            Check(UnityEngine.Object.FindFirstObjectByType<DockGangway>().RaisedFraction>.99f,"HQ gangway fully raised before ship moves");
             Check(HostPlayer().TravelLocked && !ScreenFade.Instance.IsBlack, "D1 host locked in place, screen still visible while the ship moves");
-            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("travelLocked=True") && GuestLine(r, "server=").Contains("trip=PullingAway/") && r.Contains("boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=True") && r.Contains("boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=True"), 4f, "D1 guest locked, sees PullingAway and both boarding gates closed");
+            yield return GuestEventually(GuestDir, r => GuestLine(r, "server=").Contains("travelLocked=True") && GuestLine(r, "server=").Contains("trip=PullingAway/") && r.Contains("boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=True") && r.Contains("boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=True") && r.Contains("gangway=Lifting HQ gangway; raised=1.00"), 4f, "D1 guest locked, sees raised gangway, PullingAway and both boarding gates closed");
             double untilMoved = EditorApplication.timeSinceStartup + 3.0;
             while (EditorApplication.timeSinceStartup < untilMoved && Stage() == DepartureStage.PullingAway) yield return null;
             float travelled = Vector3.Distance(hqShip.transform.position, hqShipRest);
@@ -422,6 +423,7 @@ namespace SunkCost.Editor.Prototype
             hqShip = ShipParts.InWorld(WorldId.HQ);
             Check(hqShip != null && HostPlayer().gameObject.scene.name == WorldScenes.HQName, "S13 host back in HQ");
             yield return WaitUntil(() => UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsSortMode.None).All(g => !g.Closed), 3f, "Boarding gates reopen after docking");
+            Check(UnityEngine.Object.FindFirstObjectByType<DockGangway>().RaisedFraction<.01f,"HQ gangway lowered before boarding gates reopen");
             Check(Vector3.Distance(hqShip.ToShipLocal(HostPlayer().transform.position), hostLocalBefore) < 0.15f, "S13 host at the same deck spot at HQ");
             // The fresh HQ fixture reuses the names, so the travelled balls are held by reference.
             Check(heldBall.State == ItemState.Held && heldBall.gameObject.scene.name == WorldScenes.HQName, "S13 held ball came home");

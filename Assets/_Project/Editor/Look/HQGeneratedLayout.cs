@@ -13,7 +13,8 @@ namespace SunkCost.Editor.Look
     // north +Z. Art can change without replacing the shop/crew/plank rules.
     public static partial class HQGeneratedLayout
     {
-        public static readonly Vector3 Arrival = new(-11f, 0f, -14f);
+        public static readonly Vector3 Arrival = new(18f, 0f, 14f);
+        public static readonly Quaternion ArrivalFacing = Quaternion.Euler(0,180,0);
         public static Vector3 ShipPosition => new(-44f - ShipDeckDressing.W(-6f) + .08f, 0f, -18f);
         public const float BridgeHalfWidth = 1.5f;
 
@@ -51,6 +52,14 @@ namespace SunkCost.Editor.Look
         internal static BoxCollider Box(GameObject parent, Vector3 centre, Vector3 size)
         {
             var c = parent.AddComponent<BoxCollider>(); c.center = centre; c.size = size; return c;
+        }
+
+        internal static void SurfaceCollision(GameObject model)
+        {
+            // Static machinery has open space under/around its mechanism. A box
+            // at the prefab origin blocks empty deck when the mesh is offset.
+            foreach(var filter in model.GetComponentsInChildren<MeshFilter>())
+                filter.gameObject.AddComponent<MeshCollider>().sharedMesh=filter.sharedMesh;
         }
 
         internal static GameObject Slab(GameObject parent, string name, Vector3 bottom, Vector3 size, Material material, bool solid = false)
@@ -147,42 +156,43 @@ namespace SunkCost.Editor.Look
 
         public static void ArrivalArea(GameObject root)
         {
+            // Author around zero, then rotate the entire station towards the HQ.
+            // The colour console is ahead of all four spawn points, not behind.
             var pad = Group(root, "Crew Arrival");
-            Slab(pad, "Flush arrival pad", Arrival + new Vector3(0,.025f,0), new Vector3(6,.015f,4), ShipKitMaterials.Steel());
-            Frame(pad, Arrival, 6, 4);
-            var gantry = Model(pad, "ArrivalGantry", Arrival + new Vector3(0,0,-1.6f));
+            Slab(pad, "Flush arrival pad", new Vector3(0,.025f,0), new Vector3(6,.015f,4), ShipKitMaterials.Steel());
+            Frame(pad, Vector3.zero, 6, 4);
+            var gantry = Model(pad, "ArrivalGantry", new Vector3(0,0,-1.6f));
             Box(gantry, new Vector3(-1.8f,1.5f,0), new Vector3(.4f,3,.6f));
             Box(gantry, new Vector3(1.8f,1.5f,0), new Vector3(.4f,3,.6f));
             Box(gantry, new Vector3(0,2.8f,0), new Vector3(4,.4f,.6f));
-            Label(pad, "CREW ARRIVAL  /  01–04", Arrival + new Vector3(0,2.7f,-1.25f), 3.3f, .35f, 0);
+            Label(pad, "CREW ARRIVAL  /  01–04", new Vector3(0,2.7f,-1.25f), 3.3f, .35f, 0);
             foreach (float x in new[] { -.75f,.75f }) foreach (float z in new[] { -.5f,1f })
-                Frame(pad, Arrival + new Vector3(x,0,z), .7f,.7f);
-            Label(pad, "CREW ARRIVAL  /  01-04", Arrival + new Vector3(0,2.7f,-1.95f), 3.3f, .35f);
-            Model(pad, "Console", Arrival + new Vector3(3.5f,0,0), 180, default, true);
-            Box(pad, Arrival + new Vector3(3.5f,.55f,0), new Vector3(1.2f,1.1f,.7f));
-            Slab(pad,"Colour panel mast",Arrival + new Vector3(3.5f,0,.2f),new Vector3(.16f,2.3f,.16f),ShipKitMaterials.Steel(),true);
-            HQPlatformBuilder.ColourPanel(pad, Arrival + new Vector3(3.5f,1.4f,-.35f));
-            Label(pad, "CREW COLOUR", Arrival + new Vector3(3.5f,2.3f,0), 1.8f);
-            Lamp(pad, Arrival + new Vector3(0,2.6f,0), 6, 3);
+                Frame(pad, new Vector3(x,0,z), .7f,.7f);
+            Label(pad, "CREW ARRIVAL  /  01-04", new Vector3(0,2.7f,-1.95f), 3.3f, .35f);
+            Model(pad, "Console", new Vector3(0,0,3), 180, default, true);
+            Box(pad, new Vector3(0,.55f,3), new Vector3(1.8f,1.1f,.7f));
+            Slab(pad,"Colour panel mast",new Vector3(0,0,3.2f),new Vector3(.16f,2.3f,.16f),ShipKitMaterials.Steel(),true);
+            HQPlatformBuilder.ColourPanel(pad, new Vector3(0,1.4f,2.65f));
+            Label(pad, "CHOOSE YOUR CREW COLOUR", new Vector3(0,2.3f,3), 3);
+            Lamp(pad, new Vector3(0,2.6f,0), 6, 3);
+            pad.transform.SetPositionAndRotation(Arrival,ArrivalFacing);
         }
 
         public static void Dressing(GameObject root)
         {
             var cargo = Group(root, "Cargo apron");
-            Model(cargo,"Crane",new Vector3(24,0,4),-100,new Vector3(2,2,2),true);
-            Box(cargo,new Vector3(24,1,4),new Vector3(3,2,3));
+            SurfaceCollision(Model(cargo,"Crane",new Vector3(24,0,4),-100,new Vector3(2,2,2),true));
             Frame(cargo,new Vector3(24,0,4),5,5);
-            Model(cargo,"Winch",new Vector3(27,0,-4),90,default,true);
-            Box(cargo,new Vector3(27,.7f,-4),new Vector3(2,1.4f,2));
+            SurfaceCollision(Model(cargo,"Winch",new Vector3(27,0,-4),90,default,true));
             Model(cargo,"Container",new Vector3(20,0,-10),90,default,true);
             Box(cargo,new Vector3(20,1.3f,-10),new Vector3(2.5f,2.6f,6));
-            foreach (Vector3 at in new[] { new Vector3(16,0,5),new Vector3(21,0,11),new Vector3(26,0,12) })
+            foreach (Vector3 at in new[] { new Vector3(16,0,5),new Vector3(26,0,9),new Vector3(26,0,12) })
             {
                 Model(cargo,"Pallet",at);
                 Model(cargo,"Crate",at+Vector3.up*.16f,0,default,true);
                 Box(cargo,at+Vector3.up*.6f,new Vector3(1.1f,1.2f,1.1f));
             }
-            foreach (Vector3 at in new[] {new Vector3(26,0,15),new Vector3(27,0,16),new Vector3(15,0,16)})
+            foreach (Vector3 at in new[] {new Vector3(26,0,15),new Vector3(27,0,16),new Vector3(28,0,15)})
             {
                 Model(cargo,"Barrel",at,0,default,true);Box(cargo,at+Vector3.up*.55f,new Vector3(.8f,1.1f,.8f));
             }
@@ -191,7 +201,6 @@ namespace SunkCost.Editor.Look
             Model(cargo,"Toolbox",new Vector3(22,.16f,11),15,default,true);
             foreach (float x in new[] {-26f,4f,27f}) Model(root,"Lifebuoy",new Vector3(x,1,-17.5f),0,default,true);
             Model(root,"Pipes",new Vector3(-26,-2,-17.9f),0,new Vector3(2,1,1),true);
-            Model(root,"Ladder",new Vector3(-25,-3.1f,-17.9f),0,default,true);
             var rest = Group(root,"Crew rest");
             Model(rest,"Couch",new Vector3(7,0,-11),180,default,true);
             Box(rest,new Vector3(7,.5f,-11),new Vector3(2.8f,1,1));
@@ -202,8 +211,17 @@ namespace SunkCost.Editor.Look
                 Model(root,"Bench",new Vector3(x,0,6),180,default,true);
                 Box(root,new Vector3(x,.45f,6),new Vector3(2,.9f,.6f));
             }
-            foreach(float x in new[]{20.2f,23.8f}) Slab(cargo,"Cargo sign post",new Vector3(x,0,15.1f),new Vector3(.12f,2.2f,.12f),ShipKitMaterials.Steel(),true);
-            Label(cargo,"CARGO / KEEP ACCESS CLEAR",new Vector3(22,2,15),4);
+            foreach(float x in new[]{24.2f,27.8f}) Slab(cargo,"Cargo sign post",new Vector3(x,0,16.8f),new Vector3(.12f,2.2f,.12f),ShipKitMaterials.Steel(),true);
+            Label(cargo,"CARGO / KEEP ACCESS CLEAR",new Vector3(26,2,16.7f),4);
+            // A compact, physical wayfinding board at the arrival exit. Keep the
+            // centre open for walking and ball play instead of filling it with props.
+            var wayfinding=Group(root,"Arrival wayfinding",new Vector3(14,0,8));
+            foreach(float x in new[]{-1.2f,1.2f})
+                Slab(wayfinding,"Sign upright",new Vector3(x,0,0),new Vector3(.1f,2.2f,.1f),ShipKitMaterials.Steel(),true);
+            Label(wayfinding,"DEPOT  >",new Vector3(0,2,0),2.7f,.35f,0);
+            Label(wayfinding,"SHIP  >     QUOTA  >",new Vector3(0,1.55f,0),2.7f,.35f,0);
+            Lamp(wayfinding,new Vector3(0,2.3f,.5f),5,1.5f);
+            Lamp(rest,new Vector3(7,2.3f,-12),5,1.8f);
         }
     }
 }

@@ -105,7 +105,9 @@ namespace SunkCost.Net
                 item = FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == command.item || i.name == command.item + "(Clone)");
             if (player == null) return "No owned player";
             // Keep uncontrolled physical keyboard/mouse input out of hook tests.
-            SessionInputGate.OpenMenu();
+            // Ordinary verification pauses input. Catalogue checks need their
+            // own modal to stay open while snapshots and buys are delivered.
+            if (!SessionInputGate.ShopOpen && command.action != "shop_open") SessionInputGate.OpenMenu();
             switch (command.action)
             {
                 case "move":
@@ -149,6 +151,15 @@ namespace SunkCost.Net
                     return $"patch requested on {nearest.OwnerId} at {best:0.0} m";
                 }
                 case "buy": if (player.Upgrades != null) player.Upgrades.RequestBuy(command.item); break; // E on a shop stand; the item id rides in the item field
+                case "shop_open":
+                    SessionInputGate.SetApplicationFocus(true); // opt-in test peer simulates foreground input
+                    SessionInputGate.Resume();
+                    foreach(var display in FindObjectsByType<SunkCost.Shop.ShopDisplay>(FindObjectsSortMode.None))
+                        if(display.BrowsesCatalog) { player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Open(display); break; }
+                    break;
+                case "shop_buy":
+                    return player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Buy(command.item)==true?"Catalogue purchase requested":"Catalogue purchase not available";
+                case "shop_close": player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Close(); break;
                 case "spectate_next": player.RequestNextSpectate(); break; // left click while dead (card 2)
                 case "tv_next": // E on the deck TV (card 3)
                     var tvControls = player.GetComponent<SunkCost.World.ShipControls>();
@@ -369,8 +380,12 @@ namespace SunkCost.Net
             tvLine += ghostLight == null ? "; ghost=none" : $"; ghostGreen={ghostLight.IsGreen}; ghostActive={(day != null && day.Ghost.Active)}; ghostSerial={(day == null ? 0 : day.Ghost.Serial)}; slamsHeard={ghostLight.SlamsHeard}";
             string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {tvLine}; {CarLine()}; {VisorLine()}\n";
             if (voice != null) text += voice.Diagnostics + "\n";
+            var localShop=SunkCost.World.WorldSceneFlow.LocalPlayer()?.GetComponent<SunkCost.Shop.ShopBrowserUI>();
+            if(localShop!=null)text += $"shopBrowser={localShop.IsOpen}; entries={localShop.VisibleItemCount}\n";
             foreach (var gate in FindObjectsByType<SunkCost.World.DockBoardingGate>(FindObjectsSortMode.None))
                 text += $"boardingGate={gate.name}; scene={gate.gameObject.scene.name}; closed={gate.Closed}\n";
+            foreach (var gangway in FindObjectsByType<SunkCost.World.DockGangway>(FindObjectsSortMode.None))
+                text += $"gangway={gangway.name}; raised={gangway.RaisedFraction.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}\n";
             foreach (var player in FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None).OrderBy(p => p.OwnerId))
             {
                 var pc = player.GetComponent<SunkCost.Player.HQPlayerController>();

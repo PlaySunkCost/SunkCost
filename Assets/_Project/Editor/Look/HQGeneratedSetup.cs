@@ -43,9 +43,9 @@ namespace SunkCost.Editor.Look
                 LookCapture.Shoot("hq-generated-overview",new Vector3(48,39,-58),new Vector3(-8,0,1),48);
                 LookCapture.Shoot("hq-generated-depot",new Vector3(-9,1.7f,6),new Vector3(-7,1.8f,16),83);
                 LookCapture.Shoot("hq-generated-bridge",new Vector3(-25,1.65f,-12),new Vector3(-48,1,-12),72);
-                LookCapture.Shoot("hq-generated-arrival",new Vector3(-6,3,-20),new Vector3(-11,1,-14),65);
+                LookCapture.Shoot("hq-generated-arrival",new Vector3(18,2,8),new Vector3(18,1.5f,14),72);
                 LookCapture.Shoot("hq-generated-court",new Vector3(-7,2,-9),new Vector3(-17,2.3f,-2),78);
-                LookCapture.Shoot("hq-generated-intake",new Vector3(11,2.5f,7),new Vector3(17,1.8f,15),74);
+                LookCapture.Shoot("hq-generated-intake",new Vector3(-11,2.5f,-8),new Vector3(-11,1.8f,-14),74);
             }
             finally { SunkCost.Look.SkyEnvironment.Restore(sky); }
             return "HQ screenshots: Temp/look/hq-generated-*.png";
@@ -70,6 +70,14 @@ namespace SunkCost.Editor.Look
                 if(x>=-44 && (ship.IsSafelyAboard(new Vector3(x,0,-12)) || ship.IsAboard(new Vector3(x,0,-12))))errors.Add("Fixed bridge counted as aboard at "+x);
             }
             if(UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsInactive.Include,FindObjectsSortMode.None).Length!=2) errors.Add("Need the HQ and ship boarding gates.");
+            if(UnityEngine.Object.FindObjectsByType<DockGangway>(FindObjectsSortMode.None).Length!=1) errors.Add("Need one lifting HQ gangway.");
+            foreach(Transform point in spawn.transform)
+            {
+                var colour=UnityEngine.Object.FindFirstObjectByType<ColourPanel>();
+                if(colour==null || Vector3.Dot(point.forward,colour.transform.position-point.position)<=0)errors.Add("Colour panel behind "+point.name);
+            }
+            foreach(Transform candidate in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include,FindObjectsSortMode.None))
+                if(candidate.name.StartsWith("Catwalk") || candidate.name=="Tower Ladder Removed" || candidate.name=="Price plate")errors.Add("Obsolete prop: "+candidate.name);
             if(errors.Count>0)throw new InvalidOperationException(string.Join("\n",errors));
             string report="HQ validation passed: four clear spawns, level continuous bridge, two gates, shop, court and plank. "+LookCapture.PerfReport();
             Directory.CreateDirectory("Temp/HQBuild");File.WriteAllText("Temp/HQBuild/validation.txt",report);
