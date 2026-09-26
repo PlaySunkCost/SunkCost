@@ -105,6 +105,15 @@ namespace SunkCost.Editor.Prototype
                     name + " one live confetti burst and playing chime");
                 if (name == "Hoop W")
                     H.CaptureFrom(trigger.position + hoop.forward*3f + Vector3.up*.8f, trigger.position+Vector3.up*.5f,"Temp/look/basket-confetti.png");
+                if (name == "Hoop W")
+                {
+                    // A first burst, read in the frame it starts (before any Update): no piece at a 1 m default size.
+                    var fresh = new GameObject("Confetti first-frame check").AddComponent<SunkCost.Look.BasketCelebration>();
+                    fresh.Play(null, trigger.position, 7);
+                    float largest = fresh.LargestPiece;
+                    UnityEngine.Object.Destroy(fresh.gameObject);
+                    Check(largest > 0f && largest <= .06f, $"first burst's pieces are confetti-sized from the first frame ({largest:0.###} m)");
+                }
                 yield return Wait(2f);
                 Check(!celebration.Active, "confetti cleans up after short celebration");
                 Check(Day.Baskets == before + 1, name + " clean downward basket counts once");

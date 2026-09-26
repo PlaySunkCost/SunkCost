@@ -25,6 +25,16 @@ namespace SunkCost.Look
         public int BurstsShown { get; private set; }
         public int SoundsPlayed { get; private set; }
         public bool Active => pieces != null && Time.time - born < duration;
+        // The widest live piece, metres (the checks: no piece may flash at its 1 m default size).
+        public float LargestPiece
+        {
+            get
+            {
+                float largest = 0f;
+                if (pieces != null) foreach (var p in pieces) if (p != null && p.gameObject.activeSelf) largest = Mathf.Max(largest, p.localScale.x, p.localScale.y);
+                return largest;
+            }
+        }
 
         public void Play(TextMesh scoreboard, Vector3 rim, int seed)
         {
@@ -39,6 +49,9 @@ namespace SunkCost.Look
                 velocity[i] = new Vector3(Mathf.Cos(angle)*outward, 1.1f+(float)random.NextDouble()*1.3f, Mathf.Sin(angle)*outward);
                 spin[i] = new Vector3((float)random.NextDouble()*500, (float)random.NextDouble()*500, (float)random.NextDouble()*500);
                 size[i] = .025f + (float)random.NextDouble() * .025f;
+                // Its real size from the first frame: a new piece is 1 m wide until Update scales it,
+                // which showed as a white square on the first basket of every session.
+                pieces[i].localScale = new Vector3(size[i], size[i]*.55f, size[i]); pieces[i].rotation = Quaternion.identity;
                 pieces[i].gameObject.SetActive(true); pieces[i].position = origin;
             }
             speaker.PlayOneShot(Chime(), soundVolume); BurstsShown++; SoundsPlayed++;
@@ -53,7 +66,7 @@ namespace SunkCost.Look
                 go.AddComponent<MeshFilter>().sharedMesh = Paper();
                 var renderer = go.AddComponent<MeshRenderer>(); renderer.sharedMaterial = ScreenStyle.Flat(Colours[i % Colours.Length]);
                 renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
-                pieces[i] = go.transform; go.SetActive(false);
+                go.transform.localScale = Vector3.zero; pieces[i] = go.transform; go.SetActive(false);
             }
             speaker = gameObject.AddComponent<AudioSource>(); speaker.playOnAwake = false;
             speaker.spatialBlend = 1f; speaker.rolloffMode = AudioRolloffMode.Linear;
