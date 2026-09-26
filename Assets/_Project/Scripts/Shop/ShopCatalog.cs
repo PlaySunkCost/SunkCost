@@ -28,6 +28,8 @@ namespace SunkCost.Shop
         public string Name = "Air tank";
         [Min(0)] public int Price = 40;
         public ShopItemKind Kind = ShopItemKind.Consumable;
+        [Tooltip("One line under the name in the counter's browser: what it does for the buyer. Empty: a line composed from the catalogue's own numbers.")]
+        public string Description = string.Empty;
         [Tooltip("Consumable: the networked prefab spawned on purchase.")]
         public GameObject Prefab;
         [Tooltip("Upgrade: which flag the buyer gets.")]
