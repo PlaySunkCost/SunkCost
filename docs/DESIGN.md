@@ -643,6 +643,9 @@ Follow-up request: make the ball more substantial and scoring easier. The ball
 grew from 24 to 26 cm; the physical rim and matching scoring opening are 40%
 wider, with unchanged backboards/posts and the same downward-pass rule. These
 are deliberate game-friendly proportions; see [basketball tuning](BASKETBALL.md).
+Scoring feedback (27 September 2026): a small, short world-space confetti burst,
+a brief score-label pulse and a spatial scoring chime at the hoop. Every current
+observer sees/hears the celebration; joining later does not replay past baskets.
 
 The original first implemented slice was a grey-box HQ where players could walk,
 look, carry basketballs, drop them and throw them. It exists to verify the basic

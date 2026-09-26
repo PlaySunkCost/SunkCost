@@ -383,7 +383,10 @@ namespace SunkCost.Net
             if (voice != null) text += voice.Diagnostics + "\n";
             text += $"baskets={(day == null ? -1 : day.Baskets)};\n";
             foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
-                text += $"hoop={hoop.transform.parent.name}; board={hoop.transform.parent.Find("Score")?.GetComponent<TextMesh>()?.text}\n";
+            {
+                var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();
+                text += $"hoop={hoop.transform.parent.name}; confetti={effect?.BurstsShown ?? 0}; chimes={effect?.SoundsPlayed ?? 0}; board={hoop.transform.parent.Find("Score")?.GetComponent<TextMesh>()?.text}\n";
+            }
             var localShop=SunkCost.World.WorldSceneFlow.LocalPlayer()?.GetComponent<SunkCost.Shop.ShopBrowserUI>();
             if(localShop!=null)text += $"shopBrowser={localShop.IsOpen}; entries={localShop.VisibleItemCount}\n";
             foreach (var gate in FindObjectsByType<SunkCost.World.DockBoardingGate>(FindObjectsSortMode.None))

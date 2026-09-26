@@ -28,9 +28,25 @@ that replicated value, including for late joiners. Held, stowed, transit and
 non-basketball items cannot score. Upward passes, side misses and discontinuous
 motion do not score. A pass latch/repeat delay prevents duplicate counts.
 
-No new RPC/SyncVar, no change to who simulates a released item, no new personal
+The scoring correction itself added no RPC/SyncVar, no change to who simulates a released item, no new personal
 score or two/three-point rules. Human review of the authority-related correction
 and contract update is required before merge; no sign-off is claimed.
+
+## Score celebration (27 September 2026)
+
+On each accepted basket, the scoring hoop emits a 1.5-second burst of 40 coloured
+paper pieces, briefly pulses its score label and plays a quiet three-note chime.
+`BasketCelebration` owns the shared world presentation, so any camera looking at
+the hoop sees the same effect. Pieces are reused and have no colliders. Audio is
+spatial (2 m minimum, 24 m maximum), routed through the game's selected audio
+output, with original procedurally synthesized tones. No gameplay hearing event.
+
+Unlike the preceding scoring fix, this addition uses one **unbuffered
+ObserversRpc** on the existing server-owned `CrewDayState`, sent only after a
+server-accepted score. It carries hoop position and a visual random seed;
+clients do not request celebrations or decide scores. Late join/load and score
+restore/reset do not replay old effects. The score remains the existing SyncVar.
+Volume, lifetime and paper count are serialized on the effect component.
 
 ## More forgiving court
 

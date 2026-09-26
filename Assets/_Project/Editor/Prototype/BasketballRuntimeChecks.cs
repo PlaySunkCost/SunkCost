@@ -94,8 +94,18 @@ namespace SunkCost.Editor.Prototype
                 var hoop = GameObject.Find(name).transform;
                 var trigger = hoop.Find("Score Trigger");
                 int before = Day.Baskets;
+                int burstsBefore = trigger.GetComponent<SunkCost.Look.BasketCelebration>()?.BurstsShown ?? 0;
                 Ball.ServerDropAt(trigger.position + Vector3.up * .85f);
+                yield return Until(() => Day.Baskets == before + 1, 3f, "basket accepted before celebration check");
+                yield return Wait(.12f);
+                var celebration = trigger.GetComponent<SunkCost.Look.BasketCelebration>();
+                Check(celebration != null && celebration.Active && celebration.BurstsShown == burstsBefore + 1 &&
+                    celebration.SoundsPlayed == burstsBefore + 1 && celebration.GetComponent<AudioSource>().isPlaying,
+                    name + " one live confetti burst and playing chime");
+                if (name == "Hoop W")
+                    H.CaptureFrom(trigger.position + hoop.forward*3f + Vector3.up*.8f, trigger.position+Vector3.up*.5f,"Temp/look/basket-confetti.png");
                 yield return Wait(2f);
+                Check(!celebration.Active, "confetti cleans up after short celebration");
                 Check(Day.Baskets == before + 1, name + " clean downward basket counts once");
                 Check(hoop.Find("Score").GetComponent<TextMesh>().text == "BASKETS " + Day.Baskets, "backboard shows shared score");
                 foreach (float offset in new[] { -.16f, .16f })
@@ -133,9 +143,11 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(2f);
             yield return Send("\"action\":\"snapshot\"");
             Check(reply.Contains("baskets=" + Day.Baskets + ";"), "late joiner receives existing basket count");
+            Check(reply.Contains("hoop=Hoop W; confetti=0; chimes=0") && reply.Contains("hoop=Hoop E; confetti=0; chimes=0"), "late joiner does not replay old celebrations");
             yield return Shoot(other, true);
             yield return Send("\"action\":\"snapshot\"");
             Check(reply.Contains("baskets=" + Day.Baskets + ";") && reply.Contains("BASKETS " + Day.Baskets), "guest receives updated count and backboard text");
+            Check(reply.Contains("hoop=Hoop W; confetti=1; chimes=1") && reply.Contains("hoop=Hoop E; confetti=0; chimes=0"), "guest sees/hears one celebration at only the scoring hoop");
             File.WriteAllText(GuestDir + "/scoring-snapshot.txt", reply);
             yield return Send("\"action\":\"leave\"");
         }

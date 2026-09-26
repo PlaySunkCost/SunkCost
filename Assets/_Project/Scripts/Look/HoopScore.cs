@@ -30,6 +30,19 @@ namespace SunkCost.Look
 
         public void Configure(TextMesh scoreboard) => board = scoreboard;
 
+        public static void CelebrateAt(Vector3 rim, int seed)
+        {
+            foreach (var hoop in FindObjectsByType<HoopScore>(FindObjectsSortMode.None))
+            {
+                Vector3 centre = hoop.transform.position + Vector3.up * hoop.rimAboveTrigger;
+                if ((centre-rim).sqrMagnitude > .01f) continue;
+                var effect = hoop.GetComponent<BasketCelebration>();
+                if (effect == null) effect = hoop.gameObject.AddComponent<BasketCelebration>();
+                effect.Play(hoop.board, rim, seed);
+                return;
+            }
+        }
+
         private void LateUpdate()
         {
             if (InstanceFinder.IsServerStarted) ObserveBalls();
@@ -75,6 +88,7 @@ namespace SunkCost.Look
                     {
                         pass.ScoredAt = Time.time;
                         CrewDayState.Instance.ServerAddBasket();
+                        CrewDayState.Instance.ServerCelebrateBasket(transform.position + Vector3.up * rimAboveTrigger);
                         Debug.Log($"[Court] {item.name} through {transform.parent.name}: {CrewDayState.Instance.Baskets}");
                     }
                 }

@@ -190,6 +190,15 @@ Two-person carrying has no defined protocol yet: do not assume a shared writer.
 Rule of thumb: **if getting it wrong would let someone cheat or desync the run,
 the server decides.**
 
+Basket celebration addition (27 September 2026, user requested; teammate review
+pending): after `HoopScore` accepts a basket, `CrewDayState.ServerCelebrateBasket`
+sends an unbuffered `ObserversBasketCelebration(rim, seed)` to current observers.
+Each client locates that loaded hoop and builds confetti, a label pulse and a
+spatial chime as world presentation. No client request, second score writer or
+physics writer. The cue is ephemeral: late joiners/scene loads do not replay it;
+the existing `Baskets` SyncVar remains the persistent score. No monster-hearing
+noise is emitted for this HQ presentation sound.
+
 ## 4. Naming
 
 FishNet attributes, consistent names, no exceptions:
