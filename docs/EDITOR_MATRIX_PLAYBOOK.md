@@ -5,6 +5,15 @@ What the cabin, world-loop, hands and full-run matrices taught on 16 September
 Read this before writing a new `*RuntimeChecks.cs` row or job.
 
 ## Running
+- `matrix hq` checks the generated HQ: both boarding gates open while docked,
+  keyboard movement across the level bridge in both directions, aboard detection,
+  a clear depot aisle, and a real ball scoring through each generated hoop.
+  Results: `Temp/hq-art-matrix.log`; screenshot: `Temp/look/hq-runtime-arrival.png`.
+  Run `matrix shop`, `matrix plank` and `matrix loop` with a fresh guest build
+  for the separate-client checks. The loop also checks the fixed bridge is not
+  passenger/cargo space, and both peers close/open the boarding gates on travel.
+  Rebuild the authored layout through **Sunk Cost → Look → Build generated HQ**;
+  see [HQ_GENERATED_ART_HANDOFF.md](HQ_GENERATED_ART_HANDOFF.md).
 - Jobs: `CameraClearanceMatrixDriver.Start("camera" | "cabin" | "hands" | "loop" | "fullrun" | "spectate" | "smooth")`
   (`spectate` = death and dead spectating, `SpectateRuntimeChecks`, log `Temp/spectate-matrix.log`,
   guest dirs `Temp/spectate-guest` and `Temp/spectate-guest-b` — the S rows run two guest builds;

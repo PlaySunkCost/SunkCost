@@ -179,6 +179,12 @@ namespace SunkCost.World
         public int Baskets => baskets.Value;
         [Server]
         public void ServerAddBasket() => baskets.Value = baskets.Value + 1;
+        // Ephemeral celebration only: no buffered replay for a late joiner or load.
+        // Persistent score still lives in baskets; this does not decide a basket.
+        [Server]
+        public void ServerCelebrateBasket(Vector3 rim) => ObserversBasketCelebration(rim, baskets.Value);
+        [ObserversRpc(BufferLast = false)]
+        private void ObserversBasketCelebration(Vector3 rim, int seed) => SunkCost.Look.HoopScore.CelebrateAt(rim, seed);
         public float RunSeconds => Time.unscaledTime - runStartTime; // server view
         public event Action<RunOverReport> RunOverChanged;
         // How many watch this player: the dead spectating it, plus the TV when it is the channel.

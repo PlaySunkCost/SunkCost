@@ -16,8 +16,12 @@ namespace SunkCost.Shop
         [SerializeField] private TextMesh label;
         [Tooltip("Optional: where a bought consumable lands; the nearest ShopDeliveryPoint in the scene otherwise.")]
         [SerializeField] private ShopDeliveryPoint deliveryPoint;
+        [Tooltip("A catalogue counter sells every catalogue entry without a separate display per item.")]
+        [SerializeField] private bool browsesCatalog;
 
         public string ItemId => itemId;
+        public bool BrowsesCatalog => browsesCatalog;
+        public bool Offers(string id) => browsesCatalog || itemId == id;
         public ShopItem Item => ShopCatalog.Resolve().Find(itemId);
         public ShopDeliveryPoint DeliveryPoint => deliveryPoint != null ? deliveryPoint : ShopDeliveryPoint.Nearest(transform.position, gameObject.scene);
 
@@ -27,6 +31,14 @@ namespace SunkCost.Shop
             label = text;
             deliveryPoint = delivery;
             WriteLabel();
+        }
+
+        public void ConfigureCatalog(ShopDeliveryPoint delivery)
+        {
+            browsesCatalog = true;
+            itemId = string.Empty;
+            label = null;
+            deliveryPoint = delivery;
         }
 
         private void Awake() => WriteLabel();

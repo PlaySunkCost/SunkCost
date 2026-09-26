@@ -1,0 +1,15 @@
+{
+  "part": "Window",
+  "source_archive": "Meshy_AI_Weathered_Industrial__0925103331_texture_fbx.zip",
+  "source_sha256": "c4622fee51ad48f3c790781fb6e1adec74b9c2a1e06c0de2ce36e697069210e3",
+  "original_triangles": 184884,
+  "triangles": 2500,
+  "unity_dimensions": [
+    4,
+    4,
+    0.2
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

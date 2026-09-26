@@ -1,0 +1,1 @@
+HQ validation passed: four clear spawns, level continuous bridge, two gates, shop, court and plank. renderers 1449 (mesh 1439, text 63, batching-static 1144); triangles 2079986; lights point 56 spot 11 dir 2 shadowed 1; colliders 737 (mesh 25); materials 92: Ink=365 Railing=121 LampOrange=89 DepthText=63 KitSteel=62 Fascia=56 Girder=54 Hazard=48 

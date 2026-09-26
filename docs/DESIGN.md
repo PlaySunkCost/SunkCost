@@ -89,17 +89,13 @@ from the couch (both in §4: "The couch" and the TV card). The elevator car's li
 cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
 heard across the deck. The name plates read **BLACK TIDE**, with SALVAGE under it.
 
-**Sailing** (decided 15 September 2026; the way aboard changed 18 September
-2026, and again 23 September 2026). The ship carries nothing that reaches the
-base: the way aboard belongs to the HQ — a railed bridge off the west rim to a
-landing at the aft face of the ship's bridge tower, 6 m over the deck (the tower
-model's roof is about 3.7 m over the deck, so the landing stands about 2.3 m above
-it; measured 23 September 2026).
-The ship's own stair down the tower's side (Dan, 19 September) came off on 23
-September 2026 (Dan: no stairs on the ship); how the crew gets from the landing
-down to the deck, 6 m below the platform, is an open card ("The way aboard from
-the HQ", [ROADMAP.md](ROADMAP.md)). Someone standing on the HQ's bridge or its
-landing is not aboard; on the tower or the deck they are. When
+**Sailing** (departure decided 15 September 2026; level boarding approved
+for the generated HQ on 25 September 2026). HQ and ship decks are at the
+same height, 4.5 m above the sea. The fixed, railed bridge belongs to HQ
+and reaches an opening in the ship's port bulwark. No tower access or stairs
+are required to board. A barrier at each end of the connection closes during
+travel; the ship's opening stays closed at sea. Being on the fixed HQ bridge
+does not count as aboard. When
 the monitor accepts a destination everyone is held where they stand — you can
 look around and talk, not walk or use items — the ship casts off (a short
 still moment), the engine starts and the ship visibly pulls away for about
@@ -109,8 +105,10 @@ back in on the stopped ship at the destination. At HQ a moment of making fast
 passes before you can walk. No docking animation, no steering, no walking on
 the moving deck in this version. Loose deck cargo is secured for the trip: a
 ball thrown just before departure stops where it is and does not keep flying
-at the far end. (Until 18 September the gangway was the ship's own and cargo
-on it stopped the ship; there is no gangway now.)
+at the far end. The HQ owns the boarding bridge. Its final hinged section
+raises during casting off and lowers while docking; barriers at both ends
+close before movement. The ship's boarding opening stays protected at sea
+(Dan, 26 September 2026). The bridge and its hinged section never count as aboard.
 
 **Scene 3 — the elevator and the site.** One scene per site, holding the shaft,
 the moving cabin and the seafloor; reached only from the deck cabin and left only
@@ -316,7 +314,7 @@ at the next day's fresh reload. That body is lost. This is intentional.
 | Art direction | Stylised and chunky, in the R.E.P.O. / PEAK direction. Low-poly geometry, flat shading, bold silhouettes. Not photorealistic. |
 | Audio | Ambient drones underwater, real music on the ship. |
 | Ship name | **Black Tide Salvage** |
-| HQ | **Built 18 September 2026 (Dan, from his reference picture, "1:1"):** an offshore rig of 2300, six in the morning — one open deck, 60 × 36 m, on six rusted legs 12 m over a blocky blue sea, lit by orange lamps on every rail post and strings of lights over the court. Along the north wall, six booths with shelves full of goods and a lit sign each: the **Office** (the company's name and skull, the flag, the beacon, an antenna, a windsock, the motto on its side), **Upgrades** (click and it is fitted), **Gear & Supplies** (click and it lands upstairs), **Intake / Sell** (the quota board as a console on the counter, the SALVAGE QUOTAS display over the roof), **Save / Check in** (the colour panel as a console), and the **Pickup** tower — the room where bought gear lands, up the stairs on the east side, with two more storeys of glowing windows and the beacon on top. The **court** (20 × 12 m, two hoops; a ball through a hoop counts, the count on the backboards, reset with the run) in the west, the **CREW HERE** mark with the crane in the east; containers, crates, barrels, bottle cages and cable trays everywhere; a lit catwalk under the rim. The **bridge** leaves the west rim under its CREW SHIP THIS WAY gantry, a railed walkway to a landing at the aft face of the moored ship's bridge tower, 6 m over its deck (the **ship** as §1 "The ship" describes it since 23 September 2026: a 48 × 20 m deck, the tower at the stern, the elevator amidships, the lounge and its TV at the bow; no stair of its own, so the way down from the landing is a later card) (the HQ's; the ship carries nothing that touches the base); the **plank** is off the south-east corner, 12 m above the water. Everything on it is a **prop prefab** (`Assets/_Project/Prefabs/Props`, built from code, replaced by editing the prefab — Dan drops his Blender mesh in) placed by `HQPlatformBuilder`; every word on it is a line of **`HQSigns`** (Resources), editable in the Inspector; the textures are generated (`ProceduralTextures`), the materials matte, the sky a plain gradient with a dawn glow, the sea blocky and self-lit. Nothing gameplay reads the look; the markers the rules need are the same components in new places. Morning and storms at sea are later skies. |
+| HQ | **Generated-model layout, approved 25 September and revised 26 September 2026:** a 60 x 36 m offshore platform at the ship's deck height (4.5 m over the sea). Six legs and warm work lights; the entire lower exterior catwalk and its access ladders are removed. A single connected **32 x 8 m equipment depot** along the north edge includes the office, upgrade and gear displays, and a clear interior aisle. Merchandise names/prices appear in the existing aim prompt, with no permanent floating item signs. The separate **pickup chute** discharges onto a marked deck-level pad; the south-west intake console still settles the quota from ship storage. **No save-station prop:** saving remains automatic. The north-east **crew arrival pad** has four spawn positions facing inward, with the colour panel in front. Arrival and quota have exchanged areas. The 20 x 12 m basketball court has two inward-facing scoring hoops and backstop fences; cargo gear and the crane are east, crew rest space south, and the gated punishment plank remains at the south-east edge. A level, HQ-owned bridge with a lifting tip reaches a gated opening in the ship's port side. Art uses 24 prepared Meshy HQ models, existing ship props and materials, plus simple Unity floors/markings/collision. `HQGeneratedSetup` rebuilds it; [HQ build handoff](HQ_GENERATED_ART_HANDOFF.md) records assets, layout and validation. No new shop, save, quota or carry rules. |
 
 ---
 
@@ -582,7 +580,7 @@ The Impostor is outside this pass and unchanged.
 | System | Decision |
 |---|---|
 | Funds | Shared crew pot. One shop, at HQ only. |
-| The shop | **Built 18 September 2026 (Dan):** things on display at HQ — look at one and press E to buy it from the crew pot; anyone in the crew buys; no menu. **On the platform (later that day):** two counters — **Upgrades** (the large tank, the bright headlamp: click and it is fitted) and **Gear & Supplies** (the air tank and whatever comes: click and it **lands upstairs**, dropping from the chute in the **Pickup** room on the tower's first floor, somewhere on the landing mark, so bought things do not stack). The prompt reads `Air tank · $40 — Press E to buy (pot $460)` and the refusal, if any (`Not enough money: $40 needed, $10 in the pot`, `You already have a large tank`, `Step up to the shelf`). Three things for now: the **air tank** ($40, a real tank that **falls to the floor at the delivery spot** in front of the shelves — anyone may take it), the **large tank** ($300, +50 % air: 7.5 minutes) and the **bright headlamp** ($150, a beam ×1.6 as long and ×1.5 as strong). Upgrades are **one per player**, no refunds, shown as small marks on the visor (`L-TANK  LAMP`); others see only the longer beam — a visible tank on the back comes with the shop's art pass. **Lost when you die and your body is not brought up** (§4); kept when it is. Greybox until Dan builds the real shop: the catalogue is data (`ShopCatalog` in Resources: ids, names, prices, prefabs), a stand is a `ShopDisplay` component on any object, the delivery spot a `ShopDeliveryPoint` marker, so the look, the place and the number of stands can change without touching the rules. Prices against the $500 quota: a good first day pays for one upgrade. |
+| The shop | **Revised 26 September 2026 (Dan: the shop must expand without a stand per item):** aim at the equipment counter and press **E** to browse the full catalogue, with search, Supplies/Upgrades filters, prices and Buy buttons. The list reads `ShopCatalog` directly; new merchandise needs no scene slot. Existing physical displays are optional featured samples with aim-only name/price prompts and direct E purchases. Purchases use the shared crew pot and are decided by the server. Consumables fall from the **deck-level PICKUP chute** onto its marked pad, where anyone can take them; upgrades apply to the buyer. Current items: air tank $40, patch kit $60, large tank $300 (+50% air), bright headlamp $150 (range ×1.6, intensity ×1.5). Upgrades are one per player, no refunds; visor marks remain `L-TANK  LAMP`. They are lost when a body is not recovered and kept when it is (§4). The browser closes on Escape, leaving counter reach, death, travel, scene unload or session exit. Adding consumables is a catalogue/prefab task; a genuinely new upgrade effect still requires gameplay implementation. See [shop authoring](SHOP_CATALOGUE_AUTHORING.md). |
 | Storage | The boat's storage room is display only — a pile of physical objects growing across three dives. Sells at HQ. **Built 16 September 2026 (Dan):** a small walled room at the stern (doorway toward the centre line) with a readout over the door — `$<in the box> / $<quota>` and the balance — and the same line in the visor's corner with what is on you. **Both count the cycle, not the box (Dan, 18 September 2026: "I paid 400 already"):** `QUOTA $400/$500 · ON ME $45` on the visor, `quota $400 / $500 (handed over $400 + box $0) · balance $400` on the board — what was handed over at HQ this cycle plus what the box holds. The server sums the loose items inside the room four times a second (`CrewDayState.BoxValue`). |
 | Banked loot | Anything sent up is safe permanently, even on a total wipe. |
 | Quota curve | Gentle for the first few cycles, then accelerating past what a careful crew can earn. Most runs end between cycle 6 and 12. |
@@ -631,11 +629,32 @@ The Impostor is outside this pass and unchanged.
 
 ### First playable HQ harness
 
-The first implemented slice is a grey-box HQ where players can walk,
+Basketball polish (user request, 26 September 2026): the orange basketballs use
+an original leather-grain surface with black seams, 26 cm diameter and 1.24 kg
+mass. A rubber physics material provides diminishing rebounds; throws have
+backspin. Tuning targets roughly 1.06 m underside rebound from a 1.8 m underside
+drop on the court, informed by the [FIBA 2024 equipment drop test](https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-official-basketball-rules-and-basketball-equipment.pdf).
+This is game tuning, not a claim of equipment certification. Each downward
+pass through either hoop adds **one shared basket**, shown on both backboards;
+normal host/client throws count, upward passes and misses do not. No personal
+teams, two/three-point rules or auto-aim added. `BasketballSetup.Apply` rebuilds
+the surface/physics assets; values remain editable on the material and prefab.
+Follow-up request: make the ball more substantial and scoring easier. The ball
+grew from 24 to 26 cm; the physical rim and matching scoring opening are 40%
+wider, with unchanged backboards/posts and the same downward-pass rule. These
+are deliberate game-friendly proportions; see [basketball tuning](BASKETBALL.md).
+Scoring feedback (27 September 2026): a small, short world-space confetti burst,
+a brief score-label pulse and a spatial scoring chime at the hoop. Every current
+observer sees/hears the celebration; joining later does not replay past baskets.
+Weight follow-up (27 September 2026): double basketball mass from 0.62 to 1.24 kg;
+the existing carried-weight and mass-scaled throwing rules apply.
+
+The original first implemented slice was a grey-box HQ where players could walk,
 look, carry basketballs, drop them and throw them. It exists to verify the basic
 FishNet ownership loop and Steam P2P transport before underwater gameplay begins.
-It has four inventory slots plus hands, but no scoring, economy, saving, combat or
-finished art. E grabs, Q drops at the feet, left click uses/throws, and 1–4 equip
+It initially had four inventory slots plus hands, without scoring, economy, saving, combat or
+finished art. The current HQ includes these later systems as described above.
+E grabs, Q drops safely in front, left click uses/throws, and 1–4 equip
 or put away slot items. Held items stay rigidly at the camera's hold point;
 stowed items are hidden. Every item weighs its Rigidbody mass; the carried total
 is server state and drives a grey meter under the slots and a linear slowdown
@@ -643,7 +662,7 @@ is server state and drives a grey meter under the slots and a linear slowdown
 10 % crawl until something is dropped. Holding a two-handed ball, E on a
 slot-able item stores it straight into a free slot. Two-handed items are held centred and low,
 never stowed, and throw shorter the heavier they are. The fixture is three
-basketballs (0.62 kg, one hand), two blue balls (6 kg, one hand, slot-able) and
+basketballs (now 1.24 kg, one hand), two blue balls (6 kg, one hand, slot-able) and
 two two-handed heavy balls (purple 12 kg, black 20 kg); the tuning numbers
 (decided 14 September 2026) live in
 `Assets/_Project/Settings/Prototype/WeightSettings.asset` and are provisional

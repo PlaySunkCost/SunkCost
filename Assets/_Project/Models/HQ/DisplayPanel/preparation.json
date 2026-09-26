@@ -1,0 +1,15 @@
+{
+  "part": "DisplayPanel",
+  "source_archive": "Meshy_AI_Industrial_Sci_Fi_Arm_0925103346_texture_fbx.zip",
+  "source_sha256": "8f71dba89be994b1863d2e298e6103d2ef4c210d5fcb06e37286d8af979a547d",
+  "original_triangles": 203140,
+  "triangles": 3000,
+  "unity_dimensions": [
+    1,
+    2,
+    0.12
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

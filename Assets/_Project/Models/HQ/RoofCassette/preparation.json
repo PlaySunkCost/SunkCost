@@ -1,0 +1,15 @@
+{
+  "part": "RoofCassette",
+  "source_archive": "Meshy_AI_Weathered_Industrial__0925103355_texture_fbx.zip",
+  "source_sha256": "1bce1499b76be7cdf72ea3e6c08d8bedd8dd6ccfc1e81257649b36e5fb9a5f5b",
+  "original_triangles": 75118,
+  "triangles": 2000,
+  "unity_dimensions": [
+    4,
+    0.3,
+    4
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

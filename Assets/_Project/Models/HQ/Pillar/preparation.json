@@ -1,0 +1,15 @@
+{
+  "part": "Pillar",
+  "source_archive": "Meshy_AI_Ironclad_Sentinel_0925103327_texture_fbx.zip",
+  "source_sha256": "af099f659189cfbe9d69a8e3bedc68ba9bb3cacd79d6fce340a352eef382d63e",
+  "original_triangles": 143726,
+  "triangles": 2000,
+  "unity_dimensions": [
+    0.4,
+    4,
+    0.4
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

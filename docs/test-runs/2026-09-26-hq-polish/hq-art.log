@@ -1,0 +1,31 @@
+HQ art runtime checks 26/09/2026 04:41:27
+PASS gate opens at HQ: Ship Boarding Gate
+PASS gate opens at HQ: HQ Boarding Gate
+PASS walk (-28.00, 0.05, -12.00) -> (-47.00, 0.05, -12.00), ended (-46.89, 0.07, -12.00)
+PASS walking over the lip reaches the ship's safe deck
+PASS walk (-47.00, 0.05, -12.00) -> (-28.00, 0.05, -12.00), ended (-28.13, 0.07, -12.00)
+PASS back on HQ is not aboard
+PASS walk (-16.00, 0.05, 11.70) -> (6.00, 0.05, 11.70), ended (5.82, 0.05, 11.70)
+PASS walk (22.00, 0.05, 4.00) -> (24.00, 0.05, 4.00), ended (23.66, 0.05, 4.00)
+PASS walk (18.75, 0.05, 14.50) -> (20.00, 0.05, 9.00), ended (19.95, 0.05, 9.24)
+PASS aim shows item name: air-tank
+PASS look away hides item name: air-tank
+PASS aim shows item name: bright-headlamp
+PASS look away hides item name: bright-headlamp
+PASS aim shows item name: patch-kit
+PASS look away hides item name: patch-kit
+PASS aim shows item name: large-tank
+PASS look away hides item name: large-tank
+PASS one counter offers the entire catalogue
+PASS aim finds the catalogue counter
+PASS E opens the catalogue and captures gameplay input
+PASS menu lists every catalogue entry
+PASS fifth item appears without a new stand or scene rebuild
+PASS catalogue submits new-item purchase
+PASS server charges catalogue price for item with no dedicated display
+PASS catalogue purchase uses shared delivery chute
+PASS Escape closes the catalogue
+PASS moving away closes the catalogue
+PASS Hoop W scores through the actual generated rim
+PASS Hoop E scores through the actual generated rim
+MATRIX_PASS

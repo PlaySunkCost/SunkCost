@@ -404,6 +404,7 @@ namespace SunkCost.Player
             if (dead.Value) ApplyDead(true);
             if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
             if (IsOwner && GetComponent<InteractHighlight>() == null) gameObject.AddComponent<InteractHighlight>(); // what the dot rests on shows it can be used (SHIP-054)
+            if (IsOwner && GetComponent<SunkCost.Shop.ShopBrowserUI>() == null) gameObject.AddComponent<SunkCost.Shop.ShopBrowserUI>();
             dashClientStartFrame = Time.frameCount;
             if (GetComponent<PlayerDashEffects>() == null) gameObject.AddComponent<PlayerDashEffects>(); // the rings and the whoosh, on every peer
             // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
@@ -436,7 +437,8 @@ namespace SunkCost.Player
             // Escape opens the menu and, pressed again, closes it (the same as Resume).
             if (hasDevices && ActiveKeyboard.escapeKey.wasPressedThisFrame)
             {
-                if (SessionInputGate.PickerOpen) SessionInputGate.ClosePicker();
+                if (SessionInputGate.ShopOpen) SessionInputGate.CloseShop();
+                else if (SessionInputGate.PickerOpen) SessionInputGate.ClosePicker();
                 else if (SessionInputGate.MenuOpen) SessionInputGate.Resume();
                 else SessionInputGate.OpenMenu();
             }
@@ -591,7 +593,8 @@ namespace SunkCost.Player
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentShopDisplay != null)
             {
                 grabConsumed = true;
-                Upgrades?.RequestBuy(CurrentShopDisplay.ItemId);
+                if (CurrentShopDisplay.BrowsesCatalog) GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Open(CurrentShopDisplay);
+                else Upgrades?.RequestBuy(CurrentShopDisplay.ItemId);
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentTv != null)
             {

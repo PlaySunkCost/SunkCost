@@ -47,15 +47,19 @@ namespace SunkCost.Editor.Prototype
             if (catalog == null) errors.Add("ShopCatalog asset missing (run Sunk Cost/Prototype/Apply shop setup).");
             else
             {
+                var itemIds=new System.Collections.Generic.HashSet<string>();
                 foreach (SunkCost.Shop.ShopItem item in catalog.Items)
                 {
-                    if (!stands.Exists(s => s.ItemId == item.Id)) errors.Add("The shop has no stand for " + item.Id + ".");
+                    if(item==null){errors.Add("Catalogue contains an empty row.");continue;}
+                    if(string.IsNullOrWhiteSpace(item.Id) || !itemIds.Add(item.Id))errors.Add("Catalogue ids must be nonempty and unique: "+item.Id);
+                    if(string.IsNullOrWhiteSpace(item.Name) || item.Price<0)errors.Add("Catalogue item needs a name and nonnegative price: "+item.Id);
+                    if (!stands.Exists(s => s.Offers(item.Id))) errors.Add("The shop has no catalogue counter or display offering " + item.Id + ".");
                     if (item.Kind == SunkCost.Shop.ShopItemKind.Consumable && (item.Prefab == null || item.Prefab.GetComponent<NetworkObject>() == null)) errors.Add("Catalogue item " + item.Id + " needs a networked prefab.");
                     if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && item.Upgrade == SunkCost.Shop.PlayerUpgrade.None) errors.Add("Catalogue item " + item.Id + " names no upgrade.");
                 }
                 foreach (SunkCost.Shop.ShopDisplay stand in stands)
                 {
-                    if (catalog.Find(stand.ItemId) == null) errors.Add("Shop stand " + stand.name + " sells an id the catalogue does not have: " + stand.ItemId);
+                    if (!stand.BrowsesCatalog && catalog.Find(stand.ItemId) == null) errors.Add("Shop stand " + stand.name + " sells an id the catalogue does not have: " + stand.ItemId);
                     if (stand.GetComponentInChildren<Collider>() == null) errors.Add("Shop stand " + stand.name + " needs a collider to be looked at.");
                 }
             }

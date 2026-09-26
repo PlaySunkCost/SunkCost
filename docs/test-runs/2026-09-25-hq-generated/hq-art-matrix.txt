@@ -1,0 +1,11 @@
+HQ art runtime checks 25/09/2026 22:19:55
+PASS gate opens at HQ: HQ Boarding Gate
+PASS gate opens at HQ: Ship Boarding Gate
+PASS walk (-28.00, 0.05, -12.00) -> (-47.00, 0.05, -12.00), ended (-46.94, 0.05, -12.00)
+PASS walking over the lip reaches the ship's safe deck
+PASS walk (-47.00, 0.05, -12.00) -> (-28.00, 0.05, -12.00), ended (-28.08, 0.05, -12.00)
+PASS back on HQ is not aboard
+PASS walk (-16.00, 0.05, 11.70) -> (6.00, 0.05, 11.70), ended (5.62, 0.05, 11.70)
+PASS Hoop W scores through the actual generated rim
+PASS Hoop E scores through the actual generated rim
+MATRIX_PASS

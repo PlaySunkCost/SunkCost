@@ -1,0 +1,15 @@
+{
+  "part": "TankCradle",
+  "source_archive": "Meshy_AI_Industrial_Climbing_M_0925103304_texture_fbx.zip",
+  "source_sha256": "235a2e004cd43692cd03f5923a6cb8cece2a991ac10448702525fac14038a532",
+  "original_triangles": 629740,
+  "triangles": 4500,
+  "unity_dimensions": [
+    0.5,
+    1,
+    0.35
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

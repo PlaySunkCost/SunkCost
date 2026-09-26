@@ -34,7 +34,7 @@ namespace SunkCost.World
             ShopItem item = catalog.Find(itemId);
             if (item == null) { why = "No such item"; return false; }
             ShopDisplay display = ServerNearestDisplay(itemId, hq, buyer.EyePosition, out float distance);
-            if (display == null || distance > buyer.InteractReach + ShopReachMargin) { why = "Step up to the shelf"; return false; }
+            if (display == null || distance > buyer.InteractReach + ShopReachMargin) { why = "Step up to the shop counter or display"; return false; }
             PlayerUpgrades upgrades = buyer.Upgrades;
             if (item.Kind == ShopItemKind.Upgrade)
             {
@@ -71,7 +71,7 @@ namespace SunkCost.World
             distance = float.MaxValue;
             foreach (ShopDisplay display in FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
             {
-                if (display.gameObject.scene != scene || display.ItemId != itemId) continue;
+                if (display.gameObject.scene != scene || !display.Offers(itemId)) continue;
                 Collider collider = display.GetComponentInChildren<Collider>();
                 Vector3 point = collider != null ? collider.ClosestPoint(from) : display.transform.position;
                 float d = Vector3.Distance(from, point);

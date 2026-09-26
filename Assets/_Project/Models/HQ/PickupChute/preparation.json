@@ -1,0 +1,15 @@
+{
+  "part": "PickupChute",
+  "source_archive": "Meshy_AI_Rustline_Cargo_Ramp_0925103248_texture_fbx.zip",
+  "source_sha256": "7e0295c3fcad8c7859478a0effa3084f063e2fdeb50fea342bdce44e80bc6269",
+  "original_triangles": 740642,
+  "triangles": 8000,
+  "unity_dimensions": [
+    2,
+    3,
+    2
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

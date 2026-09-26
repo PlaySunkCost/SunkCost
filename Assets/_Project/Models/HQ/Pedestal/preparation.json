@@ -1,0 +1,15 @@
+{
+  "part": "Pedestal",
+  "source_archive": "Meshy_AI_Weathered_Cargo_Crate_0925103243_texture_fbx.zip",
+  "source_sha256": "fb87cf36667d210610c056900c7ff1a64a21a4c4cafceb8ffe8babdbb8e355eb",
+  "original_triangles": 370700,
+  "triangles": 3500,
+  "unity_dimensions": [
+    1,
+    0.8,
+    1
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

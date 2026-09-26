@@ -1,0 +1,15 @@
+{
+  "part": "Pallet",
+  "source_archive": "Meshy_AI_Industrial_Cargo_Pall_0925103234_texture_fbx.zip",
+  "source_sha256": "b26690a69cf957445dd595f3d714890bf1b405cbab5488e556dd3342fccac2b2",
+  "original_triangles": 171128,
+  "triangles": 2000,
+  "unity_dimensions": [
+    1.2,
+    0.16,
+    1
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

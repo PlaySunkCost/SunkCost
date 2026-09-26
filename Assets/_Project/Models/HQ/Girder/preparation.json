@@ -1,0 +1,15 @@
+{
+  "part": "Girder",
+  "source_archive": "Meshy_AI_Industrial_Cargo_Beam_0925103200_texture_fbx.zip",
+  "source_sha256": "e5d8a7d8ef0367ad70cf3d339f99c844d09bc6aab8fefa9b842f4c2f8fffa88d",
+  "original_triangles": 208034,
+  "triangles": 2500,
+  "unity_dimensions": [
+    4,
+    0.8,
+    0.4
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}

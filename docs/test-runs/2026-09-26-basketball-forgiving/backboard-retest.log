@@ -1,0 +1,38 @@
+Basketball checks 26/09/2026 22:47:05
+PASS rubber physics material assigned
+PASS leather texture assigned
+PASS court floor found
+PASS ball bounces upward from court
+PASS first rebound underside=1.189 m from 1.800 m drop (target ~1.06 m)
+PASS first rebound falls
+PASS second bounce
+PASS successive bounce loses energy
+PASS Hoop W clean downward basket counts once
+PASS backboard shows shared score
+PASS Hoop W off-centre basket at -0.16 m clears physical rim and scores
+PASS Hoop W off-centre basket at 0.16 m clears physical rim and scores
+PASS beside rim does not count
+PASS ball passes upward through ring
+PASS upward pass does not count
+PASS Hoop E clean downward basket counts once
+PASS backboard shows shared score
+PASS Hoop E off-centre basket at -0.16 m clears physical rim and scores
+PASS Hoop E off-centre basket at 0.16 m clears physical rim and scores
+PASS beside rim does not count
+PASS ball passes upward through ring
+PASS upward pass does not count
+PASS shooter holds ball
+PASS actual camera aim: shot requested pitch=74.8; predicted miss=0.003
+PASS throw uses Released owner physics
+PASS host real thrown shot scores
+PASS throw scores exactly once
+PASS separate non-host client joined
+PASS late joiner receives existing basket count
+PASS shooter holds ball
+PASS actual camera aim: id=1804; shot requested pitch=74.8; predicted miss=0.003
+PASS throw uses Released owner physics
+PASS server observes remote throw without simulating it
+PASS client real thrown shot scores
+PASS throw scores exactly once
+PASS guest receives updated count and backboard text
+MATRIX_PASS

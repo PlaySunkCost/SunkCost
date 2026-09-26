@@ -1,0 +1,15 @@
+{
+  "part": "Counter",
+  "source_archive": "Meshy_AI_Weathered_Cargo_Crate_0925103209_texture_fbx.zip",
+  "source_sha256": "f70f7eec91ccbc7ae86e532630db2a6d9c72a350e21d2f293bbb3d0d7d5422cf",
+  "original_triangles": 325488,
+  "triangles": 4500,
+  "unity_dimensions": [
+    2,
+    1,
+    0.8
+  ],
+  "pivot": "bottom centre",
+  "maps": "rebaked base colour and tangent normal",
+  "source": "User-provided Meshy export, 25 September 2026"
+}
