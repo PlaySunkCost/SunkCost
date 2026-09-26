@@ -49,7 +49,7 @@ MonoBehaviour:
   ownFootstepScale: 0.6
   leakHiss: {fileID: 0}
   leakHissVolume: 0.35
-  dashWhoosh: {fileID: 0}
+  dashWhoosh: {fileID: 8300000, guid: 9ff87a710bc555e47b7888e54bf211b4, type: 3}
   dashWhooshVolume: 0.5
   monsterCall: {fileID: 0}
   monsterCallVolume: 0.7
