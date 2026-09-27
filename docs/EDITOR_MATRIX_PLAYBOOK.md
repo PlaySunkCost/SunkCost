@@ -36,6 +36,16 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   that do not exist yet and the scene (`Sunk Cost/Look/Rebuild look props` rewrites every prop from code and loses
   hand edits to them; `Regenerate textures and materials` alone for a palette change); rows that stood in the old hall
   by coordinates (camera clearance, hands, inventory) are matrix debt until they are re-placed;
+  `console-ship` = the ship's navigation console, `ShipConsoleRuntimeChecks`, log `Temp/console-ship-matrix.log`:
+  the host alone at the docked ship's console (choose HQ / an open site / a locked site with the real aim and E, the
+  not-aboard refusal, every site bought short / exact / already open in the order 03-04-02 with a same-frame double
+  charge, the selection changed under the pull, the sail and its screens, SITE 03 routed to Site 01's world, the dive
+  and END DAY states, the UNLOCK override after a dive, divers below, payday, the plank relocking the sites), then one
+  guest in `Temp/console-ship-guest` (the selection, the lock, the sign and the screens replicated, the guest's own
+  selection and pull, WAITING FOR <guest> TO BOARD, the lever swing seen on the guest, a same-frame host+guest pull, a
+  late joiner's first snapshot, the compat server sail) — about 9 minutes; peer commands `select`, `lever`,
+  `lever_expect`, `look_control`; snapshot line `selected=…; unlocked=…; leverPulls=…; leverPlayed=…; leverAngle=…;
+  leverSign=…; topScreen=…; bottomScreen=…`;
   `plank` = the plank at HQ, `PlankRuntimeChecks`, log `Temp/plank-matrix.log`: a lost payday, the board and
   the prompt, sailing and the shop refused, the host placed and pushed, the card, the fresh run; then a guest in
   `Temp/plank-guest` (the host jumps, the guest is next and pushed, both start over) — about 3 minutes;
