@@ -125,7 +125,8 @@ namespace SunkCost.World
         {
             enabled = false; reason = string.Empty;
             if (f.Phase == DayPhase.Plank) { reason = RunOver; return LeverAction.None; }
-            if (f.Phase != DayPhase.AtHQ || f.World != WorldId.HQ || f.Travelling) { reason = NotDocked; return LeverAction.None; }
+            if (f.Travelling || f.Phase == DayPhase.Sailing || f.Phase == DayPhase.SailingHome) { reason = Travelling; return LeverAction.None; } // ServerPay's own first refusal (hq, 27 September 2026)
+            if (f.Phase != DayPhase.AtHQ || f.World != WorldId.HQ) { reason = NotDocked; return LeverAction.None; }
             if (f.Day == 0 && !f.Payday) { reason = NothingToPay; return LeverAction.None; }
             if (!f.Payday && f.BoxValue <= 0) { reason = NothingToSell; return LeverAction.None; }
             enabled = true;

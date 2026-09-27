@@ -5,14 +5,19 @@ using UnityEngine.SceneManagement;
 
 namespace SunkCost.World
 {
-    // The HQ quota console on the server (the shared console, 27 September 2026):
-    // where a PAY pull must come from, and the lever's current action. PAY itself is
-    // the existing ServerPay (WorldSceneFlow.Cabin); GIVE UP is the existing
-    // ServerToggleGiveUp (WorldSceneFlow.GiveUp). Nothing else lives here.
-    // Foundation body by console_state: the lever is found by its object's name, which
-    // the old board and the new rig share, so this works before and after the HQ
-    // rebuild; the hq agent owns this file in the Implement phase and may look the
-    // rig up through ConsoleRig.InScene instead.
+    // The HQ quota console on the server (the shared console, 27 September 2026;
+    // BRIEF "HQ LEVER — PAY"): where a PAY pull must come from, and the lever's
+    // current action. The action is resolved with ConsoleRules.HQLever over the
+    // server's own facts (ServerFacts: the day state, the transition flag, the room's
+    // worth summed now) — the same conditions ServerPay refuses with, in its order
+    // (travelling, not docked at HQ, nothing to pay yet), plus the run being over and
+    // an empty room before payday — so the sign every peer draws from the replicated
+    // facts is what the server will accept. PAY itself is the existing ServerPay
+    // (WorldSceneFlow.Cabin: sells the storage room, banks it, judges PAID / SHORT BY /
+    // THE RUN IS OVER and starts the plank); GIVE UP is the existing ServerToggleGiveUp
+    // (WorldSceneFlow.GiveUp). No quota maths lives here. The lever's collider is the
+    // HQ rig's own (ConsoleRig.InScene) once the console stands at the intake; the old
+    // board's object by name is the fallback until every scene is rebuilt.
     public sealed partial class WorldSceneFlow
     {
         // == ConsoleRig.HQLeverName == QuotaBoard.BoardName: the HQ lever's control object.

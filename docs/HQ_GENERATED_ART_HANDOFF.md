@@ -134,12 +134,17 @@ Presentation only, on `dan/hq-polish`; see the
 - The catalogue counter carries the depot's largest plate after the fascia, a lamp and
   a marked square; the east end wall names the depot for the arrivals; PICKUP sits
   above the chute's lip.
-- The quota board (27 September 2026) is the intake console itself, at the ship's 1.5x
-  scale: `HQPlatformBuilder.QuotaBoard` wraps it in a `Quota Station`, finds its screen
-  with the ship's `ScreenPanel`, lays the ship monitor's `ScreenStyle` lines on it
-  (`QuotaBoard.Configure`) and sets PAY (the `Quota Board` object the aim and checks
-  use) and GIVE UP (`GiveUpButton`) into the desk. Button words: `button.pay`,
-  `button.giveup`; the screen's name: `board.title`.
+- The quota board (27 September 2026, later the same day) is the shared console: the
+  ship's navigation console model (`Prefabs/Ship/NavConsole`, 2.38 x 2.17 x 1.20 m)
+  placed by `HQPlatformBuilder.QuotaConsole` through `ConsoleBuilder.Place(..., ConsoleKind.HQ)`
+  at the intake (group-local (17.2, 0, 15), yaw 180, between the INTAKE / SELL sign's
+  posts), on a bolted steel footing plate with a hazard lip, the `HQQuotaConsole`
+  composer on its root (`Quota Console`). Its top screen is the quota board, its bottom
+  panel the red GIVE UP card (`Give Up Button`), its lever PAY (`Quota Board`, the object
+  the aim and the checks use); the screens are painted from replicated state
+  (`ConsolePaint`, `Resources/ConsoleStyle.asset`). Words: `board.title`, `lever.pay`,
+  `giveup.card`, `giveup.foot`, `giveup.voted`. The old desk board (`QuotaBoard`,
+  `GiveUpButton` push buttons) is gone from the scene; the validator refuses one.
 - The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
 - The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
   the browser is the same IMGUI in the ship's `ScreenStyle` palette.

@@ -174,7 +174,9 @@ namespace SunkCost.Editor.Tests
             Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out bool enabled, out string reason)); Assert.AreEqual(ConsoleRules.RunOver, reason);
             Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(AtSea(SiteId.None), out _, out reason)); Assert.AreEqual(ConsoleRules.NotDocked, reason);
             f = Docked(SiteId.None); f.Travelling = true;
-            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out _, out reason)); Assert.AreEqual(ConsoleRules.NotDocked, reason);
+            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out _, out reason)); Assert.AreEqual(ConsoleRules.Travelling, reason); // the dock's first frame of a cast-off: ServerPay's own words
+            f = Docked(SiteId.None); f.Phase = DayPhase.SailingHome; f.World = WorldId.Sea;
+            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out _, out reason)); Assert.AreEqual(ConsoleRules.Travelling, reason);
             Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(Docked(SiteId.None), out enabled, out reason)); Assert.IsFalse(enabled); Assert.AreEqual(ConsoleRules.NothingToPay, reason);
             f = Docked(SiteId.None); f.Day = 1; f.BoxValue = 50;
             Assert.AreEqual(LeverAction.Pay, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
