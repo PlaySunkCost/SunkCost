@@ -64,6 +64,28 @@ what you have against what you owe. A low sill across its doorway keeps a droppe
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
+**The navigation console (decided by Dan, 27 September 2026; not built yet: it waits
+for Dan's model, which replaces both the ship's sailing console and the HQ quota
+console).** One model with a top screen, a bottom touch panel and a lever with a lit
+sign. The game draws the screens and the sign's word, so they can change.
+
+- **Sailing is select, then confirm.** This replaces "choosing a destination sails the ship".
+  Aim at a site card on the top screen and press E to select it. Every screen sees the
+  selection. The bottom screen then shows game facts only: the site, the day and the
+  quota so far. Pulling the lever (**CONFIRM**) sails, under the same all-aboard and
+  payday rules.
+- **End day is the lever too.** Once today's dive is done the ship cannot sail, so the
+  lever reads **END DAY** and ends the day. The word goes dim when nothing is possible.
+- **Sites 02-04 are bought at the console, any time, in any order,** from the crew
+  balance: **$100, $200 and $300** (placeholder prices, to be discussed). Selecting a
+  locked card shows that site's info, the current balance and its cost on the bottom
+  screen, and the lever reads UNLOCK. A bought site stays open until the run is lost on
+  the plank, or until a new game. Until those sites are built, sailing to 02, 03 or 04
+  takes the ship to Site 01.
+- **At HQ, the same model is the quota board.** The top screen shows the board, the lever
+  reads **PAY**, and **GIVE UP** is a red card on the bottom panel (aim and E) showing
+  the vote count.
+
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
