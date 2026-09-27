@@ -78,7 +78,9 @@ sign. The game draws the screens and the sign's word, so they can change.
   lever reads **END DAY** and ends the day. The word goes dim when nothing is possible.
 - **Sites 02-04 are bought at the console, any time, in any order,** from the crew
   balance: **$100, $200 and $300** (placeholder prices, to be discussed). Their cards
-  stay on the top screen with a **lock** (as in Dan's reference) until bought. Selecting a
+  stay on the top screen with a **lock** (as in Dan's reference) until bought. Every card
+  shows a **picture** of its site; for now all sites share one, and each site's picture is
+  its own editable setting so it can change later. Selecting a
   locked card shows that site's info, the current balance and its cost on the bottom
   screen, and the lever reads UNLOCK. A bought site stays open until the run is lost on
   the plank, or until a new game. Until those sites are built, sailing to 02, 03 or 04
