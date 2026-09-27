@@ -98,13 +98,16 @@ sign. The game draws the screens and the sign's word, so they can change.
   sell, or on payday (the empty room is judged then, and the plank follows a miss); an empty
   room before payday dims it with "Nothing to sell — dive again", so a second PAY after a
   short sale does nothing (the old desk button sold the empty room again and reported SHORT
-  a second time).
+  a second time). END DAY needs no selection: the selection clears on every accepted sail,
+  so after the dive the lever reads END DAY at once (a locked selection still reads UNLOCK);
+  a card may be selected during a dive, the lever staying dim until the divers are up.
 
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
-tower** stands at the stern, with the sailing console on its forward face (the
-buttons **SITE 01 · HQ · END DAY**, left to right as the player reads them) and
+tower** stands at the stern, with the navigation console on its forward face (the
+shared console model since 27 September 2026: the five destination cards on its top
+screen, the lever with its lit sign, port of the tower's door) and
 the crew's screen beside it; the storage room is forward of it, to starboard. The
 **glass elevator** stands amidships in its well, open to the sea, with a **low
 visible rail** round the well, open only at the grate; the rail's collider is

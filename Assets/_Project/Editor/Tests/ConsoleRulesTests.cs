@@ -101,6 +101,25 @@ namespace SunkCost.Editor.Tests
             Assert.AreEqual(LeverAction.EndDay, Ship(f, out _, out enabled, out _)); Assert.IsTrue(enabled);
         }
 
+        // The selection clears on every accepted sail, so every dive ends with nothing
+        // selected: END DAY must read then (BRIEF "END DAY - when today's dive is
+        // completed"), and a trip, a dive or the plank names itself before asking for a card.
+        [Test]
+        public void NothingSelected_AfterDive_ReadsEndDay_TripsNameThemselves()
+        {
+            ConsoleFacts f = AtSea(SiteId.None); f.DiveDone = true;
+            Assert.AreEqual(LeverAction.EndDay, Ship(f, out SiteId target, out bool enabled, out string reason));
+            Assert.AreEqual(SiteId.None, target); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
+            f = AtSea(SiteId.None); f.Travelling = true; f.Phase = DayPhase.SailingHome;
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.Travelling, reason);
+            f = AtSea(SiteId.None); f.Phase = DayPhase.DiveInProgress; f.BelowCount = 1;
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.DiveInProgress, reason);
+            f = Docked(SiteId.None); f.Phase = DayPhase.Plank;
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.RunOver, reason);
+            f = AtSea(SiteId.None);                                                   // at sea, nothing done yet: a card is needed
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.SelectFirst, reason);
+        }
+
         [Test]
         public void Travelling_DiveInProgress_Below_Riding_AreDim()
         {

@@ -4,16 +4,20 @@ using UnityEngine;
 namespace SunkCost.World
 {
     // The ship's navigation console on the server (the shared console, 27 September
-    // 2026): the selection, the site unlock transaction and CONFIRM. Foundation body
-    // by console_state, written against the interfaces; the ship agent owns this file
-    // in the Implement phase and may extend it (a per-site world once real sites
-    // exist). Every method is server-side; the dispatcher (WorldSceneFlow.Console)
-    // has checked the server, the day state and the presser's location before
-    // calling ServerUnlockSite / ServerConfirmSail.
+    // 2026): the selection, the site unlock transaction and CONFIRM. Written by
+    // console_state against the interfaces (Foundation) and kept by the ship agent
+    // (Implement), whose file it is; a per-site world in Destinations.WorldOf is the
+    // extension point once real sites exist. Every method is server-side; the
+    // dispatcher (WorldSceneFlow.Console) has checked the server, the day state and
+    // the presser's location before calling ServerUnlockSite / ServerConfirmSail.
     public sealed partial class WorldSceneFlow
     {
-        // E on a card: the crew's selection. Any player aboard may change it; the same
-        // card again is not a change and not a refusal.
+        // E on a card: the crew's selection. Any living player aboard may change it, to
+        // any card (a locked one shows its price); the same card again is not a change
+        // and not a refusal. Allowed during a dive and after it (the lever is dim, or
+        // reads END DAY or UNLOCK; the crew on deck pick the next stop while they wait);
+        // refused during a trip, since an accepted sail clears the selection and the
+        // arrival screen starts clean; refused on the plank.
         public bool ServerSelectSite(NetworkConnection sender, SiteId site, out string why)
         {
             why = string.Empty;

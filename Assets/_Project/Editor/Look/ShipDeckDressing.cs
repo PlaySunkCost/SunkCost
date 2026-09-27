@@ -67,13 +67,12 @@ namespace SunkCost.Editor.Look
             return 1f;
         }
 
-        // What the models never touch: the glass cabin, the monitor and its buttons,
+        // What the models never touch: the glass cabin, the navigation console's rig,
         // the screens the game writes on. Exact names, and everything under them (a
         // prefix here once kept the monitor's old desk boxes seen: SHIP-009).
         private static readonly HashSet<string> Kept = new()
         {
-            ShipParts.DeckCabinName, ShipParts.MonitorName, ShipParts.MonitorStatusName,
-            ShipParts.MonitorButtonSite01Name, ShipParts.MonitorButtonHQName, ShipParts.MonitorButtonEndDayName,
+            ShipParts.DeckCabinName, ConsoleRig.ShipRootName,
             ShipParts.TvScreenName, "Tv Caption Sign", ShipParts.TvSpeakerName,
             "Crew Screen", "Crew Screen Frame", "Crew Screen Text",
             "Storage Sign", // the room's readout: the game writes on it
@@ -113,6 +112,7 @@ namespace SunkCost.Editor.Look
         private const float WellClear = 0.8f;       // a walk round the well's rail, outside it
         private const float TvScreenCentreY = 2.0f; // seated eyes at about 1.15 m, standing 1.6 m (SHIP-026)
         private const float ConsoleX = -2.2f;       // port of the tower model's door and ladder, which it hid (SHIP-039)
+        private const float ConsoleGap = 0.08f;     // the console's back off the tower's real face: square to it, touching nothing
         // A patch of open, flat deck starboard of the well's rail that no prop may take:
         // where WorldLoopRuntimeChecks drops the ball that must ride the trip at its spot
         // (row D7; its old spot became the crane's base with SHIP-012).
@@ -278,21 +278,28 @@ namespace SunkCost.Editor.Look
                 Transform t = root.Find(panel);
                 if (t != null && t.GetComponent<Collider>() == null) t.gameObject.AddComponent<BoxCollider>();
             }
-            // The console against the tower's forward face is the panel the crew press
-            // to sail: the game's monitor screen on the model's own display, its three
-            // buttons set into the desk under it (Dan, 23 September 2026: "replace the
-            // last thing that helped the player choose, now use the new display"). Port
-            // of the tower model's door, which it stood in front of (SHIP-039).
-            GameObject console = Put(look, "Console", new Vector3(ConsoleX, 0f, towerFront + 0.75f), 0f);
-            if (console != null)
+            // The navigation console against the tower's forward face (Dan, 27 September
+            // 2026: the shared console model replaces the old console, its monitor and its
+            // three buttons): the rig ConsoleBuilder builds - the model with its own mesh
+            // collider, the two painted screens, the lever and the five destination cards
+            // the crew aim at - standing on the deck square to the tower, its back a hand
+            // off the tower's real face, port of the tower model's door (SHIP-039), where
+            // the old console stood. On the ship's root rather than in Look: the collider
+            // pass below strips every collider under Look, and the rig's are the game's
+            // own; ShipHierarchy groups it under Tower/Console by its name. The composer
+            // that fills its screens from the day state is added here; ShipScreens leaves
+            // the idle screens painted.
+            ConsoleRig navConsole = ConsoleBuilder.Place(root, new Vector3(ConsoleX, 0f, towerFront + 0.75f), 0f, ConsoleKind.Ship);
+            if (navConsole != null)
             {
-                Bounds cb = ShipBounds(console);
-                console.transform.localPosition += Vector3.forward * (TowerFace(cb.min.x, cb.max.x) + 0.08f - cb.min.z);
-                Settle(console, false);
-                cb = ShipBounds(console);
+                GameObject rig = navConsole.gameObject;
+                Bounds cb = ShipBounds(rig);
+                rig.transform.localPosition += Vector3.forward * (TowerFace(cb.min.x, cb.max.x) + ConsoleGap - cb.min.z);
+                Settle(rig, false);
+                cb = ShipBounds(rig);
                 Keep("the console's front", new Vector2(cb.min.x - 0.1f, cb.max.z), new Vector2(cb.max.x + 0.1f, cb.max.z + 2f));
+                rig.AddComponent<ShipNavigationConsole>();
             }
-            DressConsole(root, console);
             ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(1.0f, 2.35f, towerFront + 0.3f), 0f), ShipSign.Bridge); // over the tower's door, on the one flat panel of its face (flat to 2 cm), clear of the console and the crew screen
 
             // Port, the cargo corner: one 20 ft container across the deck from the rail,
@@ -563,56 +570,10 @@ namespace SunkCost.Editor.Look
             return !(neg && pos);
         }
 
-        // ---- the console ----------------------------------------------------------------
+        // ---- the console's desk ----------------------------------------------------
 
-        // The game's monitor onto the console model (SHIP-008): the screen block (the
-        // ShipMonitor's target) exactly on the model's upright display, measured off
-        // its mesh as the TV's is; the status line on that screen; the three buttons
-        // laid in the sloping desk under it, facing up at the person pressing them, in
-        // the order the stub builder gives them (SITE 01 · HQ · END DAY as read).
-        private static void DressConsole(Transform root, GameObject console)
-        {
-            if (console == null) return;
-            float cx = console.transform.localPosition.x; // the stub's buttons stand about x = 0
-            if (!ScreenPanel(root, console, Vector3.forward, 1.2f, out Vector3 centre, out Vector2 size))
-            {
-                Debug.LogWarning("Ship dressing: no display panel found on the console");
-                return;
-            }
-            Transform monitor = root.Find(ShipParts.MonitorName);
-            if (monitor != null)
-            {
-                monitor.localPosition = centre + Vector3.forward * 0.012f;
-                monitor.localRotation = Quaternion.identity;
-                monitor.localScale = new Vector3(size.x, size.y, 0.02f);
-            }
-            Transform status = root.Find(ShipParts.MonitorStatusName);
-            if (status != null) status.localPosition = centre + new Vector3(0f, size.y * 0.25f, 0.03f);
-            string[] buttons = { ShipParts.MonitorButtonSite01Name, ShipParts.MonitorButtonHQName, ShipParts.MonitorButtonEndDayName };
-            if (!Desk(root, console, centre.y - size.y / 2f, out Vector3 point, out Vector3 normal))
-            {
-                Debug.LogWarning("Ship dressing: no desk found on the console; its buttons stay on the screen's foot");
-                foreach (string name in buttons)
-                {
-                    Transform b = root.Find(name);
-                    if (b != null) b.localPosition = new Vector3(cx + b.localPosition.x, centre.y - size.y / 2f - 0.42f, centre.z + 0.05f);
-                }
-                return;
-            }
-            // Its +Y runs up the slope, away from the person at the desk, so the words
-            // on its cap read the right way up to them; the bezel's 40 cm centred on
-            // the desk's middle, just proud of its bumps.
-            Vector3 upSlope = Vector3.ProjectOnPlane(Vector3.up, normal).normalized;
-            Quaternion turn = Quaternion.LookRotation(normal, upSlope);
-            foreach (string name in buttons)
-            {
-                Transform b = root.Find(name);
-                if (b == null) continue;
-                Vector3 on = point + Vector3.right * (cx + b.localPosition.x - point.x);
-                b.localPosition = on - upSlope * 0.2f + normal * 0.045f;
-                b.localRotation = turn;
-            }
-        }
+        // The old monitor dressing (DressConsole) went with the navigation console rig
+        // (27 September 2026); the desk measurement below is still the HQ builder's.
 
         // The console's sloping desk, in ship space: the triangles below its display
         // that face up and toward the crew, their area-weighted centre and normal.

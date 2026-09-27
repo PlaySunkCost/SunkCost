@@ -84,11 +84,14 @@ namespace SunkCost.World
         // The ship lever. Returns the CURRENT action; `target` is the card it acts on
         // (Confirm/Unlock) or None; `enabled` false = the sign is dim / the pull will be
         // refused with `reason`. The order is BRIEF "SHIP LEVER": a locked selection reads
-        // UNLOCK before the dive/day rules (players may buy a site after a dive).
+        // UNLOCK before the dive/day rules (players may buy a site after a dive), and a
+        // destination is needed only to sail: END DAY reads with nothing selected (the
+        // selection clears on every accepted sail, so every dive ends that way), and a
+        // trip or a dive names itself rather than asking for a card (the ship agent, 27
+        // September 2026).
         public static LeverAction ShipLever(in ConsoleFacts f, SiteCatalog sites, out SiteId target, out bool enabled, out string reason)
         {
             target = SiteId.None; enabled = false; reason = string.Empty;
-            if (f.Selected == SiteId.None) { reason = SelectFirst; return LeverAction.None; }
             if (f.Phase == DayPhase.Plank) { reason = RunOver; return LeverAction.None; }
             if (Destinations.IsPurchasable(f.Selected) && !Destinations.IsOpen(f.Selected, f.UnlockedMask))
             {
@@ -103,6 +106,7 @@ namespace SunkCost.World
             if (f.BelowCount > 0 || f.CabinAway) { reason = DiversBelow; return LeverAction.None; }
             if (f.Riding) { reason = CabinInUse; return LeverAction.None; }
             if (f.DiveDone && f.World == WorldId.Sea) { enabled = true; return LeverAction.EndDay; }
+            if (f.Selected == SiteId.None) { reason = SelectFirst; return LeverAction.None; }
             if (f.Payday && f.Selected != SiteId.HQ) { reason = f.World == WorldId.HQ ? PayQuotaFirst : PaydayOnlyHQ; return LeverAction.None; }
             if (f.Selected == f.CurrentSite && f.World == Destinations.WorldOf(f.Selected)) { reason = AlreadyHere; return LeverAction.None; }
             // Until sites have their own worlds every site is the one sea world, so a

@@ -131,3 +131,27 @@ MonoBehaviour:
     Text: GIVE UP
   - Key: board.title
     Text: QUOTA BOARD
+  - Key: nav.title
+    Text: NAVIGATION
+  - Key: nav.selected
+    Text: SELECTED DESTINATION
+  - Key: nav.select
+    Text: SELECT A DESTINATION
+  - Key: nav.sailing
+    Text: SAILING
+  - Key: nav.dive
+    Text: DIVE IN PROGRESS
+  - Key: lever.confirm
+    Text: CONFIRM
+  - Key: lever.unlock
+    Text: UNLOCK ${0}
+  - Key: lever.endday
+    Text: END DAY
+  - Key: lever.pay
+    Text: PAY
+  - Key: giveup.card
+    Text: GIVE UP
+  - Key: giveup.foot
+    Text: EVERYONE MUST AGREE
+  - Key: giveup.voted
+    Text: "YOU VOTED \xB7 E TO TAKE BACK"

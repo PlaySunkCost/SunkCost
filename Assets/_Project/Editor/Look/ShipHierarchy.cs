@@ -23,7 +23,7 @@ namespace SunkCost.Editor.Look
     {
         // The models renamed so no group shares a name with them.
         public const string TowerModelName = "Tower Model";
-        public const string ConsoleModelName = "Console Model";
+        public const string ConsoleModelName = "Console Model"; // the old console model's name; superseded by the navigation console rig (27 September 2026)
         public const string StorageSillModelName = "StorageSill Model"; // the stub's collider keeps "StorageSill"
 
         public static void Group(Transform root)
@@ -43,7 +43,8 @@ namespace SunkCost.Editor.Look
 
             // The models out of Look, into their areas.
             Move(look, "Tower", tower, TowerModelName);
-            Move(look, "Console", console, ConsoleModelName);
+            // The navigation console is not a Look model: its rig stands on the root and
+            // goes to the Console group by its name below (ConsoleBuilder.Place).
             Move(look, "TvCabinet", tv, null);
             Move(look, "StorageRoom", storage, null);
             Move(look, "StorageSill", storage, StorageSillModelName);
@@ -63,7 +64,9 @@ namespace SunkCost.Editor.Look
         private static Transform AreaOf(string name, Transform well, Transform tower, Transform console, Transform tv, Transform storage, Transform cabin, Transform volumes, Transform points)
         {
             if (name.StartsWith("Well", StringComparison.Ordinal) || name.StartsWith("Pedestal", StringComparison.Ordinal) || name.StartsWith("Grate", StringComparison.Ordinal)) return well;
-            // The monitor, its buttons, its status line and its display (Monitor Display).
+            // The navigation console rig (Nav Console: its screens, its cards and its lever
+            // are its own children), and any old monitor part of a ship built before it.
+            if (name == ConsoleRig.ShipRootName || name.StartsWith("Nav ", StringComparison.Ordinal)) return console;
             if (name.StartsWith(ShipParts.MonitorName, StringComparison.Ordinal)) return console;
             if (name.StartsWith("Crew Screen", StringComparison.Ordinal)) return tower;
             // The screen, the caption, the speaker and the idle card (Tv Idle).

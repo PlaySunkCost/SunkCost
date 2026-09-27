@@ -14,11 +14,19 @@ namespace SunkCost.World
         public void ConfigureDockBridge(Collider bridge) => fixedDockBridge = bridge;
         public const string RootName = "Ship";
         public const string AboardVolumeName = "AboardVolume";
+        // The old monitor and its three buttons: superseded by the navigation console
+        // (27 September 2026). The names stay declared until the test phase deletes the
+        // old classes; no built ship carries these parts any more.
         public const string MonitorName = "Monitor";
         public const string MonitorButtonSite01Name = "MonitorButton_Site01";
         public const string MonitorButtonHQName = "MonitorButton_HQ";
         public const string MonitorButtonEndDayName = "MonitorButton_EndDay";
-        public const string MonitorStatusName = "MonitorStatus"; // TextMesh the ShipMonitor writes
+        public const string MonitorStatusName = "MonitorStatus"; // TextMesh the ShipMonitor wrote
+        // The navigation console (Dan, 27 September 2026; docs/DESIGN.md "The navigation
+        // console"): the shared console's rig on the tower's forward face (ConsoleRig), with
+        // its lever and its five destination cards ("Nav Card HQ", "Nav Card Site01" ...).
+        public const string NavConsoleName = ConsoleRig.ShipRootName;   // "Nav Console"
+        public const string NavLeverName = ConsoleRig.ShipLeverName;    // "Nav Lever"
         public const string DeckCabinName = "DeckCabin";
         public const string DeckCabinVolumeName = "DeckCabinVolume";
         public const string DeckCabinDoorLName = "DeckCabinDoorL";
@@ -52,7 +60,7 @@ namespace SunkCost.World
         // Find searches at any depth, so nothing reads these to find a part.
         public const string WellGroupName = "Well";
         public const string TowerGroupName = "Tower";
-        public const string ConsoleGroupName = "Console"; // under Tower: the console model, the monitor, its buttons and its displays
+        public const string ConsoleGroupName = "Console"; // under Tower: the navigation console rig (its screens, its cards and its lever)
         public const string TvGroupName = "Tv";
         public const string StorageGroupName = "Storage";
         public const string CabinGroupName = "Cabin";
@@ -62,7 +70,7 @@ namespace SunkCost.World
 
         public static readonly string[] RequiredChildren =
         {
-            AboardVolumeName, MonitorName, MonitorButtonSite01Name, MonitorButtonHQName, MonitorButtonEndDayName, MonitorStatusName, DeckCabinName,
+            AboardVolumeName, NavConsoleName, NavLeverName, DeckCabinName,
             DeckCabinVolumeName, DeckCabinDoorLName, DeckCabinDoorRName, DeckCabinButtonName, DeckCabinPanelName,
             StorageAreaName, StorageVolumeName, StorageReadoutName, BoardingPointName,
             TvScreenName, TvCaptionName, TvSpeakerName,
@@ -72,6 +80,7 @@ namespace SunkCost.World
 
         public Transform Root => transform;
         public Collider AboardVolume => Find(AboardVolumeName)?.GetComponent<Collider>();
+        public Transform NavConsole => Find(NavConsoleName);
         public Transform DeckCabin => Find(DeckCabinName);
         public Collider DeckCabinVolume => Find(DeckCabinVolumeName)?.GetComponent<Collider>();
         public Transform DeckCabinDoorL => Find(DeckCabinDoorLName);
