@@ -21,11 +21,12 @@ namespace SunkCost.World
         public const string GiveUpCardName = "Give Up Button";     // == GiveUpButton.ButtonName
         public const string TopScreenName = "Console Top Screen", BottomScreenName = "Console Bottom Screen", SignName = "Console Sign";
         public const string LeverHandleName = "Console Lever Handle", LeverHingeName = "Console Lever Hinge", BodyName = "Console Body";
+        public const string TouchName = "Touch";                   // each control's invisible quad (InteractHighlight rims MeshRenderers only)
 
         [SerializeField] private ConsoleKind kind;
         [SerializeField] private Transform topScreen, bottomScreen, sign, leverHandle, leverHinge;
         [SerializeField] private Collider leverCollider, giveUpCollider;      // giveUpCollider null on the ship
-        [SerializeField] private Collider[] cardColliders = new Collider[5]; // Destinations.Cards order; empty on HQ
+        [SerializeField] private Collider[] cardColliders = System.Array.Empty<Collider>(); // Destinations.Cards order; empty on HQ
         [SerializeField] private ConsoleScreen topSurface, bottomSurface, signSurface;
 
         public ConsoleKind Kind => kind;
@@ -46,6 +47,17 @@ namespace SunkCost.World
         public string BottomText { get; private set; } = string.Empty;
         public string SignText { get; private set; } = string.Empty;
 
+        // What Show drew last, read by the draw delegates below: made once per rig, so a
+        // Show every frame allocates nothing but the key strings (the surfaces keep the
+        // delegate for a repaint after a lost texture, and then draw the latest model).
+        private TopModel shownTop;
+        private BottomModel shownBottom;
+        private SignModel shownSign;
+        private ConsoleStyle shownStyle;
+        private System.Action<ScreenPainter> drawTop, drawBottom, drawSign;
+
+        private void Awake() => LayoutControls();
+
         // The builder's wiring.
         public void Configure(ConsoleKind consoleKind, ConsoleScreen top, ConsoleScreen bottom, ConsoleScreen signSurfaceScreen,
             Transform hinge, Transform handle, Collider lever, Collider giveUp, Collider[] cards)
@@ -57,31 +69,67 @@ namespace SunkCost.World
             sign = signSurfaceScreen != null ? signSurfaceScreen.transform : null;
             leverHinge = hinge; leverHandle = handle;
             leverCollider = lever; giveUpCollider = giveUp;
-            cardColliders = new Collider[5];
-            if (cards != null) for (int i = 0; i < cards.Length && i < 5; i++) cardColliders[i] = cards[i];
+            cardColliders = cards != null ? (Collider[])cards.Clone() : System.Array.Empty<Collider>();
+        }
+
+        // The control colliders where the painter draws their pictures: the same rectangles
+        // (ConsolePaint.CardRects / GiveUpRect) over the surfaces' current pixel size, so a
+        // layout knob changed on the style asset after the rig was built moves the hit box
+        // with the card. Run at Awake and by the builder; only the builder's own children
+        // of a surface are moved (their z and depth stay as built).
+        public void LayoutControls()
+        {
+            ConsoleStyle style = ConsoleStyle.Resolve();
+            if (topSurface != null && cardColliders != null)
+            {
+                Rect[] rects = ConsolePaint.CardRects(topSurface.Width, topSurface.Height, style);
+                for (int i = 0; i < cardColliders.Length && i < rects.Length; i++) Lay(cardColliders[i], topSurface, rects[i]);
+            }
+            if (bottomSurface != null && giveUpCollider != null) Lay(giveUpCollider, bottomSurface, ConsolePaint.GiveUpRect(bottomSurface.Width, bottomSurface.Height, style));
+        }
+
+        private static void Lay(Collider c, ConsoleScreen screen, Rect px)
+        {
+            if (c == null || screen == null || c.transform.parent != screen.transform) return;
+            Vector2 centre = screen.LocalCentre(px), size = screen.LocalSize(px);
+            Transform t = c.transform;
+            t.localPosition = new Vector3(centre.x, centre.y, t.localPosition.z);
+            if (c is BoxCollider box) box.size = new Vector3(size.x, size.y, box.size.z);
+            Transform touch = t.Find(TouchName);
+            if (touch != null) touch.localScale = new Vector3(Mathf.Max(0.01f, size.x), Mathf.Max(0.01f, size.y), 1f);
         }
 
         // The ConsoleControl on that collider's object, or null.
         public ConsoleControl ControlOf(Collider c) => c != null ? c.GetComponent<ConsoleControl>() : null;
 
-        // Draws the three models; safe every frame, cheap when nothing changed.
+        // Draws the three models; safe every frame, cheap when nothing changed (one
+        // Flatten per surface for the key and the text; no closure, no second Flatten).
         public void Show(TopModel top, BottomModel bottom, SignModel signModel)
         {
-            ConsoleStyle style = ConsoleStyle.Resolve();
+            shownStyle = ConsoleStyle.Resolve();
+            drawTop ??= p => ConsolePaint.Top(p, shownTop, shownStyle);
+            drawBottom ??= p => ConsolePaint.Bottom(p, shownBottom, shownStyle);
+            drawSign ??= p => ConsolePaint.Sign(p, shownSign, shownStyle);
             if (topSurface != null && top != null)
             {
-                topSurface.Paint(ConsolePaint.Key(top), p => ConsolePaint.Top(p, top, style));
-                TopText = ConsoleModels.Flatten(top);
+                shownTop = top;
+                string flat = ConsoleModels.Flatten(top);
+                topSurface.Paint(ConsolePaint.Key(top, flat), drawTop);
+                TopText = flat;
             }
             if (bottomSurface != null && bottom != null)
             {
-                bottomSurface.Paint(ConsolePaint.Key(bottom), p => ConsolePaint.Bottom(p, bottom, style));
-                BottomText = ConsoleModels.Flatten(bottom);
+                shownBottom = bottom;
+                string flat = ConsoleModels.Flatten(bottom);
+                bottomSurface.Paint(ConsolePaint.Key(bottom, flat), drawBottom);
+                BottomText = flat;
             }
             if (signSurface != null)
             {
-                signSurface.Paint(ConsolePaint.Key(signModel), p => ConsolePaint.Sign(p, signModel, style));
-                SignText = ConsoleModels.Flatten(signModel);
+                shownSign = signModel;
+                string flat = ConsoleModels.Flatten(signModel);
+                signSurface.Paint(ConsolePaint.Key(signModel, flat), drawSign);
+                SignText = flat;
             }
         }
 

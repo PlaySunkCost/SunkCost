@@ -20,10 +20,13 @@ namespace SunkCost.World
         public const float ConsoleReachMargin = 1.5f;   // the shop's margin: the server sees a copy a tick behind
 
         // The frame a pull of each console was last accepted on: two pulls of the same
-        // lever in one frame (two clients' RPCs in one tick) run one transaction. The
-        // transactions refuse a repeat by themselves except PAY after a short sale
-        // (ServerPay would sell an empty room and report SHORT again), so the guard is
-        // here, after the resolver, and only the second of a same-frame pair sees it.
+        // lever in one frame (two clients' RPCs in one tick) run one transaction and
+        // the second is answered "Lever in use" before the lever is even resolved - the
+        // first accepted CONFIRM clears the selection synchronously, so a resolved
+        // second pull would read "Select a destination" as the ship casts off (the
+        // netcode review's m3). Across ticks the transactions refuse a repeat by
+        // themselves (ServerSail's transitioning, the unlock bit, DiveDone) and the
+        // rule table dims PAY over an empty room (ConsoleRules.NothingToSell).
         private readonly int[] lastPullFrame = { -1, -1 };
 
         // E on a destination card. Ship only (the HQ console has no cards).
@@ -41,8 +44,11 @@ namespace SunkCost.World
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
+            if (kind != ConsoleKind.Ship && kind != ConsoleKind.HQ) { why = "No such console"; return false; } // a hand-made request: no rig would swing for it
             bool located = kind == ConsoleKind.Ship ? ServerPresserAboard(sender, out why) : ServerPresserAtHQConsole(sender, out why);
             if (!located) return false;
+            int k = (int)kind;
+            if (lastPullFrame[k] == Time.frameCount) { why = ConsoleRules.LeverInUse; return false; }
             SiteId target = SiteId.None;
             bool enabled;
             string reason;
@@ -53,13 +59,15 @@ namespace SunkCost.World
                 // reason where one transaction already has words for it.
                 if (expected == LeverAction.Unlock && expectedTarget != SiteId.None && dayState.IsOpen(expectedTarget)) why = ConsoleRules.AlreadyOpen;
                 else if (expected == LeverAction.EndDay && !dayState.DiveDone) why = ConsoleRules.NobodyDived;
+                // The lever now acts on another card than the one the presser saw: the
+                // card changed under the pull, whatever the new card's own state is (a
+                // "$100 short" for a card the presser never chose would mislead).
+                else if (target != SiteId.None && target != expectedTarget) why = ConsoleRules.SelectionChanged;
                 else why = current == LeverAction.None || !enabled ? reason : ConsoleRules.SelectionChanged;
                 Debug.Log($"[Console] {DisplayName(sender)} pulled {kind} expecting {expected}/{expectedTarget}, now {current}/{target}: {why}");
                 return false;
             }
             if (!enabled) { why = reason; return false; }
-            int k = (int)kind;
-            if (k >= 0 && k < lastPullFrame.Length && lastPullFrame[k] == Time.frameCount) { why = ConsoleRules.LeverInUse; return false; }
             bool ok;
             switch (current)
             {
@@ -70,14 +78,16 @@ namespace SunkCost.World
                 default: why = string.IsNullOrEmpty(reason) ? ConsoleRules.SelectFirst : reason; ok = false; break;
             }
             if (!ok) return false;
-            if (k >= 0 && k < lastPullFrame.Length) lastPullFrame[k] = Time.frameCount;
+            lastPullFrame[k] = Time.frameCount;
             dayState.ServerPullLever(kind, current, networkManager.TimeManager.Tick);
             Debug.Log($"[Console] {DisplayName(sender)} pulled {kind}/{current}/{target}");
             return true;
         }
 
         // The server's facts for the rule table: the day state plus what only the
-        // server knows — its own transition flag, the ride, and who is not aboard.
+        // server knows — its own transition flag, the ride, who is not aboard, and the
+        // room's worth summed now rather than the quarter-second-old replicated sum, so
+        // an item dropped into the room a moment ago counts for PAY at once.
         internal ConsoleFacts ServerFacts()
         {
             string notAboard = string.Empty;
@@ -87,6 +97,7 @@ namespace SunkCost.World
             ConsoleFacts f = ConsoleFacts.From(dayState, Settings, notAboard);
             f.Travelling = f.Travelling || transitioning;
             f.Riding = f.Riding || riding;
+            if (ship != null) f.BoxValue = StorageReadout.SumInside(ship);
             return f;
         }
 

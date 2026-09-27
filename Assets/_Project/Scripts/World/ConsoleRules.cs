@@ -71,6 +71,7 @@ namespace SunkCost.World
         public const string SailHomeFirst = "Sail home first";
         public const string NotDocked = "Not docked at HQ";
         public const string NothingToPay = "Nothing to pay yet — dive first";
+        public const string NothingToSell = "Nothing to sell — dive again";     // docked with an empty room before payday: a PAY would sell nothing and report SHORT again
         public const string SelectionChanged = "Selection changed";
         public const string NotAtConsole = "Step up to the console";
         public const string AlreadyOpen = "Already open";
@@ -113,13 +114,20 @@ namespace SunkCost.World
             return LeverAction.Confirm;
         }
 
-        // The HQ lever: PAY while docked with a cycle to pay for.
+        // The HQ lever: PAY while docked with a cycle to pay for AND something to hand
+        // over - the room's worth, or payday, when the empty room must still be judged
+        // (the plank). An empty room before payday is dim: CrewDayState.ServerPay keeps
+        // Day and Payday on a short sale, so without this row a second PAY after a short
+        // sale would sell an empty room and report SHORT again with a new serial (the
+        // netcode review's M1, 27 September 2026); the same facts dim the sign on every
+        // peer and refuse the pull on the server.
         public static LeverAction HQLever(in ConsoleFacts f, out bool enabled, out string reason)
         {
             enabled = false; reason = string.Empty;
             if (f.Phase == DayPhase.Plank) { reason = RunOver; return LeverAction.None; }
             if (f.Phase != DayPhase.AtHQ || f.World != WorldId.HQ || f.Travelling) { reason = NotDocked; return LeverAction.None; }
             if (f.Day == 0 && !f.Payday) { reason = NothingToPay; return LeverAction.None; }
+            if (!f.Payday && f.BoxValue <= 0) { reason = NothingToSell; return LeverAction.None; }
             enabled = true;
             return LeverAction.Pay;
         }

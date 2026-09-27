@@ -26,12 +26,25 @@ namespace SunkCost.World
         [SerializeField] private Vector2 metres = new(1f, 0.5f);
         [SerializeField] private Renderer glass;
 
+        // A painted texture is self-contained: the glyphs were rasterised into it, so a
+        // font-atlas rebuild AFTER a paint cannot stale it. Only a rebuild DURING a paint
+        // can (glyphs drawn before it moved), and PaintNow runs the pass again for that;
+        // a surface whose every pass meets a rebuild (an atlas at its cap, thrashed by the
+        // consoles' own glyphs) retries no faster than this, so nine surfaces on a host
+        // can never repaint every frame. The rebuild count is the testers' storm gauge.
+        public const float RetrySeconds = 0.5f;
+        public static int AtlasRebuilds { get; private set; }      // Font.textureRebuilt events for the console font since the domain loaded
+        private static bool counting;
+        private static int rebuildsInWindow;
+        private static float windowStart;
+
         private RenderTexture texture;
         private MaterialPropertyBlock block;
         private string lastKey;
         private Action<ScreenPainter> lastDraw;
         private bool dirty, painting;
         private float paintedEmission = -1f;
+        private float nextRetry;
 
         public string SurfaceName => surfaceName;
         public Vector2 Metres => metres;
@@ -127,6 +140,7 @@ namespace SunkCost.World
                 if (!ok) { lastKey = null; return false; }
                 if (!dirty) break; // the atlas was rebuilt under the first pass: once more, with every glyph in
             }
+            if (dirty) nextRetry = Time.realtimeSinceStartup + RetrySeconds; // rebuilt under both passes: Update tries again, no sooner than this
             Apply(s);
             return true;
         }
@@ -180,6 +194,7 @@ namespace SunkCost.World
         {
             lastKey = null;
             Font.textureRebuilt += OnFontRebuilt;
+            if (!counting) { counting = true; Font.textureRebuilt += CountRebuild; }
         }
 
         private void OnDisable()
@@ -188,16 +203,29 @@ namespace SunkCost.World
             Release();
         }
 
+        // Only a rebuild under this surface's own paint matters (see RetrySeconds).
         private void OnFontRebuilt(Font font)
         {
-            if (font == ConsoleStyle.Resolve().ResolvedFont) dirty = true;
+            if (painting && font == ConsoleStyle.Resolve().ResolvedFont) dirty = true;
+        }
+
+        // The storm gauge: every rebuild of the console font, and a warning when they
+        // come faster than a handful in five seconds (the atlas is at its cap).
+        private static void CountRebuild(Font font)
+        {
+            if (font != ConsoleStyle.Resolve().ResolvedFont) return;
+            AtlasRebuilds++;
+            float now = Time.realtimeSinceStartup;
+            if (now - windowStart > 5f) { windowStart = now; rebuildsInWindow = 0; }
+            if (++rebuildsInWindow == 6)
+                Debug.LogWarning($"[ConsoleScreen] the font atlas was rebuilt {rebuildsInWindow} times in 5 s ({AtlasRebuilds} in all): the console text is thrashing it — {(font.material != null && font.material.mainTexture != null ? font.material.mainTexture.width + "x" + font.material.mainTexture.height : "?")}");
         }
 
         private void Update()
         {
             if (lastDraw == null || painting) return;
             if (texture == null || !texture.IsCreated()) { EnsureTexture(); PaintNow(); }
-            else if (dirty) PaintNow();
+            else if (dirty && Time.realtimeSinceStartup >= nextRetry) PaintNow();
         }
     }
 }

@@ -62,11 +62,13 @@ namespace SunkCost.World
             if (hooked != null) hooked.LeverPulled += Play;
         }
 
-        // An accepted pull: swing if it is this console's kind.
+        // An accepted pull: swing if it is this console's kind. PlayedSerial only ever
+        // grows: a serial already played (any caller replaying the SyncVar) swings nothing.
         public void Play(LeverPull pull)
         {
             if (pull.Serial == 0) return;
             if (rig != null && pull.Kind != rig.Kind) return;
+            if (pull.Serial <= PlayedSerial) return;
             PlayedSerial = pull.Serial;
             startTick = pull.Tick;
             startTime = Time.time;

@@ -18,6 +18,8 @@ namespace SunkCost.World
         // == ConsoleRig.HQLeverName == QuotaBoard.BoardName: the HQ lever's control object.
         public const string HQLeverObjectName = "Quota Board";
 
+        private Collider hqLeverCollider; // found once per HQ scene load; a destroyed one (a rebuild) is looked up again
+
         // The presser's object in the HQ scene, its eyes within InteractReach + the
         // margin of the lever's collider (the shop's reach rule, WorldSceneFlow.Shop).
         internal bool ServerPresserAtHQConsole(NetworkConnection sender, out string why)
@@ -33,7 +35,18 @@ namespace SunkCost.World
             return true;
         }
 
-        private static Collider ServerHQLeverCollider(Scene hq)
+        // The rig's own lever collider when the new console stands at HQ (ConsoleRig.InScene,
+        // INTERFACES §7.3), else the old board's object by name; kept between pulls so the
+        // reach test does not walk the HQ scene per press (the netcode review's m5).
+        private Collider ServerHQLeverCollider(Scene hq)
+        {
+            if (hqLeverCollider != null && hqLeverCollider.gameObject.scene == hq) return hqLeverCollider;
+            ConsoleRig rig = ConsoleRig.InScene(hq, ConsoleKind.HQ);
+            hqLeverCollider = rig != null && rig.LeverCollider != null ? rig.LeverCollider : ServerFindHQLeverByName(hq);
+            return hqLeverCollider;
+        }
+
+        private static Collider ServerFindHQLeverByName(Scene hq)
         {
             foreach (GameObject root in hq.GetRootGameObjects())
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))

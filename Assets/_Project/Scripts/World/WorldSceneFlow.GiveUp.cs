@@ -19,6 +19,10 @@ namespace SunkCost.World
             if (currentWorld != WorldId.HQ || dayState.Phase != DayPhase.AtHQ) { why = "Not docked at HQ"; return false; }
             HQPlayerController presser = PlayerOf(sender);
             if (presser == null || presser.gameObject.scene != WorldScenes.Scene(WorldId.HQ)) { why = "Not at HQ"; return false; }
+            // A joiner between authentication and its spawn is not in the crew count yet:
+            // the vote waits for it, as a departure does (the netcode review's M2).
+            CrewSpawner spawner = FindAnyObjectByType<CrewSpawner>();
+            if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
             int crew = ServerCrewCount();
             bool voted = dayState.ServerToggleGiveUp(sender.ClientId, crew);
             Debug.Log($"[GiveUp] {DisplayName(sender)} {(voted ? "votes to give up" : "takes the vote back")}: {dayState.GiveUpVotes}/{crew}");
@@ -39,6 +43,10 @@ namespace SunkCost.World
                 if (conn.IsActive && PlayerOf(conn) != null) crew++;
             return crew;
         }
+
+        // A joiner's player spawned (CrewSpawner.Spawn): the crew grew, so a count taken
+        // against the smaller crew never completes.
+        internal void ServerPlayerSpawned() => ServerClearGiveUp("a player spawned");
 
         private void ServerClearGiveUp(string reason)
         {

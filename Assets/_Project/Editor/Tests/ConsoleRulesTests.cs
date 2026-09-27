@@ -176,10 +176,27 @@ namespace SunkCost.Editor.Tests
             f = Docked(SiteId.None); f.Travelling = true;
             Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out _, out reason)); Assert.AreEqual(ConsoleRules.NotDocked, reason);
             Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(Docked(SiteId.None), out enabled, out reason)); Assert.IsFalse(enabled); Assert.AreEqual(ConsoleRules.NothingToPay, reason);
-            f = Docked(SiteId.None); f.Day = 1;
+            f = Docked(SiteId.None); f.Day = 1; f.BoxValue = 50;
             Assert.AreEqual(LeverAction.Pay, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
-            f = Docked(SiteId.None); f.Day = 3; f.Payday = true;
+            f = Docked(SiteId.None); f.Day = 3; f.Payday = true; f.BoxValue = 50;
             Assert.AreEqual(LeverAction.Pay, ConsoleRules.HQLever(f, out enabled, out _)); Assert.IsTrue(enabled);
+        }
+
+        // An empty room before payday: nothing to hand over, so PAY is dim on every peer
+        // and a second PAY after a short sale is refused (no empty sale, no second report).
+        [Test]
+        public void HQLever_EmptyRoom_NothingToSell_ExceptOnPayday()
+        {
+            ConsoleFacts f = Docked(SiteId.None); f.Day = 1; f.BoxValue = 0;
+            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out bool enabled, out string reason)); Assert.IsFalse(enabled); Assert.AreEqual(ConsoleRules.NothingToSell, reason);
+            f = Docked(SiteId.None); f.Day = 2; f.CycleSales = 120; f.BoxValue = 0;  // right after a short sale
+            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.IsFalse(enabled); Assert.AreEqual(ConsoleRules.NothingToSell, reason);
+            f.BoxValue = 1;                                                            // one item in the room again
+            Assert.AreEqual(LeverAction.Pay, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
+            f = Docked(SiteId.None); f.Day = 3; f.Payday = true; f.BoxValue = 0;      // payday judges the empty room (the plank)
+            Assert.AreEqual(LeverAction.Pay, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
+            f = Docked(SiteId.None); f.Day = 0; f.BoxValue = 80;                       // nothing dived yet: the older row still wins
+            Assert.AreEqual(LeverAction.None, ConsoleRules.HQLever(f, out enabled, out reason)); Assert.AreEqual(ConsoleRules.NothingToPay, reason);
         }
 
         // ---- destinations ----------------------------------------------------------

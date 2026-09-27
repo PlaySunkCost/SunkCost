@@ -186,7 +186,7 @@ namespace SunkCost.Editor.Look
         // MeshRenderers, and gives a Quad the panel-edge frame.
         private static void Touch(Transform control, Quaternion localRotation, Vector2 size, Material touch)
         {
-            var go = new GameObject("Touch");
+            var go = new GameObject(ConsoleRig.TouchName);
             go.transform.SetParent(control, false);
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = localRotation;

@@ -69,9 +69,14 @@ namespace SunkCost.Look
             if (shapesShared == null || shapesShared.shader != shader)
             {
                 shaderShared = shader;
-                shapesShared = new Material(shader) { name = "Screen paint shapes", hideFlags = HideFlags.HideAndDontSave };
-                textShared = new Material(shader) { name = "Screen paint text", hideFlags = HideFlags.HideAndDontSave };
-                pictureShared = new Material(shader) { name = "Screen paint picture", hideFlags = HideFlags.HideAndDontSave };
+                // Not HideAndDontSave: that includes DontUnloadUnusedAsset, and the static
+                // references die on every domain reload, so the editor kept three native
+                // materials per reload. The unused-asset sweep may collect these once the
+                // statics are gone; while they hold them, Unity's sweep examines statics.
+                const HideFlags flags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild | HideFlags.NotEditable;
+                shapesShared = new Material(shader) { name = "Screen paint shapes", hideFlags = flags };
+                textShared = new Material(shader) { name = "Screen paint text", hideFlags = flags };
+                pictureShared = new Material(shader) { name = "Screen paint picture", hideFlags = flags };
             }
             return true;
         }
@@ -253,6 +258,19 @@ namespace SunkCost.Look
             return new Vector2(e.x, e.y + e.z);
         }
 
+        // The width `s` would take at `px`, estimated from one small probe size the
+        // whole paint shares, so deciding whether a string fits (and how far to shrink
+        // it) puts no glyphs of the unused sizes into the font atlas: only the size that
+        // is drawn is ever requested, which keeps the dynamic atlas - shared with every
+        // TextMesh in the world - from filling with the consoles' large bold glyphs.
+        public const int ProbePx = 48;
+        public float Estimate(string s, int px, FontStyle style, float tracking = 0f)
+        {
+            if (string.IsNullOrEmpty(s) || px < 1) return 0f;
+            if (px <= ProbePx) return MeasureExtents(s, px, style, tracking).x;
+            return MeasureExtents(s, ProbePx, style, tracking).x * px / ProbePx;
+        }
+
         // Draws from the baseline's left end; returns the advance.
         public float Text(string s, int px, FontStyle style, Vector2 baselineLeft, Color c, float tracking = 0f)
         {
@@ -277,16 +295,23 @@ namespace SunkCost.Look
             return x - baselineLeft.x;
         }
 
-        // Text placed in a box by anchor, shrunk to fit its width when asked. Returns the pixel size used.
+        // Text placed in a box by anchor, shrunk to fit its width when asked. Returns the
+        // pixel size used. The shrink is decided from the probe estimate (a 2 % margin
+        // for the estimate's error) and only the size drawn is requested from the atlas;
+        // a string the estimate misjudged is shrunk once more from its exact width.
         public int TextIn(string s, int px, FontStyle style, Rect box, TextAnchor anchor, Color c, float tracking = 0f, bool shrinkToFit = true)
         {
             if (string.IsNullOrEmpty(s) || px < 1) return px;
+            if (shrinkToFit)
+            {
+                float estimate = Estimate(s, px, style, tracking);
+                if (estimate > box.width * 0.98f && estimate > 0f) px = Mathf.Max(6, Mathf.FloorToInt(px * box.width * 0.98f / estimate));
+            }
             Vector3 e = MeasureExtents(s, px, style, tracking);
-            if (shrinkToFit && e.x > box.width && e.x > 0f)
+            if (shrinkToFit && e.x > box.width && e.x > 0f && px > 6)
             {
                 px = Mathf.Max(6, Mathf.FloorToInt(px * box.width / e.x));
                 e = MeasureExtents(s, px, style, tracking);
-                if (e.x > box.width && px > 6) { px = Mathf.Max(6, Mathf.FloorToInt(px * box.width / e.x)); e = MeasureExtents(s, px, style, tracking); }
             }
             float x = anchor == TextAnchor.UpperLeft || anchor == TextAnchor.MiddleLeft || anchor == TextAnchor.LowerLeft ? box.xMin
                 : anchor == TextAnchor.UpperRight || anchor == TextAnchor.MiddleRight || anchor == TextAnchor.LowerRight ? box.xMax - e.x

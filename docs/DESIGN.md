@@ -94,7 +94,11 @@ sign. The game draws the screens and the sign's word, so they can change.
   away when the sites get their own scenes). The selection clears once a sail is accepted
   (Dan's proposal). A lever pull carries the word the presser saw; if the crew changed the
   selection just before, the pull is refused "Selection changed" rather than acting on the
-  new card.
+  new card. At HQ the lever reads PAY only while the ship's storage room holds something to
+  sell, or on payday (the empty room is judged then, and the plank follows a miss); an empty
+  room before payday dims it with "Nothing to sell — dive again", so a second PAY after a
+  short sale does nothing (the old desk button sold the empty room again and reported SHORT
+  a second time).
 
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built

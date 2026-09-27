@@ -87,6 +87,7 @@ namespace SunkCost.World
             NetworkObject nob = networkManager.GetPooledInstantiated(playerPrefab, position, rotation, true);
             networkManager.ServerManager.Spawn(nob, conn, scene);
             OnSpawned?.Invoke(nob);
+            if (flow != null) flow.ServerPlayerSpawned(); // the give-up vote's crew grew (WorldSceneFlow.GiveUp)
         }
 
         // HQ has its own "Spawn Points/Spawn n" (players arrive in the base, not

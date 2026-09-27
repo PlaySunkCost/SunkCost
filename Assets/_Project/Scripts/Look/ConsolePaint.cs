@@ -33,10 +33,11 @@ namespace SunkCost.Look
 
         // ---- keys: everything that changes the picture, nothing that does not ---------
 
-        public static string Key(TopModel m)
+        public static string Key(TopModel m) => Key(m, m != null ? ConsoleModels.Flatten(m) : null);
+        public static string Key(TopModel m, string flat)
         {
             if (m == null) return "top:none";
-            var sb = new StringBuilder("top:").Append(ConsoleModels.Flatten(m));
+            var sb = new StringBuilder("top:").Append(flat ?? ConsoleModels.Flatten(m));
             sb.Append('|').Append((int)m.BigTone).Append((int)m.HintTone).Append((int)m.FootLeftTone);
             if (m.Cards != null)
                 foreach (CardModel c in m.Cards)
@@ -44,17 +45,24 @@ namespace SunkCost.Look
             return sb.ToString();
         }
 
-        public static string Key(BottomModel m)
+        public static string Key(BottomModel m) => Key(m, m != null ? ConsoleModels.Flatten(m) : null);
+        public static string Key(BottomModel m, string flat)
         {
             if (m == null) return "bottom:none";
-            var sb = new StringBuilder("bottom:").Append(ConsoleModels.Flatten(m));
+            var sb = new StringBuilder("bottom:").Append(flat ?? ConsoleModels.Flatten(m));
             sb.Append('|').Append((int)m.Status.Tone).Append((int)m.Status.Size).Append('|').Append(m.Picture != null ? m.Picture.GetEntityId().ToString() : "0");
             if (m.Lines != null) foreach (ConsoleLine line in m.Lines) sb.Append('|').Append((int)line.Tone).Append((int)line.Size);
             if (m.VoteCard != null) sb.Append("|vote").Append(m.VoteCard.Enabled ? 'e' : 'd').Append(m.VoteCard.Aimed ? 'a' : '-').Append(m.VoteCard.Foot);
             return sb.ToString();
         }
 
-        public static string Key(SignModel m) => "sign:" + ConsoleModels.Flatten(m) + "|" + (int)m.Tone + (m.Aimed ? "a" : "-");
+        public static string Key(SignModel m) => Key(m, ConsoleModels.Flatten(m));
+        public static string Key(SignModel m, string flat) => "sign:" + (flat ?? ConsoleModels.Flatten(m)) + "|" + (int)m.Tone + (m.Aimed ? "a" : "-");
+
+        // A picture's tint: the accent (or a card's own variant) when the style paints
+        // silhouettes, else white so Dan's own colours show (a locked card's are dimmed).
+        private static Color PictureTint(ConsoleStyle s, Color silhouette, bool locked)
+            => s.PictureTintOnly ? silhouette : locked ? Scale(Color.white, s.LockedDim) : Color.white;
 
         // ---- layout ------------------------------------------------------------------
 
@@ -129,7 +137,7 @@ namespace SunkCost.Look
             {
                 CardModel c = m.Cards[i];
                 if (c == null || string.IsNullOrEmpty(c.Name)) continue;
-                float need = p.Measure(c.Name, namePx, Style, s.TitleTracking).x, room = rects[i].width * 0.86f;
+                float need = p.Estimate(c.Name, namePx, Style, s.TitleTracking), room = rects[i].width * 0.86f;
                 if (need > room && need > 0f) namePx = Mathf.Max(8, Mathf.FloorToInt(namePx * room / need));
             }
             for (int i = 0; i < CardCount && i < m.Cards.Length; i++)
@@ -152,7 +160,7 @@ namespace SunkCost.Look
             float pad = 0.06f * r.width;
             Rect box = new(r.x + pad, r.y + pad, r.width - 2f * pad, r.height * 0.58f - pad);
             p.Frame(box, 1f, Alpha(frame, 0.45f));
-            p.Picture(Inset(box, 0.08f * box.width), c.Picture, picture, s.PictureTintOnly);
+            p.Picture(Inset(box, 0.08f * box.width), c.Picture, PictureTint(s, picture, c.Locked), s.PictureTintOnly);
             p.TextIn(c.Name, namePx, Style, new Rect(r.x, r.y + r.height * 0.61f, r.width, r.height * 0.13f), TextAnchor.MiddleCenter, name, s.TitleTracking);
             if (!string.IsNullOrEmpty(c.Tag))
                 p.TextIn(c.Tag, (int)Px(s.CardTag, h), Style, new Rect(r.x, r.y + r.height * 0.735f, r.width, r.height * 0.09f), TextAnchor.MiddleCenter, c.Locked ? Alpha(ScreenStyle.Warn, 0.85f) : ScreenStyle.Dim, s.TitleTracking * 0.5f);
@@ -167,7 +175,7 @@ namespace SunkCost.Look
             {
                 const string word = "HERE";
                 int px = (int)Px(s.HereChip, h);
-                float chipW = p.Measure(word, px, Style, 0.08f).x + px * 1.2f, chipH = px * 1.6f;
+                float chipW = p.Estimate(word, px, Style, 0.08f) + px * 1.2f, chipH = px * 1.6f;
                 Rect chip = new(c.Locked ? r.xMax - pad - chipW : r.center.x - chipW / 2f, rowY + (rowH - chipH) / 2f, chipW, chipH);
                 p.Frame(chip, 1.5f, ScreenStyle.Dim);
                 p.TextIn(word, px, Style, chip, TextAnchor.MiddleCenter, ScreenStyle.Text, 0.08f);
@@ -225,7 +233,7 @@ namespace SunkCost.Look
             // The picture left, the facts right of a thin divider (the reference's layout).
             Rect picture = new(content.x + pad, content.y + pad, content.width * 0.36f - pad, content.height - 2f * pad);
             p.Frame(picture, 1f, Alpha(ScreenStyle.Accent, 0.35f));
-            p.Picture(Inset(picture, 0.08f * picture.width), m.Picture, ScreenStyle.Accent, s.PictureTintOnly);
+            p.Picture(Inset(picture, 0.08f * picture.width), m.Picture, PictureTint(s, ScreenStyle.Accent, false), s.PictureTintOnly);
             p.Rect(new Rect(picture.xMax + pad * 0.6f, content.y + pad, 1.5f, content.height - 2f * pad), Alpha(ScreenStyle.Accent, 0.5f));
             float colX = picture.xMax + pad * 1.4f;
             Rect col = new(colX, content.y + pad, content.xMax - pad - colX, content.height - 2f * pad);
@@ -305,12 +313,26 @@ namespace SunkCost.Look
             p.Frame(frame, t, tone);
             float chev = s.SignChevrons * h;
             p.Glyph(ScreenPainter.GlyphKind.Chevrons, new Rect(frame.x + t, frame.yMax - t - chev, frame.width - 2f * t, chev), warn);
-            // The word between two end bars, as the reference's plate reads.
+            // The word between two end bars, as the reference's plate reads. A long word
+            // (UNLOCK $100) is width-limited on this 0.25 x 0.11 m plate: then the bars go
+            // and the tracking tightens so the word keeps as much height as the width allows.
+            int wordPx = (int)Px(s.SignWord, h);
             float barW = Mathf.Max(2f, 0.025f * h), barPad = 0.10f * h;
             Rect word = new(frame.x + barPad + barW + 0.04f * h, frame.y + t, frame.width - 2f * (barPad + barW + 0.04f * h), frame.yMax - t - chev - frame.y - t);
-            p.Rect(new Rect(frame.x + barPad, word.y + word.height * 0.25f, barW, word.height * 0.5f), warn);
-            p.Rect(new Rect(frame.xMax - barPad - barW, word.y + word.height * 0.25f, barW, word.height * 0.5f), warn);
-            p.TextIn(m.Word, (int)Px(s.SignWord, h), Style, word, TextAnchor.MiddleCenter, tone, s.TitleTracking);
+            float tracking = s.TitleTracking;
+            bool bars = p.Estimate(m.Word, wordPx, Style, tracking) <= word.width;
+            if (bars)
+            {
+                p.Rect(new Rect(frame.x + barPad, word.y + word.height * 0.25f, barW, word.height * 0.5f), warn);
+                p.Rect(new Rect(frame.xMax - barPad - barW, word.y + word.height * 0.25f, barW, word.height * 0.5f), warn);
+            }
+            else
+            {
+                float edge = t + 0.03f * h;
+                word = new Rect(frame.x + edge, word.y, frame.width - 2f * edge, word.height);
+                tracking *= 0.4f;
+            }
+            p.TextIn(m.Word, wordPx, Style, word, TextAnchor.MiddleCenter, tone, tracking);
             if (!m.Enabled) p.Rect(new Rect(0f, 0f, w, h), Alpha(ScreenStyle.Back, 0.55f));
         }
     }
