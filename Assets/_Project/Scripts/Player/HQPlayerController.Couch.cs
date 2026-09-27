@@ -340,7 +340,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentButton = null;
             CurrentColourPanel = null;
-            CurrentQuotaBoard = null;
+            CurrentQuotaBoard = null; CurrentGiveUpButton = null;
             CurrentShopDisplay = null;
             CurrentTv = null;
             CurrentSeat = null;

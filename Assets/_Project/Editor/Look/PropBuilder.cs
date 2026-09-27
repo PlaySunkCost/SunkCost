@@ -521,7 +521,7 @@ namespace SunkCost.Editor.Look
         public static bool ShipStyle(GameObject parent) =>
             parent.GetComponentInParent<SunkCost.World.ShipParts>(true) != null || parent.transform.root.name == DiveCarRootName;
 
-        public static readonly string[] DangerKeys = { "button.endday" };
+        public static readonly string[] DangerKeys = { "button.endday", "button.giveup" };
         public static GameObject PushButton(GameObject parent, string name, Vector3 localPosition, Quaternion localRotation, string textKey, float width = 0.6f)
         {
             GameObject root = new(name);

@@ -139,10 +139,9 @@ namespace SunkCost.Editor.Look
             var intake=Group(root,"Intake and quota");
             Model(intake,"IntakeHopper",new Vector3(20,0,15));
             Box(intake,new Vector3(20,.55f,15),new Vector3(2,1.1f,1.5f));
-            Model(intake,"Console",new Vector3(16,0,15),180,default,true);
-            Box(intake,new Vector3(16,.55f,15),new Vector3(1.2f,1.1f,.8f));
-            Slab(intake,"Quota display mount",new Vector3(16,1,15),new Vector3(.18f,.8f,.18f),ShipKitMaterials.Steel());
-            HQPlatformBuilder.QuotaBoard(intake,new Vector3(16,1.7f,14.7f));
+            var quotaConsole=Model(intake,"Console",new Vector3(17.2f,0,15),180,Vector3.one*1.5f,true); // the ship's console at the ship's size (1.5x: its screen 1.8 x 0.7 m at eye height), between the intake sign's posts
+            Box(intake,new Vector3(17.2f,.375f,15),new Vector3(1.8f,.75f,1.1f)); // the base only: the desk's buttons stand above it, where the aim reaches them
+            HQPlatformBuilder.QuotaBoard(intake,quotaConsole); // the screen and PAY / GIVE UP on the console itself (Dan, 27 September 2026)
             foreach(float x in new[]{15.7f,20.3f}) Slab(intake,"Intake sign post",new Vector3(x,0,16.6f),new Vector3(.14f,3.2f,.14f),ShipKitMaterials.Steel(),true);
             Label(intake,"intake",new Vector3(18,2.88f,16.5f),5,.5f);
             Label(intake,"intake.sub",new Vector3(18,2.45f,16.5f),5,.3f);

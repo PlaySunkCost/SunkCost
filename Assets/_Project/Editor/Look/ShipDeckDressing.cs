@@ -487,7 +487,7 @@ namespace SunkCost.Editor.Look
         // flat layer with the most area is the panel - frames and legs are thin - and
         // the largest solid rectangle in that layer is the screen. The mesh need not be
         // import-readable: the editor reads its vertices anyway.
-        private static bool ScreenPanel(Transform root, GameObject model, Vector3 facing, float minHeight, out Vector3 centre, out Vector2 size)
+        internal static bool ScreenPanel(Transform root, GameObject model, Vector3 facing, float minHeight, out Vector3 centre, out Vector2 size)
         {
             centre = default; size = default;
             MeshFilter mf = model.GetComponentInChildren<MeshFilter>();
@@ -616,7 +616,7 @@ namespace SunkCost.Editor.Look
 
         // The console's sloping desk, in ship space: the triangles below its display
         // that face up and toward the crew, their area-weighted centre and normal.
-        private static bool Desk(Transform root, GameObject console, float below, out Vector3 point, out Vector3 normal)
+        internal static bool Desk(Transform root, GameObject console, float below, out Vector3 point, out Vector3 normal)
         {
             point = default; normal = default;
             MeshFilter mf = console.GetComponentInChildren<MeshFilter>();

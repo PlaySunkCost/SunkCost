@@ -307,6 +307,7 @@ namespace SunkCost.World
             if (!ServerEveryoneAboard(fromShip, out why)) return false;
             if (currentWorld == WorldId.HQ) ServerSaveRun("cast off"); // the last state at the dock: everyone aboard with what they carry
             trip = StartCoroutine(TripRoutine(to, fromShip));
+            ServerClearGiveUp("the ship sails"); // a vote to give up belongs to one stay at the HQ
             return true;
         }
 
@@ -509,6 +510,7 @@ namespace SunkCost.World
 
         private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
         {
+            ServerClearGiveUp(args.ConnectionState == RemoteConnectionState.Stopped ? "a player left" : "a player joined"); // the count must match the crew
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             ServerSaveLeaver(conn);
             cohort.Remove(conn.ClientId);

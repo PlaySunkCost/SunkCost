@@ -125,3 +125,9 @@ MonoBehaviour:
     Text: SELL / QUOTA  >
   - Key: boarding
     Text: BLACK TIDE / BOARDING
+  - Key: button.pay
+    Text: PAY
+  - Key: button.giveup
+    Text: GIVE UP
+  - Key: board.title
+    Text: QUOTA BOARD

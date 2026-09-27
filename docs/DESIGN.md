@@ -194,7 +194,12 @@ sailing. **Home only at the start of a day (Dan, 17 September 2026):** once
 today's dive has happened the monitor refuses HQ ("Dive done — End day
 first") until the crew ends the day; a day nobody has dived on yet — day 1
 fresh from HQ included — may sail home. With no dive taken the board says
-"Nothing to pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
+"Nothing to pay yet — dive first". **The board as a screen (Dan, 27 September 2026:
+"like in the photo"):** the text sits on the intake console's own screen in the ship
+monitor's layout — QUOTA BOARD and the day over a rule, the state large (NEW CYCLE,
+DAY n OF 3, PAYDAY, PAID, SHORT BY $n, THE RUN IS OVER), a hint under it, the quota
+(amber, green once met) and the balance at the foot — and the console's desk carries
+two buttons: a blue **PAY** (look, E) and a red **GIVE UP**. The quota is a serialized number (`WorldLoopSettings`,
 $500 for the prototype). **Built 16
 September 2026 (Dan):** the day counter lives on the crew's day state — day 1
 on arrival from HQ, the day in progress from the moment the riders stand in
@@ -587,6 +592,7 @@ The Impostor is outside this pass and unchanged.
 | Early return | You can go back to HQ before all three dives. **Amended 16 September 2026 (Dan):** sailing costs no day — days are spent only by dives — and docking judges nothing. At HQ the crew *may* pay early at the board; if it does not, it sails out again on the same day count. |
 | Run length | Endless. The run recap screen is the ending, every time — give it real production value. |
 | Failure | Miss the quota, walk the plank, run over. **Built 18 September 2026 (Dan):** the crew has sold everything, used its three days and is still short at payday — the board says THE RUN IS OVER and the crew **walks the plank** at HQ, a board off the pier over the water, **one by one in crew order**: the jumper is put at its base, free to walk out and back and jump when ready; after **10 seconds** they are pushed. **A gate** (a rail across the board's base, up on every peer while the crew walks the plank) keeps the jumper on the board — free along it, no way back to the pier — and the others on the pier. The last one in the water brings the card — **THE GAME IS OVER · N days · M minutes** (dive days begun this run, across cycles; wall time from the run's start) — for six seconds, then **everything from nothing**: day 0, $0, no cycle, empty hands, no upgrades, everyone alive on the pier at HQ, and **the world as it was found** — every loose item (bought tanks, bodies, whatever lies on the ship or the pier) gone, each loaded scene's fixture spawned again. Sailing, the shop and joining are refused while the plank is on. Nobody can hold the crew hostage on the board: the push, and a leaver simply counts as in the water. |
+| Giving up | **Decided 27 September 2026 (Dan):** the red GIVE UP button on the HQ quota console is a crew vote. Each press toggles the presser's vote (press again to take it back); the board shows the count on every screen ("GIVE UP 1/3"). Only while docked at HQ with the run on. When every connected player has voted, the run is lost exactly as a missed quota is: THE RUN IS OVER and the crew **walks the plank** (see Failure). The votes clear when the ship sails, when a player joins or leaves, and with a fresh run. |
 | Between runs | Cosmetics only, unlocked through achievements. No permanent power. |
 | Difficulty | One difficulty for everyone. The site vote is how you choose your risk. |
 | Teaching | No tutorial. The starter site is survivable enough that players learn noise matters by getting away with it once. |

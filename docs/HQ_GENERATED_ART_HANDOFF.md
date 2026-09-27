@@ -133,7 +133,13 @@ Presentation only, on `dan/hq-polish`; see the
   Change the words in `Resources/HQSigns.asset`; no rebuild needed.
 - The catalogue counter carries the depot's largest plate after the fascia, a lamp and
   a marked square; the east end wall names the depot for the arrivals; PICKUP sits
-  above the chute's lip; the quota board's runtime text is fitted by `PlateText`.
+  above the chute's lip.
+- The quota board (27 September 2026) is the intake console itself, at the ship's 1.5x
+  scale: `HQPlatformBuilder.QuotaBoard` wraps it in a `Quota Station`, finds its screen
+  with the ship's `ScreenPanel`, lays the ship monitor's `ScreenStyle` lines on it
+  (`QuotaBoard.Configure`) and sets PAY (the `Quota Board` object the aim and checks
+  use) and GIVE UP (`GiveUpButton`) into the desk. Button words: `button.pay`,
+  `button.giveup`; the screen's name: `board.title`.
 - The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
 - The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
   the browser is the same IMGUI in the ship's `ScreenStyle` palette.

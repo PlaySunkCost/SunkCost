@@ -140,6 +140,7 @@ namespace SunkCost.Player
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
+                if (target == null && controller.CurrentGiveUpButton != null) return GiveUpPrompt();
                 if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentSeat != null) return controller.SeatPrompt;
@@ -261,6 +262,18 @@ namespace SunkCost.Player
             if (day == null) return "Press E to pay the quota";
             if (day.Day == 0 && !day.Payday) return "Nothing to pay yet " + "—" + " dive first";
             return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
+        }
+
+        // GIVE UP (Dan, 27 September 2026): every player must press; again takes it back.
+        private string GiveUpPrompt()
+        {
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null) return "Press E to vote to give up the run";
+            if (day.Phase != DayPhase.AtHQ || day.Travelling) return "Give up only while docked at HQ";
+            int crew = Mathf.Max(day.GiveUpCrew, 1), votes = day.GiveUpVotes;
+            if (day.HasVotedGiveUp(controller.OwnerId)) return $"Press E to take back your vote (give up {votes}/{crew})";
+            return votes > 0 ? $"Press E to vote to give up (give up {votes}/{crew}) " + "—" + " everyone must agree"
+                             : "Press E to vote to give up the run " + "—" + " everyone must agree";
         }
 
         // Dead, watching (card 2): the watched player's name up top and the one
@@ -1095,6 +1108,7 @@ namespace SunkCost.Player
             else if (controller.CurrentShopDisplay != null) usable = ShopUsable(controller.CurrentShopDisplay);
             else if (controller.CurrentColourPanel != null) usable = true;
             else if (controller.CurrentQuotaBoard != null) usable = PayPrompt().StartsWith("Press E");
+            else if (controller.CurrentGiveUpButton != null) usable = GiveUpPrompt().StartsWith("Press E");
             Color previous = GUI.color;
             if (outline > 0f)
             {

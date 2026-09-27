@@ -138,49 +138,95 @@ namespace SunkCost.Editor.Look
 
         // ---- the booths -----------------------------------------------------------------
 
-        internal static void QuotaBoard(GameObject root, Vector3 at)
+        // The quota board on the intake console (Dan, 27 September 2026, "like in the
+        // photo"): the text on the console model's own screen, laid out as the ship's
+        // monitor is (ShipMonitor: the name and the day over a rule, the state large, a
+        // hint, the quota and the balance at the foot), and two buttons in its desk as
+        // the ship's are: PAY (the Quota Board itself, the aim's target, so every check
+        // that looks at the board and presses E still pays) and GIVE UP, the crew's vote.
+        internal static void QuotaBoard(GameObject root, GameObject console)
         {
-            GameObject board = new(SunkCost.World.QuotaBoard.BoardName);
-            board.transform.SetParent(root.transform);
-            board.transform.position = at;
-            board.transform.rotation = Quaternion.Euler(-25f, 180f, 0f);
-            // Drawn like the ship's screens (Dan, 27 September 2026): the plate is a
-            // screen's glass, the lines ScreenStyle's (a cyan title over a rule, the money
-            // as the bold value line, the next step as the dim hint), saved materials.
-            const float w = 3.0f, h = 0.9f;
-            GameObject plate = new("Board Plate");
-            plate.transform.SetParent(board.transform, false);
-            plate.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w, h, 0.08f), 0.45f);
-            plate.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ShipFlat(ScreenStyle.Back);
-            GameObject frame = new("Frame");
-            frame.transform.SetParent(board.transform, false);
-            frame.transform.localPosition = new Vector3(0f, 0f, -0.02f);
-            frame.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w + 0.08f, h + 0.08f, 0.03f), 0.49f);
-            frame.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ScreenTeal();
-            Transform display = new GameObject("Display").transform;
-            display.SetParent(board.transform, false);
-            display.localPosition = new Vector3(0f, 0f, 0.045f); // the glass's face; the lines sit 4 mm in front of it
+            // A frame that is the console's own (the ship's helpers expect a console
+            // standing square in its root, its screen facing +Z): the console moves into it.
+            Transform station = new GameObject("Quota Station").transform;
+            station.SetParent(console.transform.parent, false);
+            station.localPosition = console.transform.localPosition;
+            station.localRotation = console.transform.localRotation;
+            console.transform.SetParent(station, true);
+            // This console stands lower than the ship's (its screen from about 1 m), so the search starts lower.
+            if (!ShipDeckDressing.ScreenPanel(station, console, Vector3.forward, 0.8f, out Vector3 centre, out Vector2 size)
+                && !ShipDeckDressing.ScreenPanel(station, console, Vector3.forward, 1.2f, out centre, out size))
+            {
+                Debug.LogWarning("HQ quota board: no display panel found on the intake console; the screen goes where the ship's stands");
+                centre = new Vector3(0f, 1.35f, 0.3f); size = new Vector2(0.9f, 0.55f);
+            }
+            float w = size.x, h = size.y;
+            GameObject glass = new("Board Screen");
+            glass.transform.SetParent(station, false);
+            glass.transform.localPosition = centre + Vector3.forward * 0.012f;
+            glass.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w, h, 0.02f), h / 2f); // centred on the screen, as the text is
+            glass.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ShipFlat(ScreenStyle.Back);
+            Transform display = new GameObject("Board Display").transform;
+            display.SetParent(station, false);
+            display.localPosition = centre + Vector3.forward * 0.024f; // the glass's face, 2 mm clear
             ScreenStyle.EditorFlat = LookMaterials.ShipFlat;
             try
             {
+                // The ship monitor's numbers (ShipMonitor.EnsureDisplay): the reader's left is +X.
                 Material textMaterial = LookMaterials.DepthText();
-                float m = ScreenStyle.Margin * h;
-                float titleLine = ScreenStyle.TitleLine * h, valueLine = ScreenStyle.ValueLine * h, small = ScreenStyle.HintLine * h;
-                float top = h / 2f - m - titleLine / 2f, bottom = -h / 2f + m + small / 2f;
-                TextMesh title = ScreenStyle.Line(display, "Title", new Vector3(0f, top, 0.004f), titleLine, ScreenStyle.Accent, TextAnchor.MiddleCenter, textMaterial);
-                ScreenStyle.Quad(display, "Rule", new Vector3(0f, top - titleLine * 0.75f, 0.002f), w - 2f * m, Mathf.Max(0.006f, h * 0.008f), Color.Lerp(ScreenStyle.Track, ScreenStyle.Accent, 0.5f));
-                float mid = ((top - titleLine) + (bottom + small)) / 2f;
-                TextMesh value = ScreenStyle.Line(display, "Value", new Vector3(0f, mid, 0.004f), valueLine * 0.55f, ScreenStyle.Text, TextAnchor.MiddleCenter, textMaterial);
-                TextMesh hint = ScreenStyle.Line(display, "Hint", new Vector3(0f, bottom, 0.004f), small, ScreenStyle.Dim, TextAnchor.MiddleCenter, textMaterial);
-                title.text = "QUOTA BOARD"; value.text = string.Empty; hint.text = string.Empty;
-                // The money line is the long one ("quota $0 / $500 (handed over ...) · balance $0"): fitted to the glass, refitted as it changes.
-                value.gameObject.AddComponent<PlateText>().Configure(new Vector2(w - 2f * m, valueLine * 0.6f), PlateText.Mode.Fit, null);
-                board.AddComponent<SunkCost.World.QuotaBoard>().Configure(title, value, hint);
+                float m = ScreenStyle.Margin * Mathf.Min(w, h);
+                float title = ScreenStyle.TitleLine * h, value = ScreenStyle.ValueLine * h, small = ScreenStyle.HintLine * h;
+                float top = h / 2f - m - title / 2f, left = w / 2f - m, bottom = -h / 2f + m + small / 2f;
+                TextMesh site = ScreenStyle.Line(display, "Site", new Vector3(left, top, 0.004f), title, ScreenStyle.Accent, TextAnchor.MiddleLeft, textMaterial);
+                TextMesh day = ScreenStyle.Line(display, "Day", new Vector3(-left, top, 0.004f), title, ScreenStyle.Accent, TextAnchor.MiddleRight, textMaterial);
+                ScreenStyle.Quad(display, "Rule", new Vector3(0f, top - title * 0.75f, 0.002f), w - 2f * m, Mathf.Max(0.006f, h * 0.008f), Color.Lerp(ScreenStyle.Track, ScreenStyle.Accent, 0.5f));
+                TextMesh quota = ScreenStyle.Line(display, "Quota", new Vector3(left, bottom, 0.004f), small, ScreenStyle.Warn, TextAnchor.MiddleLeft, textMaterial);
+                TextMesh balance = ScreenStyle.Line(display, "Balance", new Vector3(-left, bottom, 0.004f), small, ScreenStyle.Dim, TextAnchor.MiddleRight, textMaterial);
+                TextMesh hint = ScreenStyle.Line(display, "Hint", new Vector3(0f, bottom + small * 1.9f, 0.004f), small * 1.15f, ScreenStyle.Dim, TextAnchor.MiddleCenter, textMaterial);
+                float mid = ((top - title) + (bottom + small * 2.6f)) / 2f;
+                TextMesh state = ScreenStyle.Line(display, "State", new Vector3(0f, mid, 0.004f), value, ScreenStyle.Text, TextAnchor.MiddleCenter, textMaterial);
+                Vector2 stateBox = new(w - 2f * m, (top - title) - (bottom + small * 2.6f)), hintBox = new(w - 2f * m, small * 1.6f);
+
+                // The buttons in the desk under the screen, as the ship lays its three.
+                GameObject pay = DeskButton(station, console, centre, size, 0.3f, SunkCost.World.QuotaBoard.BoardName, "button.pay");
+                GameObject giveUp = DeskButton(station, console, centre, size, -0.3f, SunkCost.World.GiveUpButton.ButtonName, "button.giveup");
+                giveUp.AddComponent<SunkCost.World.GiveUpButton>();
+                SunkCost.World.QuotaBoard board = pay.AddComponent<SunkCost.World.QuotaBoard>();
+                board.Configure(site, day, state, hint, quota, balance, stateBox, value * 0.1f, hintBox, small * 1.15f * 0.1f);
+                board.ShowIdle();
             }
             finally { ScreenStyle.EditorFlat = null; }
-            BoxCollider box = board.AddComponent<BoxCollider>();
-            box.center = new Vector3(0f, 0f, 0.02f);
-            box.size = new Vector3(w, h, 0.12f);
+        }
+
+        // One of the board's desk buttons: the ship's push button laid in the console's
+        // sloping desk, wrapped in an object at the cap's middle that carries the aim's
+        // collider (a look at the object's position lands on the cap, not its edge).
+        private static GameObject DeskButton(Transform station, GameObject console, Vector3 centre, Vector2 size, float x, string name, string key)
+        {
+            Vector3 pos; Quaternion turn;
+            if (ShipDeckDressing.Desk(station, console, centre.y - size.y / 2f, out Vector3 point, out Vector3 normal))
+            {
+                Vector3 upSlope = Vector3.ProjectOnPlane(Vector3.up, normal).normalized;
+                turn = Quaternion.LookRotation(normal, upSlope);
+                pos = new Vector3(x, point.y, point.z) - upSlope * 0.2f + normal * 0.045f;
+            }
+            else
+            {
+                Debug.LogWarning("HQ quota board: no desk found on the intake console; its buttons stand under the screen");
+                turn = Quaternion.identity;
+                pos = new Vector3(x, centre.y - size.y / 2f - 0.42f, centre.z + 0.05f);
+            }
+            GameObject button = PropBuilder.PushButton(station.gameObject, name + " Cap", pos, turn, key, 0.5f);
+            GameObject wrapper = new(name);
+            wrapper.transform.SetParent(station, false);
+            wrapper.transform.SetPositionAndRotation(button.transform.TransformPoint(new Vector3(0f, 0.2f, 0.02f)), button.transform.rotation);
+            button.transform.SetParent(wrapper.transform, true);
+            BoxCollider own = button.GetComponent<BoxCollider>();
+            Vector3 colliderSize = own != null ? own.size : new Vector3(0.5f, 0.4f, 0.12f);
+            if (own != null) Object.DestroyImmediate(own);
+            BoxCollider aim = wrapper.AddComponent<BoxCollider>();
+            aim.center = Vector3.zero; aim.size = colliderSize;
+            return wrapper;
         }
 
         internal static void ColourPanel(GameObject root, Vector3 at)

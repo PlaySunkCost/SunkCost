@@ -100,7 +100,7 @@ namespace SunkCost.Player
             CarryableItem item = controller.CurrentTarget;
             if (item != null) return item.CanGrabFromWorld && controller.Inventory != null && controller.Inventory.CanStoreOrHold(item) ? item.transform : null;
             bool any = controller.CurrentButton != null || controller.CurrentTv != null || controller.CurrentCabinControl != CabinControl.None
-                || controller.CurrentColourPanel != null || controller.CurrentQuotaBoard != null || controller.CurrentShopDisplay != null || controller.SeatUsable;
+                || controller.CurrentColourPanel != null || controller.CurrentQuotaBoard != null || controller.CurrentGiveUpButton != null || controller.CurrentShopDisplay != null || controller.SeatUsable;
             return any ? controller.CurrentUsable : null;
         }
 

@@ -135,6 +135,7 @@ namespace SunkCost.Player
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
+        public SunkCost.World.GiveUpButton CurrentGiveUpButton { get; private set; }
         // The shop stand under the crosshair within reach (E buys; the shop, 18 September 2026).
         public SunkCost.Shop.ShopDisplay CurrentShopDisplay { get; private set; }
         // What this player bought (PlayerUpgrades on the same prefab); null before the shop setup ran.
@@ -454,7 +455,7 @@ namespace SunkCost.Player
                 CurrentTarget = null;
                 CurrentButton = null;
                 CurrentColourPanel = null;
-                CurrentQuotaBoard = null;
+                CurrentQuotaBoard = null; CurrentGiveUpButton = null;
                 CurrentShopDisplay = null;
                 CurrentTv = null;
                 CurrentCabinControl = CabinControl.None;
@@ -589,6 +590,12 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestPay();
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentGiveUpButton != null)
+            {
+                grabConsumed = true;
+                SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+                if (ship != null) ship.RequestGiveUp();
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentShopDisplay != null)
             {
@@ -1007,7 +1014,7 @@ namespace SunkCost.Player
         {
             CurrentTarget = null;
             CurrentColourPanel = null;
-            CurrentQuotaBoard = null;
+            CurrentQuotaBoard = null; CurrentGiveUpButton = null;
             CurrentShopDisplay = null;
             CurrentTv = null;
             CurrentPatient = null;
@@ -1038,6 +1045,8 @@ namespace SunkCost.Player
             if (CurrentButton != null) { CurrentUsable = CurrentButton.transform; return; }
             CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();
             if (CurrentColourPanel != null) { CurrentUsable = CurrentColourPanel.transform; return; }
+            CurrentGiveUpButton = pressed.GetComponentInParent<SunkCost.World.GiveUpButton>();
+            if (CurrentGiveUpButton != null) { CurrentUsable = CurrentGiveUpButton.transform; return; }
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
             if (CurrentQuotaBoard != null) { CurrentUsable = CurrentQuotaBoard.transform; return; }
             CurrentShopDisplay = pressed.GetComponentInParent<SunkCost.Shop.ShopDisplay>();

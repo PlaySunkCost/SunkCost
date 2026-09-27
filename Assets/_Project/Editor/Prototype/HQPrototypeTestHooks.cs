@@ -440,6 +440,22 @@ namespace SunkCost.Editor.Prototype
             return ClientMoveLocalPlayerTo(at);
         }
 
+        // GIVE UP as the local player (the board's red button): toggles this player's vote.
+        public static string ClientRequestGiveUp()
+        {
+            HQPlayerController local = LocalPlayer();
+            var ship = local != null ? local.GetComponent<SunkCost.World.ShipControls>() : null;
+            if (ship == null) return "No local player.";
+            ship.RequestGiveUp();
+            return "give up requested";
+        }
+
+        public static string GiveUpStatus()
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            return day == null ? "(no day)" : $"votes={day.GiveUpVotes} crew={day.GiveUpCrew} phase={day.Phase}";
+        }
+
         public static string QuotaBoardText()
         {
             SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();

@@ -72,6 +72,24 @@ namespace SunkCost.World
             if (!flow.ServerPay(sender, out string why)) day.ServerReportRefusal(why);
         }
 
+        // E on GIVE UP at the HQ board (Dan, 27 September 2026): toggle this player's
+        // vote; the whole crew agreed ends the run on the plank (WorldSceneFlow.GiveUp).
+        public void RequestGiveUp()
+        {
+            if (!IsOwner) return;
+            ServerRequestGiveUp();
+        }
+
+        [ServerRpc]
+        private void ServerRequestGiveUp(NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            if (!ServerPresserAlive(sender, day)) return;
+            if (!flow.ServerToggleGiveUp(sender, out string why)) day.ServerReportRefusal(why);
+        }
+
         // E on the deck TV's screen: the next channel (card 3).
         public void RequestTvNext()
         {

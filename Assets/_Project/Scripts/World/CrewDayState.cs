@@ -120,6 +120,10 @@ namespace SunkCost.World
         // The plank and the run's end (18 September 2026); WorldSceneFlow is the writer.
         private readonly SyncVar<PlankState> plank = new(new PlankState { Active = false, Jumper = -1 });
         private readonly SyncList<int> jumped = new();
+        // The crew's vote to give up the run at the HQ board (Dan, 27 September 2026):
+        // who has pressed GIVE UP, and how many the crew counts; everyone agreed is the plank.
+        private readonly SyncList<int> giveUpVoters = new();
+        private readonly SyncVar<int> giveUpCrew = new(0);
         private readonly SyncVar<RunOverReport> runOver = new(new RunOverReport { Serial = 0 });
         private readonly SyncVar<int> runDays = new(0);   // dive days begun this run (the card counts them)
         private float runStartTime;                        // server: when this run began
@@ -170,6 +174,9 @@ namespace SunkCost.World
         public PlankState Plank => plank.Value;
         public IReadOnlyList<int> Jumped => jumped;
         public bool HasJumped(int clientId) => jumped.Contains(clientId);
+        public int GiveUpVotes => giveUpVoters.Count;
+        public int GiveUpCrew => giveUpCrew.Value;
+        public bool HasVotedGiveUp(int clientId) => giveUpVoters.Contains(clientId);
         public RunOverReport RunOver => runOver.Value;
         public int RunDays => runDays.Value;
         // The court's count (Dan, 18 September 2026: "a ball through the hoop
@@ -432,6 +439,33 @@ namespace SunkCost.World
 
         [Server]
         public void ServerSetPlank(PlankState next) => plank.Value = next;
+
+        // GIVE UP at the board: a press toggles the presser's vote; the crew's size is
+        // counted by the flow at each press. Returns whether the presser now votes.
+        [Server]
+        public bool ServerToggleGiveUp(int clientId, int crew)
+        {
+            bool voted;
+            if (giveUpVoters.Contains(clientId)) { giveUpVoters.Remove(clientId); voted = false; }
+            else { giveUpVoters.Add(clientId); voted = true; }
+            if (giveUpCrew.Value != crew) giveUpCrew.Value = crew;
+            return voted;
+        }
+
+        [Server]
+        public void ServerClearGiveUp()
+        {
+            if (giveUpVoters.Count > 0) giveUpVoters.Clear();
+            if (giveUpCrew.Value != 0) giveUpCrew.Value = 0;
+        }
+
+        // The whole crew agreed: the run ends as a missed quota does, on the plank.
+        [Server]
+        public void ServerGiveUp()
+        {
+            ServerClearGiveUp();
+            phase.Value = DayPhase.Plank;
+        }
 
         [Server]
         public void ServerMarkJumped(int clientId)

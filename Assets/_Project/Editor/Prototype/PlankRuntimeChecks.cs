@@ -391,7 +391,42 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.Phase == DayPhase.AtHQ, card + 6f, () => "G1 the fresh run (phase " + Day.Phase + ")");
             yield return GuestEventually(r => r.Contains("phase=AtHQ") && r.Contains("day=0") && GuestPlayerLine(r, guestId).Contains("dead=False") && GuestPlayerLine(r, guestId).Contains("upgrades=None"), 10f, "G1 the guest reads the fresh run, alive, no upgrades");
             yield return Expect(() => !plank.IsInWater(remote.transform.position) && !plank.IsInWater(host.transform.position), 6f, () => "G1 both back on land");
+            // GIVE UP (Dan, 27 September 2026): every player must press the board's red
+            // button; the board shows the count on every screen; a second press takes a
+            // vote back; all agreed is the plank, as a missed quota is; a leave clears it.
+            Heading("G2 — GIVE UP with a guest: both must press; a second press takes a vote back; all agreed walks the plank");
+            Check(Day.Phase == DayPhase.AtHQ && Day.GiveUpVotes == 0, "G2 no votes at the fresh run");
+            Check(flow.ServerToggleGiveUp(host.Owner, out string giveUpWhy), "G2 the host's vote is taken: " + giveUpWhy);
+            Check(Day.GiveUpVotes == 1 && Day.GiveUpCrew == 2 && Day.Phase == DayPhase.AtHQ, $"G2 one of two ({Day.GiveUpVotes}/{Day.GiveUpCrew}), the run goes on");
+            yield return null;
+            Check(H.QuotaBoardText().Contains("give up 1/2"), "G2 the host's board counts it: " + H.QuotaBoardText().Replace("\n", " | "));
+            yield return GuestEventually(r => r.Contains("giveup=1/2") && r.Contains("give up 1/2"), 5f, "G2 the guest's board shows GIVE UP 1/2");
+            Check(flow.ServerToggleGiveUp(host.Owner, out giveUpWhy) && Day.GiveUpVotes == 0, "G2 pressed again, the host's vote is taken back: " + Day.GiveUpVotes);
+            yield return GuestEventually(r => r.Contains("giveup=0/") && !r.Contains("give up 1/2"), 5f, "G2 the guest reads the vote taken back");
+            yield return Send("{\"id\":{id},\"action\":\"giveup\"}"); // E on the guest's own button (the ServerRpc)
+            yield return Expect(() => Day.GiveUpVotes == 1 && Day.HasVotedGiveUp(guestId) && !Day.HasVotedGiveUp(host.OwnerId), 3f, () => "G2 the guest's vote arrives: " + Day.GiveUpVotes);
+            Check(Day.Phase == DayPhase.AtHQ, "G2 one vote of two is not the end");
+            Check(flow.ServerToggleGiveUp(host.Owner, out giveUpWhy), "G2 the host agrees: " + giveUpWhy);
+            yield return Expect(() => Day.Phase == DayPhase.Plank && Day.Plank.Active && Day.Plank.Jumper == host.OwnerId, 3f, () => $"G2 all agreed: the plank, the host first (phase {Day.Phase})");
+            Check(Day.GiveUpVotes == 0, "G2 the votes are spent");
+            yield return null;
+            Check(H.QuotaBoardText().StartsWith("THE RUN IS OVER"), "G2 the board: " + H.QuotaBoardText().Replace("\n", " | "));
+            yield return GuestEventually(r => r.Contains("phase=Plank") && r.Contains("THE RUN IS OVER"), 5f, "G2 the guest reads the plank and the board");
+            yield return Expect(() => Vector3.Distance(host.transform.position, plank.Base.position) < 1f, 3f, () => "G2 the host is at the base");
+            host.TeleportLocal(plank.End.position + plank.End.forward * 0.8f + Vector3.up * 0.1f, plank.WalkYaw);
+            yield return Expect(() => Day.HasJumped(host.OwnerId), 5f, () => "G2 the host jumped");
+            yield return Expect(() => Day.Plank.Active && Day.Plank.Jumper == guestId, 3f, () => "G2 the guest is next");
+            yield return Expect(() => plank.IsInWater(remote.transform.position), turn + 6f, () => "G2 the guest was pushed");
+            yield return Expect(() => Day.Phase == DayPhase.AtHQ, card + 6f, () => "G2 the fresh run (phase " + Day.Phase + ")");
+            yield return GuestEventually(r => r.Contains("phase=AtHQ") && r.Contains("day=0") && r.Contains("giveup=0/"), 10f, "G2 the guest reads the fresh run, no votes");
+            yield return Expect(() => !plank.IsInWater(remote.transform.position) && !plank.IsInWater(host.transform.position), 6f, () => "G2 both back on land");
+
+            Heading("G3 — a vote is cleared when a player leaves");
+            Check(flow.ServerToggleGiveUp(host.Owner, out giveUpWhy) && Day.GiveUpVotes == 1, "G3 the host votes: " + Day.GiveUpVotes + "/" + Day.GiveUpCrew);
             yield return Send("{\"id\":{id},\"action\":\"leave\"}");
+            yield return Expect(() => GuestCopy() == null, 15f, () => "G3 the guest left");
+            yield return Expect(() => Day.GiveUpVotes == 0 && Day.GiveUpCrew == 0, 3f, () => $"G3 the vote cleared ({Day.GiveUpVotes}/{Day.GiveUpCrew})");
+            Check(Day.Phase == DayPhase.AtHQ, "G3 the run goes on");
         }
     }
 }
