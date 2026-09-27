@@ -136,6 +136,10 @@ namespace SunkCost.Player
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
         public SunkCost.World.GiveUpButton CurrentGiveUpButton { get; private set; }
+        // A control of the shared console under the crosshair within reach (a destination
+        // card, the lever, the HQ's GIVE UP card; 27 September 2026). The three above are
+        // the old monitor's and board's, kept until their classes go in the test phase.
+        public SunkCost.World.ConsoleControl CurrentConsoleControl { get; private set; }
         // The shop stand under the crosshair within reach (E buys; the shop, 18 September 2026).
         public SunkCost.Shop.ShopDisplay CurrentShopDisplay { get; private set; }
         // What this player bought (PlayerUpgrades on the same prefab); null before the shop setup ran.
@@ -456,6 +460,7 @@ namespace SunkCost.Player
                 CurrentButton = null;
                 CurrentColourPanel = null;
                 CurrentQuotaBoard = null; CurrentGiveUpButton = null;
+                CurrentConsoleControl = null;
                 CurrentShopDisplay = null;
                 CurrentTv = null;
                 CurrentCabinControl = CabinControl.None;
@@ -517,6 +522,7 @@ namespace SunkCost.Player
                 CurrentSeat = null;
                 CurrentTarget = null;
                 CurrentButton = null;
+                CurrentConsoleControl = null;
                 CurrentCabinControl = CabinControl.None;
                 ClearPatch();
                 grabBufferedUntil = -1f;
@@ -539,6 +545,7 @@ namespace SunkCost.Player
                 CurrentSeat = null;
                 CurrentTarget = null;
                 CurrentButton = null;
+                CurrentConsoleControl = null;
                 CurrentCabinControl = CabinControl.None;
                 ClearPatch();
                 grabConsumed = true;
@@ -571,6 +578,11 @@ namespace SunkCost.Player
             {
                 grabConsumed = true;
                 inventory.RequestGrab(CurrentTarget);
+            }
+            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentConsoleControl != null)
+            {
+                grabConsumed = true;
+                PressConsole(CurrentConsoleControl);
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentButton != null)
             {
@@ -630,6 +642,26 @@ namespace SunkCost.Player
             else if (keys.digit2Key.wasPressedThisFrame) inventory.RequestEquip(1);
             else if (keys.digit3Key.wasPressedThisFrame) inventory.RequestEquip(2);
             else if (keys.digit4Key.wasPressedThisFrame) inventory.RequestEquip(3);
+        }
+
+        // E on the shared console (27 September 2026): a card selects, the lever sends
+        // the action and target THIS client's sign shows right now (the same rule table
+        // over the replicated facts) so the server can refuse a pull whose selection
+        // changed under it; a dim lever still sends and the server answers why. The
+        // GIVE UP card is the existing vote. All server-validated on the player's ShipControls.
+        private void PressConsole(SunkCost.World.ConsoleControl c)
+        {
+            SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
+            if (ship == null || c == null) return;
+            switch (c.Kind)
+            {
+                case SunkCost.World.ConsoleControlKind.Card: ship.RequestSelect(c.Payload); break;
+                case SunkCost.World.ConsoleControlKind.GiveUpCard: ship.RequestGiveUp(); break;
+                case SunkCost.World.ConsoleControlKind.Lever:
+                    SunkCost.World.LeverAction action = SunkCost.World.ConsoleRules.Expected(c.Console, null, out SunkCost.World.SiteId target);
+                    ship.RequestLever(c.Console, action, target);
+                    break;
+            }
         }
 
         private void UpdatePatchHold(Keyboard keys)
@@ -845,6 +877,7 @@ namespace SunkCost.Player
             lastFlags = CollisionFlags.None;
             CurrentTarget = null;
             CurrentButton = null;
+            CurrentConsoleControl = null;
             CurrentCabinControl = CabinControl.None;
             CurrentPatient = null;
             ClearPatch();
@@ -974,6 +1007,7 @@ namespace SunkCost.Player
             if (!value) return;
             CurrentTarget = null;
             CurrentButton = null;
+            CurrentConsoleControl = null;
             CurrentCabinControl = CabinControl.None;
             CurrentPatient = null;
             ClearPatch();
@@ -1015,6 +1049,7 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentColourPanel = null;
             CurrentQuotaBoard = null; CurrentGiveUpButton = null;
+            CurrentConsoleControl = null;
             CurrentShopDisplay = null;
             CurrentTv = null;
             CurrentPatient = null;
@@ -1041,6 +1076,10 @@ namespace SunkCost.Player
             // A living teammate's capsule under the dot (the patch; a dead one is a body, an item).
             HQPlayerController teammate = pressed.GetComponentInParent<HQPlayerController>();
             if (teammate != null && teammate != this && !teammate.IsDead) { CurrentPatient = teammate; return; }
+            // The shared console's controls (cards, lever, GIVE UP card) come first: the
+            // old monitor buttons and board below are kept only until their classes go.
+            CurrentConsoleControl = pressed.GetComponentInParent<SunkCost.World.ConsoleControl>();
+            if (CurrentConsoleControl != null) { CurrentUsable = CurrentConsoleControl.transform; return; }
             CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
             if (CurrentButton != null) { CurrentUsable = CurrentButton.transform; return; }
             CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();

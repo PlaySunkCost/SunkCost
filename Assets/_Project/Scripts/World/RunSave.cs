@@ -35,13 +35,16 @@ namespace SunkCost.World
         public int runDays;
         public float runSeconds;   // the run clock at the save, for the recap card
         public int baskets;
+        // The sites bought at the console this run (a Destinations.Bit mask of Site02..04;
+        // the shared console, 27 September 2026). Missing in an older slot → 0 = locked.
+        public int unlockedSites;
 
         // The storage room on the docked ship, ship-local.
         public List<SavedItem> box = new();
         // Everyone who was ever in this run, by identity.
         public List<SavedPlayer> players = new();
 
-        public bool IsFresh => day == 0 && balance == 0 && cycleSales == 0 && runDays == 0 && box.Count == 0;
+        public bool IsFresh => day == 0 && balance == 0 && cycleSales == 0 && runDays == 0 && box.Count == 0 && unlockedSites == 0;
     }
 
     [Serializable]

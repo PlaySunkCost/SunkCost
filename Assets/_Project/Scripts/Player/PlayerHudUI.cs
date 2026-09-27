@@ -136,6 +136,7 @@ namespace SunkCost.Player
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 if (controller.Upgrades != null && !string.IsNullOrEmpty(controller.Upgrades.Refusal)) return controller.Upgrades.Refusal;
                 CarryableItem target = controller.CurrentTarget;
+                if (target == null && controller.CurrentConsoleControl != null) return ConsolePrompt(controller.CurrentConsoleControl);
                 if (target == null && controller.CurrentButton != null)
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
@@ -262,6 +263,42 @@ namespace SunkCost.Player
             if (day == null) return "Press E to pay the quota";
             if (day.Day == 0 && !day.Payday) return "Nothing to pay yet " + "—" + " dive first";
             return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
+        }
+
+        // The shared console under the dot (27 September 2026): a card offers the
+        // selection (and says so when it is the selection, or locked with its price);
+        // the lever offers what its sign reads from the same rule table the server
+        // resolves with — or the reason it is dim, without "Press E"; the GIVE UP card
+        // is the vote's prompt.
+        private string ConsolePrompt(ConsoleControl c)
+        {
+            CrewDayState day = CrewDayState.Instance;
+            SiteCatalog sites = SiteCatalog.Resolve();
+            switch (c.Kind)
+            {
+                case ConsoleControlKind.Card:
+                {
+                    string name = sites.NameOf(c.Payload);
+                    if (day != null && day.SelectedSite == c.Payload) return name + " selected";
+                    bool locked = day != null && !day.IsOpen(c.Payload);
+                    return locked ? $"Press E to select {name} (locked · ${sites.UnlockPrice(c.Payload)})" : $"Press E to select {name}";
+                }
+                case ConsoleControlKind.GiveUpCard: return GiveUpPrompt();
+                default:
+                {
+                    LeverAction action = ConsoleRules.Expected(c.Console, sites, out SiteId target, out bool enabled, out string reason);
+                    switch (action)
+                    {
+                        case LeverAction.Confirm:
+                            if (!enabled) return reason;
+                            return target == SiteId.HQ ? "Press E to sail home" : $"Press E to sail to {sites.NameOf(target)}";
+                        case LeverAction.Unlock: return enabled ? $"Press E to unlock {sites.NameOf(target)} (${sites.UnlockPrice(target)})" : reason;
+                        case LeverAction.EndDay: return "Press E to end the day";
+                        case LeverAction.Pay: return PayPrompt();
+                        default: return reason == ConsoleRules.SelectFirst || string.IsNullOrEmpty(reason) ? "Nothing to confirm " + "—" + " select a destination" : reason;
+                    }
+                }
+            }
         }
 
         // GIVE UP (Dan, 27 September 2026): every player must press; again takes it back.
@@ -1099,6 +1136,7 @@ namespace SunkCost.Player
             if (controller.IsSeated) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.IsDead) usable = false;
             else if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
+            else if (controller.CurrentConsoleControl != null) usable = ConsolePrompt(controller.CurrentConsoleControl).StartsWith("Press E");
             else if (controller.CurrentButton != null) usable = CrewDayState.Instance != null && !CrewDayState.Instance.Travelling && !CrewDayState.Instance.Sailing;
             else if (controller.CurrentTv != null) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.CurrentSeat != null) usable = controller.SeatUsable;

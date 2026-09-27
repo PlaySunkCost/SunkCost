@@ -23,10 +23,53 @@ namespace SunkCost.World
             return true;
         }
 
+        // The old one-press sail by world (hooks, the guest peer's `monitor`, the checks):
+        // still server-validated through WorldSceneFlow.ServerSail; the console's own path
+        // is select (RequestSelect) then the lever (RequestLever).
         public void RequestSail(WorldId to)
         {
             if (!IsOwner) return;
             ServerRequestSail(to);
+        }
+
+        // ---- the shared console (Dan, 27 September 2026) ------------------------------
+
+        // E on a destination card of the ship's navigation screen: the crew's selection
+        // (networked; the server writes it for everyone).
+        public void RequestSelect(SiteId site)
+        {
+            if (!IsOwner) return;
+            ServerRequestSelect(site);
+        }
+
+        // E on the lever: the client sends the console it stands at and the action and
+        // target its sign showed; the server resolves the CURRENT action from its own
+        // facts and refuses "Selection changed" when they differ (a pull meant for one
+        // site never sails to another). A dim lever still sends: the server answers why.
+        public void RequestLever(ConsoleKind kind, LeverAction expected, SiteId expectedTarget)
+        {
+            if (!IsOwner) return;
+            ServerRequestLever(kind, expected, expectedTarget);
+        }
+
+        [ServerRpc]
+        private void ServerRequestSelect(SiteId site, NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            if (!ServerPresserAlive(sender, day)) return;
+            if (!flow.ServerSelect(sender, site, out string why)) day.ServerReportRefusal(why);
+        }
+
+        [ServerRpc]
+        private void ServerRequestLever(ConsoleKind kind, LeverAction expected, SiteId expectedTarget, NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            if (!ServerPresserAlive(sender, day)) return;
+            if (!flow.ServerPullLever(sender, kind, expected, expectedTarget, out string why)) day.ServerReportRefusal(why);
         }
 
         // E on the deck cabin's button: take everyone in the cabin down.

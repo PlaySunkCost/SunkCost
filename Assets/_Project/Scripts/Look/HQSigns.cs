@@ -90,6 +90,21 @@ namespace SunkCost.Look
             { "button.pay", "PAY" },
             { "button.giveup", "GIVE UP" },
             { "board.title", "QUOTA BOARD" },
+            // The shared console's words (27 September 2026): the screens' titles and
+            // headings, the lever sign per action ({0} in lever.unlock is the price), the
+            // GIVE UP card's lines.
+            { "nav.title", "NAVIGATION" },
+            { "nav.selected", "SELECTED DESTINATION" },
+            { "nav.select", "SELECT A DESTINATION" },
+            { "nav.sailing", "SAILING" },
+            { "nav.dive", "DIVE IN PROGRESS" },
+            { "lever.confirm", "CONFIRM" },
+            { "lever.unlock", "UNLOCK ${0}" },
+            { "lever.endday", "END DAY" },
+            { "lever.pay", "PAY" },
+            { "giveup.card", "GIVE UP" },
+            { "giveup.foot", "EVERYONE MUST AGREE" },
+            { "giveup.voted", "YOU VOTED · E TO TAKE BACK" },
             { "button.descend", "▼" }, // a down arrow on the deck cabin's button (Dan, 19 September 2026)
             { "button.surface", "▲" }, // an up arrow on the car's
             // The generated platform's plates (HQ polish, 27 September 2026: they were literal

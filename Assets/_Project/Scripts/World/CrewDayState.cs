@@ -127,6 +127,18 @@ namespace SunkCost.World
         private readonly SyncVar<RunOverReport> runOver = new(new RunOverReport { Serial = 0 });
         private readonly SyncVar<int> runDays = new(0);   // dive days begun this run (the card counts them)
         private float runStartTime;                        // server: when this run began
+        // The shared console (Dan, 27 September 2026; docs/DESIGN.md "The navigation
+        // console"): the card the crew selected on the ship's screen, the site the ship
+        // is at (HERE) and the one it is heading for (they mirror World/Destination so
+        // "SAILING TO SITE 02" is exact and a cancelled trip restores cleanly), the
+        // sites bought this run (a Destinations.Bit mask; cleared on the plank, kept in
+        // the save), and the last accepted lever pull every rig swings its lever from.
+        // WorldSceneFlow is the only writer of all five.
+        private readonly SyncVar<SiteId> selectedSite = new(SiteId.None);
+        private readonly SyncVar<SiteId> currentSite = new(SiteId.HQ);
+        private readonly SyncVar<SiteId> siteDestination = new(SiteId.HQ);
+        private readonly SyncVar<int> unlockedSites = new(0);
+        private readonly SyncVar<LeverPull> lastLeverPull = new(new LeverPull { Serial = 0 });
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -179,6 +191,15 @@ namespace SunkCost.World
         public bool HasVotedGiveUp(int clientId) => giveUpVoters.Contains(clientId);
         public RunOverReport RunOver => runOver.Value;
         public int RunDays => runDays.Value;
+        // The console's state (server-written; every screen, sign, prompt and dot reads it).
+        public SiteId SelectedSite => selectedSite.Value;
+        public SiteId CurrentSite => currentSite.Value;
+        public SiteId SiteDestination => siteDestination.Value;
+        public int UnlockedSites => unlockedSites.Value;
+        public bool IsOpen(SiteId id) => Destinations.IsOpen(id, unlockedSites.Value);
+        public LeverPull LastLeverPull => lastLeverPull.Value;
+        // Once per peer for a NEW serial; never for a joiner's initial value (the rigs animate from it).
+        public event Action<LeverPull> LeverPulled;
         // The court's count (Dan, 18 September 2026: "a ball through the hoop
         // counts"): baskets this run, server-written by HoopScore, shown on the
         // backboards. Nothing else reads it.
@@ -214,7 +235,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value} plank={(plank.Value.Active ? plank.Value.Jumper.ToString() : "off")} jumped=[{string.Join(",", jumped)}] runDays={runDays.Value}";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value} plank={(plank.Value.Active ? plank.Value.Jumper.ToString() : "off")} jumped=[{string.Join(",", jumped)}] runDays={runDays.Value} site={currentSite.Value} toSite={siteDestination.Value} selected={selectedSite.Value} unlocked={Destinations.MaskText(unlockedSites.Value)} lever={lastLeverPull.Value.Serial}";
         private string SpectateText()
         {
             var parts = new List<string>();
@@ -240,6 +261,15 @@ namespace SunkCost.World
             runOver.OnChange += OnRunOverChanged;
             departure.OnChange += OnDepartureChanged;
             cabinRide.OnChange += OnCabinRideChanged;
+            lastLeverPull.OnChange += OnLeverPullChanged;
+        }
+
+        // A pull accepted now (a new serial), once per peer; a joiner's initial value is
+        // old news and never swings a lever (the same guard as refusals and sales).
+        private void OnLeverPullChanged(LeverPull previous, LeverPull next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (next.Serial != 0 && next.Serial != previous.Serial && !InitialSync(asServer)) LeverPulled?.Invoke(next);
         }
 
         private void OnCabinRideChanged(CabinRideState previous, CabinRideState next, bool asServer)
@@ -354,10 +384,17 @@ namespace SunkCost.World
             return true;
         }
 
+        // Kept for callers that sail by world alone: the site identity the world implies.
         [Server]
-        public void ServerBeginSail(WorldId to)
+        public void ServerBeginSail(WorldId to) => ServerBeginSail(to, Destinations.SiteOf(to));
+
+        // The trip's start: the world and the logical site it is bound for (Site02..04
+        // sail to Site01's world until they have their own; the site stays theirs).
+        [Server]
+        public void ServerBeginSail(WorldId to, SiteId site)
         {
             destination.Value = to;
+            siteDestination.Value = site == SiteId.None ? Destinations.SiteOf(to) : site;
             phase.Value = to == WorldId.HQ ? DayPhase.SailingHome : DayPhase.Sailing;
         }
 
@@ -366,8 +403,57 @@ namespace SunkCost.World
         public void ServerCancelSail()
         {
             destination.Value = world.Value;
+            siteDestination.Value = currentSite.Value;
             phase.Value = world.Value == WorldId.HQ ? DayPhase.AtHQ : DayPhase.AtSea;
         }
+
+        // ---- the console (27 September 2026) ----------------------------------------
+
+        [Server]
+        public void ServerSetSelectedSite(SiteId id)
+        {
+            if (selectedSite.Value != id) selectedSite.Value = id;
+        }
+
+        [Server]
+        public void ServerClearSelection() => ServerSetSelectedSite(SiteId.None);
+
+        // The site's bit goes into the mask. False when the site is not purchasable or
+        // already open — no money moves here: the flow spends first, in the same server
+        // call, so two pulls in one tick cannot both charge (the second finds it open).
+        [Server]
+        public bool ServerUnlockSite(SiteId id)
+        {
+            if (!Destinations.IsPurchasable(id) || Destinations.IsOpen(id, unlockedSites.Value)) return false;
+            unlockedSites.Value = unlockedSites.Value | Destinations.Bit(id);
+            return true;
+        }
+
+        // Editor checks only: every bought site locked again without a plank.
+        [Server]
+        public void ServerResetUnlocks()
+        {
+            if (unlockedSites.Value != 0) unlockedSites.Value = 0;
+        }
+
+        // Editor checks and restores: where the ship is, by site.
+        [Server]
+        public void ServerSetCurrentSite(SiteId site)
+        {
+            if (site == SiteId.None) site = Destinations.SiteOf(world.Value);
+            currentSite.Value = site;
+            siteDestination.Value = site;
+        }
+
+        // An accepted pull: Serial+1, the tick it was accepted on; every rig animates from it.
+        [Server]
+        public void ServerPullLever(ConsoleKind kind, LeverAction action, uint tick)
+        {
+            lastLeverPull.Value = new LeverPull { Serial = lastLeverPull.Value.Serial + 1, Kind = kind, Action = action, Tick = tick };
+        }
+
+        [Server]
+        public void ServerAnnounceLeverPull(ConsoleKind kind, LeverAction action, uint tick) => ServerPullLever(kind, action, tick);
 
         [Server]
         public void ServerSetDeparture(ShipDepartureState next) => departure.Value = next;
@@ -380,6 +466,9 @@ namespace SunkCost.World
         {
             world.Value = at;
             destination.Value = at;
+            // HERE is the site the trip was bound for (the logical one, not the scene's).
+            currentSite.Value = at == WorldId.HQ ? SiteId.HQ : (siteDestination.Value == SiteId.None || siteDestination.Value == SiteId.HQ ? Destinations.SiteOf(at) : siteDestination.Value);
+            siteDestination.Value = currentSite.Value;
             phase.Value = at == WorldId.HQ ? DayPhase.AtHQ : DayPhase.AtSea;
             if (at != WorldId.HQ && day.Value == 0) day.Value = 1;
         }
@@ -494,6 +583,12 @@ namespace SunkCost.World
             runStartTime = Time.unscaledTime;
             jumped.Clear();
             plank.Value = new PlankState { Active = false, Jumper = -1, Serial = plank.Value.Serial + 1 };
+            // The console: every bought site locked again, nothing selected, the ship at HQ
+            // (the plank ends at the dock). The votes are the flow's to clear.
+            if (unlockedSites.Value != 0) unlockedSites.Value = 0;
+            if (selectedSite.Value != SiteId.None) selectedSite.Value = SiteId.None;
+            currentSite.Value = SiteId.HQ;
+            siteDestination.Value = SiteId.HQ;
             phase.Value = DayPhase.AtHQ;
         }
 
@@ -512,6 +607,7 @@ namespace SunkCost.World
             into.runDays = runDays.Value;
             into.runSeconds = RunSeconds;
             into.baskets = baskets.Value;
+            into.unlockedSites = unlockedSites.Value; // a bought site stays open through quit-and-continue (a fresh slot starts locked)
         }
 
         // A hosted slot, applied at server start: the crew is at HQ with its run
@@ -529,6 +625,10 @@ namespace SunkCost.World
             runStartTime = Time.unscaledTime - Mathf.Max(0f, from.runSeconds);
             world.Value = WorldId.HQ;
             destination.Value = WorldId.HQ;
+            unlockedSites.Value = from.unlockedSites;
+            selectedSite.Value = SiteId.None;
+            currentSite.Value = SiteId.HQ;
+            siteDestination.Value = SiteId.HQ;
             phase.Value = DayPhase.AtHQ;
         }
 

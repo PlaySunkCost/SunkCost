@@ -287,10 +287,17 @@ namespace SunkCost.World
 
         // ---- sailing (server) -----------------------------------------------------
 
-        // The monitor's request lands here. Refuses with a reason the caller can
-        // show; the aboard rule names who is missing (design section 1). Everything
-        // that can be checked before locking anyone is checked here.
-        public bool ServerSail(WorldId to, out string why)
+        // A sail asked by world alone (the hooks, the peer's `sail`, RequestSail): the
+        // site identity the world implies (HQ, or Site 01 for the sea).
+        public bool ServerSail(WorldId to, out string why) => ServerSail(to, Destinations.SiteOf(to), out why);
+
+        // The console's CONFIRM (and the old monitor's request) lands here. Refuses with
+        // a reason the caller can show; the aboard rule names who is missing (design
+        // section 1). Everything that can be checked before locking anyone is checked
+        // here. `site` is the logical destination the trip records (Site02..04 sail to
+        // Site01's world until they have their own); the selection clears once the sail
+        // is accepted (Dan's proposal, 27 September 2026).
+        public bool ServerSail(WorldId to, SiteId site, out string why)
         {
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
@@ -306,8 +313,9 @@ namespace SunkCost.World
             if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
             if (!ServerEveryoneAboard(fromShip, out why)) return false;
             if (currentWorld == WorldId.HQ) ServerSaveRun("cast off"); // the last state at the dock: everyone aboard with what they carry
-            trip = StartCoroutine(TripRoutine(to, fromShip));
+            trip = StartCoroutine(TripRoutine(to, site, fromShip));
             ServerClearGiveUp("the ship sails"); // a vote to give up belongs to one stay at the HQ
+            dayState.ServerClearSelection();     // the console's selection was this sail; the crew selects again on arrival
             return true;
         }
 
@@ -364,7 +372,7 @@ namespace SunkCost.World
         }
 
         // The trip, stage by stage (plan section 4, "Accepted request through arrival").
-        private IEnumerator TripRoutine(WorldId to, ShipParts fromShip)
+        private IEnumerator TripRoutine(WorldId to, SiteId site, ShipParts fromShip)
         {
             transitioning = true;
             WorldId from = currentWorld;
@@ -375,7 +383,7 @@ namespace SunkCost.World
                 if (conn.IsActive) cohort.Add(conn.ClientId);
 
             // 3. Lock everyone where they stand; the ship does not move yet.
-            dayState.ServerBeginSail(to);
+            dayState.ServerBeginSail(to, site);
             SetStage(DepartureStage.Preparing, from, to, Settings.PrepareTimeoutSeconds);
             float deadline = Time.unscaledTime + Settings.PrepareTimeoutSeconds;
             while (Time.unscaledTime < deadline && !AllAcked(prepared)) yield return null;

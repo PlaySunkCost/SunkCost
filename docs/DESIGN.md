@@ -88,6 +88,13 @@ sign. The game draws the screens and the sign's word, so they can change.
 - **At HQ, the same model is the quota board.** The top screen shows the board, the lever
   reads **PAY**, and **GIVE UP** is a red card on the bottom panel (aim and E) showing
   the vote count.
+- **Being built (27 September 2026, `dan/hq-polish`, not yet play-tested).** Until Sites
+  02–04 have their own worlds every site is the one sea world, so at sea the lever refuses
+  a sail to another site with "Sail home first" (sites are chosen at HQ; the rule falls
+  away when the sites get their own scenes). The selection clears once a sail is accepted
+  (Dan's proposal). A lever pull carries the word the presser saw; if the crew changed the
+  selection just before, the pull is refused "Selection changed" rather than acting on the
+  new card.
 
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built

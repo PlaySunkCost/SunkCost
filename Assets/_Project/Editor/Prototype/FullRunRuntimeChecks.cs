@@ -271,7 +271,7 @@ namespace SunkCost.Editor.Prototype
             HQPlayerController host = Host();
             H.ClientMoveLocalPlayerToBoard(); yield return null;
             H.ClientLookAtNamed(QuotaBoard.BoardName); yield return null; yield return null;
-            Check(host.CurrentQuotaBoard != null, "looking at the board: " + H.PromptText());
+            Check(host.CurrentQuotaBoard != null || (host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Lever), "looking at the board: " + H.PromptText()); // the old board or the console's lever (27 September 2026)
             Say("prompt: " + H.PromptText());
             ShotFrom("board-before-pay", new Vector3(-2.5f, 1.6f, -3.6f), new Vector3(-2.5f, 1.6f, -5.85f));
             H.ClientRequestPay();

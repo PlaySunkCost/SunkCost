@@ -431,11 +431,12 @@ namespace SunkCost.Editor.Prototype
         // September 2026: the board sits on the Intake counter, facing south).
         public static string ClientMoveLocalPlayerToBoard()
         {
-            SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();
-            if (board == null) return "No quota board.";
-            Vector3 front = board.transform.rotation * Vector3.forward; // the console faces the buyer
+            // The HQ console's rig root (+Z is its front; 27 September 2026), else the old board.
+            Transform stand = HQComposer() is MonoBehaviour rig ? rig.transform : Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>()?.transform;
+            if (stand == null) return "No quota board.";
+            Vector3 front = stand.rotation * Vector3.forward; // the console faces the buyer
             Vector3 flat = new Vector3(front.x, 0f, front.z).normalized;
-            Vector3 at = board.transform.position + flat * 1.6f;
+            Vector3 at = stand.position + flat * 1.6f;
             at.y = 0f;
             return ClientMoveLocalPlayerTo(at);
         }
@@ -456,10 +457,14 @@ namespace SunkCost.Editor.Prototype
             return day == null ? "(no day)" : $"votes={day.GiveUpVotes} crew={day.GiveUpCrew} phase={day.Phase}";
         }
 
+        // The HQ console's status first (27 September 2026); the old board answers until
+        // the HQ rebuild removes it (its class goes in the test phase).
         public static string QuotaBoardText()
         {
+            SunkCost.World.IConsoleComposer console = HQComposer();
+            if (console != null && !string.IsNullOrEmpty(console.Text)) return console.Text;
             SunkCost.World.QuotaBoard board = Object.FindAnyObjectByType<SunkCost.World.QuotaBoard>();
-            return board == null ? "(no board)" : board.Text;
+            return board == null ? (console != null ? "(console has no text yet)" : "(no board)") : board.Text;
         }
 
         public static string ClientRequestCar()
@@ -508,10 +513,14 @@ namespace SunkCost.Editor.Prototype
                    $"deckDoors={(flow == null ? -1f : flow.DeckCabinOpenFraction()):0.00} fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.00} refusal='{day.LastRefusal.Text}' failure='{(flow == null ? "" : flow.LastFailure)}'";
         }
 
+        // The ship console's status first (27 September 2026); the old monitor answers
+        // until the ship rebuild removes it (its class goes in the test phase).
         public static string MonitorText()
         {
+            SunkCost.World.IConsoleComposer console = ShipComposer();
+            if (console != null && !string.IsNullOrEmpty(console.Text)) return console.Text;
             SunkCost.World.ShipMonitor monitor = Object.FindAnyObjectByType<SunkCost.World.ShipMonitor>();
-            return monitor == null ? "(no monitor)" : monitor.Text;
+            return monitor == null ? (console != null ? "(console has no text yet)" : "(no monitor)") : monitor.Text;
         }
 
         // The server-side sail, for the matrix's setup steps.
@@ -576,6 +585,179 @@ namespace SunkCost.Editor.Prototype
                 .Concat(Object.FindObjectsByType<CarryableItem>(FindObjectsSortMode.None).OrderBy(i => i.name)
                     .Select(i => $"item {i.name} scene={i.gameObject.scene.name} state={i.State} holder={i.HolderClientId} pos={i.transform.position}"));
             return string.Join("\n", lines);
+        }
+
+        // ---- the shared console (27 September 2026; scratchpad console/INTERFACES.md §13) ----
+        // The composers (ShipNavigationConsole on the ship rig, HQQuotaConsole on the HQ
+        // rig) are reached through IConsoleComposer, so these hooks compile before the
+        // rigs exist and answer "(no console)" until the builders place them. Requests go
+        // through the local player's ShipControls, the path a real E takes.
+
+        private static SunkCost.World.ShipControls LocalControls()
+        {
+            HQPlayerController local = LocalPlayer();
+            return local != null ? local.GetComponent<SunkCost.World.ShipControls>() : null;
+        }
+
+        private static System.Collections.Generic.IEnumerable<SunkCost.World.IConsoleComposer> Composers() =>
+            Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>();
+
+        // The ship's console in the crew's world (the host may have two ships loaded).
+        private static SunkCost.World.IConsoleComposer ShipComposer()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(day != null ? day.World : SunkCost.World.WorldId.HQ);
+            if (ship != null)
+                foreach (SunkCost.World.IConsoleComposer c in ship.GetComponentsInChildren<SunkCost.World.IConsoleComposer>(true))
+                    if (c.Kind == SunkCost.World.ConsoleKind.Ship) return c;
+            return Composers().FirstOrDefault(c => c.Kind == SunkCost.World.ConsoleKind.Ship);
+        }
+
+        private static SunkCost.World.IConsoleComposer HQComposer()
+        {
+            UnityEngine.SceneManagement.Scene hq = SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.HQ);
+            SunkCost.World.IConsoleComposer[] all = Composers().Where(c => c.Kind == SunkCost.World.ConsoleKind.HQ).ToArray();
+            return all.FirstOrDefault(c => c is MonoBehaviour mb && hq.IsValid() && mb.gameObject.scene == hq) ?? all.FirstOrDefault();
+        }
+
+        private static string ScreenText(SunkCost.World.IConsoleComposer c) =>
+            c == null ? "(no console)" : "top=" + SunkCost.World.ConsoleModels.Flatten(c.Top) + " | bottom=" + SunkCost.World.ConsoleModels.Flatten(c.Bottom) + " | sign=" + SunkCost.World.ConsoleModels.Flatten(c.Sign);
+
+        // E on a destination card as the local player: "HQ", "Site02", "SITE 02", "3" all name a card.
+        public static string ClientSelect(string site)
+        {
+            if (!SunkCost.World.Destinations.TryParse(site, out SunkCost.World.SiteId id) || id == SunkCost.World.SiteId.None) return "Unknown site " + site;
+            SunkCost.World.ShipControls controls = LocalControls();
+            if (controls == null) return "No local ShipControls";
+            controls.RequestSelect(id);
+            return "requested " + id;
+        }
+
+        public static string ClientRequestSelect(string site) => ClientSelect(site);
+
+        // E on the lever of the named console ("Ship"/"HQ"): the expectation THIS peer's
+        // sign shows (the same rule table over the replicated facts), as a real E sends it.
+        public static string ClientPullLever(string kind)
+        {
+            if (!System.Enum.TryParse(kind, true, out SunkCost.World.ConsoleKind console)) return "Unknown console " + kind;
+            SunkCost.World.ShipControls controls = LocalControls();
+            if (controls == null) return "No local ShipControls";
+            SunkCost.World.LeverAction action = SunkCost.World.ConsoleRules.Expected(console, null, out SunkCost.World.SiteId target);
+            controls.RequestLever(console, action, target);
+            return $"requested {console}/{action}/{target}";
+        }
+
+        // The lever under the local player's dot, else the ship's.
+        public static string ClientRequestLever()
+        {
+            HQPlayerController local = LocalPlayer();
+            SunkCost.World.ConsoleControl aimed = local != null ? local.CurrentConsoleControl : null;
+            return ClientPullLever(aimed != null && aimed.Kind == SunkCost.World.ConsoleControlKind.Lever ? aimed.Console.ToString() : "Ship");
+        }
+
+        public static string ClientRequestLever(string kind) => ClientPullLever(kind);
+
+        // The race rows: send exactly this expectation ("Ship", "Confirm", "Site01"; site "" or "None" for none).
+        public static string ClientPullLeverExpecting(string kind, string action, string site)
+        {
+            if (!System.Enum.TryParse(kind, true, out SunkCost.World.ConsoleKind console)) return "Unknown console " + kind;
+            if (!System.Enum.TryParse(action, true, out SunkCost.World.LeverAction expected)) return "Unknown action " + action;
+            if (!SunkCost.World.Destinations.TryParse(string.IsNullOrEmpty(site) ? "None" : site, out SunkCost.World.SiteId target)) return "Unknown site " + site;
+            SunkCost.World.ShipControls controls = LocalControls();
+            if (controls == null) return "No local ShipControls";
+            controls.RequestLever(console, expected, target);
+            return $"requested {console}/{expected}/{target}";
+        }
+
+        // The console's replicated state and what the rule table makes of it on this peer
+        // (the sign words come from the composers when the rigs exist, else from the rules).
+        public static string ConsoleStatus()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null) return "(no day)";
+            SunkCost.World.SiteCatalog sites = SunkCost.World.SiteCatalog.Resolve();
+            SunkCost.World.LeverPull pull = day.LastLeverPull;
+            SunkCost.World.LeverAction shipAction = SunkCost.World.ConsoleRules.Expected(SunkCost.World.ConsoleKind.Ship, sites, out SunkCost.World.SiteId shipTarget, out bool shipOn, out string shipWhy);
+            SunkCost.World.LeverAction hqAction = SunkCost.World.ConsoleRules.Expected(SunkCost.World.ConsoleKind.HQ, sites, out _, out bool hqOn, out string hqWhy);
+            SunkCost.World.IConsoleComposer ship = ShipComposer(), hq = HQComposer();
+            string shipSign = SunkCost.World.ConsoleModels.Flatten(ship != null ? ship.Sign : SunkCost.World.ConsoleRules.Sign(shipAction, shipOn, sites.UnlockPrice(shipTarget), false));
+            string hqSign = SunkCost.World.ConsoleModels.Flatten(hq != null ? hq.Sign : SunkCost.World.ConsoleRules.Sign(hqAction, hqOn, 0, false));
+            HQPlayerController local = LocalPlayer();
+            SunkCost.World.ConsoleControl aimed = local != null ? local.CurrentConsoleControl : null;
+            string aim = aimed == null ? "none" : aimed.Kind == SunkCost.World.ConsoleControlKind.Card ? "card:" + aimed.Payload : aimed.Kind == SunkCost.World.ConsoleControlKind.Lever ? "lever" : "giveup";
+            return $"selected={day.SelectedSite} unlocked={SunkCost.World.Destinations.MaskText(day.UnlockedSites)} site={day.CurrentSite} toSite={day.SiteDestination} lever={pull.Serial}/{pull.Kind}/{pull.Action} shipSign={shipSign} hqSign={hqSign} " +
+                   $"shipAction={shipAction}/{shipTarget}/{(shipOn ? "on" : "off:" + shipWhy)} hqAction={hqAction}/{(hqOn ? "on" : "off:" + hqWhy)} aim={aim} votes={day.GiveUpVotes}/{day.GiveUpCrew} refusal='{day.LastRefusal.Text}'";
+        }
+
+        // The ship console's one-line compat status (the old monitor's words; INTERFACES §12).
+        public static string ShipConsoleText()
+        {
+            SunkCost.World.IConsoleComposer ship = ShipComposer();
+            return ship == null ? "(no console)" : ship.Text;
+        }
+
+        public static string ShipScreenText() => ScreenText(ShipComposer());
+        public static string HQScreenText() => ScreenText(HQComposer());
+
+        // 1.6 m in front of the ship rig's root (+Z), on the deck the rig stands on, in the crew's world.
+        public static string ClientMoveLocalPlayerToShipConsole()
+        {
+            if (ShipComposer() is not MonoBehaviour rig) return "No ship console.";
+            Vector3 front = rig.transform.rotation * Vector3.forward;
+            Vector3 flat = new Vector3(front.x, 0f, front.z).normalized;
+            Vector3 at = rig.transform.position + flat * 1.6f;
+            at.y = rig.transform.position.y;
+            return ClientMoveLocalPlayerTo(at);
+        }
+
+        // Like ClientLookAtNamed, resolved under the crew's world's ship (two ships may be loaded on the host).
+        public static string ClientLookAtShipControl(string objectName)
+        {
+            HQPlayerController local = LocalPlayer();
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            SunkCost.World.ShipParts ship = SunkCost.World.ShipParts.InWorld(day != null ? day.World : SunkCost.World.WorldId.HQ);
+            if (local == null || ship == null) return "No local player or ship.";
+            Transform target = ship.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == objectName);
+            if (target == null) return "No control " + objectName + " on the ship.";
+            Vector3 to = target.position - local.EyePosition;
+            Vector3 flat = new(to.x, 0f, to.z);
+            if (flat.sqrMagnitude > 0.0001f) local.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
+            local.SetPitchForChecks(-Mathf.Atan2(to.y, flat.magnitude) * Mathf.Rad2Deg);
+            return $"looking at {objectName}: distance={to.magnitude:0.00}";
+        }
+
+        // The server-side unlock, for the matrix's setup and the same-frame double-charge rows.
+        public static string ServerUnlock(string site)
+        {
+            SunkCost.World.WorldSceneFlow flow = SunkCost.World.WorldSceneFlow.Instance;
+            NetworkManager nm = Object.FindFirstObjectByType<NetworkManager>();
+            if (flow == null || nm == null || !nm.IsServerStarted) return "Not the server.";
+            if (!SunkCost.World.Destinations.TryParse(site, out SunkCost.World.SiteId id)) return "Unknown site " + site;
+            return flow.ServerUnlockSite(nm.ClientManager.Connection, id, out string why) ? "unlocked " + id : "refused: " + why;
+        }
+
+        public static string ServerUnlockForChecks(string site) => ServerUnlock(site);
+
+        // Server only: every bought site locked again without a plank (the relock rows).
+        public static string ServerRelock()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            NetworkManager nm = Object.FindFirstObjectByType<NetworkManager>();
+            if (day == null || nm == null || !nm.IsServerStarted) return "Not the server.";
+            day.ServerResetUnlocks();
+            return "relocked: " + SunkCost.World.Destinations.MaskText(day.UnlockedSites);
+        }
+
+        public static string ServerRelockForChecks() => ServerRelock();
+
+        // The last accepted pull and what each loaded rig has animated of it.
+        public static string LeverPullText()
+        {
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
+            if (day == null) return "(no day)";
+            SunkCost.World.LeverPull pull = day.LastLeverPull;
+            SunkCost.World.IConsoleComposer ship = ShipComposer(), hq = HQComposer();
+            return $"serial={pull.Serial} kind={pull.Kind} action={pull.Action} tick={pull.Tick} played={(ship == null ? -1 : ship.LeverPlayedSerial)}/{(hq == null ? -1 : hq.LeverPlayedSerial)} angles={(ship == null ? 0f : ship.LeverAngle):0.#}/{(hq == null ? 0f : hq.LeverAngle):0.#}";
         }
 
         private static HQPlayerController LocalPlayer()

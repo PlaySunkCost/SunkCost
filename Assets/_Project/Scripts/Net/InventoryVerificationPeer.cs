@@ -188,6 +188,51 @@ namespace SunkCost.Net
                     if (giveUp == null) return "No ShipControls";
                     giveUp.RequestGiveUp();
                     break;
+                // The shared console (27 September 2026). E on a destination card: the site
+                // text rides in the item field ("HQ", "Site02", "SITE 02", "3").
+                case "select":
+                {
+                    if (!SunkCost.World.Destinations.TryParse(command.item, out SunkCost.World.SiteId card) || card == SunkCost.World.SiteId.None) return "Unknown site " + command.item;
+                    var selectControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (selectControls == null) return "No ShipControls";
+                    selectControls.RequestSelect(card);
+                    return "requested select " + card;
+                }
+                // E on the lever of the console named in the item field ("Ship"/"HQ"): the
+                // expectation THIS peer's sign shows, as the owner's E sends it.
+                case "lever":
+                {
+                    if (!Enum.TryParse(command.item, true, out SunkCost.World.ConsoleKind leverKind)) return "Unknown console " + command.item;
+                    var leverControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (leverControls == null) return "No ShipControls";
+                    SunkCost.World.LeverAction leverAction = SunkCost.World.ConsoleRules.Expected(leverKind, null, out SunkCost.World.SiteId leverTarget);
+                    leverControls.RequestLever(leverKind, leverAction, leverTarget);
+                    return $"requested lever {leverKind}/{leverAction}/{leverTarget}";
+                }
+                // The race rows: exactly this expectation (item = the console, slot =
+                // (int)LeverAction, position.x = (int)SiteId).
+                case "lever_expect":
+                {
+                    if (!Enum.TryParse(command.item, true, out SunkCost.World.ConsoleKind expectKind)) return "Unknown console " + command.item;
+                    var expectControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (expectControls == null) return "No ShipControls";
+                    var expectAction = (SunkCost.World.LeverAction)command.slot;
+                    var expectTarget = (SunkCost.World.SiteId)Mathf.RoundToInt(command.position.x);
+                    expectControls.RequestLever(expectKind, expectAction, expectTarget);
+                    return $"requested lever {expectKind}/{expectAction}/{expectTarget}";
+                }
+                // Turns toward a console control by its object name, resolved in this
+                // player's world's ship (two may be loaded on a host) or the HQ scene.
+                case "look_control":
+                {
+                    Transform control = FindControl(command.item);
+                    if (control == null) return "No control " + command.item;
+                    Vector3 toControl = control.position - player.EyePosition;
+                    Vector3 flatControl = new(toControl.x, 0f, toControl.z);
+                    if (flatControl.sqrMagnitude > 0.0001f) player.transform.rotation = Quaternion.LookRotation(flatControl, Vector3.up);
+                    player.SetPitchForChecks(-Mathf.Atan2(toControl.y, flatControl.magnitude) * Mathf.Rad2Deg);
+                    return $"looking at {command.item}: distance={toControl.magnitude:0.00}";
+                }
                 // The deck cabin's button / the car's panel, as E would press them.
                 case "cabin":
                 case "car":
@@ -362,6 +407,54 @@ namespace SunkCost.Net
             return visor + "; coins=" + string.Join(",", coins);
         }
 
+        // ---- the shared console (27 September 2026) --------------------------------
+        // The composers are reached through IConsoleComposer (ShipNavigationConsole,
+        // HQQuotaConsole), so the peer compiles before the rigs exist and reports
+        // "none" until the builders place them.
+
+        private static SunkCost.World.IConsoleComposer ShipComposer()
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            var ship = SunkCost.World.ShipParts.InWorld(day != null ? day.World : SunkCost.World.WorldId.HQ);
+            if (ship != null)
+                foreach (SunkCost.World.IConsoleComposer c in ship.GetComponentsInChildren<SunkCost.World.IConsoleComposer>(true))
+                    if (c.Kind == SunkCost.World.ConsoleKind.Ship) return c;
+            return FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>().FirstOrDefault(c => c.Kind == SunkCost.World.ConsoleKind.Ship);
+        }
+
+        private static SunkCost.World.IConsoleComposer HQComposer()
+        {
+            var hq = SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.HQ);
+            var all = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>().Where(c => c.Kind == SunkCost.World.ConsoleKind.HQ).ToArray();
+            return all.FirstOrDefault(c => c is MonoBehaviour mb && hq.IsValid() && mb.gameObject.scene == hq) ?? all.FirstOrDefault();
+        }
+
+        // A console control object by name: in the ship of this player's world, else in the HQ scene.
+        private static Transform FindControl(string name)
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            var ship = SunkCost.World.ShipParts.InWorld(day != null ? day.World : SunkCost.World.WorldId.HQ);
+            if (ship != null)
+                foreach (Transform t in ship.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+            var hq = SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.HQ);
+            if (hq.IsValid() && hq.isLoaded)
+                foreach (GameObject root in hq.GetRootGameObjects())
+                    foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+            return null;
+        }
+
+        private static string ConsoleLine()
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            SunkCost.World.IConsoleComposer ship = ShipComposer(), hq = HQComposer();
+            SunkCost.World.LeverPull pull = day == null ? default : day.LastLeverPull;
+            return $"selected={(day == null ? "none" : day.SelectedSite.ToString())}; unlocked={(day == null ? "none" : SunkCost.World.Destinations.MaskText(day.UnlockedSites))}; site={(day == null ? "none" : day.CurrentSite.ToString())}; toSite={(day == null ? "none" : day.SiteDestination.ToString())}; " +
+                   $"leverPulls={pull.Serial}/{pull.Kind}/{pull.Action}; leverPlayed={(ship == null ? -1 : ship.LeverPlayedSerial)}; leverAngle={(ship == null ? 0f : ship.LeverAngle).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}; " +
+                   $"leverSign={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Sign))}; hqSign={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Sign))}; " +
+                   $"topScreen={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Top))}; bottomScreen={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Bottom))}; " +
+                   $"hqTop={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Top))}; hqBottom={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Bottom))};\n";
+        }
+
         public static string Snapshot()
         {
             var nm = InstanceFinder.NetworkManager;
@@ -372,6 +465,8 @@ namespace SunkCost.Net
                 .Select(i => UnityEngine.SceneManagement.SceneManager.GetSceneAt(i)).Where(sc => sc.isLoaded && sc.name != "MovedObjectsHolder" && sc.name != "DelayedDestroy").Select(sc => sc.name).OrderBy(n => n)); // FishNet holder scenes excluded
             var session = FindAnyObjectByType<PrototypeSessionController>();
             var monitor = FindAnyObjectByType<SunkCost.World.ShipMonitor>();
+            SunkCost.World.IConsoleComposer shipConsole = ShipComposer();
+            string monitorText = shipConsole != null && !string.IsNullOrEmpty(shipConsole.Text) ? shipConsole.Text : monitor == null ? string.Empty : monitor.Text; // the console's status first (27 September 2026), the old monitor until it goes
             var seaShip = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
             var tv = seaShip != null ? seaShip.GetComponent<SunkCost.World.ShipTV>() : null;
             string tvLine = tv == null ? "tv=none" : $"tv={tv.Channel}; tvLive={tv.Live}; tvCaption={tv.Caption}; tvViewerNear={tv.ViewerNear}; tvRendered={tv.RenderedFrames}";
@@ -385,11 +480,14 @@ namespace SunkCost.Net
             tvLine += elevatorSounds == null ? "; winch=none" : $"; winchAtCar={elevatorSounds.WinchPlayingAtCar}; winchOnShip={elevatorSounds.WinchPlayingOnShip}; dingsAtCar={elevatorSounds.DingsAtCar}; dingsOnShip={elevatorSounds.DingsOnShip}";
             var ghostLight = SunkCost.Monsters.ElevatorGhostLight.Instance;
             tvLine += ghostLight == null ? "; ghost=none" : $"; ghostGreen={ghostLight.IsGreen}; ghostActive={(day != null && day.Ghost.Active)}; ghostSerial={(day == null ? 0 : day.Ghost.Serial)}; slamsHeard={ghostLight.SlamsHeard}";
-            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={(monitor == null ? string.Empty : monitor.Text)}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {tvLine}; {CarLine()}; {VisorLine()}\n";
+            string text = $"server={nm.IsServerStarted}; client={nm.IsClientStarted}; clientId={nm.ClientManager.Connection.ClientId}; loaded={loaded}; active={UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; phase={(day == null ? "none" : day.Phase.ToString())}; day={(day == null ? -1 : day.Day)}; payday={(day != null && day.Payday)}; box={(day == null ? -1 : day.BoxValue)}; balance={(day == null ? -1 : day.Balance)}; world={(day == null ? "none" : day.World.ToString())}; fade={(SunkCost.World.ScreenFade.Instance == null ? -1f : SunkCost.World.ScreenFade.Instance.Alpha):0.##}; message={(session == null ? string.Empty : session.Message)}; monitor={monitorText}; trip={(day == null ? "none" : day.Departure.Stage + "/" + day.Departure.Serial)}; ride={(day == null ? "none" : day.CabinRide.Stage + "/" + day.CabinRide.Direction + "/" + day.CabinRide.Serial)}; car={(day == null ? "none" : day.Elevator.State.ToString())}; carPos={(SunkCost.World.WorldSceneFlow.FindCar() == null ? "none" : SunkCost.World.WorldSceneFlow.FindCar().transform.position.ToString())}; below={(day == null ? "" : string.Join("+", day.Below))}; travelLocked={(SunkCost.World.WorldSceneFlow.LocalRider() != null && SunkCost.World.WorldSceneFlow.LocalRider().Locked)}; underwater={Underwater()}; cabinWater={CabinWaterLevel()}; {tvLine}; {CarLine()}; {VisorLine()}\n";
             if (voice != null) text += voice.Diagnostics + "\n";
             text += $"baskets={(day == null ? -1 : day.Baskets)};\n";
             var quotaBoard = FindFirstObjectByType<SunkCost.World.QuotaBoard>();
-            text += $"giveup={(day == null ? -1 : day.GiveUpVotes)}/{(day == null ? -1 : day.GiveUpCrew)}; quotaBoard={(quotaBoard == null ? "none" : quotaBoard.Text.Replace("\n", " | "))};\n";
+            SunkCost.World.IConsoleComposer hqConsole = HQComposer();
+            string quotaText = hqConsole != null && !string.IsNullOrEmpty(hqConsole.Text) ? hqConsole.Text : quotaBoard == null ? "none" : quotaBoard.Text; // the console's status first (27 September 2026), the old board until it goes
+            text += $"giveup={(day == null ? -1 : day.GiveUpVotes)}/{(day == null ? -1 : day.GiveUpCrew)}; quotaBoard={quotaText.Replace("\n", " | ")};\n";
+            text += ConsoleLine();
             foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
             {
                 var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();
