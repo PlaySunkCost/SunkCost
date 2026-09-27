@@ -144,34 +144,43 @@ namespace SunkCost.Editor.Look
             board.transform.SetParent(root.transform);
             board.transform.position = at;
             board.transform.rotation = Quaternion.Euler(-25f, 180f, 0f);
+            // Drawn like the ship's screens (Dan, 27 September 2026): the plate is a
+            // screen's glass, the lines ScreenStyle's (a cyan title over a rule, the money
+            // as the bold value line, the next step as the dim hint), saved materials.
+            const float w = 3.0f, h = 0.9f;
             GameObject plate = new("Board Plate");
             plate.transform.SetParent(board.transform, false);
-            plate.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(3.0f, 0.9f, 0.08f), 0.45f);
-            plate.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.SignBoard();
+            plate.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w, h, 0.08f), 0.45f);
+            plate.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ShipFlat(ScreenStyle.Back);
             GameObject frame = new("Frame");
             frame.transform.SetParent(board.transform, false);
             frame.transform.localPosition = new Vector3(0f, 0f, -0.02f);
-            frame.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(3.08f, 0.98f, 0.03f), 0.49f);
+            frame.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(w + 0.08f, h + 0.08f, 0.03f), 0.49f);
             frame.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ScreenTeal();
-            GameObject text = new("Board Text", typeof(TextMesh));
-            text.transform.SetParent(board.transform, false);
-            text.transform.localPosition = new Vector3(0f, 0f, 0.05f);
-            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            TextMesh mesh = text.GetComponent<TextMesh>();
-            mesh.text = "QUOTA BOARD";
-            mesh.characterSize = 0.05f;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(0.55f, 0.95f, 0.85f);
-            text.AddComponent<DepthText>().Configure(LookMaterials.DepthText());
-            // The runtime lines ("quota $0 / $500 · balance $0") ran off both edges of the
-            // plate (HQ polish, 27 September 2026): fitted to it, refitted whenever they change.
-            text.AddComponent<PlateText>().Configure(new Vector2(2.7f, 0.78f), PlateText.Mode.Fit, null);
+            Transform display = new GameObject("Display").transform;
+            display.SetParent(board.transform, false);
+            display.localPosition = new Vector3(0f, 0f, 0.045f); // the glass's face; the lines sit 4 mm in front of it
+            ScreenStyle.EditorFlat = LookMaterials.ShipFlat;
+            try
+            {
+                Material textMaterial = LookMaterials.DepthText();
+                float m = ScreenStyle.Margin * h;
+                float titleLine = ScreenStyle.TitleLine * h, valueLine = ScreenStyle.ValueLine * h, small = ScreenStyle.HintLine * h;
+                float top = h / 2f - m - titleLine / 2f, bottom = -h / 2f + m + small / 2f;
+                TextMesh title = ScreenStyle.Line(display, "Title", new Vector3(0f, top, 0.004f), titleLine, ScreenStyle.Accent, TextAnchor.MiddleCenter, textMaterial);
+                ScreenStyle.Quad(display, "Rule", new Vector3(0f, top - titleLine * 0.75f, 0.002f), w - 2f * m, Mathf.Max(0.006f, h * 0.008f), Color.Lerp(ScreenStyle.Track, ScreenStyle.Accent, 0.5f));
+                float mid = ((top - titleLine) + (bottom + small)) / 2f;
+                TextMesh value = ScreenStyle.Line(display, "Value", new Vector3(0f, mid, 0.004f), valueLine * 0.55f, ScreenStyle.Text, TextAnchor.MiddleCenter, textMaterial);
+                TextMesh hint = ScreenStyle.Line(display, "Hint", new Vector3(0f, bottom, 0.004f), small, ScreenStyle.Dim, TextAnchor.MiddleCenter, textMaterial);
+                title.text = "QUOTA BOARD"; value.text = string.Empty; hint.text = string.Empty;
+                // The money line is the long one ("quota $0 / $500 (handed over ...) · balance $0"): fitted to the glass, refitted as it changes.
+                value.gameObject.AddComponent<PlateText>().Configure(new Vector2(w - 2f * m, valueLine * 0.6f), PlateText.Mode.Fit, null);
+                board.AddComponent<SunkCost.World.QuotaBoard>().Configure(title, value, hint);
+            }
+            finally { ScreenStyle.EditorFlat = null; }
             BoxCollider box = board.AddComponent<BoxCollider>();
             box.center = new Vector3(0f, 0f, 0.02f);
-            box.size = new Vector3(3.0f, 0.9f, 0.12f);
-            board.AddComponent<SunkCost.World.QuotaBoard>().Configure(mesh);
+            box.size = new Vector3(w, h, 0.12f);
         }
 
         internal static void ColourPanel(GameObject root, Vector3 at)
