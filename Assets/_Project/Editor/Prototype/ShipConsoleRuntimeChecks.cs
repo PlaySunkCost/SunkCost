@@ -303,6 +303,22 @@ namespace SunkCost.Editor.Prototype
             yield return null;
         }
 
+        // A fake diver (ServerSetBelow) calls the car down (WorldSceneFlow.CarReturnWanted) and
+        // nobody rides it up again; the ship's rule table then reads DIVERS BELOW for an empty
+        // Below because the cabin is away (CrewDayState.CabinAway; bugs/SHIP-2). Put the car back
+        // at the top as a fresh site does, once nobody is below.
+        private static IEnumerator CarUp(string label)
+        {
+            Say(label + ": the car after the fake dive: " + Day.Elevator.State + (Day.CabinAway ? " (cabin away)" : string.Empty));
+            float deadline = Time.unscaledTime + 3f;
+            while (Time.unscaledTime < deadline && Day.Below.Count == 0 && Day.CabinAway)
+            {
+                Day.ServerSetElevator(new ElevatorPhase { Serial = Day.Elevator.Serial + 1, State = SunkCost.Diving.ElevatorState.AtTop, Upward = true, StartTick = FishNet.InstanceFinder.TimeManager.Tick, DurationTicks = 0 });
+                yield return null; yield return null;
+            }
+            Check(!Day.CabinAway, label + ": the car is back at the top (" + Day.Elevator.State + ")");
+        }
+
         // ---- the run ------------------------------------------------------------------
 
         private static IEnumerator Run()
@@ -522,6 +538,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !NoticeShown(), refusalSeconds + 1.5f, () => "H13 the notice cleared");
             Day.ServerSetBelow(host.OwnerId, false); yield return null;
             Check(Day.ServerEndDayIfDone(days) && Day.DiveDone && Day.Phase == DayPhase.AtSea, "H13 everyone up: the dive is done");
+            yield return CarUp("H13");
 
             Heading("H11 — after the dive: END DAY on the sign whatever is selected; the real pull ends the day once; a second pull is refused");
             yield return Expect(() => Sign() == "END DAY/on" && Bottom().EndsWith("DIVE DONE — END THE DAY FIRST"), 2f, () => "H11 END DAY with HQ selected: " + Sign() + " | " + Bottom());
@@ -577,6 +594,7 @@ namespace SunkCost.Editor.Prototype
             yield return ExpectRefusal(refusal, ConsoleRules.DiversBelow, "H15 the pull with a diver below");
             Check(!Day.Travelling && Day.Departure.Serial == trips && Day.LastLeverPull.Serial == pulls, "H15 nothing sailed");
             Day.ServerSetBelow(host.OwnerId, false); yield return null;
+            yield return CarUp("H15");
             yield return Expect(() => !NoticeShown() && Sign() == "CONFIRM/on", refusalSeconds + 1.5f, () => "H15 CONFIRM again once everyone is up: " + Sign());
 
             Heading("H14 — payday: PAYDAY in the corner, a site's CONFIRM refused 'Payday — only HQ', HQ sails home; at the dock 'Pay the quota first'");
@@ -639,6 +657,8 @@ namespace SunkCost.Editor.Prototype
             Check(GuestHeader(lastReply).Contains("monitor=Docked at HQ"), "G1 the guest's compat text: " + GuestHeader(lastReply).Split(new[] { "monitor=" }, StringSplitOptions.None)[1].Split(';')[0]);
 
             Heading("G2 — the guest, aboard, changes the selection: both screens agree, CONFIRM lit on both");
+            hqShip = ShipParts.InWorld(WorldId.HQ); // the docked ship is a fresh instance after the trips (the HQ scene was unloaded and reloaded)
+            Check(hqShip != null && hqShip.gameObject.scene == WorldScenes.Scene(WorldId.HQ), "G2 the docked ship after the trips");
             Vector3 guestDeck = hqShip.FromShipLocal(new Vector3(2.5f, 0f, 4f));
             yield return GuestMove(guestDeck);
             yield return Expect(() => hqShip.IsSafelyAboard(remote.transform.position), 5f, () => "G2 the guest stands on the deck");
@@ -677,9 +697,9 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.IsOpen(SiteId.Site03) && Day.Balance == 0 && Day.LastLeverPull.Serial == pulls + 1, 3f, () => "G5 the guest's pull bought Site 03 once: " + Destinations.MaskText(Day.UnlockedSites) + " $" + Day.Balance);
             float angleInReply = GuestAngle(lastReply);
             Say($"the guest's own reply (0.4 s after its pull): leverPlayed/leverAngle → {GuestConsole(lastReply).Split(new[] { "leverPulls=" }, StringSplitOptions.None).Last().Split(new[] { "leverSign=" }, StringSplitOptions.None)[0]}");
+            yield return ExpectSwing(pulls + 1, "G6 host"); // measured at once: the swing lasts 0.6 s and a snapshot round trip would miss its peak
             yield return GuestEventually(r => GuestConsole(r).Contains($"leverPulls={pulls + 1}/Ship/Unlock;") && GuestConsole(r).Contains($"leverPlayed={pulls + 1};") && GuestConsole(r).Contains("unlocked=Site03;") && GuestHeader(r).Contains("balance=0;"), 6f, "G6 the guest saw the pull serial, played it, and reads the unlock and the balance");
             Check(!float.IsNaN(angleInReply) && angleInReply > 0f, $"G6 the guest's lever was mid-swing 0.4 s after its pull ({angleInReply:0.#}°)");
-            yield return ExpectSwing(pulls + 1, "G6 host");
             yield return GuestEventually(r => GuestCardIs(r, "SITE 03", true, false, false) && GuestConsole(r).Contains("leverSign=CONFIRM/on;"), 4f, "G5 the guest's card lost its lock; CONFIRM lit");
 
             Heading("G5b — host and guest pull UNLOCK in the same editor frame for one locked site: charged once, one pull counted, the loser refused");
@@ -718,12 +738,13 @@ namespace SunkCost.Editor.Prototype
             trips = Day.Departure.Serial; pulls = Day.LastLeverPull.Serial;
             yield return Send("{\"id\":{id},\"action\":\"lever\",\"item\":\"Ship\"}");
             Check(lastReply.Contains("requested lever Ship/Confirm/Site01"), "G4 the guest's CONFIRM went: " + lastReply.Split('\n')[0]);
+            yield return Expect(() => Day.LastLeverPull.Serial == pulls + 1, 3f, () => "G4 the guest's pull was accepted (serial " + Day.LastLeverPull.Serial + ")");
+            yield return ExpectSwing(pulls + 1, "G4 host"); // measured at once (the swing lasts 0.6 s)
             yield return Expect(() => Day.Departure.Serial == trips + 1 && Day.Travelling, 4f, () => "G4 one trip started by the guest's pull (serial " + Day.Departure.Serial + ")");
             Check(Day.LastLeverPull.Serial == pulls + 1 && Day.LastLeverPull.Action == LeverAction.Confirm && Day.SelectedSite == SiteId.None, "G4 the pull counted once, the selection cleared");
             angleInReply = GuestAngle(lastReply);
             Check(GuestConsole(lastReply).Contains($"leverPulls={pulls + 1}/Ship/Confirm;") && GuestConsole(lastReply).Contains($"leverPlayed={pulls + 1};"), "G6 the guest's reply carries the pull and has played it: " + GuestConsole(lastReply).Split(new[] { "leverSign=" }, StringSplitOptions.None)[0]);
             Check(!float.IsNaN(angleInReply) && angleInReply > 0f, $"G6 the guest's lever mid-swing 0.4 s after the pull ({angleInReply:0.#}°)");
-            yield return ExpectSwing(pulls + 1, "G4 host");
             yield return Expect(() => Bottom().EndsWith("SAILING TO SITE 01"), 3f, () => "G4 the host's screen: " + Bottom());
             yield return GuestEventually(r => GuestConsole(r).Contains("SAILING TO SITE 01") && GuestConsole(r).Contains("selected=None;") && GuestConsole(r).Contains("toSite=Site01;") && !GuestTop(r).Contains("@"), 6f, "G4 the guest's screen: SAILING TO SITE 01, nothing selected, HERE on no card");
             yield return Arrive(WorldId.Sea, "G4");
