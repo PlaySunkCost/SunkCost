@@ -58,6 +58,14 @@ namespace SunkCost.Editor.Prototype
             Near(errors, ElevatorMath.WaterLevelInCar(-1f, -45f, 3.5f), 3.5f, 1e-5f, "full at the bottom");
             if (ElevatorMath.IsBelowSurface(-1f, -0.999f)) errors.Add("an eye just above the surface counts as below.");
             if (!ElevatorMath.IsBelowSurface(-1f, -1.001f)) errors.Add("an eye just below the surface counts as above.");
+            // The car's own water (28 September 2026): one truth, derived visuals.
+            Near(errors, ElevatorMath.CarWaterSurfaceY(-4.5f, -6f, 3.5f), -4.5f, 1e-5f, "the car's surface stands at sea level while crossing");
+            Near(errors, ElevatorMath.CarWaterSurfaceY(-4.5f, -45f, 3.5f), -41.5f, 1e-5f, "the full car's surface is its roof");
+            if (ElevatorMath.WaterFlowInCar(ElevatorState.Descending, 1f, 3.5f) != CarWaterFlow.Filling) errors.Add("the car does not fill while descending through the surface.");
+            if (ElevatorMath.WaterFlowInCar(ElevatorState.Ascending, 1f, 3.5f) != CarWaterFlow.Draining) errors.Add("the car does not drain while ascending through the surface.");
+            if (ElevatorMath.WaterFlowInCar(ElevatorState.AtBottom, 3.5f, 3.5f) != CarWaterFlow.Still) errors.Add("the full car at the bottom is not still.");
+            try { SunkCost.Editor.Tests.CabinWaterTests.RunAll(); }
+            catch (Exception e) { errors.Add("cabin water tests: " + e.Message); }
             if (settings != null)
             {
                 float derived = settings.ElevatorTravelSecondsOneWay(0f);
@@ -75,6 +83,13 @@ namespace SunkCost.Editor.Prototype
                 Transform surface = car.transform.Find(ShaftTubeSetup.CabinWaterSurfaceName);
                 if (surface == null) errors.Add("elevator prefab has no cabin water disc.");
                 else if (surface.GetComponent<Collider>() != null) errors.Add("the cabin water disc must carry no collider.");
+                else if (Mathf.Abs(surface.localScale.x - 2f * (2.5f - ShaftTubeSetup.CabinWaterInsetMeters)) > 0.01f) errors.Add($"the cabin water disc is {surface.localScale.x / 2f:0.00} m in radius (expected 2.47, inside the glass band).");
+                Transform fx = car.transform.Find(ShaftTubeSetup.CabinWaterFxName);
+                CabinWaterVisuals visuals = fx != null ? fx.GetComponent<CabinWaterVisuals>() : null;
+                if (visuals == null) errors.Add("elevator prefab has no \"Cabin Water FX\" with CabinWaterVisuals (run Apply shaft tube setup).");
+                else if (visuals.OutletCount != CabinWaterVisuals.NozzleCount) errors.Add($"the cabin water FX has {visuals.OutletCount} nozzles (expected 6).");
+                else if (fx.GetComponentsInChildren<Collider>(true).Length > 0) errors.Add("the cabin water FX must carry no collider.");
+                if (car.GetComponent<CarWaterSorting>() == null) errors.Add("elevator prefab has no CarWaterSorting.");
                 if (car.GetComponent<ElevatorController>() == null) errors.Add("elevator prefab has no ElevatorController.");
             }
             GameObject player = AssetDatabase.LoadAssetAtPath<GameObject>(HQPrototypeBuilder.PlayerPrefabPath);

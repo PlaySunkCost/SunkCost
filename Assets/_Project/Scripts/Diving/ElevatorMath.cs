@@ -73,5 +73,38 @@ namespace SunkCost.Diving
             Mathf.Clamp(seaLevelY - carFloorY, 0f, Mathf.Max(0f, interiorHeight));
 
         public static bool IsBelowSurface(float seaLevelY, float y) => y < seaLevelY;
+
+        // ---- the car's own water (the new elevator, 28 September 2026) ----------------
+        // One truth: the level above stays the only level. The car is a sealed glass car
+        // whose roof nozzles pour while it sinks through the surface and whose floor
+        // grilles drain while it rises through it; the rule is that its water stands where
+        // the sea outside stands while its span crosses the surface. Everything below is
+        // derived from that level and the car's replicated state: nothing new is synced.
+
+        // Below this the car counts as dry, and within this of the roof as full (the same
+        // threshold CabinWater.IsWet has always used).
+        public const float WaterMarginMeters = 0.02f;
+
+        // The world y of the water inside the car: its floor datum (the root) plus the level.
+        // For any eye inside the car, eye < this ⇔ eye < sea level (docs: MAP.md §4), which
+        // is why PlayerSubmersion and the underwater grade can keep reading sea level.
+        public static float CarWaterSurfaceY(float seaLevelY, float carRootY, float interiorHeight) =>
+            carRootY + WaterLevelInCar(seaLevelY, carRootY, interiorHeight);
+
+        // Which way the water moves: the nozzles pour only while the car descends and the
+        // level is between dry and full; the grilles drain only while it ascends likewise.
+        public static CarWaterFlow WaterFlowInCar(ElevatorState state, float level, float interiorHeight)
+        {
+            if (level <= WaterMarginMeters || level >= interiorHeight - WaterMarginMeters) return CarWaterFlow.Still;
+            return state switch
+            {
+                ElevatorState.Descending => CarWaterFlow.Filling,
+                ElevatorState.Ascending => CarWaterFlow.Draining,
+                _ => CarWaterFlow.Still
+            };
+        }
     }
+
+    // The car water's direction of change, derived per frame (ElevatorMath.WaterFlowInCar).
+    public enum CarWaterFlow : byte { Still = 0, Filling = 1, Draining = 2 }
 }

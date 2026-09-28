@@ -45,6 +45,16 @@ namespace SunkCost.Sites
                 if (car == null) car = root.GetComponentInChildren<ElevatorController>(true);
             }
             Transform cabinWater = car != null ? car.transform.Find("Cabin Water") : null;
+            // The car's water effects (streams, splashes, bubbles, the drain swirl) in a
+            // mid-flood pose, and the tube's water ring (28 September 2026).
+            CabinWaterVisuals waterFx = car != null ? car.GetComponentInChildren<CabinWaterVisuals>(true) : null;
+            TubeWaterSurface tubeRing = null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (tubeRing == null) tubeRing = root.GetComponentInChildren<TubeWaterSurface>(true);
+            Renderer ringRenderer = tubeRing != null ? tubeRing.GetComponent<Renderer>() : null;
+            bool ringWasEnabled = ringRenderer != null && ringRenderer.enabled;
+            if (ringRenderer != null) ringRenderer.enabled = true;
+            if (waterFx != null) waterFx.WarmPose(true);
 
             // Force what the ride will show: the grade everywhere, the cabin half full.
             bool volumeWasGlobal = false; float volumeWeight = 1f;
@@ -81,6 +91,16 @@ namespace SunkCost.Sites
                     camera.transform.position = car.transform.position + Vector3.up * 1.6f;
                     camera.transform.rotation = Quaternion.LookRotation(Vector3.down + car.transform.forward * 0.5f, car.transform.forward);
                     camera.Render();
+                    if (waterFx != null && waterFx.OutletCount > 0)
+                    {
+                        // From across the car at the first nozzle: its stream, splash and
+                        // bubbles, the swirl and the surface in one view.
+                        Vector3 outlet = car.transform.TransformPoint(waterFx.OutletLocal(0));
+                        Vector3 across = car.transform.position + (car.transform.position - new Vector3(outlet.x, car.transform.position.y, outlet.z)).normalized * 1.8f + Vector3.up * 1.7f;
+                        camera.transform.position = across;
+                        camera.transform.rotation = Quaternion.LookRotation(outlet + Vector3.down * 1.4f - across, Vector3.up);
+                        camera.Render();
+                    }
                 }
             }
             finally
@@ -89,6 +109,8 @@ namespace SunkCost.Sites
                 Object.Destroy(go);
                 if (volume != null) { volume.isGlobal = volumeWasGlobal; volume.weight = volumeWeight; }
                 if (cabinWater != null) { cabinWater.localPosition = cabinWaterLocal; cabinWater.gameObject.SetActive(cabinWaterWasActive); }
+                if (waterFx != null) waterFx.WarmPose(false);
+                if (ringRenderer != null) ringRenderer.enabled = ringWasEnabled;
             }
         }
 
