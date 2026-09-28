@@ -304,7 +304,8 @@ namespace SunkCost.World
             if (dayState == null) { why = "No day state."; return false; }
             if (transitioning || dayState.Travelling) { why = "Ship travelling; try again on arrival"; return false; }
             if (riding) { why = "Cabin in use"; return false; }
-            if (dayState.Below.Count > 0 || dayState.CabinAway) { why = "Divers below"; return false; }
+            if (dayState.Below.Count > 0) { why = "Divers below"; return false; }
+            if (dayState.CabinAway) { why = ConsoleRules.CabinBelow; return false; } // the car away with nobody below (bugs/SHIP-2)
             if (!dayState.ServerCanSail(to, out why)) return false;
             ShipParts fromShip = ShipParts.InWorld(currentWorld);
             if (fromShip == null) { why = "No ship in " + WorldScenes.Name(currentWorld) + "."; return false; }

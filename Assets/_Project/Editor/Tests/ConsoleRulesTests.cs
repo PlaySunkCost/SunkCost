@@ -132,9 +132,25 @@ namespace SunkCost.Editor.Tests
             f = AtSea(SiteId.HQ); f.BelowCount = 1;
             Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.DiversBelow, reason);
             f = AtSea(SiteId.HQ); f.CabinAway = true;
-            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.DiversBelow, reason);
-            f = AtSea(SiteId.HQ); f.Riding = true;
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.CabinBelow, reason);
+            f = AtSea(SiteId.HQ); f.Riding = true; f.CabinAway = true;            // a ride is the cabin in use, whatever the car
             Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.CabinInUse, reason);
+        }
+
+        // bugs/SHIP-2: the car left away with nobody below (the last diver left the game
+        // down there) neither holds END DAY nor reads as divers; a sail names the cabin.
+        [Test]
+        public void CabinAway_NobodyBelow_EndDayReads_SailNamesTheCabin()
+        {
+            ConsoleFacts f = AtSea(SiteId.None); f.DiveDone = true; f.CabinAway = true;
+            Assert.AreEqual(LeverAction.EndDay, Ship(f, out _, out bool enabled, out string reason)); Assert.IsTrue(enabled); Assert.AreEqual(string.Empty, reason);
+            f.Selected = SiteId.HQ;
+            Assert.AreEqual(LeverAction.EndDay, Ship(f, out _, out enabled, out _)); Assert.IsTrue(enabled);
+            f.BelowCount = 1;                                                        // someone really below: divers, not END DAY
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.DiversBelow, reason);
+            f = AtSea(SiteId.None); f.CabinAway = true;                               // nothing selected: a card is asked for first
+            Assert.AreEqual(LeverAction.None, Ship(f, out _, out _, out reason)); Assert.AreEqual(ConsoleRules.SelectFirst, reason);
+            Assert.AreEqual("CABIN BELOW", ConsoleRules.ShipStatus(AtSea(SiteId.HQ), LeverAction.None, false, ConsoleRules.CabinBelow).Text);
         }
 
         [Test]

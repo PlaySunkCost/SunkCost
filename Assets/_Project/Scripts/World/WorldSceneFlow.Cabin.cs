@@ -140,6 +140,7 @@ namespace SunkCost.World
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
+            if (dayState.Phase == DayPhase.Plank) { why = ConsoleRules.RunOver; return false; } // the lever's own first reason (bugs/HQ-1)
             if (transitioning || dayState.Travelling) { why = "Ship travelling"; return false; }
             if (currentWorld != WorldId.HQ || dayState.Phase != DayPhase.AtHQ) { why = "Not docked at HQ"; return false; }
             HQPlayerController presser = PlayerOf(sender);

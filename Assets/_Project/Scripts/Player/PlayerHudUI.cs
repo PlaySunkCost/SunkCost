@@ -306,6 +306,7 @@ namespace SunkCost.Player
         {
             CrewDayState day = CrewDayState.Instance;
             if (day == null) return "Press E to vote to give up the run";
+            if (day.Phase == DayPhase.Plank) return ConsoleRules.RunOver;       // the server's own refusal (bugs/HQ-1)
             if (day.Phase != DayPhase.AtHQ || day.Travelling) return "Give up only while docked at HQ";
             int crew = Mathf.Max(day.GiveUpCrew, 1), votes = day.GiveUpVotes;
             if (day.HasVotedGiveUp(controller.OwnerId)) return $"Press E to take back your vote (give up {votes}/{crew})";

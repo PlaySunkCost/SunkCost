@@ -64,6 +64,7 @@ namespace SunkCost.World
         public const string DiveInProgress = "Dive in progress";
         public const string DiversBelow = "Divers below";
         public const string CabinInUse = "Cabin in use";
+        public const string CabinBelow = "Cabin below";                       // the car is away with nobody below (the deck cabin panel's own words)
         public const string PaydayOnlyHQ = "Payday — only HQ";
         public const string PayQuotaFirst = "Pay the quota first";           // payday at the dock (CrewDayState.ServerCanSail's own words)
         public const string DiveDoneEndDay = "Dive done — End day first";
@@ -103,8 +104,12 @@ namespace SunkCost.World
             }
             if (f.Travelling || f.Phase == DayPhase.Sailing || f.Phase == DayPhase.SailingHome) { reason = Travelling; return LeverAction.None; }
             if (f.Phase == DayPhase.DiveInProgress) { reason = DiveInProgress; return LeverAction.None; }
-            if (f.BelowCount > 0 || f.CabinAway) { reason = DiversBelow; return LeverAction.None; }
+            if (f.BelowCount > 0) { reason = DiversBelow; return LeverAction.None; }
             if (f.Riding) { reason = CabinInUse; return LeverAction.None; }
+            // Ending the day needs nobody below, not the car at the top (ServerEndDay does
+            // not test the car): a car left at the bottom with nobody in the water (the last
+            // diver left the game down there) must not hold the day, nor be called divers
+            // (bugs/SHIP-2, 28 September 2026).
             if (f.DiveDone && f.World == WorldId.Sea) { enabled = true; return LeverAction.EndDay; }
             if (f.Selected == SiteId.None) { reason = SelectFirst; return LeverAction.None; }
             if (f.Payday && f.Selected != SiteId.HQ) { reason = f.World == WorldId.HQ ? PayQuotaFirst : PaydayOnlyHQ; return LeverAction.None; }
@@ -112,6 +117,8 @@ namespace SunkCost.World
             // Until sites have their own worlds every site is the one sea world, so a
             // site-to-site sail would be "Already there." — sites are chosen at HQ (MAP §3).
             if (f.World == WorldId.Sea && Destinations.IsSite(f.Selected)) { reason = SailHomeFirst; return LeverAction.None; }
+            // A sail waits for the car to be back up (WorldSceneFlow.ServerSail's own test).
+            if (f.CabinAway) { reason = CabinBelow; return LeverAction.None; }
             target = f.Selected;
             if (!string.IsNullOrEmpty(f.NotAboard)) { reason = NotAboard(f.NotAboard); return LeverAction.Confirm; }
             enabled = true;

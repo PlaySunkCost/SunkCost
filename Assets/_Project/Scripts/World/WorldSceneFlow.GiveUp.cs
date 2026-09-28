@@ -15,6 +15,9 @@ namespace SunkCost.World
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
+            // The plank and the run-over card that follows it (phase Plank until the fresh
+            // run): the lever's own first reason, not "Not docked" (bugs/HQ-1).
+            if (dayState.Phase == DayPhase.Plank) { why = ConsoleRules.RunOver; return false; }
             if (transitioning || dayState.Travelling) { why = "Ship travelling"; return false; }
             if (currentWorld != WorldId.HQ || dayState.Phase != DayPhase.AtHQ) { why = "Not docked at HQ"; return false; }
             HQPlayerController presser = PlayerOf(sender);
