@@ -152,6 +152,14 @@ namespace SunkCost.Sites
             m.DisableKeyword("_METALLICSPECGLOSSMAP");
             m.SetColor("_EmissionColor", Color.black);
             m.DisableKeyword("_EMISSION");
+            // URP's own validation (BaseShaderGUI.SetMaterialKeywords) mirrors the base map
+            // and colour into the legacy _MainTex/_Color on every build; write them the same
+            // way here, so the saved asset is the validated one and a build leaves the tree
+            // clean (NET-CHURN-ADMISSION: a rewritten .mat made the editor host local-dev).
+            m.SetTexture("_MainTex", m.GetTexture("_BaseMap"));
+            m.SetTextureScale("_MainTex", m.GetTextureScale("_BaseMap"));
+            m.SetTextureOffset("_MainTex", m.GetTextureOffset("_BaseMap"));
+            m.SetColor("_Color", m.GetColor("_BaseColor"));
             EditorUtility.SetDirty(m);
             AssetDatabase.SaveAssetIfDirty(m);
             return m;
