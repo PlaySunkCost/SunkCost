@@ -367,7 +367,7 @@ namespace SunkCost.Editor.Prototype
                 if (root.name == SunkCost.Sites.DiveSiteBuilder.ShaftTubeName) p.Tube = root.transform;
                 if (p.Gate == null) p.Gate = root.GetComponentInChildren<ShaftGate>(true);
             }
-            if (p.Gate != null) p.GateCollider = p.Gate.GetComponent<Collider>() ?? p.Gate.GetComponentInChildren<Collider>(true);
+            if (p.Gate != null) p.GateCollider = p.Gate.GetComponentInChildren<Collider>(true); // the gate's own object or its "Gate Collider" child (no ?? on Unity objects: GetComponent returns a fake null in the editor)
             if (p.Tube != null)
             {
                 p.TubeDisc = p.Tube.Find(SunkCost.Sites.DiveSiteBuilder.WaterSurfaceName)?.GetComponent<Renderer>();

@@ -566,7 +566,7 @@ namespace SunkCost.Net
             elevGate = null;
             foreach (GameObject root in car.gameObject.scene.GetRootGameObjects())
                 if (elevGate == null) elevGate = root.GetComponentInChildren<SunkCost.Diving.ShaftGate>(true);
-            elevGateCollider = elevGate == null ? null : (elevGate.GetComponent<Collider>() ?? elevGate.GetComponentInChildren<Collider>(true));
+            elevGateCollider = elevGate == null ? null : elevGate.GetComponentInChildren<Collider>(true);
             elevRing = car.GetComponentInChildren<SunkCost.Diving.CarRingLight>(true);
             Transform bulb = car.transform.Find("Cabin Light");
             elevCabinLight = bulb != null ? bulb.GetComponent<Light>() : null;
