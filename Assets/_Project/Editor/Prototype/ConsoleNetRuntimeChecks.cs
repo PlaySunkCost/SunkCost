@@ -71,6 +71,8 @@ namespace SunkCost.Editor.Prototype
         private static float worstSync;
         // Findings that should not stop the run (a late peer, a log hit): logged, then failed at the end.
         private static readonly List<string> softFails = new();
+        // bugs/NET-2: a DIM ship sign shows each peer's own last lit word (composer history, not replicated).
+        private static readonly List<string> dimWordSplits = new();
         public static string Status { get; private set; } = "Not run";
 
         private static CrewDayState Day => CrewDayState.Instance;
@@ -91,7 +93,7 @@ namespace SunkCost.Editor.Prototype
             if (!File.Exists(BuildExe)) throw new InvalidOperationException("Build " + BuildExe + " first.");
             File.WriteAllText(Log, "Console-net matrix started " + DateTime.Now + "\n");
             Status = "Running";
-            logs.Clear(); syncs.Clear(); crew.Clear(); launched.Clear(); softFails.Clear();
+            logs.Clear(); syncs.Clear(); crew.Clear(); launched.Clear(); softFails.Clear(); dimWordSplits.Clear();
             exceptionsSeen = 0; errorsSeen = 0; worstSync = 0f;
             Application.logMessageReceived += OnLog;
             steps = Run();
@@ -374,6 +376,13 @@ namespace SunkCost.Editor.Prototype
                 if (skip != null && skip.Contains(kv.Key)) continue;
                 if (!atHQ && HQKeys.Contains(kv.Key)) continue;
                 string g = guest.TryGetValue(kv.Key, out string gv) ? gv : "(absent)";
+                if (g != kv.Value && kv.Key == "leverSign" && g.EndsWith("/off") && kv.Value.EndsWith("/off"))
+                {
+                    // Both dim: the word differs only by each peer's history (bugs/NET-2); recorded, not a divergence of state.
+                    string split = $"host '{kv.Value}' guest '{g}' (selected {Day.SelectedSite}, phase {Day.Phase})";
+                    if (!dimWordSplits.Contains(split)) dimWordSplits.Add(split);
+                    continue;
+                }
                 if (g != kv.Value) parts.Add($"{kv.Key}: host '{kv.Value}' guest '{g}'");
             }
             return string.Join("; ", parts);
@@ -1015,6 +1024,7 @@ namespace SunkCost.Editor.Prototype
                 Soft(hits.Length == 0, $"N20 {g.Label}'s log has no exception, MissingReference or 'expected to exist'");
             }
             Say($"worst late sample {worstSync:0.00} s; end: {H.ConsoleStatus()}");
+            Soft(dimWordSplits.Count == 0, "the dim ship sign reads the same word on every peer (bugs/NET-2): " + string.Join(" / ", dimWordSplits));
             Check(softFails.Count == 0, $"no soft failure ({softFails.Count}: {string.Join(" | ", softFails)})");
         }
     }
