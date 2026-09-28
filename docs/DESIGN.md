@@ -107,24 +107,38 @@ sign. The game draws the screens and the sign's word, so they can change.
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
-tower** stands at the stern, with the navigation console on its forward face (the
-shared console model since 27 September 2026: the five destination cards on its top
-screen, the lever with its lit sign, port of the tower's door) and
-the crew's screen beside it; the storage room is forward of it, to starboard. The
+tower** stands at the stern with the crew's screen on its forward face; the storage
+room is forward of it, to starboard. The
 **glass elevator** stands amidships in its well, open to the sea, with a **low
 visible rail** round the well, open only at the grate; the rail's collider is
 1.2 m high so nobody jumps it (a jump is 0.65 m). The deck's side is a **1.2 m
 bulwark** with an unseen guard above it. The crane and the winch stand by the
-well, one container, and deck gear along the sides. The **lounge**
-is at the bow: the **TV** in its big cabinet facing aft, two couches in front of
-it, and a table between two benches that face each other across it, clear of
-the couches. There is no ladder; the tower model has its own. **Sizes** (Dan):
+well, one container, and deck gear along the sides. **The bow (Dan's plan 4,
+28 September 2026, built on `dan/elevator-look`, not yet play-tested):** where the
+side turns in across the bow, the **navigation console** (the shared console model
+since 27 September 2026: the five destination cards on its top screen, the lever
+with its lit sign) stands with its back flat on the **port diagonal**, and the
+**TV** in its cabinet with its back flat on the **starboard diagonal**, both facing
+back into the ship. Each diagonal's inner face was measured off the built side
+(port and starboard separately, a line fitted through rays onto the side): both run
+**54.7° off the centre line** over a 3.49 m straight run (the side's outline is made
+one straight line between z 21 and 23 m, a few centimetres off the generated hull),
+so the console is turned to yaw 144.7° and the TV to −144.7° (Dan: not 45°, the
+measured angle). The two **couches** stand side by side about 3.7 m in front of the
+screen, each aimed at the screen's centre (yaws 53.0° and 17.5°), and the **table**
+between its two benches behind them, square to the couches' shared axis; the lounge's
+lamps stand at the aft ends of the diagonals, the bollards and the coiled line at
+the bow's point. The **container** lies along the port side against the rail
+(turned 90°, Dan, 28 September 2026), its hatches facing fore and aft, the pipework
+across the forward one and the barrels, a crate and a coil between its doors and the
+tower. There is no ladder; the tower model has its own. **Sizes** (Dan):
 the player stays as is (1.8 m, eyes at 1.6 m) and the props come to it —
 furniture (couch, table, bench, toolbox) at 1×, the models being made at a
 person's size; deck gear (barrel, crate, lamp, bollard, lifebuoy, pipes, coil,
 signs) at 1.25×; the container a real 20-ft box (6 × 2.6 × 2.6 m); the crane
-and the winch at 2×. The TV keeps its size but stands lower, its screen's centre
-at about the eye height of someone sitting on the couch. **Sitting on a couch**
+and the winch at 2×. The TV's cabinet is scaled to what the starboard diagonal holds
+(1.11×, its screen 2.85 × 1.25 m, its centre at 1.83 m; before the move it was the 2×
+cabinet with a 5.2 m screen facing aft, sunk to a sitting eye's height). **Sitting on a couch**
 zooms the view onto the TV, and the TV's channel can be switched from **6 m**, so
 from the couch (both in §4: "The couch" and the TV card). The elevator car's light is **warm white** in both worlds, on both
 cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
@@ -482,8 +496,8 @@ close. If the diver below dies or leaves while the car is on its way down, the c
 comes straight back and the site closes as at the end of a dive.
 
 **Built 17 September 2026 (Dan, the third spectating card — the TV):** a large
-screen on the deck (since 23 September 2026 at the bow, in its cabinet facing aft
-over the lounge's couches, §1 "The ship") shows **one diver at a time** from their
+screen on the deck (since 23 September 2026 at the bow; since 28 September 2026 in
+its cabinet on the bow's starboard diagonal, facing the lounge's couches, §1 "The ship") shows **one diver at a time** from their
 eyes — whoever surfaced early watches the others. The channel is the first living
 diver below; **E on the screen is the next channel**, wrapping (the screen answers E
 from up to 6 m, so from the couch; every other control keeps 3.5 m: decided 23

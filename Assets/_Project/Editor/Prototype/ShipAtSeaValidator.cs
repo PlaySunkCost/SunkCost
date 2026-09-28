@@ -57,8 +57,8 @@ namespace SunkCost.Editor.Prototype
         }
 
         // The navigation console (27 September 2026): one rig of the ship kind with its
-        // composer, standing on the deck square to the tower (its front toward the bow,
-        // where the crew read it), its lever's control the aim's target with a collider
+        // composer, standing on the deck with its back on the bow's port diagonal (its
+        // front into the ship, where the crew read it), its lever's control the aim's target with a collider
         // and a ConsoleControl, its five cards in the reading order with theirs, and the
         // model's own mesh collider so the crew walk against it and the aim reaches the
         // controls through nothing.
@@ -73,7 +73,11 @@ namespace SunkCost.Editor.Prototype
             if (root.GetComponent<ConsoleLever>() == null) errors.Add("Ship: the navigation console has no ConsoleLever.");
             Vector3 local = ship.ToShipLocal(root.position);
             if (Mathf.Abs(local.y) > 0.01f) errors.Add("Ship: the navigation console stands " + local.y.ToString("F3") + " m off the deck.");
-            if (Vector3.Dot(root.forward, ship.transform.forward) < 0.999f) errors.Add("Ship: the navigation console does not face the bow (yaw " + ship.ToShipYaw(root.eulerAngles.y).ToString("F1") + ").");
+            // Its back on the bow's port diagonal, facing back into the ship: toward
+            // starboard and aft (Dan's plan 4, 28 September 2026).
+            Vector3 front = ship.transform.InverseTransformDirection(root.forward);
+            if (local.x > -0.5f || local.z < ShipStubBuilder.DeckLength / 2f - 6f || front.x < 0.3f || front.z > -0.3f)
+                errors.Add("Ship: the navigation console does not stand on the port bow diagonal facing into the ship (at " + local.ToString("F2") + ", yaw " + ship.ToShipYaw(root.eulerAngles.y).ToString("F1") + ").");
             if (rig.TopScreen == null || rig.BottomScreen == null || rig.Sign == null) errors.Add("Ship: the navigation console is missing a painted surface.");
             if (rig.LeverHinge == null || rig.LeverHandle == null) errors.Add("Ship: the navigation console's lever has no hinge or handle.");
             if (rig.LeverCollider == null || rig.LeverCollider.name != ShipParts.NavLeverName) errors.Add("Ship: the navigation console's lever control is not '" + ShipParts.NavLeverName + "'.");
