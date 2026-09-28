@@ -869,7 +869,7 @@ namespace SunkCost.Editor.Prototype
                 Check(hud.PromptText.StartsWith("THE RUN IS OVER"), "G11 the prompt at the lever for a non-jumper on the plank names the reason: " + hud.PromptText);
                 yield return AimCard();
                 yield return null;
-                Check(hud.PromptText == ConsoleRules.RunOver, "HQ-1 retest: G11 the card's prompt for a non-jumper on the plank: " + hud.PromptText);
+                Check(hud.PromptText.StartsWith("THE RUN IS OVER") || hud.PromptText == ConsoleRules.RunOver, "HQ-1 retest: G11 the card's prompt for a non-jumper on the plank names the run over (the plank HUD's prompt covers every player): " + hud.PromptText);
                 Check(!hud.PromptText.StartsWith("Press E"), "G11 the card offers no vote on the plank: " + hud.PromptText);
                 Check(!Card().Enabled && Sign() == "PAY/off", "G11 the card and the sign dark: " + CardText() + " | " + Sign());
             }
