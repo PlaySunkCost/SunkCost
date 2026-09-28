@@ -437,7 +437,26 @@ namespace SunkCost.Editor.Prototype
             Same("surfaceShown", s.Shown, a.Shown, b.Shown);
             Same("tubeRing", s.Ring, a.Ring, b.Ring);
             Same("gateBlocks", s.GateBlocks, a.GateBlocks, b.GateBlocks);
-            Same("carScreen", s.CarScreen, ElevatorNetProbe.Normalised(a.CarScreen), ElevatorNetProbe.Normalised(b.CarScreen));
+            string sa = ElevatorNetProbe.Normalised(a.CarScreen), sb = ElevatorNetProbe.Normalised(b.CarScreen);
+            if (!ScreenBetween(s.CarScreen, sa, sb)) st.Fail($"carScreen {s.CarScreen} vs host {sa}/{sb} at {at}");
+        }
+
+        // The screen's words equal one host frame's, and each number lies between the two
+        // host frames' (±1): depth and water round at different moments, so a peer between
+        // two host frames may show one number of each (round 1 fix to the test).
+        private static readonly Regex Digits = new(@"\d+");
+        private static bool ScreenBetween(string v, string a, string b)
+        {
+            if (v == a || v == b) return true;
+            string sk = Digits.Replace(v, "#");
+            if (sk != Digits.Replace(a, "#") || sk != Digits.Replace(b, "#")) return false;
+            MatchCollection mv = Digits.Matches(v), ma = Digits.Matches(a), mb = Digits.Matches(b);
+            for (int i = 0; i < mv.Count; i++)
+            {
+                int x = int.Parse(mv[i].Value), xa = int.Parse(ma[i].Value), xb = int.Parse(mb[i].Value);
+                if (x < Math.Min(xa, xb) - 1 || x > Math.Max(xa, xb) + 1) return false;
+            }
+            return true;
         }
 
         private static void CompareDeck(S s, Stats st)
