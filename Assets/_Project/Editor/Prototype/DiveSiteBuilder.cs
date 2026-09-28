@@ -94,7 +94,7 @@ namespace SunkCost.Sites
             CreateSurfaceLight(deepLayer, settings);
             Transform anchorBottom = CreateSeafloor(floorMaterial, wallMaterial, shaftDepth, deepLayer, settings);
             ElevatorController elevatorController = CreateElevator(anchorTop.position, anchorBottom.position, playerSpawnPosition, floorMaterial, wallMaterial, glassMaterial, accentMaterial, settings, out float doorwayBearingDeg);
-            CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, glassMaterial, SunkCost.Editor.Look.LookMaterials.Ink(), deepLayer, settings); // the ribs and the gate in the kit's ink (Dan, 19 September 2026)
+            CreateShaftTube(anchorTop, anchorBottom, elevatorController, doorwayBearingDeg, SunkCost.Editor.Look.ElevatorLook.TubeGlass(), SunkCost.Editor.Look.LookMaterials.Ink(), deepLayer, settings); // the ribs and the gate in the kit's ink (Dan, 19 September 2026); the tube's own glass, no highlights (DIVE-GLARE, 28 September 2026)
             CreateDiveLoot(anchorBottom.position, doorwayBearingDeg, settings);
             CreateUnderwaterVolume(settings);
             CreateHeadlampActivator();

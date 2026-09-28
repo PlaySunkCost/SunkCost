@@ -16,8 +16,12 @@ namespace SunkCost.Diving
         public const string SlotMaterialPrefix = "ElevatorCarLight";
 
         [SerializeField] private Light source;
+        // The ring's glow: the light's colour times this. 2 read as a blown-out white disc
+        // under bloom (DIVE-GLARE, 28 September 2026); the field is renamed from "intensity"
+        // so the prefabs' old 2 gives way to this without a rebuild.
+        public const float DefaultGlow = 0.9f;
         [Tooltip("Emission = the light's colour times this (HDR).")]
-        [SerializeField] private float intensity = 2f;
+        [SerializeField] private float glow = DefaultGlow;
         [Tooltip("The ring's colour while no light drives it.")]
         [SerializeField] private Color idleColour = new(1f, 0.95f, 0.85f);
 
@@ -50,7 +54,7 @@ namespace SunkCost.Diving
         private void LateUpdate()
         {
             Color colour = source != null && source.isActiveAndEnabled ? source.color : idleColour;
-            CurrentEmission = colour * intensity;
+            CurrentEmission = colour * glow;
             for (int i = 0; i < renderers.Length; i++)
             {
                 Renderer r = renderers[i];

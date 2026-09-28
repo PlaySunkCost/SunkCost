@@ -31,6 +31,15 @@ namespace SunkCost.Diving
         [SerializeField] private string carWord = "SURFACE";
         [SerializeField] private string deckWord = "DESCEND";
         [SerializeField] private float floorTop = 0.10f;
+        // The screen's layout (DECK-PANEL-TEXT, 28 September 2026): the words are wrapped to
+        // short lines and fitted to the screen here, so a long plate line ("Day 1 of 3 — all
+        // in, press E to descend") no longer shrinks the whole text to a few pixels or runs
+        // off the curved screen. The largest letters: about 5 cm lines (the TextMesh's
+        // characterSize at fontSize 64); the box stays inside the ~0.42 x 0.24 m screen.
+        [SerializeField] private int screenLineChars = 16;
+        [SerializeField] private float screenCharacterSize = 0.0075f;
+        [SerializeField] private Vector2 screenBox = new(0.36f, 0.20f);
+        private int fitFrames;        // refit on the frame after a write too (the mesh's bounds settle)
         private int lastState = -1, lastDepth = -1, lastPercent = -1;
         private CarWaterFlow lastFlow;
         private string lastPlate;
@@ -50,7 +59,7 @@ namespace SunkCost.Diving
             Resolve();
         }
 
-        public void SetScreen(TextMesh text) { screen = text; written = null; }
+        public void SetScreen(TextMesh text) { screen = text; written = null; ReleaseGenericFit(); }
 
         // WorldSceneFlow.PresentDeckCabin hands the plate's words over when it writes them,
         // so the mirror never reads TextMesh.text (a native getter that allocates) per frame.
@@ -60,7 +69,20 @@ namespace SunkCost.Diving
             platePushed = true;
         }
 
-        private void Awake() => Resolve();
+        private void Awake()
+        {
+            Resolve();
+            ReleaseGenericFit();
+        }
+
+        // A screen built before this display laid it out itself carries the kit's PlateText
+        // (one line fitted whole); it is switched off so the two never fight over the size.
+        private void ReleaseGenericFit()
+        {
+            if (!Application.isPlaying || screen == null) return;
+            SunkCost.Look.PlateText generic = screen.GetComponent<SunkCost.Look.PlateText>();
+            if (generic != null && generic.enabled) generic.enabled = false;
+        }
 
         // The empties by name under this panel, when the serialized ones are missing.
         private void Resolve()
@@ -88,7 +110,54 @@ namespace SunkCost.Diving
 
             string text = mode == Mode.Deck ? DeckText() : CarText();
             if (text != ScreenText) ScreenText = text;
-            if (screen != null && written != ScreenText) { screen.text = ScreenText; written = ScreenText; }
+            if (screen != null && written != ScreenText)
+            {
+                written = ScreenText;
+                screen.text = Layout(ScreenText, screenLineChars);
+                fitFrames = 2;
+            }
+            if (screen != null && fitFrames > 0)
+            {
+                fitFrames--;
+                SunkCost.Look.TextFit.Fit(screen, screenBox, screenCharacterSize);
+            }
+        }
+
+        // The screen's lines: every line longer than `maxChars` is broken first where its
+        // writer spaced it apart ("DEPTH 12 m   WATER 40%"), at " — " and after ": ", then
+        // between words. ScreenText (what the tests and peers compare) keeps the words as
+        // written; only the drawn text is wrapped. Runs only when the words change.
+        public static string Layout(string text, int maxChars)
+        {
+            if (string.IsNullOrEmpty(text) || maxChars <= 0) return text ?? string.Empty;
+            var result = new System.Text.StringBuilder(text.Length + 8);
+            foreach (string line in text.Split('\n'))
+            {
+                if (line.Length <= maxChars) { Append(result, line); continue; }
+                string marked = line.Replace("   ", "\n").Replace(" — ", "\n").Replace(": ", ":\n");
+                foreach (string part in marked.Split('\n'))
+                {
+                    string piece = part.Trim();
+                    if (piece.Length == 0) continue;
+                    if (piece.Length <= maxChars) { Append(result, piece); continue; }
+                    var current = new System.Text.StringBuilder();
+                    foreach (string word in piece.Split(' '))
+                    {
+                        if (word.Length == 0) continue;
+                        if (current.Length > 0 && current.Length + 1 + word.Length > maxChars) { Append(result, current.ToString()); current.Clear(); }
+                        if (current.Length > 0) current.Append(' ');
+                        current.Append(word);
+                    }
+                    if (current.Length > 0) Append(result, current.ToString());
+                }
+            }
+            return result.ToString();
+        }
+
+        private static void Append(System.Text.StringBuilder result, string line)
+        {
+            if (result.Length > 0) result.Append('\n');
+            result.Append(line);
         }
 
         private string DeckText()

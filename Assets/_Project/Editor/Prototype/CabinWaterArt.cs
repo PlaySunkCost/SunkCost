@@ -5,9 +5,12 @@ using UnityEngine.Rendering;
 
 namespace SunkCost.Editor.Prototype
 {
-    // The car water's art (the new elevator, 28 September 2026): five small procedural
-    // textures (ripples, a stream, a splash, bubbles, a drain swirl), their materials and
-    // the tube's water ring mesh, under Art/Elevator/Water. The assets are made once and
+    // The car water's art (the new elevator, 28 September 2026; the powerful jets, the
+    // particle bubbles and the churn after Dan's review the same day): small procedural
+    // textures (ripples, a splash, a drain swirl, the jet's streaks, surface foam, a bubble
+    // and a mist puff), their materials and the tube's water ring mesh, under
+    // Art/Elevator/Water. The old stream and bubble-strip art is still made (its GUIDs
+    // stay) but the FX no longer uses it. The assets are made once and
     // kept (the GUIDs stay), but every call writes the materials' settings and the texture
     // importers' again and rebuilds the ring when its radii differ, so a change here reaches
     // the committed assets on the next build. ShaftTubeSetup wires them onto the car and
@@ -23,12 +26,26 @@ namespace SunkCost.Editor.Prototype
         public const string BubblesMaterialPath = Folder + "/CabinWaterBubbles.mat";
         public const string SwirlMaterialPath = Folder + "/CabinWaterSwirl.mat";
         public const string RingMeshPath = Folder + "/TubeWaterRing.asset";
+        public const string JetMaterialPath = Folder + "/CabinWaterJet.mat";
+        public const string ChurnMaterialPath = Folder + "/CabinWaterChurn.mat";
+        public const string BubbleParticleMaterialPath = Folder + "/CabinWaterBubbleParticle.mat";
+        public const string SprayMaterialPath = Folder + "/CabinWaterSpray.mat";
 
         private const string RipplePath = Folder + "/CabinWaterRipples.png";
         private const string StreamPath = Folder + "/CabinWaterStream.png";
         private const string SplashPath = Folder + "/CabinWaterSplash.png";
         private const string BubblesPath = Folder + "/CabinWaterBubbles.png";
         private const string SwirlPath = Folder + "/CabinWaterSwirl.png";
+        private const string JetPath = Folder + "/CabinWaterJet.png";
+        private const string FoamPath = Folder + "/CabinWaterFoam.png";
+        private const string BubbleSpritePath = Folder + "/CabinWaterBubble.png";
+        private const string MistPath = Folder + "/CabinWaterMist.png";
+
+        // URP's particle shader: it multiplies the base map by the vertex (or particle)
+        // colour, which the jets, the churn and the particles fade with. Unlit: URP's lit
+        // particle shader takes the main directional light only, and the car is lit by its
+        // own point light, so a lit jet would go dark in the deep.
+        private const string ParticleUnlitShader = "Universal Render Pipeline/Particles/Unlit";
 
         [MenuItem("Sunk Cost/Prototype/Make cabin water art")]
         public static void MakeFromMenu() => Debug.Log(EnsureAll());
@@ -36,6 +53,7 @@ namespace SunkCost.Editor.Prototype
         public static string EnsureAll()
         {
             Surface(); Stream(); Splash(); Bubbles(); Swirl();
+            Jet(); Churn(); BubbleParticle(); Spray();
             RingMesh(2.56f, 2.97f);
             return "Cabin water art ready in " + Folder;
         }
@@ -45,7 +63,13 @@ namespace SunkCost.Editor.Prototype
         // The car's water: the sea's colour (DiveSiteWaterSurface), rippled by a drifting
         // normal map, with a faint cyan from the car's ring light.
         // Smoothness 0.65 (was 0.9): with the Cabin Light over it a mirror-smooth surface
-        // showed a blown-out white disc from above (the review's F1).
+        // showed a blown-out white disc from above (the review's F1). Specular highlights
+        // off (DIVE-GLARE, 28 September 2026): the blown-out ball seen from above the car was
+        // the Cabin Light's own highlight on this surface (a point light 0.4 m under the
+        // roof, intensity 6, mirrored in the water right under it), blooming; F1 shrank it
+        // to a pale patch, and this removes it. The sky's and the car's reflections
+        // (environment reflections) stay, so the ripples still glint.
+        // (CabinWaterVisuals raises _BumpScale per renderer while the jets pour.)
         public static Material Surface() => GetOrMake(SurfaceMaterialPath, "Universal Render Pipeline/Lit", m =>
         {
             SetTransparent(m, new Color(0.25f, 0.55f, 0.6f, 0.55f), cullOff: false);
@@ -53,7 +77,38 @@ namespace SunkCost.Editor.Prototype
             m.SetFloat("_BumpScale", 0.55f);
             m.EnableKeyword("_NORMALMAP");
             m.SetFloat("_Smoothness", 0.65f);
+            SpecularHighlights(m, false);
             Emission(m, new Color(0.02f, 0.10f, 0.12f));
+        });
+
+        // The jets (CabinWaterVisuals builds their meshes): streaky white water, two-sided so
+        // the far wall of the tube shows through the near one; the vertex alpha fades it.
+        public static Material Jet() => GetOrMake(JetMaterialPath, ParticleUnlitShader, m =>
+        {
+            SetParticleTransparent(m, new Color(0.80f, 0.92f, 0.97f, 1f), cullOff: true);
+            m.SetTexture("_BaseMap", TextureAt(JetPath, JetTexture, normalMap: false, repeat: true));
+        });
+
+        // The foam on the surface while the jets pour: drawn from above only (the grid
+        // faces up), like the splash and the swirl.
+        public static Material Churn() => GetOrMake(ChurnMaterialPath, ParticleUnlitShader, m =>
+        {
+            SetParticleTransparent(m, new Color(0.90f, 0.96f, 1f, 1f), cullOff: false);
+            m.SetTexture("_BaseMap", TextureAt(FoamPath, FoamTexture, normalMap: false, repeat: true));
+        });
+
+        // The bubbles (billboard particles).
+        public static Material BubbleParticle() => GetOrMake(BubbleParticleMaterialPath, ParticleUnlitShader, m =>
+        {
+            SetParticleTransparent(m, new Color(0.85f, 0.97f, 1f, 1f), cullOff: true);
+            m.SetTexture("_BaseMap", TextureAt(BubbleSpritePath, BubbleSprite, normalMap: false, repeat: false));
+        });
+
+        // The spray, droplets and mist (billboard particles).
+        public static Material Spray() => GetOrMake(SprayMaterialPath, ParticleUnlitShader, m =>
+        {
+            SetParticleTransparent(m, new Color(0.88f, 0.95f, 1f, 1f), cullOff: true);
+            m.SetTexture("_BaseMap", TextureAt(MistPath, MistSprite, normalMap: false, repeat: false));
         });
 
         public static Material Stream() => GetOrMake(StreamMaterialPath, "Universal Render Pipeline/Simple Lit", m =>
@@ -131,6 +186,49 @@ namespace SunkCost.Editor.Prototype
             m.SetColor("_BaseColor", colour);
             if (m.HasProperty("_ReceiveShadows")) m.SetFloat("_ReceiveShadows", 0f);
             m.EnableKeyword("_RECEIVE_SHADOWS_OFF");
+        }
+
+        // URP Lit's "Specular Highlights" toggle ([ToggleOff] _SpecularHighlights, keyword
+        // _SPECULARHIGHLIGHTS_OFF): the lights' highlights only; environment reflections stay.
+        public static void SpecularHighlights(Material m, bool on)
+        {
+            if (m.HasProperty("_SpecularHighlights")) m.SetFloat("_SpecularHighlights", on ? 1f : 0f);
+            if (on) m.DisableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            else m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+        }
+
+        private static readonly string[] ParticleKeywordsOff =
+        {
+            "_ALPHATEST_ON", "_ALPHAPREMULTIPLY_ON", "_ALPHAMODULATE_ON", "_COLOROVERLAY_ON", "_COLORCOLOR_ON",
+            "_COLORADDSUBDIFF_ON", "_SOFTPARTICLES_ON", "_FADING_ON", "_DISTORTION_ON", "_EMISSION", "_NORMALMAP", "_FLIPBOOKBLENDING_ON"
+        };
+
+        // URP's particle shader, alpha blended, ZWrite off, queue 3000, colour mode Multiply
+        // (the vertex colour multiplies the map), without soft particles, camera fading or
+        // distortion (they would need the depth or opaque texture).
+        private static void SetParticleTransparent(Material m, Color colour, bool cullOff)
+        {
+            m.SetFloat("_Surface", 1f);
+            m.SetFloat("_Blend", 0f);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+            m.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            if (m.HasProperty("_SrcBlendAlpha")) m.SetInt("_SrcBlendAlpha", (int)BlendMode.One);
+            if (m.HasProperty("_DstBlendAlpha")) m.SetInt("_DstBlendAlpha", (int)BlendMode.OneMinusSrcAlpha);
+            m.SetInt("_ZWrite", 0);
+            m.SetFloat("_Cull", cullOff ? (float)CullMode.Off : (float)CullMode.Back);
+            m.SetFloat("_AlphaClip", 0f);
+            m.SetFloat("_ColorMode", 0f);
+            m.SetFloat("_SoftParticlesEnabled", 0f);
+            m.SetFloat("_CameraFadingEnabled", 0f);
+            m.SetFloat("_DistortionEnabled", 0f);
+            foreach (string keyword in ParticleKeywordsOff) m.DisableKeyword(keyword);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.SetShaderPassEnabled("ShadowCaster", false);
+            m.SetShaderPassEnabled("DepthOnly", false);
+            m.SetShaderPassEnabled("DepthNormalsOnly", false);
+            m.renderQueue = (int)RenderQueue.Transparent;
+            m.SetColor("_BaseColor", colour);
         }
 
         private static void Emission(Material m, Color colour)
@@ -350,6 +448,105 @@ namespace SunkCost.Editor.Prototype
                     float band = Mathf.Exp(-Mathf.Pow((r - 0.85f) / 0.06f, 2f));
                     float alpha = Mathf.Clamp01((arms * grain * 0.8f + band * 0.9f) * window);
                     texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            texture.Apply();
+            return texture;
+        }
+
+        // The jet's water, wrapped round the tube: bright streaks along it (v) with darker
+        // gaps and white flecks; integer frequencies so it tiles both ways (u round the
+        // tube, v along the flow).
+        private static Texture2D JetTexture()
+        {
+            const int w = 64, h = 256;
+            var texture = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            var random = new System.Random(2892026);
+            var flecks = new Vector3[40];
+            for (int i = 0; i < flecks.Length; i++) flecks[i] = new Vector3((float)random.NextDouble(), (float)random.NextDouble(), 0.01f + 0.025f * (float)random.NextDouble());
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
+                    float streaks = 0.55f + 0.22f * Mathf.Sin(2f * Mathf.PI * (u * 6f + 0.35f * Mathf.Sin(2f * Mathf.PI * v * 2f)))
+                                          + 0.16f * Mathf.Sin(2f * Mathf.PI * (u * 13f + v * 3f))
+                                          + 0.10f * Mathf.Sin(2f * Mathf.PI * (u * 3f - v * 5f));
+                    float pulse = 0.82f + 0.18f * Mathf.Sin(2f * Mathf.PI * (v * 4f + u * 2f));
+                    float fleck = 0f;
+                    foreach (Vector3 f in flecks)
+                    {
+                        float du = Mathf.Abs(u - f.x); du = Mathf.Min(du, 1f - du);
+                        float dv = Mathf.Abs(v - f.y); dv = Mathf.Min(dv, 1f - dv);
+                        fleck = Mathf.Max(fleck, Mathf.Clamp01(1f - Mathf.Sqrt(du * du + dv * dv * 16f) / f.z));
+                    }
+                    float a = Mathf.Clamp01(streaks * pulse + fleck * 0.6f);
+                    float white = Mathf.Clamp01(0.78f + 0.22f * streaks + 0.3f * fleck);
+                    texture.SetPixel(x, y, new Color(white, Mathf.Clamp01(white + 0.03f), 1f, a));
+                }
+            texture.Apply();
+            return texture;
+        }
+
+        // Surface foam: a lace of foam rings and blobs, tileable.
+        private static Texture2D FoamTexture()
+        {
+            const int n = 256;
+            var alpha = new float[n * n];
+            var random = new System.Random(28092027);
+            for (int b = 0; b < 160; b++)
+            {
+                float cx = (float)random.NextDouble() * n, cy = (float)random.NextDouble() * n;
+                float radius = 3f + (float)random.NextDouble() * 14f;
+                float rim = 1.2f + (float)random.NextDouble() * 2.5f;
+                float fill = random.NextDouble() < 0.35 ? 0.55f : 0f;
+                for (int y = (int)(cy - radius - rim - 1f); y <= (int)(cy + radius + rim + 1f); y++)
+                    for (int x = (int)(cx - radius - rim - 1f); x <= (int)(cx + radius + rim + 1f); x++)
+                    {
+                        float d = Mathf.Sqrt((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy));
+                        float a = Mathf.Max(Mathf.Clamp01(1f - Mathf.Abs(d - radius) / rim), d < radius ? fill * Mathf.Clamp01(1f - d / radius) : 0f);
+                        int index = (((y % n) + n) % n) * n + ((x % n) + n) % n;
+                        alpha[index] = Mathf.Max(alpha[index], a);
+                    }
+            }
+            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha[y * n + x]));
+            texture.Apply();
+            return texture;
+        }
+
+        // One bubble: a bright rim, a faint body and a glint at the upper left.
+        private static Texture2D BubbleSprite()
+        {
+            const int n = 64;
+            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float rim = Mathf.Clamp01(1f - Mathf.Abs(r - 0.82f) / 0.12f);
+                    float body = r < 0.82f ? 0.16f + 0.1f * r : 0f;
+                    float glint = Mathf.Clamp01(1f - Mathf.Sqrt((dx + 0.32f) * (dx + 0.32f) + (dy - 0.34f) * (dy - 0.34f)) / 0.2f);
+                    float a = Mathf.Clamp01(Mathf.Max(rim * 0.95f, Mathf.Max(body, glint))) * Mathf.Clamp01((1f - r) * 12f);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
+            texture.Apply();
+            return texture;
+        }
+
+        // A soft round puff of mist.
+        private static Texture2D MistSprite()
+        {
+            const int n = 64;
+            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    float r2 = dx * dx + dy * dy;
+                    float a = Mathf.Exp(-r2 * 4.5f) * Mathf.Clamp01((1f - Mathf.Sqrt(r2)) * 6f);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a));
                 }
             texture.Apply();
             return texture;

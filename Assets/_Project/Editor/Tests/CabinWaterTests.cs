@@ -27,7 +27,8 @@ namespace SunkCost.Editor.Tests
             t.Sorting_InsideIsTheReverseOfOutside();
             t.TubeRing_OnlyWhileTheCarIsAtTheSurface();
             t.Screen_SaysFloodingAndDraining();
-            return "Cabin water tests passed: 8";
+            t.Screen_WrapsLongLinesToShortOnes();
+            return "Cabin water tests passed: 9";
         }
 
         [Test]
@@ -158,6 +159,20 @@ namespace SunkCost.Editor.Tests
             Assert.AreEqual("DRAINING", CabinPanelDisplay.CarLine(ElevatorState.Ascending, true, CarWaterFlow.Draining));
             Assert.AreEqual("ON THE SEABED", CabinPanelDisplay.CarLine(ElevatorState.AtBottom, false, CarWaterFlow.Still));
             Assert.AreEqual("AT THE SURFACE", CabinPanelDisplay.CarLine(ElevatorState.AtTop, false, CarWaterFlow.Still));
+        }
+
+        // DECK-PANEL-TEXT: the drawn screen wraps a long line to short ones (at the writer's
+        // wide gaps, " — " and ": " first) and keeps every word; short lines stay as they are.
+        [Test]
+        public void Screen_WrapsLongLinesToShortOnes()
+        {
+            Assert.AreEqual("DESCEND\nDay 1 of 3\nall in, press E\nto descend", CabinPanelDisplay.Layout("DESCEND\nDay 1 of 3 — all in, press E to descend", 16));
+            Assert.AreEqual("DESCEND\nWaiting for:\nMate bof the", CabinPanelDisplay.Layout("DESCEND\nWaiting for: Mate bof the", 16));
+            Assert.AreEqual("SURFACE\nFLOODING\nDEPTH 12 m\nWATER 40%", CabinPanelDisplay.Layout("SURFACE\nFLOODING\nDEPTH 12 m   WATER 40%", 16));
+            Assert.AreEqual("SURFACE", CabinPanelDisplay.Layout("SURFACE", 16));
+            string layout = CabinPanelDisplay.Layout("DESCEND\nDive in progress — 3 below: Alice, Bob, Carol", 16);
+            foreach (string line in layout.Split('\n')) Assert.LessOrEqual(line.Length, 16, line);
+            Assert.AreEqual("DESCEND Dive in progress 3 below: Alice, Bob, Carol", layout.Replace("\n", " "));
         }
     }
 }

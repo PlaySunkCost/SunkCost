@@ -34,6 +34,10 @@ namespace SunkCost.Sites
         {
             if (reference == null || !scene.isLoaded || warmedScenes.Contains(scene)) return;
             warmedScenes.Add(scene);
+            // A process without a graphics device (a -batchmode -nographics peer, as the
+            // matrices run their guests) has nothing to warm, and URP's render there only
+            // logs RenderTexture and render-graph errors (NET-HEADLESS-WARMUP).
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return;
 
             Transform surface = null;
             Volume volume = null;

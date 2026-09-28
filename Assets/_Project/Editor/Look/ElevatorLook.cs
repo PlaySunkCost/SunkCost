@@ -41,6 +41,7 @@ namespace SunkCost.Editor.Look
 
         public const string CarGlassPath = ShipModelSetup.TextureFolder + "/ElevatorCarGlass.mat";
         public const string CarLightPath = ShipModelSetup.TextureFolder + "/ElevatorCarLight.mat";
+        public const string TubeGlassPath = ShipModelSetup.TextureFolder + "/ElevatorTubeGlass.mat";
         public const string ShutterPath = ShipModelSetup.TextureFolder + "/ElevatorShutter.mat";
         public const string ScreenPath = ShipModelSetup.TextureFolder + "/CarPanelScreen.mat";
         public const string GaugePath = ShipModelSetup.TextureFolder + "/CarPanelGauge.mat";
@@ -49,11 +50,15 @@ namespace SunkCost.Editor.Look
         private const float ModelDoorwayBearing = 90f;
         private static float YawFor(float bearing) => ModelDoorwayBearing - bearing;
 
-        // The six roof outlets (the lowest points of the downturned pipes), Car Look local.
+        // The six roof outlets, Car Look local: the centre of each downturned pipe's mouth,
+        // re-measured on the prepared ElevatorCar.fbx for the powerful jets (DIVE-STREAMS,
+        // 28 September 2026; 5-10 mm from the first numbers). Every mouth faces straight
+        // down, so the empties stay unrotated: CabinWaterVisuals takes an outlet's -up as
+        // its outflow.
         private static readonly Vector3[] FloodOutlets =
         {
-            new(0.770f, 2.924f, 1.467f), new(-0.738f, 2.908f, 1.487f), new(1.846f, 2.975f, 0.002f),
-            new(-1.846f, 2.975f, 0.064f), new(0.928f, 3.051f, -1.470f), new(-0.948f, 3.050f, -1.439f),
+            new(0.7721f, 2.9295f, 1.4683f), new(-0.7302f, 2.9100f, 1.4897f), new(1.8421f, 2.9772f, -0.0009f),
+            new(-1.8546f, 2.9788f, 0.0606f), new(0.9305f, 3.0583f, -1.4731f), new(-0.9481f, 3.0556f, -1.4401f),
         };
 
         // The car model's posts and its two dark glass slabs, measured on the prepared
@@ -341,6 +346,16 @@ namespace SunkCost.Editor.Look
             string drop = right ? "GateLeaf_L" : "GateLeaf";
             foreach (Transform t in look.GetComponentsInChildren<Transform>(true))
                 if (t != look.transform && t.name == drop && t.GetComponent<Renderer>() != null) { Object.DestroyImmediate(t.gameObject); break; }
+            // The leaves' panes wear the tube's own glass (DIVE-GLARE), like the tube.
+            Material tubeGlass = TubeGlass();
+            foreach (Renderer r in look.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] slots = r.sharedMaterials;
+                bool swapped = false;
+                for (int i = 0; i < slots.Length; i++)
+                    if (slots[i] != null && slots[i].name == "DiveSiteGlass") { slots[i] = tubeGlass; swapped = true; }
+                if (swapped) r.sharedMaterials = slots;
+            }
             return look;
         }
 
@@ -355,12 +370,39 @@ namespace SunkCost.Editor.Look
         // car's glass band (both cabins): seen from inside and outside the car.
         // Transparent queue, no depth write. Smoothness 0.6 (was 0.92): with the Cabin
         // Light inside, a mirror-smooth two-sided pane read milky white and haloed
-        // (the review's F1/F5).
+        // (the review's F1/F5). No light highlights (DIVE-GLARE, 28 September 2026): a
+        // light's specular highlight on these smooth two-sided panes (the rider's own
+        // headlamp's, right in the middle of the view) read as a white halo, and so did
+        // the headlamp's diffuse light on a pale pane (an edit-mode headlamp on/off probe:
+        // the halo went only with a dark tint): real glass scatters almost nothing, so
+        // the tint is dark. The environment reflection stays, so it still reads as glass.
+        public static readonly Color GlassTint = new(0.10f, 0.16f, 0.18f, 0.20f);
         public static Material CarGlass()
         {
             Material m = LoadOrCreate(CarGlassPath, "Universal Render Pipeline/Lit");
-            MakeTransparent(m, new Color(0.62f, 0.86f, 0.92f, 0.20f), 0.6f, twoSided: true);
+            MakeTransparent(m, GlassTint, 0.6f, twoSided: true);
+            NoHighlights(m);
             return m;
+        }
+
+        // The shaft tube's glass and the gate leaves' panes (DIVE-GLARE): the shared
+        // DiveSiteGlass (the HQ office glass wears it too) is premultiplied with its
+        // highlights on, and the headlamp of anyone at the tube made a blown-out white
+        // ball on it. The tube's own copy: the same one-sided sheets, the dark glass tint,
+        // no light highlights.
+        public static Material TubeGlass()
+        {
+            Material m = LoadOrCreate(TubeGlassPath, "Universal Render Pipeline/Lit");
+            MakeTransparent(m, new Color(GlassTint.r, GlassTint.g, GlassTint.b, 0.22f), 0.5f, twoSided: false);
+            NoHighlights(m);
+            return m;
+        }
+
+        private static void NoHighlights(Material m)
+        {
+            m.SetFloat("_SpecularHighlights", 0f);
+            m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            EditorUtility.SetDirty(m);
         }
 
         // The car's light ring: the baked car map, glowing; CarRingLight sets the colour.
@@ -369,9 +411,11 @@ namespace SunkCost.Editor.Look
             Material m = LoadOrCreate(CarLightPath, "Universal Render Pipeline/Lit");
             Texture2D baseMap = AssetDatabase.LoadAssetAtPath<Texture2D>(ShipModelSetup.ModelRoot + "/ElevatorCar/Maps/ElevatorCar_BaseColor.jpg");
             m.SetTexture("_BaseMap", baseMap);
-            m.SetColor("_BaseColor", Color.white);
+            // Tamed (DIVE-GLARE): lit white by the Cabin Light 0.4 m under it and glowing at
+            // twice the light's colour, the roof's light read as a blown-out white disc.
+            m.SetColor("_BaseColor", new Color(0.55f, 0.55f, 0.55f));
             m.SetTexture("_EmissionMap", baseMap);
-            m.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.85f) * 2f);
+            m.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.85f) * CarRingLight.DefaultGlow);
             m.EnableKeyword("_EMISSION");
             m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             m.SetFloat("_Metallic", 0f);
