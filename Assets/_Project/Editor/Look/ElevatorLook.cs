@@ -376,7 +376,7 @@ namespace SunkCost.Editor.Look
         // the headlamp's diffuse light on a pale pane (an edit-mode headlamp on/off probe:
         // the halo went only with a dark tint): real glass scatters almost nothing, so
         // the tint is dark. The environment reflection stays, so it still reads as glass.
-        public static readonly Color GlassTint = new(0.10f, 0.16f, 0.18f, 0.20f);
+        public static readonly Color GlassTint = new(0.03f, 0.05f, 0.055f, 0.20f);
         public static Material CarGlass()
         {
             Material m = LoadOrCreate(CarGlassPath, "Universal Render Pipeline/Lit");

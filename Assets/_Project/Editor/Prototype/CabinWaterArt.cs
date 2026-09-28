@@ -235,7 +235,9 @@ namespace SunkCost.Editor.Prototype
         {
             m.SetColor("_EmissionColor", colour);
             m.EnableKeyword("_EMISSION");
-            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            // RealtimeEmissive, as ElevatorLook.CarLight: with None, URP's material validation
+            // dropped _EMISSION again on the next import (a churning diff and no glow).
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
 
         // ---- the tube's ring ------------------------------------------------------------
