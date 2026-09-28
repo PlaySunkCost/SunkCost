@@ -74,10 +74,11 @@ namespace SunkCost.Editor.Prototype
         {
             // Near-black albedo (the polish pass, 28 September 2026): the old one (0.25, 0.55,
             // 0.6) took a diver's headlamp as a pale oval on the surface from above and a
-            // cyan dome on its underside from below; the emission keeps the cyan tone. _Color mirrors _BaseColor as URP's validation
-            // does, so a player build does not rewrite the asset (NET-CHURN-ADMISSION).
+            // cyan dome on its underside from below; the emission keeps the cyan tone. The
+            // legacy _Color is left to URP's validation, which mirrors _BaseColor through a
+            // colour-space round trip (0.09999997); the asset is committed as URP wrote it, so
+            // a player build does not rewrite it (NET-CHURN-ADMISSION).
             SetTransparent(m, new Color(0.04f, 0.10f, 0.12f, 0.55f), cullOff: false);
-            if (m.HasProperty("_Color")) m.SetColor("_Color", new Color(0.04f, 0.10f, 0.12f, 0.55f));
             m.SetTexture("_BumpMap", TextureAt(RipplePath, RippleTexture, normalMap: true, repeat: true));
             m.SetFloat("_BumpScale", 0.55f);
             m.EnableKeyword("_NORMALMAP");
