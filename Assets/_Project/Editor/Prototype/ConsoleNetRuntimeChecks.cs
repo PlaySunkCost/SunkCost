@@ -872,10 +872,19 @@ namespace SunkCost.Editor.Prototype
             int payReports = Day.LastPay.Serial - paySerial, payPulls = Day.LastLeverPull.Serial - pulls, payRefusals = Day.LastRefusal.Serial - refusal;
             Say($"N14 after the three pulls: {payReports} pay report(s) (last: sold ${Day.LastPay.Sales}, short {Day.LastPay.Short}), {payPulls} pull(s), {payRefusals} refusal(s) (last '{Day.LastRefusal.Text}'), {Count("Pay: sold")} sale line(s) in the log in total");
             Check(Day.Balance == balance + v && Day.CycleSales >= v && (coin == null || !coin.IsSpawned) && Count("Pay: sold $" + v + ",") == 1, $"N14 the coin sold and banked once (+${Day.Balance - balance} of ${v})");
-            // bugs/NET-1: a pull a tick after the sale still resolves PAY (the box sum counts the sold coin) and a second, empty sale reports again.
-            Soft(payReports == 1 && payPulls == 1 && payRefusals == 2 && (Day.LastRefusal.Text == ConsoleRules.LeverInUse || Day.LastRefusal.Text == ConsoleRules.NothingToSell), $"N14 one pay report ({payReports}), one pull ({payPulls}), two refusals ({payRefusals}, last '{Day.LastRefusal.Text}')");
+            // bugs/NET-1 (round 2 retest): a pull a tick after the sale resolved PAY over the sold coin and a second, empty sale reported again.
+            Soft(payReports == 1 && payPulls == 1 && payRefusals == 2 && (Day.LastRefusal.Text == ConsoleRules.LeverInUse || Day.LastRefusal.Text == ConsoleRules.NothingToSell), $"N14 NET-1 retest: one pay report ({payReports}, sold ${Day.LastPay.Sales}), one pull ({payPulls}), two refusals ({payRefusals}, last '{Day.LastRefusal.Text}')");
+            Soft(Day.LastPay.Sales == v && Count("Pay: sold $0,") == 0, $"N14 NET-1 retest: the report the crew reads is the real sale (sold ${Day.LastPay.Sales} of ${v}; empty-sale log lines {Count("Pay: sold $0,")})");
             yield return Converge("N14 the report", Time.unscaledTime);
             yield return ExpectPlayed(Day.LastLeverPull.Serial, ConsoleKind.HQ, "N14");
+            Soft(Day.LastLeverPull.Serial == pulls + 1, $"N14 NET-1 retest: every rig swung once (serial +{Day.LastLeverPull.Serial - pulls})");
+            // NET-1 retest, the slow form: A pulls PAY again well after the sale (not the same frame): the room is empty, PAY dim, refused 'Nothing to sell'.
+            yield return GuestEventually(A, r => G(r, "hqSign") == "PAY/off", 4f, "N14 NET-1 retest: PAY dim on A after the sale");
+            paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; refusal = Day.LastRefusal.Serial;
+            yield return Send(A, LeverJson("HQ"));
+            yield return Wait(0.8f);
+            Soft(Day.LastPay.Serial == paySerial && Day.LastLeverPull.Serial == pulls && Day.LastRefusal.Serial == refusal + 1 && Day.LastRefusal.Text == ConsoleRules.NothingToSell, $"N14 NET-1 retest: A's later PAY over the empty room refused (pay +{Day.LastPay.Serial - paySerial}, pull +{Day.LastLeverPull.Serial - pulls}, refusal +{Day.LastRefusal.Serial - refusal} '{Day.LastRefusal.Text}')");
+            yield return Converge("N14 the later refusal", Time.unscaledTime);
 
             Heading("N15 — an UNLOCK sent in the frame a lost payday starts the plank: bought before the loss or refused, never after; on the plank a guest cannot select, pull or vote; the fresh run relocks every site on every peer");
             yield return Wait(flow.Settings.PayReportSeconds);
@@ -915,18 +924,26 @@ namespace SunkCost.Editor.Prototype
             refusal = Day.LastRefusal.Serial;
             yield return Send(B2, GiveUpJson);
             yield return ExpectRefused(refusal, 1, s => s.Length > 0, "N15 B2's vote on the plank");
-            Say("N15 B2's vote refusal on the plank: '" + Day.LastRefusal.Text + "' (bugs/HQ-1 for the wording)");
+            Soft(Day.LastRefusal.Text == ConsoleRules.RunOver, "N15 HQ-1 retest: B2's vote on the plank is refused '" + ConsoleRules.RunOver + "' (got '" + Day.LastRefusal.Text + "')");
             Check(Day.SelectedSite == selOnPlank && Day.UnlockedSites == maskOnPlank && Day.LastLeverPull.Serial == pulls && Day.GiveUpVotes == 0 && Count("[Plank] The run is over") == planks + 1, "N15 nothing changed on the plank: " + H.ConsoleStatus());
             yield return RideOutPlank("N15");
             t = Time.unscaledTime;
             yield return Expect(() => ShipTop().Contains("[SITE 02#]") && ShipTop().Contains("[SITE 03#]") && ShipTop().Contains("[SITE 04#]") && HQTop().Contains("NEW CYCLE"), 3f, () => "N15 the host's consoles after the fresh run: " + ShipTop() + " | " + HQTop());
             yield return Converge("N15 the fresh run relocked everywhere", t);
             hqShip = ShipParts.InWorld(WorldId.HQ);
+            // NET-2 retest: before the plank the sign read UNLOCK $300 lit; on the fresh run nothing is selected, so no peer may keep that price.
+            Soft(ShipSign() == "CONFIRM/off", "N15 NET-2 retest: the host's dim ship sign after the fresh run is CONFIRM/off (got '" + ShipSign() + "')");
+            foreach (Guest g in crew.ToList())
+            {
+                yield return Send(g, "{\"id\":{id},\"action\":\"snapshot\"}");
+                Soft(G(lastReply, "leverSign") == ShipSign(), $"N15 NET-2 retest: {g.Label}'s ship sign after the fresh run equals the host's ('{G(lastReply, "leverSign")}' / '{ShipSign()}')");
+            }
 
             // ================================ 4 players ================================
             Heading("N16 — 4 players: C (headless) joins; four identical peers");
             Guest C = Launch("C", "Temp/console-net-guest-c", headless: true);
             yield return Joined(C, "N16 C", "HQ", "AtHQ");
+            Soft(G(lastReply, "leverSign") == ShipSign(), $"N16 NET-2 retest: late joiner C's first ship sign equals the host's ('{G(lastReply, "leverSign")}' / '{ShipSign()}')");
             Check(SpawnedPlayers() == 4, "N16 four players spawned: " + SpawnedPlayers());
             yield return AtBoard();
             yield return GuestMove(A, StandSpot(1.0f));
@@ -1024,7 +1041,7 @@ namespace SunkCost.Editor.Prototype
                 Soft(hits.Length == 0, $"N20 {g.Label}'s log has no exception, MissingReference or 'expected to exist'");
             }
             Say($"worst late sample {worstSync:0.00} s; end: {H.ConsoleStatus()}");
-            Soft(dimWordSplits.Count == 0, "the dim ship sign reads the same word on every peer (bugs/NET-2): " + string.Join(" / ", dimWordSplits));
+            Soft(dimWordSplits.Count == 0, "NET-2 retest: the dim ship sign read the same word on every peer in every convergence row: " + string.Join(" / ", dimWordSplits));
             Check(softFails.Count == 0, $"no soft failure ({softFails.Count}: {string.Join(" | ", softFails)})");
         }
     }
