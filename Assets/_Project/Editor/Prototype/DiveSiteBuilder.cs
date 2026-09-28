@@ -270,8 +270,9 @@ namespace SunkCost.Sites
         // parked car, sealed but for a doorway cut into its bottom metres facing the
         // car's own doorway; a gate of two leaves closes that doorway while the car is
         // away; a translucent disc marks the water standing at sea level inside it.
-        // Without the ship shell (its own card) the tube's top is the parked car's roof;
-        // with it, the shell's deck cabin continues the column.
+        // Without the ship shell (its own card) the tube rises into the top collar over the
+        // parked car (Dan's round shaft, 28 September 2026: ShaftTubeLook); with the shell,
+        // the collar must be reconciled with the shell's deck cabin.
         public const string ShaftTubeName = "Shaft Tube";
         public const string TubeGlassName = "TubeGlass";
         public const string TubeWallsName = "TubeWalls";
@@ -285,10 +286,11 @@ namespace SunkCost.Sites
         {
             GameObject root = new(ShaftTubeName);
             float bottomY = anchorBottom.position.y;
-            float topY = anchorTop.position.y + settings.CarInteriorHeightMeters; // section 4.1: no ship shell yet
+            float topY = anchorTop.position.y + ShaftTubeLook.TubeTopAboveTopStop; // section 4.1: no ship shell yet; the tube's top plugs into the top collar
             float doorwayWidth = ElevatorCabinBuilder.CarDoorwayWidthMeters + TubeDoorwayExtraWidthMeters;
             float doorwayHalfAngleDeg = RoundCabinGeometry.CreateTube(root.transform, settings.TubeRadiusMeters, bottomY, topY, glass, frame,
                 doorwayBearingDeg, doorwayWidth, settings.CarInteriorHeightMeters, settings.TubeRibSpacingMeters, TubeGlassName, TubeWallsName, TubeRibPrefix);
+            ShaftTubeLook.HideRibs(root.transform, TubeRibPrefix);
 
             // The gate: two leaves like the car's, closed at rest; ShaftGate opens them
             // while the car is parked or occupies the bottom of the tube.
@@ -296,8 +298,12 @@ namespace SunkCost.Sites
             gate.transform.SetParent(root.transform, false);
             gate.transform.position = anchorBottom.position;
             float leafRadius = settings.TubeRadiusMeters - 0.03f;
-            Transform leafRight = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Right", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, 3, 0.1f);
-            Transform leafLeft = RoundCabinGeometry.CreateDoorLeafPanels(gate.transform, "Gate Leaf Left", leafRadius, settings.CarInteriorHeightMeters, doorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, 3, 0.1f);
+            // The pivots on the tube's axis carry Dan's curved glass gate leaves (28 September 2026).
+            Transform leafRight = new GameObject("Gate Leaf Right").transform;
+            leafRight.SetParent(gate.transform, false);
+            Transform leafLeft = new GameObject("Gate Leaf Left").transform;
+            leafLeft.SetParent(gate.transform, false);
+            ShaftTubeLook.PlaceGateLeaves(leafRight, leafLeft, doorwayBearingDeg);
             float bearingRad = doorwayBearingDeg * Mathf.Deg2Rad;
             Vector3 doorwayDirection = new Vector3(Mathf.Cos(bearingRad), 0f, Mathf.Sin(bearingRad));
             GameObject gateCollider = new("Gate Collider", typeof(BoxCollider));
@@ -315,14 +321,14 @@ namespace SunkCost.Sites
             serialized.ApplyModifiedPropertiesWithoutUndo();
             SetLayerRecursively(gate, deepLayer);
 
-            // The water standing in the tube: a translucent disc at sea level, no collider.
-            GameObject water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            water.name = WaterSurfaceName;
-            water.transform.SetParent(root.transform, false);
-            water.transform.position = new Vector3(anchorTop.position.x, settings.SeaLevelY, anchorTop.position.z);
-            water.transform.localScale = new Vector3((settings.TubeRadiusMeters - 0.03f) * 2f, 0.01f, (settings.TubeRadiusMeters - 0.03f) * 2f);
-            water.GetComponent<Renderer>().sharedMaterial = GetOrCreateWaterSurfaceMaterial();
-            Object.DestroyImmediate(water.GetComponent<Collider>());
+            // The water standing in the tube: a translucent disc at sea level, no collider,
+            // and its ring round the car while the car crosses the surface (one surface shows).
+            ShaftTubeSetup.AddTubeWater(root.transform, anchorTop.position, settings, controller);
+
+            // Dan's models over it all: the foot, the stacked sections, the collar, and the
+            // colliders their metal needs.
+            ShaftTubeLook.Build(root.transform, anchorTop.position, anchorTop.position.y, bottomY, doorwayBearingDeg, doorwayHalfAngleDeg,
+                settings.SeaLevelY - SunlitWaterMeters, deepLayer);
         }
 
         public static Material GetOrCreateWaterSurfaceMaterial()
