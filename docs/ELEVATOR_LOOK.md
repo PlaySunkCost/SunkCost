@@ -135,8 +135,9 @@ of the cabin (`ShipParts.InDeckCabinEntrance`: a capsule reaching the band from 
 to the shutter box, in the shutter box's space):
 - the empty car going back down reopens for someone standing there, and after the grace period that
   player is put on the deck, like someone in the cabin;
-- after the ride down's doors shut, anyone standing there (someone who stepped out after the seal
-  cap) is put on the deck.
+- after the ride down's doors shut with riders inside, anyone standing there (someone who stepped
+  out after the seal cap) is put on the deck. A ride cancelled because nobody is inside ("Nobody
+  aboard") moves nobody: the car stays up and the shutters open again at once.
 
 So nobody is closed in between the doors and the shutters while the car is below. While the car is
 away, its panel body, posts and button colliders are switched off with its renderers, so the empty

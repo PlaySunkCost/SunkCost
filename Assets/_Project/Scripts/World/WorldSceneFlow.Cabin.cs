@@ -815,9 +815,6 @@ namespace SunkCost.World
             foreach (int id in riders) cohort.Add(id);
             dayState.ServerSetRiders(riders);
             yield return ServerSealDeckCabin(ship);
-            // The shutters shut with the doors: whoever stands between them (stepped out
-            // after the seal cap) is put on the deck, not closed in for the dive.
-            ServerPutCabinOccupantsOut(ship, entranceOnly: true);
             var inside = new List<int>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
@@ -825,7 +822,13 @@ namespace SunkCost.World
                 HQPlayerController player = PlayerOf(conn);
                 if (player != null && player.gameObject.scene == WorldScenes.Scene(WorldId.Sea) && ship.IsInDeckCabin(player.transform.position)) inside.Add(conn.ClientId);
             }
+            // Nobody inside: the car never leaves and the shutters open again at once,
+            // so whoever stands in the entrance stays where they are (DECK-N1-CANCEL).
             if (inside.Count == 0) { yield return CancelRide(RideDirection.Down, "Nobody aboard"); yield break; }
+            // The ride goes down and the shutters stay shut behind it: whoever stands
+            // between them and the car's doors (stepped out after the seal cap) is put
+            // on the deck, not closed in for the dive.
+            ServerPutCabinOccupantsOut(ship, entranceOnly: true);
             cohort.Clear();
             foreach (int id in inside) cohort.Add(id);
             dayState.ServerSetRiders(inside);
