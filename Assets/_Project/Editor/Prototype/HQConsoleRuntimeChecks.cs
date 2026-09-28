@@ -723,7 +723,7 @@ namespace SunkCost.Editor.Prototype
             WorldLoopSettings.QuotaOverrideForTests = v8;
             yield return Expect(() => Sign() == "PAY/on", 2f, () => "G8 PAY lit on the host: " + Sign());
             yield return GuestEventually(guestA, r => GSign(r) == "PAY/on" && GuestHeader(r).Contains("box=" + v8 + ";"), 5f, "G8 PAY lit on A, the box $" + v8);
-            yield return GuestEventually(guestB, r => GSign(r) == "PAY/on" && GTop(r).Contains($"QUOTA ${v8} / ${v8}"), 5f, "G8 PAY lit on B, the quota met");
+            yield return GuestEventually(guestB, r => GSign(r) == "PAY/on" && GTop(r).Contains($"QUOTA ${v8} / "), 5f, "G8 PAY lit on B, the box counted (the quota override is the editor's only)");
             paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; balance = Day.Balance; refusal = Day.LastRefusal.Serial;
             Command(guestA, "{\"id\":{id},\"action\":\"lever\",\"item\":\"HQ\"}");
             int aCmd = guestCommand;
