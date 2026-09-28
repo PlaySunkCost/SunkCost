@@ -451,7 +451,7 @@ namespace SunkCost.Editor.Prototype
             yield return CoinInRoom("Q1 coin", c => coin1 = c);
             int v1 = coin1.Value;
             WorldLoopSettings.QuotaOverrideForTests = v1; // exactly the quota
-            yield return Expect(() => Sign() == "PAY/on" && Big() == $"DAY 1 OF {days}" && TopM().Hint == HQQuotaConsole.HintDay && TopM().Corner == $"DAY 1/{days}", 2f, () => "Q1 PAY lit on day 1: " + Sign() + " | " + Top());
+            yield return Expect(() => Sign() == "PAY/on" && Big() == $"DAY 1 OF {days}" && TopM().Hint == HQQuotaConsole.HintDay && TopM().Corner == $"DAY 1/{days}" && TopM().FootLeft == $"QUOTA ${v1} / ${v1}", 2f, () => "Q1 PAY lit on day 1: " + Sign() + " | " + Top());
             Check(TopM().FootLeft == $"QUOTA ${v1} / ${v1}" && TopM().FootLeftTone == ConsoleTone.Good, "Q1 the quota counts the box and turns green when met: " + TopM().FootLeft + " " + TopM().FootLeftTone);
             yield return AimLever();
             yield return null;
