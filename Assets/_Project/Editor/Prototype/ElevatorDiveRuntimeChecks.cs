@@ -806,9 +806,12 @@ namespace SunkCost.Editor.Prototype
 
         // Every drawn triangle under the roots, nearest to a point (the camera's near-plane test).
         private static readonly Dictionary<Mesh, (Vector3[] v, int[] t)> meshCache = new();
-        private static float NearestDrawn(IEnumerable<Transform> roots, Vector3 point, out string nearest)
+        private static float NearestDrawn(IEnumerable<Transform> roots, Vector3 point, out string nearest) =>
+            NearestDrawn(roots, point, out nearest, out _);
+
+        private static float NearestDrawn(IEnumerable<Transform> roots, Vector3 point, out string nearest, out Vector3 at)
         {
-            float best = float.PositiveInfinity; nearest = "nothing";
+            float best = float.PositiveInfinity; nearest = "nothing"; at = point;
             foreach (Transform root in roots)
             {
                 if (root == null) continue;
@@ -826,7 +829,7 @@ namespace SunkCost.Editor.Prototype
                     {
                         Vector3 c = ClosestOnTriangle(point, world[data.t[i]], world[data.t[i + 1]], world[data.t[i + 2]]);
                         float d = (c - point).magnitude;
-                        if (!float.IsNaN(d) && d < best) { best = d; nearest = filter.name; }
+                        if (!float.IsNaN(d) && d < best) { best = d; nearest = filter.name; at = c; }
                     }
                 }
             }
@@ -1523,19 +1526,45 @@ namespace SunkCost.Editor.Prototype
                 }
                 if (bearing == 90f || bearing == 35f) { host.SetPitchForChecks(0f); yield return null; CaptureEye("dv10-glass-press-" + (++shot) + ".png"); }
             }
-            // From the tube's doorway (on the sill), sideways along the tube wall toward each open gate leaf.
+            // From the tube's doorway (on the sill, between the car's doorway and the open gate),
+            // walk straight at each open gate leaf until the colliders stop the player, face it,
+            // and judge the near plane there. DIVE-DV10-GATE-ROWS: the first version started at
+            // r 2.95 (the capsule already in the tube wall's band) and pushed along a straight
+            // tangent, so the player slid out through the doorway onto the ramp and ended about
+            // 2 m from every mesh: the rows passed without ever meeting a leaf. The coverage row
+            // below fails if the camera does not end up at the leaf, in view.
             Vector3 doorway = Doorway(car);
-            foreach (float side in new[] { 90f, -90f })
+            float standY = SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f;
+            foreach (Transform leaf in AllNamed(cp.Tube, SunkCost.Editor.Look.ElevatorLook.GateLeafLookName).ToList())
             {
-                host.TeleportLocal(car.transform.position + doorway * 2.95f + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f), host.Yaw);
+                string side = leaf.parent != null ? leaf.parent.name : leaf.name;
+                string file = "dv10-" + side.ToLowerInvariant().Replace(' ', '-') + ".png";
+                var leafRoots = new[] { leaf };
+                host.TeleportLocal(car.transform.position + doorway * GateRowStartRadius + Vector3.up * standY, host.Yaw);
                 yield return Wait(0.2f);
-                yield return PushInto(Quaternion.Euler(0f, -side, 0f) * doorway, 1.5f);
-                host.SetPitchForChecks(0f); yield return null; yield return null;
+                NearestDrawn(leafRoots, cam.transform.position, out _, out Vector3 aim);
+                yield return PushInto(aim - cam.transform.position, 1.5f);
+                float dLeaf = NearestDrawn(leafRoots, cam.transform.position, out _, out Vector3 onLeaf);
+                host.transform.rotation = Quaternion.LookRotation(Flat(onLeaf - cam.transform.position)); host.SetPitchForChecks(0f);
+                yield return null; yield return null;
+                dLeaf = NearestDrawn(leafRoots, cam.transform.position, out _, out onLeaf);
+                Vector3 vp = cam.WorldToViewportPoint(onLeaf);
+                bool inView = vp.z > 0f && vp.x > 0f && vp.x < 1f && vp.y > 0f && vp.y < 1f;
+                float r = Flat(cam.transform.position - car.transform.position).magnitude;
+                Check(cp.Gate.OpenFraction >= 0.99f && dLeaf <= GateRowReach && inView,
+                    $"DV10 the push from the tube's doorway reached the open {side} (gate {cp.Gate.OpenFraction:0.00}; camera {dLeaf * 100f:0.0} cm from the leaf, ≤ {GateRowReach * 100f:0} cm; r {r:0.00} m from the axis; the leaf in view {inView})");
                 float d = NearestDrawn(roots, cam.transform.position, out string what);
-                Check(d >= near, $"DV10 from the tube's doorway pushing {(side > 0 ? "left" : "right")} along the wall: the near plane is {d * 100f:0.0} cm from {what} (envelope {near * 100f:0.0} cm)");
-                CaptureEye("dv10-gate-" + (side > 0 ? "left" : "right") + ".png");
+                bool clear = clearance == null || PlayerCameraClearance.IsClear(cam.transform.position, clearance.LastEnvelopeRadius, host.transform);
+                Check(d >= near && clear, $"DV10 pressed against the open {side}: the near plane is {d * 100f:0.0} cm from the nearest drawn mesh ({what}), envelope {near * 100f:0.0} cm; clearance clear={clear}");
+                CaptureEye(file);
             }
         }
+
+        // DV10's gate rows: the start on the sill, midway between the car's doorway (r 2.4-2.5)
+        // and the gate leaves' inner face (r 2.69), so the 0.3 m capsule stands clear of both; and
+        // how near the camera must come to a leaf for the row to count as a test of that leaf.
+        private const float GateRowStartRadius = 2.72f;
+        private const float GateRowReach = 0.6f;
 
         private static IEnumerator PushInto(Vector3 direction, float seconds)
         {
