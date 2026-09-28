@@ -13,9 +13,11 @@ namespace SunkCost.Editor.Look
     // functional object, name, collider and pivot the builders make stays; this adds
     // look children, the post colliders the model's posts need (the player's camera
     // only knows colliders), and the named empties the water and the panel display
-    // read. The numbers are the prepared models' own (scratchpad elev/ELEVATOR_MODELS.md,
-    // measured on the exported meshes); bearings are the builders' (0 = +X, 90 = +Z,
+    // read. The numbers are the prepared models' own (docs/ELEVATOR_LOOK.md, measured
+    // on the exported meshes); bearings are the builders' (0 = +X, 90 = +Z,
     // counter-clockwise from above), and a Unity yaw of +a lowers a bearing by a.
+    // Every placement first removes a child of the same name, so running a builder
+    // again on an existing root replaces its look instead of stacking a second one.
     public static class ElevatorLook
     {
         public const string CarLookName = "Car Look";
@@ -266,6 +268,7 @@ namespace SunkCost.Editor.Look
         {
             float from = right ? doorwayBearingDeg : doorwayBearingDeg - ShutterSpanDeg;
             float to = right ? doorwayBearingDeg + ShutterSpanDeg : doorwayBearingDeg;
+            RemoveChildren(pivot, ShutterLookName);
             GameObject leaf = new(ShutterLookName);
             leaf.transform.SetParent(pivot, false);
             leaf.transform.localPosition = new Vector3(0f, bottomY, 0f);
@@ -348,12 +351,15 @@ namespace SunkCost.Editor.Look
 
         // ---- materials --------------------------------------------------------------
 
-        // Clear, two-sided glass for the car's slabs and the door leaves' windows: seen
-        // from inside and outside the car. Transparent queue, no depth write.
+        // Clear, two-sided glass for the car's slabs, the door leaves' windows and the
+        // car's glass band (both cabins): seen from inside and outside the car.
+        // Transparent queue, no depth write. Smoothness 0.6 (was 0.92): with the Cabin
+        // Light inside, a mirror-smooth two-sided pane read milky white and haloed
+        // (the review's F1/F5).
         public static Material CarGlass()
         {
             Material m = LoadOrCreate(CarGlassPath, "Universal Render Pipeline/Lit");
-            MakeTransparent(m, new Color(0.62f, 0.86f, 0.92f, 0.20f), 0.92f, twoSided: true);
+            MakeTransparent(m, new Color(0.62f, 0.86f, 0.92f, 0.20f), 0.6f, twoSided: true);
             return m;
         }
 
@@ -392,10 +398,14 @@ namespace SunkCost.Editor.Look
             return m;
         }
 
+        // Preserve Specular off: URP's material validation would otherwise switch the
+        // blend to premultiplied (One, OneMinusSrcAlpha), and reflections and highlights
+        // would not fade with alpha; this way the code and the saved asset agree.
         public static void MakeTransparent(Material m, Color colour, float smoothness, bool twoSided)
         {
             m.SetFloat("_Surface", 1f);
             m.SetFloat("_Blend", 0f);
+            if (m.HasProperty("_BlendModePreserveSpecular")) m.SetFloat("_BlendModePreserveSpecular", 0f);
             m.SetOverrideTag("RenderType", "Transparent");
             m.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
             m.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
@@ -440,12 +450,24 @@ namespace SunkCost.Editor.Look
                 Debug.LogWarning("ElevatorLook: no prefab " + ShipModelSetup.PrefabPath(part) + " (run ShipModelSetup.Apply(\"" + part + "\"))");
                 return null;
             }
+            RemoveChildren(parent, name);
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
             go.name = name;
             go.transform.localPosition = localPosition;
             go.transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
             go.transform.localScale = Vector3.one;
             return go;
+        }
+
+        // Removes every direct child of that name (a look placed by an earlier build).
+        public static void RemoveChildren(Transform parent, string name)
+        {
+            if (parent == null) return;
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = parent.GetChild(i);
+                if (child.name == name) Object.DestroyImmediate(child.gameObject);
+            }
         }
 
         private static GameObject Empty(Transform parent, string name, Vector3 localPosition, Quaternion localRotation)

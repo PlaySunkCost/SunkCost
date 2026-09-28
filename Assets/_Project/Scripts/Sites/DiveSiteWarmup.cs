@@ -53,19 +53,24 @@ namespace SunkCost.Sites
                 if (tubeRing == null) tubeRing = root.GetComponentInChildren<TubeWaterSurface>(true);
             Renderer ringRenderer = tubeRing != null ? tubeRing.GetComponent<Renderer>() : null;
             bool ringWasEnabled = ringRenderer != null && ringRenderer.enabled;
-            if (ringRenderer != null) ringRenderer.enabled = true;
-            if (waterFx != null) waterFx.WarmPose(true);
+            bool volumeWasGlobal = volume != null && volume.isGlobal;
+            float volumeWeight = volume != null ? volume.weight : 1f;
+            bool cabinWaterWasActive = cabinWater != null && cabinWater.gameObject.activeSelf;
+            Vector3 cabinWaterLocal = cabinWater != null ? cabinWater.localPosition : Vector3.zero;
 
-            // Force what the ride will show: the grade everywhere, the cabin half full.
-            bool volumeWasGlobal = false; float volumeWeight = 1f;
-            if (volume != null) { volumeWasGlobal = volume.isGlobal; volumeWeight = volume.weight; volume.isGlobal = true; volume.weight = 1f; }
-            bool cabinWaterWasActive = false; Vector3 cabinWaterLocal = Vector3.zero;
-            if (cabinWater != null) { cabinWaterWasActive = cabinWater.gameObject.activeSelf; cabinWaterLocal = cabinWater.localPosition; cabinWater.gameObject.SetActive(true); cabinWater.localPosition = new Vector3(0f, 1f, 0f); }
-
-            var go = new GameObject("DiveSiteWarmupCamera");
+            GameObject go = null;
             RenderTexture target = null;
             try
             {
+                // Every change below is undone in the finally, whatever throws: a warm
+                // pose left on would freeze this peer's water effects for the scene's life.
+                if (ringRenderer != null) ringRenderer.enabled = true;
+                if (waterFx != null) waterFx.WarmPose(true);
+                // Force what the ride will show: the grade everywhere, the cabin half full.
+                if (volume != null) { volume.isGlobal = true; volume.weight = 1f; }
+                if (cabinWater != null) { cabinWater.gameObject.SetActive(true); cabinWater.localPosition = new Vector3(0f, 1f, 0f); }
+
+                go = new GameObject("DiveSiteWarmupCamera");
                 Camera camera = go.AddComponent<Camera>();
                 camera.CopyFrom(reference);
                 camera.enabled = false;
@@ -106,7 +111,7 @@ namespace SunkCost.Sites
             finally
             {
                 if (target != null) RenderTexture.ReleaseTemporary(target);
-                Object.Destroy(go);
+                if (go != null) Object.Destroy(go);
                 if (volume != null) { volume.isGlobal = volumeWasGlobal; volume.weight = volumeWeight; }
                 if (cabinWater != null) { cabinWater.localPosition = cabinWaterLocal; cabinWater.gameObject.SetActive(cabinWaterWasActive); }
                 if (waterFx != null) waterFx.WarmPose(false);

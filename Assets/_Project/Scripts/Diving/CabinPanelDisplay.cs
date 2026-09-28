@@ -34,6 +34,9 @@ namespace SunkCost.Diving
         private int lastState = -1, lastDepth = -1, lastPercent = -1;
         private CarWaterFlow lastFlow;
         private string lastPlate;
+        private string pushedPlate;   // the plate's words as WorldSceneFlow writes them (Deck mode)
+        private bool platePushed;
+        private string written;       // the last string given to the screen's TextMesh
 
         public Mode DisplayMode => mode;
         public float GaugeFraction { get; private set; }
@@ -47,7 +50,15 @@ namespace SunkCost.Diving
             Resolve();
         }
 
-        public void SetScreen(TextMesh text) => screen = text;
+        public void SetScreen(TextMesh text) { screen = text; written = null; }
+
+        // WorldSceneFlow.PresentDeckCabin hands the plate's words over when it writes them,
+        // so the mirror never reads TextMesh.text (a native getter that allocates) per frame.
+        public void SetPlateText(string plate)
+        {
+            pushedPlate = plate ?? string.Empty;
+            platePushed = true;
+        }
 
         private void Awake() => Resolve();
 
@@ -77,12 +88,13 @@ namespace SunkCost.Diving
 
             string text = mode == Mode.Deck ? DeckText() : CarText();
             if (text != ScreenText) ScreenText = text;
-            if (screen != null && screen.text != ScreenText) screen.text = ScreenText;
+            if (screen != null && written != ScreenText) { screen.text = ScreenText; written = ScreenText; }
         }
 
         private string DeckText()
         {
-            string plate = mirror != null ? mirror.text : string.Empty;
+            // Without a flow (a scene opened in the editor) the plate is read directly.
+            string plate = platePushed ? pushedPlate : mirror != null ? mirror.text : string.Empty;
             if (plate == lastPlate && ScreenText.Length > 0) return ScreenText;
             lastPlate = plate;
             return string.IsNullOrEmpty(plate) ? deckWord : deckWord + "\n" + plate;

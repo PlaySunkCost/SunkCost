@@ -64,7 +64,9 @@ namespace SunkCost.Sites
                 // No frame posts: the car is clean, clear glass like the tube (Dan, 19 September 2026).
                 // The wall behind the button is open over the button's band only (as the deck cabin's).
                 float buttonBottom = PanelChestHeightMeters - 0.2f;
-                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
+                // The band wears the car's own glass (ElevatorLook.CarGlass), not the shared
+                // DiveSiteGlass: under the Cabin Light that one haloed white (the review's F5).
+                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, SunkCost.Editor.Look.ElevatorLook.CarGlass(), BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
 
                 // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
                 Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;

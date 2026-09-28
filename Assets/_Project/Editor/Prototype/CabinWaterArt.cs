@@ -7,8 +7,11 @@ namespace SunkCost.Editor.Prototype
 {
     // The car water's art (the new elevator, 28 September 2026): five small procedural
     // textures (ripples, a stream, a splash, bubbles, a drain swirl), their materials and
-    // the tube's water ring mesh, under Art/Elevator/Water. Made once and kept (the GUIDs
-    // stay); ShaftTubeSetup wires them onto the car and the tube. New assets only: the
+    // the tube's water ring mesh, under Art/Elevator/Water. The assets are made once and
+    // kept (the GUIDs stay), but every call writes the materials' settings and the texture
+    // importers' again and rebuilds the ring when its radii differ, so a change here reaches
+    // the committed assets on the next build. ShaftTubeSetup wires them onto the car and
+    // the tube. New assets only: the
     // shared DiveSiteGlass/DiveSiteWaterSurface materials are not touched (the tube's
     // ring uses DiveSiteWaterSurface as it is, so it matches the disc exactly).
     public static class CabinWaterArt
@@ -41,78 +44,84 @@ namespace SunkCost.Editor.Prototype
 
         // The car's water: the sea's colour (DiveSiteWaterSurface), rippled by a drifting
         // normal map, with a faint cyan from the car's ring light.
-        public static Material Surface() => GetOrMake(SurfaceMaterialPath, lit: true, () =>
+        // Smoothness 0.65 (was 0.9): with the Cabin Light over it a mirror-smooth surface
+        // showed a blown-out white disc from above (the review's F1).
+        public static Material Surface() => GetOrMake(SurfaceMaterialPath, "Universal Render Pipeline/Lit", m =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Lit", new Color(0.25f, 0.55f, 0.6f, 0.55f), cullOff: false);
+            SetTransparent(m, new Color(0.25f, 0.55f, 0.6f, 0.55f), cullOff: false);
             m.SetTexture("_BumpMap", TextureAt(RipplePath, RippleTexture, normalMap: true, repeat: true));
             m.SetFloat("_BumpScale", 0.55f);
             m.EnableKeyword("_NORMALMAP");
-            m.SetFloat("_Smoothness", 0.9f);
+            m.SetFloat("_Smoothness", 0.65f);
             Emission(m, new Color(0.02f, 0.10f, 0.12f));
-            return m;
         });
 
-        public static Material Stream() => GetOrMake(StreamMaterialPath, lit: false, () =>
+        public static Material Stream() => GetOrMake(StreamMaterialPath, "Universal Render Pipeline/Simple Lit", m =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.82f, 0.95f, 1f, 0.62f), cullOff: true);
+            SetTransparent(m, new Color(0.82f, 0.95f, 1f, 0.62f), cullOff: true);
             m.SetTexture("_BaseMap", TextureAt(StreamPath, StreamTexture, normalMap: false, repeat: true));
             Emission(m, new Color(0.10f, 0.16f, 0.18f));
-            return m;
         });
 
         // Foam lies ON the water: the splash and the drain swirl are drawn from above only
         // (their quads face up), so an eye under the surface sees the water's underside,
         // not white foam cut-outs (the dive captures of 28 September 2026).
-        public static Material Splash() => GetOrMake(SplashMaterialPath, lit: false, () =>
+        public static Material Splash() => GetOrMake(SplashMaterialPath, "Universal Render Pipeline/Simple Lit", m =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.93f, 0.98f, 1f, 0.8f), cullOff: false);
+            SetTransparent(m, new Color(0.93f, 0.98f, 1f, 0.8f), cullOff: false);
             m.SetTexture("_BaseMap", TextureAt(SplashPath, SplashTexture, normalMap: false, repeat: false));
             Emission(m, new Color(0.12f, 0.16f, 0.17f));
-            return m;
         });
 
-        public static Material Bubbles() => GetOrMake(BubblesMaterialPath, lit: false, () =>
+        public static Material Bubbles() => GetOrMake(BubblesMaterialPath, "Universal Render Pipeline/Simple Lit", m =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.85f, 0.97f, 1f, 0.6f), cullOff: true);
+            SetTransparent(m, new Color(0.85f, 0.97f, 1f, 0.6f), cullOff: true);
             m.SetTexture("_BaseMap", TextureAt(BubblesPath, BubblesTexture, normalMap: false, repeat: true));
             Emission(m, new Color(0.06f, 0.12f, 0.14f));
-            return m;
         });
 
-        public static Material Swirl() => GetOrMake(SwirlMaterialPath, lit: false, () =>
+        public static Material Swirl() => GetOrMake(SwirlMaterialPath, "Universal Render Pipeline/Simple Lit", m =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.9f, 0.97f, 1f, 0.75f), cullOff: false);
+            SetTransparent(m, new Color(0.9f, 0.97f, 1f, 0.75f), cullOff: false);
             m.SetTexture("_BaseMap", TextureAt(SwirlPath, SwirlTexture, normalMap: false, repeat: false));
             Emission(m, new Color(0.08f, 0.12f, 0.13f));
-            return m;
         });
 
-        private static Material GetOrMake(string path, bool lit, System.Func<Material> make)
+        // Loads the material (or makes it, once: its GUID stays) and writes its settings
+        // every time, like ElevatorLook.LoadOrCreate, so the code and the asset agree.
+        private static Material GetOrMake(string path, string shaderName, System.Action<Material> configure)
         {
-            Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (existing != null) return existing;
-            EnsureFolder();
-            Material material = make();
-            AssetDatabase.CreateAsset(material, path);
-            AssetDatabase.SaveAssets();
+            Shader shader = Shader.Find(shaderName) ?? Shader.Find("Universal Render Pipeline/Lit");
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                EnsureFolder();
+                material = new Material(shader) { name = Path.GetFileNameWithoutExtension(path) };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            if (material.shader != shader) material.shader = shader;
+            configure(material);
+            EditorUtility.SetDirty(material);
+            AssetDatabase.SaveAssetIfDirty(material);
             return material;
         }
 
-        // URP transparent, alpha blended, ZWrite off, queue 3000 (INTERFACES.md §2.6), the
-        // same set-up as DiveSiteBuilder's glass.
-        private static Material NewTransparent(string shaderName, Color colour, bool cullOff)
+        // URP transparent, alpha blended, ZWrite off, queue 3000 (INTERFACES.md §2.6).
+        // Preserve Specular off: URP's validation would otherwise turn the blend
+        // premultiplied, and reflections and highlights would not fade with alpha (a
+        // milky, blown-out surface under the Cabin Light; the review's F1).
+        private static void SetTransparent(Material m, Color colour, bool cullOff)
         {
-            Shader shader = Shader.Find(shaderName) ?? Shader.Find("Universal Render Pipeline/Lit");
-            var m = new Material(shader);
             m.SetFloat("_Surface", 1f);
             m.SetFloat("_Blend", 0f);
+            if (m.HasProperty("_BlendModePreserveSpecular")) m.SetFloat("_BlendModePreserveSpecular", 0f);
             m.SetOverrideTag("RenderType", "Transparent");
             m.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
             m.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
             if (m.HasProperty("_SrcBlendAlpha")) m.SetInt("_SrcBlendAlpha", (int)BlendMode.One);
             if (m.HasProperty("_DstBlendAlpha")) m.SetInt("_DstBlendAlpha", (int)BlendMode.OneMinusSrcAlpha);
             m.SetInt("_ZWrite", 0);
-            if (cullOff) m.SetFloat("_Cull", 0f);
+            m.SetFloat("_Cull", cullOff ? (float)CullMode.Off : (float)CullMode.Back);
             m.DisableKeyword("_ALPHATEST_ON");
             m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
@@ -122,7 +131,6 @@ namespace SunkCost.Editor.Prototype
             m.SetColor("_BaseColor", colour);
             if (m.HasProperty("_ReceiveShadows")) m.SetFloat("_ReceiveShadows", 0f);
             m.EnableKeyword("_RECEIVE_SHADOWS_OFF");
-            return m;
         }
 
         private static void Emission(Material m, Color colour)
@@ -134,12 +142,31 @@ namespace SunkCost.Editor.Prototype
 
         // ---- the tube's ring ------------------------------------------------------------
 
-        // A flat annulus, both faces, in the XZ plane, for "WaterSurface Ring".
+        // A flat annulus, both faces, in the XZ plane, for "WaterSurface Ring". One asset
+        // (its GUID stays), rebuilt in place when it was made for other radii (a changed
+        // tube radius or TubeRingInnerRadius would otherwise leave a gap or an overlap
+        // exactly where the car crosses the surface).
         public static Mesh RingMesh(float inner, float outer)
         {
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(RingMeshPath);
-            if (existing != null) return existing;
+            if (existing != null && RingMatches(existing, inner, outer)) return existing;
             EnsureFolder();
+            Mesh mesh = existing != null ? existing : new Mesh();
+            FillRing(mesh, inner, outer);
+            if (existing == null) AssetDatabase.CreateAsset(mesh, RingMeshPath);
+            else EditorUtility.SetDirty(mesh);
+            AssetDatabase.SaveAssets();
+            return mesh;
+        }
+
+        private static bool RingMatches(Mesh mesh, float inner, float outer)
+        {
+            Vector3[] v = mesh.vertices;
+            return v.Length >= 2 && Mathf.Abs(v[0].magnitude - inner) < 0.001f && Mathf.Abs(v[1].magnitude - outer) < 0.001f;
+        }
+
+        private static void FillRing(Mesh mesh, float inner, float outer)
+        {
             const int segments = 96;
             var vertices = new Vector3[(segments + 1) * 4];
             var normals = new Vector3[vertices.Length];
@@ -166,32 +193,42 @@ namespace SunkCost.Editor.Prototype
                     else { triangles[t] = i0; triangles[t + 1] = o0; triangles[t + 2] = i1; triangles[t + 3] = o0; triangles[t + 4] = o1; triangles[t + 5] = i1; }
                 }
             }
-            var mesh = new Mesh { name = "TubeWaterRing", vertices = vertices, normals = normals, uv = uvs, triangles = triangles };
+            mesh.Clear();
+            mesh.name = "TubeWaterRing";
+            mesh.vertices = vertices;
+            mesh.normals = normals;
+            mesh.uv = uvs;
+            mesh.triangles = triangles;
             mesh.RecalculateBounds();
             mesh.RecalculateTangents();
-            AssetDatabase.CreateAsset(mesh, RingMeshPath);
-            AssetDatabase.SaveAssets();
-            return mesh;
         }
 
         // ---- textures -------------------------------------------------------------------
 
+        // The pixels are drawn once (a procedural picture; delete the PNG to redraw it);
+        // the importer's settings are checked on every call and reimported when they differ.
         private static Texture2D TextureAt(string path, System.Func<Texture2D> make, bool normalMap, bool repeat)
         {
-            Texture2D existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (existing != null) return existing;
-            EnsureFolder();
-            Texture2D texture = make();
-            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), path), texture.EncodeToPNG());
-            Object.DestroyImmediate(texture);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(path) == null)
+            {
+                EnsureFolder();
+                Texture2D texture = make();
+                File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), path), texture.EncodeToPNG());
+                Object.DestroyImmediate(texture);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            }
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            importer.textureType = normalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
-            importer.alphaIsTransparency = !normalMap;
-            importer.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-            importer.mipmapEnabled = true;
-            importer.sRGBTexture = !normalMap;
-            importer.SaveAndReimport();
+            TextureImporterType type = normalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+            TextureWrapMode wrap = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            if (importer.textureType != type || importer.alphaIsTransparency != !normalMap || importer.wrapMode != wrap || !importer.mipmapEnabled || importer.sRGBTexture != !normalMap)
+            {
+                importer.textureType = type;
+                importer.alphaIsTransparency = !normalMap;
+                importer.wrapMode = wrap;
+                importer.mipmapEnabled = true;
+                importer.sRGBTexture = !normalMap;
+                importer.SaveAndReimport();
+            }
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 

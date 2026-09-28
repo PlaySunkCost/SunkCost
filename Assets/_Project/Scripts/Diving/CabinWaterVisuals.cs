@@ -1,3 +1,5 @@
+using FishNet;
+using FishNet.Managing.Timing;
 using UnityEngine;
 
 namespace SunkCost.Diving
@@ -102,7 +104,7 @@ namespace SunkCost.Diving
         {
             Cache();
             float span = water != null ? water.SpanMeters : 3.5f;
-            float t = Time.time;
+            float t = SharedSeconds();
             float landing = Mathf.Max(level, floorTop);
             bool filling = flow == CarWaterFlow.Filling;
             bool draining = flow == CarWaterFlow.Draining;
@@ -197,6 +199,18 @@ namespace SunkCost.Diving
             Bubbles = !all && anyBubbles;
             Foam01 = all ? 0f : filling ? (count > 0 ? (float)drawn / count : 0f) : draining ? 0.35f + 0.65f * Drain01 : 0f;
             if (all) Drain01 = 0f;
+        }
+
+        // The phases' clock: the network tick every peer shares (the same clock the car's
+        // position is driven from), so a stream's scroll and a splash's spin match between
+        // the diver's screen, a spectator's and the TV. Wrapped each hour to keep float
+        // precision; the local clock without a session (the editor, the warm-up in a test).
+        public static float SharedSeconds()
+        {
+            TimeManager time = InstanceFinder.TimeManager;
+            if (time != null && time.Tick != 0)
+                return (float)((time.TicksToTime(time.Tick) + time.GetTickElapsedAsDouble()) % 3600.0);
+            return Time.time;
         }
 
         private void Scroll(Renderer[] renderers, Vector4 st)

@@ -8,7 +8,7 @@ namespace SunkCost.Sites
 {
     // Dan's round glass shaft in the dive scene (28 September 2026), laid over the tube
     // DiveSiteBuilder already builds (glass, wall colliders, gate, water): the prepared
-    // models of scratchpad elev/ELEVATOR_MODELS.md placed as look children of "Shaft Tube",
+    // models (docs/ELEVATOR_LOOK.md) placed as look children of "Shaft Tube",
     // and the colliders their metal needs (the players' camera only knows colliders).
     // Look only: the car's stops (top anchor 0, bottom anchor -depth), its timing, the
     // gate and the water are unchanged (INTERFACES A1-A3).
@@ -66,6 +66,7 @@ namespace SunkCost.Sites
             BuildFootColliders(shaftTube, foot, axis, footFloorY, doorwayBearingDeg, doorwayHalfAngleDeg, deepLayer);
 
             // The sections: the column from the foot's top to the tube's top.
+            ElevatorLook.RemoveChildren(shaftTube, SectionsName);
             GameObject sections = new(SectionsName);
             sections.transform.SetParent(shaftTube, false);
             float bottom = footFloorY + FootHeight;
@@ -108,6 +109,7 @@ namespace SunkCost.Sites
 
         private static void BuildFootColliders(Transform shaftTube, GameObject foot, Vector3 axis, float footFloorY, float doorwayBearingDeg, float doorwayHalfAngleDeg, int deepLayer)
         {
+            ElevatorLook.RemoveChildren(shaftTube, FootCollidersName);
             GameObject root = new(FootCollidersName);
             root.transform.SetParent(shaftTube, false);
             root.layer = deepLayer;
@@ -182,6 +184,7 @@ namespace SunkCost.Sites
         // tube's walls: a ring of boxes keeps walkers (and their camera) out of the metal.
         private static void BuildPlatformGuard(Transform shaftTube, Vector3 axis, float platformY, float topY)
         {
+            ElevatorLook.RemoveChildren(shaftTube, PlatformGuardName);
             GameObject root = new(PlatformGuardName);
             root.transform.SetParent(shaftTube, false);
             float height = topY - platformY;

@@ -321,12 +321,19 @@ namespace SunkCost.World
             // The car itself is only on the deck while it is up: its doors and its own
             // glass show then; away, the glass housing stands empty and see-through.
             bool present = DeckCabinCarPresent(ship);
-            SetVisible(doorL, present);
-            SetVisible(doorR, present);
-            // The car's glass, its model, its panel and its light (all under
-            // DeckCabinCarGlass), and the panel's button on the model's cap.
-            SetVisible(ship.DeckCabinCarGlass, present);
-            SetVisible(ship.DeckCabinButton, present);
+            DeckCabinShown shown = ShownFor(ship);
+            if (shown.Present != present)
+            {
+                // Switched on a change only (no per-frame walks of the car's parts).
+                shown.Present = present;
+                SetVisible(doorL, present);
+                SetVisible(doorR, present);
+                // The car's glass, its model, its panel, its posts' colliders and its
+                // light (all under DeckCabinCarGlass), and the panel's button on the
+                // model's cap: away, the empty housing holds nothing to bump or press.
+                SetVisible(ship.DeckCabinCarGlass, present);
+                SetVisible(ship.DeckCabinButton, present);
+            }
             doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
             doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
             // The tube's own leaves mirror the car's while it is up and stay shut while
@@ -361,8 +368,39 @@ namespace SunkCost.World
             if (panel != null)
             {
                 string text = DeckCabinText();
-                if (panel.text != text) panel.text = text;
+                if (shown.Plate != text)
+                {
+                    shown.Plate = text;
+                    panel.text = text;
+                    // The car panel's screen mirrors the plate (CabinPanelDisplay, Deck mode).
+                    if (shown.Display == null && ship.DeckCabinCarGlass != null) shown.Display = ship.DeckCabinCarGlass.GetComponentInChildren<CabinPanelDisplay>(true);
+                    if (shown.Display != null) shown.Display.SetPlateText(text);
+                }
             }
+        }
+
+        // What PresentDeckCabin last showed on a ship (a ship instance per loaded world).
+        private sealed class DeckCabinShown
+        {
+            public bool Present;
+            public string Plate;
+            public CabinPanelDisplay Display;
+        }
+        private readonly Dictionary<ShipParts, DeckCabinShown> deckCabinShown = new();
+
+        private DeckCabinShown ShownFor(ShipParts ship)
+        {
+            if (deckCabinShown.TryGetValue(ship, out DeckCabinShown shown)) return shown;
+            if (deckCabinShown.Count > 3) // ships of unloaded worlds
+            {
+                var gone = new List<ShipParts>();
+                foreach (ShipParts known in deckCabinShown.Keys) if (known == null) gone.Add(known);
+                foreach (ShipParts known in gone) deckCabinShown.Remove(known);
+            }
+            // The first frame on a ship applies everything: the prefab's own state is not trusted.
+            shown = new DeckCabinShown { Present = !DeckCabinCarPresent(ship) };
+            deckCabinShown[ship] = shown;
+            return shown;
         }
 
         private static void SetVisible(Transform part, bool visible)
@@ -373,6 +411,10 @@ namespace SunkCost.World
             // The car's own lamp goes with it: the empty housing is not lit from inside.
             foreach (Light light in part.GetComponentsInChildren<Light>(true))
                 if (light.enabled != visible) light.enabled = visible;
+            // And its solid parts (the panel's body, the posts, the button's press box):
+            // every peer derives the same value, and no server rule reads these.
+            foreach (Collider collider in part.GetComponentsInChildren<Collider>(true))
+                if (collider.enabled != visible) collider.enabled = visible;
         }
 
         // The docked ship's cabin never leaves. At sea the car is on the deck while
@@ -773,6 +815,9 @@ namespace SunkCost.World
             foreach (int id in riders) cohort.Add(id);
             dayState.ServerSetRiders(riders);
             yield return ServerSealDeckCabin(ship);
+            // The shutters shut with the doors: whoever stands between them (stepped out
+            // after the seal cap) is put on the deck, not closed in for the dive.
+            ServerPutCabinOccupantsOut(ship, entranceOnly: true);
             var inside = new List<int>();
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
@@ -957,6 +1002,10 @@ namespace SunkCost.World
         // Divers below, no ride running, the car up and not sealed for a ride: it is owed below.
         private bool CarReturnWanted() => dayState != null && dayState.Below.Count > 0 && !riding && !siteClosing && dayState.Elevator.State == ElevatorState.AtTop;
 
+        // Occupied: a living player in the deck cabin or in its entrance. The entrance
+        // is the grate between the car's doorway and the housing's shutters (Dan's round
+        // housing, 28 September 2026): the shutters stand 0.7 m out and shut with the
+        // car's doors, so whoever waits there would be closed in until the car is back.
         private bool CabinOccupied(ShipParts ship)
         {
             if (ship == null) return false;
@@ -964,26 +1013,40 @@ namespace SunkCost.World
             {
                 if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
-                if (player != null && player.gameObject.scene == ship.gameObject.scene && ship.IsInDeckCabin(player.transform.position)) return true;
+                if (player != null && player.gameObject.scene == ship.gameObject.scene && InDeckCabinOrEntrance(ship, player)) return true;
             }
             return false;
         }
 
-        // Everyone living still in the deck cabin is placed at a deck spawn point.
-        private void ServerPutCabinOccupantsOut(ShipParts ship)
+        // Everyone living still in the deck cabin or its entrance is placed at a deck
+        // spawn point; with entranceOnly, those in the entrance but not in the cabin
+        // (the ride down: whoever stepped out after the seal cap).
+        private void ServerPutCabinOccupantsOut(ShipParts ship, bool entranceOnly = false)
         {
             int k = 0;
             foreach (NetworkConnection conn in networkManager.ServerManager.Clients.Values)
             {
                 if (!conn.IsActive || dayState.IsDead(conn.ClientId)) continue;
                 HQPlayerController player = PlayerOf(conn);
-                if (player == null || player.gameObject.scene != ship.gameObject.scene || !ship.IsInDeckCabin(player.transform.position)) continue;
+                if (player == null || player.gameObject.scene != ship.gameObject.scene) continue;
+                bool inCabin = ship.IsInDeckCabin(player.transform.position);
+                bool put = entranceOnly ? !inCabin && InDeckCabinEntrance(ship, player) : inCabin || InDeckCabinEntrance(ship, player);
+                if (!put) continue;
                 Transform point = ship.SpawnPoint(k++ % ShipParts.SpawnPointCount) ?? ship.SpawnPoint(0);
                 if (point == null) continue;
                 player.TargetPlace(conn, point.position, point.eulerAngles.y);
-                Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} put out of the deck cabin: the car is needed below");
+                string where = inCabin ? "the deck cabin" : "the deck cabin's entrance";
+                string why = entranceOnly ? "the shutters shut behind the ride" : "the car is needed below";
+                Debug.Log($"[WorldSceneFlow] {DisplayName(conn)} put out of {where}: {why}");
             }
         }
+
+        private static bool InDeckCabinOrEntrance(ShipParts ship, HQPlayerController player)
+            => ship.IsInDeckCabin(player.transform.position) || InDeckCabinEntrance(ship, player);
+
+        // The player's capsule reaches the entrance band (ShipParts.InDeckCabinEntrance).
+        public static bool InDeckCabinEntrance(ShipParts ship, HQPlayerController player)
+            => ship != null && player != null && ship.InDeckCabinEntrance(player.transform.position, player.Controller != null ? player.Controller.radius : 0.35f);
 
         // Every server tick while the car is up and owed below: keep the return
         // going (a wait that gave up because someone kept stepping in starts over).

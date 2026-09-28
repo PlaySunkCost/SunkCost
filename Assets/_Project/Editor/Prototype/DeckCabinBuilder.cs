@@ -72,7 +72,8 @@ namespace SunkCost.Editor.Prototype
             // The button's band (its collider, 1.1 to 1.5 m, and a few centimetres) is the
             // only open arc in the wall behind it.
             float buttonBottom = PanelChestHeightMeters - 0.2f;
-            float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
+            // The band wears the car's own glass, as on the dive car (the review's F5).
+            float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, ElevatorLook.CarGlass(), DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
             // The button: red, its word on it, facing into the cabin (every button in the game, Dan, 19 September 2026).
             Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
             PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
@@ -125,7 +126,9 @@ namespace SunkCost.Editor.Prototype
             CreateShutterCollider(cabin.transform);
             // The model's posts and glass slabs stand inside the wall ring: the camera
             // only knows colliders (the same set as the dive car's, from one helper).
-            ElevatorLook.AddPostColliders(cabin.transform, DoorwayBearingDeg);
+            // Under DeckCabinCarGlass (at the cabin's own pose), so they go with the car
+            // while it is away (WorldSceneFlow.PresentDeckCabin switches its colliders).
+            ElevatorLook.AddPostColliders(carGlass.transform, DoorwayBearingDeg);
 
             // The inside, round like the cabin (ship audit SHIP-086: a square box reached
             // over the well at its corners and took in the grate): an upright capsule out
