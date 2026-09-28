@@ -529,6 +529,7 @@ namespace SunkCost.Editor.Prototype
             Day.ServerSetBelow(host.OwnerId, true); yield return null;
             yield return Expect(() => Bottom().StartsWith("DIVE IN PROGRESS") && Bottom().EndsWith("1 BELOW") && Sign().EndsWith("/off"), 2f, () => "H13 the dive screen: " + Bottom() + " | " + Sign());
             Check(Text().StartsWith($"Day 1 of {days} — dive in progress"), "H13 compat text: " + Text());
+            Check(Sign() == "END DAY/off", "H13 the dim sign's word comes from the facts (the lever's next job, bugs/NET-2's fix): " + Sign());
             Say("select during the dive: " + H.ClientSelect("HQ"));
             yield return Expect(() => Day.SelectedSite == SiteId.HQ, 3f, () => "H13 a card may be selected during the dive (" + Day.SelectedSite + ")");
             refusal = Day.LastRefusal.Serial; pulls = Day.LastLeverPull.Serial;
@@ -538,7 +539,21 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => !NoticeShown(), refusalSeconds + 1.5f, () => "H13 the notice cleared");
             Day.ServerSetBelow(host.OwnerId, false); yield return null;
             Check(Day.ServerEndDayIfDone(days) && Day.DiveDone && Day.Phase == DayPhase.AtSea, "H13 everyone up: the dive is done");
-            yield return CarUp("H13");
+
+            // Round 2 (28 September 2026): the retest of bugs/SHIP-2 (fixed in 9a2c11b). The fake
+            // diver called the car down and nobody rode it up: Below is empty, the car is away.
+            // END DAY must read and the real pull below (H11) must end the day with the car away.
+            Heading("SHIP-2 retest — the car away with nobody below after the dive: END DAY lit (not 'Divers below')");
+            Say("SHIP-2: the car after the fake dive: " + Day.Elevator.State + (Day.CabinAway ? " (cabin away)" : " (at the top)"));
+            if (!Day.CabinAway)
+            {
+                Day.ServerSetElevator(new ElevatorPhase { Serial = Day.Elevator.Serial + 1, State = SunkCost.Diving.ElevatorState.AtBottom, Upward = false, StartTick = FishNet.InstanceFinder.TimeManager.Tick, DurationTicks = 0 });
+                yield return null; yield return null;
+                Say("SHIP-2: the car was up; sent to the bottom by hand: " + Day.Elevator.State);
+            }
+            Check(Day.CabinAway && Day.Below.Count == 0 && Day.DiveDone, "SHIP-2 the repro state: the cabin away (" + Day.Elevator.State + "), nobody below, the dive done");
+            yield return Expect(() => Sign() == "END DAY/on" && Bottom().EndsWith("DIVE DONE — END THE DAY FIRST") && H.ConsoleStatus().Contains("shipAction=EndDay/None/on"), 2f, () => "SHIP-2 END DAY lit with the car away and nobody below: " + Sign() + " | " + Bottom());
+            Check(!Bottom().Contains("DIVERS BELOW"), "SHIP-2 the screen names no divers: " + Bottom());
 
             Heading("H11 — after the dive: END DAY on the sign whatever is selected; the real pull ends the day once; a second pull is refused");
             yield return Expect(() => Sign() == "END DAY/on" && Bottom().EndsWith("DIVE DONE — END THE DAY FIRST"), 2f, () => "H11 END DAY with HQ selected: " + Sign() + " | " + Bottom());
@@ -554,6 +569,7 @@ namespace SunkCost.Editor.Prototype
             yield return Press(Key.E);
             yield return Expect(() => Day.Day == 2 && !Day.DiveDone && Day.LastLeverPull.Serial == pulls + 1, 3f, () => $"H11 the day ended once by the lever: day {Day.Day}, pull {Day.LastLeverPull.Serial}");
             Check(Day.LastLeverPull.Action == LeverAction.EndDay, "H11 the pull is END DAY");
+            Say("SHIP-2: the car after END DAY: " + Day.Elevator.State + (Day.CabinAway ? " (cabin away)" : " (at the top)"));
             yield return ExpectSwing(pulls + 1, "H11");
             refusal = Day.LastRefusal.Serial;
             Say("second END DAY: " + H.ClientPullLeverExpecting("Ship", "EndDay", "None"));
@@ -563,8 +579,23 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Top().Contains($"DAY 2/{days}") && Bottom().EndsWith("SAIL HOME FIRST") && Sign().EndsWith("/off"), 2f, () => "H16 day 2, Site 01 selected at Site 03: sail home first: " + Top() + " | " + Bottom());
             Say("select the site the ship is at: " + H.ClientSelect("Site03"));
             yield return Expect(() => Day.SelectedSite == SiteId.Site03 && Bottom().EndsWith("YOU ARE HERE") && CardIs("SITE 03", true, false, true), 3f, () => "H16 the current site selected: YOU ARE HERE: " + Bottom());
+            Heading("SHIP-2 retest (the sail) — HQ selected with the car still away and nobody below: CONFIRM dim, 'Cabin below', the pull and the server sail refused; READY once the car is up");
+            if (!Day.CabinAway)
+            {
+                Day.ServerSetElevator(new ElevatorPhase { Serial = Day.Elevator.Serial + 1, State = SunkCost.Diving.ElevatorState.AtBottom, Upward = false, StartTick = FishNet.InstanceFinder.TimeManager.Tick, DurationTicks = 0 });
+                yield return null; yield return null;
+                Say("SHIP-2: the car was up after END DAY; sent to the bottom by hand: " + Day.Elevator.State);
+            }
             Say("select HQ: " + H.ClientSelect("HQ"));
-            yield return Expect(() => Day.SelectedSite == SiteId.HQ && Sign() == "CONFIRM/on" && Bottom().StartsWith("SELECTED DESTINATION · HQ · SAIL HOME") && Bottom().EndsWith("READY"), 3f, () => "H16 HQ selected at sea: SAIL HOME, CONFIRM: " + Bottom());
+            yield return Expect(() => Day.SelectedSite == SiteId.HQ && Sign() == "CONFIRM/off" && Bottom().StartsWith("SELECTED DESTINATION · HQ · SAIL HOME") && Bottom().EndsWith(ConsoleRules.CabinBelow.ToUpperInvariant()) && H.ConsoleStatus().Contains("shipAction=None/None/off:" + ConsoleRules.CabinBelow), 3f, () => "SHIP-2 HQ selected, the car away: CONFIRM dim, CABIN BELOW: " + Sign() + " | " + Bottom());
+            refusal = Day.LastRefusal.Serial; pulls = Day.LastLeverPull.Serial; trips = Day.Departure.Serial;
+            Say("pull with the car away: " + H.ClientPullLever("Ship"));
+            yield return ExpectRefusal(refusal, ConsoleRules.CabinBelow, "SHIP-2 the pull with the car away");
+            string carSail = H.ServerSail("HQ");
+            Check(carSail == "refused: " + ConsoleRules.CabinBelow, "SHIP-2 the server sail agrees with the lever: " + carSail);
+            Check(!Day.Travelling && Day.Departure.Serial == trips && Day.LastLeverPull.Serial == pulls, "SHIP-2 nothing sailed, no pull counted");
+            yield return CarUp("SHIP-2");
+            yield return Expect(() => Day.SelectedSite == SiteId.HQ && Sign() == "CONFIRM/on" && Bottom().StartsWith("SELECTED DESTINATION · HQ · SAIL HOME") && Bottom().EndsWith("READY"), refusalSeconds + 3f, () => "H16 HQ selected at sea: SAIL HOME, CONFIRM: " + Bottom());
             Check(Text().StartsWith($"Day 2 of {days} — Site 03"), "H16 compat text at sea on day 2: " + Text());
 
             Heading("H12 — a locked site selected after the dive: UNLOCK overrides END DAY; the pull buys it; then END DAY reads for the open site");
