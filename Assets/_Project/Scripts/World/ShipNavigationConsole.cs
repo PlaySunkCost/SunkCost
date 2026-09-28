@@ -33,7 +33,6 @@ namespace SunkCost.World
         private float nextRefresh;
         private ConsoleControl lastAim;
         private bool idleShown;
-        private string lastWord = string.Empty;   // the sign's last lit word, shown dim while the lever does nothing
 
         // The models, made once and rewritten in place.
         private readonly CardModel[] cards = new CardModel[Destinations.Cards.Length];
@@ -62,7 +61,6 @@ namespace SunkCost.World
         {
             for (int i = 0; i < cards.Length; i++) cards[i] ??= new CardModel { Id = Destinations.Cards[i] };
             top.Cards = cards;
-            if (string.IsNullOrEmpty(lastWord)) lastWord = HQSigns.Resolve().Get("lever.confirm");
 #if UNITY_EDITOR
             // The editor's scene and prefab read right after a reload: the surfaces lose
             // their textures with the domain, and only a Show paints them again. After
@@ -206,14 +204,26 @@ namespace SunkCost.World
             }
             bottom.Lines = lines.ToArray();
 
-            // The sign: the action's word, lit or dim; the last lit word stays, dim, while
-            // the lever does nothing.
+            // The sign: the action's word, lit or dim; while the lever does nothing, a dim
+            // word read from the replicated facts alone (DimWord), so every peer - a late
+            // joiner, a peer whose ship scene reloaded - shows the same sign (bugs/NET-2).
             bool leverAimed = aim != null && aim.Kind == ConsoleControlKind.Lever;
-            SignModel sign = ConsoleRules.Sign(action, enabled, price, leverAimed, lastWord);
-            if (action != LeverAction.None) lastWord = sign.Word;
+            SignModel sign = ConsoleRules.Sign(action, enabled, price, leverAimed, DimWord(f, signs));
 
             Top = top; Bottom = bottom; Sign = sign;
             if (Rig != null) Rig.Show(top, bottom, sign);
+        }
+
+        // The dim sign's word while the lever does nothing, from the replicated facts
+        // only (never from what this peer happened to show before: that history does not
+        // replicate, so a late joiner and a fresh run disagreed with the rest - NET-2).
+        // A None action never has a locked card selected (ShipLever reads UNLOCK first),
+        // so the word is the lever's next job: END DAY while today's dive at sea is under
+        // way or done and waiting for its divers, otherwise CONFIRM (the idle sign's word).
+        private static string DimWord(in ConsoleFacts f, HQSigns signs)
+        {
+            bool dayToEnd = f.World == WorldId.Sea && (f.DiveDone || f.Phase == DayPhase.DiveInProgress);
+            return signs.Get(dayToEnd ? "lever.endday" : "lever.confirm");
         }
 
         // HERE: the ship's place - HQ at the dock, the site it is at when at sea (the
