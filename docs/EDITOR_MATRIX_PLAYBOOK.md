@@ -46,6 +46,15 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   late joiner's first snapshot, the compat server sail) — about 9 minutes; peer commands `select`, `lever`,
   `lever_expect`, `look_control`; snapshot line `selected=…; unlocked=…; leverPulls=…; leverPlayed=…; leverAngle=…;
   leverSign=…; topScreen=…; bottomScreen=…`;
+  `console-net` = the shared console over the network, `ConsoleNetRuntimeChecks`, log `Temp/console-net-matrix.log`:
+  guest A windowed (`Temp/console-net-guest-a`), B / B2 / C / C2 / D headless; every row compares each guest's snapshot with
+  the host's state (selection, unlocks, HERE, balance, votes, both signs, both consoles' screens and compat lines, the
+  lever pull) and fails a peer that still differs a second after the change; 2 players (replication, same-frame
+  selections and unlocks, a dead guest spectating the host at the console, presses refused dead / off the ship /
+  hand-made, the vote at cast-off and presses during Preparing, a same-frame END DAY), 3 players (a joiner at sea and one
+  at HQ, three same-frame selections, CONFIRMs and PAYs, a guest killed while the ship pulls away, an UNLOCK in the frame
+  the plank starts, presses on the plank), 4 players (a fifth guest refused, a vote with a take-back and a leave, four
+  same-frame GIVE UPs) — about 8 minutes; findings that should not stop the run are `SOFT-FAIL` lines, failed at the end;
   `plank` = the plank at HQ, `PlankRuntimeChecks`, log `Temp/plank-matrix.log`: a lost payday, the board and
   the prompt, sailing and the shop refused, the host placed and pushed, the card, the fresh run; then a guest in
   `Temp/plank-guest` (the host jumps, the guest is next and pushed, both start over) — about 3 minutes;
