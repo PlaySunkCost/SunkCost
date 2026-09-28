@@ -318,11 +318,19 @@ namespace SunkCost.Editor.Prototype
             Check(Day.LastRefusal.Text == text, label + ": the refusal reads '" + Day.LastRefusal.Text + "' (expected '" + text + "')");
         }
         // The HQ rig swings for the pull on this peer: the played serial and a peak angle.
-        private static IEnumerator ExpectSwing(int serial, string label)
+        private static readonly List<string> sampled = new();
+        private static IEnumerator ExpectSwing(int serial, string label, Func<string> sample = null)
         {
-            float peak = 0f; float deadline = Time.unscaledTime + 1.2f;
+            float peak = 0f; float start = Time.unscaledTime, deadline = start + 1.2f;
             HQQuotaConsole c = Console();
-            while (Time.unscaledTime < deadline) { if (c != null) peak = Mathf.Max(peak, c.LeverAngle); yield return null; }
+            sampled.Clear();
+            string lastSample = null;
+            while (Time.unscaledTime < deadline)
+            {
+                if (c != null) peak = Mathf.Max(peak, c.LeverAngle);
+                if (sample != null) { string s = sample(); if (s != lastSample) { sampled.Add($"{Time.unscaledTime - start:0.00}s {s}"); lastSample = s; } }
+                yield return null;
+            }
             Check(c != null && c.LeverPlayedSerial == serial && peak > 0f, $"{label}: the HQ rig swung its lever for pull {serial} (played {(c == null ? -1 : c.LeverPlayedSerial)}, peak {peak:0.#}°)");
         }
         private static IEnumerator Shot(string name)
@@ -506,27 +514,19 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Sign() == "PAY/on" && TopM().FootLeft == $"QUOTA ${v3} / ${v3 + 50}" && TopM().FootLeftTone == ConsoleTone.Warn, 2f, () => "Q3 PAY lit, the quota amber: " + Sign() + " | " + Top());
             paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; balance = Day.Balance;
             Say("pull: " + H.ClientPullLever("HQ"));
-            yield return Expect(() => Day.LastPay.Serial == paySerial + 1, 3f, () => "Q3 the pay went through");
+            // The swing, and the top screen sampled every frame from the pull on (the foot must never count the sold box twice).
+            yield return ExpectSwing(pulls + 1, "Q3", () => (TopM().BigState ?? "") + " | " + TopM().FootLeft + "/" + TopM().FootLeftTone + " | box=" + Day.BoxValue + " handed=" + Day.CycleSales);
+            List<string> q3Seen = new(sampled);
+            Say("Q3 the top screen from the pull on: " + string.Join(" → ", q3Seen));
+            Check(Day.LastPay.Serial == paySerial + 1, "Q3 the pay went through");
             PayReport r3 = Day.LastPay;
             Check(r3.Short && !r3.Paid && !r3.Lost && r3.Sales == v3, $"Q3 SHORT: sold ${r3.Sales}, had ${r3.Had} of ${r3.Quota}");
             Check(Day.Balance == balance + v3 && Day.CycleSales == v3 && Day.Day == 2 && Day.Phase == DayPhase.AtHQ, $"Q3 banked (${Day.Balance}), the cycle keeps ${Day.CycleSales}, still day 2");
-            yield return Expect(() => Gone(coin3), 2f, () => "Q3 the coin was sold");
-            yield return Expect(() => Big() == "SHORT BY $50" && TopM().BigTone == ConsoleTone.Warn && Text().StartsWith("SHORT BY $50"), 2f, () => "Q3 the top screen: " + Top() + " | " + Text().Replace("\n", " | "));
-            {
-                // The foot's quota right after the sale, sampled: the box must not be counted on top of the handed-over sale.
-                var seen = new List<string>(); float until = Time.unscaledTime + 2f; float lastWrong = -1f, start = Time.unscaledTime;
-                while (Time.unscaledTime < until)
-                {
-                    string foot = TopM().FootLeft + "/" + TopM().FootLeftTone + " box=" + Day.BoxValue;
-                    if (seen.Count == 0 || seen[seen.Count - 1] != foot) seen.Add($"{Time.unscaledTime - start:0.00}s {foot}");
-                    if (TopM().FootLeft != $"QUOTA ${v3} / ${v3 + 50}") lastWrong = Time.unscaledTime - start;
-                    yield return null;
-                }
-                Say("Q3 the quota foot after the SHORT sale: " + string.Join(" → ", seen));
-                Check(TopM().FootLeft == $"QUOTA ${v3} / ${v3 + 50}" && TopM().FootLeftTone == ConsoleTone.Warn, "Q3 the foot settles on the handed-over sale, amber: " + TopM().FootLeft);
-                Say(lastWrong < 0f ? "Q3 the foot never counted the sold box twice" : $"OBSERVED (bug candidate) Q3 the foot counted the sold box twice until {lastWrong:0.00} s after the SHORT report");
-            }
-            yield return ExpectSwing(pulls + 1, "Q3");
+            Check(Gone(coin3), "Q3 the coin was sold");
+            Check(Big() == "SHORT BY $50" && TopM().BigTone == ConsoleTone.Warn && Text().StartsWith("SHORT BY $50"), "Q3 the top screen: " + Top() + " | " + Text().Replace("\n", " | "));
+            Check(TopM().FootLeft == $"QUOTA ${v3} / ${v3 + 50}" && TopM().FootLeftTone == ConsoleTone.Warn, "Q3 the foot settles on the handed-over sale, amber: " + TopM().FootLeft);
+            List<string> doubled = q3Seen.Where(s => s.Contains($"QUOTA ${2 * v3} /")).ToList();
+            Say(doubled.Count == 0 ? "Q3 the foot never counted the sold box twice" : "OBSERVED (bug candidate HQ-1) Q3 the foot counted the sold box twice: " + string.Join(" → ", doubled));
             Check(Day.ServerCanSail(WorldId.Sea, out string sailWhy), "Q3 sailing out is allowed again (" + sailWhy + ")");
             yield return Shot("console-hq-Q3-short");
             refusal = Day.LastRefusal.Serial; paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; balance = Day.Balance;
