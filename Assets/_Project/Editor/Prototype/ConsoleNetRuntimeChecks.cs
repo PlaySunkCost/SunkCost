@@ -30,9 +30,12 @@ namespace SunkCost.Editor.Prototype
     //   the host at the console (its screens are the host's) who can press nothing; A
     //   off the ship and hand-made requests refused; the vote sent as the ship casts
     //   off and a stale pull and a selection sent during the trip's Preparing stage;
-    //   the screens during the trip and after it; a same-frame END DAY.
+    //   the screens during the trip and after it; a guest launched as the ship casts
+    //   off (refused while travelling or admitted after arrival, never spawned
+    //   mid-trip; N8b); a same-frame END DAY.
     //   3 players (+ headless B): B joins at sea after selections, unlocks and pulls
-    //   (the state at once, no swing replayed); three same-frame selections; three
+    //   (the state at once, no swing replayed); three same-frame selections; A's
+    //   CONFIRM pulled in the frame the host changes the selection (N11b); three
     //   same-frame CONFIRMs (one trip) with B's process killed while the ship pulls
     //   away; a late joiner at HQ after a selection, an unlock and a vote; three
     //   same-frame PAYs (one sale); an UNLOCK in the frame a lost payday starts the
@@ -734,6 +737,10 @@ namespace SunkCost.Editor.Prototype
             string stageAtRace = Day.Departure.Stage.ToString();
             int staleCmd = Command(A, ExpectJson("Ship", LeverAction.Confirm, SiteId.Site01));
             Say($"N8 while the trip reads {stageAtRace}: A's stale CONFIRM written; host: {H.ClientPullLeverExpecting("Ship", "Confirm", "Site01")}; host: {H.ClientSelect("HQ")}");
+            // N8b (round 4): a guest launched as the ship casts off (the join / scene-load race); judged after arrival.
+            Guest T = Launch("T", "Temp/console-net-guest-t", headless: true);
+            float tLaunched = Time.unscaledTime;
+            int admissionRefusals = Count("refused: ShipTravelling"), departureDrops = Count("authenticated during a departure");
             yield return AwaitReply(A, voteCmd);
             yield return AwaitReply(A, staleCmd);
             int selCmd2 = Command(A, SelectJson("Site02"));
@@ -749,11 +756,55 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => ShipBottom().Contains("SAILING TO SITE 01") && ShipSign().EndsWith("/off") && HereCount(ShipTop()) == 0, 3f, () => "N8 the host's screens during the trip: " + ShipBottom() + " | " + ShipTop());
             yield return GuestEventually(A, r => G(r, "bottomScreen").Contains("SAILING TO SITE 01") && G(r, "leverSign").EndsWith("/off") && G(r, "selected") == "None" && !G(r, "topScreen").Contains("@"), 5f, "N8 A's screens during the trip: SAILING TO SITE 01, the sign dim, HERE on no card");
             Say($"N8 trip stage {Day.Departure.Stage} {Time.unscaledTime - castOff:0.0} s after casting off");
+            int mostDuringTrip = SpawnedPlayers();
+            while ((Day.Travelling || Flow.Transitioning || Day.World != WorldId.Sea) && Time.unscaledTime < castOff + 120f)
+            {
+                mostDuringTrip = Math.Max(mostDuringTrip, SpawnedPlayers());
+                yield return null;
+            }
+            float tripEnded = Time.unscaledTime;
+            Check(mostDuringTrip == 2, $"N8b nobody spawned during the trip (most {mostDuringTrip} players; T launched {tLaunched - castOff:0.0} s after casting off, the trip ended {tripEnded - castOff:0.0} s after it)");
             yield return Arrive(WorldId.Sea, "N8");
             yield return GuestEventually(A, r => Header(r).Contains("world=Sea;") && Header(r).Contains("phase=AtSea;"), 20f, "N8 A arrived at sea");
             t = Time.unscaledTime;
             yield return Expect(() => ShipTop().StartsWith($"NAVIGATION · DAY 1/{days}") && Here(ShipTop(), "SITE 01") && HereCount(ShipTop()) == 1 && !ShipBottom().Contains("SAILING") && Day.SelectedSite == SiteId.None, 3f, () => "N8 the host's console at sea is fresh: " + ShipTop() + " | " + ShipBottom());
             yield return Converge("N8 arrived at sea", t);
+
+            Heading("N8b — guest T, launched as the ship cast off: refused while the ship travels ('Ship travelling; try again on arrival'), or admitted after arrival reading the fresh console; never spawned mid-trip; the refusal holds no seat");
+            string tHeader = string.Empty, tMessage = string.Empty;
+            bool tJoined = false;
+            float tDeadline = Time.unscaledTime + 45f;
+            while (Time.unscaledTime < tDeadline)
+            {
+                if (UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).Any(p => p.IsSpawned && p.OwnerId != host.OwnerId && p.OwnerId != A.Id)) { tJoined = true; break; }
+                int tc = Command(T, "{\"id\":{id},\"action\":\"snapshot\"}");
+                float until = Time.unscaledTime + 3f;
+                while (Time.unscaledTime < until && !Reply(T).StartsWith("id=" + tc + ";")) yield return null;
+                string r = Reply(T);
+                if (r.StartsWith("id=" + tc + ";"))
+                {
+                    tHeader = Header(r);
+                    tMessage = Rx(tHeader, @"; message=([^;]*);");
+                    if (tHeader.Contains("client=False") && Regex.IsMatch(tMessage, "travelling|Disconnected|Could not|full|progress|Wrong", RegexOptions.IgnoreCase)) break;
+                }
+                yield return Wait(1f);
+            }
+            int tRefusedByAdmission = Count("refused: ShipTravelling") - admissionRefusals, tDropped = Count("authenticated during a departure") - departureDrops;
+            Say($"N8b T: joined={tJoined}; message '{tMessage}'; host admission refusals (ShipTravelling) +{tRefusedByAdmission}, departure drops +{tDropped}; header: {tHeader.Substring(0, Math.Min(200, tHeader.Length))}");
+            if (tJoined)
+            {
+                // The handshake landed after the arrival: an ordinary late joiner at sea.
+                yield return Joined(T, "N8b T (admitted after the arrival)", "Sea", "AtSea");
+                Check(G(lastReply, "leverPlayed") == "0" && G(lastReply, "selected") == Day.SelectedSite.ToString(), "N8b T's first console line has the state, no swing: " + ConsoleL(lastReply));
+                yield return Converge("N8b T admitted at sea");
+                yield return Leave(T, "N8b");
+            }
+            else
+            {
+                Check(tHeader.Contains("client=False") && (tMessage == "Ship travelling; try again on arrival" && tRefusedByAdmission >= 1 || tMessage.StartsWith("Disconnected") && tDropped >= 1), $"N8b T refused during the trip: '{tMessage}' (admission +{tRefusedByAdmission}, departure drop +{tDropped})");
+                try { if (!T.Process.HasExited) T.Process.Kill(); } catch (Exception) { }
+            }
+            Check(SpawnedPlayers() == 2 && crew.Count == 1 && Day.Phase == DayPhase.AtSea && Day.Departure.Serial == trips + 1, "N8b the crew is the host and A, at sea after one trip: " + SpawnedPlayers() + " players");
 
             Heading("N9 — END DAY pulled by A and the host in one frame: the day ends once, one pull, one refusal");
             ShipParts seaShip = ShipParts.InWorld(WorldId.Sea);
@@ -804,6 +855,32 @@ namespace SunkCost.Editor.Prototype
             selectsNow = Count(" selects ") - selectsBefore;
             Check(selectsNow >= 1 && selectsNow <= 3, $"N11 each press processed at most once ({selectsNow} logged)");
             yield return Converge("N11 one selection everywhere (" + Day.SelectedSite + ")", Time.unscaledTime);
+
+            Heading("N11b — the selection changes under a guest's pull (round 4): A pulls the CONFIRM it sees for HQ in the frame the host picks SITE 04 (locked, not affordable): the server resolves the lever from its own selection; A's pull is refused, no trip, no charge, no pull; SITE 04 and the refusal on every peer");
+            Say(H.ClientSelect("HQ"));
+            yield return Expect(() => Day.SelectedSite == SiteId.HQ && ShipSign() == "CONFIRM/on", 4f, () => "N11b CONFIRM lit on the host: " + ShipSign() + " | " + ShipBottom());
+            yield return GuestEventually(A, r => G(r, "leverSign") == "CONFIRM/on", 4f, "N11b CONFIRM lit on A");
+            yield return GuestEventually(B, r => G(r, "leverSign") == "CONFIRM/on", 4f, "N11b CONFIRM lit on B");
+            trips = Day.Departure.Serial; pulls = Day.LastLeverPull.Serial; refusal = Day.LastRefusal.Serial; balance = Day.Balance;
+            int maskBefore = Day.UnlockedSites, changedLines = Count("expecting Confirm/HQ, now Unlock/Site04");
+            Check(balance < p4 && !Day.IsOpen(SiteId.Site04), $"N11b SITE 04 is locked and not affordable (balance ${balance} < ${p4})");
+            cmd = Command(A, LeverJson("Ship"));
+            Say("N11b same editor frame: " + H.ClientSelect("Site04"));
+            yield return AwaitReply(A, cmd);
+            string aSent = lastReply.Split('\n')[0];
+            yield return Wait(0.8f);
+            if (Day.Departure.Serial > trips)
+            {
+                Check(Day.SiteDestination == SiteId.HQ && Day.LastLeverPull.Serial == pulls + 1 && Day.Balance == balance && Day.UnlockedSites == maskBefore, "N11b A's pull landed before the host's selection: one trip to HQ, nothing charged");
+                throw new Exception("N11b: A's pull landed before the host's selection (a legal order, but the rows below need the ship at sea): rerun\n" + State());
+            }
+            yield return ExpectRefused(refusal, 1, s => s == ConsoleRules.SelectionChanged || s == ConsoleRules.ShortBy(p4), "N11b A's pull under the changed selection");
+            Check(Day.SelectedSite == SiteId.Site04 && Day.Departure.Serial == trips && Day.LastLeverPull.Serial == pulls && Day.Balance == balance && Day.UnlockedSites == maskBefore && Day.Phase == DayPhase.AtSea, "N11b no trip, no charge, no pull, SITE 04 selected: " + H.ConsoleStatus());
+            Say($"N11b A sent: {aSent}; refused '{Day.LastRefusal.Text}'; server lines 'expecting Confirm/HQ, now Unlock/Site04' +{Count("expecting Confirm/HQ, now Unlock/Site04") - changedLines}");
+            t = Time.unscaledTime;
+            yield return Expect(() => ShipBottom().Contains("NOTICE") && ShipSign() == $"UNLOCK ${p4}/off", 2f, () => "N11b the host's screen shows the refusal and the dim UNLOCK: " + ShipBottom() + " | " + ShipSign());
+            yield return Converge("N11b the changed selection and A's refusal", t);
+            yield return Wait(refusalSeconds);
 
             Heading("N12 — three CONFIRM pulls in one frame (HQ selected at sea): one trip home, two refusals; B's process killed while the ship pulls away: the trip goes on, B is dropped, the survivors agree");
             Say(H.ClientSelect("HQ"));
