@@ -437,7 +437,11 @@ namespace SunkCost.Editor.Prototype
             Num("drain", s.Drain, a.Drain, b.Drain, TolDrain, ref unused);
             Same("flow", s.Flow, a.Flow, b.Flow);
             Same("pour", s.Pour, a.Pour, b.Pour);
-            Same("visibleStreams", s.Visible, a.Visible, b.Visible);
+            // The jets drawn through the air are the outlets whose tip is still above the level,
+            // a step function of the (monotone) level; two tips stand 1.6 mm apart (2.9772 and
+            // 2.9788), so the host can go 4 -> 2 in one frame while a peer between those frames
+            // shows 3. The count must lie between the two host frames' (round 2 fix to the test).
+            if (s.Visible < Mathf.Min(a.Visible, b.Visible) || s.Visible > Mathf.Max(a.Visible, b.Visible)) st.Fail($"visibleStreams {s.Visible} vs host {a.Visible}/{b.Visible} at {at}");
             Same("bubbles", s.Bubbles, a.Bubbles, b.Bubbles);
             Same("surfaceShown", s.Shown, a.Shown, b.Shown);
             Same("tubeRing", s.Ring, a.Ring, b.Ring);
@@ -1083,6 +1087,17 @@ namespace SunkCost.Editor.Prototype
                 int noGpu = badBlocks.Length - hits.Length;
                 Say($"{g.Label} player.log: {lines.Length} lines, {hits.Length} bad blocks, {noGpu} headless no-GPU render blocks (DiveSiteWarmup, ShipTV)" + (hits.Length > 0 ? ": " + string.Join(" / ", hits.Take(4).Select(b => b.Split('\n')[0])) : string.Empty));
                 Soft(hits.Length == 0, $"E9 {g.Label}'s log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)");
+                // Retest of NET-HEADLESS-WARMUP (round 2): DiveSiteWarmup.RenderOnce now returns on a
+                // process with no graphics device, so its blocks must be gone; ShipTV's render is
+                // not guarded (nobody-touches file), so its blocks are only counted.
+                int warmupBlocks = badBlocks.Count(b => NoGpuRender(b) && b.Contains("DiveSiteWarmup:RenderOnce"));
+                int tvBlocks = badBlocks.Count(b => NoGpuRender(b) && b.Contains("ShipTV:LateUpdate"));
+                int warmupLines = lines.Count(l => l.Contains("DiveSiteWarmup:RenderOnce"));
+                if (g.Headless)
+                {
+                    Say($"{g.Label} NET-HEADLESS-WARMUP retest: {warmupBlocks} DiveSiteWarmup no-GPU blocks ({warmupLines} lines naming DiveSiteWarmup:RenderOnce), {tvBlocks} ShipTV no-GPU blocks (not guarded)");
+                    Soft(warmupLines == 0, $"E9 NET-HEADLESS-WARMUP {g.Label}: no DiveSiteWarmup render error on a headless guest ({warmupLines} lines)");
+                }
             }
             Check(softFails.Count == 0, $"no soft failure ({softFails.Count}: {string.Join(" | ", softFails)})");
         }
