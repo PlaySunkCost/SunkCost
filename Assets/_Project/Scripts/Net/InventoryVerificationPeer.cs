@@ -48,6 +48,7 @@ namespace SunkCost.Net
             if (string.IsNullOrEmpty(directory)) return;
             Turn();
             Jitter();
+            WalkStep(); // the elevator-deck tester's walk (below)
             var nm = InstanceFinder.NetworkManager;
             // Answers as soon as the Local transport is bound, connected or not: a
             // joiner refused at admission reports the refusal through its snapshot.
@@ -253,6 +254,8 @@ namespace SunkCost.Net
                     if (stance == null) return "No PlayerStance";
                     stance.SetDesiredCrouch(command.slot != 0);
                     break;
+                case "walk": StartWalk(command.aim, command.position.x, player); return "walking " + command.position.x.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s"; // elevator-deck tester
+                case "elev_reset": ResetElevatorDeck(); break; // elevator-deck tester
                 case "snapshot": break;
                 // The guest's own screen, HUD and visor included, to a file (the item field is the path).
                 case "capture": ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
@@ -369,6 +372,7 @@ namespace SunkCost.Net
 
         private void LateUpdate()
         {
+            RecordElevatorDeck(); // the elevator-deck tester's per-frame recorder (above)
             var car = SunkCost.World.WorldSceneFlow.FindCarCached();
             var localPlayer = SunkCost.World.WorldSceneFlow.LocalPlayer();
             if (car != null && localPlayer != null && localPlayer.gameObject.scene == car.gameObject.scene && (car.State == SunkCost.Diving.ElevatorState.AtTop || car.State == SunkCost.Diving.ElevatorState.Descending))
@@ -390,6 +394,135 @@ namespace SunkCost.Net
                 }
                 cargoLastLocal[item.ObjectId] = local;
             }
+        }
+
+        // ---- the deck cabin of Dan's round elevator (elevator-deck tester, 28 September 2026) ----
+        // What this peer PRESENTS of the deck cabin on the ship at sea, against what the
+        // replicated ride state says (CrewDayState.CabinRide / Elevator), every frame:
+        // the shutters' sweep, the shutter and doorway boxes, and whether the car shows.
+        // Also run by the editor host (ElevatorDeckRuntimeChecks) from EditorApplication.update.
+        private static int deckFrames, deckBadBox, deckBadDoorway, deckBadShown, deckShutFrames, deckShownRun;
+        private static float deckWorstShutter, deckHalfAngle = float.NaN;
+        private static string deckFirstBad = string.Empty;
+
+        public static void ResetElevatorDeck()
+        {
+            deckFrames = deckBadBox = deckBadDoorway = deckBadShown = deckShutFrames = deckShownRun = 0;
+            deckWorstShutter = 0f; deckFirstBad = string.Empty;
+        }
+
+        // DeckCabinCarPresent (WorldSceneFlow.Cabin), recomputed here from the replicated state.
+        public static bool ExpectedDeckCarPresent()
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            if (day == null) return true;
+            SunkCost.World.CabinRideState ride = day.CabinRide;
+            if (ride.Active) return ride.Direction == SunkCost.World.RideDirection.Down ? ride.Stage <= SunkCost.World.CabinRideStage.Sealing : ride.Stage >= SunkCost.World.CabinRideStage.Loading;
+            SunkCost.World.ElevatorPhase car = day.Elevator;
+            return car.State == SunkCost.Diving.ElevatorState.AtTop || (car.State == SunkCost.Diving.ElevatorState.Sealing && !car.Upward);
+        }
+
+        private static bool AnyRendererOn(Transform part)
+        {
+            if (part == null) return false;
+            foreach (Renderer r in part.GetComponentsInChildren<Renderer>(true)) if (r.enabled) return true;
+            return false;
+        }
+
+        public static void RecordElevatorDeck()
+        {
+            var flow = SunkCost.World.WorldSceneFlow.Instance;
+            var ship = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
+            if (flow == null || ship == null || SunkCost.World.CrewDayState.Instance == null) return;
+            Transform doorR = ship.DeckCabinDoorR, shutterR = ship.DeckCabinHousingDoorR;
+            if (doorR == null || shutterR == null) return;
+            bool present = ExpectedDeckCarPresent();
+            float open = flow.DeckCabinOpenFraction();
+            if (float.IsNaN(deckHalfAngle) && present && open >= 0.999f) deckHalfAngle = Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y));
+            if (float.IsNaN(deckHalfAngle) || deckHalfAngle < 1f) return;
+            deckFrames++;
+            float shownShutter = Mathf.Abs(Mathf.DeltaAngle(0f, shutterR.localEulerAngles.y)) / deckHalfAngle;
+            float wantShutter = present ? open : 0f;
+            float err = Mathf.Abs(shownShutter - wantShutter);
+            if (err > deckWorstShutter) deckWorstShutter = err;
+            bool shutShown = shownShutter <= 0.001f;
+            if (shutShown) deckShutFrames++;
+            Collider box = ship.DeckCabinShutterCollider, doorway = ship.DeckCabinDoorCollider;
+            string bad = null;
+            // (a sweep within 0.0005 of the threshold may read either way through the Euler angles)
+            bool shutClear = shownShutter < 0.0005f || shownShutter > 0.002f;
+            if (box != null && shutClear && box.enabled != shutShown) { deckBadBox++; bad = $"shutterBox={box.enabled} shutters={shownShutter:0.000}"; }
+            float shownDoor = Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)) / deckHalfAngle;
+            if (doorway != null && (shownDoor < 0.0005f || shownDoor > 0.002f) && doorway.enabled != (shownDoor <= 0.001f)) { deckBadDoorway++; bad = $"doorBox={doorway.enabled} doors={shownDoor:0.000}"; }
+            // A replicated change may land between the flow's Update and this read: a mismatch counts once it lasts 3 frames.
+            if (AnyRendererOn(ship.DeckCabinCarGlass) != present) { if (++deckShownRun >= 3) { deckBadShown++; bad = $"carShown={!present} present={present}"; } }
+            else deckShownRun = 0;
+            if (bad != null && deckFirstBad.Length == 0)
+            {
+                var day = SunkCost.World.CrewDayState.Instance;
+                deckFirstBad = $"frame {deckFrames}: {bad} ride={day.CabinRide.Stage}/{day.CabinRide.Direction} car={day.Elevator.State}/{day.Elevator.Upward} open={open:0.000}";
+            }
+        }
+
+        // "elevatorDeck: ..." — this peer's deck cabin, its recorder and its last walk.
+        public static string ElevatorDeckLine()
+        {
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var flow = SunkCost.World.WorldSceneFlow.Instance;
+            var ship = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
+            if (ship == null || flow == null) return "elevatorDeck: none\n";
+            float half = float.IsNaN(deckHalfAngle) ? 23.578f : deckHalfAngle;
+            Transform shutterR = ship.DeckCabinHousingDoorR, doorR = ship.DeckCabinDoorR;
+            var display = ship.DeckCabinCarGlass != null ? ship.DeckCabinCarGlass.GetComponentInChildren<SunkCost.Diving.CabinPanelDisplay>(true) : null;
+            string Flat(string s) => (s ?? string.Empty).Replace("\n", " | ").Replace(";", ",");
+            return string.Format(ci,
+                "elevatorDeck: deckPresent={0}; deckCarShown={1}; deckDoors={2:0.000}; doorsShown={3:0.000}; shutters={4:0.000}; shutterBox={5}; doorBox={6}; deckPanel='{7}'; deckScreen='{8}'; deckGauge={9:0.000}; " +
+                "deckFrames={10}; deckWorstShutter={11:0.000}; deckBadBox={12}; deckBadDoorway={13}; deckBadShown={14}; deckShutFrames={15}; deckFirstBad='{16}'; " +
+                "walkDone={17}; walked={18:0.00}; walkFrames={19}; walkGrounded={20}; walkMaxDrop={21:0.000}; walkMaxRise={22:0.000}; walkEnd={23}\n",
+                ExpectedDeckCarPresent(), AnyRendererOn(ship.DeckCabinCarGlass), flow.DeckCabinOpenFraction(),
+                doorR == null ? -1f : Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)) / half,
+                shutterR == null ? -1f : Mathf.Abs(Mathf.DeltaAngle(0f, shutterR.localEulerAngles.y)) / half,
+                ship.DeckCabinShutterCollider != null && ship.DeckCabinShutterCollider.enabled, ship.DeckCabinDoorCollider != null && ship.DeckCabinDoorCollider.enabled,
+                Flat(ship.DeckCabinPanel != null ? ship.DeckCabinPanel.text : "none"), Flat(display != null ? display.ScreenText : "none"), display != null ? display.GaugeFraction : -1f,
+                deckFrames, deckWorstShutter, deckBadBox, deckBadDoorway, deckBadShown, deckShutFrames, Flat(deckFirstBad),
+                walkUntil < 0f && walkFrames > 0, walkDistance, walkFrames, walkGroundedFrames, walkMaxDrop, walkMaxRise, walkEnd.ToString("F3"));
+        }
+
+        // "walk": the owned capsule walks through CharacterController.Move (the collision the
+        // player's own input would meet) along aim's flat direction at |aim| m/s for
+        // position.x seconds, with a small push down so the ground is felt every frame.
+        // The guest's menu gate blocks its real input, so the walk moves the controller itself.
+        private static float walkUntil = -1f, walkDistance, walkMaxDrop, walkMaxRise, walkLastY;
+        private static int walkFrames, walkGroundedFrames;
+        private static Vector3 walkVelocity, walkStart, walkEnd;
+
+        private static void StartWalk(Vector3 aim, float seconds, HQPlayerController player)
+        {
+            Vector3 flat = new(aim.x, 0f, aim.z);
+            walkVelocity = flat;
+            walkUntil = Time.unscaledTime + Mathf.Max(0.1f, seconds);
+            walkFrames = walkGroundedFrames = 0; walkDistance = walkMaxDrop = walkMaxRise = 0f;
+            walkStart = walkEnd = player.transform.position; walkLastY = walkStart.y;
+            if (flat.sqrMagnitude > 0.0001f) player.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
+        }
+
+        private static void WalkStep()
+        {
+            if (walkUntil < 0f) return;
+            var player = FindObjectsByType<HQPlayerController>(FindObjectsSortMode.None).FirstOrDefault(p => p.IsOwner);
+            if (player == null || player.Controller == null || !player.Controller.enabled) { walkUntil = -1f; return; }
+            if (Time.unscaledTime >= walkUntil) { walkUntil = -1f; walkEnd = player.transform.position; return; }
+            float dt = Mathf.Min(Time.deltaTime, 0.05f);
+            CollisionFlags flags = player.Controller.Move((walkVelocity + Vector3.down * 2f) * dt);
+            Vector3 p = player.transform.position;
+            walkFrames++;
+            if ((flags & CollisionFlags.Below) != 0) walkGroundedFrames++;
+            float dy = p.y - walkLastY;
+            if (-dy > walkMaxDrop) walkMaxDrop = -dy;
+            if (dy > walkMaxRise) walkMaxRise = dy;
+            walkLastY = p.y;
+            walkDistance = new Vector3(p.x - walkStart.x, 0f, p.z - walkStart.z).magnitude;
+            walkEnd = p;
         }
 
         private static string CabinWaterLevel()
@@ -498,6 +631,7 @@ namespace SunkCost.Net
             string quotaText = hqConsole != null && !string.IsNullOrEmpty(hqConsole.Text) ? hqConsole.Text : quotaBoard == null ? "none" : quotaBoard.Text; // the console's status first (27 September 2026), the old board until it goes
             text += $"giveup={(day == null ? -1 : day.GiveUpVotes)}/{(day == null ? -1 : day.GiveUpCrew)}; quotaBoard={quotaText.Replace("\n", " | ")};\n";
             text += ConsoleLine();
+            text += ElevatorDeckLine();
             foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
             {
                 var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();
