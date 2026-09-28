@@ -80,7 +80,7 @@ namespace SunkCost.Editor.Prototype
         private sealed class Stats
         {
             public string Label;
-            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge;
+            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall;
             public float WorstY, WorstWater, WorstDoor, WorstGate, WorstGauge, WorstDeckDoors, WorstYaw, WorstEye, WorstTvEye, MaxLag;
             public readonly List<double> Skews = new();
             public readonly List<string> Fails = new();
@@ -371,9 +371,10 @@ namespace SunkCost.Editor.Prototype
         }
 
         // The host's network tick at a moment of the machine's clock.
-        private static bool HostTickAtWall(long wall, out double tick)
+        private static bool HostTickAtWall(long wall, out double tick) => HostTickAtWall(wall, out tick, out _);
+        private static bool HostTickAtWall(long wall, out double tick, out double gapSeconds)
         {
-            tick = double.NaN;
+            tick = double.NaN; gapSeconds = double.NaN;
             IReadOnlyList<S> rec = ElevatorNetProbe.Recorded;
             S a = default, b = default; bool haveA = false, haveB = false;
             for (int i = 0; i < rec.Count; i++)
@@ -383,6 +384,7 @@ namespace SunkCost.Editor.Prototype
                 else if (!haveB) { b = h; haveB = true; }
             }
             if (!haveA || !haveB || b.Wall == a.Wall) return false;
+            gapSeconds = (b.Wall - a.Wall) / (double)TimeSpan.TicksPerSecond;
             tick = a.Tick + (b.Tick - a.Tick) * (wall - a.Wall) / (double)(b.Wall - a.Wall);
             return true;
         }
@@ -548,7 +550,16 @@ namespace SunkCost.Editor.Prototype
             }
             if (s.Ship) CompareDeck(s, st);
             CompareEyes(g, s, st, hostId);
-            if (s.Tick > 0 && HostTickAtWall(s.Wall, out double hostTick))
+            double hostTick = double.NaN, hostGap = 0;
+            bool haveHostTick = s.Tick > 0 && HostTickAtWall(s.Wall, out hostTick, out hostGap);
+            if (haveHostTick && hostGap > 0.1)
+            {
+                // The host's two frames around the guest's moment are more than 0.1 s apart (an
+                // editor stall): the host's tick is not linear across a stall (it catches up in
+                // bursts), so the skew is not measurable there (round 1 fix to the test).
+                st.SkewHostStall++;
+            }
+            else if (haveHostTick)
             {
                 double skewNow = s.Tick - hostTick;
                 if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (reply {st.Replies})";
@@ -631,7 +642,7 @@ namespace SunkCost.Editor.Prototype
                 foreach (string m in required) Check(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 foreach (string m in wanted) Soft(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 Soft(st.MaxLag <= LagLimit, $"{label}: {g.Label} showed a phase the host had left for at most {LagLimit} s (worst {st.MaxLag:0.00} s over {st.Stale} replies)");
-                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt})");
+                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s)");
                 Soft(st.Unmatched <= Math.Max(2, st.Replies / 10), $"{label}: {g.Label}'s car replies found the host's frames at their tick ({st.Unmatched} of {st.Replies} did not)");
                 Soft(st.ScreenSoft == 0, $"{label}: {g.Label}'s deck screen read the host's words ({st.ScreenSoft} replies differed; a refusal shows by each peer's own clock)");
                 JudgeRecorder(label + ": " + g.Label, st.LastReply);
@@ -1050,9 +1061,19 @@ namespace SunkCost.Editor.Prototype
                 string path = Path.Combine(g.Dir, "player.log");
                 string[] lines;
                 try { lines = File.Exists(path) ? File.ReadAllLines(path) : Array.Empty<string>(); } catch (IOException) { lines = Array.Empty<string>(); }
-                string[] hits = lines.Where(l => bad.IsMatch(l)).ToArray();
-                Say($"{g.Label} player.log: {lines.Length} lines, {hits.Length} hits" + (hits.Length > 0 ? ": " + string.Join(" / ", hits.Take(6)) : string.Empty));
-                Soft(hits.Length == 0, $"E9 {g.Label}'s log has no exception, MissingReference or 'expected to exist'");
+                // A -nographics guest has no GPU: DiveSiteWarmup's Camera.Render (on main since
+                // c9604d0) fails inside URP there ("RenderTexture.Create failed", a
+                // NullReferenceException in a render pass). Those blocks are counted and named,
+                // not failed; every other hit fails (round 1 fix to the test).
+                var blocks = new List<string>(); var cur = new List<string>();
+                foreach (string l in lines) { if (l.Trim().Length == 0) { if (cur.Count > 0) blocks.Add(string.Join("\n", cur)); cur.Clear(); } else cur.Add(l); }
+                if (cur.Count > 0) blocks.Add(string.Join("\n", cur));
+                string[] badBlocks = blocks.Where(b => bad.IsMatch(b)).ToArray();
+                bool NoGpuRender(string b) => g.Headless && b.Contains("DiveSiteWarmup:RenderOnce") && (b.Contains("RenderGraph") || b.Contains("RenderTexture") || b.Contains("Rendering.Universal"));
+                string[] hits = badBlocks.Where(b => !NoGpuRender(b)).ToArray();
+                int noGpu = badBlocks.Length - hits.Length;
+                Say($"{g.Label} player.log: {lines.Length} lines, {hits.Length} bad blocks, {noGpu} headless no-GPU warm-up render blocks" + (hits.Length > 0 ? ": " + string.Join(" / ", hits.Take(4).Select(b => b.Split('\n')[0])) : string.Empty));
+                Soft(hits.Length == 0, $"E9 {g.Label}'s log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU warm-up render)");
             }
             Check(softFails.Count == 0, $"no soft failure ({softFails.Count}: {string.Join(" | ", softFails)})");
         }
