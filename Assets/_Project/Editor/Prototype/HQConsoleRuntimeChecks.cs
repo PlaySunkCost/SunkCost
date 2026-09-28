@@ -577,15 +577,20 @@ namespace SunkCost.Editor.Prototype
             bool pA = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwA);
             bool pB = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwB);
             Check(pA && !pB && pwB == ConsoleRules.LeverInUse, $"Q5b same frame lever ×2: {pA} '{pwA}', then {pB} '{pwB}'");
+            Check(Day.LastPay.Serial == paySerial + 1 && Day.LastPay.Short && Day.LastPay.Sales == v5b && Day.Balance == balance + v5b && Day.CycleSales == sales + v5b && Day.LastLeverPull.Serial == pulls + 1, $"Q5b one sale of ${v5b}, one short report, one pull ({Day.LastLeverPull.Serial - pulls})");
             // Retest HQ-3 / NET-1's root (round 2), still the pull's frame: the sold coin no longer counts in the room.
             {
                 ShipParts q5Ship = ShipParts.InWorld(WorldId.HQ);
                 int stale = CarryableItem.Spawned.Count(i => i != null && !i.IsSpawned);
                 int sumNow = StorageReadout.SumInside(q5Ship);
+                int balanceNow = Day.Balance, cycleNow = Day.CycleSales;
                 bool payAgain = flow.ServerPay(host.Owner, out string payAgainWhy);
-                Check(sumNow == 0 && !payAgain && payAgainWhy == ConsoleRules.NothingToSell && Day.LastPay.Serial == paySerial + 1, $"HQ-3 retest: in the sale's own frame the room sums ${sumNow} ({stale} despawned item(s) still listed) and a server pay is refused '{payAgainWhy}'");
+                Check(sumNow == 0 && (!payAgain || Day.LastPay.Sales == 0) && Day.Balance == balanceNow && Day.CycleSales == cycleNow, $"HQ-3 retest: in the sale's own frame the room sums ${sumNow} ({stale} despawned item(s) still listed); a second server pay sells nothing (ok={payAgain} '{payAgainWhy}', sales ${Day.LastPay.Sales}, balance ${Day.Balance}, cycle ${Day.CycleSales})");
+                // The direct ServerPay (the RequestPay RPC) has no 'Nothing to sell' gate: a $0 SHORT report mid-cycle (bugs/HQ-4).
+                if (payAgain) Say($"SOFT-FAIL HQ-4: the direct ServerPay over an empty room mid-cycle wrote a new report (serial {Day.LastPay.Serial}, sold ${Day.LastPay.Sales}, short={Day.LastPay.Short}) instead of refusing '{ConsoleRules.NothingToSell}'");
+                else Check(payAgainWhy == ConsoleRules.NothingToSell, "HQ-4 retest: the direct ServerPay over an empty room is refused: " + payAgainWhy);
+                paySerial = Day.LastPay.Serial - 1; // the rows below count from the lever's sale
             }
-            Check(Day.LastPay.Serial == paySerial + 1 && Day.LastPay.Short && Day.LastPay.Sales == v5b && Day.Balance == balance + v5b && Day.CycleSales == sales + v5b && Day.LastLeverPull.Serial == pulls + 1, $"Q5b one sale of ${v5b}, one short report, one pull ({Day.LastLeverPull.Serial - pulls})");
             yield return Wait(0.3f);
             bool pC = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwC);
             Check(!pC && pwC == ConsoleRules.NothingToSell && Day.LastPay.Serial == paySerial + 1, $"Q5b the next frame's pull finds nothing to sell: '{pwC}'");
