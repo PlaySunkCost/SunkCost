@@ -41,6 +41,7 @@ namespace SunkCost.Net
             var go = new GameObject("Inventory Verification Peer");
             DontDestroyOnLoad(go);
             go.AddComponent<InventoryVerificationPeer>().directory = Path.GetFullPath(args[index + 1]);
+            go.AddComponent<ElevatorNetProbe>(); // the elevator-net matrix's per-frame view of the elevator (elevnet: lines)
         }
 
         private void Update()
@@ -255,7 +256,7 @@ namespace SunkCost.Net
                     stance.SetDesiredCrouch(command.slot != 0);
                     break;
                 case "walk": StartWalk(command.aim, command.position.x, player); return "walking " + command.position.x.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s"; // elevator-deck tester
-                case "elev_reset": ResetElevatorDeck(); ElevatorReset(); break; // elevator-deck and elevator-dive testers
+                case "elev_reset": ResetElevatorDeck(); ElevatorReset(); ElevatorNetProbe.ResetRecorder(); break; // elevator-deck, elevator-dive and elevator-net testers
                 case "snapshot": break;
                 // The guest's own screen, HUD and visor included, to a file (the item field is the path).
                 case "capture": ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
@@ -305,6 +306,17 @@ namespace SunkCost.Net
                 case "frames_reset":
                     SunkCost.Diagnostics.FrameTimeRecorder.Instance?.Reset();
                     break;
+                // The ship TV's shown picture to a file (the item field is the path), as the host's
+                // spectate rows do with ShipTV.SavePicture: the brightness spread, the grade, live or not (elevator-net tester).
+                case "capture_tv":
+                {
+                    var tvShip = SunkCost.World.ShipParts.InWorld(SunkCost.World.WorldId.Sea);
+                    var tvNow = tvShip != null ? tvShip.GetComponent<SunkCost.World.ShipTV>() : null;
+                    if (tvNow == null) return "No TV";
+                    float spread = tvNow.SavePicture(command.item);
+                    return string.Format(System.Globalization.CultureInfo.InvariantCulture, "tv picture {0}; spread={1:0.000}; mean={2:0.000}; grade={3:0.00}; live={4}; channel={5}",
+                        command.item, spread, tvNow.LastMeanBrightness, tvNow.PictureGradeWeight, tvNow.Live, tvNow.Channel);
+                }
                 default: return "Unknown action";
             }
             return "requested " + command.action;
@@ -819,6 +831,8 @@ namespace SunkCost.Net
             text += ConsoleLine();
             text += ElevatorDeckLine();
             text += ElevatorLine(); // the elevator-dive tester's "elevator:" line
+            // The elevator as this peer presents it, tick-stamped, and its per-frame self-check (ElevatorNetProbe; elevator-net tester).
+            text += ElevatorNetProbe.Line(ElevatorNetProbe.Last) + "\n" + ElevatorNetProbe.RecorderLine() + "\n";
             foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
             {
                 var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();

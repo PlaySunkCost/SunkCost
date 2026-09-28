@@ -158,6 +158,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "elevator-deck") ElevatorDeckRuntimeChecks.RunAsHost();
                         else if (job == "elevator-dive") ElevatorDiveRuntimeChecks.RunAsHost();
                         else if (job == "elevator-dive-prefix") ElevatorDiveRuntimeChecks.RunAsHost(false); // the W rows (water rework) XFAIL
+                        else if (job == "elevator-net") ElevatorNetRuntimeChecks.RunAsHost();
                         // A monster's own polish checks (24 September 2026): "polish-<Kind>" runs
                         // MonsterPolish<Kind>Checks.RunAsHost, one file per monster, found by name so
                         // no one edits this list to add one. They spawn their own creatures.
