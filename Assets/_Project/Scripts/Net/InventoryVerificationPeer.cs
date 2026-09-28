@@ -452,7 +452,10 @@ namespace SunkCost.Net
                    $"leverPulls={pull.Serial}/{pull.Kind}/{pull.Action}; leverPlayed={(ship == null ? -1 : ship.LeverPlayedSerial)}; leverAngle={(ship == null ? 0f : ship.LeverAngle).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}; " +
                    $"leverSign={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Sign))}; hqSign={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Sign))}; " +
                    $"topScreen={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Top))}; bottomScreen={(ship == null ? "none" : SunkCost.World.ConsoleModels.Flatten(ship.Bottom))}; " +
-                   $"hqTop={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Top))}; hqBottom={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Bottom))};\n";
+                   $"hqTop={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Top))}; hqBottom={(hq == null ? "none" : SunkCost.World.ConsoleModels.Flatten(hq.Bottom))}; " +
+                   // The HQ rig's own swing and the GIVE UP card's state on this peer (the console-hq tester, 28 September 2026).
+                   $"hqLeverPlayed={(hq == null ? -1 : hq.LeverPlayedSerial)}; hqLeverAngle={(hq == null ? 0f : hq.LeverAngle).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}; " +
+                   $"hqCard={(hq == null || hq.Bottom == null || hq.Bottom.VoteCard == null ? "none" : (hq.Bottom.VoteCard.Enabled ? "on" : "off") + "/" + hq.Bottom.VoteCard.Foot)};\n";
         }
 
         public static string Snapshot()
