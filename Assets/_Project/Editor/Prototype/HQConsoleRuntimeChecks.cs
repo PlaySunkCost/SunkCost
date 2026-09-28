@@ -549,11 +549,12 @@ namespace SunkCost.Editor.Prototype
                     yield return Expect(() => Big() == "SHORT BY $50", back - Time.unscaledTime + 0.5f, () => "HQ-2 retest: SHORT BY $50 returns after the refusal's window: " + Top());
                 else Say($"HQ-2 retest: no time left in the SHORT report after the refusal (back {back:0.0}, report ends {reportEnd:0.0})");
             }
+            refusal = Day.LastRefusal.Serial;
             Say("the old RequestPay path after SHORT: " + H.ClientRequestPay());
-            yield return Wait(0.5f);
+            yield return ExpectRefusal(refusal, ConsoleRules.NothingToSell, "HQ-4 retest (round 3): Q4 the RequestPay RPC over the empty room after SHORT");
             Say("its answer: '" + Day.LastRefusal.Text + "', pay serial " + Day.LastPay.Serial + " (was " + paySerial + ")");
             Check(Day.LastLeverPull.Serial == pulls && Day.CycleSales == v3 && Day.Balance == balance, $"Q4 no second sale by the lever: the cycle keeps ${Day.CycleSales}, balance ${Day.Balance}");
-            Check(Day.LastPay.Serial == paySerial || (Day.LastPay.Sales == 0 && Day.LastPay.Short), "Q4 the old path's second press sells nothing (serial " + Day.LastPay.Serial + ", sales $" + Day.LastPay.Sales + ")");
+            Check(Day.LastPay.Serial == paySerial, "HQ-4 retest (round 3): Q4 the RequestPay RPC writes no new pay report (serial " + Day.LastPay.Serial + ", was " + paySerial + ", sales $" + Day.LastPay.Sales + ")");
             yield return Wait(refusalSeconds + 0.5f);
 
             Heading("Q5 — the same-frame double PAY: two server pays and two lever pulls in one frame sell and bank once");
@@ -586,9 +587,8 @@ namespace SunkCost.Editor.Prototype
                 int balanceNow = Day.Balance, cycleNow = Day.CycleSales;
                 bool payAgain = flow.ServerPay(host.Owner, out string payAgainWhy);
                 Check(sumNow == 0 && (!payAgain || Day.LastPay.Sales == 0) && Day.Balance == balanceNow && Day.CycleSales == cycleNow, $"HQ-3 retest: in the sale's own frame the room sums ${sumNow} ({stale} despawned item(s) still listed); a second server pay sells nothing (ok={payAgain} '{payAgainWhy}', sales ${Day.LastPay.Sales}, balance ${Day.Balance}, cycle ${Day.CycleSales})");
-                // The direct ServerPay (the RequestPay RPC) has no 'Nothing to sell' gate: a $0 SHORT report mid-cycle (bugs/HQ-4).
-                if (payAgain) Say($"SOFT-FAIL HQ-4: the direct ServerPay over an empty room mid-cycle wrote a new report (serial {Day.LastPay.Serial}, sold ${Day.LastPay.Sales}, short={Day.LastPay.Short}) instead of refusing '{ConsoleRules.NothingToSell}'");
-                else Check(payAgainWhy == ConsoleRules.NothingToSell, "HQ-4 retest: the direct ServerPay over an empty room is refused: " + payAgainWhy);
+                // Retest HQ-4 (round 3): the direct ServerPay (the RequestPay RPC) refuses an empty room before payday like the lever.
+                Check(!payAgain && payAgainWhy == ConsoleRules.NothingToSell && Day.LastPay.Serial == paySerial + 1 && Day.LastPay.Sales == v5b, $"HQ-4 retest (round 3): the direct ServerPay over an empty room mid-cycle is refused (ok={payAgain} '{payAgainWhy}', pay serial {Day.LastPay.Serial} = the lever's {paySerial + 1}, report sales ${Day.LastPay.Sales})");
                 paySerial = Day.LastPay.Serial - 1; // the rows below count from the lever's sale
             }
             yield return Wait(0.3f);
