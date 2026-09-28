@@ -34,6 +34,7 @@ namespace SunkCost.Diving
         [SerializeField] private float bubbleWidth = 0.22f;
         [SerializeField] private float bubbleScroll = 0.55f;
         [SerializeField] private float bubbleTextureMeters = 1.2f;
+        [SerializeField] private float plungeMeters = 1.1f;       // how deep a pouring stream drives its bubbles
         [SerializeField] private float swirlSize = 4.5f;
         [SerializeField] private float swirlDegreesPerSecond = 95f;
         [SerializeField] private float rippleScroll = 0.035f;
@@ -144,16 +145,20 @@ namespace SunkCost.Diving
                     }
                 }
 
-                // Bubbles from a covered nozzle while it pours or while the car stands full.
-                bool bubblesOn = all || (covered && !draining && level > 0.5f);
-                if (bubblesOn) anyBubbles = true;
+                // Bubbles from a covered nozzle while it pours or while the car stands full;
+                // and under a stream still pouring through the air, the plunge it drives
+                // into the water (what an eye under the surface sees of the pour).
+                bool fromNozzle = all || (covered && !draining && level > 0.5f);
+                bool plunge = !fromNozzle && streamOn && level > floorTop + 0.3f;
+                bool bubblesOn = fromNozzle || plunge;
+                if (fromNozzle) anyBubbles = true;
                 if (i < bubbles.Length && bubbles[i] != null)
                 {
                     SetActive(bubbles[i], bubblesOn);
                     if (bubblesOn)
                     {
                         float top = Mathf.Min(all ? landing : level, span) - 0.04f;
-                        float bottom = floorTop + 0.05f;
+                        float bottom = plunge ? Mathf.Max(floorTop + 0.05f, level - plungeMeters) : floorTop + 0.05f;
                         float h = Mathf.Max(0.1f, top - bottom);
                         bubbles[i].localPosition = new Vector3(o.x, bottom + h * 0.5f, o.z);
                         bubbles[i].localScale = new Vector3(bubbleWidth, h, bubbleWidth);

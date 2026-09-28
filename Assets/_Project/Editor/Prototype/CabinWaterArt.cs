@@ -60,9 +60,12 @@ namespace SunkCost.Editor.Prototype
             return m;
         });
 
+        // Foam lies ON the water: the splash and the drain swirl are drawn from above only
+        // (their quads face up), so an eye under the surface sees the water's underside,
+        // not white foam cut-outs (the dive captures of 28 September 2026).
         public static Material Splash() => GetOrMake(SplashMaterialPath, lit: false, () =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.93f, 0.98f, 1f, 0.8f), cullOff: true);
+            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.93f, 0.98f, 1f, 0.8f), cullOff: false);
             m.SetTexture("_BaseMap", TextureAt(SplashPath, SplashTexture, normalMap: false, repeat: false));
             Emission(m, new Color(0.12f, 0.16f, 0.17f));
             return m;
@@ -78,7 +81,7 @@ namespace SunkCost.Editor.Prototype
 
         public static Material Swirl() => GetOrMake(SwirlMaterialPath, lit: false, () =>
         {
-            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.9f, 0.97f, 1f, 0.75f), cullOff: true);
+            Material m = NewTransparent("Universal Render Pipeline/Simple Lit", new Color(0.9f, 0.97f, 1f, 0.75f), cullOff: false);
             m.SetTexture("_BaseMap", TextureAt(SwirlPath, SwirlTexture, normalMap: false, repeat: false));
             Emission(m, new Color(0.08f, 0.12f, 0.13f));
             return m;
