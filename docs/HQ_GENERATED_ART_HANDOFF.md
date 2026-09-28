@@ -145,6 +145,11 @@ Presentation only, on `dan/hq-polish`; see the
   (`ConsolePaint`, `Resources/ConsoleStyle.asset`). Words: `board.title`, `lever.pay`,
   `giveup.card`, `giveup.foot`, `giveup.voted`. The old desk board (`QuotaBoard`,
   `GiveUpButton` push buttons) is gone from the scene; the validator refuses one.
+  Since the polish of 28 September 2026 the console glass (`Materials/Console/ConsoleGlass.mat`,
+  `ConsoleBuilder.GlassMaterial`) has no environment reflections or specular highlights, so the
+  screens stay readable from the side; the painted screens are 1200 px per metre with
+  anisotropic filtering 16. The console's rows are the `console-hq` matrix (see the playbook);
+  the final regression is [the console test report](test-runs/2026-09-27-console/RESULT.md).
 - The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
 - The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
   the browser is the same IMGUI in the ship's `ScreenStyle` palette.

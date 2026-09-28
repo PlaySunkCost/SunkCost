@@ -64,9 +64,9 @@ what you have against what you owe. A low sill across its doorway keeps a droppe
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
-**The navigation console (decided by Dan, 27 September 2026; not built yet: it waits
-for Dan's model, which replaces both the ship's sailing console and the HQ quota
-console).** One model with a top screen, a bottom touch panel and a lever with a lit
+**The navigation console (decided by Dan, 27 September 2026; built on `dan/hq-polish`
+27–28 September 2026 from Dan's model, which replaces both the ship's sailing console
+and the HQ quota console).** One model with a top screen, a bottom touch panel and a lever with a lit
 sign. The game draws the screens and the sign's word, so they can change.
 
 - **Sailing is select, then confirm.** This replaces "choosing a destination sails the ship".
@@ -88,7 +88,9 @@ sign. The game draws the screens and the sign's word, so they can change.
 - **At HQ, the same model is the quota board.** The top screen shows the board, the lever
   reads **PAY**, and **GIVE UP** is a red card on the bottom panel (aim and E) showing
   the vote count.
-- **Being built (27 September 2026, `dan/hq-polish`, not yet play-tested).** Until Sites
+- **Built (27–28 September 2026, `dan/hq-polish`; checked by the `console-ship`,
+  `console-hq` and `console-net` matrices with local guest builds on one machine, not yet
+  play-tested over Steam on separate machines; `docs/test-runs/2026-09-27-console/RESULT.md`).** Until Sites
   02–04 have their own worlds every site is the one sea world, so at sea the lever refuses
   a sail to another site with "Sail home first" (sites are chosen at HQ; the rule falls
   away when the sites get their own scenes). The selection clears once a sail is accepted

@@ -1,0 +1,24 @@
+HQ art runtime checks 28/09/2026 07:57:34
+PASS gate opens at HQ: Ship Boarding Gate
+PASS gate opens at HQ: HQ Boarding Gate
+PASS walk (-28.00, 0.05, -12.00) -> (-47.00, 0.05, -12.00), ended (-46.64, 0.07, -12.00)
+PASS walking over the lip reaches the ship's safe deck
+PASS walk (-47.00, 0.05, -12.00) -> (-28.00, 0.05, -12.00), ended (-28.03, 0.07, -12.00)
+PASS back on HQ is not aboard
+PASS walk (-16.00, 0.05, 11.70) -> (6.00, 0.05, 11.70), ended (5.83, 0.05, 11.70)
+PASS walk (22.00, 0.05, 4.00) -> (24.00, 0.05, 4.00), ended (23.67, 0.05, 4.00)
+PASS walk (18.75, 0.05, 14.50) -> (20.00, 0.05, 9.00), ended (19.96, 0.05, 9.16)
+PASS aim shows item name: large-tank
+PASS look away hides item name: large-tank
+PASS aim shows item name: air-tank
+PASS look away hides item name: air-tank
+PASS aim shows item name: bright-headlamp
+PASS look away hides item name: bright-headlamp
+PASS aim shows item name: patch-kit
+PASS look away hides item name: patch-kit
+PASS one counter offers the entire catalogue
+PASS aim finds the catalogue counter
+FAIL: System.Exception: E opens the catalogue and captures gameplay input
+  at SunkCost.Editor.Prototype.HQArtRuntimeChecks.Check (System.Boolean pass, System.String text) [0x00024] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\HQArtRuntimeChecks.cs:70 
+  at SunkCost.Editor.Prototype.HQArtRuntimeChecks+<Catalogue>d__15.MoveNext () [0x00260] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\HQArtRuntimeChecks.cs:150 
+  at SunkCost.Editor.Prototype.HQArtRuntimeChecks.Tick () [0x0001d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\HQArtRuntimeChecks.cs:47 

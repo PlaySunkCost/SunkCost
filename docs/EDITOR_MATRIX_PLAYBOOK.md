@@ -9,6 +9,14 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   keyboard movement across the level bridge in both directions, aboard detection,
   a clear depot aisle, and a real ball scoring through each generated hoop.
   Results: `Temp/hq-art-matrix.log`; screenshot: `Temp/look/hq-runtime-arrival.png`.
+  Its catalogue row ("E opens the catalogue…") needs the Unity editor to be the focused
+  window: `ShopBrowserUI` closes itself when the application loses focus
+  (`SessionInputGate.ApplicationFocused`), so with another program in front the row fails
+  (seen twice on 28 September 2026, `Application.isFocused` false both times). The matrix driver cannot take focus
+  itself; bring the editor to the front and run the job again.
+  Any tracked change in the tree (a doc edit too) makes the editor's build identity
+  `local-dev:` and every guest row fails as "Wrong build": do not edit tracked files while
+  a guest job runs.
   Run `matrix shop`, `matrix plank` and `matrix loop` with a fresh guest build
   for the separate-client checks. The loop also checks the fixed bridge is not
   passenger/cargo space, and both peers close/open the boarding gates on travel.
@@ -46,6 +54,14 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   late joiner's first snapshot, the compat server sail) — about 9 minutes; peer commands `select`, `lever`,
   `lever_expect`, `look_control`; snapshot line `selected=…; unlocked=…; leverPulls=…; leverPlayed=…; leverAngle=…;
   leverSign=…; topScreen=…; bottomScreen=…`;
+  `console-hq` = the HQ quota console, `HQConsoleRuntimeChecks`, log `Temp/console-hq-matrix.log`: the host alone
+  (Q rows: nothing payable yet with the dim PAY and its reason, PAY with enough money selling a coin from the docked
+  ship's storage room, repeated PAY, an empty room before payday, SHORT BY $n with sailing allowed again, the same-frame
+  double pay, the payday failure and the plank, the lever and the GIVE UP card on the plank and under the run-over
+  card, the direct `RequestPay` RPC over an empty room), then two guests in `Temp/console-hq-guest-a` / `-b` (G rows:
+  the card's 0/n on every peer, YOU VOTED on the voter's screen only, the take-back, one player refusing, a join, a leave
+  and a killed guest mid-vote, a same-frame PAY from host and guest, the vote cleared by a sail and by a fresh run, all
+  vote, three same-frame card presses) — about 5 minutes; peer snapshot fields `hqLeverPlayed`, `hqLeverAngle`, `hqCard`;
   `console-net` = the shared console over the network, `ConsoleNetRuntimeChecks`, log `Temp/console-net-matrix.log`:
   guest A windowed (`Temp/console-net-guest-a`), B / B2 / C / C2 / D headless; every row compares each guest's snapshot with
   the host's state (selection, unlocks, HERE, balance, votes, both signs, both consoles' screens and compat lines, the

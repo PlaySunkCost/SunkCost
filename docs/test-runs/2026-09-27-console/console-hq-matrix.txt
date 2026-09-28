@@ -1,0 +1,367 @@
+Console-hq matrix started 28/09/2026 07:50:00
+PASS editor is the host with a spawned player
+  · host 'Skipper', 3 days a cycle, quota $500, refusals shown 3 s, pay reports 8 s, plank turn 10 s, card 6 s
+
+== Q0 — nothing payable yet: the dim PAY, the reason on the prompt and the screen, the pull refused with no pay and no pull counted
+PASS Q0 the HQ console stands in the HQ scene with its rig and lever
+PASS Q0 fresh run: flow=world=HQ transitioning=False pending=; day=phase=AtHQ day=0 balance=0 handed=0 world=HQ to=HQ ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0 site=HQ toSite=HQ selected=None unlocked=none lever=0; trip=serial=0 stage=Idle from=HQ to=HQ; rider=locked=False placed=False local=(0.00, 0.00, 0.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS Q0 top screen: QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0
+PASS Q0 the quota amber, the balance: QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0
+PASS Q0 the sign is a dim PAY: PAY/off
+PASS Q0 the resolver: selected=None unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal=''
+PASS Q0 compat text: NEW CYCLE | quota $0 / $500 · balance $0 | dive first
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS Q0 the dim lever's prompt explains: Nothing to pay yet — dive first
+PASS Q0 E on the dim lever: refused 'Nothing to pay yet — dive first'
+PASS Q0 E on the dim lever: the refusal reads 'Nothing to pay yet — dive first' (expected 'Nothing to pay yet — dive first')
+PASS Q0 the top screen shows the reason large: QUOTA BOARD ·  ·  · Nothing to pay yet — dive first ·  · QUOTA $0 / $500 · BALANCE $0
+PASS Q0 no pay, no pull counted, the lever did not swing
+  · capture saved Temp/look/console-hq-Q0-refusal.png
+PASS Q0 the board returns to NEW CYCLE after the notice: QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0
+
+== Q1 — PAY with enough money: a coin in the storage room sold through the real path, PAID, the lever swings once; then repeated PAY is refused
+PASS Q1 coin: the docked ship
+PASS Q1 coin: the CoinMedium prefab is registered
+PASS Q1 coin: a $63 coin lies in the docked ship's storage room
+PASS Q1 coin: the box reads $63
+PASS Q1 PAY lit on day 1: PAY/on | QUOTA BOARD · DAY 1/3 ·  · DAY 1 OF 3 · PAY early, or sail out and dive again · QUOTA $63 / $63 · BALANCE $0
+PASS Q1 the quota counts the box and turns green when met: QUOTA $63 / $63 Good
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS Q1 the lever's prompt: Press E to pay the quota ($63) — sells the box ($63)
+PASS Q1 the pay went through (serial 1)
+PASS Q1 PAID: sold $63, had $63 of $63
+PASS Q1 banked once: balance $63, day 0, the cycle closed
+PASS Q1 the coin was sold (despawned), the box reads $0
+PASS Q1 one pull counted: serial=1 kind=HQ action=Pay tick=328 played=0/1 angles=0/10.4
+PASS Q1: the HQ rig swung its lever for pull 1 (played 1, peak 30°)
+PASS Q1 the top screen: QUOTA BOARD ·  ·  · PAID · Handed over $63 · every dollar is yours · QUOTA $0 / $63 · BALANCE $63 | PAID $63 | handed over $63 — every dollar yours · balance $63 | next dive is day 1
+PASS Q1 the server logged one sale of $63
+  · capture saved Temp/look/console-hq-Q1-paid.png
+PASS Q1 the lever dims once the cycle is paid: PAY/off
+PASS Q4 a second E right after PAID: refused 'Nothing to pay yet — dive first'
+PASS Q4 a second E right after PAID: the refusal reads 'Nothing to pay yet — dive first' (expected 'Nothing to pay yet — dive first')
+PASS HQ-2 retest: the refusal came 1.4 s into the 8 s report
+PASS HQ-2 retest: the top screen shows the refusal inside the PAID report's window: QUOTA BOARD ·  ·  · Nothing to pay yet — dive first ·  · QUOTA $0 / $63 · BALANCE $63 | Text=Nothing to pay yet — dive first
+  · hook pull: requested HQ/None/None
+PASS Q4 a third pull (hook): refused 'Nothing to pay yet — dive first'
+PASS Q4 a third pull (hook): the refusal reads 'Nothing to pay yet — dive first' (expected 'Nothing to pay yet — dive first')
+  · old pay path: requested pay
+PASS Q4 the old RequestPay path: refused 'Nothing to pay yet — dive first'
+PASS Q4 the old RequestPay path: the refusal reads 'Nothing to pay yet — dive first' (expected 'Nothing to pay yet — dive first')
+PASS Q4 no second sale, no second bank ($63), no pull counted
+  · the top screen during a refusal inside the pay report's window: Nothing to pay yet — dive first (the report has 8 s)
+PASS HQ-2 retest: PAID returns after the refusal's window, inside the report's: QUOTA BOARD ·  ·  · PAID · Handed over $63 · every dollar is yours · QUOTA $0 / $63 · BALANCE $63
+PASS Q1 back to NEW CYCLE after the report: QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $63 · BALANCE $63
+
+== Q2 — an empty storage room before payday: PAY dim with the reason, the pull refused, nothing sold
+PASS Q2 day 2, empty room: PAY/off | QUOTA BOARD · DAY 2/3 ·  · DAY 2 OF 3 · Nothing to sell yet · sail out and dive again · QUOTA $0 / $500 · BALANCE $63
+PASS Q2 the resolver: selected=None unlocked=none site=HQ toSite=HQ lever=1/HQ/Pay shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to sell — dive again aim=lever votes=0/0 refusal='Nothing to pay yet — dive first'
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS Q2 the prompt: Nothing to sell — dive again
+PASS Q2 E over an empty room: refused 'Nothing to sell — dive again'
+PASS Q2 E over an empty room: the refusal reads 'Nothing to sell — dive again' (expected 'Nothing to sell — dive again')
+PASS Q2 the reason on the top screen: QUOTA BOARD · DAY 2/3 ·  · Nothing to sell — dive again ·  · QUOTA $0 / $500 · BALANCE $63
+PASS Q2 nothing paid, the day kept
+PASS Q2 notice cleared: QUOTA BOARD · DAY 2/3 ·  · DAY 2 OF 3 · Nothing to sell yet · sail out and dive again · QUOTA $0 / $500 · BALANCE $63
+
+== Q3 — short but allowed to continue: SHORT BY $50 amber, the box banked, sailing allowed again, a second PAY refused (nothing to sell)
+PASS Q3 coin: the docked ship
+PASS Q3 coin: the CoinMedium prefab is registered
+PASS Q3 coin: a $89 coin lies in the docked ship's storage room
+PASS Q3 coin: the box reads $89
+PASS Q3 PAY lit, the quota amber: PAY/on | QUOTA BOARD · DAY 2/3 ·  · DAY 2 OF 3 · PAY early, or sail out and dive again · QUOTA $89 / $139 · BALANCE $63
+  · pull: requested HQ/Pay/None
+PASS Q3: the HQ rig swung its lever for pull 2 (played 2, peak 30°)
+  · Q3 the top screen from the pull on: 0.00s DAY 2 OF 3 | QUOTA $89 / $139/Warn | box=89 handed=0 → 0.02s SHORT BY $50 | QUOTA $89 / $139/Warn | box=0 handed=89
+PASS Q3 the pay went through
+PASS Q3 SHORT: sold $89, had $89 of $139
+PASS Q3 banked ($152), the cycle keeps $89, still day 2
+PASS Q3 the coin was sold
+PASS Q3 the top screen: QUOTA BOARD · DAY 2/3 ·  · SHORT BY $50 · Sold $89 · sail out and dive again · QUOTA $89 / $139 · BALANCE $152 | SHORT BY $50 | sold $89, handed over $89 · balance $152 | sail out and dive again
+PASS Q3 the foot settles on the handed-over sale, amber: QUOTA $89 / $139
+PASS HQ-3 retest: the foot never counted the sold box twice from the pull on (every frame sampled)
+PASS Q3 sailing out is allowed again ()
+  · capture saved Temp/look/console-hq-Q3-short.png
+  · second pull: requested HQ/None/None
+PASS Q4 a second PAY after SHORT: refused 'Nothing to sell — dive again'
+PASS Q4 a second PAY after SHORT: the refusal reads 'Nothing to sell — dive again' (expected 'Nothing to sell — dive again')
+PASS HQ-2 retest: this refusal came 1.3 s into the SHORT report
+PASS HQ-2 retest: the top screen shows the refusal inside the SHORT report's window: QUOTA BOARD · DAY 2/3 ·  · Nothing to sell — dive again ·  · QUOTA $89 / $139 · BALANCE $152
+PASS HQ-2 retest: SHORT BY $50 returns after the refusal's window: QUOTA BOARD · DAY 2/3 ·  · SHORT BY $50 · Sold $89 · sail out and dive again · QUOTA $89 / $139 · BALANCE $152
+  · the old RequestPay path after SHORT: requested pay
+PASS HQ-4 retest (round 3): Q4 the RequestPay RPC over the empty room after SHORT: refused 'Nothing to sell — dive again'
+PASS HQ-4 retest (round 3): Q4 the RequestPay RPC over the empty room after SHORT: the refusal reads 'Nothing to sell — dive again' (expected 'Nothing to sell — dive again')
+  · its answer: 'Nothing to sell — dive again', pay serial 2 (was 2)
+PASS Q4 no second sale by the lever: the cycle keeps $89, balance $152
+PASS HQ-4 retest (round 3): Q4 the RequestPay RPC writes no new pay report (serial 2, was 2, sales $89)
+
+== Q5 — the same-frame double PAY: two server pays and two lever pulls in one frame sell and bank once
+PASS Q5 coin: the docked ship
+PASS Q5 coin: the CoinMedium prefab is registered
+PASS Q5 coin: a $62 coin lies in the docked ship's storage room
+PASS Q5 coin: the box reads $62
+PASS Q5 same frame ServerPay ×2: True '', then False 'Nothing to pay yet — dive first'
+PASS Q5 one sale, one bank (+$62 of $62)
+PASS Q5b coin: the docked ship
+PASS Q5b coin: the CoinMedium prefab is registered
+PASS Q5b coin: a $67 coin lies in the docked ship's storage room
+PASS Q5b coin: the box reads $67
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS Q5b same frame lever ×2: True '', then False 'Lever in use'
+PASS Q5b one sale of $67, one short report, one pull (1)
+PASS HQ-3 retest: in the sale's own frame the room sums $0 (1 despawned item(s) still listed); a second server pay sells nothing (ok=False 'Nothing to sell — dive again', sales $67, balance $281, cycle $67)
+PASS HQ-4 retest (round 3): the direct ServerPay over an empty room mid-cycle is refused (ok=False 'Nothing to sell — dive again', pay serial 4 = the lever's 4, report sales $67)
+PASS Q5b the next frame's pull finds nothing to sell: 'Nothing to sell — dive again'
+PASS HQ-3 retest: Q5b's foot after the sale: QUOTA $67 / $99999
+
+== Q6 — payday failure: PAYDAY lit, the empty-room PAY loses the run: THE RUN IS OVER, the plank starts, sailing refused
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS Q6 PAYDAY, PAY lit over an empty room: PAY/on | QUOTA BOARD · PAYDAY ·  · PAYDAY · PAY sells the box · short means the plank · QUOTA $67 / $99999 · BALANCE $281
+PASS Q6 compat text: PAYDAY | quota $67 / $99999 (handed over $67 + box $0) · balance $281 | E to pay (sells the box)
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS Q6 the prompt: Press E to pay the quota ($99999) — sells the box ($0)
+PASS Q6 short at payday: lost, the plank
+PASS Q6 sold $0, the host first on the plank
+PASS Q6 the top screen: QUOTA BOARD · PAYDAY ·  · THE RUN IS OVER · Quota $99999 missed · walk the plank · QUOTA $67 / $99999 · BALANCE $281
+PASS Q6 the sign and the card dark: PAY/off | GIVE UP 0 / 1 foot='EVERYONE MUST AGREE' voted=False enabled=False
+PASS Q6 the resolver: selected=None unlocked=none site=HQ toSite=HQ lever=4/HQ/Pay shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:The run is over hqAction=None/off:The run is over aim=none votes=0/0 refusal='Nothing to sell — dive again'
+PASS Q6 sailing is refused: The run is over
+PASS Q6 one plank started
+  · capture saved Temp/look/console-hq-Q6-runover.png
+
+== Q7 — the plank already active: at the console the lever and the card are dim, their prompts say why, both presses refused, no vote
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS Q7 the jumper's prompt is the plank's (the non-jumper's console prompts are G11's): WALK THE PLANK — jump when you are ready · 9 s
+PASS Q7 E on the lever on the plank: refused 'The run is over'
+PASS Q7 E on the lever on the plank: the refusal reads 'The run is over' (expected 'The run is over')
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+  · Q7 the card's prompt on the plank: WALK THE PLANK — jump when you are ready · 9 s
+PASS Q7 the card does not offer a vote on the plank: WALK THE PLANK — jump when you are ready · 9 s
+PASS Q7 E on the card on the plank is refused
+PASS HQ-1 retest: Q7 the card's refusal on the plank reads 'The run is over' (expected 'The run is over')
+  · Q7 the hook vote on the plank: give up requested
+PASS HQ-1 retest: Q7 ClientRequestGiveUp on the plank: refused 'The run is over'
+PASS HQ-1 retest: Q7 ClientRequestGiveUp on the plank: the refusal reads 'The run is over' (expected 'The run is over')
+PASS Q7 no vote, no second pay, no run-over yet
+PASS Q7 still one plank
+
+== Q8 — the run already over (the card between the last jump and the fresh run): pay and vote refused, no second run-over
+PASS Q8 the run-over card was sent
+PASS Q8 still the plank phase under the card
+PASS Q8 ServerPay refused: The run is over
+PASS Q8 a vote refused: The run is over
+PASS Q8 the lever reads dim: The run is over
+  · Q8 refusals: pay 'The run is over', vote 'The run is over'
+PASS HQ-1 retest: Q8 under the run-over card, pay 'The run is over' and vote 'The run is over' both read 'The run is over'
+PASS Q8 the fresh run
+PASS Q8 exactly one run-over and one plank
+PASS Q8 the screen clear again
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS Q8 the fresh board: QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0 | GIVE UP 0 / 1 foot='EVERYONE MUST AGREE' voted=False enabled=True
+
+== Q9 — GIVE UP with the host alone: the card reads 0 / 1, one E is unanimous: THE RUN IS OVER, the plank, the fresh run with no votes
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+PASS Q9 the card: GIVE UP 0 / 1 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS Q9 the card's prompt: Press E to vote to give up the run — everyone must agree
+PASS Q9 the host's vote ends the run
+PASS Q9 unanimous with 1, the votes spent, one plank
+PASS Q9 the board: QUOTA BOARD ·  ·  · THE RUN IS OVER · Skipper walks the plank · QUOTA $0 / $500 · BALANCE $0
+PASS Q9: the plank
+  · Q9: Skipper steps off the plank
+PASS Q9: the fresh run after the plank (phase AtHQ)
+PASS Q9: day 0, $0, no cycle, no votes (0/0)
+PASS Q9: the screen clear again
+PASS Q9 one run over
+
+== G1 — guest A joins: the card reads 0 / 2 on both peers
+PASS G1 A: the guest's player spawned on the host
+PASS G1 A: the guest's peer answers at HQ
+  · G1 A: guest 'Mate bof the' is client 1 (Temp/console-hq-guest-a)
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS G1 the host's card: GIVE UP 0 / 2 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G1 A's card reads 0 / 2
+
+== G2 — the host votes with the real E: 1/2 on both peers, YOU VOTED on the host's card only, the top hint on both
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+PASS G2 the host's vote: 1/2
+PASS G2 the host's screens: GIVE UP 1 / 2 foot='YOU VOTED · E TO TAKE BACK' voted=True enabled=True | QUOTA BOARD ·  ·  · NEW CYCLE · GIVE UP 1/2 · EVERYONE MUST PRESS · QUOTA $0 / $500 · BALANCE $0
+PASS G2 the host's prompt: Press E to take back your vote (give up 1/2)
+PASS G2 compat text, the run goes on: NEW CYCLE | quota $0 / $500 · balance $0 | dive first | give up 1/2
+PASS G2 A sees 1 / 2 and the hint, and NOT 'YOU VOTED'
+  · capture saved Temp/look/console-hq-G2-voted.png
+
+== G3 — the host takes the vote back (E again): 0 / 2 on both, the hint gone
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+PASS G3 the vote taken back: votes=0 crew=2 phase=AtHQ
+PASS G3 the host's screens: GIVE UP 0 / 2 foot='EVERYONE MUST AGREE' voted=False enabled=True | QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0
+PASS G3 A reads the vote taken back
+
+== G4 — one player refuses: A votes, the host does not; nothing happens
+PASS G4 A's vote arrives: votes=1 crew=2 phase=AtHQ
+PASS G4 the host's card (not voted): GIVE UP 1 / 2 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G4 A's own card: YOU VOTED · E TO TAKE BACK
+PASS G4 one of two holds: no plank (AtHQ)
+
+== G5 — a player joins mid-vote: B's arrival clears the vote; the count's n grows to 3 on every peer; the joiner never sees a stale count
+PASS G5 B: the guest's player spawned on the host
+PASS G5 B: the guest's peer answers at HQ
+  · G5 B: guest 'Mate bof the' is client 2 (Temp/console-hq-guest-b)
+PASS G5 the vote cleared by the join: votes=0 crew=0 phase=AtHQ
+PASS G5 the server logged the clear: [Log] [GiveUp] Votes cleared: a player joined
+PASS G5 the host's card: GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G5 A's card: 0 / 3, its vote gone
+PASS G5 B's first board: 0 / 3, no vote hint
+
+== G6 — a player leaves mid-vote: the host votes 1/3, B leaves; the vote clears and n shrinks to 2
+PASS G6 the host votes: 1/3 
+PASS G6 A sees 1/3
+PASS G6 B left
+PASS G6 the vote cleared: votes=0 crew=0 phase=AtHQ
+PASS G6 the run goes on, the server logged 'a player left'
+PASS G6 the host's card: GIVE UP 0 / 2 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G6 A's card: 0 / 2
+
+== G7 — a disconnect during the vote: the host votes 1/2, A's process is killed; the vote clears when the connection drops, n = 1, no plank, no exception
+PASS G7 the host votes: 1/2 
+  · G7 guest A killed
+PASS G7 no plank right after the kill
+PASS G7 A's connection dropped and the vote cleared: votes=0 crew=0 phase=AtHQ (A's copy False)
+  · G7 the drop took 58.9 s
+PASS G7 the host alone, the run goes on: votes=0 crew=0 phase=AtHQ
+PASS G7 the host's card: GIVE UP 0 / 1 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G7 no exception in the host's log during the drop: 
+
+== G8 — two guests again (3 crew); PAY from the host and A in the same frame: one sale, one bank, one pull; everything replicates, the lever swings on A too
+PASS G8 A: the guest's player spawned on the host
+PASS G8 A: the guest's peer answers at HQ
+  · G8 A: guest 'Mate bof the' is client 3 (Temp/console-hq-guest-a2)
+PASS G8 B: the guest's player spawned on the host
+PASS G8 B: the guest's peer answers at HQ
+  · G8 B: guest 'Mate bof the' is client 4 (Temp/console-hq-guest-b2)
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS G8 3 crew: GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G8 coin: the docked ship
+PASS G8 coin: the CoinMedium prefab is registered
+PASS G8 coin: a $59 coin lies in the docked ship's storage room
+PASS G8 coin: the box reads $59
+PASS G8 PAY lit on the host: PAY/on
+PASS G8 PAY lit on A, the box $59
+PASS G8 PAY lit on B, the box counted (the quota override is the editor's only)
+  · G8 same editor frame: A's lever written, host requested HQ/Pay/None
+PASS G8 A's pull went expecting PAY: id=3884; requested lever HQ/Pay/None
+PASS G8 a pay went through
+PASS G8 one sale ($59), one bank (+$59), one pull (1)
+PASS G8 the loser was refused: 'Nothing to pay yet — dive first'
+PASS G8 the server logged exactly one sale of $59
+PASS G8 the host's rig played the pull once: serial=5 kind=HQ action=Pay tick=9216 played=0/5 angles=0/0
+  · G8 A's lever angle in its reply 0.4 s after the pull: 22.2
+PASS G8 A reads PAID, the balance, the pull, and its rig played it
+PASS G8 B reads PAID, the balance, the dim PAY, and its rig played the pull
+PASS G8 A's lever was mid-swing 0.4 s after the pull (22.2°)
+
+== G9 — one player refuses with 3 crew: host and A vote 2/3, B does not; nothing happens
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+PASS G9 2/3: votes=2 crew=3 phase=AtHQ
+PASS G9 the host's screens: GIVE UP 2 / 3 foot='YOU VOTED · E TO TAKE BACK' voted=True enabled=True | QUOTA BOARD ·  ·  · NEW CYCLE · GIVE UP 2/3 · EVERYONE MUST PRESS · QUOTA $0 / $59 · BALANCE $59
+PASS G9 B sees 2 / 3, not voted
+PASS G9 A sees its own vote
+PASS G9 two of three holds: no plank
+
+== G10 — the vote resets when the ship sails: 2/3 in, everyone aboard, CONFIRM on the ship's lever; cleared at once; no vote at sea; home again
+PASS G10 both guests on the deck
+PASS G10 the host at the ship's console
+  · select: requested Site01
+PASS G10 Site 01 selected, CONFIRM lit
+PASS G10 the vote still 2/3 before the sail
+  · pull: requested Ship/Confirm/Site01
+PASS G10 the ship sails
+PASS G10 the vote cleared by the sail: votes=0 crew=0 phase=Sailing
+PASS G10 B reads no votes
+PASS G10: arrived at Sea (phase AtSea)
+PASS G10 a vote at sea is refused: Not docked at HQ
+PASS G10 A's vote at sea is refused
+  · G10 A's refusal at sea: 'Not docked at HQ'
+PASS G10 no vote registered at sea
+PASS G10 A at sea
+PASS G10 B at sea
+PASS G10 the host at the sea ship's console
+PASS G10 everyone aboard at sea
+PASS G10 sail home: sailing to HQ
+PASS G10: arrived at HQ (phase AtHQ)
+PASS G10 docked, no votes: votes=0 crew=0 phase=AtHQ
+PASS G10 A docked, 0 / 3
+PASS G10 B docked, no votes
+
+== G11 — all players vote (host, A, then B last): THE RUN IS OVER on every screen, the plank flow; on the plank the card and PAY are dark for the guests and their presses are refused
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS G11 the card: GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=True
+PASS G11 the host votes
+PASS G11 A votes: 2/3, not yet
+PASS G11 B's vote completes it: the plank
+PASS G11 unanimous 3/3, the votes spent, one plank
+PASS G11 the host's board: QUOTA BOARD · DAY 1/3 ·  · THE RUN IS OVER · Skipper walks the plank · QUOTA $0 / $59 · BALANCE $59 | GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=False | PAY/off
+PASS G11 A reads THE RUN IS OVER
+PASS G11 B: THE RUN IS OVER, PAY dim, the card dark
+  · G11 B's pull on the plank: id=3908; requested lever HQ/None/None
+PASS G11 B's pull is refused
+PASS G11 B's pull is refused: 'The run is over'
+PASS G11 B's vote on the plank is refused
+PASS HQ-1 retest: G11 B's vote refusal on the plank: 'The run is over'
+PASS G11 no vote, still one plank
+PASS G11 the host is the first jumper
+PASS G11 the host jumped
+PASS the dot is on Quota Board (aim HQ/Lever)
+PASS G11 the prompt at the lever for a non-jumper on the plank names the reason: THE RUN IS OVER — Mate bof the walks the plank
+PASS the dot is on Give Up Button (aim HQ/GiveUpCard)
+PASS HQ-1 retest: G11 the card's prompt for a non-jumper on the plank names the run over (the plank HUD's prompt covers every player): THE RUN IS OVER — Mate bof the walks the plank
+PASS G11 the card offers no vote on the plank: THE RUN IS OVER — Mate bof the walks the plank
+PASS G11 the card and the sign dark: GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=False | PAY/off
+PASS G11: the plank
+  · G11: Mate bof the steps off the plank
+  · G11: Mate bof the steps off the plank
+PASS G11: the fresh run after the plank (phase AtHQ)
+PASS G11: day 0, $0, no cycle, no votes (0/0)
+PASS G11: the screen clear again
+PASS G11 one run over
+PASS G11 A reads the fresh run, no votes
+PASS G11 B reads the fresh run, the card lit again
+
+== G12 — the vote resets with a fresh run: 2/3 in, a lost payday puts the crew on the plank; after it the vote is gone
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS G12 the host votes
+PASS G12 2/3 in: votes=2 crew=3 phase=AtHQ
+PASS G12 PAYDAY: PAY/on
+  · pay: requested HQ/Pay/None
+PASS G12 lost at payday: the plank
+  · G12 the vote during the plank: votes=2 crew=3 phase=Plank, the card GIVE UP 2 / 3 foot='YOU VOTED · E TO TAKE BACK' voted=True enabled=False
+PASS G12: the plank
+  · G12: Skipper steps off the plank
+  · G12: Mate bof the steps off the plank
+  · G12: Mate bof the steps off the plank
+PASS G12: the fresh run after the plank (phase AtHQ)
+PASS G12: day 0, $0, no cycle, no votes (0/0)
+PASS G12: the screen clear again
+PASS G12 one run over
+PASS G12 the server cleared the vote for the fresh run
+PASS G12 A: the fresh run has no votes, its own vote gone
+
+== G13 — the whole crew presses the card in the same frame: one plank, one run-over, no exception
+PASS stood at the quota console: moved local player to (-10.20, 0.00, -12.40)
+PASS G13 the card: GIVE UP 0 / 3 foot='EVERYONE MUST AGREE' voted=False enabled=True
+  · G13 same frame: give up requested
+PASS G13 the plank: votes=0 crew=0 phase=Plank
+PASS G13 exactly one agreement, one plank, no exception
+PASS G13 B reads the run over
+PASS G13: the plank
+  · G13: Skipper steps off the plank
+  · G13: Mate bof the steps off the plank
+  · G13: Mate bof the steps off the plank
+PASS G13: the fresh run after the plank (phase AtHQ)
+PASS G13: day 0, $0, no cycle, no votes (0/0)
+PASS G13: the screen clear again
+PASS G13 one run over
+PASS both guests left
+  · host log: 0 errors, 0 exceptions during the run
+  · end: selected=None unlocked=none site=HQ toSite=HQ lever=7/HQ/Pay shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal='The run is over'
+MATRIX_PASS
