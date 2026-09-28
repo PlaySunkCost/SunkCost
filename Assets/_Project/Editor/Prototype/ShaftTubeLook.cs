@@ -11,11 +11,11 @@ namespace SunkCost.Sites
     // models (docs/ELEVATOR_LOOK.md) placed as look children of "Shaft Tube",
     // and the colliders their metal needs (the players' camera only knows colliders).
     // Look only: the car's stops (top anchor 0, bottom anchor -depth), its timing, the
-    // gate and the water are unchanged (INTERFACES A1-A3).
+    // gate and the water are unchanged (docs/ELEVATOR_LOOK.md A1-A3).
     //
     //   - "Tube Foot" on the seafloor: its floor top 0.10 above the sand (= the car's
     //     floor top at the bottom stop, flush), its doorway threshold a 10 cm kerb with
-    //     a sill and a gentle ramp down to the sand (option A', INTERFACES A2);
+    //     a sill and a gentle ramp down to the sand (option A', docs/ELEVATOR_LOOK.md A2);
     //   - "TubeSections": the tube section stacked from the foot's top to the tube's top,
     //     a whole number of sections stretched to fit, its pipe running up one post;
     //   - "Top Collar": over the car's top stop (its glass top at root + 3.50, the collar
@@ -98,7 +98,7 @@ namespace SunkCost.Sites
             Require(ElevatorLook.PlaceGateLeaf(leafLeft, doorwayBearingDeg, false, FootFloorAboveSand), "GateLeaf");
         }
 
-        // Hollow rings every 5 m clash with the sections' own joints (ELEVATOR_MODELS §4):
+        // Hollow rings every 5 m clash with the sections' own joints (docs/ELEVATOR_LOOK.md §2):
         // their objects stay (the validator counts them), their renderers go.
         public static void HideRibs(Transform shaftTube, string ribPrefix)
         {

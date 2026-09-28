@@ -193,6 +193,25 @@ cabin), once-per-day, the air, the ship shell over the tube's top. If someone
 stays below, the car goes back down for them, empty; the monitor will not sail
 while anyone is below.
 
+**The round elevator (28 September 2026, `dan/elevator-look`; the water rule
+decided with Dan that day, the look proposed until he reviews it).** Dan's eight
+models replace the elevator's look everywhere: a round glass car inside a round
+glass shaft, the tube stacked from a foot on the seafloor to a collar under the
+platform, and on the ship a round housing round the car in the deck's well, its
+floor flush with the deck. The ride's rules and timing are unchanged. The car
+carries its own water instead of flooding "by geometry": as it sinks through the
+surface six roof nozzles pour and it is full about 3.5 s later; as it rises back
+through the surface the floor grilles drain it and it is dry about 1.5 s before
+the top. The water inside always stands where the sea outside stands while the
+car crosses the surface, so the water you see is the water your eyes and your
+air obey; the panel's gauge follows the level and its screen says FLOODING or
+DRAINING, the depth and the water %. Every player, spectator and the TV see the
+same water, derived from the car's replicated ride. The housing's two shutters
+close its entrance while the car is away below. Proposed with them (teammate
+review pending): nobody is closed in between the car's doors and the shutters
+(someone standing there when the empty car leaves, or after the ride down's
+doors shut, is put on the deck). Numbers and rules: docs/ELEVATOR_LOOK.md.
+
 **A day is one dive.** The day starts when **every living player is in the deck
 cabin** and it departs — the button does nothing with anyone missing, nothing
 overrides this, and the cabin panel names who. Anyone can ride up whenever they

@@ -527,7 +527,7 @@ namespace SunkCost.Editor.Prototype
         // model round the car, its base on the deck and its wall on the deck's cut, its
         // entrance at the car's doorway; a top track the shutters hang from; a lid under
         // its rim with the old beacon on it (the model is open on top); the car's own
-        // light, which goes with the car. Numbers: scratchpad elev/ELEVATOR_MODELS.md §7.
+        // light, which goes with the car. Numbers: docs/ELEVATOR_LOOK.md §2.
         public const string HousingName = "Cabin Housing";
         private const float HousingBaseY = 0.01f;               // ship y: the walkway a centimetre over the deck
         private const float LidRadius = 3.20f, LidBottom = 3.71f, LidThickness = 0.05f; // housing-local: tucked under the rim (inner r 3.22-3.26 there)

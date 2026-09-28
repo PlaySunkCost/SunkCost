@@ -118,7 +118,7 @@ namespace SunkCost.Editor.Tests
             Assert.AreEqual(CarWaterFlow.Still, ElevatorMath.WaterFlowInCar(ElevatorState.Ascending, Span - 0.01f, Span), "within the margin of full");
         }
 
-        // INTERFACES.md §2.6: lower draws first. From inside the car the far tube draws
+        // docs/ELEVATOR_LOOK.md §5: lower draws first. From inside the car the far tube draws
         // first and the car's own water last; from outside, the reverse.
         [Test]
         public void Sorting_InsideIsTheReverseOfOutside()

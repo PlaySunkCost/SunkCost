@@ -8,7 +8,7 @@ namespace SunkCost.Diving
     // on every peer: the light's colour is already derived from replicated state
     // (ElevatorGhostLight), so the ring shows the same on every screen, the
     // spectators' and the TV's. It runs after the ghost light has set the colour
-    // this frame (execution order 100, INTERFACES 2.5).
+    // this frame (execution order 100, docs/ELEVATOR_LOOK.md §3).
     [DefaultExecutionOrder(100)]
     public sealed class CarRingLight : MonoBehaviour
     {

@@ -24,7 +24,7 @@ namespace SunkCost.Diving
         public static int OrderOf(Group group, bool cameraInsideCar) =>
             (cameraInsideCar ? InsideOrder : OutsideOrder)[(int)group];
 
-        // Names the groups are found by (INTERFACES.md §2.6; the builders keep them).
+        // Names the groups are found by (docs/ELEVATOR_LOOK.md §5; the builders keep them).
         public const string ShaftTubeName = "Shaft Tube";
         private static readonly string[] CarGlassRoots = { "Glass Shell", "Car Look" };
         private static readonly string[] TubeGlassRoots = { "TubeGlass", "Gate Leaf Right", "Gate Leaf Left" };

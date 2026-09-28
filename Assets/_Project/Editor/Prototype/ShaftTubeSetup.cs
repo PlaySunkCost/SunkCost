@@ -118,7 +118,7 @@ namespace SunkCost.Editor.Prototype
         public const string WaterSurfaceRingName = "WaterSurface Ring";
         public const float TubeRingInnerRadius = 2.56f;        // clear of the car's glass band's outer face (2.525)
 
-        // The nozzle mouths in the dive car's root frame (INTERFACES.md §1.1), used until
+        // The nozzle mouths in the dive car's root frame (docs/ELEVATOR_LOOK.md §2.1), used until
         // the car's look provides "Car Look/Flood Outlet n".
         private static readonly Vector3[] DefaultOutlets =
         {

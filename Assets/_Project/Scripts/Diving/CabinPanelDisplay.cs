@@ -14,7 +14,7 @@ namespace SunkCost.Diving
     {
         public enum Mode : byte { Car = 0, Deck = 1 }
 
-        // The names the models role gives the panel's empties (INTERFACES.md §4.1).
+        // The names the models role gives the panel's empties (docs/ELEVATOR_LOOK.md §2.1, §3).
         public const string GaugeBottomName = "Gauge Bottom";
         public const string GaugeTopName = "Gauge Top";
         public const string GaugeMarkerName = "Gauge Marker";
@@ -27,7 +27,7 @@ namespace SunkCost.Diving
         [SerializeField] private TextMesh mirror;      // the deck's status plate; null in the car
         [SerializeField] private TextMesh screen;
         [SerializeField] private Transform gaugeBottom, gaugeTop, gaugeMarker, gaugeFill;
-        // The word the button used to carry now heads the screen (INTERFACES.md §2.3).
+        // The word the button used to carry now heads the screen (docs/ELEVATOR_LOOK.md §3).
         [SerializeField] private string carWord = "SURFACE";
         [SerializeField] private string deckWord = "DESCEND";
         [SerializeField] private float floorTop = 0.10f;

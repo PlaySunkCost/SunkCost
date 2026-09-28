@@ -106,7 +106,7 @@ namespace SunkCost.Editor.Prototype
             return material;
         }
 
-        // URP transparent, alpha blended, ZWrite off, queue 3000 (INTERFACES.md §2.6).
+        // URP transparent, alpha blended, ZWrite off, queue 3000 (docs/ELEVATOR_LOOK.md §3, §5).
         // Preserve Specular off: URP's validation would otherwise turn the blend
         // premultiplied, and reflections and highlights would not fade with alpha (a
         // milky, blown-out surface under the Cabin Light; the review's F1).

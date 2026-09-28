@@ -68,7 +68,7 @@ TABLE = {
     "NamePlate":    ((3.0, 0.15, 0.6), "uniform", 3000),
     "Signs":        ((1.9, 0.12, 0.45), "uniform", 3000),
     # The elevator (Dan's round glass car and shaft, 28 September 2026): each has its
-    # own steps in elevator_parts.py (scratchpad elev/ELEVATOR_MODELS.md sections 1-8).
+    # own steps in elevator_parts.py (the resulting numbers: docs/ELEVATOR_LOOK.md).
     "ElevatorCar":  ((4.657, 4.658, 3.896), "uniform", 40000),  # k 2.4501, then the car frame: floor top at 0.10
     "CarPanel":     ((0.74, 0.36, 0.9463), "uniform", 8000),   # k 0.5: the cap at 1.30 m in the car
     "TubeSection":  ((6.574, 6.574, 4.4725), "uniform", 12000),

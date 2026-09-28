@@ -1,7 +1,6 @@
 """The eight elevator models (Dan's round glass car and shaft, 28 September 2026):
 the extra Blender steps each one needs on top of prepare_ship_part.py, in the order
-the readiness check tested end to end (scratchpad elev/ELEVATOR_MODELS.md sections
-1-8, the tested code in elev/work/rw2/*_final*.py).
+the readiness check tested end to end (the numbers they produce: docs/ELEVATOR_LOOK.md).
 
 prepare_ship_part.py calls run() for these parts instead of its generic fit: each
 recipe puts the raw download into the game's frame itself (a car frame, a bend, a
@@ -441,7 +440,7 @@ def plain(mesh, target, budget, psp, res):
     res["r"] = [round(float(vr.min()), 4), round(float(vr.max()), 4)]
 
 
-# ---- 5. the tube foot (option A': the threshold on the sand, INTERFACES A2) -------------
+# ---- 5. the tube foot (option A': the threshold on the sand, docs/ELEVATOR_LOOK.md A2) -------------
 
 FOOT = {"axis": (-0.0118, 0.127), "floor": -0.2486, "yaw": -2.25, "k": 5.40, "pit_r": 2.56}
 

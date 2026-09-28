@@ -39,7 +39,7 @@ namespace SunkCost.Editor.Prototype
         private const float DoorThicknessMeters = 0.1f;
         public const float FloorThicknessMeters = 0.1f;
 
-        // The housing's shutters (ELEVATOR_MODELS D3): curved plates on the shutter line,
+        // The housing's shutters (docs/ELEVATOR_LOOK.md §2): curved plates on the shutter line,
         // hung from a top track, their bottom edge just over the grate's slats (ship y
         // 0.05, the slats' tops are 0.03) and their top under the track.
         public const float ShutterRadius = ElevatorLook.ShutterRadius;   // 3.075
@@ -49,7 +49,7 @@ namespace SunkCost.Editor.Prototype
         private const float ShutterColliderThickness = 0.10f;
 
         // The status plate on the housing's header over the entrance, read from the bow:
-        // its back against the header's face (ELEVATOR_MODELS §7, cabin-local).
+        // its back against the header's face (docs/ELEVATOR_LOOK.md §2, cabin-local).
         private static readonly Vector3 StatusPlateLocal = new(0f, 3.49f, 4.185f);
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the
@@ -180,8 +180,8 @@ namespace SunkCost.Editor.Prototype
             return colliderObject;
         }
 
-        // The shut shutters' box across the housing's entrance, on their line (INTERFACES
-        // A6): without it a player walked 0.7 m into the drawn plates. Disabled here (the
+        // The shut shutters' box across the housing's entrance, on their line (docs/ELEVATOR_LOOK.md
+        // A6, §4): without it a player walked 0.7 m into the drawn plates. Disabled here (the
         // shutters are parked open); WorldSceneFlow.PresentDeckCabin switches it with them.
         public static GameObject CreateShutterCollider(Transform cabin)
         {
