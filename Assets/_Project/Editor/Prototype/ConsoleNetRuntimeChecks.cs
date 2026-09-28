@@ -784,7 +784,7 @@ namespace SunkCost.Editor.Prototype
                 if (r.StartsWith("id=" + tc + ";"))
                 {
                     tHeader = Header(r);
-                    tMessage = Rx(tHeader, @"; message=([^;]*);");
+                    tMessage = Rx(tHeader, @"; message=(.*?); monitor="); // the admission text itself holds a ';'
                     if (tHeader.Contains("client=False") && Regex.IsMatch(tMessage, "travelling|Disconnected|Could not|full|progress|Wrong", RegexOptions.IgnoreCase)) break;
                 }
                 yield return Wait(1f);
