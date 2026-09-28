@@ -148,6 +148,9 @@ namespace SunkCost.World
             if (dayState.Day == 0 && !dayState.Payday) { why = "Nothing to pay yet — dive first"; return false; }
             ShipParts ship = ShipParts.InWorld(WorldId.HQ);
             if (ship == null) { why = "No ship at the dock."; return false; }
+            // The lever's own row (ConsoleRules.HQLever): before payday an empty room sells
+            // nothing, and CrewDayState.ServerPay would write a new $0 SHORT report (bugs/HQ-4).
+            if (!dayState.Payday && StorageReadout.SumInside(ship) <= 0) { why = ConsoleRules.NothingToSell; return false; }
             int sales = ServerSellStorage(ship);
             PayReport report = dayState.ServerPay(sales, Settings.QuotaPerCycle);
             dayState.ServerSetBoxValue(0);

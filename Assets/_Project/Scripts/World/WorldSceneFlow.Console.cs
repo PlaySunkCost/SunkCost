@@ -26,7 +26,8 @@ namespace SunkCost.World
         // second pull would read "Select a destination" as the ship casts off (the
         // netcode review's m3). Across ticks the transactions refuse a repeat by
         // themselves (ServerSail's transitioning, the unlock bit, DiveDone) and the
-        // rule table dims PAY over an empty room (ConsoleRules.NothingToSell).
+        // rule table dims PAY over an empty room (ConsoleRules.NothingToSell), which
+        // ServerPay itself refuses too (bugs/HQ-4).
         private readonly int[] lastPullFrame = { -1, -1 };
 
         // E on a destination card. Ship only (the HQ console has no cards).
