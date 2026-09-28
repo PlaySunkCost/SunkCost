@@ -282,7 +282,7 @@ namespace SunkCost.Editor.Prototype
         }
 
         public const float ScreenLineHeight = 0.045f;
-        public static readonly Vector2 ScreenTextBox = new(0.26f, 0.16f);
+        public static readonly Vector2 ScreenTextBox = new(0.36f, 0.20f);  // the curved screen is about 0.42 x 0.24 m
 
         private static Transform FindDeep(Transform root, string name)
         {

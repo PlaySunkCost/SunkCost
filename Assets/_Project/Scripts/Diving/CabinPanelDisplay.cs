@@ -27,12 +27,13 @@ namespace SunkCost.Diving
         [SerializeField] private TextMesh mirror;      // the deck's status plate; null in the car
         [SerializeField] private TextMesh screen;
         [SerializeField] private Transform gaugeBottom, gaugeTop, gaugeMarker, gaugeFill;
-        [SerializeField] private string deckIdleText = "DESCEND";
+        // The word the button used to carry now heads the screen (INTERFACES.md §2.3).
+        [SerializeField] private string carWord = "SURFACE";
+        [SerializeField] private string deckWord = "DESCEND";
         [SerializeField] private float floorTop = 0.10f;
-        private Vector3 fillScale;
-        private bool fillScaleKnown;
         private int lastState = -1, lastDepth = -1, lastPercent = -1;
         private CarWaterFlow lastFlow;
+        private string lastPlate;
 
         public Mode DisplayMode => mode;
         public float GaugeFraction { get; private set; }
@@ -67,9 +68,11 @@ namespace SunkCost.Diving
                 gaugeMarker.position = Vector3.Lerp(gaugeBottom.position, gaugeTop.position, GaugeFraction);
             if (gaugeFill != null)
             {
-                if (!fillScaleKnown) { fillScale = gaugeFill.localScale; fillScaleKnown = true; }
-                // The fill's pivot is its bottom (the models role builds it so).
-                gaugeFill.localScale = new Vector3(fillScale.x, fillScale.y * Mathf.Max(0.0001f, GaugeFraction), fillScale.z);
+                // The fill's mesh is the whole gauge tall with its pivot at the bottom
+                // (ElevatorLook.PlacePanel), so its y scale is the fraction itself.
+                Vector3 scale = gaugeFill.localScale;
+                float y = Mathf.Max(0.0001f, GaugeFraction);
+                if (!Mathf.Approximately(scale.y, y)) gaugeFill.localScale = new Vector3(scale.x, y, scale.z);
             }
 
             string text = mode == Mode.Deck ? DeckText() : CarText();
@@ -80,7 +83,9 @@ namespace SunkCost.Diving
         private string DeckText()
         {
             string plate = mirror != null ? mirror.text : string.Empty;
-            return string.IsNullOrEmpty(plate) ? deckIdleText : plate;
+            if (plate == lastPlate && ScreenText.Length > 0) return ScreenText;
+            lastPlate = plate;
+            return string.IsNullOrEmpty(plate) ? deckWord : deckWord + "\n" + plate;
         }
 
         // Rebuilt only when a shown number changes (no garbage per frame).
@@ -95,7 +100,7 @@ namespace SunkCost.Diving
             CarWaterFlow flow = water.Flow;
             if (state == lastState && depth == lastDepth && percent == lastPercent && flow == lastFlow) return ScreenText;
             lastState = state; lastDepth = depth; lastPercent = percent; lastFlow = flow;
-            return CarLine(car.State, car.Upward, flow) + "\n" + $"DEPTH {depth} m   WATER {percent}%";
+            return carWord + "\n" + CarLine(car.State, car.Upward, flow) + "\n" +$"DEPTH {depth} m   WATER {percent}%";
         }
 
         public static string CarLine(ElevatorState state, bool upward, CarWaterFlow flow)
