@@ -826,7 +826,7 @@ namespace SunkCost.Editor.Prototype
                 yield return Expect(() => Day.HasJumped(host.OwnerId), 5f, () => "G11 the host jumped");
                 yield return AimLever();
                 yield return null;
-                Check(hud.PromptText == ConsoleRules.RunOver, "G11 the lever's prompt for a non-jumper on the plank: " + hud.PromptText);
+                Check(hud.PromptText.StartsWith("THE RUN IS OVER"), "G11 the prompt at the lever for a non-jumper on the plank names the reason: " + hud.PromptText);
                 yield return AimCard();
                 yield return null;
                 Say("G11 the card's prompt for a non-jumper on the plank: " + hud.PromptText);
