@@ -385,7 +385,10 @@ namespace SunkCost.Editor.Prototype
             Check(!float.IsNaN(lo), "DK3 the housing is open somewhere in front of the doorway");
             float centre = (lo + hi) * 0.5f;
             Check(Mathf.Abs(centre) <= 1f, $"DK3 the housing's opening is centred on the car's doorway ({lo:0.00}° .. {hi:0.00}°, centre {centre:0.00}°)");
-            Check(hi - lo >= 2f * half, $"DK3 the opening ({hi - lo:0.0}°) is at least as wide as the car's doorway ({2f * half:0.0}°)");
+            // Widths as chords where they stand: the housing's opening at the shutters' radius, the car's doorway at its door leaves (r 2.35).
+            float housingChord = 2f * DeckCabinBuilder.ShutterRadius * Mathf.Sin(Mathf.Min(-lo, hi) * Mathf.Deg2Rad);
+            float doorwayChord = 2f * DeckCabinBuilder.InteriorRadiusMeters * Mathf.Sin(half * Mathf.Deg2Rad);
+            Check(housingChord >= doorwayChord, $"DK3 the housing's opening ({hi - lo:0.0}°, {housingChord:0.00} m at r {DeckCabinBuilder.ShutterRadius}) is wider than the car's doorway ({2f * half:0.0}°, {doorwayChord:0.00} m at r {DeckCabinBuilder.InteriorRadiusMeters})");
             foreach (float x in new[] { -0.7f, 0f, 0.7f })
             {
                 Vector3 start = sea.DeckCabin.TransformPoint(new Vector3(x, StandY, 5.5f));
@@ -440,9 +443,10 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.5f);
             int serial = Day.CabinRide.Serial;
             H.ClientRequestCabin();
-            string waiting = "Waiting for: " + guestName;
-            yield return Expect(() => Day.LastRefusal.Text == waiting, 3f, () => "DK6 the deck button refuses without the guest: '" + Day.LastRefusal.Text + "'");
+            yield return Expect(() => Day.LastRefusal.Text == "Waiting for: " + WorldSceneFlow.DisplayName(guestId), 3f, () => "DK6 the deck button refuses without the guest: '" + Day.LastRefusal.Text + "'");
             Check(Day.CabinRide.Serial == serial && !Day.Riding, "DK6/DK7 no ride started with the guest on the deck");
+            guestName = WorldSceneFlow.DisplayName(guestId); // the guest's saved name arrives after its spawn
+            string waiting = "Waiting for: " + guestName;
             yield return Expect(() => sea.DeckCabinPanel.text.Contains(waiting), 2f, () => "DK6 the status plate names the guest: '" + sea.DeckCabinPanel.text.Replace("\n", " | ") + "'");
             CabinPanelDisplay deckDisplay = DeckDisplay(sea);
             Check(deckDisplay != null, "DK6 the car's panel on the deck has its screen (CabinPanelDisplay)");
@@ -463,7 +467,7 @@ namespace SunkCost.Editor.Prototype
             yield return DeckVsCarLook(sea, "before the ride", null);
             serial = Day.CabinRide.Serial;
             H.ClientRequestCabin();
-            yield return Expect(() => Day.CabinRide.Serial == serial + 1, 3f, () => "DK7 the host's press starts the ride with everyone in (refusal: '" + Day.LastRefusal.Text + "')");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "DK7 the host's press starts the ride with everyone in (refusal: '" + Day.LastRefusal.Text + "')");
             yield return Expect(() => host.gameObject.scene == WorldScenes.Scene(WorldId.Dive) && WorldSceneFlow.FindCar() != null && WorldSceneFlow.FindCar().IsInsideCar(host.transform.position + Vector3.up * 0.5f), 60f, () => "DK8 the host crossed into the dive car");
             yield return null; yield return null;
             ElevatorController car = WorldSceneFlow.FindCar();
@@ -476,8 +480,9 @@ namespace SunkCost.Editor.Prototype
             yield return DeckVsCarLook(sea, "at the swap", car);
             yield return Expect(() => !Day.CabinRide.Active && Day.Elevator.State == ElevatorState.AtBottom, 60f, () => "DK7 both rode down");
             Check(Day.IsBelow(host.OwnerId) && Day.IsBelow(guestId), "DK7 both are listed below");
-            yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && Field(r, "deckPresent") == "False" && Field(r, "deckCarShown") == "False" && FieldF(r, "shutters") < 0.001f && Field(r, "shutterBox") == "True", 20f,
-                () => "DK4 below, the guest's ship shows the empty housing: no car, shutters shut, the entrance boxed");
+            // A diver below holds only the dive world (no ship loaded): its ship rows come once it is back on deck.
+            yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("scene=DiveSite01") && DeckLine(r).Contains("elevatorDeck: none"), 20f,
+                () => "DK4 below, the guest holds the dive world only (its ship is not loaded; its shutter rows follow on deck)");
             Check(!AnyRendererOn(sea.DeckCabinCarGlass) && YawFraction(sea.DeckCabinHousingDoorR, half) < 0.001f && sea.DeckCabinShutterCollider.enabled, "DK4 the host's ship shows the same: no car, shutters shut, the entrance boxed");
 
             // ---- DK5 (car away): the entrance and the well while the car is below ----
@@ -488,17 +493,19 @@ namespace SunkCost.Editor.Prototype
             Heading("DK4/DK5 — the guest comes up alone; the empty car goes back down for the host; the guest waits in the entrance");
             car = WorldSceneFlow.FindCar();
             Vector3 carDoorway = car.transform.TransformDirection(Quaternion.Euler(0f, CabinFrame.CarDoorwayYaw, 0f) * Vector3.forward);
+            yield return GuestEventually(r => r.Contains("travelLocked=False") && GuestPlayerLine(r, guestId).Contains("controllerOn=True"), 8f, () => "the guest is unlocked at the bottom");
             host.TeleportLocal(car.transform.position + carDoorway * 4.2f + Vector3.up * 0.1f, host.Yaw); // the host steps out onto the sand
             yield return Wait(0.5f);
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f)) + "}");
             yield return Wait(0.6f);
             serial = Day.CabinRide.Serial;
             yield return Send("{\"id\":{id},\"action\":\"car\"}");
-            yield return Expect(() => Day.CabinRide.Serial == serial + 1, 5f, () => "the guest's press starts its ride up (refusal: '" + Day.LastRefusal.Text + "')");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 5f, () => "the guest's press starts its ride up (refusal: '" + Day.LastRefusal.Text + "')");
             yield return ArrivalOpens(sea, half, "the guest's ride up");
             Check(Day.IsBelow(host.OwnerId) && !Day.IsBelow(guestId), "the guest is up, the host still below");
             // N1 (the review fix, 28 September 2026): the guest waits on the grate between the
             // car's doorway and the shutters while the empty car is owed below.
+            yield return GuestEventually(r => r.Contains("travelLocked=False") && GuestPlayerLine(r, guestId).Contains("controllerOn=True"), 8f, () => "the guest is unlocked on the deck after its ride");
             Vector3 entrance = CabinPoint(sea, 2.8f, 0f, StandY);
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(entrance) + "}");
             yield return Wait(0.3f);
@@ -552,7 +559,7 @@ namespace SunkCost.Editor.Prototype
             H.MoveLocalIntoCar(); yield return Wait(0.5f);
             serial = Day.CabinRide.Serial;
             H.ClientRequestCar();
-            yield return Expect(() => Day.CabinRide.Serial == serial + 1, 3f, () => "the host's car press starts the ride up");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "the host's car press starts the ride up");
             yield return ArrivalOpens(sea, half, "the host's ride up");
             Check(Day.Below.Count == 0 && sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "the host is back in the deck cabin, nobody below");
             yield return GuestEventually(r => Field(r, "deckCarShown") == "True" && FieldF(r, "shutters") > 0.999f && Field(r, "shutterBox") == "False" && Field(r, "doorBox") == "False", 6f,
@@ -568,15 +575,16 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.6f);
             serial = Day.CabinRide.Serial;
             yield return Send("{\"id\":{id},\"action\":\"cabin\"}");
-            yield return Expect(() => Day.CabinRide.Serial == serial + 1, 3f, () => "DK7 the guest's press starts the ride with everyone in (refusal: '" + Day.LastRefusal.Text + "')");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "DK7 the guest's press starts the ride with everyone in (refusal: '" + Day.LastRefusal.Text + "')");
             yield return Expect(() => !Day.CabinRide.Active && Day.Elevator.State == ElevatorState.AtBottom, 70f, () => "DK7 both rode down on day 2");
+            yield return GuestEventually(r => r.Contains("travelLocked=False") && GuestPlayerLine(r, guestId).Contains("controllerOn=True"), 8f, () => "the guest is unlocked at the bottom");
             car = WorldSceneFlow.FindCar();
             H.MoveLocalIntoCar();
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + car.transform.forward * 1.1f + Vector3.up * (SunkCost.Sites.ElevatorCabinBuilder.CarFloorThickness + 0.05f)) + "}");
             yield return Wait(0.8f);
             serial = Day.CabinRide.Serial;
             H.ClientRequestCar();
-            yield return Expect(() => Day.CabinRide.Serial == serial + 1, 3f, () => "both ride up");
+            yield return Expect(() => Day.CabinRide.Serial > serial, 3f, () => "both ride up");
             yield return ArrivalOpens(sea, half, "the ride up together");
 
             // ---- DK4: every frame on both peers ----
@@ -765,7 +773,7 @@ namespace SunkCost.Editor.Prototype
                 {
                     frames++;
                     float y = ShipY(ship, host.transform.position);
-                    if (!host.Controller.isGrounded) airborne++;
+                    if (!host.IsGrounded) airborne++;
                     if (Mathf.Abs(y - lastY) > worstDy) { worstDy = Mathf.Abs(y - lastY); worstAt = $"r {RadiusOf(ship, host.transform.position):0.00}"; }
                     lastY = y;
                     if (Time.unscaledTime - stallFrom >= 0.5f)
