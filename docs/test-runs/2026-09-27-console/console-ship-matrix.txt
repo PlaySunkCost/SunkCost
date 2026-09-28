@@ -1,0 +1,422 @@
+Console-ship matrix started 28/09/2026 07:47:08
+PASS editor is the host with a spawned player
+  · host 'Skipper', 3 days a cycle, quota $500, refusals shown 3 s; prices Site02 $100 Site03 $200 Site04 $300
+
+== H0 — the console stands on the docked ship: nothing selected, HERE on HQ, the locks, the dim sign
+PASS H0 HQ has a docked ship
+PASS H0 the ship rig is on the docked ship, kind Ship
+PASS H0 the rig carries the composer and the lever
+PASS H0 the lever control and five card colliders
+PASS H0 card 0 is Nav Card HQ → HQ
+PASS H0 card 1 is Nav Card Site01 → Site01
+PASS H0 card 2 is Nav Card Site02 → Site02
+PASS H0 card 3 is Nav Card Site03 → Site03
+PASS H0 card 4 is Nav Card Site04 → Site04
+PASS H0 fresh state: selected=None unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal=''
+PASS stood at the ship console: moved local player to (-50.79, 0.00, -2.23)
+PASS H0 top screen: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H0 the quota at the foot: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H0 bottom screen: SELECT A DESTINATION ·  ·  · NEW CYCLE | QUOTA $0 / $500 · 
+PASS H0 the sign is dim: CONFIRM/off
+PASS H0 nothing to confirm: selected=None unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal=''
+PASS H0 compat text: Docked at HQ — select a site and pull CONFIRM
+  · prompt at rest: prompt=''; target=none
+
+== H1 — choose HQ with the real aim and E: selected, HERE stays, SAIL HOME, the lever dim with 'Already here'
+PASS the dot is on Nav Card HQ (aim Card/HQ)
+PASS H1 the prompt on the HQ card: Press E to select HQ
+PASS H1 the selection is HQ (HQ)
+PASS H1 the HQ card is selected and HERE: NAVIGATION · NEW CYCLE · [HQ*@~][SITE 01][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H1 bottom screen: SELECTED DESTINATION · HQ · SAIL HOME · NEW CYCLE | QUOTA $0 / $500 · YOU ARE HERE
+PASS H1 the sign is dim, reason Already here: CONFIRM/off
+PASS H1 the card's prompt now: HQ selected
+PASS the dot is on Nav Lever (aim Lever/None)
+PASS H1 the dim lever's prompt explains: Already here
+PASS H1 a pull on the dim lever: refused 'Already here'
+PASS H1 a pull on the dim lever: the refusal reads 'Already here' (expected 'Already here')
+PASS H1 the bottom screen shows the refusal prominently: SELECTED DESTINATION · HQ · SAIL HOME ·  · ALREADY HERE · NOTICE
+PASS H1 compat text is the refusal, no pull, no trip: Already here
+PASS H1 the contextual screen is back after the notice: SELECTED DESTINATION · HQ · SAIL HOME · NEW CYCLE | QUOTA $0 / $500 · YOU ARE HERE
+
+== H2 — choose the open site: CONFIRM lit, READY
+PASS the dot is on Nav Card Site01 (aim Card/Site01)
+PASS H2 the selection is Site 01 (Site01)
+PASS H2 CONFIRM lit, READY: CONFIRM/on | SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · READY
+PASS H2 the card selected, HERE still on HQ, the facts: NAVIGATION · NEW CYCLE · [HQ@][SITE 01*~][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H2 the resolver: selected=Site01 unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=CONFIRM/on hqSign=PAY/off shipAction=Confirm/Site01/on hqAction=None/off:Nothing to pay yet — dive first aim=card:Site01 votes=0/0 refusal='Already here'
+PASS the dot is on Nav Lever (aim Lever/None)
+PASS H2 the lever's prompt: Press E to sail to SITE 01
+PASS H2 compat text: Docked at HQ — select a site and pull CONFIRM
+  · capture saved Temp/look/console-ship-H2-confirm.png
+
+== H3 — the presser ashore: 'Not aboard: <host>' on the screen and the compat text; nothing sails; a selection from ashore is refused too
+PASS H3 the host stands on the HQ floor
+  · pull from ashore: requested Ship/Confirm/Site01
+PASS H3 the pull from ashore: refused 'Not aboard: Skipper'
+PASS H3 the pull from ashore: the refusal reads 'Not aboard: Skipper' (expected 'Not aboard: Skipper')
+PASS H3 compat text is the whole refusal: Not aboard: Skipper
+PASS H3 the bottom screen names the absentee: SELECTED DESTINATION · SITE 01 ·  ·  · NOT ABOARD: SKIPPER · NOTICE
+PASS H3 nothing sailed, no pull counted, the selection kept
+  · select from ashore: requested HQ
+PASS H3 a selection from ashore: refused 'Not aboard: Skipper'
+PASS H3 a selection from ashore: the refusal reads 'Not aboard: Skipper' (expected 'Not aboard: Skipper')
+PASS H3 the selection is unchanged by the ashore press
+PASS stood at the ship console: moved local player to (-50.79, 0.00, -2.23)
+PASS H3 back at the console: CONFIRM again after the notice: CONFIRM/on
+
+== H4 — choose a locked site short of money: UNLOCK dim, BALANCE / COST / $40 SHORT, the pull refused and nothing charged
+PASS the dot is on Nav Card Site02 (aim Card/Site02)
+PASS H4 the locked site is selected (Site02)
+PASS H4 UNLOCK dim, the shortfall: UNLOCK $100/off | SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $60 | COST $100 · $40 SHORT
+PASS H4 the locked card's screen: SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $60 | COST $100 · $40 SHORT | NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02*#~][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H4 the resolver: selected=Site02 unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=UNLOCK $100/off hqSign=PAY/off shipAction=Unlock/Site02/off:$40 short hqAction=None/off:Nothing to pay yet — dive first aim=card:Site02 votes=0/0 refusal='Not aboard: Skipper'
+PASS the dot is on Nav Lever (aim Lever/None)
+PASS H4 the dim lever's prompt: $40 short
+PASS H4 the pull short of money: refused '$40 short'
+PASS H4 the pull short of money: the refusal reads '$40 short' (expected '$40 short')
+PASS H4 the screen explains: SELECTED DESTINATION · SITE 02 ·  ·  · $40 SHORT · NOTICE
+PASS H4 nothing charged ($60), nothing unlocked, no pull counted
+  · capture saved Temp/look/console-ship-H4-short.png
+PASS H4 the notice cleared
+
+== H6 — the same-frame double charge: two server unlocks of one site in one frame charge once
+PASS H6 same frame: 'unlocked Site04' then 'refused: Already open'
+PASS H6 charged exactly once: balance $0, unlocked Site04
+PASS H6 HQ and Site 01 cannot be bought
+  · relock: relocked: none
+PASS H6 every site locked again for the per-site rows
+
+== H5/H7 — unlock each site in the order 03, 04, 02: short (no charge), exact funds (charged once, the lever swings), already open (refused, no charge)
+PASS H7 SITE 03 costs $200 (the catalogue's serialized price; the default is $200)
+PASS the dot is on Nav Card Site03 (aim Card/Site03)
+PASS H7 SITE 03 selected short: UNLOCK $200/off | SELECTED DESTINATION · SITE 03 ·  · SITE 03 · uncharted | BALANCE $160 | COST $200 · $40 SHORT
+  · pull short: requested Ship/Unlock/Site03
+PASS H7 SITE 03 pull $40 short: refused '$40 short'
+PASS H7 SITE 03 pull $40 short: the refusal reads '$40 short' (expected '$40 short')
+PASS H7 SITE 03: no charge on the short pull ($160)
+PASS H7 the notice cleared
+PASS H5 SITE 03 exact funds: UNLOCK $200/on | SELECTED DESTINATION · SITE 03 ·  · SITE 03 · uncharted | BALANCE $200 | COST $200 · PULL TO UNLOCK
+PASS the dot is on Nav Lever (aim Lever/None)
+PASS H5 the lever's prompt: Press E to unlock SITE 03 ($200)
+  · capture saved Temp/look/console-ship-H5-unlock-lit.png
+PASS H5 SITE 03 unlocked by the pull (mask Site03, pull 1)
+PASS H5 SITE 03: charged exactly $200, balance $0, the pull is Ship/Unlock
+PASS H5 SITE 03: this rig swung its lever for pull 1 (played 1, peak 30°)
+PASS H5 SITE 03 now open: no lock, CONFIRM lit, READY: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02#][SITE 03*][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | CONFIRM/on
+  · stale UNLOCK pull: requested Ship/Unlock/Site03
+PASS H7 SITE 03 a pull still expecting UNLOCK: refused 'Already open'
+PASS H7 SITE 03 a pull still expecting UNLOCK: the refusal reads 'Already open' (expected 'Already open')
+PASS H7 SITE 03 the server unlock refuses an open site
+PASS H7 SITE 03: no second charge ($200), no pull counted
+PASS H7 the notice cleared
+PASS H7 SITE 04 costs $300 (the catalogue's serialized price; the default is $300)
+PASS the dot is on Nav Card Site04 (aim Card/Site04)
+PASS H7 SITE 04 selected short: UNLOCK $300/off | SELECTED DESTINATION · SITE 04 ·  · SITE 04 · uncharted | BALANCE $260 | COST $300 · $40 SHORT
+  · pull short: requested Ship/Unlock/Site04
+PASS H7 SITE 04 pull $40 short: refused '$40 short'
+PASS H7 SITE 04 pull $40 short: the refusal reads '$40 short' (expected '$40 short')
+PASS H7 SITE 04: no charge on the short pull ($260)
+PASS H7 the notice cleared
+PASS H5 SITE 04 exact funds: UNLOCK $300/on | SELECTED DESTINATION · SITE 04 ·  · SITE 04 · uncharted | BALANCE $300 | COST $300 · PULL TO UNLOCK
+  · pull exact: requested Ship/Unlock/Site04
+PASS H5 SITE 04 unlocked by the pull (mask Site03+Site04, pull 2)
+PASS H5 SITE 04: charged exactly $300, balance $0, the pull is Ship/Unlock
+PASS H5 SITE 04: this rig swung its lever for pull 2 (played 2, peak 30°)
+PASS H5 SITE 04 now open: no lock, CONFIRM lit, READY: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02#][SITE 03][SITE 04*~] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | CONFIRM/on
+  · stale UNLOCK pull: requested Ship/Unlock/Site04
+PASS H7 SITE 04 a pull still expecting UNLOCK: refused 'Already open'
+PASS H7 SITE 04 a pull still expecting UNLOCK: the refusal reads 'Already open' (expected 'Already open')
+PASS H7 SITE 04 the server unlock refuses an open site
+PASS H7 SITE 04: no second charge ($300), no pull counted
+PASS H7 the notice cleared
+PASS H7 SITE 02 costs $100 (the catalogue's serialized price; the default is $100)
+PASS the dot is on Nav Card Site02 (aim Card/Site02)
+PASS H7 SITE 02 selected short: UNLOCK $100/off | SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $60 | COST $100 · $40 SHORT
+  · pull short: requested Ship/Unlock/Site02
+PASS H7 SITE 02 pull $40 short: refused '$40 short'
+PASS H7 SITE 02 pull $40 short: the refusal reads '$40 short' (expected '$40 short')
+PASS H7 SITE 02: no charge on the short pull ($60)
+PASS H7 the notice cleared
+PASS H5 SITE 02 exact funds: UNLOCK $100/on | SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $100 | COST $100 · PULL TO UNLOCK
+  · pull exact: requested Ship/Unlock/Site02
+PASS H5 SITE 02 unlocked by the pull (mask Site02+Site03+Site04, pull 3)
+PASS H5 SITE 02: charged exactly $100, balance $0, the pull is Ship/Unlock
+PASS H5 SITE 02: this rig swung its lever for pull 3 (played 3, peak 30°)
+PASS H5 SITE 02 now open: no lock, CONFIRM lit, READY: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02*~][SITE 03][SITE 04] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | CONFIRM/on
+  · stale UNLOCK pull: requested Ship/Unlock/Site02
+PASS H7 SITE 02 a pull still expecting UNLOCK: refused 'Already open'
+PASS H7 SITE 02 a pull still expecting UNLOCK: the refusal reads 'Already open' (expected 'Already open')
+PASS H7 SITE 02 the server unlock refuses an open site
+PASS H7 SITE 02: no second charge ($100), no pull counted
+PASS H7 the notice cleared
+PASS H7 all three sites open after three pulls: Site02+Site03+Site04
+PASS H7 no lock on any card: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02*~][SITE 03][SITE 04] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+
+== H8 — the selection changes in the frame before the pull: 'Selection changed', nothing sails; then the honest pull sails and clears the selection
+  · select: requested Site01
+PASS H8 Site 01 selected, CONFIRM: CONFIRM/on
+  · same frame: requested Site03 then requested Ship/Confirm/Site01
+PASS H8 the stale CONFIRM: refused 'Selection changed'
+PASS H8 the stale CONFIRM: the refusal reads 'Selection changed' (expected 'Selection changed')
+PASS H8 the new selection stands, nothing sailed, no pull counted
+PASS H8 the screen explains: SELECTED DESTINATION · SITE 03 ·  ·  · SELECTION CHANGED · NOTICE
+PASS H8 Site 03 ready after the notice: SELECTED DESTINATION · SITE 03 ·  · NEW CYCLE | QUOTA $0 / $500 · READY
+  · pull: requested Ship/Confirm/Site03
+PASS H8 one trip started (serial 1)
+PASS H8 the pull counted once as CONFIRM and the selection cleared at once: selected=None unlocked=Site02+Site03+Site04 site=HQ toSite=Site03 lever=4/Ship/Confirm shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Ship travelling hqAction=None/off:Ship travelling aim=none votes=0/0 refusal='Selection changed'
+PASS H8 bound for Site 03 in the sea world: to=Sea toSite=Site03
+PASS H8: this rig swung its lever for pull 4 (played 4, peak 30°)
+
+== H10 — the sailing screens: SAILING TO SITE 03, the lever dim, HERE on no card, a selection refused during the trip
+PASS H10 bottom screen: SAILING · SITE 03 ·  · NEW CYCLE | QUOTA $0 / $500 · SAILING TO SITE 03
+PASS H10 the sign dim, HERE on no card while travelling: CONFIRM/off | NAVIGATION · NEW CYCLE · [HQ][SITE 01][SITE 02][SITE 03][SITE 04] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H10 compat text: Sailing to Site 03…
+  · select during the trip: requested HQ
+PASS H10 a selection during the trip: refused 'Ship travelling'
+PASS H10 a selection during the trip: the refusal reads 'Ship travelling' (expected 'Ship travelling')
+PASS H10 the selection stays cleared
+PASS H10: arrived at Sea (phase AtSea)
+
+== H9 — SITE 03 routed to Site 01's world with its identity kept: HERE on SITE 03, DAY 1/3
+PASS H9 at sea on day 1 (phase AtSea)
+PASS H9 the logical site is Site 03: site=Site03
+PASS H9 the sea ship carries its own console
+PASS stood at the ship console: moved local player to (-2.20, 0.00, 2984.23)
+PASS H9/H16 HERE on SITE 03, DAY 1/3, nothing selected: NAVIGATION · DAY 1/3 · [HQ][SITE 01][SITE 02~][SITE 03@][SITE 04] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H16 the screen re-entered after the trip: SELECT A DESTINATION ·  ·  · DAY 1 OF 3 | QUOTA $0 / $500 · 
+PASS H9 compat text names the site: Day 1 of 3 — Site 03 — select HQ and pull CONFIRM
+  · the sea rig's played serial (a fresh rig plays no pull that preceded it): serial=4 kind=Ship action=Confirm tick=2305 played=0/-1 angles=0/0
+
+== H13 — a dive in progress: DIVE IN PROGRESS / 1 BELOW, the lever dim, a selection allowed, the pull refused
+PASS H13 the day began ()
+PASS H13 the dive screen: DIVE IN PROGRESS · SITE 03 ·  · DAY 1 OF 3 | QUOTA $0 / $500 · 1 BELOW | END DAY/off
+PASS H13 compat text: Day 1 of 3 — dive in progress — console locked
+PASS H13 the dim sign's word comes from the facts (the lever's next job, bugs/NET-2's fix): END DAY/off
+  · select during the dive: requested HQ
+PASS H13 a card may be selected during the dive (HQ)
+  · pull during the dive: requested Ship/None/None
+PASS H13 the pull during the dive: refused 'Dive in progress'
+PASS H13 the pull during the dive: the refusal reads 'Dive in progress' (expected 'Dive in progress')
+PASS H13 no pull counted, the dive goes on
+PASS H13 the notice cleared
+PASS H13 everyone up: the dive is done
+
+== SHIP-2 retest — the car away with nobody below after the dive: END DAY lit (not 'Divers below')
+  · SHIP-2: the car after the fake dive: Descending (cabin away)
+PASS SHIP-2 the repro state: the cabin away (Descending), nobody below, the dive done
+PASS SHIP-2 END DAY lit with the car away and nobody below: END DAY/on | SELECTED DESTINATION · HQ · SAIL HOME · DAY 1 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST
+PASS SHIP-2 the screen names no divers: SELECTED DESTINATION · HQ · SAIL HOME · DAY 1 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST
+
+== H11 — after the dive: END DAY on the sign whatever is selected; the real pull ends the day once; a second pull is refused
+PASS H11 END DAY with HQ selected: END DAY/on | SELECTED DESTINATION · HQ · SAIL HOME · DAY 1 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST
+  · select Site 01: requested Site01
+PASS H11 still END DAY with Site 01 selected: END DAY/on
+PASS H11 compat text: Day 1 of 3 — dive done — pull END DAY
+PASS H11 the resolver: selected=Site01 unlocked=Site02+Site03+Site04 site=Site03 toSite=Site03 lever=4/Ship/Confirm shipSign=END DAY/on hqSign=/off shipAction=EndDay/None/on hqAction=None/off:Not docked at HQ aim=card:Site02 votes=0/0 refusal='Dive in progress'
+PASS the dot is on Nav Lever (aim Lever/None)
+PASS H11 the lever's prompt: Press E to end the day
+  · capture saved Temp/look/console-ship-H11-endday.png
+PASS H11 the day ended once by the lever: day 2, pull 5
+PASS H11 the pull is END DAY
+  · SHIP-2: the car after END DAY: Descending (cabin away)
+PASS H11: this rig swung its lever for pull 5 (played 5, peak 30°)
+  · second END DAY: requested Ship/EndDay/None
+PASS H11 a second END DAY pull: refused 'Nobody has dived today'
+PASS H11 a second END DAY pull: the refusal reads 'Nobody has dived today' (expected 'Nobody has dived today')
+PASS H11 the day did not end twice
+PASS H11 the notice cleared
+PASS H16 day 2, Site 01 selected at Site 03: sail home first: NAVIGATION · DAY 2/3 · [HQ][SITE 01*][SITE 02][SITE 03@][SITE 04] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | SELECTED DESTINATION · SITE 01 ·  · DAY 2 OF 3 | QUOTA $0 / $500 · SAIL HOME FIRST
+  · select the site the ship is at: requested Site03
+PASS H16 the current site selected: YOU ARE HERE: SELECTED DESTINATION · SITE 03 ·  · DAY 2 OF 3 | QUOTA $0 / $500 · YOU ARE HERE
+
+== SHIP-2 retest (the sail) — HQ selected with the car still away and nobody below: CONFIRM dim, 'Cabin below', the pull and the server sail refused; READY once the car is up
+  · select HQ: requested HQ
+PASS SHIP-2 HQ selected, the car away: CONFIRM dim, CABIN BELOW: CONFIRM/off | SELECTED DESTINATION · HQ · SAIL HOME · DAY 2 OF 3 | QUOTA $0 / $500 · CABIN BELOW
+  · pull with the car away: requested Ship/None/None
+PASS SHIP-2 the pull with the car away: refused 'Cabin below'
+PASS SHIP-2 the pull with the car away: the refusal reads 'Cabin below' (expected 'Cabin below')
+PASS SHIP-2 the server sail agrees with the lever: refused: Cabin below
+PASS SHIP-2 nothing sailed, no pull counted
+  · SHIP-2: the car after the fake dive: Descending (cabin away)
+PASS SHIP-2: the car is back at the top (AtTop)
+PASS H16 HQ selected at sea: SAIL HOME, CONFIRM: SELECTED DESTINATION · HQ · SAIL HOME · DAY 2 OF 3 | QUOTA $0 / $500 · READY
+PASS H16 compat text at sea on day 2: Day 2 of 3 — Site 03 — select HQ and pull CONFIRM
+
+== H12 — a locked site selected after the dive: UNLOCK overrides END DAY; the pull buys it; then END DAY reads for the open site
+  · relock: relocked: none
+PASS H12: the day began ()
+PASS H12: the dive is done
+PASS H12 END DAY first (HQ selected): END DAY/on
+  · select the locked site: requested Site02
+PASS H12 UNLOCK overrides END DAY: UNLOCK $100/on | SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $100 | COST $100 · PULL TO UNLOCK
+PASS H12 the locked card selected, the resolver agrees: NAVIGATION · DAY 2/3 · [HQ][SITE 01][SITE 02*#][SITE 03#@][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+  · pull: requested Ship/Unlock/Site02
+PASS H12 bought after the dive: Site02 $0
+PASS H12 END DAY again for the now-open site: END DAY/on | SELECTED DESTINATION · SITE 02 ·  · DAY 2 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST
+PASS H12 the day is still to be ended
+  · END DAY: requested Ship/EndDay/None
+PASS H12 the day ended: day 3
+
+== H15 — someone still below: the sign dim, the reason names it, the pull refused
+  · select HQ: requested HQ
+PASS H15 HQ selected, CONFIRM: CONFIRM/on
+PASS H15 dim, divers below: CONFIRM/off | SELECTED DESTINATION · HQ · SAIL HOME · DAY 3 OF 3 | QUOTA $0 / $500 · DIVERS BELOW
+  · pull: requested Ship/None/None
+PASS H15 the pull with a diver below: refused 'Divers below'
+PASS H15 the pull with a diver below: the refusal reads 'Divers below' (expected 'Divers below')
+PASS H15 nothing sailed
+  · H15: the car after the fake dive: Sealing (cabin away)
+PASS H15: the car is back at the top (AtTop)
+PASS H15 CONFIRM again once everyone is up: CONFIRM/on
+
+== H14 — payday: PAYDAY in the corner, a site's CONFIRM refused 'Payday — only HQ', HQ sails home; at the dock 'Pay the quota first'
+  · select Site 01: requested Site01
+PASS H14 a site on payday: NAVIGATION · PAYDAY · [HQ][SITE 01*][SITE 02][SITE 03#@][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | SELECTED DESTINATION · SITE 01 ·  · PAYDAY | QUOTA $0 / $500 · PAYDAY — ONLY HQ | CONFIRM/off
+PASS H14 compat text: PAYDAY — select HQ and pull CONFIRM
+  · pull for a site on payday: requested Ship/None/None
+PASS H14 the site's pull on payday: refused 'Payday — only HQ'
+PASS H14 the site's pull on payday: the refusal reads 'Payday — only HQ' (expected 'Payday — only HQ')
+PASS H14 nothing sailed
+PASS H14 the notice cleared
+  · select HQ: requested HQ
+PASS H14 HQ on payday: CONFIRM: CONFIRM/on | SELECTED DESTINATION · HQ · SAIL HOME · PAYDAY | QUOTA $0 / $500 · READY
+  · pull: requested Ship/Confirm/HQ
+PASS H14 sailing home (phase SailingHome)
+PASS H14 the pull counted, the selection cleared
+PASS H14 SAILING HOME: SAILING · HQ · SAIL HOME · PAYDAY | QUOTA $0 / $500 · SAILING HOME
+PASS H14: arrived at HQ (phase AtHQ)
+PASS H14 docked on payday, nothing selected
+PASS stood at the ship console: moved local player to (-50.79, 0.00, -2.23)
+PASS H16 re-entered at the dock on payday: NAVIGATION · PAYDAY · [HQ@][SITE 01][SITE 02][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | SELECT A DESTINATION ·  ·  · PAYDAY | QUOTA $0 / $500 · 
+PASS H14 compat text: Docked at HQ — PAYDAY: pay the quota at the board
+  · select Site 01 at the dock on payday: requested Site01
+PASS H14 pay the quota first: SELECTED DESTINATION · SITE 01 ·  · PAYDAY | QUOTA $0 / $500 · PAY THE QUOTA FIRST | CONFIRM/off
+
+== H17 — the run lost on the plank relocks the sites and clears the selection; the console reads THE RUN IS OVER meanwhile
+PASS H17 sites are open before the plank: Site02
+PASS H17 the pay press is taken: 
+PASS H17 short at payday: the plank
+PASS H17 the console on the plank: SELECTED DESTINATION · SITE 01 ·  · PAYDAY | QUOTA $0 / $99999 · THE RUN IS OVER | CONFIRM/off
+PASS H17 an unlock on the plank is refused: The run is over
+PASS H17 a sail on the plank is refused: The run is over
+PASS H17 the fresh run after the plank (phase AtHQ)
+PASS H17 the fresh run relocked every site, nothing selected, $0: selected=None unlocked=none site=HQ toSite=HQ lever=8/Ship/Confirm shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal='Payday — only HQ'
+PASS H17 the locks are back on the screen: NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS H17 the screen clear again
+
+== G1 — a guest joins at HQ: the host's locked selection, the dim UNLOCK sign and the shortfall replicate to it
+PASS G1 guest player spawned
+PASS G1 guest joined at HQ
+  · guest 'Mate bof the' is client 1
+PASS G1 the host is free
+PASS stood at the ship console: moved local player to (-50.79, 0.00, -2.23)
+  · host selects Site 02: requested Site02
+PASS G1 the host's selection is Site 02
+PASS G1 the guest's screens: the selection, the lock, the dim UNLOCK, the shortfall, HERE on HQ
+  · guest console line: selected=Site02; unlocked=none; site=HQ; toSite=HQ; leverPulls=8/Ship/Confirm; leverPlayed=0; leverAngle=0; leverSign=UNLOCK $100/off; hqSign=PAY/off; topScreen=NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02*#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECTED DESTINATION · SITE 02 ·  · SITE 02 · uncharted | BALANCE $0 | COST $100 · $100 SHORT; hqTop=QUOTA BOARD ·  ·  · NEW CYCLE · Sail to Site 01 and dive first · QUOTA $0 / $500 · BALANCE $0; hqBottom= ·  ·  ·  ·  · vote=GIVE UP 0 / 2 voted=False; hqLeverPlayed=0; hqLeverAngle=0; hqCard=on/EVERYONE MUST AGREE;
+PASS G1 the guest's compat text: Docked at HQ — select a site and pull CONFIRM
+
+== G2 — the guest, aboard, changes the selection: both screens agree, CONFIRM lit on both
+PASS G2 the docked ship after the trips
+PASS G2 the guest stands on the deck
+PASS G2 the guest's select went: id=2634; requested select Site01
+PASS G2 the host sees the guest's selection (Site01)
+PASS G2 the host's console: CONFIRM, READY: CONFIRM/on | SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · READY
+PASS G2 the guest's console agrees: CONFIRM, READY
+
+== G3 — the guest ashore: WAITING FOR <guest> TO BOARD on the host's screen, the host's pull refused naming the guest; aboard again → READY
+PASS G3 HQ has pier spawn points
+PASS G3 the guest stands on the pier
+PASS G3 the host's screen waits for the guest: SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · WAITING FOR MATE BOF THE TO BOARD | CONFIRM/off
+  · capture saved Temp/look/console-ship-G3-waiting.png
+  · host pulls: requested Ship/Confirm/Site01
+PASS G3 the host's pull: refused 'Not aboard: Mate bof the'
+PASS G3 the host's pull: the refusal reads 'Not aboard: Mate bof the' (expected 'Not aboard: Mate bof the')
+PASS G3 nothing sailed, no pull counted
+PASS G3 the refusal on the host's screen and text: SELECTED DESTINATION · SITE 01 ·  ·  · NOT ABOARD: MATE BOF THE · NOTICE
+PASS G3 the guest's screen shows the same refusal
+PASS G3 the guest is aboard again
+PASS G3 READY once the guest is aboard: SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · READY | CONFIRM/on
+
+== G5 — the guest buys a site: the unlock and the balance replicate; the lever swings on the guest
+PASS G5 the guest selected the locked Site 03; UNLOCK lit on the host: UNLOCK $200/on
+PASS G5 UNLOCK lit on the guest too
+PASS G5 the guest's pull went with the right expectation: id=2641; requested lever Ship/Unlock/Site03
+PASS G5 the guest's pull bought Site 03 once: Site03 $0
+  · the guest's own reply (0.4 s after its pull): leverPlayed/leverAngle → 9/Ship/Unlock; leverPlayed=9; leverAngle=25.4; 
+PASS G6 host: this rig swung its lever for pull 9 (played 9, peak 25.1°)
+PASS G6 the guest saw the pull serial, played it, and reads the unlock and the balance
+PASS G6 the guest's lever was mid-swing 0.4 s after its pull (25.4°)
+PASS G5 the guest's card lost its lock; CONFIRM lit
+
+== G5b — host and guest pull UNLOCK in the same editor frame for one locked site: charged once, one pull counted, the loser refused
+  · host selects Site 02: requested Site02
+PASS G5b Site 02 selected, UNLOCK lit: UNLOCK $100/on
+PASS G5b the guest's sign agrees
+  · same editor frame: guest lever written, host requested Ship/Unlock/Site02
+PASS G5b Site 02 unlocked
+PASS G5b charged once ($0), one pull counted (1)
+PASS G5b the loser was refused: 'Lever in use'
+PASS G5b the loser's reason: Lever in use
+PASS G5b the guest agrees: both sites open, $0, one pull
+PASS G5b the notice cleared
+
+== G9 — the guest changes the selection right before the host's pull: 'Selection changed', nothing sails
+  · host selects Site 01: requested Site01
+PASS G9 Site 01 selected, CONFIRM: CONFIRM/on
+PASS G9 the guest moved the selection to Site 03
+  · host's stale pull: requested Ship/Confirm/Site01
+PASS G9 the stale pull: refused 'Selection changed'
+PASS G9 the stale pull: the refusal reads 'Selection changed' (expected 'Selection changed')
+PASS G9 nothing sailed, the guest's selection stands
+PASS G9 the guest's screen shows the refusal and its own selection
+PASS G9 the notice cleared
+
+== G4 — the guest pulls CONFIRM: one trip, SAILING TO SITE 01 on both peers, the pull serial once, the guest's lever swings; both clear on arrival
+PASS G4 Site 01 selected by the guest, READY: SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · READY
+PASS G4 the guest's CONFIRM went: id=2650; requested lever Ship/Confirm/Site01
+PASS G4 the guest's pull was accepted (serial 11)
+PASS G4 host: this rig swung its lever for pull 11 (played 11, peak 23.8°)
+PASS G4 one trip started by the guest's pull (serial 3)
+PASS G4 the pull counted once, the selection cleared
+PASS G6 the guest's reply carries the pull and has played it: selected=None; unlocked=Site02+Site03; site=HQ; toSite=Site01; leverPulls=11/Ship/Confirm; leverPlayed=11; leverAngle=22.3; 
+PASS G6 the guest's lever mid-swing 0.4 s after the pull (22.3°)
+PASS G4 the host's screen: SAILING · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · SAILING TO SITE 01
+PASS G4 the guest's screen: SAILING TO SITE 01, nothing selected, HERE on no card
+PASS G4: arrived at Sea (phase AtSea)
+PASS G4 at Site 01 on day 1, nothing selected
+PASS G4 the guest re-entered the console at sea: HERE on SITE 01, the unlocks kept, nothing selected
+
+== G7 — a late joiner sees the state at once: the guest leaves, the host selects the locked Site 04, the guest returns
+PASS G7 the guest left
+PASS stood at the ship console: moved local player to (-2.20, 0.00, 2984.23)
+  · host selects Site 04: requested Site04
+PASS G7 Site 04 selected, locked: UNLOCK $300/off
+PASS G7 the guest spawned again
+PASS G7 the joiner is at sea
+  · the joiner's first snapshot console line: selected=Site04; unlocked=Site02+Site03; site=Site01; toSite=Site01; leverPulls=11/Ship/Confirm; leverPlayed=0; leverAngle=0; leverSign=UNLOCK $300/off; hqSign=none; topScreen=NAVIGATION · DAY 1/3 · [HQ][SITE 01@][SITE 02][SITE 03][SITE 04*#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECTED DESTINATION · SITE 04 ·  · SITE 04 · uncharted | BALANCE $0 | COST $300 · $300 SHORT; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+PASS G7 the joiner's console: the selection, the locks, HERE, the dim UNLOCK, the screens composed
+PASS G7 the joiner plays no pull that preceded it (leverPlayed=0)
+
+== H19 — the old server sail is still the checks' path: everyone aboard, ServerSail(HQ) sails home; both consoles read the dock on arrival
+PASS H19 the guest stands on the sea ship's deck
+PASS stood at the ship console: moved local player to (-2.20, 0.00, 2984.23)
+PASS H19 the compat sail: sailing to HQ
+PASS H19 sailing
+PASS H19 the compat sail cleared the selection and counted no lever pull
+PASS H19: arrived at HQ (phase AtHQ)
+PASS H19 docked on day 1
+PASS stood at the ship console: moved local player to (-50.79, 0.00, -2.23)
+PASS H19 the docked console: NAVIGATION · DAY 1/3 · [HQ@][SITE 01][SITE 02][SITE 03][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | Docked at HQ — day 1 of 3 — select a site and pull CONFIRM
+PASS H19 the guest reads the dock too
+
+== H18 — the save keeps the unlocks: the capture writes the mask, a restore brings it back
+PASS H18 the captured run lists the bought sites: Site02+Site03
+PASS H18 the slot's JSON carries unlockedSites
+PASS H18 relocked for the restore
+PASS H18 the restore brought the unlocks back: Site02+Site03
+PASS H18 the guest reads the restored unlocks
+  · a re-host from a slot (SaveRuntimeChecks.ReHost) is the save job's; marked for the final regression
+PASS the guest left at the end
+  · end: selected=None unlocked=Site02+Site03 site=HQ toSite=HQ lever=11/Ship/Confirm shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to sell — dive again aim=none votes=0/0 refusal='Selection changed'
+MATRIX_PASS

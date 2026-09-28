@@ -92,12 +92,66 @@ MonoBehaviour:
   - Key: button.endday
     Text: END DAY
   - Key: button.descend
-    Text: "▼"
+    Text: "\u25BC"
   - Key: button.surface
-    Text: "▲"
+    Text: "\u25B2"
   - Key: ship.cabin.idle
-    Text: "DIVE CAGE — standing by"
+    Text: "DIVE CAGE \u2014 standing by"
   - Key: ship.tv.idle
-    Text: "SALVAGE · CREW CHANNEL"
+    Text: "SALVAGE \xB7 CREW CHANNEL"
   - Key: ship.tv.idle.hint
     Text: Live when a diver is below
+  - Key: depot.title
+    Text: BLACK TIDE SALVAGE CO.  /  EQUIPMENT DEPOT
+  - Key: depot.end
+    Text: EQUIPMENT DEPOT
+  - Key: depot.end.sub
+    Text: "SHOP  \xB7  UPGRADES  \xB7  SUPPLIES"
+  - Key: counter
+    Text: EQUIPMENT CATALOGUE
+  - Key: counter.sub
+    Text: "BROWSE & BUY  \xB7  PRESS E"
+  - Key: arrival
+    Text: "CREW ARRIVAL  /  01\u201304"
+  - Key: arrival.colour
+    Text: CHOOSE YOUR CREW COLOUR
+  - Key: cargo
+    Text: CARGO / KEEP ACCESS CLEAR
+  - Key: way.depot
+    Text: EQUIPMENT DEPOT  >
+  - Key: way.ship
+    Text: SHIP  >
+  - Key: way.quota
+    Text: SELL / QUOTA  >
+  - Key: boarding
+    Text: BLACK TIDE / BOARDING
+  - Key: button.pay
+    Text: PAY
+  - Key: button.giveup
+    Text: GIVE UP
+  - Key: board.title
+    Text: QUOTA BOARD
+  - Key: nav.title
+    Text: NAVIGATION
+  - Key: nav.selected
+    Text: SELECTED DESTINATION
+  - Key: nav.select
+    Text: SELECT A DESTINATION
+  - Key: nav.sailing
+    Text: SAILING
+  - Key: nav.dive
+    Text: DIVE IN PROGRESS
+  - Key: lever.confirm
+    Text: CONFIRM
+  - Key: lever.unlock
+    Text: UNLOCK ${0}
+  - Key: lever.endday
+    Text: END DAY
+  - Key: lever.pay
+    Text: PAY
+  - Key: giveup.card
+    Text: GIVE UP
+  - Key: giveup.foot
+    Text: EVERYONE MUST AGREE
+  - Key: giveup.voted
+    Text: "YOU VOTED \xB7 E TO TAKE BACK"

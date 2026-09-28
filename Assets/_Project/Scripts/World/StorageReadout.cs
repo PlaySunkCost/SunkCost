@@ -181,13 +181,16 @@ namespace SunkCost.World
             if (mesh != null && mesh.text != text) mesh.text = text;
         }
 
-        // The loose items (not in anyone's hands or slots) inside the room.
+        // The loose items (not in anyone's hands or slots) inside the room. A sold item
+        // leaves CarryableItem.Spawned only at OnStopNetwork, which on a host comes after
+        // the client side's despawn: IsSpawned is already false then, so it no longer counts
+        // (the test ServerSellStorage sells by; bug HQ-3, the box counted twice after a sale).
         public static int SumInside(ShipParts ship)
         {
             int sum = 0;
             foreach (CarryableItem item in CarryableItem.Spawned)
             {
-                if (item == null || !item.CanGrabFromWorld) continue;
+                if (item == null || !item.IsSpawned || !item.CanGrabFromWorld) continue;
                 if (item.gameObject.scene != ship.gameObject.scene) continue;
                 if (ship.IsInStorageRoom(item.transform.position)) sum += item.Value;
             }

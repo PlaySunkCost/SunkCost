@@ -25,7 +25,7 @@ namespace SunkCost.Editor.Look
             var gantry=Model(dock,"ArrivalGantry",new Vector3(-31,0,-12),90,new Vector3(.85f,1,1));
             Box(gantry,new Vector3(-1.8f,1.5f,0),new Vector3(.4f,3,.6f));
             Box(gantry,new Vector3(1.8f,1.5f,0),new Vector3(.4f,3,.6f));
-            Label(dock,"BLACK TIDE / BOARDING",new Vector3(-30.6f,2.6f,-12),3,.4f,90);
+            Label(dock,"boarding",new Vector3(-30.6f,2.6f,-12),3,.4f,90);
             var hinge=Group(dock,"Lifting HQ gangway",new Vector3(-41,0,-12));
             hinge.AddComponent<DockGangway>();
             Slab(hinge,"Gangway leaf",new Vector3(-1.6f,-.12f,0),new Vector3(3.2f,.16f,3),ShipModelSetup.DeckMaterial(),true);

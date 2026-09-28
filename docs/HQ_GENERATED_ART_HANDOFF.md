@@ -121,3 +121,35 @@ These were local Tugboat/loopback runs, without injected latency or packet loss.
 They do not prove Steam transport on two computers or four-player performance.
 Teammate review of `ShipParts`, `DockBoardingGate` and the contract change remains
 required before merging. No human approval is claimed.
+
+## Polish pass, 27 September 2026
+
+Presentation only, on `dan/hq-polish`; see the
+[polish test report](test-runs/2026-09-27-hq-polish/RESULT.md).
+
+- Every plate on the platform now reads an `HQSigns` line: `HQGeneratedLayout.Label`
+  takes a key (`depot.title`, `depot.end`, `counter`, `counter.sub`, `pickup.sub`,
+  `intake`/`intake.sub`, `arrival`, `arrival.colour`, `cargo`, `way.*`, `boarding`).
+  Change the words in `Resources/HQSigns.asset`; no rebuild needed.
+- The catalogue counter carries the depot's largest plate after the fascia, a lamp and
+  a marked square; the east end wall names the depot for the arrivals; PICKUP sits
+  above the chute's lip.
+- The quota board (27 September 2026, later the same day) is the shared console: the
+  ship's navigation console model (`Prefabs/Ship/NavConsole`, 2.38 x 2.17 x 1.20 m)
+  placed by `HQPlatformBuilder.QuotaConsole` through `ConsoleBuilder.Place(..., ConsoleKind.HQ)`
+  at the intake (group-local (17.2, 0, 15), yaw 180, between the INTAKE / SELL sign's
+  posts), on a bolted steel footing plate with a hazard lip, the `HQQuotaConsole`
+  composer on its root (`Quota Console`). Its top screen is the quota board, its bottom
+  panel the red GIVE UP card (`Give Up Button`), its lever PAY (`Quota Board`, the object
+  the aim and the checks use); the screens are painted from replicated state
+  (`ConsolePaint`, `Resources/ConsoleStyle.asset`). Words: `board.title`, `lever.pay`,
+  `giveup.card`, `giveup.foot`, `giveup.voted`. The old desk board (`QuotaBoard`,
+  `GiveUpButton` push buttons) is gone from the scene; the validator refuses one.
+  Since the polish of 28 September 2026 the console glass (`Materials/Console/ConsoleGlass.mat`,
+  `ConsoleBuilder.GlassMaterial`) has no environment reflections or specular highlights, so the
+  screens stay readable from the side; the painted screens are 1200 px per metre with
+  anisotropic filtering 16. The console's rows are the `console-hq` matrix (see the playbook);
+  the final regression is [the console test report](test-runs/2026-09-27-console/RESULT.md).
+- The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
+- The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
+  the browser is the same IMGUI in the ship's `ScreenStyle` palette.

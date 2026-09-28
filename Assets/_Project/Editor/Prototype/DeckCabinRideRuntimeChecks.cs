@@ -1183,7 +1183,7 @@ namespace SunkCost.Editor.Prototype
             // the coin's worth: sold, paid exactly, a new cycle, the coin gone.
             H.ClientMoveLocalPlayerToBoard(); yield return null;
             H.ClientLookAtNamed(SunkCost.World.QuotaBoard.BoardName); yield return null; yield return null;
-            Check(host.CurrentQuotaBoard != null && H.PromptText().Contains("Press E to pay the quota"), "Z3 looking at the board offers the pay: " + H.PromptText());
+            Check((host.CurrentQuotaBoard != null || (host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Lever)) && H.PromptText().Contains("Press E to pay the quota"), "Z3 looking at the board offers the pay: " + H.PromptText()); // the old board or the console's lever (27 September 2026)
             WorldLoopSettings.QuotaOverrideForTests = coinValue;
             H.ClientRequestPay();
             yield return WaitUntil(() => Day.LastPay.Serial == 1, 3f, "Z3 the pay was processed");

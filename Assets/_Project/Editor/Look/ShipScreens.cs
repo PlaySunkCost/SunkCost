@@ -20,14 +20,10 @@ namespace SunkCost.Editor.Look
             ScreenStyle.EditorFlat = LookMaterials.ShipFlat; // saved materials, so the prefab keeps its colours
             try
             {
-                Transform monitorPart = ship.Find(ShipParts.MonitorName);
-                if (monitorPart != null)
-                {
-                    ShipMonitor monitor = monitorPart.GetComponent<ShipMonitor>();
-                    if (monitor == null) monitor = monitorPart.gameObject.AddComponent<ShipMonitor>();
-                    monitor.EnsureDisplay();
-                    monitor.ShowIdle();
-                }
+                // The navigation console's painted screens and sign, idle (NAVIGATION with
+                // nothing selected, the sign dim); the composer takes over in play.
+                ConsoleRig navConsole = ConsoleRig.OnShip(ship);
+                if (navConsole != null) navConsole.ShowIdle();
                 Transform crewPart = ship.Find(CrewScreen.TextObjectName);
                 if (crewPart != null)
                 {

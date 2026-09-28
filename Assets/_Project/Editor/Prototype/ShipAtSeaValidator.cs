@@ -38,18 +38,59 @@ namespace SunkCost.Editor.Prototype
             {
                 ShipParts.WellGroupName, ShipParts.TowerGroupName, ShipParts.ConsoleGroupName, ShipParts.TvGroupName,
                 ShipParts.StorageGroupName, ShipParts.CabinGroupName, ShipParts.VolumesGroupName, ShipParts.PointsGroupName,
-                SunkCost.Editor.Look.ShipHierarchy.TowerModelName, SunkCost.Editor.Look.ShipHierarchy.ConsoleModelName, "TvCabinet", "StorageRoom",
-                ShipMonitor.DisplayName, TvDisplay.IdleName, StorageReadout.InsideName
+                SunkCost.Editor.Look.ShipHierarchy.TowerModelName, "TvCabinet", "StorageRoom",
+                ConsoleRig.BodyName, ConsoleRig.TopScreenName, ConsoleRig.BottomScreenName, ConsoleRig.SignName, ConsoleRig.LeverHingeName, ConsoleRig.LeverHandleName,
+                ConsoleRig.CardNamePrefix + SiteId.HQ, ConsoleRig.CardNamePrefix + SiteId.Site01, ConsoleRig.CardNamePrefix + SiteId.Site02,
+                ConsoleRig.CardNamePrefix + SiteId.Site03, ConsoleRig.CardNamePrefix + SiteId.Site04,
+                TvDisplay.IdleName, StorageReadout.InsideName
             };
             foreach (string name in unique)
             {
                 int count = ship.CountNamed(name);
                 if (count != 1) errors.Add("Ship: " + count + " parts named '" + name + "' (one expected).");
             }
-            Beside(ship, ShipParts.ConsoleGroupName, errors, SunkCost.Editor.Look.ShipHierarchy.ConsoleModelName, ShipParts.MonitorName, ShipParts.MonitorButtonSite01Name,
-                ShipParts.MonitorButtonHQName, ShipParts.MonitorButtonEndDayName, ShipParts.MonitorStatusName, ShipMonitor.DisplayName);
+            Beside(ship, ShipParts.ConsoleGroupName, errors, ConsoleRig.ShipRootName);
+            CheckConsole(ship, errors);
             Beside(ship, ShipParts.TvGroupName, errors, "TvCabinet", ShipParts.TvScreenName, "Tv Caption Sign", ShipParts.TvSpeakerName, TvDisplay.IdleName);
             Beside(ship, ShipParts.StorageGroupName, errors, "StorageRoom", ShipParts.StorageVolumeName, StorageReadout.InsideName);
+        }
+
+        // The navigation console (27 September 2026): one rig of the ship kind with its
+        // composer, standing on the deck square to the tower (its front toward the bow,
+        // where the crew read it), its lever's control the aim's target with a collider
+        // and a ConsoleControl, its five cards in the reading order with theirs, and the
+        // model's own mesh collider so the crew walk against it and the aim reaches the
+        // controls through nothing.
+        private static void CheckConsole(ShipParts ship, List<string> errors)
+        {
+            Transform root = ship.NavConsole;
+            if (root == null) { errors.Add("Ship: no '" + ShipParts.NavConsoleName + "'."); return; }
+            ConsoleRig rig = root.GetComponent<ConsoleRig>();
+            if (rig == null) { errors.Add("Ship: '" + ShipParts.NavConsoleName + "' has no ConsoleRig."); return; }
+            if (rig.Kind != ConsoleKind.Ship) errors.Add("Ship: the navigation console's rig is of kind " + rig.Kind + ".");
+            if (root.GetComponent<ShipNavigationConsole>() == null) errors.Add("Ship: the navigation console has no ShipNavigationConsole composer.");
+            if (root.GetComponent<ConsoleLever>() == null) errors.Add("Ship: the navigation console has no ConsoleLever.");
+            Vector3 local = ship.ToShipLocal(root.position);
+            if (Mathf.Abs(local.y) > 0.01f) errors.Add("Ship: the navigation console stands " + local.y.ToString("F3") + " m off the deck.");
+            if (Vector3.Dot(root.forward, ship.transform.forward) < 0.999f) errors.Add("Ship: the navigation console does not face the bow (yaw " + ship.ToShipYaw(root.eulerAngles.y).ToString("F1") + ").");
+            if (rig.TopScreen == null || rig.BottomScreen == null || rig.Sign == null) errors.Add("Ship: the navigation console is missing a painted surface.");
+            if (rig.LeverHinge == null || rig.LeverHandle == null) errors.Add("Ship: the navigation console's lever has no hinge or handle.");
+            if (rig.LeverCollider == null || rig.LeverCollider.name != ShipParts.NavLeverName) errors.Add("Ship: the navigation console's lever control is not '" + ShipParts.NavLeverName + "'.");
+            else
+            {
+                ConsoleControl lever = rig.ControlOf(rig.LeverCollider);
+                if (lever == null || lever.Kind != ConsoleControlKind.Lever || lever.Console != ConsoleKind.Ship) errors.Add("Ship: '" + ShipParts.NavLeverName + "' is not a ship lever control.");
+            }
+            if (rig.CardColliders.Count != Destinations.Cards.Length) errors.Add("Ship: the navigation console has " + rig.CardColliders.Count + " card controls (" + Destinations.Cards.Length + " expected).");
+            for (int i = 0; i < rig.CardColliders.Count && i < Destinations.Cards.Length; i++)
+            {
+                Collider c = rig.CardColliders[i];
+                ConsoleControl card = rig.ControlOf(c);
+                string expected = ConsoleRig.CardNamePrefix + Destinations.Cards[i];
+                if (c == null || c.name != expected) errors.Add("Ship: card control " + i + " is not '" + expected + "'.");
+                else if (card == null || card.Kind != ConsoleControlKind.Card || card.Payload != Destinations.Cards[i] || card.Console != ConsoleKind.Ship) errors.Add("Ship: '" + expected + "' is not the " + Destinations.Cards[i] + " card control.");
+            }
+            if (root.GetComponentInChildren<MeshCollider>(true) == null) errors.Add("Ship: the navigation console's body has no mesh collider.");
         }
 
         private static void Beside(ShipParts ship, string group, List<string> errors, params string[] parts)

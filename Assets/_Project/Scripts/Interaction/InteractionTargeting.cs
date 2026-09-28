@@ -38,17 +38,10 @@ namespace SunkCost.Interaction
             return best;
         }
 
-        // A ship button straight under the crosshair, within reach and not behind
-        // anything. Buttons are exact targets: no forgiving aim.
-        public static SunkCost.World.MonitorButton FindButton(Vector3 eye, Vector3 forward, Transform player, float reach)
-        {
-            Transform hit = FindPressable(eye, forward, player, reach);
-            return hit != null ? hit.GetComponentInParent<SunkCost.World.MonitorButton>() : null;
-        }
-
         // The nearest solid thing under the crosshair within reach, or null: the
-        // monitor buttons, the deck cabin's button and the car's panel are all
-        // plain colliders told apart by their components and names.
+        // console's controls, the deck cabin's button and the car's panel are all
+        // plain colliders told apart by their components and names. Pressables are
+        // exact targets: no forgiving aim.
         public static Transform FindPressable(Vector3 eye, Vector3 forward, Transform player, float reach)
         {
             int count = Physics.RaycastNonAlloc(eye, forward, Obstructions, reach, PressableMask, QueryTriggerInteraction.Ignore);

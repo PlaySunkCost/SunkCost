@@ -71,10 +71,16 @@ namespace SunkCost.Editor.Look
             return go;
         }
 
-        internal static void Label(GameObject parent, string text, Vector3 at, float width, float height = .55f, float yaw = 180f)
+        // A plate reading one HQSigns line by `key` (every word on the platform is
+        // Dan's to change in the asset, 18 September 2026): a SignText follows the
+        // asset, the plate's PlateText fits whatever it says. `yaw` 180 reads from
+        // the south (the viewer at -Z), 0 from the north, 90 from the east.
+        internal static void Label(GameObject parent, string key, Vector3 at, float width, float height = .55f, float yaw = 180f)
         {
-            var label = PropBuilder.SignPlate(parent, text + " Sign", text, at, Quaternion.Euler(0f, yaw, 0f), width, height, height * .65f, new Color(1f, .84f, .58f));
+            string text = HQSigns.Resolve().Get(key);
+            var label = PropBuilder.SignPlate(parent, key + " Sign", text, at, Quaternion.Euler(0f, yaw, 0f), width, height, height * .65f, new Color(1f, .84f, .58f));
             label.text = text;
+            label.gameObject.AddComponent<SignText>().Configure(key);
             label.GetComponent<PlateText>().Refresh();
             foreach (Renderer r in label.transform.parent.GetComponentsInChildren<Renderer>())
                 if (r.name.StartsWith("Frame ")) r.sharedMaterial = ShipKitMaterials.Bezel();
@@ -165,15 +171,15 @@ namespace SunkCost.Editor.Look
             Box(gantry, new Vector3(-1.8f,1.5f,0), new Vector3(.4f,3,.6f));
             Box(gantry, new Vector3(1.8f,1.5f,0), new Vector3(.4f,3,.6f));
             Box(gantry, new Vector3(0,2.8f,0), new Vector3(4,.4f,.6f));
-            Label(pad, "CREW ARRIVAL  /  01–04", new Vector3(0,2.7f,-1.25f), 3.3f, .35f, 0);
+            Label(pad, "arrival", new Vector3(0,2.7f,-1.25f), 3.3f, .35f, 0);
             foreach (float x in new[] { -.75f,.75f }) foreach (float z in new[] { -.5f,1f })
                 Frame(pad, new Vector3(x,0,z), .7f,.7f);
-            Label(pad, "CREW ARRIVAL  /  01-04", new Vector3(0,2.7f,-1.95f), 3.3f, .35f);
+            Label(pad, "arrival", new Vector3(0,2.7f,-1.95f), 3.3f, .35f);
             Model(pad, "Console", new Vector3(0,0,3), 180, default, true);
             Box(pad, new Vector3(0,.55f,3), new Vector3(1.8f,1.1f,.7f));
             Slab(pad,"Colour panel mast",new Vector3(0,0,3.2f),new Vector3(.16f,2.3f,.16f),ShipKitMaterials.Steel(),true);
             HQPlatformBuilder.ColourPanel(pad, new Vector3(0,1.4f,2.65f));
-            Label(pad, "CHOOSE YOUR CREW COLOUR", new Vector3(0,2.3f,3), 3);
+            Label(pad, "arrival.colour", new Vector3(0,2.3f,3), 3);
             Lamp(pad, new Vector3(0,2.6f,0), 6, 3);
             pad.transform.SetPositionAndRotation(Arrival,ArrivalFacing);
         }
@@ -212,15 +218,18 @@ namespace SunkCost.Editor.Look
                 Box(root,new Vector3(x,.45f,6),new Vector3(2,.9f,.6f));
             }
             foreach(float x in new[]{24.2f,27.8f}) Slab(cargo,"Cargo sign post",new Vector3(x,0,16.8f),new Vector3(.12f,2.2f,.12f),ShipKitMaterials.Steel(),true);
-            Label(cargo,"CARGO / KEEP ACCESS CLEAR",new Vector3(26,2,16.7f),4);
+            Label(cargo,"cargo",new Vector3(26,2,16.7f),4);
             // A compact, physical wayfinding board at the arrival exit. Keep the
             // centre open for walking and ball play instead of filling it with props.
+            // One destination per line, named as its own sign names it (HQ polish,
+            // 27 September 2026: "DEPOT >" meant nothing to a newcomer).
             var wayfinding=Group(root,"Arrival wayfinding",new Vector3(14,0,8));
             foreach(float x in new[]{-1.2f,1.2f})
-                Slab(wayfinding,"Sign upright",new Vector3(x,0,0),new Vector3(.1f,2.2f,.1f),ShipKitMaterials.Steel(),true);
-            Label(wayfinding,"DEPOT  >",new Vector3(0,2,0),2.7f,.35f,0);
-            Label(wayfinding,"SHIP  >     QUOTA  >",new Vector3(0,1.55f,0),2.7f,.35f,0);
-            Lamp(wayfinding,new Vector3(0,2.3f,.5f),5,1.5f);
+                Slab(wayfinding,"Sign upright",new Vector3(x,0,0),new Vector3(.1f,2.4f,.1f),ShipKitMaterials.Steel(),true);
+            Label(wayfinding,"way.depot",new Vector3(0,2.1f,0),2.7f,.36f,0);
+            Label(wayfinding,"way.ship",new Vector3(0,1.68f,0),2.7f,.36f,0);
+            Label(wayfinding,"way.quota",new Vector3(0,1.26f,0),2.7f,.36f,0);
+            Lamp(wayfinding,new Vector3(0,2.5f,.6f),5,1.8f);
             Lamp(rest,new Vector3(7,2.3f,-12),5,1.8f);
         }
     }

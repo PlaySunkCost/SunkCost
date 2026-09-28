@@ -200,7 +200,7 @@ namespace SunkCost.Editor.Prototype
             // obstructed (cover), no target is offered; clearing the box restores it.
             GameObject box = Block("box", host.EyePosition, Vector3.one * 0.8f);
             yield return null; yield return null;
-            Check(clearance.Obstructed && host.ViewObstructed && host.CurrentTarget == null && host.CurrentButton == null, "C5 enclosure: obstructed, no target");
+            Check(clearance.Obstructed && host.ViewObstructed && host.CurrentTarget == null && host.CurrentButton == null && host.CurrentConsoleControl == null, "C5 enclosure: obstructed, no target");
             Check(host.transform.position.y < 0.1f, "C5 enclosure: the root did not move");
             UnityEngine.Object.Destroy(box); yield return null; yield return null;
             Check(!clearance.Obstructed && !host.ViewObstructed, "C5 enclosure gone: cover down at once");

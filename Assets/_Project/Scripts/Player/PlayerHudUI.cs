@@ -136,10 +136,12 @@ namespace SunkCost.Player
                 if (!string.IsNullOrEmpty(refusal)) return refusal;
                 if (controller.Upgrades != null && !string.IsNullOrEmpty(controller.Upgrades.Refusal)) return controller.Upgrades.Refusal;
                 CarryableItem target = controller.CurrentTarget;
+                if (target == null && controller.CurrentConsoleControl != null) return ConsolePrompt(controller.CurrentConsoleControl);
                 if (target == null && controller.CurrentButton != null)
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
                 if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
+                if (target == null && controller.CurrentGiveUpButton != null) return GiveUpPrompt();
                 if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentSeat != null) return controller.SeatPrompt;
@@ -261,6 +263,55 @@ namespace SunkCost.Player
             if (day == null) return "Press E to pay the quota";
             if (day.Day == 0 && !day.Payday) return "Nothing to pay yet " + "—" + " dive first";
             return $"Press E to pay the quota (${quota}) " + "—" + $" sells the box (${day.BoxValue})";
+        }
+
+        // The shared console under the dot (27 September 2026): a card offers the
+        // selection (and says so when it is the selection, or locked with its price);
+        // the lever offers what its sign reads from the same rule table the server
+        // resolves with — or the reason it is dim, without "Press E"; the GIVE UP card
+        // is the vote's prompt.
+        private string ConsolePrompt(ConsoleControl c)
+        {
+            CrewDayState day = CrewDayState.Instance;
+            SiteCatalog sites = SiteCatalog.Resolve();
+            switch (c.Kind)
+            {
+                case ConsoleControlKind.Card:
+                {
+                    string name = sites.NameOf(c.Payload);
+                    if (day != null && day.SelectedSite == c.Payload) return name + " selected";
+                    bool locked = day != null && !day.IsOpen(c.Payload);
+                    return locked ? $"Press E to select {name} (locked · ${sites.UnlockPrice(c.Payload)})" : $"Press E to select {name}";
+                }
+                case ConsoleControlKind.GiveUpCard: return GiveUpPrompt();
+                default:
+                {
+                    LeverAction action = ConsoleRules.Expected(c.Console, sites, out SiteId target, out bool enabled, out string reason);
+                    switch (action)
+                    {
+                        case LeverAction.Confirm:
+                            if (!enabled) return reason;
+                            return target == SiteId.HQ ? "Press E to sail home" : $"Press E to sail to {sites.NameOf(target)}";
+                        case LeverAction.Unlock: return enabled ? $"Press E to unlock {sites.NameOf(target)} (${sites.UnlockPrice(target)})" : reason;
+                        case LeverAction.EndDay: return "Press E to end the day";
+                        case LeverAction.Pay: return PayPrompt();
+                        default: return reason == ConsoleRules.SelectFirst || string.IsNullOrEmpty(reason) ? "Nothing to confirm " + "—" + " select a destination" : reason;
+                    }
+                }
+            }
+        }
+
+        // GIVE UP (Dan, 27 September 2026): every player must press; again takes it back.
+        private string GiveUpPrompt()
+        {
+            CrewDayState day = CrewDayState.Instance;
+            if (day == null) return "Press E to vote to give up the run";
+            if (day.Phase == DayPhase.Plank) return ConsoleRules.RunOver;       // the server's own refusal (bugs/HQ-1)
+            if (day.Phase != DayPhase.AtHQ || day.Travelling) return "Give up only while docked at HQ";
+            int crew = Mathf.Max(day.GiveUpCrew, 1), votes = day.GiveUpVotes;
+            if (day.HasVotedGiveUp(controller.OwnerId)) return $"Press E to take back your vote (give up {votes}/{crew})";
+            return votes > 0 ? $"Press E to vote to give up (give up {votes}/{crew}) " + "—" + " everyone must agree"
+                             : "Press E to vote to give up the run " + "—" + " everyone must agree";
         }
 
         // Dead, watching (card 2): the watched player's name up top and the one
@@ -820,13 +871,36 @@ namespace SunkCost.Player
         // upgrade already bought (one each).
         private string ShopPrompt(SunkCost.Shop.ShopDisplay display)
         {
-            if (display.BrowsesCatalog) return "Equipment catalogue — Press E to browse";
+            if (display.BrowsesCatalog) return "Equipment catalogue — Press E to browse and buy";
             SunkCost.Shop.ShopItem item = display.Item;
             if (item == null) return "Nothing for sale here";
             SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
-            string pot = day != null ? $" (pot ${day.Balance})" : string.Empty;
+            string pot = day != null ? $" · crew pot ${day.Balance}" : string.Empty;
             if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return $"{item.Name} · owned";
             return $"{item.Name} · ${item.Price} — Press E to buy{pot}";
+        }
+
+        // The shop's displays and its counter name what they sell while aimed at
+        // (docs/DESIGN.md §8, the shop, 26 September 2026: "aim-only name/price
+        // prompts"; the stands carry no signs). Everything else keeps the rule of
+        // 19 September 2026: no prompt for merely looking, a notice after a press.
+        private string ShopAimPrompt()
+        {
+            if (controller == null || controller.IsDead || controller.TravelLocked || controller.IsSeated) return null;
+            if (controller.CurrentTarget != null || controller.CurrentShopDisplay == null || !SessionInputGate.CanPlay) return null;
+            return ShopPrompt(controller.CurrentShopDisplay);
+        }
+
+        // Whether E would do something at this display: the counter always opens;
+        // a stand sells what the pot can pay for and you do not already own.
+        private bool ShopUsable(SunkCost.Shop.ShopDisplay display)
+        {
+            if (display.BrowsesCatalog) return true;
+            SunkCost.Shop.ShopItem item = display.Item;
+            CrewDayState day = CrewDayState.Instance;
+            if (item == null || day == null) return false;
+            if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return false;
+            return day.Balance >= item.Price;
         }
 
         private static string UpgradeMarksOf(PlayerUpgrades upgrades)
@@ -910,9 +984,11 @@ namespace SunkCost.Player
 
         private void DrawPrompt()
         {
-            // The plank's turn is the one line that stays up; everything else is a notice after a press.
+            // The plank's turn is the one line that stays up; everything else is a notice
+            // after a press — except the shop, whose displays say what they sell (ShopAimPrompt).
             string text = PlankPrompt();
             if (text == null && Time.unscaledTime < noticeUntil) text = notice;
+            if (string.IsNullOrEmpty(text)) text = ShopAimPrompt();
             if (string.IsNullOrEmpty(text)) return;
             float s = Screen.height / 1080f;
             DrawPanelLabel(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f + 46f * s), text);
@@ -1061,11 +1137,17 @@ namespace SunkCost.Player
             if (controller.IsSeated) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.IsDead) usable = false;
             else if (target != null && target.CanGrabFromWorld) usable = inventory.CanStoreOrHold(target);
+            else if (controller.CurrentConsoleControl != null) usable = ConsolePrompt(controller.CurrentConsoleControl).StartsWith("Press E");
             else if (controller.CurrentButton != null) usable = CrewDayState.Instance != null && !CrewDayState.Instance.Travelling && !CrewDayState.Instance.Sailing;
             else if (controller.CurrentTv != null) usable = CrewDayState.Instance != null && CrewDayState.Instance.TvChannel >= 0;
             else if (controller.CurrentSeat != null) usable = controller.SeatUsable;
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             else if (controller.CurrentPatient != null) usable = controller.CurrentPatient.Vitals != null && controller.CurrentPatient.Vitals.Leaking && !controller.CurrentPatient.Vitals.FriendPatchedToday;
+            // The HQ's own pressables were left out (HQ polish, 27 September 2026): the dot never went gold on them.
+            else if (controller.CurrentShopDisplay != null) usable = ShopUsable(controller.CurrentShopDisplay);
+            else if (controller.CurrentColourPanel != null) usable = true;
+            else if (controller.CurrentQuotaBoard != null) usable = PayPrompt().StartsWith("Press E");
+            else if (controller.CurrentGiveUpButton != null) usable = GiveUpPrompt().StartsWith("Press E");
             Color previous = GUI.color;
             if (outline > 0f)
             {

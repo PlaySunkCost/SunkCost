@@ -69,11 +69,8 @@ namespace SunkCost.Editor.Prototype
             var panels = new System.Collections.Generic.List<SunkCost.World.ColourPanel>();
             foreach (GameObject root in scene.GetRootGameObjects()) panels.AddRange(root.GetComponentsInChildren<SunkCost.World.ColourPanel>(true));
             if (panels.Count != 1) errors.Add("HQ needs exactly one Colour Panel (found " + panels.Count + ").");
-            var boards = new System.Collections.Generic.List<SunkCost.World.QuotaBoard>();
-            foreach (GameObject root in scene.GetRootGameObjects()) boards.AddRange(root.GetComponentsInChildren<SunkCost.World.QuotaBoard>(true));
-            if (boards.Count != 1) errors.Add("HQ needs exactly one Quota Board (found " + boards.Count + ").");
-            else if (boards[0].GetComponent<Collider>() == null) errors.Add("The Quota Board needs a collider to be looked at.");
-            else if (panels[0].GetComponent<Collider>() == null || panels[0].transform.Find(SunkCost.World.ColourPanel.SwatchName) == null) errors.Add("The Colour Panel needs its collider and swatch.");
+            if (panels.Count == 1 && (panels[0].GetComponent<Collider>() == null || panels[0].transform.Find(SunkCost.World.ColourPanel.SwatchName) == null)) errors.Add("The Colour Panel needs its collider and swatch.");
+            CheckQuotaConsole(scene, errors);
             if (HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root belongs in Session.unity, not the HQ world scene.");
             if (CrewSpawner.SpawnPointsIn(scene).Count != new LobbySessionSettings().LocalSocketCap)
                 errors.Add($"HQ needs {new LobbySessionSettings().LocalSocketCap} spawn points under 'Spawn Points'.");
@@ -97,6 +94,47 @@ namespace SunkCost.Editor.Prototype
             WorldSceneChecks.CheckBuildList(errors);
             if (errors.Count > 0) throw new InvalidOperationException("HQ validation failed:\n- " + string.Join("\n- ", errors));
             Debug.Log($"HQ validation passed: world scene with room, four spawns, light, a loot fixture spawner for {HQPrototypeLootSetup.SceneItemCount} items and the docked ship.");
+        }
+
+        // The quota console (the shared console, 27 September 2026): exactly one
+        // HQQuotaConsole on an HQ ConsoleRig, its lever's control object "Quota Board"
+        // (the aim's collider, a ConsoleControl) and its GIVE UP card "Give Up Button",
+        // both once in the scene (the hooks find them by name); the three painted
+        // surfaces; and none of the old desk board left behind.
+        private static void CheckQuotaConsole(Scene scene, List<string> errors)
+        {
+            var consoles = new List<SunkCost.World.HQQuotaConsole>();
+            foreach (GameObject root in scene.GetRootGameObjects()) consoles.AddRange(root.GetComponentsInChildren<SunkCost.World.HQQuotaConsole>(true));
+            if (consoles.Count != 1) { errors.Add("HQ needs exactly one quota console (HQQuotaConsole; found " + consoles.Count + ")."); return; }
+            SunkCost.World.ConsoleRig rig = consoles[0].GetComponent<SunkCost.World.ConsoleRig>();
+            if (rig == null || rig.Kind != SunkCost.World.ConsoleKind.HQ) { errors.Add("The quota console needs its HQ ConsoleRig on the same object."); return; }
+            if (rig.name != SunkCost.World.ConsoleRig.HQRootName) errors.Add("The quota console's root is named \"" + rig.name + "\", expected \"" + SunkCost.World.ConsoleRig.HQRootName + "\".");
+            CheckControl(rig.LeverCollider, SunkCost.World.ConsoleRig.HQLeverName, SunkCost.World.ConsoleControlKind.Lever, "lever", errors);
+            CheckControl(rig.GiveUpCollider, SunkCost.World.ConsoleRig.GiveUpCardName, SunkCost.World.ConsoleControlKind.GiveUpCard, "GIVE UP card", errors);
+            if (rig.TopSurface == null || rig.BottomSurface == null || rig.SignSurface == null) errors.Add("The quota console needs its three painted surfaces (top, bottom, sign).");
+            if (rig.LeverHinge == null || rig.LeverHandle == null) errors.Add("The quota console needs its lever hinge and handle.");
+            if (rig.GetComponent<SunkCost.World.ConsoleLever>() == null) errors.Add("The quota console needs its ConsoleLever.");
+            if (rig.GetComponentInChildren<MeshCollider>(true) == null) errors.Add("The quota console's body needs its mesh collider.");
+            foreach (string name in new[] { SunkCost.World.ConsoleRig.HQLeverName, SunkCost.World.ConsoleRig.GiveUpCardName })
+            {
+                int found = 0;
+                foreach (GameObject root in scene.GetRootGameObjects())
+                    foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) if (t.name == name) found++;
+                if (found != 1) errors.Add("HQ needs exactly one object named \"" + name + "\" (found " + found + "; the hooks find it by name).");
+            }
+            int oldBoards = 0;
+            foreach (GameObject root in scene.GetRootGameObjects()) oldBoards += root.GetComponentsInChildren<SunkCost.World.QuotaBoard>(true).Length;
+            if (oldBoards != 0) errors.Add("The old desk Quota Board is superseded by the quota console (27 September 2026); found " + oldBoards + ".");
+        }
+
+        private static void CheckControl(Collider collider, string name, SunkCost.World.ConsoleControlKind kind, string what, List<string> errors)
+        {
+            if (collider == null) { errors.Add("The quota console's " + what + " has no collider."); return; }
+            if (collider.name != name) errors.Add("The quota console's " + what + " is named \"" + collider.name + "\", expected \"" + name + "\".");
+            if (collider.isTrigger) errors.Add("The quota console's " + what + " collider must not be a trigger (the aim ignores triggers).");
+            SunkCost.World.ConsoleControl control = collider.GetComponent<SunkCost.World.ConsoleControl>();
+            if (control == null) errors.Add("The quota console's " + what + " needs a ConsoleControl on its collider's object.");
+            else if (control.Console != SunkCost.World.ConsoleKind.HQ || control.Kind != kind) errors.Add("The quota console's " + what + " ConsoleControl reads " + control.Console + "/" + control.Kind + ", expected HQ/" + kind + ".");
         }
 
         // docs/LOOT_WEIGHT_IMPLEMENTATION_PLAN.md section 9: every item prefab has a

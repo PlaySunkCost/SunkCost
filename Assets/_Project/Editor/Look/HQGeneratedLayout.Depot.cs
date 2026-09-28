@@ -53,10 +53,10 @@ namespace SunkCost.Editor.Look
             }
             for(float x=-24;x<=8;x+=4) Model(depot,"Pillar",new Vector3(x,0,10));
             // Readable, editable boards; generated geometry carries no baked prices.
-            Label(depot,"SUNK COST  /  EQUIPMENT DEPOT",new Vector3(-6,3.75f,9.58f),17,.55f);
-            Label(depot,"OFFICE",new Vector3(-20,3.1f,9.6f),3);
-            Label(depot,"UPGRADES",new Vector3(-12,2.95f,9.6f),3);
-            Label(depot,"GEAR & SUPPLIES",new Vector3(0,2.95f,9.6f),5);
+            Label(depot,"depot.title",new Vector3(-6,3.75f,9.58f),17,.55f);
+            Label(depot,"office",new Vector3(-20,3.1f,9.6f),3);
+            Label(depot,"upgrades",new Vector3(-12,2.95f,9.6f),3);
+            Label(depot,"gear",new Vector3(0,2.95f,9.6f),5);
 
             // Rear displays, two clear lanes between the fronts and the merchandise.
             for(float x=-14;x<=6;x+=2)
@@ -66,6 +66,9 @@ namespace SunkCost.Editor.Look
                 Model(depot,"Shelf",new Vector3(x,2f,17.2f));
                 Model(depot,"DisplayHook",new Vector3(x-.25f,2.7f,17.25f));
             }
+            // Stock on the upper shelves: a depot that has something in it, not bare panels (HQ polish, 27 September 2026).
+            foreach(float x in new[]{-12f,-4f,4f}) Model(depot,"Toolbox",new Vector3(x,2.05f,17.1f),0,new Vector3(.8f,.8f,.8f),true);
+            foreach(float x in new[]{-10f,0f,6f}) Model(depot,"Crate",new Vector3(x,2.05f,17.15f),0,new Vector3(.45f,.45f,.45f),true);
             foreach(float x in new[]{-13.5f,-11.5f,1.5f,3.5f}) Model(depot,"TankCradle",new Vector3(x,1.1f,17.1f));
             Model(depot,"Toolbox",new Vector3(-7,1,17.05f),0,default,true);
             Model(depot,"Toolbox",new Vector3(5,1,17.05f),0,default,true);
@@ -81,6 +84,12 @@ namespace SunkCost.Editor.Look
             Model(depot,"TvCabinet",new Vector3(-22,1,10.6f),180,new Vector3(.5f,.5f,.5f),true);
             // Wire cages decorate the end of the depot without closing the aisle.
             for(float z=14;z<=17;z++) Model(depot,"CagePanel",new Vector3(7.5f,0,z),90);
+            // The east end wall is the first face of the depot the arrivals walk toward:
+            // it says what the building is (HQ polish, 27 September 2026: it was blank).
+            // On the wall's south half, high: the pickup chute stands before the north half.
+            Label(depot,"depot.end",new Vector3(8.22f,3.3f,12.2f),4.4f,.6f,90);
+            Label(depot,"depot.end.sub",new Vector3(8.22f,2.82f,12.2f),4.4f,.34f,90);
+            Lamp(depot,new Vector3(9.2f,3.5f,12.2f),6,2.5f);
 
             var chuteArt=Model(root,"PickupChute",new Vector3(10,0,15));
             // Use a mesh collision surface for the chute so purchases slide out.
@@ -92,9 +101,12 @@ namespace SunkCost.Editor.Look
             deliverySettings.FindProperty("scatterRadius").floatValue=.15f;
             deliverySettings.ApplyModifiedPropertiesWithoutUndo();
             Frame(root,new Vector3(10,0,12),4,4);
-            Slab(root,"Pickup sign support",new Vector3(10,2.9f,15),new Vector3(.12f,.45f,.12f),ShipKitMaterials.Steel());
-            Label(root,"PICKUP",new Vector3(10,3.2f,15),2);
-            Lamp(root,new Vector3(10,3,14),7,3);
+            // The sign clears the chute's lip from the deck (HQ polish, 27 September 2026:
+            // at 3.2 m its lower half hid behind the discharge from six metres away).
+            Slab(root,"Pickup sign support",new Vector3(10,3.3f,15),new Vector3(.12f,1,.12f),ShipKitMaterials.Steel());
+            Label(root,"pickup",new Vector3(10,4.05f,15),2.6f,.5f);
+            Label(root,"pickup.sub",new Vector3(10,3.62f,15),2.6f,.3f);
+            Lamp(root,new Vector3(10,3.6f,14),7,3);
 
             // Existing catalogue IDs and authority remain unchanged.
             Stand(depot,delivery,ShopCatalog.LargeTankId,new Vector3(-13,0,14),tank,PrimitiveType.Capsule,new Vector3(.3f,.65f,.3f));
@@ -114,19 +126,26 @@ namespace SunkCost.Editor.Look
             Model(catalogueCounter,"Console",Vector3.zero,0,default,true);
             Box(catalogueCounter,new Vector3(0,.7f,0),new Vector3(1.8f,1.4f,.8f));
             catalogueCounter.AddComponent<ShopDisplay>().ConfigureCatalog(delivery);
-            Slab(catalogueCounter,"Catalogue sign mast",new Vector3(0,1,-.1f),new Vector3(.1f,1.5f,.1f),ShipKitMaterials.Steel());
-            Label(catalogueCounter,"BROWSE ALL EQUIPMENT",new Vector3(0,2.1f,0),2.4f,.4f,0);
-            Lamp(catalogueCounter,new Vector3(0,2,.8f),4,1.5f);
+            // The counter is the shop's front door: the biggest plate in the depot after
+            // the fascia, lit, a marked square on the floor (HQ polish, 27 September 2026:
+            // a 2.4 m plate over a ship console was lost between the four pedestals).
+            // The mast stands behind the console's monitor, not through it.
+            Slab(catalogueCounter,"Catalogue sign mast",new Vector3(0,1.2f,-.62f),new Vector3(.1f,2.4f,.1f),ShipKitMaterials.Steel());
+            Label(catalogueCounter,"counter",new Vector3(0,2.6f,-.55f),3.4f,.5f,0);
+            Label(catalogueCounter,"counter.sub",new Vector3(0,2.16f,-.55f),3.4f,.3f,0);
+            Frame(catalogueCounter,Vector3.zero,2.8f,2.4f);
+            Lamp(catalogueCounter,new Vector3(0,2.4f,.9f),5,2.5f);
 
             var intake=Group(root,"Intake and quota");
             Model(intake,"IntakeHopper",new Vector3(20,0,15));
             Box(intake,new Vector3(20,.55f,15),new Vector3(2,1.1f,1.5f));
-            Model(intake,"Console",new Vector3(16,0,15),180,default,true);
-            Box(intake,new Vector3(16,.55f,15),new Vector3(1.2f,1.1f,.8f));
-            Slab(intake,"Quota display mount",new Vector3(16,1,15),new Vector3(.18f,.8f,.18f),ShipKitMaterials.Steel());
-            HQPlatformBuilder.QuotaBoard(intake,new Vector3(16,1.7f,14.7f));
-            foreach(float x in new[]{15.7f,20.3f}) Slab(intake,"Intake sign post",new Vector3(x,0,16.6f),new Vector3(.14f,2.9f,.14f),ShipKitMaterials.Steel(),true);
-            Label(intake,"INTAKE / SHIP STORAGE",new Vector3(18,2.7f,16.5f),5);
+            // The quota board is the shared console (Dan, 27 September 2026): 2.38 x 2.17 x 1.20 m
+            // on its footing between the intake sign's posts (x 15.7 / 20.3), the hopper to
+            // its east, its front toward the aisle; the lever housing on the reader's right.
+            HQPlatformBuilder.QuotaConsole(intake,new Vector3(17.2f,0,15),180);
+            foreach(float x in new[]{15.7f,20.3f}) Slab(intake,"Intake sign post",new Vector3(x,0,16.6f),new Vector3(.14f,3.2f,.14f),ShipKitMaterials.Steel(),true);
+            Label(intake,"intake",new Vector3(18,2.88f,16.5f),5,.5f);
+            Label(intake,"intake.sub",new Vector3(18,2.45f,16.5f),5,.3f);
             Frame(intake,new Vector3(18,0,15),8,5);
             Lamp(intake,new Vector3(18,3.5f,15),8,3);
             // Quota moves to the former arrival pad; face inward from the south.

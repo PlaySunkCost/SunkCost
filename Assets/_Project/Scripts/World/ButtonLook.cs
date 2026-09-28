@@ -105,8 +105,8 @@ namespace SunkCost.World
         {
             CrewDayState day = CrewDayState.Instance;
             if (day == null) return false;
-            if (GetComponent<MonitorButton>() != null)
-                return day.Travelling || day.Sailing || day.Riding || day.Below.Count > 0 || day.CabinAway;
+            // The monitor's buttons are gone with the shared console (27 September 2026):
+            // its lever sign carries its own dim state (ConsoleRules).
             if (name == ShipParts.DeckCabinButtonName)
                 return day.Riding || day.Travelling || day.World != WorldId.Sea || day.Elevator.State != SunkCost.Diving.ElevatorState.AtTop
                     || day.Phase == DayPhase.DiveInProgress || day.DiveDone || day.Payday;

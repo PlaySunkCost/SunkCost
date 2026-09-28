@@ -287,17 +287,25 @@ namespace SunkCost.World
 
         // ---- sailing (server) -----------------------------------------------------
 
-        // The monitor's request lands here. Refuses with a reason the caller can
-        // show; the aboard rule names who is missing (design section 1). Everything
-        // that can be checked before locking anyone is checked here.
-        public bool ServerSail(WorldId to, out string why)
+        // A sail asked by world alone (the hooks, the peer's `sail`, RequestSail): the
+        // site identity the world implies (HQ, or Site 01 for the sea).
+        public bool ServerSail(WorldId to, out string why) => ServerSail(to, Destinations.SiteOf(to), out why);
+
+        // The console's CONFIRM (and the old monitor's request) lands here. Refuses with
+        // a reason the caller can show; the aboard rule names who is missing (design
+        // section 1). Everything that can be checked before locking anyone is checked
+        // here. `site` is the logical destination the trip records (Site02..04 sail to
+        // Site01's world until they have their own); the selection clears once the sail
+        // is accepted (Dan's proposal, 27 September 2026).
+        public bool ServerSail(WorldId to, SiteId site, out string why)
         {
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
             if (transitioning || dayState.Travelling) { why = "Ship travelling; try again on arrival"; return false; }
             if (riding) { why = "Cabin in use"; return false; }
-            if (dayState.Below.Count > 0 || dayState.CabinAway) { why = "Divers below"; return false; }
+            if (dayState.Below.Count > 0) { why = "Divers below"; return false; }
+            if (dayState.CabinAway) { why = ConsoleRules.CabinBelow; return false; } // the car away with nobody below (bugs/SHIP-2)
             if (!dayState.ServerCanSail(to, out why)) return false;
             ShipParts fromShip = ShipParts.InWorld(currentWorld);
             if (fromShip == null) { why = "No ship in " + WorldScenes.Name(currentWorld) + "."; return false; }
@@ -306,7 +314,9 @@ namespace SunkCost.World
             if (spawner != null && spawner.PendingCount > 0) { why = "Someone is still joining."; return false; }
             if (!ServerEveryoneAboard(fromShip, out why)) return false;
             if (currentWorld == WorldId.HQ) ServerSaveRun("cast off"); // the last state at the dock: everyone aboard with what they carry
-            trip = StartCoroutine(TripRoutine(to, fromShip));
+            trip = StartCoroutine(TripRoutine(to, site, fromShip));
+            ServerClearGiveUp("the ship sails"); // a vote to give up belongs to one stay at the HQ
+            dayState.ServerClearSelection();     // the console's selection was this sail; the crew selects again on arrival
             return true;
         }
 
@@ -363,7 +373,7 @@ namespace SunkCost.World
         }
 
         // The trip, stage by stage (plan section 4, "Accepted request through arrival").
-        private IEnumerator TripRoutine(WorldId to, ShipParts fromShip)
+        private IEnumerator TripRoutine(WorldId to, SiteId site, ShipParts fromShip)
         {
             transitioning = true;
             WorldId from = currentWorld;
@@ -374,7 +384,7 @@ namespace SunkCost.World
                 if (conn.IsActive) cohort.Add(conn.ClientId);
 
             // 3. Lock everyone where they stand; the ship does not move yet.
-            dayState.ServerBeginSail(to);
+            dayState.ServerBeginSail(to, site);
             SetStage(DepartureStage.Preparing, from, to, Settings.PrepareTimeoutSeconds);
             float deadline = Time.unscaledTime + Settings.PrepareTimeoutSeconds;
             while (Time.unscaledTime < deadline && !AllAcked(prepared)) yield return null;
@@ -509,6 +519,7 @@ namespace SunkCost.World
 
         private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
         {
+            ServerClearGiveUp(args.ConnectionState == RemoteConnectionState.Stopped ? "a player left" : "a player joined"); // the count must match the crew
             if (args.ConnectionState != RemoteConnectionState.Stopped) return;
             ServerSaveLeaver(conn);
             cohort.Remove(conn.ClientId);

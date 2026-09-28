@@ -1,0 +1,199 @@
+World loop matrix started 27/09/2026 02:23:15
+PASS editor is the host with a spawned player
+id=501; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=40; output=43; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(18.75, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(18.75, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(17.25, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(17.25, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -4.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-14.50, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS S1 host: both players in HQPrototype
+PASS S1 guest: both players in HQPrototype
+PASS S1 guest: loaded Session + HQPrototype only
+PASS S1 guest: phase AtHQ
+PASS S1 host: one NetworkManager
+PASS S1 host: fixture spawned in HQ (7)
+PASS S1 guest: sees the fixture
+PASS S2 HQ has a docked ship
+PASS S2 monitor idle text: Docked at HQ — E on Site 01 to sail
+id=502; requested monitor
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Not aboard: Mate bof the; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=64; output=43; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(18.75, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(18.75, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(17.25, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(17.25, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -4.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-14.50, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+id=503; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Not aboard: Mate bof the; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=68; output=43; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(18.75, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(18.75, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(17.25, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(17.25, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -4.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-14.50, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS S2 guest's monitor shows the same refusal
+PASS S2 refused, names only the guest: Not aboard: Mate bof the
+id=504; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Not aboard: Mate bof the; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=68; output=43; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-47.98, 0.00, -20.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-47.98, 1.60, -20.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(17.25, 0.00, 14.50); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(17.25, 1.60, 14.50); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -4.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-14.50, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS S2 guest's monitor names only itself
+PASS S2 nothing moved
+id=505; moved to (-55.49, 0.00, -22.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=86; output=74; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-47.98, 0.00, -20.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-47.98, 1.60, -20.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(-55.49, 0.00, -22.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-55.49, 1.60, -22.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -4.50); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-16.00, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-14.50, 0.13, -6.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS D3 the HQ's landing is not safely aboard
+PASS D3 a passenger on the landing is named: refused: Not aboard: Skipper
+PASS D3 nothing moved: rest=(-52.99, 0.00, -18.00); pos=(-52.99, 0.00, -18.00); engineClip=True
+PASS S3 host holds Basketball
+id=506; moved to (-55.49, 0.00, -22.00) owner=True locked=False controller=True spawned=True scene=HQPrototype
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=AtHQ; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Docked at HQ — E on Site 01 to sail; trip=Idle/0; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=0; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=420; output=785; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=False
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=False
+gangway=Lifting HQ gangway; raised=0.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-47.98, 0.00, -20.00); slots=[1,-1,-1,-1]; held=none; massKg=1.24; speedFactor=0.9678; meterFill=0.0496; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-47.98, 1.60, -20.00); height=1.8; eye=1.6; hands=Basketball(Clone); lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=68; camFwd=(-0.37, -0.93, 0.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(-55.49, 0.00, -22.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-55.49, 1.60, -22.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=2; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-43.80, 0.17, -12.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Held; holder=0; owner=0; version=2; writer=False; kinematic=True; collider=False; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-47.91, 0.97, -20.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=2; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-58.48, 0.13, -19.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS S3 monitor press: requested Sea
+PASS S3 sail accepted from the monitor, monitor reads: Casting off
+PASS HQ and ship boarding gates close before pull-away
+PASS HQ gangway fully raised before ship moves
+PASS D1 host locked in place, screen still visible while the ship moves
+id=507; requested snapshot
+server=False; client=True; clientId=1; loaded=HQPrototype+Session; active=HQPrototype; phase=Sailing; day=0; payday=False; box=0; balance=0; world=HQ; fade=0; message=Connected to 127.0.0.1.; monitor=Sailing to Site 01…; trip=PullingAway/1; ride=Idle/Down/0; car=AtTop; carPos=none; below=; travelLocked=True; underwater=False/0.00; cabinWater=none; tv=none; spawned=0:CrewDayState+1:Basketball+2:Basketball+3:Basketball+4:HeavyBallBlue+5:HeavyBallBlue+6:HeavyBallPurple+7:HeavyBallBlack+8:PrototypePlayer+9:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=
+mic=False; test=False; tone=False; world=-1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=492; output=940; status=Microphone OFF
+heard=
+baskets=0;
+hoop=Hoop W; confetti=0; chimes=0; board=BASKETS 0
+hoop=Hoop E; confetti=0; chimes=0; board=BASKETS 0
+shopBrowser=False; entries=4
+boardingGate=Ship Boarding Gate; scene=HQPrototype; closed=True
+boardingGate=HQ Boarding Gate; scene=HQPrototype; closed=True
+gangway=Lifting HQ gangway; raised=1.00
+player=0; name=Skipper; colour=2; local=False; scene=HQPrototype; position=(-47.98, 0.00, -20.24); slots=[1,-1,-1,-1]; held=none; massKg=1.24; speedFactor=0.9678; meterFill=0.0496; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-47.98, 1.60, -20.24); height=1.8; eye=1.6; hands=Basketball(Clone); lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=68; camFwd=(-0.37, -0.93, 0.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=3; local=True; scene=HQPrototype; position=(-55.49, 0.00, -22.37); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=False; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-55.49, 1.60, -22.37); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=Basketball(Clone); display=Basketball; use=Throw; id=3; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=2; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-42.86, -1.18, -12.00); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=1; scene=HQPrototype; state=Held; holder=0; owner=0; version=2; writer=False; kinematic=True; collider=False; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-47.91, 0.97, -20.24); velocity=(0.00, 0.00, 0.00)
+item=Basketball(Clone); display=Basketball; use=Throw; id=2; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=3; writer=False; kinematic=True; collider=True; visible=True; massKg=1.24; grip=OneHand; launch=0; position=(-58.48, 0.13, -19.24); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlack(Clone); display=Black ball; use=Throw; id=7; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=20; grip=TwoHands; launch=0; position=(14.00, 0.35, 1.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=4; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(12.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallBlue(Clone); display=Blue ball; use=Throw; id=5; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=6; grip=OneHand; launch=0; position=(14.00, 0.20, -7.00); velocity=(0.00, 0.00, 0.00)
+item=HeavyBallPurple(Clone); display=Purple ball; use=Throw; id=6; scene=HQPrototype; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=12; grip=TwoHands; launch=0; position=(8.00, 0.28, 1.00); velocity=(0.00, 0.00, 0.00)
+
+PASS D1 guest locked, sees raised gangway, PullingAway and both boarding gates closed
+PASS D1 the ship has moved away from the dock (7.8 m)
+PASS D1 host rides at the same deck spot
+FAIL: D7 deck ball rides frozen at its spot
+flow=world=HQ transitioning=True pending=; day=phase=Sailing day=0 balance=0 handed=0 world=HQ to=Sea ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0; trip=serial=1 stage=PullingAway from=HQ to=Sea; rider=locked=True placed=False local=(-5.00, 0.00, 2.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0
+player 0 local=True scene=HQPrototype pos=(-47.99, 0.00, -27.80)
+player 1 local=False scene=HQPrototype pos=(-55.48, 0.00, -29.71)
+item Basketball scene=HQPrototype state=Held holder=0 pos=(-47.92, 0.98, -27.80)
+item Basketball (2) scene=HQPrototype state=Free holder=-1 pos=(-58.49, 0.13, -26.80)
+item Basketball (3) scene=HQPrototype state=Free holder=-1 pos=(-16.00, 0.13, -4.50)
+item HeavyBallBlack scene=HQPrototype state=Free holder=-1 pos=(14.00, 0.35, 1.00)
+item HeavyBallBlue scene=HQPrototype state=Free holder=-1 pos=(12.00, 0.20, -7.00)
+item HeavyBallBlue (2) scene=HQPrototype state=Free holder=-1 pos=(14.00, 0.20, -7.00)
+item HeavyBallPurple scene=HQPrototype state=Free holder=-1 pos=(8.00, 0.28, 1.00)
+  at SunkCost.Editor.Prototype.WorldLoopRuntimeChecks.Check (System.Boolean value, System.String label) [0x00052] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\WorldLoopRuntimeChecks.cs:112 
+  at SunkCost.Editor.Prototype.WorldLoopRuntimeChecks+<Run>d__37.MoveNext () [0x00de7] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\WorldLoopRuntimeChecks.cs:337 
+  at SunkCost.Editor.Prototype.WorldLoopRuntimeChecks.Step () [0x0000d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\WorldLoopRuntimeChecks.cs:99 
+  at SunkCost.Editor.Prototype.WorldLoopRuntimeChecks.Tick () [0x00033] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\WorldLoopRuntimeChecks.cs:80 
+flow=world=HQ transitioning=True pending=; day=phase=Sailing day=0 balance=0 handed=0 world=HQ to=Sea ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0; trip=serial=1 stage=PullingAway from=HQ to=Sea; rider=locked=True placed=False local=(-5.00, 0.00, 2.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0
+player 0 local=True scene=HQPrototype pos=(-47.99, 0.00, -27.80)
+player 1 local=False scene=HQPrototype pos=(-55.48, 0.00, -29.71)
+item Basketball scene=HQPrototype state=Held holder=0 pos=(-47.92, 0.98, -27.80)
+item Basketball (2) scene=HQPrototype state=Free holder=-1 pos=(-58.49, 0.13, -26.80)
+item Basketball (3) scene=HQPrototype state=Free holder=-1 pos=(-16.00, 0.13, -4.50)
+item HeavyBallBlack scene=HQPrototype state=Free holder=-1 pos=(14.00, 0.35, 1.00)
+item HeavyBallBlue scene=HQPrototype state=Free holder=-1 pos=(12.00, 0.20, -7.00)
+item HeavyBallBlue (2) scene=HQPrototype state=Free holder=-1 pos=(14.00, 0.20, -7.00)
+item HeavyBallPurple scene=HQPrototype state=Free holder=-1 pos=(8.00, 0.28, 1.00)

@@ -46,6 +46,7 @@ TABLE = {
     "Winch":        ((2.0, 1.2, 1.6), "uniform", 40000),   # 8000 from 5 million faces came out crumpled (QA round 2); see REMESH
     "Container":    ((6.0, 2.6, 2.6), "stretch", 8000),
     "Console":      ((1.8, 0.8, 1.8), "uniform", 8000),
+    "NavConsole":   ((2.38, 1.20, 2.17), "uniform", 20000),  # k 1.2506 over the raw 1.90 x 0.96 x 1.74: top glass centre 1.55 m, grip 0.95 m (console model plan, 27 Sep 2026); see the nav_* steps
     "TvCabinet":    ((3.6, 0.4, 3.3), "uniform", 8000),
     "DeckLamp":     ((0.6, 0.6, 1.9), "uniform", 4000),
     "CabinDoor":    ((1.0, 0.12, 2.6), "uniform", 5000),
@@ -81,7 +82,7 @@ SMOOTH_ANGLE = 50.0
 
 # Parts the ship stands at twice their size (ShipDeckDressing.Scale): their bake
 # gets the big parts' 2048 maps, not 1024 (the winch looked rough up close).
-LARGE_ON_DECK = {"Winch"}
+LARGE_ON_DECK = {"Winch", "NavConsole"}  # the console is read from arm's length: its body wants the 2048 maps too
 
 # Parts rebuilt as a voxel surface before decimating, voxel size as a fraction of
 # the part's largest dimension (0 or absent: straight to the budget). An optional
@@ -164,6 +165,142 @@ def hull_deck_slot(data):
             faces += 1
     print("deck faces %d" % faces)
     return plate
+
+
+# ---- the navigation console -----------------------------------------------------
+#
+# The shared console (Dan, 27 September 2026): one Meshy mesh whose two screens
+# carry the reference UI embossed into the geometry (8 mm on the upright glass,
+# 24 mm on the desk) and whose lever is a red roller bar on two cheek plates,
+# welded to the housing. The game draws its own screens on overlay quads a few
+# millimetres over the glass, so the relief is flattened back to the glass plane
+# first (in the raw frame, before the fit, so the bake source has the same
+# shape); and the lever must move, so after the bake its faces are cut out into a
+# second object, NavConsole_Lever, holes capped, its origin on the drum axis it
+# turns about. The numbers are the model inspector's, in the raw Meshy frame
+# (Z up, front = -Y, lever housing at +X); they scale with the TABLE entry.
+
+# Each screen: plane normal (raw), in-plane box (axis-aligned in x and along
+# the slope), the offset band of the relief and the glass plane it is pressed to.
+NAV_SCREENS = (
+    # the upright glass: faces -Y; the glass at y 0.196, the emboss 0.188-0.204
+    {"n": (0.0, -1.0, 0.0), "x": (-0.72, 0.64), "v_axis": (0.0, 0.0, 1.0), "v": (0.00, 0.74), "band": (-0.210, -0.183), "plane": -0.196},
+    # the desk: 44.5 degrees, the glass at offset -0.068, the emboss -0.084..-0.044; x stops short of the lever housing (0.414)
+    {"n": (0.0, -0.7007, 0.7135), "x": (-0.74, 0.39), "v_axis": (0.0, 0.7135, 0.7007), "v": (-0.66, -0.10), "band": (-0.090, -0.040), "plane": -0.068},
+)
+
+# The lever's faces, in the raw frame: the bar (a cylinder along X), the two
+# cheek plates (boxes), never the drum's own surface behind them.
+NAV_LEVER = {
+    "bar_axis_yz": (-0.219, -0.110), "bar_r": 0.0584, "bar_x": (0.460, 0.800),
+    "cheeks_x": ((0.474, 0.527), (0.722, 0.778)), "cheeks_y": (-0.311, -0.041), "cheeks_z": (-0.250, -0.029),
+    "drum_axis_yz": (-0.0932, -0.2404), "drum_r": 0.0636,
+    "pivot": (0.6232, -0.0932, -0.2404),  # the drum axis at the bar's mid x: the lever object's origin
+}
+
+
+def nav_flatten_screens(data):
+    """Press each screen's embossed UI back onto its glass plane (raw frame)."""
+    for s in NAV_SCREENS:
+        n = Vector(s["n"]); va = Vector(s["v_axis"])
+        lo_b, hi_b = s["band"]
+        moved = 0
+        for v in data.vertices:
+            p = v.co
+            if not (s["x"][0] <= p.x <= s["x"][1]):
+                continue
+            t = va.dot(p)
+            if not (s["v"][0] <= t <= s["v"][1]):
+                continue
+            d = n.dot(p)
+            if lo_b <= d <= hi_b:
+                v.co = p - n * (d - s["plane"])
+                moved += 1
+        print("flattened screen n=%s: %d vertices to offset %.3f" % (tuple(s["n"]), moved, s["plane"]))
+    data.update()
+
+
+def nav_separate_lever(mesh, part, centre, lo, factors):
+    """Cut the bar and the cheek plates out into NavConsole_Lever, origin on the
+    drum axis, both objects capped. Runs in the fitted frame: raw points go
+    through the same shift and scale main() applied to the vertices."""
+    from mathutils import Matrix
+    k = factors.x
+    spec = NAV_LEVER
+
+    def fit(p):
+        return Vector(((p[0] - centre.x) * factors.x, (p[1] - centre.y) * factors.y, (p[2] - lo.z) * factors.z))
+
+    bar_yz = fit((0.0, spec["bar_axis_yz"][0], spec["bar_axis_yz"][1]))
+    drum_yz = fit((0.0, spec["drum_axis_yz"][0], spec["drum_axis_yz"][1]))
+    bar_r, drum_r = spec["bar_r"] * k, spec["drum_r"] * k
+    bar_x = tuple(fit((x, 0.0, 0.0)).x for x in spec["bar_x"])
+    cheeks_x = [tuple(fit((x, 0.0, 0.0)).x for x in pair) for pair in spec["cheeks_x"]]
+    cheeks_y = tuple(fit((0.0, y, 0.0)).y for y in spec["cheeks_y"])
+    cheeks_z = tuple(fit((0.0, 0.0, z)).z for z in spec["cheeks_z"])
+    pivot = fit(spec["pivot"])
+
+    def in_cut(c):
+        on_bar = bar_x[0] <= c.x <= bar_x[1] and math.hypot(c.y - bar_yz.y, c.z - bar_yz.z) <= bar_r
+        on_cheek = any(x0 <= c.x <= x1 for x0, x1 in cheeks_x) and cheeks_y[0] <= c.y <= cheeks_y[1] and cheeks_z[0] <= c.z <= cheeks_z[1]
+        on_drum = abs(math.hypot(c.y - drum_yz.y, c.z - drum_yz.z) - drum_r) < 0.015 * k
+        return (on_bar or on_cheek) and not on_drum
+
+    def edit(ob):
+        bpy.ops.object.select_all(action="DESELECT")
+        ob.select_set(True)
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.mode_set(mode="EDIT")
+
+    def open_loops(ob):
+        edit(ob)
+        bpy.ops.mesh.select_mode(type="VERT")
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.mesh.select_non_manifold(extend=False, use_wire=False, use_boundary=True, use_multi_face=False, use_non_contiguous=False, use_verts=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        return sum(1 for v in ob.data.vertices if v.select)
+
+    print("lever: %d boundary vertices before the cut" % open_loops(mesh))
+    data = mesh.data
+    for v in data.vertices:
+        v.select = False
+    for e in data.edges:
+        e.select = False
+    n = 0
+    for p in data.polygons:
+        p.select = in_cut(p.center)
+        if p.select:
+            n += 1
+            for vi in p.vertices:
+                data.vertices[vi].select = True
+    if n == 0:
+        raise SystemExit("lever: no faces selected; the cut boxes do not meet the mesh")
+    edit(mesh)
+    bpy.ops.mesh.select_mode(type="FACE")
+    bpy.ops.mesh.separate(type="SELECTED")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    lever = [o for o in bpy.context.selected_objects if o is not mesh and o.type == "MESH"][0]
+    lever.name = lever.data.name = part + "_Lever"
+    # Cap the cut: the cheeks' open feet on the lever, their footprints on the body.
+    for ob in (lever, mesh):
+        before = open_loops(ob)
+        edit(ob)
+        bpy.ops.mesh.select_mode(type="VERT")
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.mesh.select_non_manifold(extend=False, use_wire=False, use_boundary=True, use_multi_face=False, use_non_contiguous=False, use_verts=False)
+        bpy.ops.mesh.fill_holes(sides=0)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        print("lever: %s had %d boundary vertices, %d after capping" % (ob.name, before, open_loops(ob)))
+    # The origin on the hinge: the vertices shifted so the pivot is the object's
+    # origin, then the object stood there. Unity's child transform is this point.
+    lever.data.transform(Matrix.Translation(-pivot))
+    lever.location = pivot
+    lever.data.update()
+    bl = [Vector(c) for c in lever.bound_box]
+    print("lever: %d faces cut, %d faces on the lever, pivot (%.4f, %.4f, %.4f), lever bounds %.3f x %.3f x %.3f about the pivot" % (
+        n, len(lever.data.polygons), pivot.x, pivot.y, pivot.z,
+        max(c.x for c in bl) - min(c.x for c in bl), max(c.y for c in bl) - min(c.y for c in bl), max(c.z for c in bl) - min(c.z for c in bl)))
+    return lever
 
 
 # ---- the shading ----------------------------------------------------------------
@@ -335,12 +472,15 @@ def main():
         size = hi - lo
         print("turned a quarter: %.2f x %.2f x %.2f" % (size.x, size.y, size.z))
 
+    if part == "NavConsole":
+        nav_flatten_screens(mesh.data)  # in the raw frame, before the fit and before the bake copy is taken
     if fit == "stretch":
         factors = Vector((target[0] / max(size.x, 1e-6), target[1] / max(size.y, 1e-6), target[2] / max(size.z, 1e-6)))
     else:
         k = min(target[i] / max((size.x, size.y, size.z)[i], 1e-6) for i in range(3))
         factors = Vector((k, k, k))
     centre = (lo + hi) / 2
+    raw_frame = (centre.copy(), lo.copy(), factors.copy())  # what the nav lever step needs to place raw points
     for v in mesh.data.vertices:
         v.co = Vector(((v.co.x - centre.x) * factors.x,
                        (v.co.y - centre.y) * factors.y,
@@ -400,6 +540,8 @@ def main():
         hull_deck_slot(mesh.data)  # after the unwrap, so the metre UVs are the ones kept
     if high is not None:
         bake_from(high, mesh, part, 2048 if max(target) >= 4.0 or part in LARGE_ON_DECK else 1024, 1.0 if part == "Hull" else 0.3)
+    if part == "NavConsole":
+        nav_separate_lever(mesh, part, *raw_frame)  # after the bake: one baked material and one unwrap on both objects
 
     # The maps out beside the model, named by their role, so Unity's setup finds them.
     map_dir = os.path.join(os.path.dirname(dst), "Maps")

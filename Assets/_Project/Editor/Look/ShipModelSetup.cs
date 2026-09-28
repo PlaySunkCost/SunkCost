@@ -24,7 +24,7 @@ namespace SunkCost.Editor.Look
         public static readonly string[] Parts =
         {
             "Hull", "Tower", "Railing", "StorageRoom", "CabinHousing",
-            "Crane", "Winch", "Container", "Console", "TvCabinet", "DeckLamp",
+            "Crane", "Winch", "Container", "Console", "NavConsole", "TvCabinet", "DeckLamp",
             "CabinDoor", "StorageSill",
             "Bollard", "Pipes", "Ladder", "Barrel", "Crate", "CableCoil", "Lifebuoy", "Toolbox",
             "Couch", "Bench", "Table",

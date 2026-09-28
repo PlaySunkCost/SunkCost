@@ -152,6 +152,9 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "monsters") MonsterRuntimeChecks.RunAsHost();
                         else if (job == "dash") DashRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
+                        else if (job == "console-ship") ShipConsoleRuntimeChecks.RunAsHost();
+                        else if (job == "console-hq") HQConsoleRuntimeChecks.RunAsHost();
+                        else if (job == "console-net") ConsoleNetRuntimeChecks.RunAsHost();
                         // A monster's own polish checks (24 September 2026): "polish-<Kind>" runs
                         // MonsterPolish<Kind>Checks.RunAsHost, one file per monster, found by name so
                         // no one edits this list to add one. They spawn their own creatures.

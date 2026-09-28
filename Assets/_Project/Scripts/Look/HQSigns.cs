@@ -87,8 +87,40 @@ namespace SunkCost.Look
             { "button.site01", "SITE 01" },
             { "button.hq", "HQ" },
             { "button.endday", "END DAY" },
+            { "button.pay", "PAY" },
+            { "button.giveup", "GIVE UP" },
+            { "board.title", "QUOTA BOARD" },
+            // The shared console's words (27 September 2026): the screens' titles and
+            // headings, the lever sign per action ({0} in lever.unlock is the price), the
+            // GIVE UP card's lines.
+            { "nav.title", "NAVIGATION" },
+            { "nav.selected", "SELECTED DESTINATION" },
+            { "nav.select", "SELECT A DESTINATION" },
+            { "nav.sailing", "SAILING" },
+            { "nav.dive", "DIVE IN PROGRESS" },
+            { "lever.confirm", "CONFIRM" },
+            { "lever.unlock", "UNLOCK ${0}" },
+            { "lever.endday", "END DAY" },
+            { "lever.pay", "PAY" },
+            { "giveup.card", "GIVE UP" },
+            { "giveup.foot", "EVERYONE MUST AGREE" },
+            { "giveup.voted", "YOU VOTED · E TO TAKE BACK" },
             { "button.descend", "▼" }, // a down arrow on the deck cabin's button (Dan, 19 September 2026)
             { "button.surface", "▲" }, // an up arrow on the car's
+            // The generated platform's plates (HQ polish, 27 September 2026: they were literal
+            // strings in the layout code, out of this asset's reach).
+            { "depot.title", "BLACK TIDE SALVAGE CO.  /  EQUIPMENT DEPOT" }, // the fascia over the depot's front
+            { "depot.end", "EQUIPMENT DEPOT" },                                // the east end wall, the first thing the arrivals walk toward
+            { "depot.end.sub", "SHOP  ·  UPGRADES  ·  SUPPLIES" },
+            { "counter", "EQUIPMENT CATALOGUE" },                              // over the counter that opens the browser
+            { "counter.sub", "BROWSE & BUY  ·  PRESS E" },
+            { "arrival", "CREW ARRIVAL  /  01–04" },
+            { "arrival.colour", "CHOOSE YOUR CREW COLOUR" },
+            { "cargo", "CARGO / KEEP ACCESS CLEAR" },
+            { "way.depot", "EQUIPMENT DEPOT  >" },                             // the board at the arrival exit
+            { "way.ship", "SHIP  >" },
+            { "way.quota", "SELL / QUOTA  >" },
+            { "boarding", "BLACK TIDE / BOARDING" },
         };
 
         private static HQSigns loaded;

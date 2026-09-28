@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79d80439ec485a44afa583389e7192f, type: 3}
+  m_Name: SiteCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.World.SiteCatalog
+  entries:
+  - Id: 1
+    Name: HQ
+    SubName: 
+    Picture: {fileID: 0}
+    Description: []
+    UnlockPrice: 0
+    RoutesTo: 0
+  - Id: 2
+    Name: SITE 01
+    SubName: 
+    Picture: {fileID: 0}
+    Description: []
+    UnlockPrice: 0
+    RoutesTo: 0
+  - Id: 3
+    Name: SITE 02
+    SubName: 
+    Picture: {fileID: 0}
+    Description:
+    - "SITE 02 \xB7 uncharted"
+    UnlockPrice: 100
+    RoutesTo: 2
+  - Id: 4
+    Name: SITE 03
+    SubName: 
+    Picture: {fileID: 0}
+    Description:
+    - "SITE 03 \xB7 uncharted"
+    UnlockPrice: 200
+    RoutesTo: 2
+  - Id: 5
+    Name: SITE 04
+    SubName: 
+    Picture: {fileID: 0}
+    Description:
+    - "SITE 04 \xB7 uncharted"
+    UnlockPrice: 300
+    RoutesTo: 2
+  sharedPicture: {fileID: 2800000, guid: 84dce76932ff3e54094d4f43dfd43de4, type: 3}

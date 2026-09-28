@@ -187,7 +187,8 @@ namespace SunkCost.Player
             CurrentTarget = null;
             CurrentButton = null;
             CurrentColourPanel = null;
-            CurrentQuotaBoard = null;
+            CurrentQuotaBoard = null; CurrentGiveUpButton = null;
+            CurrentConsoleControl = null;
             CurrentShopDisplay = null;
             CurrentTv = null;
             CurrentPatient = null;

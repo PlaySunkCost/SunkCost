@@ -302,7 +302,15 @@ namespace SunkCost.Editor.Prototype
             // the old spot (5, -3) is the crane's base since the ship audit (SHIP-012).
             deckBall.ServerDropAt(hqShip.FromShipLocal(SunkCost.Editor.Look.ShipDeckDressing.OpenDeck + new Vector3(0f, 0.5f, 0f)));
             yield return null; yield return null;
+            // Dropped half a metre up, the ball lands, bounces and rolls a little before it rests
+            // (its bouncier physic material since PR #86, 27 September 2026: 0.24 m, more than D7's
+            // 0.15 m tolerance): its spot is read once it is still, at most four seconds later.
+            Rigidbody deckBallBody = deckBall.GetComponent<Rigidbody>();
+            double settleUntil = EditorApplication.timeSinceStartup + 4.0;
+            while (EditorApplication.timeSinceStartup < settleUntil && deckBallBody != null &&
+                   (deckBallBody.linearVelocity.sqrMagnitude > 1e-4f || deckBallBody.angularVelocity.sqrMagnitude > 1e-3f)) yield return null;
             Vector3 deckBallLocalBefore = hqShip.ToShipLocal(deckBall.transform.position);
+            File.AppendAllText(Log, "deck ball settled at ship-local " + deckBallLocalBefore + " (" + (deckBallBody != null ? deckBallBody.linearVelocity.magnitude.ToString("0.000") : "-") + " m/s)\n");
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
             H.ClientRequestGrab("Basketball"); yield return null; yield return null;
             CarryableItem heldBall = H.Item("Basketball");

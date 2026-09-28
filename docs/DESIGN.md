@@ -64,11 +64,52 @@ what you have against what you owe. A low sill across its doorway keeps a droppe
 coin from rolling out (17 September 2026). **No shop.** The glass elevator cabin stands
 on the deck: it is the only way down and the only way up.
 
+**The navigation console (decided by Dan, 27 September 2026; built on `dan/hq-polish`
+27–28 September 2026 from Dan's model, which replaces both the ship's sailing console
+and the HQ quota console).** One model with a top screen, a bottom touch panel and a lever with a lit
+sign. The game draws the screens and the sign's word, so they can change.
+
+- **Sailing is select, then confirm.** This replaces "choosing a destination sails the ship".
+  Aim at a site card on the top screen and press E to select it. Every screen sees the
+  selection. The bottom screen then shows game facts only: the site, the day and the
+  quota so far. Pulling the lever (**CONFIRM**) sails, under the same all-aboard and
+  payday rules.
+- **End day is the lever too.** Once today's dive is done the ship cannot sail, so the
+  lever reads **END DAY** and ends the day. The word goes dim when nothing is possible.
+- **Sites 02-04 are bought at the console, any time, in any order,** from the crew
+  balance: **$100, $200 and $300** (placeholder prices, to be discussed). Their cards
+  stay on the top screen with a **lock** (as in Dan's reference) until bought. Every card
+  shows a **picture** of its site; for now all sites share one, and each site's picture is
+  its own editable setting so it can change later. Selecting a
+  locked card shows that site's info, the current balance and its cost on the bottom
+  screen, and the lever reads UNLOCK. A bought site stays open until the run is lost on
+  the plank, or until a new game. Until those sites are built, sailing to 02, 03 or 04
+  takes the ship to Site 01.
+- **At HQ, the same model is the quota board.** The top screen shows the board, the lever
+  reads **PAY**, and **GIVE UP** is a red card on the bottom panel (aim and E) showing
+  the vote count.
+- **Built (27–28 September 2026, `dan/hq-polish`; checked by the `console-ship`,
+  `console-hq` and `console-net` matrices with local guest builds on one machine, not yet
+  play-tested over Steam on separate machines; `docs/test-runs/2026-09-27-console/RESULT.md`).** Until Sites
+  02–04 have their own worlds every site is the one sea world, so at sea the lever refuses
+  a sail to another site with "Sail home first" (sites are chosen at HQ; the rule falls
+  away when the sites get their own scenes). The selection clears once a sail is accepted
+  (Dan's proposal). A lever pull carries the word the presser saw; if the crew changed the
+  selection just before, the pull is refused "Selection changed" rather than acting on the
+  new card. At HQ the lever reads PAY only while the ship's storage room holds something to
+  sell, or on payday (the empty room is judged then, and the plank follows a miss); an empty
+  room before payday dims it with "Nothing to sell — dive again", so a second PAY after a
+  short sale does nothing (the old desk button sold the empty room again and reported SHORT
+  a second time). END DAY needs no selection: the selection clears on every accepted sail,
+  so after the dive the lever reads END DAY at once (a locked selection still reads UNLOCK);
+  a card may be selected during a dive, the lever staying dim until the divers are up.
+
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
-tower** stands at the stern, with the sailing console on its forward face (the
-buttons **SITE 01 · HQ · END DAY**, left to right as the player reads them) and
+tower** stands at the stern, with the navigation console on its forward face (the
+shared console model since 27 September 2026: the five destination cards on its top
+screen, the lever with its lit sign, port of the tower's door) and
 the crew's screen beside it; the storage room is forward of it, to starboard. The
 **glass elevator** stands amidships in its well, open to the sea, with a **low
 visible rail** round the well, open only at the grate; the rail's collider is
@@ -194,7 +235,12 @@ sailing. **Home only at the start of a day (Dan, 17 September 2026):** once
 today's dive has happened the monitor refuses HQ ("Dive done — End day
 first") until the crew ends the day; a day nobody has dived on yet — day 1
 fresh from HQ included — may sail home. With no dive taken the board says
-"Nothing to pay yet — dive first". The quota is a serialized number (`WorldLoopSettings`,
+"Nothing to pay yet — dive first". **The board as a screen (Dan, 27 September 2026:
+"like in the photo"):** the text sits on the intake console's own screen in the ship
+monitor's layout — QUOTA BOARD and the day over a rule, the state large (NEW CYCLE,
+DAY n OF 3, PAYDAY, PAID, SHORT BY $n, THE RUN IS OVER), a hint under it, the quota
+(amber, green once met) and the balance at the foot — and the console's desk carries
+two buttons: a blue **PAY** (look, E) and a red **GIVE UP**. The quota is a serialized number (`WorldLoopSettings`,
 $500 for the prototype). **Built 16
 September 2026 (Dan):** the day counter lives on the crew's day state — day 1
 on arrival from HQ, the day in progress from the moment the riders stand in
@@ -587,6 +633,7 @@ The Impostor is outside this pass and unchanged.
 | Early return | You can go back to HQ before all three dives. **Amended 16 September 2026 (Dan):** sailing costs no day — days are spent only by dives — and docking judges nothing. At HQ the crew *may* pay early at the board; if it does not, it sails out again on the same day count. |
 | Run length | Endless. The run recap screen is the ending, every time — give it real production value. |
 | Failure | Miss the quota, walk the plank, run over. **Built 18 September 2026 (Dan):** the crew has sold everything, used its three days and is still short at payday — the board says THE RUN IS OVER and the crew **walks the plank** at HQ, a board off the pier over the water, **one by one in crew order**: the jumper is put at its base, free to walk out and back and jump when ready; after **10 seconds** they are pushed. **A gate** (a rail across the board's base, up on every peer while the crew walks the plank) keeps the jumper on the board — free along it, no way back to the pier — and the others on the pier. The last one in the water brings the card — **THE GAME IS OVER · N days · M minutes** (dive days begun this run, across cycles; wall time from the run's start) — for six seconds, then **everything from nothing**: day 0, $0, no cycle, empty hands, no upgrades, everyone alive on the pier at HQ, and **the world as it was found** — every loose item (bought tanks, bodies, whatever lies on the ship or the pier) gone, each loaded scene's fixture spawned again. Sailing, the shop and joining are refused while the plank is on. Nobody can hold the crew hostage on the board: the push, and a leaver simply counts as in the water. |
+| Giving up | **Decided 27 September 2026 (Dan):** the red GIVE UP button on the HQ quota console is a crew vote. Each press toggles the presser's vote (press again to take it back); the board shows the count on every screen ("GIVE UP 1/3"). Only while docked at HQ with the run on. When every connected player has voted, the run is lost exactly as a missed quota is: THE RUN IS OVER and the crew **walks the plank** (see Failure). The votes clear when the ship sails, when a player joins or leaves, and with a fresh run. |
 | Between runs | Cosmetics only, unlocked through achievements. No permanent power. |
 | Difficulty | One difficulty for everyone. The site vote is how you choose your risk. |
 | Teaching | No tutorial. The starter site is survivable enough that players learn noise matters by getting away with it once. |

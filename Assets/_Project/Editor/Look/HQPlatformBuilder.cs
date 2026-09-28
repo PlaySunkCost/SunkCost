@@ -65,6 +65,7 @@ namespace SunkCost.Editor.Look
                 if (r.GetComponentInParent<DockGangway>() != null) continue;
                 if (r.GetComponentInParent<SunkCost.Look.WaveSurface>() != null) continue;
                 if (r.GetComponentInParent<SunkCost.Look.Beacon>() != null) continue;
+                if (r.GetComponentInParent<ConsoleRig>() != null) continue; // its lever swings; its glass is painted through a property block
                 if (r.GetComponent<TextMesh>() != null) continue;
                 GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic);
             }
@@ -138,37 +139,33 @@ namespace SunkCost.Editor.Look
 
         // ---- the booths -----------------------------------------------------------------
 
-        internal static void QuotaBoard(GameObject root, Vector3 at)
+        // The quota console at the intake (Dan, 27 September 2026, BRIEF "COPY 2"): the
+        // shared console model (ConsoleBuilder.Place, the ship's navigation console's
+        // rig) placed as HQ's quota board, with the HQQuotaConsole composer on its root.
+        // Its lever's control object is "Quota Board" (QuotaBoard.BoardName: every check
+        // that looks at the board and presses E still pays) and the red GIVE UP card on
+        // the bottom panel is "Give Up Button" (GiveUpButton.ButtonName). It stands on
+        // a steel footing plate bolted to the deck, a hazard lip along its front, so it
+        // reads as installed rather than dropped; the rig's own body collider walks and
+        // aims (no base box). `at` is the footing's centre on the deck, `yaw` the
+        // console's facing (its front is +Z at yaw 0), both in the intake group's frame.
+        public const float FootingHeight = 0.05f;
+        public static readonly Vector3 FootingSize = new(2.6f, FootingHeight, 1.4f);
+
+        internal static ConsoleRig QuotaConsole(GameObject intake, Vector3 at, float yaw)
         {
-            GameObject board = new(SunkCost.World.QuotaBoard.BoardName);
-            board.transform.SetParent(root.transform);
-            board.transform.position = at;
-            board.transform.rotation = Quaternion.Euler(-25f, 180f, 0f);
-            GameObject plate = new("Board Plate");
-            plate.transform.SetParent(board.transform, false);
-            plate.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(3.0f, 0.9f, 0.08f), 0.45f);
-            plate.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.SignBoard();
-            GameObject frame = new("Frame");
-            frame.transform.SetParent(board.transform, false);
-            frame.transform.localPosition = new Vector3(0f, 0f, -0.02f);
-            frame.AddComponent<MeshFilter>().sharedMesh = MeshKit.Box(new Vector3(3.08f, 0.98f, 0.03f), 0.49f);
-            frame.AddComponent<MeshRenderer>().sharedMaterial = LookMaterials.ScreenTeal();
-            GameObject text = new("Board Text", typeof(TextMesh));
-            text.transform.SetParent(board.transform, false);
-            text.transform.localPosition = new Vector3(0f, 0f, 0.05f);
-            text.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-            TextMesh mesh = text.GetComponent<TextMesh>();
-            mesh.text = "QUOTA BOARD";
-            mesh.characterSize = 0.05f;
-            mesh.fontSize = 48;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.color = new Color(0.55f, 0.95f, 0.85f);
-            text.AddComponent<DepthText>().Configure(LookMaterials.DepthText());
-            BoxCollider box = board.AddComponent<BoxCollider>();
-            box.center = new Vector3(0f, 0f, 0.02f);
-            box.size = new Vector3(3.0f, 0.9f, 0.12f);
-            board.AddComponent<SunkCost.World.QuotaBoard>().Configure(mesh);
+            Quaternion facing = Quaternion.Euler(0f, yaw, 0f);
+            GameObject footing = HQGeneratedLayout.Slab(intake, "Quota console footing", at, FootingSize, ShipKitMaterials.Steel(), solid: true);
+            footing.transform.localRotation = facing;
+            // The lip along the front edge, on the plate (above it, never coplanar with the deck).
+            HQGeneratedLayout.Slab(footing, "Footing lip", new Vector3(0f, FootingHeight, FootingSize.z / 2f - 0.07f), new Vector3(FootingSize.x, 0.012f, 0.14f), ShipKitMaterials.Hazard());
+            // Four bolt heads at the corners.
+            foreach (float sx in new[] { -1f, 1f })
+                foreach (float sz in new[] { -1f, 1f })
+                    HQGeneratedLayout.Slab(footing, "Footing bolt", new Vector3(sx * (FootingSize.x / 2f - 0.12f), FootingHeight, sz * (FootingSize.z / 2f - 0.12f)), new Vector3(0.07f, 0.03f, 0.07f), LookMaterials.Ink());
+            ConsoleRig rig = ConsoleBuilder.Place(intake.transform, at + Vector3.up * FootingHeight, yaw, ConsoleKind.HQ);
+            rig.gameObject.AddComponent<HQQuotaConsole>();
+            return rig;
         }
 
         internal static void ColourPanel(GameObject root, Vector3 at)
@@ -311,19 +308,23 @@ namespace SunkCost.Editor.Look
 
         // ---- the sky ------------------------------------------------------------------
 
-        // Six in the morning: the sun still under the horizon with its glow in the
-        // east, the sky a deep blue, the lamps doing the work; a bloom volume for
-        // the glow.
+        // Six in the morning: the sun still under the horizon with its glow low on
+        // one side, the sky a deep blue lightening toward the horizon, the lamps
+        // doing the work; a bloom volume for the glow. The glow sits in the
+        // south-east (HQ polish, 27 September 2026: it read as full night, and the
+        // old east-north-east band was behind the arrivals, who face south — now
+        // it is in the spawn view, the depot's outlook and the plank's).
+        private static readonly Vector3 DawnDirection = new Vector3(0.7f, 0f, -0.7f).normalized; // where the sun is coming up
         private static void Sky(Scene scene)
         {
             GameObject sky = new("Sky");
             GameObject sunGo = new("Sun", typeof(Light));
             sunGo.transform.SetParent(sky.transform);
-            sunGo.transform.rotation = Quaternion.Euler(2f, -60f, 0f); // at the horizon, east-north-east
+            sunGo.transform.rotation = Quaternion.Euler(4f, Mathf.Atan2(-DawnDirection.x, -DawnDirection.z) * Mathf.Rad2Deg, 0f); // light from the glow's side, 4 degrees over the horizon
             Light sun = sunGo.GetComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.55f, 0.30f);
-            sun.intensity = 0.35f;
+            sun.color = new Color(1f, 0.62f, 0.38f);
+            sun.intensity = 0.6f;
             sun.shadows = LightShadows.None;
             // A dim blue fill from above so the tops read.
             GameObject fillGo = new("Sky Fill", typeof(Light));
@@ -335,12 +336,12 @@ namespace SunkCost.Editor.Look
             RenderSettings.skybox = SkyboxMaterial();
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.50f, 0.56f, 0.80f);
-            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.40f, 0.34f);
+            RenderSettings.ambientSkyColor = new Color(0.50f, 0.57f, 0.82f);
+            RenderSettings.ambientEquatorColor = new Color(0.58f, 0.43f, 0.35f);
             RenderSettings.ambientGroundColor = new Color(0.18f, 0.17f, 0.22f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.07f, 0.11f, 0.24f);
+            RenderSettings.fogColor = new Color(0.14f, 0.22f, 0.42f); // the sky's horizon band: the far sea and the ship fade into it
             RenderSettings.fogStartDistance = 60f;
             RenderSettings.fogEndDistance = 380f;
             sky.AddComponent<SkyEnvironment>();
@@ -363,13 +364,16 @@ namespace SunkCost.Editor.Look
                 AssetDatabase.CreateAsset(m, SkyboxPath);
             }
             if (m.shader != shader) m.shader = shader;
-            m.SetColor("_Zenith", new Color(0.03f, 0.05f, 0.15f));
-            m.SetColor("_Horizon", new Color(0.09f, 0.15f, 0.36f));
-            m.SetColor("_Glow", new Color(0.95f, 0.42f, 0.14f));
-            m.SetVector("_GlowDirection", new Vector4(0.85f, 0f, 0.5f, 0f)); // east-north-east: the sun is on its way
-            m.SetFloat("_GlowWidth", 0.3f);
-            m.SetFloat("_GlowHeight", 0.14f);
-            m.SetFloat("_HorizonSharpness", 2.2f);
+            // Dawn, not night: a navy zenith over a steel-blue horizon band, a wide warm
+            // glow where the sun is coming up, the stars mostly gone.
+            m.SetColor("_Zenith", new Color(0.04f, 0.06f, 0.18f));
+            m.SetColor("_Horizon", new Color(0.16f, 0.26f, 0.50f));
+            m.SetColor("_Glow", new Color(1.0f, 0.52f, 0.20f));
+            m.SetVector("_GlowDirection", new Vector4(DawnDirection.x, 0f, DawnDirection.z, 0f)); // south-east: in the arrivals' view
+            m.SetFloat("_GlowWidth", 0.6f);
+            m.SetFloat("_GlowHeight", 0.30f);
+            m.SetFloat("_HorizonSharpness", 3.0f);
+            m.SetFloat("_Stars", 0.35f);
             m.SetColor("_Ground", new Color(0.09f, 0.24f, 0.56f)); // the sea as it renders: the horizon joins it
             EditorUtility.SetDirty(m);
             return m;

@@ -309,8 +309,9 @@ namespace SunkCost.Editor.Prototype
 
         // The tower at the stern is the tower model (ShipDeckDressing), its own shape
         // its collider. On its forward face the game builds only what is used: the
-        // crew's screen, and the sailing monitor with its three buttons and its status
-        // line, which the dressing moves onto the console model.
+        // crew's screen. The navigation console beside it is the dressing's
+        // (ConsoleBuilder.Place, 27 September 2026): the old monitor block, its three
+        // buttons and its status line went with it.
         private static void BuildTower(Transform root)
         {
             float front = -DeckLength / 2f + TowerDepth;     // the tower's forward face
@@ -321,20 +322,6 @@ namespace SunkCost.Editor.Prototype
             screenText.transform.SetParent(root, false);
             screenText.transform.localPosition = new Vector3(2.8f, 2.6f, front + 0.11f);
             SunkCost.Editor.Look.PropBuilder.Text(screenText, "Text", Vector3.zero, 0.3f, new Color(0.05f, 0.14f, 0.22f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.screen");
-            // The sailing monitor at the tower's foot, the buttons under it.
-            float mz = front + 0.5f;
-            GameObject monitor = Block(ShipParts.MonitorName, root, new Vector3(0f, 1.6f, mz), new Vector3(1.6f, 1f, 0.1f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
-            monitor.AddComponent<ShipMonitor>();
-            // Three red buttons with their words on them, in a row under the screen (Dan,
-            // 19 September 2026), reading SITE 01 · HQ · END DAY from left to right (Dan,
-            // 23 September 2026): whoever reads the console faces aft, so their left is +x.
-            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonSite01Name, new Vector3(0.55f, 1.12f, mz + 0.05f), Quaternion.identity, "button.site01", 0.5f)
-                .AddComponent<MonitorButton>().Configure(WorldId.Sea, "Site 01");
-            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonHQName, new Vector3(0f, 1.12f, mz + 0.05f), Quaternion.identity, "button.hq", 0.5f)
-                .AddComponent<MonitorButton>().Configure(WorldId.HQ, "HQ");
-            SunkCost.Editor.Look.PropBuilder.PushButton(root.gameObject, ShipParts.MonitorButtonEndDayName, new Vector3(-0.55f, 1.12f, mz + 0.05f), Quaternion.identity, "button.endday", 0.5f)
-                .AddComponent<MonitorButton>().ConfigureEndDay("End day");
-            Label(ShipParts.MonitorStatusName, root, new Vector3(0f, 1.85f, mz + 0.07f), string.Empty, 0.035f, facingBow: true);
             // No stair down the tower any more (Dan, 23 September 2026: "I dont like
             // the stairs"): the way aboard from the HQ is a later card (docs/ROADMAP.md).
         }

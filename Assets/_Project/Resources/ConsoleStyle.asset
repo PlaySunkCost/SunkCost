@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e31d45d95b85334a880d4edf8377ca6, type: 3}
+  m_Name: ConsoleStyle
+  m_EditorClassIdentifier: Assembly-CSharp::SunkCost.Look.ConsoleStyle
+  Font: {fileID: 0}
+  PaintShader: {fileID: 4800000, guid: f6f8dceaed7dde64492d83a09481cee4, type: 3}
+  PixelsPerMetre: 1200
+  MaxWidth: 2048
+  MinWidth: 384
+  Emission: 1
+  TitleTracking: 0.06
+  FrameThickness: 1.5
+  SelectedFrameScale: 2
+  GridStep: 0.0625
+  GridAlpha: 0.07
+  CardFillAlpha: 0.04
+  SelectedFillAlpha: 0.1
+  HaloAlpha: 0.35
+  LockedDim: 0.45
+  DisabledSign: 0.3
+  PictureTintOnly: 1
+  TopTitle: 0.09
+  TopCorner: 0.07
+  CardGap: 0.02
+  CardName: 0.085
+  CardTag: 0.05
+  LockGlyph: 0.09
+  HereChip: 0.045
+  BigState: 0.26
+  Hint: 0.075
+  Foot: 0.08
+  BottomHeading: 0.11
+  BottomName: 0.18
+  BottomSub: 0.1
+  BottomLine: 0.085
+  BottomStatus: 0.13
+  BottomNotice: 0.17
+  PosterHeading: 0.17
+  VoteWord: 0.26
+  VoteCount: 0.18
+  VoteFoot: 0.085
+  SignWord: 0.5
+  SignChevrons: 0.14
+  SignFrame: 0.06

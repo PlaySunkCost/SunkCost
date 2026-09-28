@@ -112,6 +112,7 @@ namespace SunkCost.World
         private void ServerResetRun()
         {
             dayState.ServerResetRun();
+            ServerClearGiveUp("a fresh run");
             Scene hq = WorldScenes.Scene(WorldId.HQ);
             ServerClearWorldItems();
             List<Transform> points = hq.IsValid() && hq.isLoaded ? CrewSpawner.SpawnPointsIn(hq) : new List<Transform>();
