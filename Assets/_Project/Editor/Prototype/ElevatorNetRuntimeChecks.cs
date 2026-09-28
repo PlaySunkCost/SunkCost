@@ -126,6 +126,7 @@ namespace SunkCost.Editor.Prototype
             Status = "Running";
             logs.Clear(); crew.Clear(); launched.Clear(); softFails.Clear(); admissionRefusalDuringRide.Clear(); lastStats = new Dictionary<Guest, Stats>();
             exceptionsSeen = 0; errorsSeen = 0;
+            profileSeconds = float.NaN;
             Application.logMessageReceived += OnLog;
             steps = Run();
             stack.Clear();
@@ -659,17 +660,21 @@ namespace SunkCost.Editor.Prototype
 
         // ---- the ride's clock (the host's phase log) ----------------------------------------
 
+        private static float profileSeconds = float.NaN;
         private static void CheckTravel(string label, ElevatorState moving, ElevatorState arrive)
         {
             IReadOnlyList<ElevatorPhase> log = ElevatorNetProbe.PhaseLog;
             int i = -1;
             for (int k = log.Count - 1; k > 0; k--) if (log[k].State == arrive && log[k - 1].State == moving) { i = k; break; }
             Check(i > 0, $"{label}: the host logged {moving} then {arrive} ({string.Join(",", log.Select(p => p.Serial + ":" + p.State))})");
+            // The site may already have unloaded (the last diver up): use the profile's time
+            // read while the car stood in a scene (round 1 fix to the test).
             ElevatorController car = WorldSceneFlow.FindCar();
+            if (car != null) profileSeconds = car.TravelSecondsOneWay;
             int rate = FishNet.InstanceFinder.TimeManager.TickRate;
             double seconds = (log[i].StartTick - log[i - 1].StartTick) / (double)rate;
-            float expected = car != null ? car.TravelSecondsOneWay : float.NaN;
-            Check(car != null && Math.Abs(seconds - expected) <= 0.5, $"{label}: the car travelled {seconds:0.00} s by the server's ticks (the profile's {expected:0.00} s ± 0.5)");
+            float expected = profileSeconds;
+            Check(!float.IsNaN(expected) && Math.Abs(seconds - expected) <= 0.5, $"{label}: the car travelled {seconds:0.00} s by the server's ticks (the profile's {expected:0.00} s ± 0.5)");
         }
 
         // ---- places -----------------------------------------------------------------------
