@@ -33,6 +33,7 @@ namespace SunkCost.World
         // consoles' own glyphs) retries no faster than this, so nine surfaces on a host
         // can never repaint every frame. The rebuild count is the testers' storm gauge.
         public const float RetrySeconds = 0.5f;
+        public const float MipBias = -0.5f;
         public static int AtlasRebuilds { get; private set; }      // Font.textureRebuilt events for the console font since the domain loaded
         private static bool counting;
         private static int rebuildsInWindow;
@@ -174,7 +175,14 @@ namespace SunkCost.World
                 autoGenerateMips = false,
                 filterMode = FilterMode.Trilinear,
                 wrapMode = TextureWrapMode.Clamp,
-                anisoLevel = 4,
+                // The polish pass (28 September 2026; Dan: "blurry from the side"): the
+                // strongest anisotropic filtering, whatever the quality level asks (the
+                // Mobile level filters per texture), so a screen seen at 45-60 degrees
+                // keeps its vertical detail; and a half-mip sharpening bias, because from
+                // the standing distance the top screen is minified ~2.7x and trilinear
+                // blended half of a 480 px mip into 700 screen pixels.
+                anisoLevel = 16,
+                mipMapBias = MipBias,
             };
             texture.Create();
             return true;

@@ -237,7 +237,7 @@ namespace SunkCost.Editor.Look
         }
 
         // The glass every surface wears: URP Lit, a base darker than the paint's black so
-        // the paint sets the black level, a faint reflection, the emission map and colour
+        // the paint sets the black level, no reflections (see below), the emission map and colour
         // left to each surface's MaterialPropertyBlock (an unpainted glass stays dark).
         public static Material GlassMaterial()
         {
@@ -258,7 +258,16 @@ namespace SunkCost.Editor.Look
             m.SetTexture("_MetallicGlossMap", null);
             m.DisableKeyword("_METALLICSPECGLOSSMAP");
             m.SetFloat("_Metallic", 0f);
-            m.SetFloat("_Smoothness", 0.5f);
+            // The polish pass (28 September 2026): no sky in the glass. At 0.5 with
+            // reflections the sky's fresnel lifted the glass from (32,46,61) to
+            // (140,115,109) seen 60 degrees to the side at HQ's dusk and to (55,76,85)
+            // head-on under the sea's daylight: the text lost its contrast and read as
+            // blurry (Dan, 28 September). The paint alone sets the black level now.
+            m.SetFloat("_Smoothness", 0.2f);
+            m.SetFloat("_SpecularHighlights", 0f);
+            m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            m.SetFloat("_EnvironmentReflections", 0f);
+            m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
             m.SetTexture("_EmissionMap", null);
             m.SetColor("_EmissionColor", Color.black);
             m.EnableKeyword("_EMISSION");

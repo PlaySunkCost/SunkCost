@@ -226,7 +226,7 @@ namespace SunkCost.Look
                 else if (!string.IsNullOrEmpty(m.Status.Text))
                 {
                     float px = Px(m.Status.Size == ConsoleTextSize.Huge ? s.BottomNotice : s.BottomStatus, h);
-                    p.TextIn(m.Status.Text, (int)px, Style, new Rect(content.x + pad, content.yMax - pad - px * 1.3f, content.width - 2f * pad, px * 1.3f), TextAnchor.MiddleCenter, Tone(m.Status.Tone), s.TitleTracking * 0.5f);
+                    Fitted(p, m.Status.Text, (int)px, new Rect(content.x + pad, content.yMax - pad - px * 1.3f, content.width - 2f * pad, px * 1.3f), TextAnchor.MiddleCenter, Tone(m.Status.Tone), s.TitleTracking * 0.5f);
                 }
                 return;
             }
@@ -258,7 +258,13 @@ namespace SunkCost.Look
             // there are many (a locked site lists its description, the balance and the cost).
             bool status = !string.IsNullOrEmpty(m.Status.Text);
             float statusPx = status ? Px(m.Status.Size == ConsoleTextSize.Huge ? s.BottomNotice : s.BottomStatus, h) : 0f;
-            float statusBand = status ? statusPx * 1.15f : 0f;
+            // A long reason (DIVE DONE — END THE DAY FIRST) takes two lines rather than
+            // shrinking to a size smaller than the facts (the polish pass: the reason must
+            // be the prominent line); the facts above give up the room.
+            float tracking = s.TitleTracking * 0.5f;
+            int twoPx = 0;
+            int statusLines = status ? Lines(p, m.Status.Text, (int)statusPx, col.width, tracking, out _, out _, out twoPx) : 1;
+            float statusBand = !status ? 0f : statusLines == 2 ? twoPx * 2.3f : statusPx * 1.15f;
             int count = 0;
             if (m.Lines != null) foreach (ConsoleLine line in m.Lines) if (!string.IsNullOrEmpty(line.Text)) count++;
             float room = col.yMax - statusBand - cy;
@@ -272,7 +278,57 @@ namespace SunkCost.Look
                     cy += fit * 1.25f;
                 }
             if (status)
-                p.TextIn(m.Status.Text, (int)statusPx, Style, new Rect(col.x, col.yMax - statusBand, col.width, statusBand), TextAnchor.MiddleLeft, Tone(m.Status.Tone), s.TitleTracking * 0.5f);
+                Fitted(p, m.Status.Text, (int)statusPx, new Rect(col.x, col.yMax - statusBand, col.width, statusBand), TextAnchor.MiddleLeft, Tone(m.Status.Tone), tracking);
+        }
+
+        // How a line is best set in `width`: 1 when it fits (or shrinks only a little),
+        // else 2 when breaking it keeps it clearly larger - at " — " (the dash dropped,
+        // as the brief writes "DIVE DONE / END THE DAY FIRST"), otherwise at the space
+        // nearest the middle. `twoPx` is the size of the two-line setting.
+        private static int Lines(ScreenPainter p, string text, int px, float width, float tracking, out string first, out string second, out int twoPx)
+        {
+            first = text; second = null; twoPx = px;
+            float one = p.Estimate(text, px, Style, tracking);
+            if (one <= width * 0.98f || !Split(text, out first, out second)) { first = text; second = null; return 1; }
+            float oneScale = width * 0.98f / one;
+            float wide = Mathf.Max(p.Estimate(first, px, Style, tracking), p.Estimate(second, px, Style, tracking));
+            float twoScale = Mathf.Min(1f, wide > 0f ? width * 0.98f / wide : 1f);
+            if (twoScale < oneScale * 1.2f) { first = text; second = null; return 1; }
+            twoPx = Mathf.Max(6, Mathf.FloorToInt(px * twoScale));
+            return 2;
+        }
+
+        private static bool Split(string text, out string first, out string second)
+        {
+            first = text; second = null;
+            int dash = text.IndexOf(" — ", System.StringComparison.Ordinal);
+            if (dash > 0) { first = text.Substring(0, dash).Trim(); second = text.Substring(dash + 3).Trim(); return first.Length > 0 && second.Length > 0; }
+            int best = -1;
+            for (int i = 0; i < text.Length; i++)
+                if (text[i] == ' ' && (best < 0 || Mathf.Abs(i - text.Length / 2) < Mathf.Abs(best - text.Length / 2))) best = i;
+            if (best <= 0) return false;
+            first = text.Substring(0, best).Trim(); second = text.Substring(best + 1).Trim();
+            return first.Length > 0 && second.Length > 0;
+        }
+
+        // One line, or two stacked in the box's height when that keeps the text larger.
+        private static void Fitted(ScreenPainter p, string text, int px, Rect box, TextAnchor anchor, Color c, float tracking)
+        {
+            if (Lines(p, text, px, box.width, tracking, out string first, out string second, out int twoPx) == 1)
+            {
+                p.TextIn(text, px, Style, box, anchor, c, tracking);
+                return;
+            }
+            twoPx = Mathf.Min(twoPx, Mathf.FloorToInt(box.height / 2.3f));
+            float oneWide = p.Estimate(text, px, Style, tracking);
+            if (twoPx < px * box.width * 0.98f / Mathf.Max(1f, oneWide) * 1.1f) // the box is too low for two: one line after all
+            {
+                p.TextIn(text, px, Style, box, anchor, c, tracking);
+                return;
+            }
+            float lineH = twoPx * 1.15f, top = box.center.y - lineH;
+            p.TextIn(first, twoPx, Style, new Rect(box.x, top, box.width, lineH), anchor, c, tracking);
+            p.TextIn(second, twoPx, Style, new Rect(box.x, top + lineH, box.width, lineH), anchor, c, tracking);
         }
 
         // A refusal, or any reason an action cannot happen: a framed block the eye lands on.
@@ -281,7 +337,7 @@ namespace SunkCost.Look
             Color c = Tone(status.Tone);
             p.Rect(r, Alpha(c, 0.10f));
             p.Frame(r, t * 1.5f, c);
-            p.TextIn(status.Text, (int)Px(s.BottomNotice, p.Height), Style, Inset(r, 0.03f * p.Height), TextAnchor.MiddleCenter, c, s.TitleTracking * 0.5f);
+            Fitted(p, status.Text, (int)Px(s.BottomNotice, p.Height), Inset(r, 0.03f * p.Height), TextAnchor.MiddleCenter, c, s.TitleTracking * 0.5f);
         }
 
         // The red GIVE UP card: the same card language, deliberately dangerous.
@@ -308,7 +364,7 @@ namespace SunkCost.Look
             Color tone = Scale(Tone(m.Tone), k), warn = Scale(ScreenStyle.Warn, k);
             float inset = 0.05f * h, t = Mathf.Max(2f, s.SignFrame * h);
             Rect frame = new(inset, inset, w - 2f * inset, h - 2f * inset);
-            p.Rect(frame, Alpha(tone, 0.06f * k));
+            p.Rect(frame, Alpha(tone, m.Enabled ? 0.12f : 0.05f)); // a lit plate glows a little behind its word
             if (m.Aimed) p.Halo(frame, 0.05f * h, Alpha(tone, s.HaloAlpha));
             p.Frame(frame, t, tone);
             float chev = s.SignChevrons * h;
