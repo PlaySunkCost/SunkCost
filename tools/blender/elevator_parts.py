@@ -443,12 +443,72 @@ def plain(mesh, target, budget, psp, res):
 # ---- 5. the tube foot (option A': the threshold on the sand, docs/ELEVATOR_LOOK.md A2) -------------
 
 FOOT = {"axis": (-0.0118, 0.127), "floor": -0.2486, "yaw": -2.25, "k": 5.40, "pit_r": 2.56}
+# The wall posts (phi: the fitted frame's bearing from +X) and the band of the Meshy glass pane
+# kept beside each one (the glass cut's edges are split straight by foot_split_glass_edges).
+FOOT_POSTS = (-143.25, -46.25, 3.25, 51.25, 95.25, 173.75)
+FOOT_POST_HALF = 2.0
+
+
+def split_along(data, pick, value, levels):
+    """Split the picked faces along the iso-lines value(co) == level: every edge that crosses a
+    level gets a vertex there, joined across its face. A cut by face centres afterwards follows the
+    iso-line (straight where the surface is) instead of the triangles' zigzag. Returns the count."""
+    bm = bmesh.new(); bm.from_mesh(data); bm.faces.ensure_lookup_table()
+    faces = [bm.faces[i] for i in np.nonzero(pick)[0]]
+    print("split_along: %d faces, levels %s" % (len(faces), levels), flush=True)
+    made = 0
+    for level in levels:
+        live = [f for f in faces if f.is_valid]
+        new = set()
+        for e in {e for f in live for e in f.edges}:
+            va, vb = value(e.verts[0].co), value(e.verts[1].co)
+            if (va - level) * (vb - level) < 0:
+                t = (level - va) / (vb - va)
+                if 1e-4 < t < 1.0 - 1e-4:
+                    new.add(bmesh.utils.edge_split(e, e.verts[0], t)[1])
+        if new:   # one call: an operator's cost is the whole mesh, not the faces it splits
+            bmesh.ops.connect_verts(bm, verts=list(new))
+        faces = list(dict.fromkeys([f for f in live if f.is_valid] + [f for v in new for f in v.link_faces]))
+        made += len(new)
+    bm.to_mesh(data); bm.free(); data.update()
+    return made
+
+
+def foot_split_glass_edges(data, res):
+    """The glass cut below picks faces by their centres. Meshy's pane and the frame round it are one
+    sheet of long thin triangles, so that cut left the frame's edge as a sawtooth with 5-10 cm teeth
+    down the posts and under the top ring, which a diver pressed to the car's glass sees at the bottom
+    stop (DIVE-SLAB-EDGE). Split the sheet along the cut's own limits first (the radius 2.93 where
+    the frame turns into the pane, the pane's top and bottom, the posts' +-2 deg): every piece's
+    centre then lies on its own side and each kept edge is a straight line. Only the sheet's coarse
+    triangles (over COARSE m2) are split: the sawtooth is theirs, and the dense detail's own error is
+    under a millimetre."""
+    COARSE = 2e-4
+    fc, fn, fa, _, _ = arrays(data)
+    rho = np.hypot(fc[:, 0], fc[:, 1]); phi = np.degrees(np.arctan2(fc[:, 1], fc[:, 0]))
+    nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9)
+    sheet = (rho >= 2.80) & (rho <= 3.16) & (np.abs(nrad) > 0.5) & (fa > COARSE) & (fc[:, 2] > 0.60) & (fc[:, 2] < 3.80)
+    res["glass_edge_splits"] = {"rho": split_along(data, sheet, lambda co: math.hypot(co.x, co.y), (2.93, 3.10))}
+    fc, fn, fa, _, _ = arrays(data)
+    rho = np.hypot(fc[:, 0], fc[:, 1]); phi = np.degrees(np.arctan2(fc[:, 1], fc[:, 0]))
+    nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9)
+    sheet = (rho >= 2.88) & (rho <= 3.13) & (np.abs(nrad) > 0.5) & (fa > COARSE) & (fc[:, 2] > 0.60) & (fc[:, 2] < 3.80)
+    res["glass_edge_splits"]["z"] = split_along(data, sheet, lambda co: co.z, (0.84, 3.60))
+    posts = 0
+    for p in FOOT_POSTS:
+        fc, fn, fa, _, _ = arrays(data)
+        rho = np.hypot(fc[:, 0], fc[:, 1]); phi = np.degrees(np.arctan2(fc[:, 1], fc[:, 0]))
+        nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9)
+        near = (rho >= 2.88) & (rho <= 3.13) & (np.abs(nrad) > 0.5) & (fa > COARSE) & (fc[:, 2] > 0.80) & (fc[:, 2] < 3.64) & (np.abs((phi - p + 180) % 360 - 180) < 6.0)
+        posts += split_along(data, near, lambda co, p=p: (math.degrees(math.atan2(co.y, co.x)) - p + 180) % 360 - 180, (-FOOT_POST_HALF, FOOT_POST_HALF))
+    res["glass_edge_splits"]["posts"] = posts
 
 
 def foot(mesh, target, budget, psp, res):
     data = mesh.data
     data.transform(Matrix.Scale(FOOT["k"], 4) @ Matrix.Rotation(math.radians(FOOT["yaw"]), 4, "Z") @ Matrix.Translation((-FOOT["axis"][0], -FOOT["axis"][1], -FOOT["floor"])))
     data.update()
+    foot_split_glass_edges(data, res)
     fc, fn, fa, vc, mi = arrays(data)
     rho = np.hypot(fc[:, 0], fc[:, 1]); phi = np.degrees(np.arctan2(fc[:, 1], fc[:, 0])); dphi = (phi + 90 + 180) % 360 - 180
     nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9); z = fc[:, 2]
@@ -465,8 +525,8 @@ def foot(mesh, target, budget, psp, res):
     threshold_keep = (fn[:, 2] > 0.9) & (np.abs(dphi) <= 14.0) & (rho < 3.55)
     debris = (np.abs(dphi) <= 40.0) & (rho > 2.78) & (rho < 4.30) & (z >= -0.06) & (z <= 0.02) & ~threshold_keep & ~grille
     near_post = np.zeros(len(fc), dtype=bool)
-    for p in (-143.25, -46.25, 3.25, 51.25, 95.25, 173.75):
-        near_post |= np.abs((phi - p + 180) % 360 - 180) < 2.0
+    for p in FOOT_POSTS:
+        near_post |= np.abs((phi - p + 180) % 360 - 180) < FOOT_POST_HALF
     glass = (rho >= 2.93) & (rho <= 3.10) & (np.abs(nrad) > 0.8) & (z > 0.84) & (z < 3.60) & ~near_post & ~wedge & ~slots & ~wire
     ground = z < -0.10
     pit = (rho <= FOOT["pit_r"]) & (z >= -0.40) & (z <= 0.05)
