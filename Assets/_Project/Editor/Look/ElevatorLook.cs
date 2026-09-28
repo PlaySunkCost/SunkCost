@@ -289,10 +289,21 @@ namespace SunkCost.Editor.Look
             FrameBand(leaf.transform, "Rail Top", radius, h - ShutterRailHeight, ShutterRailHeight, from, to, steel);
             FrameBand(leaf.transform, "Seam", radius, h * 0.5f - ShutterSeamHeight / 2f, ShutterSeamHeight, from, to, steel);
             FrameBand(leaf.transform, "Stile", radius, 0f, h, lead, lead + ShutterStileDeg, steel);
+            // The back (inside) face: bare worn steel (DECK-LEAF-GLASS, 28 September 2026).
+            // Open, a shutter parks right behind the car's parked door leaf, and its
+            // painted face, flat orange lit by the Cabin Light, filled the leaf's window
+            // exactly: seen from the car, the glass read as an opaque pale panel. The
+            // lining stands just inside the plate (radius - 0.035 .. - 0.027), no collider.
+            GameObject lining = new(ShutterLiningName);
+            lining.transform.SetParent(leaf.transform, false);
+            lining.AddComponent<MeshFilter>().sharedMesh = MeshKit.Band(radius - ShutterLiningInset, h, ShutterLiningThick, from, to, 24);
+            lining.AddComponent<MeshRenderer>().sharedMaterial = steel;
             return leaf;
         }
 
+        public const string ShutterLiningName = "Lining";
         private const float ShutterRailHeight = 0.14f, ShutterSeamHeight = 0.06f, ShutterStileDeg = 1.9f, ShutterFrameProud = 0.03f;
+        private const float ShutterLiningInset = 0.031f, ShutterLiningThick = 0.008f;
 
         private static void FrameBand(Transform leaf, string name, float radius, float y, float height, float from, float to, Material material)
         {
