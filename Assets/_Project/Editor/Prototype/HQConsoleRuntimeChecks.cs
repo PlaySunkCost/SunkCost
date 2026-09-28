@@ -481,6 +481,9 @@ namespace SunkCost.Editor.Prototype
             refusal = Day.LastRefusal.Serial; paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; balance = Day.Balance;
             yield return Press(Key.E);
             yield return ExpectRefusal(refusal, ConsoleRules.NothingToPay, "Q4 a second E right after PAID");
+            // Retest HQ-2 (round 2): a refusal inside the pay report's window takes the top screen and the compat Text.
+            Check(Time.unscaledTime - Day.LastPayAt < reportSeconds, $"HQ-2 retest: the refusal came {Time.unscaledTime - Day.LastPayAt:0.0} s into the {reportSeconds} s report");
+            yield return Expect(() => Big() == ConsoleRules.NothingToPay && TopM().BigTone == ConsoleTone.Warn && Text() == ConsoleRules.NothingToPay, 1f, () => "HQ-2 retest: the top screen shows the refusal inside the PAID report's window: " + Top() + " | Text=" + Text().Replace("\n", " | "));
             refusal = Day.LastRefusal.Serial;
             Say("hook pull: " + H.ClientPullLever("HQ"));
             yield return ExpectRefusal(refusal, ConsoleRules.NothingToPay, "Q4 a third pull (hook)");
@@ -489,6 +492,12 @@ namespace SunkCost.Editor.Prototype
             yield return ExpectRefusal(refusal, ConsoleRules.NothingToPay, "Q4 the old RequestPay path");
             Check(Day.LastPay.Serial == paySerial && Day.Balance == balance && Day.LastLeverPull.Serial == pulls, $"Q4 no second sale, no second bank (${Day.Balance}), no pull counted");
             Say($"the top screen during a refusal inside the pay report's window: {Big()} (the report has {reportSeconds} s)");
+            {
+                float back = Day.LastRefusalAt + refusalSeconds, reportEnd = Day.LastPayAt + reportSeconds;
+                if (back < reportEnd - 0.6f)
+                    yield return Expect(() => Big() == "PAID" && Text().StartsWith("PAID"), back - Time.unscaledTime + 0.5f, () => "HQ-2 retest: PAID returns after the refusal's window, inside the report's: " + Top());
+                else Say($"HQ-2 retest: no time left in the report after the refusal (back {back:0.0}, report ends {reportEnd:0.0})");
+            }
             yield return Expect(() => Big() == "NEW CYCLE", reportSeconds + refusalSeconds + 1f, () => "Q1 back to NEW CYCLE after the report: " + Top());
 
             Heading("Q2 — an empty storage room before payday: PAY dim with the reason, the pull refused, nothing sold");
@@ -526,12 +535,20 @@ namespace SunkCost.Editor.Prototype
             Check(Big() == "SHORT BY $50" && TopM().BigTone == ConsoleTone.Warn && Text().StartsWith("SHORT BY $50"), "Q3 the top screen: " + Top() + " | " + Text().Replace("\n", " | "));
             Check(TopM().FootLeft == $"QUOTA ${v3} / ${v3 + 50}" && TopM().FootLeftTone == ConsoleTone.Warn, "Q3 the foot settles on the handed-over sale, amber: " + TopM().FootLeft);
             List<string> doubled = q3Seen.Where(s => s.Contains($"QUOTA ${2 * v3} /")).ToList();
-            Say(doubled.Count == 0 ? "Q3 the foot never counted the sold box twice" : "OBSERVED (bug candidate HQ-1) Q3 the foot counted the sold box twice: " + string.Join(" → ", doubled));
+            Check(doubled.Count == 0, "HQ-3 retest: the foot never counted the sold box twice from the pull on (every frame sampled)" + (doubled.Count == 0 ? string.Empty : ": " + string.Join(" → ", doubled)));
             Check(Day.ServerCanSail(WorldId.Sea, out string sailWhy), "Q3 sailing out is allowed again (" + sailWhy + ")");
             yield return Shot("console-hq-Q3-short");
             refusal = Day.LastRefusal.Serial; paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; balance = Day.Balance;
             Say("second pull: " + H.ClientPullLever("HQ"));
             yield return ExpectRefusal(refusal, ConsoleRules.NothingToSell, "Q4 a second PAY after SHORT");
+            Check(Time.unscaledTime - Day.LastPayAt < reportSeconds, $"HQ-2 retest: this refusal came {Time.unscaledTime - Day.LastPayAt:0.0} s into the SHORT report");
+            yield return Expect(() => Big() == ConsoleRules.NothingToSell && TopM().BigTone == ConsoleTone.Warn && Text() == ConsoleRules.NothingToSell, 1f, () => "HQ-2 retest: the top screen shows the refusal inside the SHORT report's window: " + Top());
+            {
+                float back = Day.LastRefusalAt + refusalSeconds, reportEnd = Day.LastPayAt + reportSeconds;
+                if (back < reportEnd - 0.6f)
+                    yield return Expect(() => Big() == "SHORT BY $50", back - Time.unscaledTime + 0.5f, () => "HQ-2 retest: SHORT BY $50 returns after the refusal's window: " + Top());
+                else Say($"HQ-2 retest: no time left in the SHORT report after the refusal (back {back:0.0}, report ends {reportEnd:0.0})");
+            }
             Say("the old RequestPay path after SHORT: " + H.ClientRequestPay());
             yield return Wait(0.5f);
             Say("its answer: '" + Day.LastRefusal.Text + "', pay serial " + Day.LastPay.Serial + " (was " + paySerial + ")");
@@ -560,10 +577,24 @@ namespace SunkCost.Editor.Prototype
             bool pA = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwA);
             bool pB = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwB);
             Check(pA && !pB && pwB == ConsoleRules.LeverInUse, $"Q5b same frame lever ×2: {pA} '{pwA}', then {pB} '{pwB}'");
+            // Retest HQ-3 / NET-1's root (round 2), still the pull's frame: the sold coin no longer counts in the room.
+            {
+                ShipParts q5Ship = ShipParts.InWorld(WorldId.HQ);
+                int stale = CarryableItem.Spawned.Count(i => i != null && !i.IsSpawned);
+                int sumNow = StorageReadout.SumInside(q5Ship);
+                bool payAgain = flow.ServerPay(host.Owner, out string payAgainWhy);
+                Check(sumNow == 0 && !payAgain && payAgainWhy == ConsoleRules.NothingToSell && Day.LastPay.Serial == paySerial + 1, $"HQ-3 retest: in the sale's own frame the room sums ${sumNow} ({stale} despawned item(s) still listed) and a server pay is refused '{payAgainWhy}'");
+            }
             Check(Day.LastPay.Serial == paySerial + 1 && Day.LastPay.Short && Day.LastPay.Sales == v5b && Day.Balance == balance + v5b && Day.CycleSales == sales + v5b && Day.LastLeverPull.Serial == pulls + 1, $"Q5b one sale of ${v5b}, one short report, one pull ({Day.LastLeverPull.Serial - pulls})");
             yield return Wait(0.3f);
             bool pC = flow.ServerPullLever(host.Owner, ConsoleKind.HQ, LeverAction.Pay, SiteId.None, out string pwC);
             Check(!pC && pwC == ConsoleRules.NothingToSell && Day.LastPay.Serial == paySerial + 1, $"Q5b the next frame's pull finds nothing to sell: '{pwC}'");
+            {
+                int q5Double = sales + 2 * v5b; List<string> seen5 = new();
+                float until5 = Time.unscaledTime + 1.5f;
+                while (Time.unscaledTime < until5) { string foot = TopM().FootLeft; if (seen5.Count == 0 || seen5[seen5.Count - 1] != foot) seen5.Add(foot); yield return null; }
+                Check(!seen5.Any(f => f.StartsWith($"QUOTA ${q5Double} /")) && seen5.Last().StartsWith($"QUOTA ${sales + v5b} /"), "HQ-3 retest: Q5b's foot after the sale: " + string.Join(" → ", seen5));
+            }
             yield return Wait(reportSeconds + 0.5f);
 
             Heading("Q6 — payday failure: PAYDAY lit, the empty-room PAY loses the run: THE RUN IS OVER, the plank starts, sailing refused");
@@ -603,7 +634,10 @@ namespace SunkCost.Editor.Prototype
             yield return Press(Key.E);
             yield return Expect(() => Day.LastRefusal.Serial > refusal, 3f, () => "Q7 E on the card on the plank is refused");
             string cardWhy = Day.LastRefusal.Text;
-            Say("Q7 the card's refusal on the plank: '" + cardWhy + "'");
+            Check(cardWhy == ConsoleRules.RunOver, "HQ-1 retest: Q7 the card's refusal on the plank reads '" + cardWhy + "' (expected '" + ConsoleRules.RunOver + "')");
+            refusal = Day.LastRefusal.Serial;
+            Say("Q7 the hook vote on the plank: " + H.ClientRequestGiveUp());
+            yield return ExpectRefusal(refusal, ConsoleRules.RunOver, "HQ-1 retest: Q7 ClientRequestGiveUp on the plank");
             Check(Day.GiveUpVotes == 0 && Day.Phase == DayPhase.Plank && Day.LastPay.Serial == paySerial + 1 && Day.RunOver.Serial == runOvers, "Q7 no vote, no second pay, no run-over yet");
             Check(Count("[Plank] The run is over") == planks + 1, "Q7 still one plank");
             H.ClientMoveLocalPlayerToBoard(); // leave the dot; the plank walk follows
@@ -617,6 +651,7 @@ namespace SunkCost.Editor.Prototype
             Check(!flow.ServerToggleGiveUp(host.Owner, out string q8Vote) && Day.GiveUpVotes == 0, "Q8 a vote refused: " + q8Vote);
             Check(ConsoleRules.Expected(ConsoleKind.HQ, null, out _, out bool q8On, out string q8Why) == LeverAction.None && !q8On && q8Why == ConsoleRules.RunOver, "Q8 the lever reads dim: " + q8Why);
             Say($"Q8 refusals: pay '{q8Pay}', vote '{q8Vote}'");
+            Check(q8Pay == ConsoleRules.RunOver && q8Vote == ConsoleRules.RunOver, $"HQ-1 retest: Q8 under the run-over card, pay '{q8Pay}' and vote '{q8Vote}' both read '{ConsoleRules.RunOver}'");
             yield return Expect(() => Day.Phase == DayPhase.AtHQ, flow.Settings.RunOverCardSeconds + 6f, () => "Q8 the fresh run");
             Check(Day.RunOver.Serial == runOvers + 1 && Count("[Plank] The run is over") == planks + 1, "Q8 exactly one run-over and one plank");
             WorldLoopSettings.QuotaOverrideForTests = null;
@@ -815,7 +850,7 @@ namespace SunkCost.Editor.Prototype
             refusal = Day.LastRefusal.Serial;
             yield return Send(guestB, "{\"id\":{id},\"action\":\"giveup\"}");
             yield return Expect(() => Day.LastRefusal.Serial > refusal, 3f, () => "G11 B's vote on the plank is refused");
-            Say("G11 B's vote refusal on the plank: '" + Day.LastRefusal.Text + "'");
+            Check(Day.LastRefusal.Text == ConsoleRules.RunOver, "HQ-1 retest: G11 B's vote refusal on the plank: '" + Day.LastRefusal.Text + "'");
             Check(Day.GiveUpVotes == 0 && Count("[Plank] The run is over") == planks + 1, "G11 no vote, still one plank");
             // The host steps off first; then, no longer the jumper, it reads the console's own prompts on the plank.
             {
@@ -829,7 +864,7 @@ namespace SunkCost.Editor.Prototype
                 Check(hud.PromptText.StartsWith("THE RUN IS OVER"), "G11 the prompt at the lever for a non-jumper on the plank names the reason: " + hud.PromptText);
                 yield return AimCard();
                 yield return null;
-                Say("G11 the card's prompt for a non-jumper on the plank: " + hud.PromptText);
+                Check(hud.PromptText == ConsoleRules.RunOver, "HQ-1 retest: G11 the card's prompt for a non-jumper on the plank: " + hud.PromptText);
                 Check(!hud.PromptText.StartsWith("Press E"), "G11 the card offers no vote on the plank: " + hud.PromptText);
                 Check(!Card().Enabled && Sign() == "PAY/off", "G11 the card and the sign dark: " + CardText() + " | " + Sign());
             }
