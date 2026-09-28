@@ -400,8 +400,42 @@ namespace SunkCost.Editor.Prototype
                 yield return Expect(() => RadiusOf(sea, remote.transform.position) > 2.6f, 3f, () => $"RT-N1 the guest's copy stepped out to r {RadiusOf(sea, remote.transform.position):0.00}");
                 float cr = remote.Controller != null ? remote.Controller.radius : 0.35f;
                 Check(sea.InDeckCabinEntrance(host.transform.position, host.Controller.radius) && sea.InDeckCabinEntrance(remote.transform.position, cr), $"RT-N1 both stand in the entrance band (host r {RadiusOf(sea, host.transform.position):0.00}, guest r {RadiusOf(sea, remote.transform.position):0.00})");
-                yield return Expect(() => Day.CabinRide.Stage == CabinRideStage.Cancelled, flow.Settings.CabinSealSeconds * 4f + 6f, () => $"RT-N1 nobody aboard when the doors shut: the ride is cancelled (stage {Day.CabinRide.Stage})");
+                // RT-CS (DECK-CANCEL-SNAP retest, round 3): sample the doors' fraction and the
+                // shutters' pose once per game frame from here through the cancel until both
+                // read open; the reopening must move at door speed, never jump in one frame.
+                float seal = flow.Settings.CabinSealSeconds;
+                float csDeadline = Time.unscaledTime + seal * 4f + 6f;
+                int csFrame = -1; float csTime = 0f;
+                float prevDoor = flow.DeckCabinOpenFraction(), prevShut = YawFraction(sea.DeckCabinHousingDoorR, half);
+                float atCancelDoor = -1f, atCancelShut = -1f, cancelAt = -1f, openAt = -1f;
+                float maxDoorStep = 0f, maxShutStep = 0f, maxDt = 0f; string worstStep = "none"; int csFrames = 0;
+                while (Time.unscaledTime < csDeadline)
+                {
+                    yield return null;
+                    if (Time.frameCount == csFrame) continue;
+                    float now = Time.unscaledTime, dt = csFrame < 0 ? 0f : now - csTime;
+                    csFrame = Time.frameCount; csTime = now;
+                    float door = flow.DeckCabinOpenFraction(), shut = YawFraction(sea.DeckCabinHousingDoorR, half);
+                    bool cancelled = Day.CabinRide.Stage == CabinRideStage.Cancelled;
+                    if (cancelled && cancelAt < 0f) { cancelAt = now; atCancelDoor = prevDoor; atCancelShut = prevShut; }
+                    if (cancelAt >= 0f)
+                    {
+                        csFrames++;
+                        maxDt = Mathf.Max(maxDt, dt);
+                        if (door - prevDoor > maxDoorStep) { maxDoorStep = door - prevDoor; worstStep = $"doors {prevDoor:0.000}->{door:0.000} in {dt * 1000f:0} ms"; }
+                        if (shut - prevShut > maxShutStep) { maxShutStep = shut - prevShut; if (maxShutStep > maxDoorStep) worstStep = $"shutters {prevShut:0.000}->{shut:0.000} in {dt * 1000f:0} ms"; }
+                        if (door > 0.99f && shut > 0.99f && YawFraction(sea.DeckCabinHousingDoorL, half) > 0.99f) { openAt = now; break; }
+                    }
+                    prevDoor = door; prevShut = shut;
+                }
+                Check(cancelAt >= 0f, $"RT-N1 nobody aboard when the doors shut: the ride is cancelled (stage {Day.CabinRide.Stage})");
                 Check(Day.LastRefusal.Text == "Nobody aboard", "RT-N1 the refusal: " + Day.LastRefusal.Text);
+                float allowed = maxDt / seal * 1.5f + 0.03f;
+                Say($"RT-CS samples: {csFrames} frames after the cancel, fraction at the cancel doors {atCancelDoor:0.000} shutters {atCancelShut:0.000}, seal {seal:0.00} s, largest frame {maxDt * 1000f:0} ms, worst step {worstStep}, open after {(openAt < 0f ? -1f : openAt - cancelAt):0.00} s");
+                Check(atCancelDoor < 0.05f && atCancelShut < 0.05f, $"RT-CS the doors and shutters were shut when the ride was cancelled (doors {atCancelDoor:0.000}, shutters {atCancelShut:0.000})");
+                Check(openAt >= 0f, $"RT-CS the doors and shutters open again after the cancel (doors {flow.DeckCabinOpenFraction():0.000}, shutters {YawFraction(sea.DeckCabinHousingDoorR, half):0.000})");
+                Check(maxDoorStep <= allowed && maxShutStep <= allowed, $"RT-CS DECK-CANCEL-SNAP: no one-frame jump on the reopening (largest step doors {maxDoorStep:0.000}, shutters {maxShutStep:0.000}, allowed {allowed:0.000}; {worstStep})");
+                Check(openAt - cancelAt >= seal * 0.7f, $"RT-CS the reopening takes about the door time ({openAt - cancelAt:0.00} s, seal {seal:0.00} s)");
                 yield return Wait(1.5f); // the old bug's TargetPlace landed within a frame or two of the seal
                 float hostMoved = Vector3.Distance(host.transform.position, hostSpot);
                 float guestMoved = Vector3.Distance(remote.transform.position, guestSpot);
