@@ -272,7 +272,27 @@ namespace SunkCost.Editor.Look
             leaf.AddComponent<MeshFilter>().sharedMesh = MeshKit.Band(radius, topY - bottomY, 0.05f, from, to, 24);
             MeshRenderer r = leaf.AddComponent<MeshRenderer>();
             r.sharedMaterial = ShutterMaterial();
+            // Framed like the housing's own painted panels: dark steel rails top and
+            // bottom, a seam at mid height, a stile on the leading (doorway) edge,
+            // standing a little proud on the outside.
+            float h = topY - bottomY, lead = right ? from : to - ShutterStileDeg;
+            Material steel = ShipKitMaterials.Steel();
+            FrameBand(leaf.transform, "Rail Bottom", radius, 0f, ShutterRailHeight, from, to, steel);
+            FrameBand(leaf.transform, "Rail Top", radius, h - ShutterRailHeight, ShutterRailHeight, from, to, steel);
+            FrameBand(leaf.transform, "Seam", radius, h * 0.5f - ShutterSeamHeight / 2f, ShutterSeamHeight, from, to, steel);
+            FrameBand(leaf.transform, "Stile", radius, 0f, h, lead, lead + ShutterStileDeg, steel);
             return leaf;
+        }
+
+        private const float ShutterRailHeight = 0.14f, ShutterSeamHeight = 0.06f, ShutterStileDeg = 1.9f, ShutterFrameProud = 0.03f;
+
+        private static void FrameBand(Transform leaf, string name, float radius, float y, float height, float from, float to, Material material)
+        {
+            GameObject band = new(name);
+            band.transform.SetParent(leaf, false);
+            band.transform.localPosition = new Vector3(0f, y, 0f);
+            band.AddComponent<MeshFilter>().sharedMesh = MeshKit.Band(radius + (0.05f + ShutterFrameProud) / 2f, height, ShutterFrameProud + 0.01f, from, to, 24);
+            band.AddComponent<MeshRenderer>().sharedMaterial = material;
         }
 
         public static Material ShutterMaterial()

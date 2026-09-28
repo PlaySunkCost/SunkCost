@@ -52,7 +52,7 @@ TABLE = {
     "NavConsole":   ((2.38, 1.20, 2.17), "uniform", 20000),  # k 1.2506 over the raw 1.90 x 0.96 x 1.74: top glass centre 1.55 m, grip 0.95 m (console model plan, 27 Sep 2026); see the nav_* steps
     "TvCabinet":    ((3.6, 0.4, 3.3), "uniform", 8000),
     "DeckLamp":     ((0.6, 0.6, 1.9), "uniform", 4000),
-    "CabinDoor":    ((1.668, 0.055, 3.30), "bend", 8000),   # the car's curved leaf, bent onto r 2.45 (elevator_parts.door); the size is only asserted
+    "CabinDoor":    ((1.635, 0.177, 3.30), "bend", 8000),   # the car's curved leaf, bent onto r 2.409-2.463 over +-19.5 deg (elevator_parts.door): its bounding box
     "StorageSill":  ((1.4, 0.5, 0.12), "uniform", 3000),
     "Bollard":      ((0.8, 0.8, 0.7), "uniform", 4000),
     "Pipes":        ((2.0, 0.6, 1.5), "uniform", 8000),

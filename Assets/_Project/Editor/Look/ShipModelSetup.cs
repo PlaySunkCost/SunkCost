@@ -151,7 +151,7 @@ namespace SunkCost.Editor.Look
                     if (materials.Length > 1) materials[1] = ElevatorLook.CarGlass();
                     break;
                 case "TubeFoot":
-                    if (materials.Length > 1) materials[1] = LookMaterials.Ink();
+                    if (materials.Length > 1) materials[1] = ShipKitMaterials.Steel(); // the cut edges (sill, jambs, slot floors, pit wall) in the kit steel, UVs in metres: ink read as holes
                     break;
                 case "GateLeaf":
                     // the tube's own glass: the leaf's panes are two sheets, one facing each way
