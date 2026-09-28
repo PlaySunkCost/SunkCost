@@ -12,6 +12,7 @@ using SunkCost.Player;
 using SunkCost.World;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Debug = UnityEngine.Debug;
 using H = SunkCost.Editor.Prototype.HQPrototypeTestHooks;
 using S = SunkCost.Net.ElevatorNetProbe.Sample;
@@ -67,6 +68,8 @@ namespace SunkCost.Editor.Prototype
         private const float LagLimit = 0.5f;       // s: a guest may show a phase the host has left for this long
         private const float SkewLimitTicks = 3f;   // the processes' ticks at one wall-clock moment
         private const double EarlyTicks = 2.0;     // a guest sample up to 2 ticks before the host's first of a phase
+        private const double ResyncSeconds = 2.0;  // s after a dropped tick: a client's Tick snaps to the server's at the next TimingUpdate (one a second)
+        private const double DropTicks = 1.0;      // a frame (or two replies) whose tick advanced this much less than the clock dropped ticks
 
         private enum Role { Rider, Spectator, Tv }
 
@@ -80,8 +83,8 @@ namespace SunkCost.Editor.Prototype
         private sealed class Stats
         {
             public string Label;
-            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall, SkewGuestStall;
-            public double WorstStallSkew;
+            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall, SkewGuestStall, SkewHostDrop, SkewGuestDrop;
+            public double WorstStallSkew, WorstDropSkew, DroppedByHost;
             public float WorstY, WorstWater, WorstDoor, WorstGate, WorstGauge, WorstDeckDoors, WorstYaw, WorstEye, WorstTvEye, MaxLag;
             public readonly List<double> Skews = new();
             public readonly List<string> Fails = new();
@@ -102,6 +105,11 @@ namespace SunkCost.Editor.Prototype
         private static readonly List<string> logs = new();
         private static readonly List<string> softFails = new();
         private static readonly List<bool> admissionRefusalDuringRide = new();
+        private static readonly Dictionary<Guest, (long Wall, double Tick, long DropWall)> guestClock = new();
+        // The host is never driven by keys in this job; an idle virtual keyboard stands in for
+        // Keyboard.current so a key pressed at the desk during a run cannot walk the host out of
+        // the car (NET-E5-HOST-LEFT-CAR, polish-fix 28 Sep 2026). The input gate is not bypassed.
+        private static Keyboard idleKeyboard;
         private static int exceptionsSeen, errorsSeen;
         private static GameObject hostProbe;
         private static Dictionary<Guest, Stats> lastStats = new();
@@ -126,7 +134,9 @@ namespace SunkCost.Editor.Prototype
             Directory.CreateDirectory(Captures);
             File.WriteAllText(Log, "Elevator-net matrix started " + DateTime.Now + "\n");
             Status = "Running";
-            logs.Clear(); crew.Clear(); launched.Clear(); softFails.Clear(); admissionRefusalDuringRide.Clear(); lastStats = new Dictionary<Guest, Stats>();
+            logs.Clear(); crew.Clear(); launched.Clear(); softFails.Clear(); admissionRefusalDuringRide.Clear(); guestClock.Clear(); lastStats = new Dictionary<Guest, Stats>();
+            idleKeyboard = InputSystem.AddDevice<Keyboard>("ElevatorNetIdleKeyboard");
+            HQPlayerController.KeyboardForChecks = idleKeyboard;
             exceptionsSeen = 0; errorsSeen = 0;
             profileSeconds = float.NaN;
             Application.logMessageReceived += OnLog;
@@ -169,6 +179,9 @@ namespace SunkCost.Editor.Prototype
             ElevatorNetProbe.StopRecording();
             if (hostProbe != null) UnityEngine.Object.Destroy(hostProbe);
             hostProbe = null;
+            if (HQPlayerController.KeyboardForChecks == idleKeyboard) HQPlayerController.KeyboardForChecks = null;
+            try { if (idleKeyboard != null && idleKeyboard.added) InputSystem.RemoveDevice(idleKeyboard); } catch (Exception) { }
+            idleKeyboard = null;
             steps = null;
             stack.Clear();
             Application.logMessageReceived -= OnLog;
@@ -462,18 +475,27 @@ namespace SunkCost.Editor.Prototype
 
         // The screen's words equal one host frame's, and each number lies between the two
         // host frames' (±1): depth and water round at different moments, so a peer between
-        // two host frames may show one number of each (round 1 fix to the test).
+        // two host frames may show one number of each (round 1 fix to the test). The words
+        // may also flip between the two host frames (FLOODING 99% -> DESCENDING 100%: the flow
+        // turns Still at span - WaterMarginMeters, which still rounds to 99%), so a peer between
+        // them may show the new word with the old number: the words must equal EITHER frame's
+        // (NET-CARSCREEN-WORD-EDGE, polish-fix 28 Sep 2026).
         private static readonly Regex Digits = new(@"\d+");
         private static bool ScreenBetween(string v, string a, string b)
         {
             if (v == a || v == b) return true;
             string sk = Digits.Replace(v, "#");
-            if (sk != Digits.Replace(a, "#") || sk != Digits.Replace(b, "#")) return false;
+            if (sk != Digits.Replace(a, "#") && sk != Digits.Replace(b, "#")) return false;
             MatchCollection mv = Digits.Matches(v), ma = Digits.Matches(a), mb = Digits.Matches(b);
+            // The bounds come from the frames that carry the same count of numbers (both, or the one whose words match).
+            bool useA = ma.Count == mv.Count, useB = mb.Count == mv.Count;
             for (int i = 0; i < mv.Count; i++)
             {
-                int x = int.Parse(mv[i].Value), xa = int.Parse(ma[i].Value), xb = int.Parse(mb[i].Value);
-                if (x < Math.Min(xa, xb) - 1 || x > Math.Max(xa, xb) + 1) return false;
+                int x = int.Parse(mv[i].Value);
+                int lo = int.MaxValue, hi = int.MinValue;
+                if (useA) { int xa = int.Parse(ma[i].Value); lo = Math.Min(lo, xa); hi = Math.Max(hi, xa); }
+                if (useB) { int xb = int.Parse(mb[i].Value); lo = Math.Min(lo, xb); hi = Math.Max(hi, xb); }
+                if (x < lo - 1 || x > hi + 1) return false;
             }
             return true;
         }
@@ -497,6 +519,42 @@ namespace SunkCost.Editor.Prototype
             if (s.DoorwayBlocks != a.DoorwayBlocks && s.DoorwayBlocks != b.DoorwayBlocks) st.Fail($"doorway collider {s.DoorwayBlocks} vs host {a.DoorwayBlocks}/{b.DoorwayBlocks} at {at}");
             // The plate's words include a refusal shown for a few seconds by each peer's own clock: soft.
             if (s.DeckScreen != ElevatorNetProbe.Normalised(a.DeckScreen) && s.DeckScreen != ElevatorNetProbe.Normalised(b.DeckScreen)) st.ScreenSoft++;
+        }
+
+        // Ticks the host dropped (a frame that should have run more ticks than it did) in the
+        // ResyncSeconds up to `wall`, from the host's own per-frame record.
+        private static double HostDroppedTicks(long wall)
+        {
+            IReadOnlyList<S> rec = ElevatorNetProbe.Recorded;
+            long from = wall - (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
+            double dropped = 0;
+            for (int i = 1; i < rec.Count; i++)
+            {
+                S p = rec[i - 1], c = rec[i];
+                if (c.Wall <= from) continue;
+                if (c.Wall > wall) break;
+                if (p.Tick <= 0 || c.Rate <= 0 || c.Wall <= p.Wall) continue;
+                double lost = (c.Wall - p.Wall) / (double)TimeSpan.TicksPerSecond * c.Rate - (c.Tick - p.Tick);
+                if (lost > DropTicks) dropped += lost;
+            }
+            return dropped;
+        }
+
+        // Whether this guest's tick fell behind its own clock (by more than DropTicks) between
+        // two of its replies within the last ResyncSeconds.
+        private static bool GuestDroppedTicks(Guest g, S s)
+        {
+            if (s.Tick <= 0 || s.Rate <= 0) return false;
+            long dropWall = long.MinValue;
+            if (guestClock.TryGetValue(g, out (long Wall, double Tick, long DropWall) prev))
+            {
+                dropWall = prev.DropWall;
+                if (s.Wall <= prev.Wall) return dropWall != long.MinValue && s.Wall - dropWall < (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
+                double lost = (s.Wall - prev.Wall) / (double)TimeSpan.TicksPerSecond * s.Rate - (s.Tick - prev.Tick);
+                if (lost > DropTicks) dropWall = s.Wall;
+            }
+            guestClock[g] = (s.Wall, s.Tick, dropWall);
+            return dropWall != long.MinValue && s.Wall - dropWall < (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
         }
 
         // A spectator's own view, and the TV's picture, against the watched host's eye at the tick.
@@ -555,8 +613,9 @@ namespace SunkCost.Editor.Prototype
             }
             if (s.Ship) CompareDeck(s, st);
             CompareEyes(g, s, st, hostId);
-            double hostTick = double.NaN, hostGap = 0;
+            double hostTick = double.NaN, hostGap = 0, hostDropped = 0;
             bool haveHostTick = s.Tick > 0 && HostTickAtWall(s.Wall, out hostTick, out hostGap);
+            bool guestDrop = GuestDroppedTicks(g, s);
             if (haveHostTick && s.SinceStall < 1.5f)
             {
                 // The guest had a frame over 0.1 s within the last 1.5 s (a dive-site load and
@@ -571,6 +630,26 @@ namespace SunkCost.Editor.Prototype
                 // editor stall): the host's tick is not linear across a stall (it catches up in
                 // bursts), so the skew is not measurable there (round 1 fix to the test).
                 st.SkewHostStall++;
+            }
+            else if (haveHostTick && (hostDropped = HostDroppedTicks(s.Wall)) > 0)
+            {
+                // FishNet runs at most three ticks in one frame and DROPS the rest
+                // (TimeManager.IncreaseTick, _maximumFrameTicks 3 in Session.unity): a host frame
+                // over 50 ms (a scene swap, a GPU stall on this shared machine) puts the host's
+                // tick behind the clock for good, and a client keeps its old pace until the next
+                // TimingUpdate (one a second) snaps its Tick to the server's. Within ResyncSeconds
+                // of a host drop the skew measures that snap, not a clock offset (NET-TICK-SKEW-SOFT,
+                // polish-fix 28 Sep 2026). Counted and named, like the stalls above.
+                st.SkewHostDrop++;
+                st.DroppedByHost = Math.Max(st.DroppedByHost, hostDropped);
+                if (Math.Abs(s.Tick - hostTick) > Math.Abs(st.WorstDropSkew)) st.WorstDropSkew = s.Tick - hostTick;
+            }
+            else if (haveHostTick && guestDrop)
+            {
+                // The same on the guest's side: its tick fell behind its own clock between two
+                // replies (dropped ticks, or the snap back after a host drop) within ResyncSeconds.
+                st.SkewGuestDrop++;
+                if (Math.Abs(s.Tick - hostTick) > Math.Abs(st.WorstDropSkew)) st.WorstDropSkew = s.Tick - hostTick;
             }
             else if (haveHostTick)
             {
@@ -655,7 +734,7 @@ namespace SunkCost.Editor.Prototype
                 foreach (string m in required) Check(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 foreach (string m in wanted) Soft(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 Soft(st.MaxLag <= LagLimit, $"{label}: {g.Label} showed a phase the host had left for at most {LagLimit} s (worst {st.MaxLag:0.00} s over {st.Stale} replies)");
-                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s, {st.SkewGuestStall} within 1.5 s after a guest stall (worst there {st.WorstStallSkew:0.00}))");
+                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s, {st.SkewGuestStall} within 1.5 s after a guest stall (worst there {st.WorstStallSkew:0.00}); {st.SkewHostDrop} within {ResyncSeconds} s after the host dropped ticks (up to {st.DroppedByHost:0.0} in that window), {st.SkewGuestDrop} after the guest's tick fell behind its clock (worst in those windows {st.WorstDropSkew:0.00}); {st.Skews.Count} measured)");
                 Soft(st.Unmatched <= Math.Max(2, st.Replies / 10), $"{label}: {g.Label}'s car replies found the host's frames at their tick ({st.Unmatched} of {st.Replies} did not)");
                 Soft(st.ScreenSoft == 0, $"{label}: {g.Label}'s deck screen read the host's words ({st.ScreenSoft} replies differed; a refusal shows by each peer's own clock)");
                 JudgeRecorder(label + ": " + g.Label, st.LastReply);
