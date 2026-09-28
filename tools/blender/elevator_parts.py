@@ -447,6 +447,12 @@ FOOT = {"axis": (-0.0118, 0.127), "floor": -0.2486, "yaw": -2.25, "k": 5.40, "pi
 # kept beside each one (the glass cut's edges are split straight by foot_split_glass_edges).
 FOOT_POSTS = (-143.25, -46.25, 3.25, 51.25, 95.25, 173.75)
 FOOT_POST_HALF = 2.0
+# The doorway's sides (DIVE-GATE-CLOSEUP-SHARDS): Meshy's metal is cleared this far past the doorway's
+# half angle up to the plinth tops, so nothing pokes through the jamb faces, and the left portal post's
+# remnant (the doorway cut went through it) goes from just above the plinth top.
+FOOT_JAMB_CLEAR = 0.25
+FOOT_PLINTH_TOP = 0.87
+FOOT_PORTAL_FLOOR = 0.95
 
 
 def split_along(data, pick, value, levels):
@@ -504,11 +510,128 @@ def foot_split_glass_edges(data, res):
     res["glass_edge_splits"]["posts"] = posts
 
 
+def foot_split_door_edges(data, res):
+    """The doorway's own cuts, picked by face centre too, left torn edges beside the jambs: teeth through
+    the jamb faces, a sawtooth along the right pocket's shell at z 0.90 and r 3.85, and a torn stub under
+    the left portal post's cut. Split the raw faces along those limits first (every face near one, not
+    only the coarse ones: here the teeth are what a diver at the gate sees)."""
+    HALF = math.degrees(math.asin(1.2 / 3.0)); J = HALF + FOOT_JAMB_CLEAR
+
+    def near():
+        fc, _, _, _, _ = arrays(data)
+        rho = np.hypot(fc[:, 0], fc[:, 1]); dphi = (np.degrees(np.arctan2(fc[:, 1], fc[:, 0])) + 90 + 180) % 360 - 180
+        return rho, dphi, fc[:, 2]
+
+    def dphi_of(co):
+        return (math.degrees(math.atan2(co.y, co.x)) + 90 + 180) % 360 - 180
+    out = {}
+    rho, dphi, z = near()
+    out["jambs"] = split_along(data, (np.abs(np.abs(dphi) - J) < 2.0) & (rho >= 2.90) & (rho <= 4.10) & (z >= -0.20) & (z <= FOOT_PLINTH_TOP + 0.15), dphi_of, (-J, J))
+    rho, dphi, z = near()
+    out["slot_ends"] = split_along(data, (np.abs(np.abs(dphi) - 49.5) < 2.0) & (rho >= 2.60) & (rho <= 3.55) & (z >= 0.0) & (z <= 3.95), dphi_of, (-49.5, 49.5))
+    rho, dphi, z = near()
+    out["pocket_z"] = split_along(data, (dphi >= HALF - 1.0) & (dphi <= 41.0) & (rho >= 3.00) & (rho <= 4.30) & (np.abs(z - 0.90) < 0.10), lambda co: co.z, (0.90,))
+    rho, dphi, z = near()
+    out["pocket_r"] = split_along(data, (dphi >= HALF - 1.0) & (dphi <= 41.0) & (np.abs(rho - 3.85) < 0.10) & (z >= 0.0) & (z <= 2.40), lambda co: math.hypot(co.x, co.y), (3.85,))
+    rho, dphi, z = near()
+    out["portal"] = split_along(data, (dphi >= -41.0) & (dphi <= -HALF + 1.0) & (rho >= 3.00) & (rho <= 3.55) & (np.abs(z - FOOT_PORTAL_FLOOR) < 0.08), lambda co: co.z, (FOOT_PORTAL_FLOOR,))
+    res["door_edge_splits"] = out
+
+
+def foot_plinth_patches(mesh, img, groups, res):
+    """The plinth's trim faces (the jambs, the slots' back walls and ends, the plinth tops) wear the
+    foot's own baked metal instead of the plain kit steel: each group's metre UVs are laid, aspect kept,
+    onto the largest square of real texels in one UV island of the plinth's matching Meshy surface (its
+    outer side for the walls, its top for the tops), the way the housing's jambs took the post's texels.
+    Called after the trim faces are added (their material index is set here to the baked slot 0)."""
+    from bpy_extras.mesh_utils import mesh_linked_uv_islands
+    data = mesh.data
+    W, H = img.size
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, 4)[:, :, :3]
+    lum = px.max(2)
+    fc, fn, fa, _, mi = arrays(data)
+    rho = np.hypot(fc[:, 0], fc[:, 1]); dphi = (np.degrees(np.arctan2(fc[:, 1], fc[:, 0])) + 90 + 180) % 360 - 180; z = fc[:, 2]
+    nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9)
+    base = (mi == 0)
+    band = np.abs(dphi) >= 26.0   # the plinth all round, outside the doorway
+    sources = {"side": base & band & (nrad > 0.7) & (rho >= 3.20) & (rho <= 4.30) & (z >= 0.05) & (z <= 0.85),
+               "top": base & band & (fn[:, 2] > 0.9) & (rho >= 3.10) & (rho <= 4.30) & (z >= 0.75) & (z <= 1.00)}
+    island_of = np.full(len(fc), -1, dtype=np.int64)
+    for k, isl in enumerate(mesh_linked_uv_islands(data)):
+        island_of[list(isl)] = k
+    uvl = data.uv_layers.active.data
+    patches = {}
+    for name, pick in sources.items():
+        lab = np.full((H, W), -1, dtype=np.int64)
+        for fi in np.nonzero(pick)[0]:
+            p = data.polygons[int(fi)]
+            t = np.array([uvl[li].uv[:] for li in p.loop_indices]) * (W, H)
+            x0, y0 = np.floor(t.min(0)).astype(int); x1, y1 = np.ceil(t.max(0)).astype(int)
+            x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, W - 1), min(y1, H - 1)
+            if x1 < x0 or y1 < y0:
+                continue
+            gx, gy = np.meshgrid(np.arange(x0, x1 + 1) + 0.5, np.arange(y0, y1 + 1) + 0.5)
+            inside = np.zeros(gx.shape, dtype=bool)
+            for j in range(1, len(t) - 1):   # the fan: the faces are triangles after shade_smooth
+                a, b, c = t[0], t[j], t[j + 1]
+                den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+                if abs(den) < 1e-12:
+                    continue
+                l1 = ((b[1] - c[1]) * (gx - c[0]) + (c[0] - b[0]) * (gy - c[1])) / den
+                l2 = ((c[1] - a[1]) * (gx - c[0]) + (a[0] - c[0]) * (gy - c[1])) / den
+                inside |= (l1 >= 0) & (l2 >= 0) & (l1 + l2 <= 1)
+            sub = lab[y0:y1 + 1, x0:x1 + 1]
+            sub[inside] = island_of[fi]
+        lab[lum < 0.03] = -1   # never a baked-black texel
+        best = None
+        for k in np.unique(lab[lab >= 0]):
+            ys, xs = np.nonzero(lab == k)
+            ya, yb, xa, xb = ys.min(), ys.max(), xs.min(), xs.max()
+            m = lab[ya:yb + 1, xa:xb + 1] == k
+            dp = np.zeros(m.shape, dtype=np.int32)
+            for y in range(m.shape[0]):   # the largest all-True square ending at each texel
+                row = m[y].astype(np.int32)
+                if y == 0:
+                    dp[y] = row
+                    continue
+                up = dp[y - 1]
+                cur = np.zeros_like(row)
+                for x in range(m.shape[1]):
+                    if row[x]:
+                        cur[x] = 1 + min(up[x], cur[x - 1] if x else 0, up[x - 1] if x else 0)
+                dp[y] = cur
+            y, x = np.unravel_index(int(dp.argmax()), dp.shape)
+            s = int(dp[y, x])
+            if best is None or s > best[0]:
+                best = (s, xa + x - s + 1, ya + y - s + 1)
+        if best is None or best[0] < 6:
+            raise SystemExit("foot: no %s patch of real texels for the plinth trim (%s)" % (name, best))
+        s, x0, y0 = best
+        inset = 1.0   # a texel of margin: bilinear filtering stays inside the island
+        patches[name] = ((x0 + inset) / W, (y0 + inset) / H, (s - 2 * inset) / W, (s - 2 * inset) / H)
+        res.setdefault("plinth_patch_texels", {})[name] = s
+    for group, faces in groups.items():
+        if not faces:
+            continue
+        rect = patches["top" if group.startswith("top") else "side"]
+        loops = [li for fi in faces for li in data.polygons[fi].loop_indices]
+        m = np.array([uvl[li].uv[:] for li in loops])
+        lo = m.min(0); ext = max(float((m.max(0) - lo).max()), 1e-6)
+        for li, q in zip(loops, m):
+            uvl[li].uv = (rect[0] + (q[0] - lo[0]) / ext * rect[2], rect[1] + (q[1] - lo[1]) / ext * rect[3])
+        for fi in faces:
+            data.polygons[fi].material_index = 0
+    col, _, _, _ = texel_colours(mesh, img)
+    allp = [fi for f in groups.values() for fi in f]
+    res["plinth_trim"] = {"faces": len(allp), "black": round(float((col[allp].max(1) < 0.03).mean()), 3) if allp else None}
+
+
 def foot(mesh, target, budget, psp, res):
     data = mesh.data
     data.transform(Matrix.Scale(FOOT["k"], 4) @ Matrix.Rotation(math.radians(FOOT["yaw"]), 4, "Z") @ Matrix.Translation((-FOOT["axis"][0], -FOOT["axis"][1], -FOOT["floor"])))
     data.update()
     foot_split_glass_edges(data, res)
+    foot_split_door_edges(data, res)
     fc, fn, fa, vc, mi = arrays(data)
     rho = np.hypot(fc[:, 0], fc[:, 1]); phi = np.degrees(np.arctan2(fc[:, 1], fc[:, 0])); dphi = (phi + 90 + 180) % 360 - 180
     nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9); z = fc[:, 2]
@@ -530,7 +653,12 @@ def foot(mesh, target, budget, psp, res):
     glass = (rho >= 2.93) & (rho <= 3.10) & (np.abs(nrad) > 0.8) & (z > 0.84) & (z < 3.60) & ~near_post & ~wedge & ~slots & ~wire
     ground = z < -0.10
     pit = (rho <= FOOT["pit_r"]) & (z >= -0.40) & (z <= 0.05)
-    res["cuts"] = delete_faces(data, wedge | slots | halfpost | pocket | wire | debris | glass | ground | pit)
+    # DIVE-GATE-CLOSEUP-SHARDS: the plinths' metal stops just behind the jamb faces, and the left portal
+    # post's torn remnant (and the frame's outer skin the slot cut left beside it) goes above the plinth top
+    jamb_clear = (np.abs(dphi) <= HALF + FOOT_JAMB_CLEAR) & (rho >= 3.05) & (rho <= 3.95) & (z >= 0.02) & (z <= FOOT_PORTAL_FLOOR)
+    portal = region(-40.0, -HALF, 3.05, 3.45, FOOT_PORTAL_FLOOR, 3.90)
+    res["door_cuts"] = {"jamb_clear": int((jamb_clear & ~wedge).sum()), "portal": int(portal.sum())}
+    res["cuts"] = delete_faces(data, wedge | slots | halfpost | pocket | wire | debris | glass | ground | pit | jamb_clear | portal)
     del fc, fn, fa, vc, mi, rho, phi, dphi, nrad, z
     # loose islands under 2000 faces, at any height
     n = len(data.polygons); nv = len(data.vertices)
@@ -561,10 +689,12 @@ def foot(mesh, target, budget, psp, res):
     base_slot(data, "TubeFoot")
     img = bake(high, mesh, psp, "TubeFoot", 2048)
     res["bake_black"] = black_share(mesh, img)
-    # foot_trim: the cut edges closed in the ink trim, UVs in metres
+    # foot_trim: the cut edges closed in the trim slot (Unity: the kit steel), UVs in metres; the plinth's
+    # faces (named groups) then move onto the foot's own baked metal (foot_plinth_patches)
     TI = new_material(data, "FootTrim", nodes=False)
     bm = bmesh.new(); bm.from_mesh(data); uvl = bm.loops.layers.uv.active
     tfaces = []
+    group = [None]; grouped = {}
 
     def P3(r, d, zz):
         a = math.radians(d - 90); return Vector((r * math.cos(a), r * math.sin(a), zz))
@@ -578,6 +708,8 @@ def foot(mesh, target, budget, psp, res):
             co_ = l.vert.co
             l[uvl].uv = (co_.x, co_.y) if abs(f.normal.z) > 0.7 else (math.atan2(co_.y, co_.x) * math.hypot(co_.x, co_.y), co_.z)
         tfaces.append(f)
+        if group[0]:
+            grouped.setdefault(group[0], []).append(f)
     UP = Vector((0, 0, 1))
 
     def sector(r0, r1, d0, d1, zz, want, seg):
@@ -597,16 +729,27 @@ def foot(mesh, target, budget, psp, res):
     sector(2.70, 3.51, -HALF, HALF, 0.0, UP, 24)            # T1 the sill
     wall(3.51, -HALF, HALF, -0.10, 0.0, False, 24)          # the sill's front, down to the sand
     for s in (-1, 1):
+        side = "R" if s > 0 else "L"
+        group[0] = "jamb" + side
         radial(s * HALF, 3.10, 3.95, -0.10, 0.87, -s)       # the jambs
+        group[0] = "slotwall" + side
         wall(3.10, min(s * HALF, s * 49.5), max(s * HALF, s * 49.5), 0.0, 0.87, True, 12)
+        group[0] = "slotend" + side
         radial(s * 49.5, 2.65, 3.10, 0.0, 0.87, -s)
+        group[0] = None
         sector(2.65, 3.10, min(s * HALF, s * 49.5), max(s * HALF, s * 49.5), 0.0, UP, 12)   # the slot floors
     wall(FOOT["pit_r"], -180, 180, -0.10, 0.0, True, 96)    # T6 the pit wall (the car's base ring sinks in)
+    group[0] = "topR"
     sector(3.10, 3.88, HALF, 40.0, 0.87, UP, 8)             # T7 the plinth tops
     sector(3.10, 3.50, 40.0, 49.5, 0.87, UP, 4)
+    group[0] = "topL"
     sector(3.10, 3.88, -26.5, -HALF, 0.87, UP, 3)           # T7L
+    group[0] = None
+    bm.faces.index_update()
+    groups = {k: [f.index for f in v] for k, v in grouped.items()}
     bm.to_mesh(data); bm.free(); data.update()
     res["trim_faces"] = len(tfaces)
+    foot_plinth_patches(mesh, img, groups, res)
     # acceptance: nothing in the gate leaf's envelope or inside the pit
     vc = verts(data); vr = np.hypot(vc[:, 0], vc[:, 1]); vd = (np.degrees(np.arctan2(vc[:, 1], vc[:, 0])) + 90 + 180) % 360 - 180
     res["in_leaf_envelope"] = int(((vr > 2.65) & (vr < 3.00) & (np.abs(vd) <= 48.4) & (vc[:, 2] > 0.02) & (vc[:, 2] < 3.50)).sum())
