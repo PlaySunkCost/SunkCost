@@ -33,6 +33,9 @@ import sys
 import bpy
 from mathutils import Vector
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import elevator_parts  # noqa: E402  the elevator's own steps (Dan's round glass car, 28 September 2026)
+
 # part: (x, y, z) metres, fit mode, triangle budget
 #   "uniform" – one scale for every axis, the largest target dimension wins
 #   "stretch" – each axis scaled to its target (only where the game fixes the shape)
@@ -41,7 +44,7 @@ TABLE = {
     "Tower":        ((8.0, 6.0, 6.0), "stretch", 20000),
     "Railing":      ((2.0, 0.2, 1.2), "uniform", 4000),
     "StorageRoom":  ((2.8, 3.0, 2.2), "stretch", 12000),
-    "CabinHousing": ((5.0, 5.0, 3.0), "stretch", 15000),
+    "CabinHousing": ((10.0, 10.0, 4.10), "uniform", 60000),  # the deck housing round the car (elevator, 28 Sep 2026): fitted about its own axis; see elevator_parts.housing
     "Crane":        ((3.0, 9.0, 7.0), "uniform", 40000),   # 15000 read rough up close at twice its size (QA round 2)
     "Winch":        ((2.0, 1.2, 1.6), "uniform", 40000),   # 8000 from 5 million faces came out crumpled (QA round 2); see REMESH
     "Container":    ((6.0, 2.6, 2.6), "stretch", 8000),
@@ -49,7 +52,7 @@ TABLE = {
     "NavConsole":   ((2.38, 1.20, 2.17), "uniform", 20000),  # k 1.2506 over the raw 1.90 x 0.96 x 1.74: top glass centre 1.55 m, grip 0.95 m (console model plan, 27 Sep 2026); see the nav_* steps
     "TvCabinet":    ((3.6, 0.4, 3.3), "uniform", 8000),
     "DeckLamp":     ((0.6, 0.6, 1.9), "uniform", 4000),
-    "CabinDoor":    ((1.0, 0.12, 2.6), "uniform", 5000),
+    "CabinDoor":    ((1.668, 0.055, 3.30), "bend", 8000),   # the car's curved leaf, bent onto r 2.45 (elevator_parts.door); the size is only asserted
     "StorageSill":  ((1.4, 0.5, 0.12), "uniform", 3000),
     "Bollard":      ((0.8, 0.8, 0.7), "uniform", 4000),
     "Pipes":        ((2.0, 0.6, 1.5), "uniform", 8000),
@@ -64,10 +67,14 @@ TABLE = {
     "Table":        ((1.2, 0.8, 0.75), "uniform", 4000),
     "NamePlate":    ((3.0, 0.15, 0.6), "uniform", 3000),
     "Signs":        ((1.9, 0.12, 0.45), "uniform", 3000),
-    "ElevatorCar":  ((5.0, 5.0, 3.5), "stretch", 15000),
-    "CarPanel":     ((0.6, 0.12, 0.4), "uniform", 3000),
-    "TubeSection":  ((5.0, 5.0, 2.0), "stretch", 6000),
-    "TubeFoot":     ((7.0, 7.0, 3.0), "stretch", 12000),
+    # The elevator (Dan's round glass car and shaft, 28 September 2026): each has its
+    # own steps in elevator_parts.py (scratchpad elev/ELEVATOR_MODELS.md sections 1-8).
+    "ElevatorCar":  ((4.657, 4.658, 3.896), "uniform", 40000),  # k 2.4501, then the car frame: floor top at 0.10
+    "CarPanel":     ((0.74, 0.36, 0.9463), "uniform", 8000),   # k 0.5: the cap at 1.30 m in the car
+    "TubeSection":  ((6.574, 6.574, 4.4725), "uniform", 12000),
+    "TubeFoot":     ((9.82, 10.30, 4.93), "uniform", 24000),   # k 5.40 about the tube's axis, the floor top on z 0
+    "TopCollar":    ((7.0, 7.0, 3.7), "uniform", 30000),
+    "GateLeaf":     ((1.204, 0.481, 3.5), "bend", 8000),       # bent onto R 2.800 (elevator_parts.gate); the size is asserted
 }
 
 # Decimation that keeps fewer than one face in four gets its maps baked afresh.
@@ -82,7 +89,7 @@ SMOOTH_ANGLE = 50.0
 
 # Parts the ship stands at twice their size (ShipDeckDressing.Scale): their bake
 # gets the big parts' 2048 maps, not 1024 (the winch looked rough up close).
-LARGE_ON_DECK = {"Winch", "NavConsole"}  # the console is read from arm's length: its body wants the 2048 maps too
+LARGE_ON_DECK = {"Winch", "NavConsole", "CabinDoor"}  # the console is read from arm's length: its body wants the 2048 maps too
 
 # Parts rebuilt as a voxel surface before decimating, voxel size as a fraction of
 # the part's largest dimension (0 or absent: straight to the budget). An optional
@@ -352,7 +359,7 @@ def unwrap_fresh(low):
     low.data.uv_layers.active = low.data.uv_layers["Baked"]
 
 
-def bake_from(high, low, part, size, ray):
+def bake_from(high, low, part, size, ray, keep=()):
     """Colour and tangent normals from the original onto the decimated mesh's fresh
     unwrap. The low mesh ends up with one material whose nodes carry the two baked
     images, which the map export below writes out like any other part's."""
@@ -372,10 +379,13 @@ def bake_from(high, low, part, size, ray):
     links.new(nmap.outputs["Normal"], bsdf.inputs["Normal"])
 
     # Every slot of the low mesh needs an image node to bake into; the hull's deck
-    # slot keeps its own material (Unity swaps it for the plate) with a node added.
+    # slot keeps its own material (Unity swaps it for the plate) with a node added,
+    # and so does every slot named in `keep` (the elevator's glass and light slots).
     targets = []
     for i, m in enumerate(low.data.materials):
-        if m is not None and m.name == "DeckPlate":
+        if m is not None and (m.name == "DeckPlate" or m.name in keep):
+            if not m.use_nodes:
+                m.use_nodes = True
             n_c = m.node_tree.nodes.new("ShaderNodeTexImage"); n_c.image = colour
             n_n = m.node_tree.nodes.new("ShaderNodeTexImage"); n_n.image = normal
             targets.append((m, n_c, n_n))
@@ -421,17 +431,9 @@ def bake_from(high, low, part, size, ray):
 
 # ---- the run ------------------------------------------------------------------
 
-def main():
-    args = sys.argv[sys.argv.index("--") + 1:]
-    part, dst = args[0], os.path.abspath(args[2])
-    if part not in TABLE:
-        raise SystemExit("unknown part " + part)
-    src = generated_source(part) if args[1] == "auto" else os.path.abspath(args[1])
-    print("source", src)
-    target, fit, budget = TABLE[part]
-    if len(args) > 3:
-        budget = int(args[3])
-
+def import_joined(src, part):
+    """The download on an empty scene, as one mesh named after the part, its
+    transforms applied (Blender Z up, the Meshy front facing -Y)."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     if src.lower().endswith(".fbx"):
         bpy.ops.import_scene.fbx(filepath=src)
@@ -451,6 +453,93 @@ def main():
             bpy.data.objects.remove(o, do_unlink=True)
     mesh.name = mesh.data.name = part
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    return mesh
+
+
+
+def write_maps_and_export(mesh, part, dst, keep=()):
+    """The baked maps beside the model, then every mesh in the scene into the FBX."""
+    # The maps out beside the model, named by their role, so Unity's setup finds them.
+    map_dir = os.path.join(os.path.dirname(dst), "Maps")
+    os.makedirs(map_dir, exist_ok=True)
+    for mat in mesh.data.materials:
+        if mat is None or not mat.use_nodes:
+            continue
+        bsdf = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+        if bsdf is None:
+            continue
+
+        def image_on(socket_name):
+            sock = bsdf.inputs.get(socket_name)
+            if sock is None or not sock.is_linked:
+                return None
+            node = sock.links[0].from_node
+            if node.type == "NORMAL_MAP":
+                col = node.inputs.get("Color")
+                node = col.links[0].from_node if col is not None and col.is_linked else None
+            return node.image if node is not None and node.type == "TEX_IMAGE" else None
+
+        for socket, role in (("Base Color", "BaseColor"), ("Normal", "Normal")):  # the two the ship material reads
+            image = image_on(socket)
+            if image is None:
+                continue
+            # Colour as JPEG, the rest lossless: thirty parts' maps go through Git
+            # LFS, and a 2048 colour PNG is twenty times the size for no visible gain.
+            path = os.path.join(map_dir, part + "_" + role + (".jpg" if role == "BaseColor" else ".png"))
+            # save_render writes in the scene render format, whatever the extension says.
+            fmt = bpy.context.scene.render.image_settings
+            fmt.file_format = "JPEG" if role == "BaseColor" else "PNG"
+            fmt.quality = 94
+            fmt.color_mode = "RGB" if role == "BaseColor" else "RGBA"
+            image.save_render(path)
+            image.name = part + "_" + role
+            image.filepath = image.filepath_raw = path
+            if image.packed_file is not None:
+                image.unpack(method="REMOVE")
+            image.source = "FILE"
+            image.reload()
+            print("map", role, os.path.basename(path), image.size[:])
+        mat.name = part if mat.name != "DeckPlate" and mat.name not in keep else mat.name
+
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.export_scene.fbx(
+        filepath=dst,
+        use_selection=False,
+        object_types={"MESH"},
+        add_leaf_bones=False,
+        bake_anim=False,
+        axis_forward="-Z",
+        axis_up="Y",
+        apply_unit_scale=True,
+        apply_scale_options="FBX_SCALE_ALL",
+        # The axis change into the vertices, not onto the node: the mesh comes into
+        # Unity Y-up with no (270.02, 0, 0) under it (ship audit SHIP-078), facing
+        # exactly as before. Unity's bakeAxisConversion must stay off on top of it,
+        # or the model comes in turned half round (ShipModelSetup.Apply).
+        bake_space_transform=True,
+        mesh_smooth_type="OFF",  # the split normals themselves go out; Unity imports them
+        path_mode="STRIP",  # no .fbm copies beside the model: Unity reads Maps/ by name
+        embed_textures=False,
+    )
+    print("wrote", dst)
+
+
+def main():
+    args = sys.argv[sys.argv.index("--") + 1:]
+    part, dst = args[0], os.path.abspath(args[2])
+    if part not in TABLE:
+        raise SystemExit("unknown part " + part)
+    src = generated_source(part) if args[1] == "auto" else os.path.abspath(args[1])
+    print("source", src)
+    target, fit, budget = TABLE[part]
+    if len(args) > 3:
+        budget = int(args[3])
+
+    if part in elevator_parts.PARTS:
+        elevator_parts.run(part, src, dst, globals())
+        return
+    mesh = import_joined(src, part)
 
     def bounds():
         lo = Vector((1e9, 1e9, 1e9)); hi = Vector((-1e9, -1e9, -1e9))
@@ -543,70 +632,7 @@ def main():
     if part == "NavConsole":
         nav_separate_lever(mesh, part, *raw_frame)  # after the bake: one baked material and one unwrap on both objects
 
-    # The maps out beside the model, named by their role, so Unity's setup finds them.
-    map_dir = os.path.join(os.path.dirname(dst), "Maps")
-    os.makedirs(map_dir, exist_ok=True)
-    for mat in mesh.data.materials:
-        if mat is None or not mat.use_nodes:
-            continue
-        bsdf = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
-        if bsdf is None:
-            continue
-
-        def image_on(socket_name):
-            sock = bsdf.inputs.get(socket_name)
-            if sock is None or not sock.is_linked:
-                return None
-            node = sock.links[0].from_node
-            if node.type == "NORMAL_MAP":
-                col = node.inputs.get("Color")
-                node = col.links[0].from_node if col is not None and col.is_linked else None
-            return node.image if node is not None and node.type == "TEX_IMAGE" else None
-
-        for socket, role in (("Base Color", "BaseColor"), ("Normal", "Normal")):  # the two the ship material reads
-            image = image_on(socket)
-            if image is None:
-                continue
-            # Colour as JPEG, the rest lossless: thirty parts' maps go through Git
-            # LFS, and a 2048 colour PNG is twenty times the size for no visible gain.
-            path = os.path.join(map_dir, part + "_" + role + (".jpg" if role == "BaseColor" else ".png"))
-            # save_render writes in the scene render format, whatever the extension says.
-            fmt = bpy.context.scene.render.image_settings
-            fmt.file_format = "JPEG" if role == "BaseColor" else "PNG"
-            fmt.quality = 94
-            fmt.color_mode = "RGB" if role == "BaseColor" else "RGBA"
-            image.save_render(path)
-            image.name = part + "_" + role
-            image.filepath = image.filepath_raw = path
-            if image.packed_file is not None:
-                image.unpack(method="REMOVE")
-            image.source = "FILE"
-            image.reload()
-            print("map", role, os.path.basename(path), image.size[:])
-        mat.name = part if mat.name != "DeckPlate" else mat.name
-
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
-    bpy.ops.object.select_all(action="SELECT")
-    bpy.ops.export_scene.fbx(
-        filepath=dst,
-        use_selection=False,
-        object_types={"MESH"},
-        add_leaf_bones=False,
-        bake_anim=False,
-        axis_forward="-Z",
-        axis_up="Y",
-        apply_unit_scale=True,
-        apply_scale_options="FBX_SCALE_ALL",
-        # The axis change into the vertices, not onto the node: the mesh comes into
-        # Unity Y-up with no (270.02, 0, 0) under it (ship audit SHIP-078), facing
-        # exactly as before. Unity's bakeAxisConversion must stay off on top of it,
-        # or the model comes in turned half round (ShipModelSetup.Apply).
-        bake_space_transform=True,
-        mesh_smooth_type="OFF",  # the split normals themselves go out; Unity imports them
-        path_mode="STRIP",  # no .fbm copies beside the model: Unity reads Maps/ by name
-        embed_textures=False,
-    )
-    print("wrote", dst)
+    write_maps_and_export(mesh, part, dst)
 
 
 main()
