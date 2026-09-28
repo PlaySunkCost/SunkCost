@@ -301,6 +301,122 @@ namespace SunkCost.Editor.Prototype
             Say($"capture {Shots + name} (FOV {host.PlayerCamera.fieldOfView:0}, eye r {RadiusOf(ship, host.EyePosition):0.00})");
         }
 
+        // ---- round 2 retests (28 September 2026) -----------------------------------------
+
+        // DECK-LEAF-GLASS: the open shutters park right behind the car's parked door leaves;
+        // their inside face now wears a bare-steel "Lining". Structure rows plus captures from
+        // inside the car toward each parked leaf and from beside one (the tester reads them).
+        private static IEnumerator RetestLeafGlass(ShipParts sea)
+        {
+            Heading("RT-LG — DECK-LEAF-GLASS retest: the parked door leaves read as glass (captures), the shutters' backs are lined");
+            foreach (Transform pivot in new[] { sea.DeckCabinHousingDoorL, sea.DeckCabinHousingDoorR })
+            {
+                Transform lining = pivot != null ? Named(pivot, ElevatorLook.ShutterLiningName) : null;
+                Renderer r = lining != null ? lining.GetComponent<Renderer>() : null;
+                Check(r != null && r.enabled && r.sharedMaterial != null, $"RT-LG {(pivot != null ? pivot.name : "?")} has its lining shown ({(r != null && r.sharedMaterial != null ? r.sharedMaterial.name : "none")})");
+            }
+            yield return HostShot(sea, CabinPoint(sea, 1.2f, 180f, StandY), CabinPoint(sea, 3f, 0f, 1.5f), "rt-leaf-inside-to-doorway.png");
+            yield return HostShot(sea, CabinPoint(sea, 1.0f, -150f, StandY), CabinPoint(sea, 2.44f, 40f, 1.5f), "rt-leaf-left.png");
+            yield return HostShot(sea, CabinPoint(sea, 1.0f, 150f, StandY), CabinPoint(sea, 2.44f, -40f, 1.5f), "rt-leaf-right.png");
+            yield return HostShot(sea, CabinPoint(sea, 1.9f, 8f, StandY), CabinPoint(sea, 2.44f, 45f, 1.4f), "rt-leaf-beside.png");
+        }
+
+        // DECK-PANEL-TEXT: the deck panel's drawn screen text is wrapped to short lines, big
+        // enough to read, and stays inside the ~0.42 x 0.24 m screen (measured in the
+        // Screen Anchor's frame from the text mesh's bounds).
+        private static IEnumerator PanelTextLayout(ShipParts sea, CabinPanelDisplay display, string state, string captureName)
+        {
+            yield return Wait(0.4f); // the display refits on the frame after a write
+            Transform anchor = Named(sea.DeckCabinCarGlass, CabinPanelDisplay.ScreenAnchorName);
+            Transform textT = Named(sea.DeckCabinCarGlass, CabinPanelDisplay.ScreenTextName);
+            TextMesh text = textT != null ? textT.GetComponent<TextMesh>() : null;
+            MeshRenderer mr = textT != null ? textT.GetComponent<MeshRenderer>() : null;
+            Check(anchor != null && text != null && mr != null && mr.enabled, $"RT-PT ({state}) the panel has its Screen Anchor and a shown Screen Text");
+            Bounds lb = mr.localBounds;
+            float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 c = lb.center + Vector3.Scale(lb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                Vector3 a = anchor.InverseTransformPoint(textT.TransformPoint(c));
+                minX = Mathf.Min(minX, a.x); maxX = Mathf.Max(maxX, a.x); minY = Mathf.Min(minY, a.y); maxY = Mathf.Max(maxY, a.y);
+            }
+            string[] lines = text.text.Split('\n');
+            float lineH = (maxY - minY) / Mathf.Max(1, lines.Length);
+            string drawn = text.text.Replace("\n", " | ");
+            string Words(string s) => Regex.Replace(s ?? string.Empty, @"\s+", " ").Trim();
+            Check(Words(text.text) == Words(display.ScreenText), $"RT-PT ({state}) the drawn words are the screen's words: '{drawn}'");
+            int longest = lines.Max(l => l.Length);
+            Check(longest <= 16, $"RT-PT ({state}) every drawn line is 16 characters or fewer (longest {longest}, {lines.Length} lines)");
+            Check(minX >= -0.21f && maxX <= 0.21f && minY >= -0.12f && maxY <= 0.12f,
+                $"RT-PT ({state}) the text stays on the screen: x {minX:+0.000;-0.000} .. {maxX:+0.000;-0.000}, y {minY:+0.000;-0.000} .. {maxY:+0.000;-0.000} (screen ±0.21 x ±0.12 m)");
+            Check(lineH >= 0.03f, $"RT-PT ({state}) each line is at least 3 cm tall ({lineH * 100f:0.0} cm per line, characterSize {text.characterSize:0.0000})");
+            if (captureName != null)
+            {
+                Vector3 face = anchor.position + anchor.forward * 1.0f; face.y = sea.DeckCabin.position.y + StandY;
+                yield return HostShot(sea, face, anchor.position, captureName);
+                yield return HostShot(sea, CabinPoint(sea, 0.2f, 0f, StandY), CabinPoint(sea, 2.3f, 75f, 1.3f), captureName.Replace(".png", "-far.png"));
+            }
+        }
+
+        private static IEnumerator RetestPanelText(ShipParts sea, CabinPanelDisplay display, string waiting)
+        {
+            Heading("RT-PT — DECK-PANEL-TEXT retest: the panel's screen is readable and on the screen");
+            Check(display.ScreenText.Contains(waiting), "RT-PT the screen names the missing guest: '" + display.ScreenText.Replace("\n", " | ") + "'");
+            yield return PanelTextLayout(sea, display, "waiting", "rt-panel-waiting.png");
+            H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.3f);
+        }
+
+        // DECK-N1-CANCEL: both press in, both step out onto the grate in the entrance band
+        // (r 3.0) while the doors seal; the ride is cancelled "Nobody aboard" and must leave
+        // everyone where they stand (no entrance put-out), the car up, the shutters open again.
+        private static IEnumerator RetestCancelInEntrance(ShipParts sea, HQPlayerController remote, int guestId, Vector3 guestInCabin)
+        {
+            Heading("RT-N1 — DECK-N1-CANCEL retest: a cancelled ride leaves the leavers in the entrance where they stand");
+            HQPlayerController host = Host();
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            float half = sea.DeckCabinDoorR != null ? Mathf.Abs(Mathf.DeltaAngle(0f, sea.DeckCabinDoorR.localEulerAngles.y)) : 23.578f;
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestInCabin) + "}");
+            H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.6f);
+            Check(sea.IsInDeckCabin(remote.transform.position + Vector3.up * 0.5f) && sea.IsInDeckCabin(host.transform.position + Vector3.up * 0.5f), "RT-N1 both stand in the deck cabin");
+            CabinPanelDisplay display = DeckDisplay(sea);
+            yield return Expect(() => !display.ScreenText.Contains("Waiting for"), flow.Settings.RefusalDisplaySeconds + 3f, () => "RT-PT the screen stops naming the guest once all are in: '" + display.ScreenText.Replace("\n", " | ") + "'");
+            yield return PanelTextLayout(sea, display, "all in", "rt-panel-all-in.png");
+            H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.4f);
+
+            bool putOut = false; string putOutLine = null;
+            Application.LogCallback listen = (message, stack, type) => { if (message.Contains("put out of the deck cabin")) { putOut = true; putOutLine = message; } };
+            Application.logMessageReceived += listen;
+            try
+            {
+                int serial = Day.CabinRide.Serial;
+                H.ClientRequestCabin();
+                yield return Expect(() => Day.CabinRide.Serial > serial && Day.CabinRide.Stage == CabinRideStage.Sealing, 3f, () => "RT-N1 the press starts the seal with both in (refusal '" + Day.LastRefusal.Text + "')");
+                yield return Wait(0.3f);
+                Vector3 hostSpot = CabinPoint(sea, 3.0f, 0f, StandY);
+                Vector3 guestSpot = CabinPoint(sea, 3.0f, 12f, StandY);
+                host.TeleportLocal(hostSpot, host.Yaw);
+                yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
+                yield return Expect(() => RadiusOf(sea, remote.transform.position) > 2.6f, 3f, () => $"RT-N1 the guest's copy stepped out to r {RadiusOf(sea, remote.transform.position):0.00}");
+                float cr = remote.Controller != null ? remote.Controller.radius : 0.35f;
+                Check(sea.InDeckCabinEntrance(host.transform.position, host.Controller.radius) && sea.InDeckCabinEntrance(remote.transform.position, cr), $"RT-N1 both stand in the entrance band (host r {RadiusOf(sea, host.transform.position):0.00}, guest r {RadiusOf(sea, remote.transform.position):0.00})");
+                yield return Expect(() => Day.CabinRide.Stage == CabinRideStage.Cancelled, flow.Settings.CabinSealSeconds * 4f + 6f, () => $"RT-N1 nobody aboard when the doors shut: the ride is cancelled (stage {Day.CabinRide.Stage})");
+                Check(Day.LastRefusal.Text == "Nobody aboard", "RT-N1 the refusal: " + Day.LastRefusal.Text);
+                yield return Wait(1.5f); // the old bug's TargetPlace landed within a frame or two of the seal
+                float hostMoved = Vector3.Distance(host.transform.position, hostSpot);
+                float guestMoved = Vector3.Distance(remote.transform.position, guestSpot);
+                Check(!putOut, "RT-N1 no entrance put-out was logged (" + (putOutLine ?? "none") + ")");
+                Check(hostMoved < 0.5f && !host.TravelLocked, $"RT-N1 the host was left where it stood (moved {hostMoved:0.00} m, now r {RadiusOf(sea, host.transform.position):0.00}, ship y {ShipY(sea, host.transform.position):0.00})");
+                Check(guestMoved < 0.5f, $"RT-N1 the guest's copy was left where it stood (moved {guestMoved:0.00} m, now r {RadiusOf(sea, remote.transform.position):0.00})");
+                yield return GuestEventually(r => { Vector3 p = GuestPosition(r, guestId); return !float.IsNaN(p.x) && Vector3.Distance(p, guestSpot) < 0.5f; }, 3f,
+                    () => "RT-N1 the guest's own view: still in the entrance where it stood");
+                yield return Expect(() => flow.DeckCabinOpenFraction() > 0.99f && YawFraction(sea.DeckCabinHousingDoorR, half) > 0.99f && YawFraction(sea.DeckCabinHousingDoorL, half) > 0.99f && !sea.DeckCabinShutterCollider.enabled && !sea.DeckCabinDoorCollider.enabled, 5f,
+                    () => $"RT-N1 the doors and shutters open again, the entrance passable (doors {flow.DeckCabinOpenFraction():0.00}, shutters {YawFraction(sea.DeckCabinHousingDoorR, half):0.00}/{YawFraction(sea.DeckCabinHousingDoorL, half):0.00})");
+                Check(Day.Elevator.State == ElevatorState.AtTop && AnyRendererOn(sea.DeckCabinCarGlass) && !Day.Riding, $"RT-N1 the car stayed up ({Day.Elevator.State}), shown, nobody riding");
+                yield return GuestEventually(r => Field(r, "deckCarShown") == "True" && FieldF(r, "shutters") > 0.99f && Field(r, "shutterBox") == "False", 4f, () => "RT-N1 the guest sees the car up and the shutters open");
+            }
+            finally { Application.logMessageReceived -= listen; }
+        }
+
         // Holds W (re-queued every frame) while `sample` reads each frame; stops when `done` holds or the time is up.
         private static IEnumerator WalkWhile(Func<bool> done, float seconds, Action sample)
         {
@@ -423,6 +539,7 @@ namespace SunkCost.Editor.Prototype
             yield return HostShot(sea, CabinPoint(sea, 1.2f, 180f, StandY), CabinPoint(sea, 3f, 0f, 1.5f), "va-inside-to-doorway.png");
             yield return HostShot(sea, CabinPoint(sea, 0.2f, 0f, StandY), CabinPoint(sea, 2.3f, 75f, 1.3f), "va-inside-to-panel.png");
             yield return HostShot(sea, CabinPoint(sea, 0.8f, 0f, StandY), CabinPoint(sea, 2.4f, 180f, 1.6f), "va-inside-back.png");
+            yield return RetestLeafGlass(sea);
 
             // ---- the guest ----
             Heading("G0 — a guest joins at sea between days");
@@ -454,9 +571,13 @@ namespace SunkCost.Editor.Prototype
             Check(deckDisplay.GaugeFraction == 0f, $"DK6 the deck panel's gauge reads empty ({deckDisplay.GaugeFraction:0.000})");
             yield return GuestEventually(r => Field(r, "deckPanel").Contains(waiting) && Field(r, "deckScreen").Contains(waiting), 3f, () => "DK6 the guest's plate and panel screen name the guest too");
 
+            // ---- round 2 retests: DECK-PANEL-TEXT and DECK-N1-CANCEL ----
+            yield return RetestPanelText(sea, deckDisplay, waiting);
+            Vector3 guestInCabin = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + sea.DeckCabin.up * StandY;
+            yield return RetestCancelInEntrance(sea, remote, guestId, guestInCabin);
+
             // ---- DK7 + DK8: everyone in, the press, the swap ----
             Heading("DK7 — the deck button starts the dive only with everyone in; DK8 — the swap is seamless");
-            Vector3 guestInCabin = sea.DeckCabin.position + sea.DeckCabin.right * 1.2f + sea.DeckCabin.up * StandY;
             yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestInCabin) + "}");
             H.MoveLocalIntoDeckCabin("Sea"); yield return Wait(0.6f);
             host.SetPitchForChecks(0f);
