@@ -343,7 +343,8 @@ namespace SunkCost.Editor.Prototype
             string[] lines = text.text.Split('\n');
             float lineH = (maxY - minY) / Mathf.Max(1, lines.Length);
             string drawn = text.text.Replace("\n", " | ");
-            string Words(string s) => Regex.Replace(s ?? string.Empty, @"\s+", " ").Trim();
+            // Layout breaks a line at " — " (the dash becomes the break), so dashes are not words here.
+            string Words(string s) => Regex.Replace((s ?? string.Empty).Replace("—", " "), @"\s+", " ").Trim();
             Check(Words(text.text) == Words(display.ScreenText), $"RT-PT ({state}) the drawn words are the screen's words: '{drawn}'");
             int longest = lines.Max(l => l.Length);
             Check(longest <= 16, $"RT-PT ({state}) every drawn line is 16 characters or fewer (longest {longest}, {lines.Length} lines)");
