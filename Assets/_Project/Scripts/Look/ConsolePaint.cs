@@ -187,7 +187,8 @@ namespace SunkCost.Look
         private static void State(ScreenPainter p, TopModel m, ConsoleStyle s, float margin, Color rule)
         {
             int w = p.Width, h = p.Height;
-            p.TextIn(m.BigState, (int)Px(s.BigState, h), Style, new Rect(margin, 0.22f * h, w - 2f * margin, 0.40f * h), TextAnchor.MiddleCenter, Tone(m.BigTone), s.TitleTracking * 0.5f);
+            // A long state (a refusal: "Nothing to sell — dive again") breaks in two rather than shrinking small.
+            Fitted(p, m.BigState, (int)Px(s.BigState, h), new Rect(margin, 0.22f * h, w - 2f * margin, 0.40f * h), TextAnchor.MiddleCenter, Tone(m.BigTone), s.TitleTracking * 0.5f);
             p.TextIn(m.Hint, (int)Px(s.Hint, h), Style, new Rect(margin, 0.63f * h, w - 2f * margin, 0.11f * h), TextAnchor.MiddleCenter, Tone(m.HintTone), s.TitleTracking * 0.2f);
             p.Rect(new Rect(margin, h - margin - Px(s.Foot, h) * 1.3f - 0.03f * h, w - 2f * margin, Mathf.Max(2f, 0.004f * h)), rule);
         }
@@ -213,14 +214,18 @@ namespace SunkCost.Look
             if (poster)
             {
                 // Nothing to picture: the heading is the large line, the facts under it.
-                p.TextIn(m.Heading, (int)Px(s.PosterHeading, h), Style, new Rect(content.x + pad, content.y + content.height * 0.08f, content.width - 2f * pad, content.height * 0.30f), TextAnchor.MiddleCenter, ScreenStyle.Accent, s.TitleTracking);
-                float y = content.y + content.height * 0.44f;
+                // With no status under them the facts are the only other thing on the glass:
+                // larger, and the block sits lower so the poster fills the screen (the polish pass).
+                bool roomy = string.IsNullOrEmpty(m.Status.Text) && !m.Notice;
+                float posterLine = roomy ? linePx * 1.25f : linePx;
+                p.TextIn(m.Heading, (int)Px(s.PosterHeading, h), Style, new Rect(content.x + pad, content.y + content.height * (roomy ? 0.12f : 0.08f), content.width - 2f * pad, content.height * 0.30f), TextAnchor.MiddleCenter, ScreenStyle.Accent, s.TitleTracking);
+                float y = content.y + content.height * (roomy ? 0.50f : 0.44f);
                 if (m.Lines != null)
                     foreach (ConsoleLine line in m.Lines)
                     {
                         if (string.IsNullOrEmpty(line.Text)) continue;
-                        p.TextIn(line.Text, (int)(line.Size == ConsoleTextSize.Small ? linePx * 0.85f : linePx), Style, new Rect(content.x + pad, y, content.width - 2f * pad, linePx * 1.3f), TextAnchor.MiddleCenter, Tone(line.Tone), s.TitleTracking * 0.3f);
-                        y += linePx * 1.35f;
+                        p.TextIn(line.Text, (int)(line.Size == ConsoleTextSize.Small ? posterLine * 0.85f : posterLine), Style, new Rect(content.x + pad, y, content.width - 2f * pad, posterLine * 1.3f), TextAnchor.MiddleCenter, Tone(line.Tone), s.TitleTracking * 0.3f);
+                        y += posterLine * 1.35f;
                     }
                 if (m.Notice) Notice(p, new Rect(content.x + pad * 2f, content.yMax - pad - Px(s.BottomNotice, h) * 1.7f, content.width - 4f * pad, Px(s.BottomNotice, h) * 1.7f), m.Status, s, t);
                 else if (!string.IsNullOrEmpty(m.Status.Text))
