@@ -80,12 +80,13 @@ namespace SunkCost.Editor.Prototype
         private sealed class Stats
         {
             public string Label;
-            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft;
+            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge;
             public float WorstY, WorstWater, WorstDoor, WorstGate, WorstGauge, WorstDeckDoors, WorstYaw, WorstEye, WorstTvEye, MaxLag;
             public readonly List<double> Skews = new();
             public readonly List<string> Fails = new();
             public readonly HashSet<string> Moments = new();
             public string LastReply = string.Empty;
+            public string WorstSkewAt = "none";
             public S Last;
             public bool HaveLast;
             public void Fail(string what) { FailCount++; if (Fails.Count < 10) Fails.Add(what); }
@@ -437,7 +438,17 @@ namespace SunkCost.Editor.Prototype
             Same("bubbles", s.Bubbles, a.Bubbles, b.Bubbles);
             Same("surfaceShown", s.Shown, a.Shown, b.Shown);
             Same("tubeRing", s.Ring, a.Ring, b.Ring);
-            Same("gateBlocks", s.GateBlocks, a.GateBlocks, b.GateBlocks);
+            // The gate's box follows its fraction (blocks at 0.01 or less), and ShaftGate reads the
+            // door's fraction from the door's own Update with no set order: on the first frame
+            // of an opening or the last of a closing the gate may be one frame behind the door
+            // (both within TolGate). A box that differs while either peer's gate stands clearly
+            // open is a real difference (round 1 fix to the test).
+            if (s.GateBlocks != a.GateBlocks && s.GateBlocks != b.GateBlocks)
+            {
+                float hostGate = Mathf.Lerp(a.Gate, b.Gate, f);
+                if (s.Gate > 0.01f + TolGate || hostGate > 0.01f + TolGate) st.Fail($"gateBlocks {s.GateBlocks} (gate {s.Gate:0.000}, door {s.Door:0.000}) vs host {a.GateBlocks}/{b.GateBlocks} (gate {hostGate:0.000}, door {Mathf.Lerp(a.Door, b.Door, f):0.000}) at {at}");
+                else st.GateEdge++;
+            }
             string sa = ElevatorNetProbe.Normalised(a.CarScreen), sb = ElevatorNetProbe.Normalised(b.CarScreen);
             if (!ScreenBetween(s.CarScreen, sa, sb)) st.Fail($"carScreen {s.CarScreen} vs host {sa}/{sb} at {at}");
         }
@@ -537,7 +548,12 @@ namespace SunkCost.Editor.Prototype
             }
             if (s.Ship) CompareDeck(s, st);
             CompareEyes(g, s, st, hostId);
-            if (s.Tick > 0 && HostTickAtWall(s.Wall, out double hostTick)) st.Skews.Add(s.Tick - hostTick);
+            if (s.Tick > 0 && HostTickAtWall(s.Wall, out double hostTick))
+            {
+                double skewNow = s.Tick - hostTick;
+                if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (reply {st.Replies})";
+                st.Skews.Add(skewNow);
+            }
         }
 
         // ---- sampling a stage ---------------------------------------------------------------
@@ -607,7 +623,7 @@ namespace SunkCost.Editor.Prototype
                 double median = st.Skews.Count == 0 ? 0 : st.Skews.OrderBy(x => x).ElementAt(st.Skews.Count / 2);
                 Say($"{st.Label}: {st.Replies} replies, {st.Car} car + {st.Deck} deck comparisons at the tick ({st.DeckInFlight} deck in flight), {st.Eye} spectator, {st.TvRows} TV; " +
                     $"worst carY {st.WorstY * 100f:0.0} cm, water {st.WorstWater * 100f:0.0} cm, gauge {st.WorstGauge:0.000}, door {st.WorstDoor:0.000}, gate {st.WorstGate:0.000}, deck doors {st.WorstDeckDoors:0.000}, yaw {st.WorstYaw:0.00}°, spectator eye {st.WorstEye:0.00} m, TV eye {st.WorstTvEye:0.00} m; " +
-                    $"stale {st.Stale} (worst {st.MaxLag:0.00} s), unmatched {st.Unmatched}, torn {st.Torn}, no line {st.NoLine}; tick skew median {median:0.00}, worst {skew:0.00} ticks; moments {string.Join(",", st.Moments.OrderBy(m => m))}");
+                    $"stale {st.Stale} (worst {st.MaxLag:0.00} s), unmatched {st.Unmatched}, torn {st.Torn}, no line {st.NoLine}, gate box one frame behind at the edge {st.GateEdge}; tick skew median {median:0.00}, worst {skew:0.00} ticks; moments {string.Join(",", st.Moments.OrderBy(m => m))}");
                 Say($"{st.Label} last recorder: {Line(st.LastReply, "elevnetrec: ")}");
                 Check(st.NoLine == 0, $"{label}: {g.Label}'s every reply carries the elevnet line ({st.NoLine} without)");
                 Check(st.FailCount == 0, $"{label}: {g.Label} shows what the host shows at the same tick ({st.FailCount} differences: {string.Join(" | ", st.Fails)})");
@@ -615,7 +631,7 @@ namespace SunkCost.Editor.Prototype
                 foreach (string m in required) Check(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 foreach (string m in wanted) Soft(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 Soft(st.MaxLag <= LagLimit, $"{label}: {g.Label} showed a phase the host had left for at most {LagLimit} s (worst {st.MaxLag:0.00} s over {st.Stale} replies)");
-                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00})");
+                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt})");
                 Soft(st.Unmatched <= Math.Max(2, st.Replies / 10), $"{label}: {g.Label}'s car replies found the host's frames at their tick ({st.Unmatched} of {st.Replies} did not)");
                 Soft(st.ScreenSoft == 0, $"{label}: {g.Label}'s deck screen read the host's words ({st.ScreenSoft} replies differed; a refusal shows by each peer's own clock)");
                 JudgeRecorder(label + ": " + g.Label, st.LastReply);
