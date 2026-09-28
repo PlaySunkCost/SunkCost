@@ -387,7 +387,15 @@ namespace SunkCost.Editor.Look
         // the headlamp's diffuse light on a pale pane (an edit-mode headlamp on/off probe:
         // the halo went only with a dark tint): real glass scatters almost nothing, so
         // the tint is dark. The environment reflection stays, so it still reads as glass.
-        public static readonly Color GlassTint = new(0.03f, 0.05f, 0.055f, 0.20f);
+        // Black, not near-black (DIVE-GLARE round 2): at the 0.03 tint the headlamp still
+        // drew a soft disc on a pane right in front of the eye (the light falls off with
+        // the square of the distance, so a pane 0.3 m away is lit a hundred times harder
+        // than one 3 m away). An edit-mode probe, lamp on/off: the pane in front of the eye
+        // read 141 against 130 without the lamp at the 0.03 tint, and 130 either way at 0.
+        // The glass has no diffuse albedo at all now: it only dims what is behind it
+        // (alpha) and reflects the surroundings; no light, the headlamp or the Cabin Light,
+        // can paint a patch on it.
+        public static readonly Color GlassTint = new(0f, 0f, 0f, 0.20f);
         public static Material CarGlass()
         {
             Material m = LoadOrCreate(CarGlassPath, "Universal Render Pipeline/Lit");
@@ -424,7 +432,11 @@ namespace SunkCost.Editor.Look
             m.SetTexture("_BaseMap", baseMap);
             // Tamed (DIVE-GLARE): lit white by the Cabin Light 0.4 m under it and glowing at
             // twice the light's colour, the roof's light read as a blown-out white disc.
-            m.SetColor("_BaseColor", new Color(0.55f, 0.55f, 0.55f));
+            // No diffuse albedo (round 2): a lamp is not lit by the bulb in front of it, so
+            // the ring shows only its glow, in the Cabin Light's colour (the Ghost's green
+            // too) instead of white; an edit-mode probe from inside, looking up: pixels at
+            // 200 or more in the roof region 21.2 % at the 0.55 grey, 14.4 % at black.
+            m.SetColor("_BaseColor", Color.black);
             m.SetTexture("_EmissionMap", baseMap);
             m.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.85f) * CarRingLight.DefaultGlow);
             m.EnableKeyword("_EMISSION");
