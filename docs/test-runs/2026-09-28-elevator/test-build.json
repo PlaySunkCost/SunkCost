@@ -1,0 +1,9 @@
+{
+    "project": "sunkcost-hq",
+    "protocol": 3,
+    "revision": "f650ce7fdf507507b875c376be519fa3f7ed9276",
+    "builtUtc": "2026-09-28T20:06:38.3500542Z",
+    "unityVersion": "6000.6.0f1",
+    "packages": "fishnet=4.7.3;steamworks.net=2025.164.1;fishysteamworks=4.1.1",
+    "localOnly": false
+}

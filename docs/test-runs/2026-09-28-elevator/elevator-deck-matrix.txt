@@ -1,0 +1,385 @@
+Elevator deck matrix started 28/09/2026 23:59:45
+PASS editor is the host with a spawned player
+  · seal 1.5 s, car return grace 10 s, refusal shown 3 s
+
+== DK10 — docked at HQ: the car stands in the housing, doors and shutters open, the floor flush
+PASS DK10 the docked ship has its deck cabin, car and shutters
+PASS DK10 the car's doors stand open at their half-angle (23.578°)
+PASS DK10 the car and its model are shown at HQ
+PASS DK10 both shutters open (1.000/1.000)
+PASS DK10 the entrance is passable: shutter and doorway boxes off
+PASS DK10 a ray finds the car's floor at r 0.3 bearing 45
+PASS DK10 a ray finds the car's floor at r 0.3 bearing 135
+PASS DK10 a ray finds the car's floor at r 0.3 bearing 225
+PASS DK10 a ray finds the car's floor at r 0.3 bearing 315
+PASS DK10 a ray finds the car's floor at r 0.9 bearing 45
+PASS DK10 a ray finds the car's floor at r 0.9 bearing 135
+PASS DK10 a ray finds the car's floor at r 0.9 bearing 225
+PASS DK10 a ray finds the car's floor at r 0.9 bearing 315
+PASS DK10 a ray finds the car's floor at r 1.5 bearing 45
+PASS DK10 a ray finds the car's floor at r 1.5 bearing 135
+PASS DK10 a ray finds the car's floor at r 1.5 bearing 225
+PASS DK10 a ray finds the car's floor at r 1.5 bearing 315
+PASS DK10 a ray finds the car's floor at r 2.1 bearing 45
+PASS DK10 a ray finds the car's floor at r 2.1 bearing 135
+PASS DK10 a ray finds the car's floor at r 2.1 bearing 225
+PASS DK10 a ray finds the car's floor at r 2.1 bearing 315
+PASS DK10 the car's floor is flush with the deck at 16 points (worst ship y 0.000 at r 0.9 b 45 on Cabin Floor)
+PASS DK10 the lane at x 0 from z 1.80 to 4.80 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK10 the lane at x 0 is at deck height all along (dips: none)
+PASS DK10 no step from the car's floor over the doorway and the grate to the deck (largest 1.0 cm at z 2.45 (Well Grate))
+  · capture Temp/elevator-deck/va-hq-deck-open.png (FOV 75, eye r 9.50)
+  · capture Temp/elevator-deck/va-hq-entrance-open.png (FOV 75, eye r 3.40)
+  · capture Temp/elevator-deck/va-hq-inside-to-doorway.png (FOV 75, eye r 1.20)
+PASS sailing to sea with the host in the deck cabin
+PASS arrived at sea
+PASS the ship at sea has its deck cabin
+PASS the car is up and its doors are open at sea
+
+== DK1 — the car stands flush in the well
+PASS DK1 the cabin root sits 0.10 m under the deck (ship y -0.100)
+PASS DK1 a ray finds the car's floor at r 0.3 bearing 45
+PASS DK1 a ray finds the car's floor at r 0.3 bearing 135
+PASS DK1 a ray finds the car's floor at r 0.3 bearing 225
+PASS DK1 a ray finds the car's floor at r 0.3 bearing 315
+PASS DK1 a ray finds the car's floor at r 0.9 bearing 45
+PASS DK1 a ray finds the car's floor at r 0.9 bearing 135
+PASS DK1 a ray finds the car's floor at r 0.9 bearing 225
+PASS DK1 a ray finds the car's floor at r 0.9 bearing 315
+PASS DK1 a ray finds the car's floor at r 1.5 bearing 45
+PASS DK1 a ray finds the car's floor at r 1.5 bearing 135
+PASS DK1 a ray finds the car's floor at r 1.5 bearing 225
+PASS DK1 a ray finds the car's floor at r 1.5 bearing 315
+PASS DK1 a ray finds the car's floor at r 2.1 bearing 45
+PASS DK1 a ray finds the car's floor at r 2.1 bearing 135
+PASS DK1 a ray finds the car's floor at r 2.1 bearing 225
+PASS DK1 a ray finds the car's floor at r 2.1 bearing 315
+PASS DK1 the car's floor is flush with the deck at 16 points (worst ship y 0.000 at r 1.5 b 135 on Cabin Floor)
+PASS DK1 the lane at x 0 from z 1.80 to 4.80 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK1 the lane at x 0 is at deck height all along (dips: none)
+PASS DK1 no step from the car's floor over the doorway and the grate to the deck (largest 1.0 cm at z 3.85 (Mesh))
+PASS DK1 the pedestal's top is under the car's floor, no z-fight (ship y -0.030)
+  · capture Temp/elevator-deck/dk1-floor-flush.png (FOV 75, eye r 4.20)
+
+== DK3 — the housing's entrance lines up with the car's doorway
+PASS DK3 the housing has its own mesh collider
+PASS DK3 the housing is open somewhere in front of the doorway
+PASS DK3 the housing's opening is centred on the car's doorway (-22.25° .. 22.25°, centre 0.00°)
+PASS DK3 the housing's opening (44.5°, 2.33 m at r 3.075) is wider than the car's doorway (47.2°, 1.88 m at r 2.35)
+PASS DK3 a walker's capsule along the lane at x -0.7 reaches the car's doorway with nothing in the way (clear)
+PASS DK3 a walker's capsule along the lane at x 0 reaches the car's doorway with nothing in the way (clear)
+PASS DK3 a walker's capsule along the lane at x +0.7 reaches the car's doorway with nothing in the way (clear)
+PASS DK3 headroom under the housing's entrance: first solid at ship y Infinity (none)
+
+== DK5 — nobody can fall into the well from any side (car up)
+PASS DK5 (car up) bearing 0° on the lane: into the car or stopped outside the well (nothing)
+PASS DK5 (car up) bearing +10° on the lane: into the car or stopped outside the well (nothing)
+PASS DK5 (car up) bearing +20°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car up) bearing +30°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing +40°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +50°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car up) bearing +60°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing +70°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +80°: stopped outside the well by Mesh at r 4.58
+PASS DK5 (car up) bearing +90°: stopped outside the well by Mesh at r 4.96
+PASS DK5 (car up) bearing +100°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car up) bearing +110°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +120°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing +130°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +140°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +150°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing +160°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing +170°: stopped outside the well by Mesh at r 4.54
+PASS DK5 (car up) bearing +180°: stopped outside the well by Mesh at r 4.83
+PASS DK5 (car up) bearing -170°: stopped outside the well by Mesh at r 4.54
+PASS DK5 (car up) bearing -160°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -150°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing -140°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -130°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -120°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing -110°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -100°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car up) bearing -90°: stopped outside the well by Mesh at r 4.92
+PASS DK5 (car up) bearing -80°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car up) bearing -70°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -60°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing -50°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car up) bearing -40°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car up) bearing -30°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car up) bearing -20°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car up) bearing -10° on the lane: into the car or stopped outside the well (nothing)
+  · 33 bearings off the lane checked (car up)
+PASS DK5 (car up) sideways off the grate in the entrance (-X): the rail stops the capsule at |x| 1.05 (Grate Rail)
+PASS DK5 (car up) sideways off the grate in the entrance (+X): the rail stops the capsule at |x| 1.05 (Grate Rail)
+PASS DK5 (car up) the lane at x -0.8 from z 2.45 to 5.50 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK5 (car up) the lane at x -0.8 is at deck height all along (dips: none)
+PASS DK5 (car up) the lane at x +0.8 from z 2.45 to 5.50 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK5 (car up) the lane at x +0.8 is at deck height all along (dips: none)
+PASS DK5 (car up) from inside the car toward bearing 30°: stopped by Car Post 1 at r 2.10
+PASS DK5 (car up) from inside the car toward bearing 60°: stopped by Car Post 4 at r 2.21
+PASS DK5 (car up) from inside the car toward bearing 90°: stopped by Wall Segment 13 at r 2.27
+PASS DK5 (car up) from inside the car toward bearing 120°: stopped by Wall Segment 15 at r 2.28
+PASS DK5 (car up) from inside the car toward bearing 150°: stopped by Car Post 6 at r 2.04
+PASS DK5 (car up) from inside the car toward bearing 180°: stopped by Wall Segment 19 at r 2.27
+PASS DK5 (car up) from inside the car toward bearing 210°: stopped by Car Post 7 at r 2.05
+PASS DK5 (car up) from inside the car toward bearing 240°: stopped by Wall Segment 23 at r 2.27
+PASS DK5 (car up) from inside the car toward bearing 270°: stopped by Wall Segment 1 at r 2.28
+PASS DK5 (car up) from inside the car toward bearing 300°: stopped by Car Post 3 at r 2.21
+PASS DK5 (car up) from inside the car toward bearing 330°: stopped by Car Post 2 at r 2.10
+PASS DK5 walking at the well from bearing 30° for 3 s: never over the well off the lane (closest r 4.35, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 60° for 3 s: never over the well off the lane (closest r 4.34, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 90° for 3 s: never over the well off the lane (closest r 4.19, the well's edge 3.7), lowest ship y 0.03
+PASS DK5 walking at the well from bearing 135° for 3 s: never over the well off the lane (closest r 4.39, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 180° for 3 s: never over the well off the lane (closest r 4.82, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 225° for 3 s: never over the well off the lane (closest r 4.39, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 270° for 3 s: never over the well off the lane (closest r 5.05, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking at the well from bearing 315° for 3 s: never over the well off the lane (closest r 4.34, the well's edge 3.7), lowest ship y 0.05
+PASS DK5 walking along the lane's edge at x -1.0: never lower than ship y 0.05, never off the grate over the well (|x| 0.75)
+PASS DK5 walking along the lane's edge at x +1.0: never lower than ship y 0.05, never off the grate over the well (|x| 0.75)
+
+== DK2 — walk in and out of the car on the ship with no step
+PASS DK2 walked in from the deck to the car's centre (297 frames, r now 0.39)
+PASS DK2 in from the deck to the car's centre: on the ground the whole way (0 airborne frames)
+PASS DK2 in from the deck to the car's centre: no step (largest height change in a frame 0.0 cm at )
+PASS DK2 in from the deck to the car's centre: never held up (0 half-seconds under 0.2 m)
+PASS DK2 in the deck cabin at the centre
+PASS DK2 walked out from the car's centre to the deck (306 frames, r now 5.81)
+PASS DK2 out from the car's centre to the deck: on the ground the whole way (0 airborne frames)
+PASS DK2 out from the car's centre to the deck: no step (largest height change in a frame 0.0 cm at )
+PASS DK2 out from the car's centre to the deck: never held up (0 half-seconds under 0.2 m)
+PASS DK2 out of the deck cabin on the deck
+
+== DK9 — the camera does not cut the glass from inside the car on the ship
+PASS DK9 the player has its camera clearance
+PASS DK9 pressed into the wall toward bearing 30° (pitch 0): the near plane stays 40.6 cm inside the glass (eye r 1.953 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 30° (pitch -30): the near plane stays 40.8 cm inside the glass (eye r 1.951 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 60° (pitch 0): the near plane stays 42.4 cm inside the glass (eye r 1.935 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 60° (pitch -30): the near plane stays 42.4 cm inside the glass (eye r 1.935 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 90° (pitch 0): the near plane stays 41.3 cm inside the glass (eye r 1.946 + envelope 0.115), clear=True
+  · capture Temp/elevator-deck/dk9-glass-press-90.png
+PASS DK9 pressed into the wall toward bearing 90° (pitch -30): the near plane stays 40.9 cm inside the glass (eye r 1.950 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 120° (pitch 0): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 120° (pitch -30): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 150° (pitch 0): the near plane stays 64.6 cm inside the glass (eye r 1.713 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 150° (pitch -30): the near plane stays 64.6 cm inside the glass (eye r 1.713 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 180° (pitch 0): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+  · capture Temp/elevator-deck/dk9-glass-press-180.png
+PASS DK9 pressed into the wall toward bearing 180° (pitch -30): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 210° (pitch 0): the near plane stays 40.4 cm inside the glass (eye r 1.955 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 210° (pitch -30): the near plane stays 40.4 cm inside the glass (eye r 1.955 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 240° (pitch 0): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 240° (pitch -30): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 270° (pitch 0): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 270° (pitch -30): the near plane stays 41.4 cm inside the glass (eye r 1.945 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 300° (pitch 0): the near plane stays 48.3 cm inside the glass (eye r 1.876 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 300° (pitch -30): the near plane stays 48.0 cm inside the glass (eye r 1.879 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 330° (pitch 0): the near plane stays 40.9 cm inside the glass (eye r 1.950 + envelope 0.115), clear=True
+PASS DK9 pressed into the wall toward bearing 330° (pitch -30): the near plane stays 40.7 cm inside the glass (eye r 1.952 + envelope 0.115), clear=True
+  · DK9 the smallest gap to the glass: 40.4 cm (bearing 210 pitch -30)
+PASS DK9 pressed into Car Post 1: the camera stays clear (eye r 1.76, obstructed=False)
+
+== VA — captures: the deck cabin from the deck (open) and inside the car on the ship
+  · capture Temp/elevator-deck/va-deck-open.png (FOV 75, eye r 9.50)
+  · capture Temp/elevator-deck/va-deck-open-3q.png (FOV 75, eye r 8.00)
+  · capture Temp/elevator-deck/va-deck-entrance-open.png (FOV 75, eye r 3.40)
+  · capture Temp/elevator-deck/va-inside-to-doorway.png (FOV 75, eye r 1.20)
+  · capture Temp/elevator-deck/va-inside-to-panel.png (FOV 75, eye r 0.20)
+  · capture Temp/elevator-deck/va-inside-back.png (FOV 75, eye r 0.80)
+
+== RT-LG — DECK-LEAF-GLASS retest: the parked door leaves read as glass (captures), the shutters' backs are lined
+PASS RT-LG DeckCabinHousingDoorL has its lining shown (KitSteel)
+PASS RT-LG DeckCabinHousingDoorR has its lining shown (KitSteel)
+  · capture Temp/elevator-deck/rt-leaf-inside-to-doorway.png (FOV 75, eye r 1.20)
+  · capture Temp/elevator-deck/rt-leaf-left.png (FOV 75, eye r 1.00)
+  · capture Temp/elevator-deck/rt-leaf-right.png (FOV 75, eye r 1.00)
+  · capture Temp/elevator-deck/rt-leaf-beside.png (FOV 75, eye r 1.90)
+  · host  before G0: elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=18165; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+
+== G0 — a guest joins at sea between days
+PASS G0 the guest's player spawned
+PASS G0 the guest is at sea and sees the car up
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=21; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+PASS G0/DK4 the guest shows the car up: the car, the shutters open, the entrance passable
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=98; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+
+== DK6 — the panel writes who is missing
+PASS DK6 the deck button refuses without the guest: 'Waiting for: Mate bof the'
+PASS DK6/DK7 no ride started with the guest on the deck
+PASS DK6 the status plate names the guest: 'Waiting for: Mate bof the'
+PASS DK6 the car's panel on the deck has its screen (CabinPanelDisplay)
+PASS DK6 the panel's screen names the guest: 'DESCEND | Waiting for: Mate bof the'
+PASS DK6 the deck panel's gauge reads empty (0.000)
+PASS DK6 the guest's plate and panel screen name the guest too
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Waiting for: Mate bof the'; deckScreen='DESCEND | Waiting for: Mate bof the'; deckGauge=0.000; deckFrames=262; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+
+== RT-PT — DECK-PANEL-TEXT retest: the panel's screen is readable and on the screen
+PASS RT-PT the screen names the missing guest: 'DESCEND | Waiting for: Mate bof the'
+PASS RT-PT (waiting) the panel has its Screen Anchor and a shown Screen Text
+PASS RT-PT (waiting) the drawn words are the screen's words: 'DESCEND | Waiting for: | Mate bof the'
+PASS RT-PT (waiting) every drawn line is 16 characters or fewer (longest 12, 3 lines)
+PASS RT-PT (waiting) the text stays on the screen: x -0.141 .. +0.141, y -0.082 .. +0.082 (screen ±0.21 x ±0.12 m)
+PASS RT-PT (waiting) each line is at least 3 cm tall (5.5 cm per line, characterSize 0.0075)
+  · capture Temp/elevator-deck/rt-panel-waiting.png (FOV 75, eye r 1.24)
+  · capture Temp/elevator-deck/rt-panel-waiting-far.png (FOV 75, eye r 0.20)
+
+== RT-N1 — DECK-N1-CANCEL retest: a cancelled ride leaves the leavers in the entrance where they stand
+PASS RT-N1 both stand in the deck cabin
+PASS RT-PT the screen stops naming the guest once all are in: 'DESCEND | Day 1 of 3 — all in, press E to descend'
+PASS RT-PT (all in) the panel has its Screen Anchor and a shown Screen Text
+PASS RT-PT (all in) the drawn words are the screen's words: 'DESCEND | Day 1 of 3 | all in, press E | to descend'
+PASS RT-PT (all in) every drawn line is 16 characters or fewer (longest 15, 4 lines)
+PASS RT-PT (all in) the text stays on the screen: x -0.142 .. +0.142, y -0.100 .. +0.100 (screen ±0.21 x ±0.12 m)
+PASS RT-PT (all in) each line is at least 3 cm tall (5.0 cm per line, characterSize 0.0068)
+  · capture Temp/elevator-deck/rt-panel-all-in.png (FOV 75, eye r 1.24)
+  · capture Temp/elevator-deck/rt-panel-all-in-far.png (FOV 75, eye r 0.20)
+PASS RT-N1 the press starts the seal with both in (refusal 'Waiting for: Mate bof the')
+PASS RT-N1 the guest's copy stepped out to r 3.00
+PASS RT-N1 both stand in the entrance band (host r 3.00, guest r 3.00)
+PASS RT-N1 nobody aboard when the doors shut: the ride is cancelled (stage Cancelled)
+PASS RT-N1 the refusal: Nobody aboard
+  · RT-CS samples: 284 frames after the cancel, fraction at the cancel doors 0.005 shutters 0.005, seal 1.50 s, largest frame 10 ms, worst step doors 0.308->0.315 in 10 ms, open after 1.47 s
+PASS RT-CS the doors and shutters were shut when the ride was cancelled (doors 0.005, shutters 0.005)
+PASS RT-CS the doors and shutters open again after the cancel (doors 0.991, shutters 0.991)
+PASS RT-CS DECK-CANCEL-SNAP: no one-frame jump on the reopening (largest step doors 0.007, shutters 0.014, allowed 0.040; doors 0.308->0.315 in 10 ms)
+PASS RT-CS the reopening takes about the door time (1.47 s, seal 1.50 s)
+PASS RT-N1 no entrance put-out was logged (none)
+PASS RT-N1 the host was left where it stood (moved 0.00 m, now r 3.00, ship y 0.05)
+PASS RT-N1 the guest's copy was left where it stood (moved 0.00 m, now r 3.00)
+PASS RT-N1 the guest's own view: still in the entrance where it stood
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=1413; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=4; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+PASS RT-N1 the doors and shutters open again, the entrance passable (doors 1.00, shutters 1.00/1.00)
+PASS RT-N1 the car stayed up (AtTop), shown, nobody riding
+PASS RT-N1 the guest sees the car up and the shutters open
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=1463; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=4; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+  · host  after RT-N1: elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 1 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 1 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=21539; deckWorstShutter=0.010; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=1; deckFirstBad=''; deckWorstAt='frame 20821: shown=0.001 want=0.011 present=True ride=Cancelled/Down/False opening=False car=AtTop/False t=111.84'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+
+== DK7 — the deck button starts the dive only with everyone in; DK8 — the swap is seamless
+PASS DK7 the guest's copy stands in the deck cabin on the host
+PASS DK8 (before the ride) the deck cabin has the car's model, panel and button
+  · DK8 deck car look: 1 meshes; the panel at (-2.294, 1.113, 0.615)
+PASS DK7 the host's press starts the ride with everyone in (refusal: 'Nobody aboard')
+PASS DK8 the host crossed into the dive car
+  · DK8 the swap read at ride Loading, car AtTop
+PASS DK8 the rider stands at the same spot in the car ((0.000, 0.150, 0.000)) as in the deck cabin ((0.000, 0.150, 0.000))
+PASS DK8 facing the same way (0.0° vs 0.0°)
+PASS DK8 (at the swap) the deck cabin has the car's model, panel and button
+PASS DK8 the dive car has the car's model, panel and button
+PASS DK8 the car's model in the same place in both cabins (deck (0.000, 0.000, 0.000) yaw 0.0, car (0.000, 0.000, 0.000) yaw 0.0)
+PASS DK8 the panel in the same place in both cabins (deck (-2.294, 1.113, 0.615) yaw 105.0, car (-2.294, 1.113, 0.615) yaw 105.0)
+PASS DK8 the panel's button in the same place in both cabins (deck (-2.122, 1.300, 0.569) yaw 105.0, car (-2.122, 1.300, 0.569) yaw 105.0)
+PASS DK8 the same model meshes on the deck and in the dive (ElevatorCar)
+PASS DK8 the floor top at the same height in both cabin frames
+PASS DK7 both rode down
+PASS DK7 both are listed below
+PASS DK4 below, the guest holds the dive world only (its ship is not loaded; its shutter rows follow on deck)
+    guest elevatorDeck: none
+PASS DK4 the host's ship shows the same: no car, shutters shut, the entrance boxed
+
+== DK5 — nobody can fall into the well from any side (car below)
+PASS DK5 (car below) bearing 0° on the lane: the shut entrance stops it (DeckCabinShutterCollider at r 3.13)
+PASS DK5 (car below) bearing +10° on the lane: the shut entrance stops it (DeckCabinShutterCollider at r 3.18)
+PASS DK5 (car below) bearing +20°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car below) bearing +30°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing +40°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +50°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car below) bearing +60°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing +70°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +80°: stopped outside the well by Mesh at r 4.58
+PASS DK5 (car below) bearing +90°: stopped outside the well by Mesh at r 4.96
+PASS DK5 (car below) bearing +100°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car below) bearing +110°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +120°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing +130°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +140°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +150°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing +160°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing +170°: stopped outside the well by Mesh at r 4.54
+PASS DK5 (car below) bearing +180°: stopped outside the well by Mesh at r 4.83
+PASS DK5 (car below) bearing -170°: stopped outside the well by Mesh at r 4.54
+PASS DK5 (car below) bearing -160°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -150°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing -140°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -130°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -120°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing -110°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -100°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car below) bearing -90°: stopped outside the well by Mesh at r 4.92
+PASS DK5 (car below) bearing -80°: stopped outside the well by Mesh at r 4.56
+PASS DK5 (car below) bearing -70°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -60°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing -50°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car below) bearing -40°: stopped outside the well by Well Rail Piece at r 4.02
+PASS DK5 (car below) bearing -30°: stopped outside the well by Well Rail Piece at r 4.06
+PASS DK5 (car below) bearing -20°: stopped outside the well by Well Rail Piece at r 4.03
+PASS DK5 (car below) bearing -10° on the lane: the shut entrance stops it (DeckCabinShutterCollider at r 3.18)
+  · 33 bearings off the lane checked (car below)
+PASS DK5 (car below) sideways off the grate in the entrance (-X): the rail stops the capsule at |x| 1.05 (Grate Rail)
+PASS DK5 (car below) sideways off the grate in the entrance (+X): the rail stops the capsule at |x| 1.05 (Grate Rail)
+PASS DK5 (car below) the lane at x -0.8 from z 2.45 to 5.50 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK5 (car below) the lane at x -0.8 is at deck height all along (dips: none)
+PASS DK5 (car below) the lane at x +0.8 from z 2.45 to 5.50 has no hole a body could drop into (widest dip 0.00 m)
+PASS DK5 (car below) the lane at x +0.8 is at deck height all along (dips: none)
+
+== DK4/DK5 — the guest comes up alone; the empty car goes back down for the host; the guest waits in the entrance
+PASS the guest is unlocked at the bottom
+    guest elevatorDeck: none
+PASS the guest's press starts its ride up (refusal: 'Nobody aboard')
+PASS DK4 the guest's ride up arrived
+PASS DK4 the guest's ride up: the shutters stayed shut until the car was back
+PASS DK4 the guest's ride up: the shutters only opened, never closed again (worst step back 0.0000)
+PASS DK4 the guest's ride up: fully open 1.50 s after the arrival began (the seal time is 1.50 s)
+PASS the guest is up, the host still below
+PASS the guest is unlocked on the deck after its ride
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Step out — the car is needed below'; deckScreen='DESCEND | Step out — the car is needed below'; deckGauge=0.000; deckFrames=2419; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=430; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+PASS DK5/N1 the guest's copy stands in the entrance (r 2.80), not in the car
+PASS DK5/N1 the empty car went back down for the host after 10.5 s
+PASS DK5/N1 the guest was never inside the shut shutters (never)
+PASS DK5/N1 the guest was put out on the deck (its copy at r 7.83)
+PASS DK5/N1 the guest's own view: outside the shutters, which are shut and boxed, the car gone
+    guest elevatorDeck: deckPresent=False; deckCarShown=False; deckDoors=0.000; doorsShown=0.000; shutters=0.000; shutterBox=True; doorBox=True; deckPanel='Dive in progress — 1 below: Skipper'; deckScreen='DESCEND | Dive in progress — 1 below: Skipper'; deckGauge=0.000; deckFrames=3808; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=481; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+  · guest at r 7.83
+PASS DK5 the guest's walk down the lane into the shut shutters ended
+    guest elevatorDeck: deckPresent=False; deckCarShown=False; deckDoors=0.000; doorsShown=0.000; shutters=0.000; shutterBox=True; doorBox=True; deckPanel='Dive in progress — 1 below: Skipper'; deckScreen='DESCEND | Dive in progress — 1 below: Skipper'; deckGauge=0.000; deckFrames=4329; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=1002; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=True; walked=2.05; walkFrames=299; walkGrounded=298; walkMaxDrop=0.017; walkMaxRise=0.005; walkEnd=(0.000, 0.040, 3003.455)
+PASS DK5 the shut shutters stop the guest at r 3.46 (walked 2.05 m)
+PASS DK5 the guest stays on the deck (drop 0.017, ship y 0.04)
+  · captures C:/Dev/SunkCost/Temp/elevator-deck/va-guest-deck-shut.png, va-deck-shut.png, va-deck-shut-3q.png, va-deck-entrance-shut.png (free camera at FOV 75)
+
+== DK4 — the host rides up: the shutters open with the car's doors when it is back
+PASS the empty car is at the bottom for the host
+PASS the host's car press starts the ride up
+PASS DK4 the host's ride up arrived
+PASS DK4 the host's ride up: the shutters stayed shut until the car was back
+PASS DK4 the host's ride up: the shutters only opened, never closed again (worst step back 0.0000)
+PASS DK4 the host's ride up: fully open 1.49 s after the arrival began (the seal time is 1.50 s)
+PASS the host is back in the deck cabin, nobody below
+PASS DK4 the guest sees the car back, the shutters open, the entrance passable
+    guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Dive done — end the day at the monitor'; deckScreen='DESCEND | Dive done — end the day at the monitor'; deckGauge=0.000; deckFrames=8543; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=4992; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=True; walked=2.05; walkFrames=299; walkGrounded=298; walkMaxDrop=0.017; walkMaxRise=0.005; walkEnd=(0.000, 0.040, 3003.455)
+
+== DK7 — day 2: the guest's own press starts the dive with everyone in
+PASS day 2 after End day
+PASS the day card is over
+PASS DK7 the guest's press starts the ride with everyone in (refusal: 'Nobody aboard')
+PASS DK7 both rode down on day 2
+PASS the guest is unlocked at the bottom
+    guest elevatorDeck: none
+PASS both ride up
+PASS DK4 the ride up together arrived
+PASS DK4 the ride up together: the shutters stayed shut until the car was back
+PASS DK4 the ride up together: the shutters only opened, never closed again (worst step back 0.0000)
+PASS DK4 the ride up together: fully open 1.49 s after the arrival began (the seal time is 1.50 s)
+
+== DK4 — the shutters, the boxes and the car's presence on every frame of the day, on both peers
+  · host  elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Dive done — end the day at the monitor'; deckScreen='DESCEND | Dive done — end the day at the monitor'; deckGauge=0.000; deckFrames=47666; deckWorstShutter=0.010; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=21590; deckFirstBad=''; deckWorstAt='frame 20821: shown=0.001 want=0.011 present=True ride=Cancelled/Down/False opening=False car=AtTop/False t=111.84'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+  · guest elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Dive done — end the day at the monitor'; deckScreen='DESCEND | Dive done — end the day at the monitor'; deckGauge=0.000; deckFrames=9850; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=5407; deckFirstBad=''; deckWorstAt='frame 782: shown=0.834 want=0.834 present=True ride=Sealing/Down/True opening=False car=AtTop/False t=11.38'; walkDone=True; walked=2.05; walkFrames=299; walkGrounded=298; walkMaxDrop=0.017; walkMaxRise=0.005; walkEnd=(0.000, 0.040, 3003.455)
+PASS DK4 host: recorded 47666 frames, 21590 with the shutters shut
+PASS DK4 host: the shutters followed the replicated state on every frame (worst 0.010 of their sweep)
+PASS DK4 host: the shutter box was on exactly while the shutters were shut (0 bad frames; )
+PASS DK4 host: the doorway box was on exactly while the doors were shut (0 bad frames)
+PASS DK4 host: the car showed exactly while the replicated state has it up (0 frames off by 3 frames or more; )
+PASS DK4 guest: recorded 9850 frames, 5407 with the shutters shut
+PASS DK4 guest: the shutters followed the replicated state on every frame (worst 0.000 of their sweep)
+PASS DK4 guest: the shutter box was on exactly while the shutters were shut (0 bad frames; )
+PASS DK4 guest: the doorway box was on exactly while the doors were shut (0 bad frames)
+PASS DK4 guest: the car showed exactly while the replicated state has it up (0 frames off by 3 frames or more; )
+PASS guest log: no 'expected to exist', 'already found' or null/missing reference (0)
+MATRIX_PASS

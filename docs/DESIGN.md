@@ -208,7 +208,8 @@ stays below, the car goes back down for them, empty; the monitor will not sail
 while anyone is below.
 
 **The round elevator (28 September 2026, `dan/elevator-look`; the water rule
-decided with Dan that day, the look proposed until he reviews it).** Dan's eight
+decided with Dan that day, the look proposed until he reviews it; built, and
+through the final regression on 29 September 2026: docs/test-runs/2026-09-28-elevator).** Dan's eight
 models replace the elevator's look everywhere: a round glass car inside a round
 glass shaft, the tube stacked from a foot on the seafloor to a collar under the
 platform, and on the ship a round housing round the car in the deck's well, its
@@ -220,7 +221,14 @@ the top. The water inside always stands where the sea outside stands while the
 car crosses the surface, so the water you see is the water your eyes and your
 air obey; the panel's gauge follows the level and its screen says FLOODING or
 DRAINING, the depth and the water %. Every player, spectator and the TV see the
-same water, derived from the car's replicated ride. The housing's two shutters
+same water, derived from the car's replicated ride. **Decided with Dan (28
+September 2026): the fill keeps its few seconds, so the six roof nozzles are
+powerful jets**, not trickles: thick aerated jets from the nozzle mouths, mist
+at the mouths and where they land, white churning foam on the rising surface.
+Bubbles rise only where air enters the water (under the pouring jets, a short
+fizz after the car is full, a few at the grilles while it drains) and never in
+a still, full car. The model's nozzle mouths point down, so the jets fall
+straight from them rather than arcing out. The housing's two shutters
 close its entrance while the car is away below. Proposed with them (teammate
 review pending): nobody is closed in between the car's doors and the shutters
 (someone standing there when the empty car leaves, or after the ride down's

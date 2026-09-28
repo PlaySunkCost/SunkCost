@@ -114,6 +114,20 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   peer took `dash` (aim = the flat direction; the reply says `dash=True/False; refusal='…'`), its player
   line `dashes=`, `dashReady=`, `dashSerial=`, `dashRings=`; rows spawn items with
   `MonsterTestHooks.ServerSpawnItem(prefabName, at)`;
+  `elevator-deck` = the round deck cabin on the ship (28 September 2026), `ElevatorDeckRuntimeChecks`, log
+  `Temp/elevator-deck-matrix.log`, captures `Temp/elevator-deck/`, host and one windowed guest in `Temp/elevator-deck-guest`:
+  the car flush in the well, walking in and out with no step, the housing's entrance, the shutters against the car on
+  every frame and peer, nobody into the well or shut in the entrance, the panel naming who is missing, the button only
+  with everyone in, the swap to the dive car, the camera against the glass, the docked ship at HQ — about 4 minutes;
+  `elevator-dive` = the round car in the dive, `ElevatorDiveRuntimeChecks`, log `Temp/elevator-dive-matrix.log`, captures
+  `Logs/elevator-dive/`, the host alone then one guest in `Temp/elevator-dive-guest`: timing, doors and gate, the flood
+  and drain, the gauge, the underwater view against the visible surface, the jets, bubbles and glare (W rows), the ramp,
+  the camera against every mesh, a rider left below, the Ghost's green car, a dead rider — about 5 minutes
+  (`elevator-dive-prefix` logs the W rows as XFAIL);
+  `elevator-net` = the elevator over the network, `ElevatorNetRuntimeChecks`, log `Temp/elevator-net-matrix.log`, guests
+  A and B windowed, C / B2 / C2 headless in `Temp/elevator-net-guest-*`: every peer, a spectator and the TV show the same
+  car, doors, gate, shutters and water at the same tick with 2 to 4 players, a join refused during a dive, a killed
+  guest and a clean leave mid-ride; the tick-skew rows are soft — about 5 minutes;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator
