@@ -158,6 +158,15 @@ reviews the look).** Dan's models dress the tube; the car's stops, the timing
   r 3.95. "Tube Foot Colliders" also holds guard boxes measured from the foot's
   own mesh (per 10° outside the doorway, per height tier) so walkers and their
   camera stay out of its metal.
+- **The doorway's threshold** (`ShaftTubeThreshold`, 28 September 2026, bug
+  DIVE-GATE-VIEW: from inside the car at the bottom the open gate showed a flat
+  dark panel, because nothing lit the sand there and the seabed is one flat
+  colour): a wide cool work light ("Foot Threshold Light", spot, no shadows) on
+  the doorway's face 3.62 m up, aimed 60° down and out, with a small lamp
+  ("Threshold Lamp"); the ramp collider drawn as a kit-steel plate ("Foot Ramp
+  Plate"); and a rippled sand patch ("Seabed Apron", 16 m, 8 mm over the sand,
+  no collider) that fades exactly into the Seabed material by 7.5 m. Look only:
+  scene statics, the same for everyone, no collider or rule changes.
 - **Gate leaves**: the GateLeaf model's two curved glass leaves on the
   `ShaftGate` pivots, their bottom on the foot's floor; `ShaftGate` and the
   "Gate Collider" are unchanged.

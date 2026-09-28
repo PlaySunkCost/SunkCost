@@ -501,6 +501,24 @@ namespace SunkCost.Sites
             Transform colliders = tube.Find(ShaftTubeLook.FootCollidersName);
             if (colliders == null || colliders.Find(ShaftTubeLook.SillName) == null || colliders.Find(ShaftTubeLook.RampName) == null)
                 errors.Add("The foot's sill and ramp colliders are missing.");
+            // The view out through the open gate (DIVE-GATE-VIEW): the doorway's work light
+            // reaches the sand, and the sand apron draws without a collider of its own.
+            Transform threshold = tube.Find(ShaftTubeThreshold.LightName);
+            Light thresholdLight = threshold != null ? threshold.GetComponent<Light>() : null;
+            if (thresholdLight == null || thresholdLight.type != LightType.Spot || !thresholdLight.enabled || thresholdLight.shadows != LightShadows.None)
+                errors.Add("The foot's doorway needs its work light (" + ShaftTubeThreshold.LightName + ": an enabled spot light, no shadows).");
+            else if (thresholdLight.transform.position.y - bottomY > thresholdLight.range || Vector3.Dot(thresholdLight.transform.forward, Vector3.down) < 0.5f)
+                errors.Add(ShaftTubeThreshold.LightName + " must aim down at the sand within its range.");
+            Transform apron = tube.Find(ShaftTubeThreshold.ApronName);
+            if (apron == null || apron.GetComponent<Renderer>() == null) errors.Add("The sand apron in front of the foot (" + ShaftTubeThreshold.ApronName + ") is missing.");
+            else if (apron.GetComponentInChildren<Collider>(true) != null) errors.Add(ShaftTubeThreshold.ApronName + " must carry no collider (the seafloor is the ground).");
+            else if (apron.position.y < bottomY || apron.position.y > bottomY + 0.02f) errors.Add($"{ShaftTubeThreshold.ApronName} is at y={apron.position.y:0.000}; it must lie just over the sand at {bottomY:0.00}.");
+            foreach (string drawnOnly in new[] { ShaftTubeThreshold.LampName, ShaftTubeThreshold.RampPlateName })
+            {
+                Transform part = tube.Find(drawnOnly);
+                if (part == null) errors.Add(drawnOnly + " is missing.");
+                else if (part.GetComponentInChildren<Collider>(true) != null) errors.Add(drawnOnly + " must carry no collider (the foot's own colliders stay the only ones).");
+            }
             foreach (string leafName in new[] { "Gate Leaf Right", "Gate Leaf Left" })
             {
                 Transform leaf = FindByName(tube, leafName);

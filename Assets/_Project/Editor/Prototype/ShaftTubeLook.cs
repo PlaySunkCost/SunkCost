@@ -20,7 +20,8 @@ namespace SunkCost.Sites
     //     a whole number of sections stretched to fit, its pipe running up one post;
     //   - "Top Collar": over the car's top stop (its glass top at root + 3.50, the collar
     //     from root + 3.52), the tube's top 0.31 into it;
-    //   - the gate's glass leaves on the ShaftGate pivots, their threshold on the foot floor.
+    //   - the gate's glass leaves on the ShaftGate pivots, their threshold on the foot floor;
+    //   - the doorway's work light and the sand apron in front of the foot (ShaftTubeThreshold).
     public static class ShaftTubeLook
     {
         public const string FootName = "Tube Foot";
@@ -64,6 +65,9 @@ namespace SunkCost.Sites
             GameObject foot = Require(ElevatorLook.PlacePart("TubeFoot", shaftTube, FootName, new Vector3(axis.x, footFloorY, axis.z), yaw), "TubeFoot");
             SetLayerRecursively(foot, deepLayer);
             BuildFootColliders(shaftTube, foot, axis, footFloorY, doorwayBearingDeg, doorwayHalfAngleDeg, deepLayer);
+            // The view out through the open gate: a work light over the doorway and a sand
+            // apron in front of the foot (DIVE-GATE-VIEW; ShaftTubeThreshold).
+            ShaftTubeThreshold.Build(shaftTube, axis, footFloorY, bottomStopY, doorwayBearingDeg, deepLayer);
 
             // The sections: the column from the foot's top to the tube's top.
             ElevatorLook.RemoveChildren(shaftTube, SectionsName);
