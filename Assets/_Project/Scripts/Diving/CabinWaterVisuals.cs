@@ -61,9 +61,9 @@ namespace SunkCost.Diving
         [SerializeField] private float jetSpeed = 6.5f;           // m/s out of the mouth
         [SerializeField] private float mouthRadius = 0.048f;      // the pipe's bore (outer r 0.06, measured)
         [SerializeField] private float jetEndRadius = 0.105f;     // where it lands: a thick, breaking jet
-        [SerializeField] private float sheathScale = 1.9f;        // the spray sheath at the landing, x the core
+        [SerializeField] private float sheathScale = 2.4f;        // the spray sheath at the landing, x the core
         [SerializeField] private float jetStartInside = 0.03f;    // the jet starts this far up the pipe (no gap)
-        [SerializeField] private float jetWobble = 0.035f;        // sway of the lower jet, m
+        [SerializeField] private float jetWobble = 0.06f;         // sway of the lower jet, m
         [SerializeField] private float jetTextureRate = 8f;       // texture lengths leaving the nozzle per second
         [SerializeField] private float jetRampSeconds = 0.15f;    // the pour's start and a jet's front
 
@@ -88,9 +88,9 @@ namespace SunkCost.Diving
         [SerializeField] private float bubbleMinSize = 0.012f, bubbleMaxSize = 0.055f;
 
         [Header("Spray")]
-        [SerializeField] private int mouthMistPerJet = 4;
-        [SerializeField] private int dropletsPerJet = 14;
-        [SerializeField] private int impactMistPerJet = 6;
+        [SerializeField] private int mouthMistPerJet = 24;
+        [SerializeField] private int dropletsPerJet = 48;
+        [SerializeField] private int impactMistPerJet = 28;
 
         [Header("Drain")]
         [SerializeField] private float swirlSize = 4.5f;
@@ -325,7 +325,7 @@ namespace SunkCost.Diving
                 float sheath = core * Mathf.Lerp(1.05f, sheathScale, flight);
                 float v = baseV - tau * vRate;
                 byte coreAlpha = (byte)(Mathf.Lerp(235f, 195f, flight) * ramp * (leading ? 0.5f : 1f));
-                byte sheathAlpha = (byte)(Mathf.Lerp(0f, 120f, flight) * ramp * (leading ? 0.4f : 1f));
+                byte sheathAlpha = (byte)(Mathf.Lerp(0f, 85f, flight) * ramp * (leading ? 0.4f : 1f));
 
                 for (int s = 0; s <= JetSides; s++)
                 {
@@ -395,14 +395,14 @@ namespace SunkCost.Diving
                     float mound = Mathf.Exp(-d2 * 6f);
                     height += churnMound * pour * mound * (0.7f + 0.3f * Mathf.Sin(t * 17f + i * 2.1f));
                     height += churnRipple * pour * Mathf.Exp(-d * 1.2f) * Mathf.Sin(d * 9f - t * 11f + i * 1.3f);
-                    foam += pour * (mound * 1.1f + Mathf.Exp(-d2 * 1.6f) * 0.35f);
+                    foam += pour * (mound * 1.6f + Mathf.Exp(-d2 * 1.6f) * 0.35f);
                 }
                 foam *= 0.72f + 0.28f * Mathf.Sin(x * 7.1f + t * 1.3f) * Mathf.Sin(z * 6.3f - t * 1.1f);
                 float r = Mathf.Sqrt(x * x + z * z) / churnRadius;
                 float edge = Mathf.Clamp01((1f - r) * 12f);
                 churnVerts[v] = new Vector3(x, height, z);
-                churnColors[v] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(foam) * Mathf.Clamp01(strength * 1.4f) * edge * 255f));
-                churnUvs[v] = new Vector2(x * 0.45f + t * 0.05f + 0.03f * Mathf.Sin(t * 0.7f + z), z * 0.45f - t * 0.035f);
+                churnColors[v] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(foam * 1.3f) * Mathf.Clamp01(strength * 1.4f) * edge * 255f));
+                churnUvs[v] = new Vector2(x * 0.8f + t * 0.05f + 0.03f * Mathf.Sin(t * 0.7f + z), z * 0.8f - t * 0.035f);
             }
             churnMesh.SetVertices(churnVerts, 0, churnVerts.Length, MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices);
             churnMesh.SetUVs(0, churnUvs, 0, churnUvs.Length, MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices);
@@ -568,12 +568,12 @@ namespace SunkCost.Diving
                 for (int k = 0; k < mouthMistPerJet && n < max; k++)
                 {
                     SprayCycle(i, k, 0, Mathf.Lerp(0.35f, 0.55f, Unit(Hash((uint)(i * 53 + k * 7 + 11)), 0)), t, out float age, out float u, out uint seed);
-                    Vector3 p = JetPoint(i, tip, dir, age * 0.5f, t);
+                    Vector3 p = JetPoint(i, tip, dir, age * 0.25f, t);
                     float a = Unit(seed, 0) * Mathf.PI * 2f;
-                    float spread = 0.03f + 0.25f * u;
+                    float spread = 0.03f + 0.14f * u;
                     p += new Vector3(Mathf.Cos(a) * spread, 0f, Mathf.Sin(a) * spread);
                     if (p.y <= level) continue;
-                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.06f, 0.22f, u), 0.35f * (1f - u) * pour);
+                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.08f, 0.24f, u), 0.5f * (1f - u) * pour);
                 }
                 if (!landed[i]) continue;
                 Vector3 hit = impacts[i];
@@ -587,15 +587,15 @@ namespace SunkCost.Diving
                     float outward = Mathf.Lerp(0.5f, 2.0f, Unit(seed, 1));
                     Vector3 p = new(hit.x + Mathf.Cos(a) * outward * age, hit.y + up * age - 0.5f * Gravity * age * age, hit.z + Mathf.Sin(a) * outward * age);
                     if (p.y <= level || p.x * p.x + p.z * p.z > 2.3f * 2.3f) continue;
-                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.015f, 0.04f, Unit(seed, 3)), 0.8f * pour);
+                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.02f, 0.06f, Unit(seed, 3)), 0.8f * pour);
                 }
                 for (int k = 0; k < impactMistPerJet && n < max; k++)
                 {
                     SprayCycle(i, k, 2, Mathf.Lerp(0.5f, 0.9f, Unit(Hash((uint)(i * 613 + k * 29 + 3)), 0)), t, out float age, out float u, out uint seed);
                     float a = Unit(seed, 0) * Mathf.PI * 2f;
                     float spread = 0.1f + 0.4f * u;
-                    Vector3 p = new(hit.x + Mathf.Cos(a) * spread, hit.y + 0.05f + 0.35f * u, hit.z + Mathf.Sin(a) * spread);
-                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.2f, 0.7f, u), 0.3f * (1f - u) * pour);
+                    Vector3 p = new(hit.x + Mathf.Cos(a) * spread, hit.y + 0.05f + 0.6f * u, hit.z + Mathf.Sin(a) * spread);
+                    SetParticle(sprayBuffer, n++, p, Mathf.Lerp(0.35f, 1.1f, u), 0.5f * (1f - u) * pour);
                 }
             }
             if (n > 0 || sprayDrawn > 0) sprayParticles.SetParticles(sprayBuffer, n);

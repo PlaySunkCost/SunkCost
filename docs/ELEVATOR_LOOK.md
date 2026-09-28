@@ -125,6 +125,13 @@ Heights above the car root: model bottom -0.255, floor top 0.10, leaves 0.10-3.4
   has smoothness 0.6 and the water surface 0.65; both glared white under the Cabin Light when they
   were smoother. `CabinWaterArt` rewrites the materials' settings on every build and rebuilds the ring
   mesh when its radii change.
+- **Polish pass (28 September 2026)**: the car's light (the dive car's "Cabin Light" and the deck
+  car's "Tube Light") hangs 0.9 m under the roof (car-local y 2.60 / cabin-local 2.62; it was 0.4 m),
+  so the model's baked white roof dome reads as a lens and not a torn white disc. The water surface
+  has a near-black albedo (0.04, 0.10, 0.12) with a cyan emission, so a headlamp paints no oval on it.
+  The foam is filled, broken clumps (no ring outlines), the jets are aerated white ropes, the spray
+  counts are 24/48/28 per jet (mouth mist, droplets, impact mist). The foam, mist and jet PNGs are
+  redrawn in place by `Sunk Cost > Prototype > Redraw cabin water foam, mist and jet`.
 
 ## 4. The deck cabin's entrance
 

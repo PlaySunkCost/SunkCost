@@ -53,6 +53,11 @@ namespace SunkCost.Editor.Prototype
         // at the bottom of a dark shaft (Dan, 15 September 2026: "make the elevator
         // look the same on the bottom"). Added to the prefab in place if missing.
         public const string CarLightName = "Cabin Light";
+        // 0.9 m under the roof (was 0.4 m, the polish pass of 28 September 2026): 0.4 m
+        // under it the light burned the car model's baked white roof dome to a torn white
+        // disc; at 0.9 m the dome takes about a fifth of that light and reads as a lens.
+        // ShipStubBuilder.CarLightY puts the deck car's Tube Light at the same height.
+        public const float CarLightBelowRoofMeters = 0.9f;
         private static IEnumerable<string> PatchCarLight()
         {
             var changes = new List<string>();
@@ -76,7 +81,7 @@ namespace SunkCost.Editor.Prototype
             if (root.Find(CarLightName) != null) return false;
             GameObject lamp = new(CarLightName, typeof(Light));
             lamp.transform.SetParent(root, false);
-            lamp.transform.localPosition = new Vector3(0f, interiorHeight - 0.4f, 0f);
+            lamp.transform.localPosition = new Vector3(0f, interiorHeight - CarLightBelowRoofMeters, 0f);
             ConfigureCarLight(lamp.GetComponent<Light>());
             return true;
         }

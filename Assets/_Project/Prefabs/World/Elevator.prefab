@@ -2595,9 +2595,9 @@ MonoBehaviour:
   jetSpeed: 6.5
   mouthRadius: 0.048
   jetEndRadius: 0.105
-  sheathScale: 1.9
+  sheathScale: 2.4
   jetStartInside: 0.03
-  jetWobble: 0.035
+  jetWobble: 0.06
   jetTextureRate: 8
   jetRampSeconds: 0.15
   splashSize: 1.35
@@ -2618,9 +2618,9 @@ MonoBehaviour:
   drainOuterRadius: 2.05
   bubbleMinSize: 0.012
   bubbleMaxSize: 0.055
-  mouthMistPerJet: 4
-  dropletsPerJet: 14
-  impactMistPerJet: 6
+  mouthMistPerJet: 24
+  dropletsPerJet: 48
+  impactMistPerJet: 28
   swirlSize: 4.5
   swirlDegreesPerSecond: 95
 --- !u!1 &414129601256397756
@@ -4050,7 +4050,7 @@ Transform:
   m_GameObject: {fileID: 2875515426606138275}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.1, z: 0}
+  m_LocalPosition: {x: 0, y: 2.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

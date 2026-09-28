@@ -734,7 +734,7 @@ namespace SunkCost.Editor.Prototype
         // Up from the car with the host aboard (the press is the caller's); returns on the deck.
         private static IEnumerator RideUp(string label, bool captures)
         {
-            bool drainShot = !captures, slabs = !captures;
+            bool drainShot = !captures, slabs = !captures, swirlShot = !captures;
             double deadline = EditorApplication.timeSinceStartup + 90.0;
             while (EditorApplication.timeSinceStartup < deadline && Day.CabinRide.Active)
             {
@@ -745,6 +745,13 @@ namespace SunkCost.Editor.Prototype
                     CabinWater water = car.GetComponent<CabinWater>();
                     float root = car.transform.position.y;
                     if (!drainShot && water != null && water.LevelMeters <= 1.8f && water.LevelMeters >= 1.2f) { drainShot = true; CaptureEye("va-ascent-draining-inside.png"); }
+                    if (!swirlShot && water != null && water.LevelMeters <= 1.1f && water.LevelMeters >= 0.6f)
+                    {
+                        // The polish pass: the drain seen from a rider's eye, looking down at the far grilles.
+                        swirlShot = true;
+                        Vector3 eyeAt = host.PlayerCamera.transform.position;
+                        Capture(eyeAt, car.transform.position + Doorway(car) * -2.4f + Vector3.up * 0.3f, "va-drain-swirl.png");
+                    }
                     if (!slabs && root > car.SeaLevelY + 1.0f) { slabs = true; GlareOnSlabs(car); }
                 }
                 yield return null;

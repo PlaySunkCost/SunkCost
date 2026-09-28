@@ -495,6 +495,10 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(YawFraction(hq.DeckCabinHousingDoorR, half) - 1f) < 0.01f && Mathf.Abs(YawFraction(hq.DeckCabinHousingDoorL, half) - 1f) < 0.01f, $"DK10 both shutters open ({YawFraction(hq.DeckCabinHousingDoorR, half):0.000}/{YawFraction(hq.DeckCabinHousingDoorL, half):0.000})");
             Check(hq.DeckCabinShutterCollider != null && !hq.DeckCabinShutterCollider.enabled && hq.DeckCabinDoorCollider != null && !hq.DeckCabinDoorCollider.enabled, "DK10 the entrance is passable: shutter and doorway boxes off");
             yield return FloorFlush(hq, "DK10");
+            // The polish pass: the deck cabin on the docked ship at HQ's dawn (captures only).
+            yield return HostShot(hq, CabinPoint(hq, 9.5f, 0f, StandY), CabinPoint(hq, 0f, 0f, 1.6f), "va-hq-deck-open.png");
+            yield return HostShot(hq, CabinPoint(hq, 3.4f, 0f, StandY), CabinPoint(hq, 0f, 0f, 1.4f), "va-hq-entrance-open.png");
+            yield return HostShot(hq, CabinPoint(hq, 1.2f, 180f, StandY), CabinPoint(hq, 3f, 0f, 1.5f), "va-hq-inside-to-doorway.png");
 
             // ---- to sea, the host in the deck cabin ----
             H.MoveLocalIntoDeckCabin("HQ"); yield return Wait(0.3f);

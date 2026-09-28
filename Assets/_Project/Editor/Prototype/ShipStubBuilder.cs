@@ -533,7 +533,7 @@ namespace SunkCost.Editor.Prototype
         private const float LidRadius = 3.20f, LidBottom = 3.71f, LidThickness = 0.05f; // housing-local: tucked under the rim (inner r 3.22-3.26 there)
         private const float TrackInner = 3.03f, TrackOuter = 3.18f, TrackHalfDeg = 50f;
         private const float TrackBottom = 3.20f, TrackTop = 3.42f;  // cabin-local: over the shutters' tops, under the rim's lip
-        private const float CarLightY = 3.12f;                     // cabin-local: in the car, under its roof
+        private const float CarLightY = 2.62f;                     // cabin-local: in the car, 0.9 m under its roof (DeckCabinRideSetup.CarLightBelowRoofMeters)
 
         private static void DressCabin(Transform cabin)
         {

@@ -72,13 +72,18 @@ namespace SunkCost.Editor.Prototype
         // (CabinWaterVisuals raises _BumpScale per renderer while the jets pour.)
         public static Material Surface() => GetOrMake(SurfaceMaterialPath, "Universal Render Pipeline/Lit", m =>
         {
-            SetTransparent(m, new Color(0.25f, 0.55f, 0.6f, 0.55f), cullOff: false);
+            // Near-black albedo (the polish pass, 28 September 2026): the old one (0.25, 0.55,
+            // 0.6) took a diver's headlamp as a pale oval on the surface from above and a
+            // cyan dome on its underside from below; the emission keeps the cyan tone. _Color mirrors _BaseColor as URP's validation
+            // does, so a player build does not rewrite the asset (NET-CHURN-ADMISSION).
+            SetTransparent(m, new Color(0.04f, 0.10f, 0.12f, 0.55f), cullOff: false);
+            if (m.HasProperty("_Color")) m.SetColor("_Color", new Color(0.04f, 0.10f, 0.12f, 0.55f));
             m.SetTexture("_BumpMap", TextureAt(RipplePath, RippleTexture, normalMap: true, repeat: true));
             m.SetFloat("_BumpScale", 0.55f);
             m.EnableKeyword("_NORMALMAP");
             m.SetFloat("_Smoothness", 0.65f);
             SpecularHighlights(m, false);
-            Emission(m, new Color(0.02f, 0.10f, 0.12f));
+            Emission(m, new Color(0.06f, 0.19f, 0.22f));
         });
 
         // The jets (CabinWaterVisuals builds their meshes): streaky white water, two-sided so
@@ -455,67 +460,103 @@ namespace SunkCost.Editor.Prototype
             return texture;
         }
 
-        // The jet's water, wrapped round the tube: bright streaks along it (v) with darker
-        // gaps and white flecks; integer frequencies so it tiles both ways (u round the
-        // tube, v along the flow).
+        // The jet's water, wrapped round the tube: aerated white water (the polish pass, 28
+        // September 2026: the old streaks were near-uniform and read as frosted glass).
+        // Ropes of white along the flow (v), bluer gaps between them and torn clumps;
+        // integer frequencies and a wrapping noise lattice so it tiles both ways.
         private static Texture2D JetTexture()
         {
             const int w = 64, h = 256;
             var texture = new Texture2D(w, h, TextureFormat.RGBA32, false);
             var random = new System.Random(2892026);
-            var flecks = new Vector3[40];
-            for (int i = 0; i < flecks.Length; i++) flecks[i] = new Vector3((float)random.NextDouble(), (float)random.NextDouble(), 0.01f + 0.025f * (float)random.NextDouble());
+            var lattice = new float[64 * 64];
+            for (int i = 0; i < lattice.Length; i++) lattice[i] = (float)random.NextDouble();
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                 {
                     float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
-                    float streaks = 0.55f + 0.22f * Mathf.Sin(2f * Mathf.PI * (u * 6f + 0.35f * Mathf.Sin(2f * Mathf.PI * v * 2f)))
-                                          + 0.16f * Mathf.Sin(2f * Mathf.PI * (u * 13f + v * 3f))
-                                          + 0.10f * Mathf.Sin(2f * Mathf.PI * (u * 3f - v * 5f));
-                    float pulse = 0.82f + 0.18f * Mathf.Sin(2f * Mathf.PI * (v * 4f + u * 2f));
-                    float fleck = 0f;
-                    foreach (Vector3 f in flecks)
-                    {
-                        float du = Mathf.Abs(u - f.x); du = Mathf.Min(du, 1f - du);
-                        float dv = Mathf.Abs(v - f.y); dv = Mathf.Min(dv, 1f - dv);
-                        fleck = Mathf.Max(fleck, Mathf.Clamp01(1f - Mathf.Sqrt(du * du + dv * dv * 16f) / f.z));
-                    }
-                    float a = Mathf.Clamp01(streaks * pulse + fleck * 0.6f);
-                    float white = Mathf.Clamp01(0.78f + 0.22f * streaks + 0.3f * fleck);
-                    texture.SetPixel(x, y, new Color(white, Mathf.Clamp01(white + 0.03f), 1f, a));
+                    float ropes = 0.6f * PeriodicNoise(lattice, u * 8f, v * 2f, 8, 2) + 0.4f * PeriodicNoise(lattice, u * 16f + 11f, v * 4f + 3f, 16, 4);
+                    float clumps = PeriodicNoise(lattice, u * 6f + 23f, v * 12f + 7f, 6, 12);
+                    float fine = PeriodicNoise(lattice, u * 32f + 2f, v * 8f + 5f, 32, 8);
+                    float white = Smooth(0.35f, 0.7f, ropes * 0.65f + clumps * 0.35f);
+                    float a = Mathf.Clamp01(0.35f + 0.55f * white + 0.15f * fine * white);
+                    float tone = Mathf.Clamp01(0.70f + 0.30f * white);
+                    texture.SetPixel(x, y, new Color(tone, Mathf.Clamp01(tone + 0.04f), 1f, a));
                 }
             texture.Apply();
             return texture;
         }
 
-        // Surface foam: a lace of foam rings and blobs, tileable.
+        // Surface foam (the polish pass, 28 September 2026: the old lace of thin rings read
+        // as a tiled pattern of circles, the sticker look Dan rejected for the bubbles):
+        // filled, broken clumps from a tileable fbm, brightened along Worley cell edges so
+        // the clumps carry a lace of bright seams, never a clean circle.
         private static Texture2D FoamTexture()
         {
             const int n = 256;
-            var alpha = new float[n * n];
             var random = new System.Random(28092027);
-            for (int b = 0; b < 160; b++)
-            {
-                float cx = (float)random.NextDouble() * n, cy = (float)random.NextDouble() * n;
-                float radius = 3f + (float)random.NextDouble() * 14f;
-                float rim = 1.2f + (float)random.NextDouble() * 2.5f;
-                float fill = random.NextDouble() < 0.35 ? 0.55f : 0f;
-                for (int y = (int)(cy - radius - rim - 1f); y <= (int)(cy + radius + rim + 1f); y++)
-                    for (int x = (int)(cx - radius - rim - 1f); x <= (int)(cx + radius + rim + 1f); x++)
-                    {
-                        float d = Mathf.Sqrt((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy));
-                        float a = Mathf.Max(Mathf.Clamp01(1f - Mathf.Abs(d - radius) / rim), d < radius ? fill * Mathf.Clamp01(1f - d / radius) : 0f);
-                        int index = (((y % n) + n) % n) * n + ((x % n) + n) % n;
-                        alpha[index] = Mathf.Max(alpha[index], a);
-                    }
-            }
+            var lattice = new float[64 * 64];
+            for (int i = 0; i < lattice.Length; i++) lattice[i] = (float)random.NextDouble();
+            const int cells = 12;
+            var points = new Vector2[cells * cells];
+            for (int i = 0; i < points.Length; i++) points[i] = new Vector2((float)random.NextDouble(), (float)random.NextDouble());
             var texture = new Texture2D(n, n, TextureFormat.RGBA32, false);
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
-                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha[y * n + x]));
+                {
+                    float u = (x + 0.5f) / n, v = (y + 0.5f) / n;
+                    float fbm = 0f, amp = 0.5f, norm = 0f;
+                    for (int o = 0; o < 4; o++)
+                    {
+                        int f = 4 << o;
+                        fbm += amp * PeriodicNoise(lattice, u * f, v * f, f);
+                        norm += amp; amp *= 0.5f;
+                    }
+                    fbm /= norm;
+                    float f1 = 9f, f2 = 9f;
+                    int cx = Mathf.FloorToInt(u * cells), cy = Mathf.FloorToInt(v * cells);
+                    for (int oy = -1; oy <= 1; oy++)
+                        for (int ox = -1; ox <= 1; ox++)
+                        {
+                            int gx = cx + ox, gy = cy + oy;
+                            Vector2 p = points[((gy % cells + cells) % cells) * cells + (gx % cells + cells) % cells];
+                            float dx = (gx + p.x) / cells - u, dy = (gy + p.y) / cells - v;
+                            float d = Mathf.Sqrt(dx * dx + dy * dy) * cells;
+                            if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) f2 = d;
+                        }
+                    float seam = (1f - Smooth(0f, 0.22f, f2 - f1)) * (0.4f + 0.6f * PeriodicNoise(lattice, u * 32f + 5f, v * 32f + 9f, 32));
+                    float body = Smooth(0.42f, 0.62f, fbm);
+                    float detail = PeriodicNoise(lattice, u * 48f + 3f, v * 48f + 1f, 48);
+                    float a = Mathf.Clamp01(body * (0.6f + 0.15f * seam + 0.3f * detail) + seam * 0.15f * Smooth(0.36f, 0.5f, fbm));
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
             texture.Apply();
             return texture;
         }
+
+        // Value noise on a lattice that wraps every `period` cells (tileable), smooth-stepped.
+        private static float PeriodicNoise(float[] lattice, float x, float y, int period) => PeriodicNoise(lattice, x, y, period, period);
+
+        // The same with its own period along each axis (a stretched noise that still tiles).
+        private static float PeriodicNoise(float[] lattice, float x, float y, int periodX, int periodY)
+        {
+            int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+            float fx = x - x0, fy = y - y0;
+            fx = fx * fx * (3f - 2f * fx); fy = fy * fy * (3f - 2f * fy);
+            float a = Lattice(lattice, x0, y0, periodX, periodY), b = Lattice(lattice, x0 + 1, y0, periodX, periodY);
+            float c = Lattice(lattice, x0, y0 + 1, periodX, periodY), d = Lattice(lattice, x0 + 1, y0 + 1, periodX, periodY);
+            return Mathf.Lerp(Mathf.Lerp(a, b, fx), Mathf.Lerp(c, d, fx), fy);
+        }
+
+        // GLSL's smoothstep (Mathf.SmoothStep interpolates between its first two arguments).
+        private static float Smooth(float edge0, float edge1, float x)
+        {
+            float t = Mathf.Clamp01((x - edge0) / (edge1 - edge0));
+            return t * t * (3f - 2f * t);
+        }
+
+        private static float Lattice(float[] lattice, int ix, int iy, int periodX, int periodY) =>
+            lattice[(((iy % periodY) + periodY) % periodY) * 64 + ((ix % periodX) + periodX) % periodX];
 
         // One bubble: a bright rim, a faint body and a glint at the upper left.
         private static Texture2D BubbleSprite()
@@ -537,21 +578,48 @@ namespace SunkCost.Editor.Prototype
             return texture;
         }
 
-        // A soft round puff of mist.
+        // A lumpy puff of mist (the polish pass: a clean Gaussian dot read as a dust ball;
+        // lumpy puffs overlap into a cloud).
         private static Texture2D MistSprite()
         {
             const int n = 64;
+            var random = new System.Random(2892028);
+            var lattice = new float[64 * 64];
+            for (int i = 0; i < lattice.Length; i++) lattice[i] = (float)random.NextDouble();
             var texture = new Texture2D(n, n, TextureFormat.RGBA32, false);
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
                 {
                     float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
                     float r2 = dx * dx + dy * dy;
-                    float a = Mathf.Exp(-r2 * 4.5f) * Mathf.Clamp01((1f - Mathf.Sqrt(r2)) * 6f);
-                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                    float u = (x + 0.5f) / n, v = (y + 0.5f) / n;
+                    float lumps = 0.65f * PeriodicNoise(lattice, u * 6f, v * 6f, 6) + 0.35f * PeriodicNoise(lattice, u * 12f + 17f, v * 12f + 5f, 12);
+                    float a = Mathf.Exp(-r2 * 3.2f) * (0.45f + 0.55f * lumps) * Mathf.Clamp01((1f - Mathf.Sqrt(r2)) * 4f);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(a * 1.2f)));
                 }
             texture.Apply();
             return texture;
+        }
+
+        // The polish pass (28 September 2026) redrew the foam, the mist and the jet: their
+        // PNGs are overwritten in place (the .meta and GUID stay) and reimported. Run once
+        // after changing those generators (TextureAt draws a PNG only when it is missing).
+        [MenuItem("Sunk Cost/Prototype/Redraw cabin water foam, mist and jet")]
+        public static string RedrawFoamMistJet()
+        {
+            Redraw(FoamPath, FoamTexture);
+            Redraw(MistPath, MistSprite);
+            Redraw(JetPath, JetTexture);
+            EnsureAll();
+            return "redrew " + FoamPath + ", " + MistPath + ", " + JetPath;
+        }
+
+        private static void Redraw(string path, System.Func<Texture2D> make)
+        {
+            Texture2D texture = make();
+            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), path), texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
         }
 
         private static void EnsureFolder()
