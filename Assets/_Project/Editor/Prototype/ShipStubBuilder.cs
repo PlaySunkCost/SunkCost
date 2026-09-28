@@ -43,9 +43,21 @@ namespace SunkCost.Editor.Prototype
         public const float VolumeHeight = 9f;   // the aboard and safe-deck volumes reach over the tower's roof
         public const float WellRadius = 3.7f, PedestalRadius = 2.55f; // the gap round the elevator: a shaft open to the sea (Dan, 19 September 2026), wide enough to read as one
         public const float WellDepth = -SeaLevelY + 0.5f; // the shaft's wall and the pedestal end half a metre under the water
-        // The low rail round the well, on the deck just outside its edge; ShipDeckDressing
-        // keeps its props clear of it.
+        // The low rail round the well, on the deck just outside its edge (before Dan's
+        // round housing, 28 September 2026); kept for readers of the old ring.
         public const float RingRadius = 4.2f;
+        // The round housing round the car (ElevatorCar's CabinHousing model): its wall
+        // stands on the deck's cut (inner face 3.739), its walkway reaches 5.007.
+        public const float HousingOuterRadius = 5.01f;
+        // The unseen 5 m ring walls round the well, inside the housing's wall (3.74 to
+        // 3.87), open only across the grate's lane.
+        public const float RailWallRadius = 3.95f;
+        // What ShipDeckDressing keeps its props out of round the well: the housing and a
+        // walk round it (its pipes reach 4.93).
+        public const float WellKeepOutRadius = 5.75f;
+        // The pedestal's top a little under the car's floor (ship y 0): the car model's
+        // floor cap lies exactly on the deck plane and would fight it.
+        public const float PedestalTopY = -0.03f;
         // Where Unstuck puts a player on this ship (ShipParts.BoardingPoint): open deck
         // aft of the well, port of the centre line, clear of every prop. It stood inside
         // the container once the models came (ship audit SHIP-001);
@@ -127,7 +139,9 @@ namespace SunkCost.Editor.Prototype
                 EditorUtility.SetDirty(glass);
                 // The floor in the kit's worn steel, tiled over the primitive disc's 5 m cap (SHIP-060).
                 Material cabinFloor = SunkCost.Editor.Look.ShipKitMaterials.Tiled(SunkCost.Editor.Look.ShipKitMaterials.Steel(), new Vector2(5f, 5f));
-                GameObject cabin = DeckCabinBuilder.Build(root.transform, Vector3.zero, cabinFloor, SunkCost.Editor.Look.LookMaterials.Ink(), glass, button); // dead centre, like the picture
+                // Dead centre, like the picture; its root a floor's thickness under the deck,
+                // so the car's floor is flush with the deck (Dan, 28 September 2026).
+                GameObject cabin = DeckCabinBuilder.Build(root.transform, new Vector3(0f, -DeckCabinBuilder.FloorThicknessMeters, 0f), cabinFloor, SunkCost.Editor.Look.LookMaterials.Ink(), glass, button);
                 DressCabin(cabin.transform);
 
                 BuildStorageRoom(root.transform, SunkCost.Editor.Look.LookMaterials.PanelDark(), tape);
@@ -359,7 +373,7 @@ namespace SunkCost.Editor.Prototype
             GameObject pedestal = new("Pedestal");
             pedestal.transform.SetParent(root, false);
             pedestal.transform.localPosition = new Vector3(0f, -WellDepth, 0f);
-            Mesh pedestalMesh = SunkCost.Editor.Look.MeshKit.Cylinder(PedestalRadius, WellDepth, 32);
+            Mesh pedestalMesh = SunkCost.Editor.Look.MeshKit.Cylinder(PedestalRadius, WellDepth + PedestalTopY, 32);
             pedestal.AddComponent<MeshFilter>().sharedMesh = pedestalMesh;
             pedestal.AddComponent<MeshRenderer>().sharedMaterial = steel;
             pedestal.AddComponent<MeshCollider>().sharedMesh = pedestalMesh;
@@ -413,33 +427,79 @@ namespace SunkCost.Editor.Prototype
         // there clears 4.63 m. 5 m is over all of it; the rail looks the same, and
         // nothing thrown goes over it.
         private const float RailWallHeight = 5f;
-        private const float RailingLength = 1.843f; // the railing model at scale 1
         private const float RailingPostSpan = 1.70f; // between its two end posts' centres (each 0.14 m wide, 0.07 m in from its ends)
+
+        // Dan's round housing (28 September 2026) is the wall round the well now: the
+        // ring's railing went with it, and its unseen walls stand inside the housing's
+        // wall (RailWallRadius), open only across the grate's lane, so they also close the
+        // entrance's sides beside the grate. The grate's own sides keep a handrail, cut
+        // where the housing's shutters pass (their plates and top track cross x ±1.15 at
+        // z 2.80-2.97); their walls run on unbroken.
+        private const float ShutterGapFromZ = 2.77f, ShutterGapToZ = 2.93f;
+        private const float HandrailHeight = 0.9f;
 
         private static void BuildWellRail(Transform root, float grateRailX)
         {
-            GameObject railing = AssetDatabase.LoadAssetAtPath<GameObject>(SunkCost.Editor.Look.ShipModelSetup.PrefabPath("Railing"));
-            if (railing == null) Debug.LogWarning("Ship stub: no Railing prefab (run the ship model setup); the well rail is its walls only");
             GameObject rail = new("Well Rail");
             rail.transform.SetParent(root, false);
-            // The ring, from one grate rail round to the other: its end posts stand on the
-            // grate rails' outer ends.
+            // The ring of walls, from one grate rail round to the other.
             float endX = grateRailX;
-            float gapHalf = Mathf.Asin(endX / RingRadius) * Mathf.Rad2Deg;
+            float gapHalf = Mathf.Asin(endX / RailWallRadius) * Mathf.Rad2Deg;
             float from = 90f + gapHalf, span = 360f - 2f * gapHalf;
-            int pieces = Mathf.CeilToInt(span / (2f * Mathf.Asin(RailingLength / 2f / RingRadius) * Mathf.Rad2Deg));
+            int pieces = Mathf.CeilToInt(span / 15f); // short chords stay inside the housing's wall
             float step = span / pieces;
             for (int i = 0; i < pieces; i++)
-                RailPiece(rail.transform, railing, "Well Rail Piece", Around(from + i * step), Around(from + (i + 1) * step));
+                RailPiece(rail.transform, null, "Well Rail Piece", Around(from + i * step), Around(from + (i + 1) * step));
+            // Where those walls cross the housing's entrance (it is wider than the grate's
+            // lane) a handrail shows them, from the grate rail's end to the entrance's jamb.
+            float jamb = HousingEntranceHalfDeg;
+            foreach (float side in new[] { -1f, 1f })
+                Handrail(rail.transform, "Entrance Rail", Around(90f - side * gapHalf), Around(90f - side * jamb));
             // The grate's sides, from the pedestal's edge out to the ring's ends; their walls
             // reach on in to the cabin's own wall, so nothing slips out between the two.
             float innerZ = Mathf.Sqrt(PedestalRadius * PedestalRadius - grateRailX * grateRailX);
-            float ringEndZ = Mathf.Sqrt(RingRadius * RingRadius - endX * endX);
+            float ringEndZ = Mathf.Sqrt(RailWallRadius * RailWallRadius - endX * endX);
             foreach (float side in new[] { -1f, 1f })
-                RailPiece(rail.transform, railing, "Grate Rail", new Vector3(side * grateRailX, 0f, innerZ), new Vector3(side * grateRailX, 0f, ringEndZ), 0.2f);
+            {
+                RailPiece(rail.transform, null, "Grate Rail", new Vector3(side * grateRailX, 0f, innerZ), new Vector3(side * grateRailX, 0f, ringEndZ), 0.2f);
+                Handrail(rail.transform, "Grate Rail Inner", new Vector3(side * grateRailX, 0f, innerZ), new Vector3(side * grateRailX, 0f, ShutterGapFromZ));
+                Handrail(rail.transform, "Grate Rail Outer", new Vector3(side * grateRailX, 0f, ShutterGapToZ), new Vector3(side * grateRailX, 0f, ringEndZ));
+            }
         }
 
-        private static Vector3 Around(float bearingDeg) => new Vector3(Mathf.Cos(bearingDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(bearingDeg * Mathf.Deg2Rad)) * RingRadius;
+        // The housing's entrance: its jambs stand ±22.5° about the doorway (the model's cut).
+        private const float HousingEntranceHalfDeg = 22.5f;
+
+        private static Vector3 Around(float bearingDeg) => new Vector3(Mathf.Cos(bearingDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(bearingDeg * Mathf.Deg2Rad)) * RailWallRadius;
+
+        // A short kit-steel handrail from a to b on the deck (a squashed railing model read
+        // badly at these lengths): a post at each end, a top rail and a knee rail. Look only.
+        private static void Handrail(Transform parent, string name, Vector3 a, Vector3 b)
+        {
+            Vector3 along = b - a;
+            float length = along.magnitude;
+            if (length < 0.1f) return;
+            GameObject piece = new(name);
+            piece.transform.SetParent(parent, false);
+            piece.transform.localPosition = (a + b) / 2f;
+            piece.transform.localRotation = Quaternion.Euler(0f, -Mathf.Atan2(along.z, along.x) * Mathf.Rad2Deg, 0f); // its x runs from a to b
+            Material steel = SunkCost.Editor.Look.ShipKitMaterials.Steel();
+            const float post = 0.05f;
+            float half = length / 2f - post / 2f;
+            HandrailPart(piece.transform, "Post", SunkCost.Editor.Look.MeshKit.Box(new Vector3(post, HandrailHeight, post)), new Vector3(-half, 0f, 0f), steel);
+            HandrailPart(piece.transform, "Post", SunkCost.Editor.Look.MeshKit.Box(new Vector3(post, HandrailHeight, post)), new Vector3(half, 0f, 0f), steel);
+            HandrailPart(piece.transform, "Top Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(length, 0.05f, 0.05f)), new Vector3(0f, HandrailHeight - 0.05f, 0f), steel);
+            HandrailPart(piece.transform, "Knee Rail", SunkCost.Editor.Look.MeshKit.Box(new Vector3(length, 0.035f, 0.035f)), new Vector3(0f, HandrailHeight * 0.5f, 0f), steel);
+        }
+
+        private static void HandrailPart(Transform parent, string name, Mesh mesh, Vector3 localPosition, Material material)
+        {
+            GameObject go = new(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = material;
+        }
 
         // One straight piece of rail from a to b on the deck: its wall (reaching on past
         // a by wallPastA), and the railing stretched so its end posts stand on a and b.
@@ -463,46 +523,57 @@ namespace SunkCost.Editor.Prototype
             model.transform.localScale = new Vector3(length / RailingPostSpan, 1f, 1f);
         }
 
-        // The tube's dressing over the shared round cabin: the cap ring over the glass's
-        // top edge, the glow band and the cap on it, the beacon on top, the hazard band
-        // at the foot, a light inside. Each piece stands on the one under it (placed by
-        // their centres, they floated with gaps; ship audit SHIP-011). The ring and the
-        // cap wear the ship's kit steel until the elevator's redesign (SHIP-060, 061; Dan:
-        // "we will do a new one after").
+        // The deck's side of Dan's round elevator (28 September 2026): the round housing
+        // model round the car, its base on the deck and its wall on the deck's cut, its
+        // entrance at the car's doorway; a top track the shutters hang from; a lid under
+        // its rim with the old beacon on it (the model is open on top); the car's own
+        // light, which goes with the car. Numbers: scratchpad elev/ELEVATOR_MODELS.md §7.
+        public const string HousingName = "Cabin Housing";
+        private const float HousingBaseY = 0.01f;               // ship y: the walkway a centimetre over the deck
+        private const float LidRadius = 3.20f, LidBottom = 3.71f, LidThickness = 0.05f; // housing-local: tucked under the rim (inner r 3.22-3.26 there)
+        private const float TrackInner = 3.03f, TrackOuter = 3.18f, TrackHalfDeg = 50f;
+        private const float TrackBottom = 3.20f, TrackTop = 3.42f;  // cabin-local: over the shutters' tops, under the rim's lip
+        private const float CarLightY = 3.12f;                     // cabin-local: in the car, under its roof
+
         private static void DressCabin(Transform cabin)
         {
-            const float radius = 2.5f; // the car's radius
             Material steel = SunkCost.Editor.Look.ShipKitMaterials.Steel();
-            float y = DeckCabinBuilder.CapRingBottom;
-            y = Round("Cap Ring", cabin, y, radius + 0.25f, DeckCabinBuilder.CapRingHeight, steel);
-            y = Round("Cap Glow", cabin, y, radius + 0.15f, 0.1f, SunkCost.Editor.Look.LookMaterials.LampWarm());
-            y = Round("Cap Top", cabin, y, radius - 0.1f, 0.3f, steel);
-            SunkCost.Editor.Look.PropBuilder.Place(cabin.gameObject, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(0f, y, 0f)).name = "Tube Beacon";
-            // The hazard band round the tube's foot: an open band, open across the
-            // doorway too, so the floor inside is the cabin's own (a capped disc covered
-            // it, and the crew's feet sank into it; SHIP-010).
-            Transform doorR = cabin.Find(ShipParts.DeckCabinDoorRName);
-            float doorHalf = doorR != null ? Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)) : 23.6f; // the doors are parked open at the doorway's half-angle
-            GameObject foot = new("Foot Band");
-            foot.transform.SetParent(cabin, false);
-            foot.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band(radius + 0.04f, 0.2f, 0.08f, 90f + doorHalf, 90f - doorHalf + 360f, 96);
-            foot.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.ShipKitMaterials.Hazard();
-            // The car's own light, warm white, the same in both worlds (Dan, 23 September 2026).
-            Light inside = new GameObject("Tube Light").AddComponent<Light>();
-            inside.transform.SetParent(cabin, false);
-            inside.transform.localPosition = new Vector3(0f, DeckCabinBuilder.CapRingBottom - 0.2f, 0f);
-            DeckCabinRideSetup.ConfigureCarLight(inside);
-        }
+            // The housing, look only; its own mesh is its collider (the walls, the walkway,
+            // the jambs), so the camera stops at the surface it sees.
+            Vector3 housingLocal = new(0f, HousingBaseY + DeckCabinBuilder.FloorThicknessMeters, 0f); // the cabin root is a floor under the deck
+            GameObject housing = SunkCost.Editor.Look.ElevatorLook.PlacePart("CabinHousing", cabin, HousingName, housingLocal, 0f);
+            if (housing != null)
+                foreach (MeshFilter mf in housing.GetComponentsInChildren<MeshFilter>(true))
+                    if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null)
+                        mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
 
-        // A solid round piece `height` tall standing at `bottom`, UVs in metres; returns its top.
-        private static float Round(string name, Transform parent, float bottom, float radius, float height, Material material)
-        {
-            GameObject go = new(name);
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = new Vector3(0f, bottom, 0f);
-            go.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Cylinder(radius, height, 48);
-            go.AddComponent<MeshRenderer>().sharedMaterial = material;
-            return bottom + height;
+            // The shutters' top track: a dark steel channel over the entrance and the two
+            // shutters' parked spans, under the rim's lip.
+            GameObject track = new("Shutter Track");
+            track.transform.SetParent(cabin, false);
+            track.transform.localPosition = new Vector3(0f, TrackBottom, 0f);
+            track.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Band((TrackInner + TrackOuter) / 2f, TrackTop - TrackBottom, TrackOuter - TrackInner, 90f - TrackHalfDeg, 90f + TrackHalfDeg, 48);
+            track.AddComponent<MeshRenderer>().sharedMaterial = SunkCost.Editor.Look.LookMaterials.Ink();
+
+            // The lid under the housing's rim, and the beacon on it (the old tube's cap).
+            float lidY = housingLocal.y + LidBottom;
+            GameObject lid = new("Housing Lid");
+            lid.transform.SetParent(cabin, false);
+            lid.transform.localPosition = new Vector3(0f, lidY, 0f);
+            lid.AddComponent<MeshFilter>().sharedMesh = SunkCost.Editor.Look.MeshKit.Cylinder(LidRadius, LidThickness, 48);
+            lid.AddComponent<MeshRenderer>().sharedMaterial = steel;
+            SunkCost.Editor.Look.PropBuilder.Place(cabin.gameObject, SunkCost.Editor.Look.PropBuilder.BeaconMast(), new Vector3(0f, lidY + LidThickness, 0f)).name = "Tube Beacon";
+
+            // The car's own light, warm white, the same in both worlds (Dan, 23 September
+            // 2026): with the car's glass, so it goes dark with the car away; the car
+            // model's ring light follows its colour.
+            Transform carGlass = cabin.Find(ShipParts.DeckCabinCarGlassName);
+            Light inside = new GameObject("Tube Light").AddComponent<Light>();
+            inside.transform.SetParent(carGlass != null ? carGlass : cabin, false);
+            inside.transform.localPosition = new Vector3(0f, CarLightY, 0f);
+            DeckCabinRideSetup.ConfigureCarLight(inside);
+            Transform carLook = carGlass != null ? carGlass.Find(SunkCost.Editor.Look.ElevatorLook.CarLookName) : null;
+            if (carLook != null) SunkCost.Editor.Look.ElevatorLook.SetRingSource(carLook.gameObject, inside);
         }
 
         // A physics wall nobody sees: the look kit's railing stands along it.

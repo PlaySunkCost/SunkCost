@@ -109,7 +109,6 @@ namespace SunkCost.Editor.Look
         private static readonly HashSet<string> NotSolid = new() { "Hull", "NamePlate", "StorageRoom", "StorageSill" };
 
 
-        private const float WellClear = 0.8f;       // a walk round the well's rail, outside it
         private const float TvScreenCentreY = 2.0f; // seated eyes at about 1.15 m, standing 1.6 m (SHIP-026)
         private const float ConsoleX = -2.2f;       // port of the tower model's door and ladder, which it hid (SHIP-039)
         private const float ConsoleGap = 0.08f;     // the console's back off the tower's real face: square to it, touching nothing
@@ -174,7 +173,9 @@ namespace SunkCost.Editor.Look
             // doorway looks to +z, over the grate); each spawn point and its way to
             // the cabin; where Unstuck puts a player; the storage doorway (in the
             // room's port wall) and the console's front, where the crew stand.
-            float ring = ShipStubBuilder.RingRadius + WellClear;
+            // Round Dan's elevator housing (28 September 2026): its walkway reaches 5.0 m
+            // and its pipes 4.93, so the walk round it starts there.
+            float ring = ShipStubBuilder.WellKeepOutRadius;
             Keep("the well's rail", Vector2.zero, ring);
             Keep("the cabin door", new Vector2(-1.3f, ShipStubBuilder.WellRadius - 0.5f), new Vector2(1.3f, ShipStubBuilder.RingRadius + 2.8f));
             foreach (Vector3 p in ShipStubBuilder.SpawnPositions) // built after the dressing, so read from the builder

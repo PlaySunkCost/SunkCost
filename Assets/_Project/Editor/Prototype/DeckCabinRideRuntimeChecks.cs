@@ -1095,7 +1095,8 @@ namespace SunkCost.Editor.Prototype
             Vector3 deckDoorway = sea.DeckCabin.forward;
             Vector3 outsideDoor = sea.DeckCabin.position + deckDoorway * 4f; outsideDoor.y = sea.DeckCabin.position.y + 0.15f;
             Collider deckBlocker = Sweep(outsideDoor, -deckDoorway, 4f);
-            Check(deckBlocker != null && deckBlocker.name == ShipParts.DeckCabinDoorColliderName, "G2 the deck cabin doorway is blocked while the car is below (" + (deckBlocker == null ? "nothing" : deckBlocker.name) + ")");
+            // The round housing's shut shutters stand in front of the car's doorway now (Dan's elevator, 28 September 2026): either box is the block.
+            Check(deckBlocker != null && (deckBlocker.name == ShipParts.DeckCabinDoorColliderName || deckBlocker.name == ShipParts.DeckCabinShutterColliderName), "G2 the deck cabin doorway is blocked while the car is below (" + (deckBlocker == null ? "nothing" : deckBlocker.name) + ")");
             H.MoveLocalIntoDeckCabin("Sea");
             yield return Wait(0.3f);
             H.ClientRequestCabin();

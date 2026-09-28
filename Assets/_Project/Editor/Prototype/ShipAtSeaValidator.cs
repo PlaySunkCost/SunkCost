@@ -19,6 +19,7 @@ namespace SunkCost.Editor.Prototype
             WorldSceneChecks.CheckNoSessionMachinery(scene, errors, "ShipAtSea");
             ShipParts ship = WorldSceneChecks.CheckShip(scene, errors, "ShipAtSea");
             if (ship != null) CheckAreas(ship, errors);
+            if (ship != null) CheckDeckCabinLook(ship, errors);
             WorldLoopSettings settings = AssetDatabase.LoadAssetAtPath<WorldLoopSettings>(ShipStubBuilder.SettingsPath);
             if (settings == null) errors.Add("WorldLoopSettings asset missing (run Create or Update Session).");
             else if (ship != null && Vector3.Distance(ship.transform.position, settings.ShipAtSeaOrigin) > 0.01f)
@@ -102,6 +103,30 @@ namespace SunkCost.Editor.Prototype
                 Transform part = ship.Find(name);
                 if (part != null && part.parent != area) errors.Add("Ship: '" + name + "' is not in the '" + group + "' group (under '" + (part.parent != null ? part.parent.name : "-") + "').");
             }
+        }
+
+        // Dan's round elevator on the deck (28 September 2026): the car's floor flush with
+        // the deck, the car at its own size, the housing solid where it is seen, and the
+        // shutters' box across its entrance.
+        private static void CheckDeckCabinLook(ShipParts ship, List<string> errors)
+        {
+            Transform cabin = ship.DeckCabin;
+            if (cabin == null) return; // CheckShip names the missing part
+            float floorTop = ship.ToShipLocal(cabin.position).y + DeckCabinBuilder.FloorThicknessMeters;
+            if (Mathf.Abs(floorTop) > 0.001f) errors.Add("Deck cabin: the car's floor top is at ship y " + floorTop.ToString("F3") + " (flush with the deck, 0, expected).");
+            Transform carGlass = ship.DeckCabinCarGlass;
+            if (carGlass == null) errors.Add("Deck cabin: no " + ShipParts.DeckCabinCarGlassName + ".");
+            else
+            {
+                if ((carGlass.lossyScale - Vector3.one).sqrMagnitude > 1e-6f) errors.Add("Deck cabin: the car's glass is at scale " + carGlass.lossyScale.ToString("F3") + " (the car's own size, 1, expected).");
+                if (carGlass.Find(SunkCost.Editor.Look.ElevatorLook.CarLookName) == null) errors.Add("Deck cabin: no '" + SunkCost.Editor.Look.ElevatorLook.CarLookName + "' under the car's glass.");
+            }
+            Transform housing = cabin.Find(ShipStubBuilder.HousingName);
+            if (housing == null) errors.Add("Deck cabin: no '" + ShipStubBuilder.HousingName + "'.");
+            else if (housing.GetComponentInChildren<MeshCollider>(true) == null) errors.Add("Deck cabin: the housing has no mesh collider.");
+            Collider shutters = ship.DeckCabinShutterCollider;
+            if (shutters == null) errors.Add("Deck cabin: no " + ShipParts.DeckCabinShutterColliderName + ".");
+            else if (shutters.isTrigger) errors.Add("Deck cabin: " + ShipParts.DeckCabinShutterColliderName + " must be solid, not a trigger.");
         }
 
         // The deck cabin's doorway collider (run Apply deck cabin ride setup for an older ship).

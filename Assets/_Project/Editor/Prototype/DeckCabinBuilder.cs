@@ -1,3 +1,5 @@
+using SunkCost.Diving;
+using SunkCost.Editor.Look;
 using SunkCost.World;
 using UnityEngine;
 
@@ -9,14 +11,17 @@ namespace SunkCost.Editor.Prototype
     //
     // Visual shell only. No ElevatorController, no DeckCabin/CabinPhase component, no
     // NetworkObject: WorldSceneChecks.CheckShip refuses a ship prefab that carries one
-    // ("the cabin and monitor become scene objects in their own cards"), and
-    // docs/WORLD_LOOP_IMPLEMENTATION_PLAN.md section 4.6 lists DeckCabin.cs/CabinPhase.cs as
-    // not yet built — that networked all-aboard/seal/suit-fade behaviour is Dan's. This only
-    // produces ShipParts.RequiredChildren's named parts (DeckCabinVolume, DeckCabinDoorL,
-    // DeckCabinDoorR, DeckCabinButton, DeckCabinPanel) for that future component to find.
+    // ("the cabin and monitor become scene objects in their own cards"). This only
+    // produces ShipParts' named parts (DeckCabinVolume, DeckCabinDoorL/R, the housing's
+    // shutters DeckCabinHousingDoorL/R, DeckCabinButton, DeckCabinPanel, the doorway and
+    // shutter colliders) that WorldSceneFlow.PresentDeckCabin drives from the ride state.
     //
-    // Doors are parked fully open and stay that way — there is no ElevatorDoor here to sweep
-    // them — matching the stub's "open, parked to the sides" convention it replaces.
+    // Dan's round elevator (28 September 2026): the look is the eight prepared models,
+    // placed by ElevatorLook exactly as on the dive car so the swap between the two shows
+    // the same car in the same place. The car (its model, its glass, its panel) stands
+    // under DeckCabinCarGlass, shown while the car is up; the round housing round it
+    // (ShipStubBuilder.DressCabin) is the ship's, always there. The cabin root sits
+    // FloorThicknessMeters under the deck, so the car's floor is flush with the deck.
     public static class DeckCabinBuilder
     {
         // Matches DiveSiteSettings' own defaults (CarDiameterMeters/CarInteriorHeightMeters)
@@ -25,23 +30,27 @@ namespace SunkCost.Editor.Prototype
         // depend on a dive-site asset for a purely visual match.
         private const float DiameterMeters = 5f;
         private const float InteriorHeightMeters = 3.5f;
-        private const float CarFrameRadius = 0.06f;
         private const float CarWallInset = 0.15f;
         public static float InteriorRadiusMeters => DiameterMeters / 2f - CarWallInset;
         private const float CarDoorwayWidthMeters = 2f;
-        private const float PostDoorwayOffsetDeg = 45f;
         private const float PanelDoorwayOffsetDeg = 75f;
         private const float PanelWidthMeters = 0.6f;
-        private const float PanelHeightMeters = 0.4f;
-        private const float PanelThicknessMeters = 0.08f;
         private const float PanelChestHeightMeters = 1.3f;
         private const float DoorThicknessMeters = 0.1f;
-        private const int DoorLeafPanelCount = 8; // smooth enough to read as round (Dan, 19 September 2026)
         public const float FloorThicknessMeters = 0.1f;
-        // The tube's cap ring (ShipStubBuilder.DressCabin) is centred on the glass's top
-        // edge: its underside, where the status plate hangs.
-        public const float CapRingHeight = 0.36f;
-        public const float CapRingBottom = InteriorHeightMeters - CapRingHeight / 2f;
+
+        // The housing's shutters (ELEVATOR_MODELS D3): curved plates on the shutter line,
+        // hung from a top track, their bottom edge just over the grate's slats (ship y
+        // 0.05, the slats' tops are 0.03) and their top under the track.
+        public const float ShutterRadius = ElevatorLook.ShutterRadius;   // 3.075
+        public const float ShutterBottomY = 0.15f;                       // cabin-local: ship y 0.05
+        public const float ShutterTopY = 3.20f;                          // cabin-local: ship y 3.10
+        private const float ShutterColliderWidth = 2.48f;                // across the housing's entrance (±22.5° at the shutters)
+        private const float ShutterColliderThickness = 0.10f;
+
+        // The status plate on the housing's header over the entrance, read from the bow:
+        // its back against the header's face (ELEVATOR_MODELS §7, cabin-local).
+        private static readonly Vector3 StatusPlateLocal = new(0f, 3.49f, 4.185f);
 
         // Faces the bow (+Z, bearing 90 in this codebase's 0=+X/90=+Z convention) — the
         // direction the crew boards from and the ship departs toward, matching the stub's
@@ -58,38 +67,65 @@ namespace SunkCost.Editor.Prototype
             cabin.transform.SetParent(parent, false);
             cabin.transform.localPosition = localPosition;
 
-            RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Floor", DiameterMeters, FloorThicknessMeters, floor, FloorThicknessMeters / 2f);
-            // No frame posts: the tube is clean, clear glass (Dan, 19 September 2026).
+            // The floor the physics knows; the car model's own floor cap is what is seen.
+            GameObject cabinFloor = RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Floor", DiameterMeters, FloorThicknessMeters, floor, FloorThicknessMeters / 2f);
             // The button's band (its collider, 1.1 to 1.5 m, and a few centimetres) is the
             // only open arc in the wall behind it.
             float buttonBottom = PanelChestHeightMeters - 0.2f;
             float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(cabin.transform, carRadius, interiorRadius, InteriorHeightMeters, glass, DoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
             // The button: red, its word on it, facing into the cabin (every button in the game, Dan, 19 September 2026).
             Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
-            SunkCost.Editor.Look.PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
-            // On a pillar with its plate, not floating on the glass (ship audit SHIP-049);
-            // the elevator's redesign replaces it (Dan: "we will do a new one after").
-            RoundCabinGeometry.CreateButtonMount(cabin.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, FloorThicknessMeters, InteriorHeightMeters, buttonBottom + 0.56f, "DESCEND", SunkCost.Editor.Look.ShipKitMaterials.Bezel()); // the buttons' own clean bezel steel: the hull's blotched plate read as a random slab (QA, 24 September 2026)
-            // The roof: a collider only. Its glass lies wholly inside the tube's opaque cap
-            // ring (ShipStubBuilder.DressCabin), where nobody can ever see it.
+            PropBuilder.PushButton(cabin, ShipParts.DeckCabinButtonName, panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.descend", PanelWidthMeters);
+            // The roof: a collider only, under the housing's lid.
             GameObject roof = RoundCabinGeometry.CreateDisc(cabin.transform, "Cabin Roof", DiameterMeters, FloorThicknessMeters, glass, InteriorHeightMeters - FloorThicknessMeters / 2f);
             roof.GetComponent<Renderer>().enabled = false;
 
-            Transform doorRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorRName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters); // glass leaves: no dark slabs beside the doorway
-            Transform doorLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinDoorLName, interiorRadius, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
-            // Fully open, permanently: the same rotation ElevatorDoor would reach at rest,
-            // set once here since nothing sweeps a static cabin's doors yet.
+            // The car: its glass (the same band as the dive car's Glass Shell, at its
+            // radius), its model and its panel, all under DeckCabinCarGlass, which
+            // WorldSceneFlow shows only while the car is up. The always-on Glass Shell
+            // stays for its name and shape but is not drawn: the housing is the ship's
+            // wall round the well now.
+            Transform shell = cabin.transform.Find("Glass Shell");
+            GameObject carGlass = Object.Instantiate(shell.gameObject, cabin.transform);
+            carGlass.name = ShipParts.DeckCabinCarGlassName;
+            carGlass.transform.localPosition = shell.localPosition;
+            carGlass.transform.localRotation = shell.localRotation;
+            carGlass.transform.localScale = Vector3.one;
+            foreach (Collider c in carGlass.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+            foreach (Renderer r in shell.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+            GameObject carLook = ElevatorLook.PlaceCar(carGlass.transform, DoorwayBearingDeg, null);
+            if (carLook != null) cabinFloor.GetComponent<Renderer>().enabled = false; // the model's floor cap would fight it
+            Transform button = cabin.transform.Find(ShipParts.DeckCabinButtonName);
+            GameObject panelLook = ElevatorLook.PlacePanel(carGlass.transform, button, panelAngleDeg);
+            if (panelLook == null)
+                RoundCabinGeometry.CreateButtonMount(cabin.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, FloorThicknessMeters, InteriorHeightMeters, buttonBottom + 0.56f, "DESCEND", ShipKitMaterials.Bezel());
+
+            // The car's door leaves: the model's leaf on each pivot at the car's axis,
+            // parked fully open (WorldSceneFlow reads the half-angle off the right one
+            // once, then sweeps both from the ride state).
+            Transform doorRight = Pivot(cabin.transform, ShipParts.DeckCabinDoorRName);
+            Transform doorLeft = Pivot(cabin.transform, ShipParts.DeckCabinDoorLName);
+            ElevatorLook.PlaceDoorLeaf(doorRight, DoorwayBearingDeg, right: true);
+            ElevatorLook.PlaceDoorLeaf(doorLeft, DoorwayBearingDeg, right: false);
             doorRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
             doorLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
-            // The tube's own leaves, just inside its glass: open with the car's while it
-            // is up, shut while it is away (WorldSceneFlow.PresentDeckCabin), like the
-            // gate at the seafloor. Parked open here.
-            Transform housingRight = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorRName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: true, DoorLeafPanelCount, 0.05f);
-            Transform housingLeft = RoundCabinGeometry.CreateDoorLeafPanels(cabin.transform, ShipParts.DeckCabinHousingDoorLName, carRadius - 0.07f, InteriorHeightMeters, DoorwayBearingDeg, doorwayHalfAngleDeg, glass, rightSide: false, DoorLeafPanelCount, 0.05f);
+
+            // The housing's shutters: open with the car's doors while it is up, shut
+            // while it is away (WorldSceneFlow.PresentDeckCabin), like the gate at the
+            // seafloor. Curved plates in the housing's paint on the shutter line, built
+            // at their shut span, parked open here.
+            Transform housingRight = Pivot(cabin.transform, ShipParts.DeckCabinHousingDoorRName);
+            Transform housingLeft = Pivot(cabin.transform, ShipParts.DeckCabinHousingDoorLName);
+            ElevatorLook.BuildShutterLeaf(housingRight, DoorwayBearingDeg, right: true, ShutterRadius, ShutterBottomY, ShutterTopY);
+            ElevatorLook.BuildShutterLeaf(housingLeft, DoorwayBearingDeg, right: false, ShutterRadius, ShutterBottomY, ShutterTopY);
             housingRight.localRotation = Quaternion.Euler(0f, -doorwayHalfAngleDeg, 0f);
             housingLeft.localRotation = Quaternion.Euler(0f, doorwayHalfAngleDeg, 0f);
 
             CreateDoorCollider(cabin.transform, interiorRadius, doorwayHalfAngleDeg);
+            CreateShutterCollider(cabin.transform);
+            // The model's posts and glass slabs stand inside the wall ring: the camera
+            // only knows colliders (the same set as the dive car's, from one helper).
+            ElevatorLook.AddPostColliders(cabin.transform, DoorwayBearingDeg);
 
             // The inside, round like the cabin (ship audit SHIP-086: a square box reached
             // over the well at its corners and took in the grate): an upright capsule out
@@ -106,16 +142,22 @@ namespace SunkCost.Editor.Prototype
             volumeCollider.radius = interiorRadius - 0.075f; // the wall ring's inner face (its walls are 0.15 m)
             volumeCollider.height = InteriorHeightMeters;
 
-            CreatePanelLabel(cabin.transform, interiorRadius);
+            TextMesh status = CreatePanelLabel(cabin.transform);
+            // The panel's screen carries the plate's words (who is missing, the countdown).
+            if (panelLook != null) ShaftTubeSetup.AddPanelDisplay(panelLook, CabinPanelDisplay.Mode.Deck, null, status);
 
             return cabin;
         }
 
-        // The status plate outside the doorway (WORLD_LOOP_IMPLEMENTATION_PLAN.md section 4.4:
-        // "a TextMesh the panel writes to") — empty until Dan's DeckCabin writes a refusal to
-        // it, same pattern as ShipMonitor's MonitorStatus label.
+        private static Transform Pivot(Transform cabin, string name)
+        {
+            GameObject pivot = new(name);
+            pivot.transform.SetParent(cabin, false);
+            return pivot.transform;
+        }
+
         // One box across the doorway, like the car's own (ElevatorCabinBuilder): a
-        // player cannot walk into the housing while its doors are shut or moving —
+        // player cannot walk into the car while its doors are shut or moving —
         // with the car below there is nothing to stand in but the space the car
         // will arrive into (Dan, 16 September 2026: "that case can never happen").
         // Disabled here (the doors are parked open); WorldSceneFlow.PresentDeckCabin
@@ -135,18 +177,33 @@ namespace SunkCost.Editor.Prototype
             return colliderObject;
         }
 
-        private static void CreatePanelLabel(Transform cabinTransform, float interiorRadius)
+        // The shut shutters' box across the housing's entrance, on their line (INTERFACES
+        // A6): without it a player walked 0.7 m into the drawn plates. Disabled here (the
+        // shutters are parked open); WorldSceneFlow.PresentDeckCabin switches it with them.
+        public static GameObject CreateShutterCollider(Transform cabin)
         {
-            float angleRad = DoorwayBearingDeg * Mathf.Deg2Rad;
-            Vector3 direction = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
+            float rad = DoorwayBearingDeg * Mathf.Deg2Rad;
+            Vector3 direction = new(Mathf.Cos(rad), 0f, Mathf.Sin(rad));
+            float height = ShutterTopY - ShutterBottomY;
+            GameObject colliderObject = new(ShipParts.DeckCabinShutterColliderName, typeof(BoxCollider));
+            colliderObject.transform.SetParent(cabin, false);
+            colliderObject.transform.localPosition = direction * ShutterRadius + new Vector3(0f, ShutterBottomY + height / 2f, 0f);
+            colliderObject.transform.localRotation = Quaternion.LookRotation(direction, Vector3.up);
+            BoxCollider box = colliderObject.GetComponent<BoxCollider>();
+            box.size = new Vector3(ShutterColliderWidth, height, ShutterColliderThickness);
+            box.enabled = false;
+            return colliderObject;
+        }
 
-            // On a plate over the doorway, read by someone approaching from the bow (+Z)
-            // looking back toward -Z: the plate's +Z faces them (no floating text, Dan,
-            // 19 September 2026). It hangs from the tube's cap ring (ShipStubBuilder.
-            // DressCabin, its underside at CapRingBottom), in the doorway's line of glass.
-            const float plateHeight = 0.5f;
-            TextMesh mesh = SunkCost.Editor.Look.PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, direction * (DiameterMeters / 2f + 0.01f) + new Vector3(0f, CapRingBottom - plateHeight / 2f, 0f), Quaternion.identity, 2.0f, plateHeight, 0.16f, new Color(0.9f, 0.95f, 1f));
+        // The status plate on the housing's header over the entrance
+        // (WORLD_LOOP_IMPLEMENTATION_PLAN.md section 4.4: "a TextMesh the panel writes
+        // to"), read by someone approaching from the bow (+Z) looking back toward -Z: the
+        // plate's +Z faces them (no floating text, Dan, 19 September 2026).
+        private static TextMesh CreatePanelLabel(Transform cabinTransform)
+        {
+            TextMesh mesh = PropBuilder.SignPlate(cabinTransform.gameObject, "Cabin Status Sign", ShipParts.DeckCabinPanelName, StatusPlateLocal, Quaternion.identity, 2.0f, 0.5f, 0.16f, new Color(0.9f, 0.95f, 1f));
             mesh.text = string.Empty; // the plate's own size and colour; the flow writes the words
+            return mesh;
         }
     }
 }

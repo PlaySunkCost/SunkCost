@@ -128,7 +128,11 @@ namespace SunkCost.Editor.Prototype
                         changes.Add("deck cabin doorway collider added");
                         dirty = true;
                     }
-                    if (cabin.Find(SunkCost.World.ShipParts.DeckCabinCarGlassName) == null)
+                    // DeckCabinBuilder builds it now (the car's glass, model and panel at
+                    // the car's own size, Dan's round elevator, 28 September 2026); this
+                    // only fills in a ship built before it.
+                    Transform existing = cabin.Find(SunkCost.World.ShipParts.DeckCabinCarGlassName);
+                    if (existing == null)
                     {
                         Transform shell = cabin.Find("Glass Shell");
                         if (shell != null)
@@ -137,11 +141,17 @@ namespace SunkCost.Editor.Prototype
                             carGlass.name = SunkCost.World.ShipParts.DeckCabinCarGlassName;
                             carGlass.transform.localPosition = shell.localPosition;
                             carGlass.transform.localRotation = shell.localRotation;
-                            carGlass.transform.localScale = new Vector3(0.93f, 1f, 0.93f);
+                            carGlass.transform.localScale = Vector3.one; // the car's glass is the car's size (r 2.5), as on the dive car
                             foreach (Collider c in carGlass.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.DestroyImmediate(c);
                             changes.Add("car glass added to the deck cabin");
                             dirty = true;
                         }
+                    }
+                    else if (existing.localScale != Vector3.one)
+                    {
+                        existing.localScale = Vector3.one;
+                        changes.Add("deck car glass at scale 1");
+                        dirty = true;
                     }
                 }
                 if (dirty) PrefabUtility.SaveAsPrefabAsset(root, ShipStubBuilder.PrefabPath);

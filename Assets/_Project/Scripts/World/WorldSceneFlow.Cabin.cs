@@ -323,7 +323,10 @@ namespace SunkCost.World
             bool present = DeckCabinCarPresent(ship);
             SetVisible(doorL, present);
             SetVisible(doorR, present);
+            // The car's glass, its model, its panel and its light (all under
+            // DeckCabinCarGlass), and the panel's button on the model's cap.
             SetVisible(ship.DeckCabinCarGlass, present);
+            SetVisible(ship.DeckCabinButton, present);
             doorR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * open, 0f);
             doorL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * open, 0f);
             // The tube's own leaves mirror the car's while it is up and stay shut while
@@ -333,6 +336,16 @@ namespace SunkCost.World
             Transform housingL = ship.DeckCabinHousingDoorL, housingR = ship.DeckCabinHousingDoorR;
             if (housingR != null) housingR.localRotation = Quaternion.Euler(0f, -deckDoorHalfAngle * housingOpen, 0f);
             if (housingL != null) housingL.localRotation = Quaternion.Euler(0f, deckDoorHalfAngle * housingOpen, 0f);
+            // The shutters stand out on the housing's entrance, 0.7 m past the car's
+            // doorway: shut, their box blocks the entrance where they are drawn (every
+            // peer, from the same replicated state; the server's doorway rule still
+            // reads only the doorway collider below).
+            Collider shutters = ship.DeckCabinShutterCollider;
+            if (shutters != null)
+            {
+                bool shut = housingOpen <= 0.001f;
+                if (shutters.enabled != shut) shutters.enabled = shut;
+            }
             // The doorway blocks only with the doors shut: nobody walks into the
             // housing while the car is away. Moving doors are walked through (the
             // leaves have no colliders, like the car's); the server turns them around
@@ -357,6 +370,9 @@ namespace SunkCost.World
             if (part == null) return;
             foreach (Renderer renderer in part.GetComponentsInChildren<Renderer>(true))
                 if (renderer.enabled != visible) renderer.enabled = visible;
+            // The car's own lamp goes with it: the empty housing is not lit from inside.
+            foreach (Light light in part.GetComponentsInChildren<Light>(true))
+                if (light.enabled != visible) light.enabled = visible;
         }
 
         // The docked ship's cabin never leaves. At sea the car is on the deck while

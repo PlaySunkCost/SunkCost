@@ -37,6 +37,10 @@ namespace SunkCost.World
         public const string DeckCabinPanelName = "DeckCabinPanel";
         public const string DeckCabinCarGlassName = "DeckCabinCarGlass"; // the car's own glass, shown while the car is up (optional part)
         public const string DeckCabinDoorColliderName = "DeckCabinDoorCollider"; // blocks the doorway while the doors are not fully open (optional part)
+        // The round housing's two shutters stand 0.7 m out from the car's doorway (Dan's
+        // elevator, 28 September 2026): a box across the housing's entrance on the
+        // shutters' line, solid exactly while they are shut (optional part).
+        public const string DeckCabinShutterColliderName = "DeckCabinShutterCollider";
         public const string StorageAreaName = "StorageArea";
         public const string StorageVolumeName = "StorageVolume";   // the room's inside: what the pay button sells
         public const string StorageReadoutName = "StorageReadout"; // TextMesh the StorageReadout writes ("$100 / $200")
@@ -91,6 +95,7 @@ namespace SunkCost.World
         public TextMesh DeckCabinPanel => Find(DeckCabinPanelName)?.GetComponent<TextMesh>();
         public Transform DeckCabinCarGlass => Find(DeckCabinCarGlassName);
         public Collider DeckCabinDoorCollider { get { Transform t = Find(DeckCabinDoorColliderName); return t != null ? t.GetComponent<Collider>() : null; } }
+        public Collider DeckCabinShutterCollider { get { Transform t = Find(DeckCabinShutterColliderName); return t != null ? t.GetComponent<Collider>() : null; } }
         public Collider StorageVolume => Find(StorageVolumeName)?.GetComponent<Collider>();
         public TextMesh StorageReadout => Find(StorageReadoutName)?.GetComponent<TextMesh>();
         public Transform BoardingPoint => Find(BoardingPointName);
