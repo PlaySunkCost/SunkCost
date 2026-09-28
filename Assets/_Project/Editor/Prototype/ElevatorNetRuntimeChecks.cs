@@ -83,8 +83,8 @@ namespace SunkCost.Editor.Prototype
         private sealed class Stats
         {
             public string Label;
-            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall, SkewGuestStall, SkewHostDrop, SkewGuestDrop;
-            public double WorstStallSkew, WorstDropSkew, DroppedByHost;
+            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall, SkewGuestStall, SkewDropWindow;
+            public double WorstStallSkew, WorstDropSkew, DropAllowance;
             public float WorstY, WorstWater, WorstDoor, WorstGate, WorstGauge, WorstDeckDoors, WorstYaw, WorstEye, WorstTvEye, MaxLag;
             public readonly List<double> Skews = new();
             public readonly List<string> Fails = new();
@@ -105,7 +105,7 @@ namespace SunkCost.Editor.Prototype
         private static readonly List<string> logs = new();
         private static readonly List<string> softFails = new();
         private static readonly List<bool> admissionRefusalDuringRide = new();
-        private static readonly Dictionary<Guest, (long Wall, double Tick, long DropWall)> guestClock = new();
+        private static readonly Dictionary<Guest, (long Wall, double Tick, long DropWall, double Lost)> guestClock = new();
         // The host is never driven by keys in this job; an idle virtual keyboard stands in for
         // Keyboard.current so a key pressed at the desk during a run cannot walk the host out of
         // the car (NET-E5-HOST-LEFT-CAR, polish-fix 28 Sep 2026). The input gate is not bypassed.
@@ -540,21 +540,22 @@ namespace SunkCost.Editor.Prototype
             return dropped;
         }
 
-        // Whether this guest's tick fell behind its own clock (by more than DropTicks) between
-        // two of its replies within the last ResyncSeconds.
-        private static bool GuestDroppedTicks(Guest g, S s)
+        // How many ticks this guest's tick fell behind its own clock between two of its replies
+        // (its own dropped ticks, or its snap back after a host drop), if within the last ResyncSeconds.
+        private static double GuestDroppedTicks(Guest g, S s)
         {
-            if (s.Tick <= 0 || s.Rate <= 0) return false;
-            long dropWall = long.MinValue;
-            if (guestClock.TryGetValue(g, out (long Wall, double Tick, long DropWall) prev))
+            if (s.Tick <= 0 || s.Rate <= 0) return 0;
+            long window = (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
+            long dropWall = long.MinValue; double lostThen = 0;
+            if (guestClock.TryGetValue(g, out (long Wall, double Tick, long DropWall, double Lost) prev))
             {
-                dropWall = prev.DropWall;
-                if (s.Wall <= prev.Wall) return dropWall != long.MinValue && s.Wall - dropWall < (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
+                dropWall = prev.DropWall; lostThen = prev.Lost;
+                if (s.Wall <= prev.Wall) return dropWall != long.MinValue && s.Wall - dropWall < window ? lostThen : 0;
                 double lost = (s.Wall - prev.Wall) / (double)TimeSpan.TicksPerSecond * s.Rate - (s.Tick - prev.Tick);
-                if (lost > DropTicks) dropWall = s.Wall;
+                if (lost > DropTicks) { dropWall = s.Wall; lostThen = lost; }
             }
-            guestClock[g] = (s.Wall, s.Tick, dropWall);
-            return dropWall != long.MinValue && s.Wall - dropWall < (long)(ResyncSeconds * TimeSpan.TicksPerSecond);
+            guestClock[g] = (s.Wall, s.Tick, dropWall, lostThen);
+            return dropWall != long.MinValue && s.Wall - dropWall < window ? lostThen : 0;
         }
 
         // A spectator's own view, and the TV's picture, against the watched host's eye at the tick.
@@ -613,9 +614,9 @@ namespace SunkCost.Editor.Prototype
             }
             if (s.Ship) CompareDeck(s, st);
             CompareEyes(g, s, st, hostId);
-            double hostTick = double.NaN, hostGap = 0, hostDropped = 0;
+            double hostTick = double.NaN, hostGap = 0;
             bool haveHostTick = s.Tick > 0 && HostTickAtWall(s.Wall, out hostTick, out hostGap);
-            bool guestDrop = GuestDroppedTicks(g, s);
+            double guestLost = GuestDroppedTicks(g, s);
             if (haveHostTick && s.SinceStall < 1.5f)
             {
                 // The guest had a frame over 0.1 s within the last 1.5 s (a dive-site load and
@@ -631,30 +632,28 @@ namespace SunkCost.Editor.Prototype
                 // bursts), so the skew is not measurable there (round 1 fix to the test).
                 st.SkewHostStall++;
             }
-            else if (haveHostTick && (hostDropped = HostDroppedTicks(s.Wall)) > 0)
+            else if (haveHostTick)
             {
                 // FishNet runs at most three ticks in one frame and DROPS the rest
                 // (TimeManager.IncreaseTick, _maximumFrameTicks 3 in Session.unity): a host frame
                 // over 50 ms (a scene swap, a GPU stall on this shared machine) puts the host's
                 // tick behind the clock for good, and a client keeps its old pace until the next
-                // TimingUpdate (one a second) snaps its Tick to the server's. Within ResyncSeconds
-                // of a host drop the skew measures that snap, not a clock offset (NET-TICK-SKEW-SOFT,
-                // polish-fix 28 Sep 2026). Counted and named, like the stalls above.
-                st.SkewHostDrop++;
-                st.DroppedByHost = Math.Max(st.DroppedByHost, hostDropped);
-                if (Math.Abs(s.Tick - hostTick) > Math.Abs(st.WorstDropSkew)) st.WorstDropSkew = s.Tick - hostTick;
-            }
-            else if (haveHostTick && guestDrop)
-            {
-                // The same on the guest's side: its tick fell behind its own clock between two
-                // replies (dropped ticks, or the snap back after a host drop) within ResyncSeconds.
-                st.SkewGuestDrop++;
-                if (Math.Abs(s.Tick - hostTick) > Math.Abs(st.WorstDropSkew)) st.WorstDropSkew = s.Tick - hostTick;
-            }
-            else if (haveHostTick)
-            {
-                double skewNow = s.Tick - hostTick;
-                if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (reply {st.Replies}, guest frame lag {s.FrameLag * 1000f:0} ms, host frame gap {hostGap * 1000:0} ms)";
+                // TimingUpdate (one a second) snaps its Tick to the server's; a guest's own long
+                // frame does the same the other way. Within ResyncSeconds of such a drop the skew
+                // is forgiven by the ticks dropped (the larger of the host's and the guest's), no
+                // more: what remains is still measured against the limit (NET-TICK-SKEW-SOFT,
+                // polish-fix 28 Sep 2026).
+                double raw = s.Tick - hostTick;
+                double allowance = Math.Max(HostDroppedTicks(s.Wall), guestLost);
+                double skewNow = raw;
+                if (allowance > 0)
+                {
+                    st.SkewDropWindow++;
+                    st.DropAllowance = Math.Max(st.DropAllowance, allowance);
+                    if (Math.Abs(raw) > Math.Abs(st.WorstDropSkew)) st.WorstDropSkew = raw;
+                    skewNow = Math.Sign(raw) * Math.Max(0, Math.Abs(raw) - allowance);
+                }
+                if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (raw {raw:0.00}, dropped-tick allowance {allowance:0.00}; reply {st.Replies}, guest frame lag {s.FrameLag * 1000f:0} ms, host frame gap {hostGap * 1000:0} ms)";
                 st.Skews.Add(skewNow);
             }
         }
@@ -734,7 +733,7 @@ namespace SunkCost.Editor.Prototype
                 foreach (string m in required) Check(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 foreach (string m in wanted) Soft(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 Soft(st.MaxLag <= LagLimit, $"{label}: {g.Label} showed a phase the host had left for at most {LagLimit} s (worst {st.MaxLag:0.00} s over {st.Stale} replies)");
-                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s, {st.SkewGuestStall} within 1.5 s after a guest stall (worst there {st.WorstStallSkew:0.00}); {st.SkewHostDrop} within {ResyncSeconds} s after the host dropped ticks (up to {st.DroppedByHost:0.0} in that window), {st.SkewGuestDrop} after the guest's tick fell behind its clock (worst in those windows {st.WorstDropSkew:0.00}); {st.Skews.Count} measured)");
+                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s, {st.SkewGuestStall} within 1.5 s after a guest stall (worst there {st.WorstStallSkew:0.00}); {st.SkewDropWindow} measured within {ResyncSeconds} s after dropped ticks, less the ticks dropped (allowance up to {st.DropAllowance:0.0}, raw worst there {st.WorstDropSkew:0.00}); {st.Skews.Count} measured)");
                 Soft(st.Unmatched <= Math.Max(2, st.Replies / 10), $"{label}: {g.Label}'s car replies found the host's frames at their tick ({st.Unmatched} of {st.Replies} did not)");
                 Soft(st.ScreenSoft == 0, $"{label}: {g.Label}'s deck screen read the host's words ({st.ScreenSoft} replies differed; a refusal shows by each peer's own clock)");
                 JudgeRecorder(label + ": " + g.Label, st.LastReply);
