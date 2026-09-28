@@ -533,6 +533,24 @@ namespace SunkCost.Editor.Prototype
             var stats = new Dictionary<Guest, Stats>();
             float deadline = Time.unscaledTime + seconds, doneAt = -1f;
             var replies = new Dictionary<Guest, string>();
+            // A guest's sample is compared only once the host has recorded frames past the
+            // guest's tick (the guest's tick often runs a tick or two ahead of the host's
+            // last LateUpdate: comparing it with the host's last frame would compare two
+            // different moments). Round 1 fix to the test (net tester, 28 Sep 2026).
+            var pending = new List<(Guest g, S s, Stats st)>();
+            void ComparePending(bool final)
+            {
+                IReadOnlyList<S> rec = ElevatorNetProbe.Recorded;
+                double hostLast = rec.Count > 0 ? rec[rec.Count - 1].Tick : double.NegativeInfinity;
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    (Guest g, S s, Stats st) p = pending[i];
+                    double need = Math.Max(p.s.Tick, p.s.CarTick) + SkewLimitTicks;
+                    if (!final && hostLast < need) continue;
+                    Compare(p.g, p.s, p.st, hostId);
+                    pending.RemoveAt(i--);
+                }
+            }
             while (Time.unscaledTime < deadline)
             {
                 if (doneAt < 0f && done()) doneAt = Time.unscaledTime;
@@ -547,10 +565,13 @@ namespace SunkCost.Editor.Prototype
                     st.LastReply = kv.Value;
                     if (!ElevatorNetProbe.TryParse(kv.Value, out S s)) { st.NoLine++; continue; }
                     st.Last = s; st.HaveLast = true;
-                    Compare(kv.Key, s, st, hostId);
+                    pending.Add((kv.Key, s, st));
                 }
+                ComparePending(false);
                 if (between != null) yield return between();
             }
+            yield return Wait(0.25f); // let the host record past the last replies
+            ComparePending(true);
             Check(doneAt >= 0f, $"{label}: the stage completed within {seconds:0} s");
             lastStats = stats;
         }
@@ -567,6 +588,7 @@ namespace SunkCost.Editor.Prototype
                 Say($"{st.Label}: {st.Replies} replies, {st.Car} car + {st.Deck} deck comparisons at the tick ({st.DeckInFlight} deck in flight), {st.Eye} spectator, {st.TvRows} TV; " +
                     $"worst carY {st.WorstY * 100f:0.0} cm, water {st.WorstWater * 100f:0.0} cm, gauge {st.WorstGauge:0.000}, door {st.WorstDoor:0.000}, gate {st.WorstGate:0.000}, deck doors {st.WorstDeckDoors:0.000}, yaw {st.WorstYaw:0.00}°, spectator eye {st.WorstEye:0.00} m, TV eye {st.WorstTvEye:0.00} m; " +
                     $"stale {st.Stale} (worst {st.MaxLag:0.00} s), unmatched {st.Unmatched}, torn {st.Torn}, no line {st.NoLine}; tick skew median {median:0.00}, worst {skew:0.00} ticks; moments {string.Join(",", st.Moments.OrderBy(m => m))}");
+                Say($"{st.Label} last recorder: {Line(st.LastReply, "elevnetrec: ")}");
                 Check(st.NoLine == 0, $"{label}: {g.Label}'s every reply carries the elevnet line ({st.NoLine} without)");
                 Check(st.FailCount == 0, $"{label}: {g.Label} shows what the host shows at the same tick ({st.FailCount} differences: {string.Join(" | ", st.Fails)})");
                 if (minCar > 0) Check(st.Car >= minCar, $"{label}: {g.Label} was compared at {st.Car} car ticks (at least {minCar})");
@@ -922,10 +944,14 @@ namespace SunkCost.Editor.Prototype
             Heading("E7 — day 3: B2 and C2 (headless) join between days: their first reply is the host's deck state at once (NT4b); 4 players ride down (NT6 4p)");
             Guest B2 = Launch("B2", "Temp/elevator-net-guest-b2", headless: true);
             yield return Joined(B2, "E7 B2");
-            JudgeFirstReply(B2, lastReply, "E7 B2");
+            string firstB2 = lastReply;
+            yield return Wait(0.3f); // the host records past the reply's tick before the comparison
+            JudgeFirstReply(B2, firstB2, "E7 B2");
             Guest C2 = Launch("C2", "Temp/elevator-net-guest-c2", headless: true);
             yield return Joined(C2, "E7 C2");
-            JudgeFirstReply(C2, lastReply, "E7 C2");
+            string firstC2 = lastReply;
+            yield return Wait(0.3f); // the host records past the reply's tick before the comparison
+            JudgeFirstReply(C2, firstC2, "E7 C2");
             Check(SpawnedPlayers() == 4 && crew.Count == 3, "E7 four players: " + SpawnedPlayers());
             yield return IntoDeckCabin(new[] { A, B2, C2 }, "E7");
             ResetRecorders(); yield return ResetGuests();
