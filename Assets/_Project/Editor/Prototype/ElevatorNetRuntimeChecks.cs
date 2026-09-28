@@ -80,7 +80,8 @@ namespace SunkCost.Editor.Prototype
         private sealed class Stats
         {
             public string Label;
-            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall;
+            public int Replies, NoLine, Car, Deck, DeckInFlight, Eye, TvRows, Stale, Unmatched, Torn, FailCount, ScreenSoft, GateEdge, SkewHostStall, SkewGuestStall;
+            public double WorstStallSkew;
             public float WorstY, WorstWater, WorstDoor, WorstGate, WorstGauge, WorstDeckDoors, WorstYaw, WorstEye, WorstTvEye, MaxLag;
             public readonly List<double> Skews = new();
             public readonly List<string> Fails = new();
@@ -552,7 +553,15 @@ namespace SunkCost.Editor.Prototype
             CompareEyes(g, s, st, hostId);
             double hostTick = double.NaN, hostGap = 0;
             bool haveHostTick = s.Tick > 0 && HostTickAtWall(s.Wall, out hostTick, out hostGap);
-            if (haveHostTick && hostGap > 0.1)
+            if (haveHostTick && s.SinceStall < 1.5f)
+            {
+                // The guest had a frame over 0.1 s within the last 1.5 s (a dive-site load and
+                // warm-up): its network tick catches up over the next frames, so this moment
+                // measures the catch-up, not a clock offset. Counted and named (round 1 fix to the test).
+                st.SkewGuestStall++;
+                if (Math.Abs(s.Tick - hostTick) > Math.Abs(st.WorstStallSkew)) st.WorstStallSkew = s.Tick - hostTick;
+            }
+            else if (haveHostTick && hostGap > 0.1)
             {
                 // The host's two frames around the guest's moment are more than 0.1 s apart (an
                 // editor stall): the host's tick is not linear across a stall (it catches up in
@@ -642,7 +651,7 @@ namespace SunkCost.Editor.Prototype
                 foreach (string m in required) Check(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 foreach (string m in wanted) Soft(st.Moments.Contains(m), $"{label}: {g.Label} was sampled at '{m}' (saw {string.Join(",", st.Moments.OrderBy(x => x))})");
                 Soft(st.MaxLag <= LagLimit, $"{label}: {g.Label} showed a phase the host had left for at most {LagLimit} s (worst {st.MaxLag:0.00} s over {st.Stale} replies)");
-                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s)");
+                Soft(skew <= SkewLimitTicks, $"{label}: {g.Label}'s tick within {SkewLimitTicks} ticks of the host's at the same moment (worst {skew:0.00}, median {median:0.00}; worst {st.WorstSkewAt}; {st.SkewHostStall} replies skipped across a host stall over 0.1 s, {st.SkewGuestStall} within 1.5 s after a guest stall (worst there {st.WorstStallSkew:0.00}))");
                 Soft(st.Unmatched <= Math.Max(2, st.Replies / 10), $"{label}: {g.Label}'s car replies found the host's frames at their tick ({st.Unmatched} of {st.Replies} did not)");
                 Soft(st.ScreenSoft == 0, $"{label}: {g.Label}'s deck screen read the host's words ({st.ScreenSoft} replies differed; a refusal shows by each peer's own clock)");
                 JudgeRecorder(label + ": " + g.Label, st.LastReply);
