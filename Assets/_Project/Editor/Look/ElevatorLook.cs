@@ -437,6 +437,7 @@ namespace SunkCost.Editor.Look
             // too) instead of white; an edit-mode probe from inside, looking up: pixels at
             // 200 or more in the roof region 21.2 % at the 0.55 grey, 14.4 % at black.
             m.SetColor("_BaseColor", Color.black);
+            m.SetColor("_Color", Color.black); // the legacy mirror URP's validation writes (NET-CHURN-ADMISSION)
             m.SetTexture("_EmissionMap", baseMap);
             m.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.85f) * CarRingLight.DefaultGlow);
             m.EnableKeyword("_EMISSION");
@@ -487,6 +488,10 @@ namespace SunkCost.Editor.Look
             m.renderQueue = (int)RenderQueue.Transparent;
             m.SetColor("_BaseColor", colour);
             m.SetTexture("_BaseMap", null);
+            // URP's validation mirrors these into the legacy _Color/_MainTex on every build;
+            // write them the same way so a build leaves the saved asset unchanged.
+            m.SetColor("_Color", colour);
+            m.SetTexture("_MainTex", null);
             m.SetFloat("_Metallic", 0f);
             m.SetFloat("_Smoothness", smoothness);
             EditorUtility.SetDirty(m);
