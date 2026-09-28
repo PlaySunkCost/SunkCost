@@ -255,7 +255,7 @@ namespace SunkCost.Net
                     stance.SetDesiredCrouch(command.slot != 0);
                     break;
                 case "walk": StartWalk(command.aim, command.position.x, player); return "walking " + command.position.x.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s"; // elevator-deck tester
-                case "elev_reset": ResetElevatorDeck(); break; // elevator-deck tester
+                case "elev_reset": ResetElevatorDeck(); ElevatorReset(); break; // elevator-deck and elevator-dive testers
                 case "snapshot": break;
                 // The guest's own screen, HUD and visor included, to a file (the item field is the path).
                 case "capture": ScreenCapture.CaptureScreenshot(command.item); return "capturing " + command.item;
@@ -373,6 +373,7 @@ namespace SunkCost.Net
         private void LateUpdate()
         {
             RecordElevatorDeck(); // the elevator-deck tester's per-frame recorder (above)
+            RecordElevator(); // the elevator-dive tester's per-frame recorder (below)
             var car = SunkCost.World.WorldSceneFlow.FindCarCached();
             var localPlayer = SunkCost.World.WorldSceneFlow.LocalPlayer();
             if (car != null && localPlayer != null && localPlayer.gameObject.scene == car.gameObject.scene && (car.State == SunkCost.Diving.ElevatorState.AtTop || car.State == SunkCost.Diving.ElevatorState.Descending))
@@ -525,6 +526,188 @@ namespace SunkCost.Net
             walkEnd = p;
         }
 
+        // ---- the dive car of Dan's round elevator (elevator-dive tester, 28 September 2026) ----
+        // What THIS peer presents of the car against the rules the replicated phase gives, every
+        // frame: the car where its profile puts it on the tick clock, the one water truth, the
+        // gauge, the doors and the gate (never open at the wrong time, together at the bottom),
+        // the underwater view against the eye, and the bubbles (none above the water, none in a
+        // still full car). `elev_reset` clears it. One "elevator:" line per snapshot reports it.
+        private static int elevFrames, elevDoorWrong, elevGateWrong, elevViewStreak, elevViewWorst, elevSubStreak, elevSubWorst, elevBubbleStill, elevBubbleAboveFrames;
+        private static float elevWorstY, elevWorstLag, elevWorstWater, elevWorstGauge, elevWorstGate, elevFirstFrameErr = -1f, elevViewWeight;
+        private static SunkCost.Diving.ElevatorController elevCar;
+        private static SunkCost.Diving.CabinWater elevWater;
+        private static SunkCost.Diving.CabinWaterVisuals elevVisuals;
+        private static SunkCost.Diving.CabinPanelDisplay elevDisplay;
+        private static SunkCost.Diving.ElevatorDoor elevDoor;
+        private static SunkCost.Diving.ShaftGate elevGate;
+        private static Collider elevGateCollider;
+        private static SunkCost.Diving.CarRingLight elevRing;
+        private static Light elevCabinLight;
+        private static ParticleSystem[] elevBubbles = System.Array.Empty<ParticleSystem>();
+        private static readonly ParticleSystem.Particle[] elevParticles = new ParticleSystem.Particle[4096];
+        private static int elevBubbleCount = -1;
+
+        public static void ElevatorReset()
+        {
+            elevFrames = elevDoorWrong = elevGateWrong = elevViewStreak = elevViewWorst = elevSubStreak = elevSubWorst = elevBubbleStill = elevBubbleAboveFrames = 0;
+            elevWorstY = elevWorstLag = elevWorstWater = elevWorstGauge = elevWorstGate = 0f;
+            elevFirstFrameErr = -1f;
+            elevCar = null; // the next frame with a car is a first frame again
+        }
+
+        private static void ElevatorBind(SunkCost.Diving.ElevatorController car)
+        {
+            elevCar = car;
+            elevWater = car.GetComponent<SunkCost.Diving.CabinWater>();
+            Transform fx = car.transform.Find("Cabin Water FX");
+            elevVisuals = fx != null ? fx.GetComponent<SunkCost.Diving.CabinWaterVisuals>() : null;
+            elevDisplay = car.GetComponentsInChildren<SunkCost.Diving.CabinPanelDisplay>(true).FirstOrDefault(d => d.DisplayMode == SunkCost.Diving.CabinPanelDisplay.Mode.Car);
+            elevDoor = car.GetComponentInChildren<SunkCost.Diving.ElevatorDoor>(true);
+            elevGate = null;
+            foreach (GameObject root in car.gameObject.scene.GetRootGameObjects())
+                if (elevGate == null) elevGate = root.GetComponentInChildren<SunkCost.Diving.ShaftGate>(true);
+            elevGateCollider = elevGate == null ? null : (elevGate.GetComponent<Collider>() ?? elevGate.GetComponentInChildren<Collider>(true));
+            elevRing = car.GetComponentInChildren<SunkCost.Diving.CarRingLight>(true);
+            Transform bulb = car.transform.Find("Cabin Light");
+            elevCabinLight = bulb != null ? bulb.GetComponent<Light>() : null;
+            // The water rework's bubbles: particle systems under an object whose name contains "Bubble" in the FX.
+            var bubbles = new System.Collections.Generic.List<ParticleSystem>();
+            if (fx != null)
+                foreach (ParticleSystem ps in fx.GetComponentsInChildren<ParticleSystem>(true))
+                    for (Transform x = ps.transform; x != null && x != fx; x = x.parent)
+                        if (x.name.IndexOf("Bubble", StringComparison.OrdinalIgnoreCase) >= 0) { bubbles.Add(ps); break; }
+            elevBubbles = bubbles.ToArray();
+        }
+
+        public static void RecordElevator()
+        {
+            var car = SunkCost.World.WorldSceneFlow.FindCarCached();
+            var flow = SunkCost.World.WorldSceneFlow.Instance;
+            var day = SunkCost.World.CrewDayState.Instance;
+            if (car == null || flow == null || day == null) return;
+            bool first = car != elevCar;
+            if (first) ElevatorBind(car);
+            elevFrames++;
+
+            // The car where its own elapsed time puts it (exact: SetDrivenPhase applies it), and
+            // that elapsed time on the tick-anchored phase clock (within this frame).
+            SunkCost.World.ElevatorPhase phase = day.Elevator;
+            float progress = car.State switch
+            {
+                SunkCost.Diving.ElevatorState.AtTop => 0f,
+                SunkCost.Diving.ElevatorState.AtBottom => 1f,
+                SunkCost.Diving.ElevatorState.Sealing => car.Upward ? 1f : 0f,
+                SunkCost.Diving.ElevatorState.Descending => SunkCost.Diving.ElevatorMath.ProgressAt(car.Profile, car.StateElapsed, false),
+                SunkCost.Diving.ElevatorState.Ascending => SunkCost.Diving.ElevatorMath.ProgressAt(car.Profile, car.StateElapsed, true),
+                _ => 0f
+            };
+            float yErr = Mathf.Abs(car.transform.position.y - Vector3.Lerp(car.TopPosition, car.BottomPosition, progress).y);
+            elevWorstY = Mathf.Max(elevWorstY, yErr);
+            if (phase.State == car.State)
+                elevWorstLag = Mathf.Max(elevWorstLag, Mathf.Abs(flow.ElapsedSince(phase.StartTick) - car.StateElapsed) - Time.unscaledDeltaTime - 0.005f);
+
+            // The one water truth and the gauge.
+            float waterErr = 0f;
+            if (elevWater != null)
+            {
+                waterErr = Mathf.Abs(elevWater.LevelMeters - SunkCost.Diving.ElevatorMath.WaterLevelInCar(car.SeaLevelY, car.transform.position.y, car.SpanMeters));
+                elevWorstWater = Mathf.Max(elevWorstWater, waterErr);
+                if (elevDisplay != null) elevWorstGauge = Mathf.Max(elevWorstGauge, Mathf.Abs(elevDisplay.GaugeFraction - elevWater.Level01));
+            }
+            if (first) elevFirstFrameErr = Mathf.Max(yErr, waterErr);
+
+            // The doors and the gate.
+            if (elevDoor != null && elevGate != null)
+            {
+                bool doorShut = car.State == SunkCost.Diving.ElevatorState.Descending || car.State == SunkCost.Diving.ElevatorState.Ascending ||
+                    (car.Driven && (car.State == SunkCost.Diving.ElevatorState.AtTop || (car.State == SunkCost.Diving.ElevatorState.Sealing && !car.Upward)));
+                if (doorShut && elevDoor.OpenFraction > 0.001f) elevDoorWrong++;
+                bool atBottom = car.State == SunkCost.Diving.ElevatorState.AtBottom || (car.State == SunkCost.Diving.ElevatorState.Sealing && car.Upward);
+                bool gateBlocks = elevGateCollider != null && elevGateCollider.enabled;
+                if (!atBottom && (elevGate.OpenFraction > 0.001f || !gateBlocks)) elevGateWrong++;
+                if (atBottom) elevWorstGate = Mathf.Max(elevWorstGate, Mathf.Abs(elevGate.OpenFraction - elevDoor.OpenFraction));
+            }
+
+            // The view: this player's camera against sea level (= the car's visible water for an eye in it).
+            var local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            if (local != null && !local.IsDead && local.PlayerCamera != null && local.gameObject.scene == car.gameObject.scene)
+            {
+                Camera cam = local.PlayerCamera;
+                float eye = cam.transform.position.y, sea = car.SeaLevelY;
+                elevViewWeight = SunkCost.Sites.UnderwaterGrade.PrepareAll(cam);
+                bool viewWrong = (eye < sea - 0.03f && elevViewWeight < 0.999f) || (eye > sea + 0.55f && elevViewWeight > 0.001f);
+                elevViewStreak = viewWrong ? elevViewStreak + 1 : 0; elevViewWorst = Mathf.Max(elevViewWorst, elevViewStreak);
+                var sub = local.GetComponent<SunkCost.Player.PlayerSubmersion>();
+                bool subWrong = sub != null && Mathf.Abs(eye - sea) > 0.03f && sub.IsSubmerged != (eye < sea);
+                elevSubStreak = subWrong ? elevSubStreak + 1 : 0; elevSubWorst = Mathf.Max(elevSubWorst, elevSubStreak);
+            }
+            else { elevViewStreak = 0; elevSubStreak = 0; }
+
+            // The bubbles (DIVE-BUBBLES): none above the water; none in a still, full car.
+            if (elevBubbles.Length > 0 && elevWater != null)
+            {
+                int count = 0, above = 0;
+                foreach (ParticleSystem ps in elevBubbles)
+                {
+                    if (ps == null || !ps.gameObject.activeInHierarchy) continue;
+                    int n = ps.GetParticles(elevParticles);
+                    count += n;
+                    ParticleSystem.MainModule main = ps.main;
+                    for (int i = 0; i < n; i++)
+                    {
+                        Vector3 p = elevParticles[i].position;
+                        Vector3 world = main.simulationSpace == ParticleSystemSimulationSpace.World ? p
+                            : main.simulationSpace == ParticleSystemSimulationSpace.Custom && main.customSimulationSpace != null ? main.customSimulationSpace.TransformPoint(p)
+                            : ps.transform.TransformPoint(p);
+                        if (world.y > elevWater.SurfaceWorldY + 0.03f) above++;
+                    }
+                }
+                elevBubbleCount = count;
+                if (above > 0) elevBubbleAboveFrames++;
+                float span = car.SpanMeters, y = car.transform.position.y;
+                bool stillFull = elevWater.LevelMeters >= span - 0.02f &&
+                    (car.State == SunkCost.Diving.ElevatorState.AtBottom || (car.State == SunkCost.Diving.ElevatorState.Sealing && car.Upward) ||
+                     (car.State == SunkCost.Diving.ElevatorState.Descending && y < car.SeaLevelY - span - 12f));
+                if (stillFull && count > 0) elevBubbleStill++;
+            }
+            else elevBubbleCount = -1;
+        }
+
+        private static string Rgb(Color c) => string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0.00}/{1:0.00}/{2:0.00}", c.r, c.g, c.b);
+
+        // "elevator: ..." — this peer's dive car now, and its recorder since elev_reset.
+        public static string ElevatorLine()
+        {
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var car = SunkCost.World.WorldSceneFlow.FindCarCached();
+            var local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            var time = InstanceFinder.TimeManager;
+            double tick = time == null ? 0.0 : time.TicksToTime(time.Tick) + time.GetTickElapsedAsDouble();
+            string now = "carState=none";
+            if (car != null)
+            {
+                if (car != elevCar) ElevatorBind(car);
+                var sub = local != null ? local.GetComponent<SunkCost.Player.PlayerSubmersion>() : null;
+                now = string.Format(ci,
+                    "carState={0}; carUp={1}; carY={2:0.000}; carElapsed={3:0.000}; door={4:0.000}; gate={5:0.000}; gateBlocks={6}; " +
+                    "carWater={7:0.000}; waterShown={8}; waterY={9:0.000}; flow={10}; pour={11}; visStreams={12}; foam={13:0.00}; bubbles={14}; drain={15:0.00}; bubbleParticles={16}; " +
+                    "gauge={17:0.000}; ringEmission={18}; cabinLight={19}; eyeY={20:0.000}; eyeUnder={21}; viewWeight={22:0.00}",
+                    car.State, car.Upward, car.transform.position.y, car.StateElapsed,
+                    elevDoor == null ? -1f : elevDoor.OpenFraction, elevGate == null ? -1f : elevGate.OpenFraction, elevGateCollider != null && elevGateCollider.enabled,
+                    elevWater == null ? -1f : elevWater.LevelMeters, elevWater != null && elevWater.SurfaceShown, elevWater == null ? 0f : elevWater.SurfaceWorldY,
+                    elevWater == null ? "none" : elevWater.Flow.ToString(),
+                    elevVisuals == null ? -1 : elevVisuals.ActiveStreams, elevVisuals == null ? -1 : elevVisuals.VisibleStreams,
+                    elevVisuals == null ? 0f : elevVisuals.Foam01, elevVisuals != null && elevVisuals.Bubbles, elevVisuals == null ? 0f : elevVisuals.Drain01, elevBubbleCount,
+                    elevDisplay == null ? -1f : elevDisplay.GaugeFraction, elevRing == null ? "none" : Rgb(elevRing.CurrentEmission), elevCabinLight == null ? "none" : Rgb(elevCabinLight.color),
+                    local == null || local.PlayerCamera == null ? 0f : local.PlayerCamera.transform.position.y, sub != null && sub.IsSubmerged, elevViewWeight);
+            }
+            return string.Format(ci,
+                "elevator: tick={0:0.000}; {1}; elevFrames={2}; elevWorstY={3:0.0000}; elevWorstLag={4:0.000}; elevWorstWater={5:0.0000}; elevWorstGauge={6:0.000}; elevWorstGate={7:0.000}; " +
+                "elevDoorWrong={8}; elevGateWrong={9}; elevViewWorst={10}; elevSubWorst={11}; elevBubbleStill={12}; elevBubbleAbove={13}; elevFirstFrameErr={14:0.000}\n",
+                tick, now, elevFrames, elevWorstY, Mathf.Max(0f, elevWorstLag), elevWorstWater, elevWorstGauge, elevWorstGate,
+                elevDoorWrong, elevGateWrong, elevViewWorst, elevSubWorst, elevBubbleStill, elevBubbleAboveFrames, elevFirstFrameErr);
+        }
+
         private static string CabinWaterLevel()
         {
             SunkCost.Diving.ElevatorController car = SunkCost.World.WorldSceneFlow.FindCar();
@@ -632,6 +815,7 @@ namespace SunkCost.Net
             text += $"giveup={(day == null ? -1 : day.GiveUpVotes)}/{(day == null ? -1 : day.GiveUpCrew)}; quotaBoard={quotaText.Replace("\n", " | ")};\n";
             text += ConsoleLine();
             text += ElevatorDeckLine();
+            text += ElevatorLine(); // the elevator-dive tester's "elevator:" line
             foreach (var hoop in FindObjectsByType<SunkCost.Look.HoopScore>(FindObjectsSortMode.None))
             {
                 var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();
