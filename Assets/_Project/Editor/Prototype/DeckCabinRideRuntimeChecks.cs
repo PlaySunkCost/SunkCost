@@ -809,15 +809,17 @@ namespace SunkCost.Editor.Prototype
             Check(Submersion() != null && Submersion().IsSubmerged, "T2 still submerged on the seafloor");
 
             // T3: the tube is sealed: a capsule sweep into it from behind is stopped by
-            // the walls; from the car's centre, only the doorway direction gets out.
+            // the tube (its walls, or first the foot's plinth and guard colliders round
+            // them since Dan's round shaft, 28 September 2026); from the car's centre,
+            // only the doorway direction gets out.
             Transform walls = TubeWalls();
             Check(walls != null, "T3 tube walls present");
             Vector3 behind = car.transform.position - doorway * (tubeRadius + 1.5f); behind.y = car.transform.position.y + 0.05f;
             Collider blockedBy = Sweep(behind, doorway, tubeRadius + 1.5f);
-            Check(blockedBy != null && blockedBy.transform.IsChildOf(walls), "T3 sweep into the tube from behind is blocked by " + (blockedBy == null ? "nothing" : blockedBy.name));
+            Check(blockedBy != null && blockedBy.transform.IsChildOf(walls.parent), "T3 sweep into the tube from behind is blocked by " + (blockedBy == null ? "nothing" : blockedBy.name));
             Vector3 side = car.transform.position + Vector3.Cross(Vector3.up, doorway) * (tubeRadius + 1.5f); side.y = behind.y;
             blockedBy = Sweep(side, -Vector3.Cross(Vector3.up, doorway), tubeRadius + 1.5f);
-            Check(blockedBy != null && blockedBy.transform.IsChildOf(walls), "T3 sweep into the tube from the side is blocked by " + (blockedBy == null ? "nothing" : blockedBy.name));
+            Check(blockedBy != null && blockedBy.transform.IsChildOf(walls.parent), "T3 sweep into the tube from the side is blocked by " + (blockedBy == null ? "nothing" : blockedBy.name));
             Vector3 centre = car.transform.position + Vector3.up * 0.15f;
             Check(Sweep(centre, -doorway, tubeRadius + 1f) != null, "T3 sweep out of the car away from the doorway is blocked");
             Check(Sweep(centre, doorway, tubeRadius + 1f) == null, "T3 sweep out of the car through the doorway passes");
