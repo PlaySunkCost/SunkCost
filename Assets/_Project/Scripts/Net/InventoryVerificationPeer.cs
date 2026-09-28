@@ -417,11 +417,12 @@ namespace SunkCost.Net
         private static int deckFrames, deckBadBox, deckBadDoorway, deckBadShown, deckShutFrames, deckShownRun;
         private static float deckWorstShutter, deckHalfAngle = float.NaN;
         private static string deckFirstBad = string.Empty;
+        private static string deckWorstAt = string.Empty; // where the worst shutter error was read (round 2)
 
         public static void ResetElevatorDeck()
         {
             deckFrames = deckBadBox = deckBadDoorway = deckBadShown = deckShutFrames = deckShownRun = 0;
-            deckWorstShutter = 0f; deckFirstBad = string.Empty;
+            deckWorstShutter = 0f; deckFirstBad = string.Empty; deckWorstAt = string.Empty;
         }
 
         // DeckCabinCarPresent (WorldSceneFlow.Cabin), recomputed here from the replicated state.
@@ -457,7 +458,12 @@ namespace SunkCost.Net
             float shownShutter = Mathf.Abs(Mathf.DeltaAngle(0f, shutterR.localEulerAngles.y)) / deckHalfAngle;
             float wantShutter = present ? open : 0f;
             float err = Mathf.Abs(shownShutter - wantShutter);
-            if (err > deckWorstShutter) deckWorstShutter = err;
+            if (err > deckWorstShutter)
+            {
+                deckWorstShutter = err;
+                var d = SunkCost.World.CrewDayState.Instance;
+                deckWorstAt = $"frame {deckFrames}: shown={shownShutter:0.000} want={wantShutter:0.000} present={present} ride={d.CabinRide.Stage}/{d.CabinRide.Direction}/{d.CabinRide.Active} opening={d.CabinRide.DoorOpening} car={d.Elevator.State}/{d.Elevator.Upward} t={Time.unscaledTime:0.00}";
+            }
             bool shutShown = shownShutter <= 0.001f;
             if (shutShown) deckShutFrames++;
             Collider box = ship.DeckCabinShutterCollider, doorway = ship.DeckCabinDoorCollider;
@@ -490,7 +496,7 @@ namespace SunkCost.Net
             string Flat(string s) => (s ?? string.Empty).Replace("\n", " | ").Replace(";", ",");
             return string.Format(ci,
                 "elevatorDeck: deckPresent={0}; deckCarShown={1}; deckDoors={2:0.000}; doorsShown={3:0.000}; shutters={4:0.000}; shutterBox={5}; doorBox={6}; deckPanel='{7}'; deckScreen='{8}'; deckGauge={9:0.000}; " +
-                "deckFrames={10}; deckWorstShutter={11:0.000}; deckBadBox={12}; deckBadDoorway={13}; deckBadShown={14}; deckShutFrames={15}; deckFirstBad='{16}'; " +
+                "deckFrames={10}; deckWorstShutter={11:0.000}; deckBadBox={12}; deckBadDoorway={13}; deckBadShown={14}; deckShutFrames={15}; deckFirstBad='{16}'; deckWorstAt='{24}'; " +
                 "walkDone={17}; walked={18:0.00}; walkFrames={19}; walkGrounded={20}; walkMaxDrop={21:0.000}; walkMaxRise={22:0.000}; walkEnd={23}\n",
                 ExpectedDeckCarPresent(), AnyRendererOn(ship.DeckCabinCarGlass), flow.DeckCabinOpenFraction(),
                 doorR == null ? -1f : Mathf.Abs(Mathf.DeltaAngle(0f, doorR.localEulerAngles.y)) / half,
@@ -498,7 +504,7 @@ namespace SunkCost.Net
                 ship.DeckCabinShutterCollider != null && ship.DeckCabinShutterCollider.enabled, ship.DeckCabinDoorCollider != null && ship.DeckCabinDoorCollider.enabled,
                 Flat(ship.DeckCabinPanel != null ? ship.DeckCabinPanel.text : "none"), Flat(display != null ? display.ScreenText : "none"), display != null ? display.GaugeFraction : -1f,
                 deckFrames, deckWorstShutter, deckBadBox, deckBadDoorway, deckBadShown, deckShutFrames, Flat(deckFirstBad),
-                walkUntil < 0f && walkFrames > 0, walkDistance, walkFrames, walkGroundedFrames, walkMaxDrop, walkMaxRise, walkEnd.ToString("F3"));
+                walkUntil < 0f && walkFrames > 0, walkDistance, walkFrames, walkGroundedFrames, walkMaxDrop, walkMaxRise, walkEnd.ToString("F3"), Flat(deckWorstAt));
         }
 
         // "walk": the owned capsule walks through CharacterController.Move (the collision the

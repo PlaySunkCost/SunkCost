@@ -416,6 +416,7 @@ namespace SunkCost.Editor.Prototype
                 yield return GuestEventually(r => Field(r, "deckCarShown") == "True" && FieldF(r, "shutters") > 0.99f && Field(r, "shutterBox") == "False", 4f, () => "RT-N1 the guest sees the car up and the shutters open");
             }
             finally { Application.logMessageReceived -= listen; }
+            Say("host  after RT-N1: " + InventoryVerificationPeer.ElevatorDeckLine().Trim());
         }
 
         // Holds W (re-queued every frame) while `sample` reads each frame; stops when `done` holds or the time is up.
@@ -543,6 +544,7 @@ namespace SunkCost.Editor.Prototype
             yield return RetestLeafGlass(sea);
 
             // ---- the guest ----
+            Say("host  before G0: " + InventoryVerificationPeer.ElevatorDeckLine().Trim());
             Heading("G0 — a guest joins at sea between days");
             guest = LaunchGuest();
             yield return Expect(() => GuestCopy() != null, 45f, () => "G0 the guest's player spawned");
