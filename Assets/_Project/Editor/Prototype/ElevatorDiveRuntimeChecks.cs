@@ -280,6 +280,8 @@ namespace SunkCost.Editor.Prototype
         private static string ElevatorLineOf(string reply) => LineOf(reply, "elevator:");
         private static string ElevField(string reply, string name) => FieldOf(ElevatorLineOf(reply), name);
         private static string DeckField(string reply, string name) => FieldOf(LineOf(reply, "elevatorDeck:"), name);
+        // The walk probe's fields: on the "elevator:" line (a guest below has no ship, so no "elevatorDeck:" fields).
+        private static string WalkField(string reply, string name) => ElevField(reply, name) ?? DeckField(reply, name);
         private static string FieldOf(string line, string name)
         {
             int colon = line.IndexOf(':');
@@ -1358,11 +1360,11 @@ namespace SunkCost.Editor.Prototype
             // position.x = seconds; its result rides on the "elevatorDeck:" line.
             yield return Send("{\"id\":{id},\"action\":\"walk\",\"aim\":" + Vec(doorway * 2.5f) + ",\"position\":{\"x\":3.2,\"y\":0,\"z\":0}}");
             yield return Wait(3.4f);
-            yield return GuestEventually(r => DeckField(r, "walkDone") == "True", 6f, () => "DV4 G the guest's walk out finished");
+            yield return GuestEventually(r => WalkField(r, "walkDone") == "True", 6f, () => "DV4 G the guest's walk out finished");
             GuestWalkChecks("out", lastReply, 6f);
             yield return Send("{\"id\":{id},\"action\":\"walk\",\"aim\":" + Vec(-doorway * 2.5f) + ",\"position\":{\"x\":3.2,\"y\":0,\"z\":0}}");
             yield return Wait(3.4f);
-            yield return GuestEventually(r => DeckField(r, "walkDone") == "True", 6f, () => "DV4 G the guest's walk back finished");
+            yield return GuestEventually(r => WalkField(r, "walkDone") == "True", 6f, () => "DV4 G the guest's walk back finished");
             GuestWalkChecks("back", lastReply, 6f);
             HQPlayerController remote = UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(pc => pc.OwnerId == guestId);
             yield return Expect(() => remote != null && car.IsInsideCar(remote.transform.position + Vector3.up * 0.5f), 3f, () => "DV4 G the guest's copy is back inside the car on the host");
@@ -1439,7 +1441,7 @@ namespace SunkCost.Editor.Prototype
         {
             HQPlayerController host = Host();
             host.SetPitchForChecks(0f); host.transform.rotation = Quaternion.LookRotation(Flat(direction)); yield return null;
-            int frames = 0, grounded = 0, bigDrops = 0; float maxRise = 0f, maxDrop = 0f, worstProgress = float.PositiveInfinity;
+            int frames = 0, grounded = 0, bigDrops = 0, airStreak = 0, longestAir = 0; var airLog = new List<string>(); float maxRise = 0f, maxDrop = 0f, worstProgress = float.PositiveInfinity;
             float lastY = host.transform.position.y; Vector3 windowStart = host.transform.position; double windowAt = EditorApplication.timeSinceStartup;
             double deadline = EditorApplication.timeSinceStartup + 14.0;
             try
@@ -1450,8 +1452,13 @@ namespace SunkCost.Editor.Prototype
                     Keys(Key.W);
                     yield return null;
                     frames++;
-                    if (host.IsGrounded) grounded++;
                     float y = host.transform.position.y, dy = y - lastY; lastY = y;
+                    if (host.IsGrounded) { grounded++; airStreak = 0; }
+                    else
+                    {
+                        airStreak++; longestAir = Mathf.Max(longestAir, airStreak);
+                        if (airLog.Count < 40) airLog.Add($"r{Flat(host.transform.position - car.transform.position).magnitude:0.00}/y{y - car.transform.position.y:+0.00;-0.00}/dy{dy * 100f:+0.0;-0.0}cm");
+                    }
                     if (frames > 3)
                     {
                         maxRise = Mathf.Max(maxRise, dy); maxDrop = Mathf.Max(maxDrop, -dy);
@@ -1466,7 +1473,12 @@ namespace SunkCost.Editor.Prototype
             }
             finally { Keys(); }
             Check(until(), $"{label} reached its end ({frames} frames, at {Flat(host.transform.position - car.transform.position).magnitude:0.00} m from the axis, y {host.transform.position.y:0.00})");
-            Check(frames > 10 && grounded >= 0.97f * frames, $"{label} grounded on {grounded} of {frames} frames");
+            if (airLog.Count > 0) Say($"{label} frames not grounded (radius from the axis / height over the car's root / step): " + string.Join(" ", airLog));
+            // Underwater the player's gravity is weak, so walking off the sill onto the 13° ramp is a
+            // short glide (first run, 28 Sep: 25 frames from r 3.69 to 4.15, at most 0.6 cm a frame; the
+            // sill, ramp and sand are continuous colliders). A step or a gap shows as a big drop (below)
+            // or a long fall; the glide is allowed, a longer float is not.
+            Check(frames > 10 && grounded >= 0.90f * frames && longestAir <= 40, $"{label} grounded on {grounded} of {frames} frames, longest airborne run {longestAir} frames (≤ 40: the underwater glide off the sill)");
             Check(maxRise <= 0.26f, $"{label} never stepped up more than the step offset in a frame ({maxRise:0.000} m)");
             Check(bigDrops <= 1 && maxDrop <= 0.2f, $"{label} never dropped more than 5 cm in a frame, bar one sill edge ≤ 20 cm ({bigDrops} drops, worst {maxDrop:0.000} m)");
             Check(worstProgress >= 0.2f || float.IsPositiveInfinity(worstProgress), $"{label} never stalled (least progress in half a second {worstProgress:0.00} m)");
@@ -1474,7 +1486,7 @@ namespace SunkCost.Editor.Prototype
 
         private static void GuestWalkChecks(string label, string reply, float minWalk)
         {
-            float Num(string name) => float.TryParse(DeckField(reply, name), NumberStyles.Float, CultureInfo.InvariantCulture, out float f) ? f : float.NaN;
+            float Num(string name) => float.TryParse(WalkField(reply, name), NumberStyles.Float, CultureInfo.InvariantCulture, out float f) ? f : float.NaN;
             float walked = Num("walked"), maxDrop = Num("walkMaxDrop"), maxRise = Num("walkMaxRise"), gFrames = Num("walkGrounded"), all = Mathf.Max(1f, Num("walkFrames"));
             Check(walked >= minWalk && gFrames >= 0.95f * all && maxRise <= 0.26f && maxDrop <= 0.2f, $"DV4 G the guest walked {label} {walked:0.00} m, grounded {gFrames}/{all} frames, worst rise {maxRise:0.000}, worst drop {maxDrop:0.000} (the peer's CharacterController walk probe)");
         }

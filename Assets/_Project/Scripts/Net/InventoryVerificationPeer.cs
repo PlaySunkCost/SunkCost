@@ -703,9 +703,12 @@ namespace SunkCost.Net
             }
             return string.Format(ci,
                 "elevator: tick={0:0.000}; {1}; elevFrames={2}; elevWorstY={3:0.0000}; elevWorstLag={4:0.000}; elevWorstWater={5:0.0000}; elevWorstGauge={6:0.000}; elevWorstGate={7:0.000}; " +
-                "elevDoorWrong={8}; elevGateWrong={9}; elevViewWorst={10}; elevSubWorst={11}; elevBubbleStill={12}; elevBubbleAbove={13}; elevFirstFrameErr={14:0.000}\n",
+                "elevDoorWrong={8}; elevGateWrong={9}; elevViewWorst={10}; elevSubWorst={11}; elevBubbleStill={12}; elevBubbleAbove={13}; elevFirstFrameErr={14:0.000}; " +
+                // the walk probe's result here too: a peer below has no ship, so its "elevatorDeck:" line is "none"
+                "walkDone={15}; walked={16:0.00}; walkFrames={17}; walkGrounded={18}; walkMaxDrop={19:0.000}; walkMaxRise={20:0.000}\n",
                 tick, now, elevFrames, elevWorstY, Mathf.Max(0f, elevWorstLag), elevWorstWater, elevWorstGauge, elevWorstGate,
-                elevDoorWrong, elevGateWrong, elevViewWorst, elevSubWorst, elevBubbleStill, elevBubbleAboveFrames, elevFirstFrameErr);
+                elevDoorWrong, elevGateWrong, elevViewWorst, elevSubWorst, elevBubbleStill, elevBubbleAboveFrames, elevFirstFrameErr,
+                walkUntil < 0f && walkFrames > 0, walkDistance, walkFrames, walkGroundedFrames, walkMaxDrop, walkMaxRise);
         }
 
         private static string CabinWaterLevel()
