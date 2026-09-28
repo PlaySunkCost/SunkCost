@@ -10,6 +10,7 @@ namespace SunkCost.World
     {
         public PayReport Pay; public bool PayShowing;      // the last pay report while it is on display (WorldLoopSettings.payReportSeconds)
         public string Refusal;                              // the refusal on display (refusalDisplaySeconds), "" when none
+        public bool RefusalAfterPay;                        // that refusal arrived after the pay report: it takes the screen for its window, then the report returns
         public bool OnPlank; public string PlankWalker;     // the run is over: who is on the board now ("" between turns, or the last one is in the water)
         public int Crew;                                    // the crew the vote needs: the n of "v / n"
         public bool LocalVoted;                             // this peer's own vote is in
@@ -146,6 +147,9 @@ namespace SunkCost.World
             v.Pay = day.LastPay;
             v.PayShowing = v.Pay.Serial != 0 && Time.unscaledTime - day.LastPayAt < settings.PayReportSeconds;
             if (Time.unscaledTime - day.LastRefusalAt < settings.RefusalDisplaySeconds && !string.IsNullOrEmpty(day.LastRefusal.Text)) v.Refusal = day.LastRefusal.Text;
+            // Both times are this peer's arrival times (CrewDayState); a refusal answered in the
+            // pay's own frame arrives with it and leaves the report on (the same-frame PAY race).
+            v.RefusalAfterPay = day.LastRefusalAt > day.LastPayAt;
             if (day.Phase == DayPhase.Plank)
             {
                 v.OnPlank = true;
@@ -192,7 +196,7 @@ namespace SunkCost.World
             top.FootRight = $"BALANCE ${f.Balance}";
             top.BigTone = ConsoleTone.Text;
             top.HintTone = ConsoleTone.Dim;
-            if (v.PayShowing)
+            if (ReportShows(v))
             {
                 PayReport pay = v.Pay;
                 if (pay.Paid) { top.BigState = "PAID"; top.BigTone = ConsoleTone.Good; top.Hint = $"Handed over ${pay.Had} · every dollar is yours"; return; }
@@ -245,6 +249,11 @@ namespace SunkCost.World
         public static SignModel ComposeSign(in QuotaView v, HQSigns signs)
             => ConsoleRules.Sign(v.Lever, v.LeverEnabled, 0, v.LeverAimed, signs.Get("lever.pay"));
 
+        // The pay report holds the screen for its window, except while a refusal that came
+        // after it is on display (BRIEF: a refused lever action shows the actual reason for
+        // a few seconds): that refusal first, then the report again for what is left of it.
+        public static bool ReportShows(in QuotaView v) => v.PayShowing && !(v.RefusalAfterPay && !string.IsNullOrEmpty(v.Refusal));
+
         // Voting is possible while docked at HQ with the run still on (WorldSceneFlow.ServerToggleGiveUp's rule).
         public static bool VotingOpen(in ConsoleFacts f) => f.Phase == DayPhase.AtHQ && f.World == WorldId.HQ && !f.Travelling;
 
@@ -255,7 +264,7 @@ namespace SunkCost.World
 
         public static string ComposeText(in ConsoleFacts f, in QuotaView v)
         {
-            if (v.PayShowing)
+            if (ReportShows(v))
             {
                 PayReport pay = v.Pay;
                 // Every dollar handed over is the crew's (Dan, 17 September 2026): the

@@ -156,10 +156,40 @@ namespace SunkCost.Editor.Tests
             Assert.AreEqual(ConsoleRules.NothingToPay, top.BigState); Assert.AreEqual(ConsoleTone.Warn, top.BigTone);
             Assert.AreEqual(string.Empty, top.Hint);
             Assert.AreEqual(ConsoleRules.NothingToPay, HQQuotaConsole.ComposeText(f, v));
-            // A pay report on display outranks it.
+            // A pay report on display outranks a refusal from before it (or from its own frame).
             v.PayShowing = true; v.Pay = new PayReport { Serial = 1, Quota = 500, Had = 500, Paid = true };
             HQQuotaConsole.ComposeTop(f, v, top, signs);
             Assert.AreEqual("PAID", top.BigState);
+            StringAssert.StartsWith("PAID $500", HQQuotaConsole.ComposeText(f, v));
+        }
+
+        [Test]
+        public void Refusal_AfterThePayReport_TakesTheScreen_ThenTheReportReturns()
+        {
+            // HQ-2: PAID (or SHORT BY) on display, then a second pull is refused: the reason
+            // shows for its window, and the report comes back for the rest of its own.
+            ConsoleFacts f = Docked(balance: 500);
+            QuotaView v = View();
+            v.PayShowing = true; v.Pay = new PayReport { Serial = 1, Sales = 500, Quota = 500, Had = 500, Balance = 500, Paid = true };
+            v.Refusal = ConsoleRules.NothingToPay; v.RefusalAfterPay = true;
+            HQQuotaConsole.ComposeTop(f, v, top, signs);
+            Assert.AreEqual(ConsoleRules.NothingToPay, top.BigState); Assert.AreEqual(ConsoleTone.Warn, top.BigTone);
+            Assert.AreEqual(ConsoleRules.NothingToPay, HQQuotaConsole.ComposeText(f, v));
+            v.Pay = new PayReport { Serial = 2, Sales = 50, Quota = 500, Had = 450, Balance = 550, Short = true };
+            v.Refusal = ConsoleRules.NothingToSell;
+            HQQuotaConsole.ComposeTop(f, v, top, signs);
+            Assert.AreEqual(ConsoleRules.NothingToSell, top.BigState);
+            // The refusal's window over: the report again.
+            v.Refusal = string.Empty;
+            HQQuotaConsole.ComposeTop(f, v, top, signs);
+            Assert.AreEqual("SHORT BY $50", top.BigState);
+            StringAssert.StartsWith("SHORT BY $50", HQQuotaConsole.ComposeText(f, v));
+            // On the plank a later refusal leaves the walker on the board (the run is over either way).
+            f.Phase = DayPhase.Plank;
+            v.Pay = new PayReport { Serial = 3, Quota = 500, Had = 0, Lost = true };
+            v.OnPlank = true; v.PlankWalker = "Dan"; v.Refusal = ConsoleRules.RunOver;
+            HQQuotaConsole.ComposeTop(f, v, top, signs);
+            Assert.AreEqual("THE RUN IS OVER", top.BigState); Assert.AreEqual("Dan walks the plank", top.Hint);
         }
 
         [Test]

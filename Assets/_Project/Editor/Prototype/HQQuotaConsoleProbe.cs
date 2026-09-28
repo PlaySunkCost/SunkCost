@@ -1,3 +1,7 @@
+using FishNet;
+using FishNet.Managing;
+using FishNet.Object;
+using SunkCost.Interaction;
 using SunkCost.World;
 using UnityEngine;
 
@@ -33,6 +37,48 @@ namespace SunkCost.Editor.Prototype
         {
             WorldLoopSettings.QuotaOverrideForTests = null;
             return "quota override cleared";
+        }
+
+        // A CoinMedium spawned server side in the docked ship's storage room (the console-hq
+        // matrix's CoinInRoom, for the bridge).
+        public static string SpawnCoinInRoom()
+        {
+            ShipParts ship = ShipParts.InWorld(WorldId.HQ);
+            NetworkManager nm = InstanceFinder.NetworkManager;
+            if (ship == null || nm == null || !nm.IsServerStarted) return "(no docked ship or no server)";
+            NetworkObject prefab = null;
+            for (int i = 0; i < nm.SpawnablePrefabs.GetObjectCount(); i++)
+            {
+                NetworkObject candidate = nm.SpawnablePrefabs.GetObject(true, i);
+                if (candidate != null && candidate.name == "CoinMedium") { prefab = candidate; break; }
+            }
+            if (prefab == null) return "(no CoinMedium prefab)";
+            Vector3 at = ship.FromShipLocal(new Vector3(3.2f, 0.3f, -12.5f));
+            NetworkObject instance = Object.Instantiate(prefab, at, Quaternion.identity);
+            instance.name = "Probe coin";
+            instance.GetComponent<CarryableItem>().SetResetPositionBeforeSpawn(at);
+            nm.ServerManager.Spawn(instance, null, ship.gameObject.scene);
+            return "spawned a coin in the storage room";
+        }
+
+        // HQ-3: PAY through the server path, then the box sum in the SAME frame, with and
+        // without the IsSpawned test (the sold coin is still in CarryableItem.Spawned on a
+        // host until the client side's despawn reaches OnStopNetwork).
+        public static string PayAndSampleSameFrame()
+        {
+            ShipParts ship = ShipParts.InWorld(WorldId.HQ);
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            if (ship == null || flow == null || CrewDayState.Instance == null) return "(no ship, flow or day state)";
+            bool ok = flow.ServerPay(InstanceFinder.ClientManager.Connection, out string why);
+            int stale = 0, inSpawnedNotSpawned = 0;
+            foreach (CarryableItem item in CarryableItem.Spawned)
+            {
+                if (item == null || !item.CanGrabFromWorld || item.gameObject.scene != ship.gameObject.scene || !ship.IsInStorageRoom(item.transform.position)) continue;
+                stale += item.Value;
+                if (!item.IsSpawned) inSpawnedNotSpawned++;
+            }
+            CrewDayState d = CrewDayState.Instance;
+            return $"pay={ok} '{why}' report: sales={d.LastPay.Sales} had={d.LastPay.Had} quota={d.LastPay.Quota} | same frame: sum without IsSpawned=${stale} ({inSpawnedNotSpawned} despawned item(s) still in Spawned), SumInside=${StorageReadout.SumInside(ship)}, BoxValue=${d.BoxValue}, CycleSales=${d.CycleSales}";
         }
 
         // The console screens' font-atlas gauge (the fixer's storm signal) and the pay report.
