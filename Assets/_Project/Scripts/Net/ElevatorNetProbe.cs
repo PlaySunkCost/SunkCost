@@ -34,7 +34,8 @@ namespace SunkCost.Net
     {
         public struct Sample
         {
-            public long Wall;           // DateTime.UtcNow.Ticks: one clock for every process on the machine
+            public long Wall;           // DateTime.UtcNow.Ticks at the start of this frame: one clock for every process on the machine
+            public float FrameLag;      // seconds from the frame's start to this LateUpdate (subtracted from Wall)
             public double Tick;         // network tick + the fraction into it, at this LateUpdate
             public int Rate;            // ticks per second
             public int Serial;          // CrewDayState.Elevator.Serial (also without a car)
@@ -141,7 +142,10 @@ namespace SunkCost.Net
 
         public static Sample Capture()
         {
-            var s = new Sample { Wall = DateTime.UtcNow.Ticks, Serial = -1, RideSerial = -1, Id = -1, Spectating = -1, Tv = -1, CarScreen = string.Empty, DeckScreen = string.Empty };
+            // The network tick is advanced at the frame's start; a long frame (a scene load, a
+            // warm-up render) would otherwise pair a frame-start tick with a frame-end clock.
+            double inFrame = Math.Max(0.0, Time.realtimeSinceStartupAsDouble - Time.unscaledTimeAsDouble);
+            var s = new Sample { Wall = DateTime.UtcNow.Ticks - (long)(inFrame * TimeSpan.TicksPerSecond), FrameLag = (float)inFrame, Serial = -1, RideSerial = -1, Id = -1, Spectating = -1, Tv = -1, CarScreen = string.Empty, DeckScreen = string.Empty };
             TimeManager time = InstanceFinder.TimeManager;
             if (time != null)
             {
@@ -347,7 +351,7 @@ namespace SunkCost.Net
         {
             CultureInfo c = CultureInfo.InvariantCulture;
             var b = new StringBuilder("elevnet: ", 900);
-            b.Append("wall=").Append(s.Wall.ToString(c)).Append("; tick=").Append(s.Tick.ToString("0.000", c)).Append("; rate=").Append(s.Rate.ToString(c));
+            b.Append("wall=").Append(s.Wall.ToString(c)).Append("; frameLag=").Append(F(s.FrameLag, "0.000")).Append("; tick=").Append(s.Tick.ToString("0.000", c)).Append("; rate=").Append(s.Rate.ToString(c));
             b.Append("; serial=").Append(s.Serial.ToString(c)).Append("; car=").Append(B(s.Car)).Append("; driven=").Append(B(s.Driven)).Append("; torn=").Append(B(s.Torn));
             b.Append("; state=").Append(s.State).Append("; up=").Append(B(s.Upward)).Append("; start=").Append(s.StartTick.ToString(c)).Append("; carTick=").Append(s.CarTick.ToString("0.000", c));
             b.Append("; carY=").Append(F(s.CarY, "0.0000")).Append("; sea=").Append(F(s.Sea, "0.000")).Append("; span=").Append(F(s.Span, "0.000"));
@@ -403,7 +407,7 @@ namespace SunkCost.Net
             int In(string k) => int.TryParse(Get(k), NumberStyles.Integer, c, out int v) ? v : -1;
             bool Bo(string k) => Get(k) == "1";
             long.TryParse(Get("wall"), NumberStyles.Integer, c, out s.Wall);
-            s.Tick = Db("tick"); s.Rate = In("rate"); s.Serial = In("serial");
+            s.FrameLag = Fl("frameLag"); s.Tick = Db("tick"); s.Rate = In("rate"); s.Serial = In("serial");
             s.Car = Bo("car"); s.Driven = Bo("driven"); s.Torn = Bo("torn");
             Enum.TryParse(Get("state"), out s.State); s.Upward = Bo("up");
             uint.TryParse(Get("start"), NumberStyles.Integer, c, out s.StartTick); s.CarTick = Db("carTick");

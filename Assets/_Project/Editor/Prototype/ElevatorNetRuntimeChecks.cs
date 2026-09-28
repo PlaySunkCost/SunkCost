@@ -562,7 +562,7 @@ namespace SunkCost.Editor.Prototype
             else if (haveHostTick)
             {
                 double skewNow = s.Tick - hostTick;
-                if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (reply {st.Replies})";
+                if (st.Skews.Count == 0 || Math.Abs(skewNow) > st.Skews.Max(x => Math.Abs(x))) st.WorstSkewAt = $"{skewNow:0.00} ticks at {At(s)} (reply {st.Replies}, guest frame lag {s.FrameLag * 1000f:0} ms, host frame gap {hostGap * 1000:0} ms)";
                 st.Skews.Add(skewNow);
             }
         }
@@ -1061,19 +1061,19 @@ namespace SunkCost.Editor.Prototype
                 string path = Path.Combine(g.Dir, "player.log");
                 string[] lines;
                 try { lines = File.Exists(path) ? File.ReadAllLines(path) : Array.Empty<string>(); } catch (IOException) { lines = Array.Empty<string>(); }
-                // A -nographics guest has no GPU: DiveSiteWarmup's Camera.Render (on main since
-                // c9604d0) fails inside URP there ("RenderTexture.Create failed", a
+                // A -nographics guest has no GPU: DiveSiteWarmup's and ShipTV's Camera.Render (both
+                // on main) fail inside URP there ("RenderTexture.Create failed", a
                 // NullReferenceException in a render pass). Those blocks are counted and named,
                 // not failed; every other hit fails (round 1 fix to the test).
                 var blocks = new List<string>(); var cur = new List<string>();
                 foreach (string l in lines) { if (l.Trim().Length == 0) { if (cur.Count > 0) blocks.Add(string.Join("\n", cur)); cur.Clear(); } else cur.Add(l); }
                 if (cur.Count > 0) blocks.Add(string.Join("\n", cur));
                 string[] badBlocks = blocks.Where(b => bad.IsMatch(b)).ToArray();
-                bool NoGpuRender(string b) => g.Headless && b.Contains("DiveSiteWarmup:RenderOnce") && (b.Contains("RenderGraph") || b.Contains("RenderTexture") || b.Contains("Rendering.Universal"));
+                bool NoGpuRender(string b) => g.Headless && (b.Contains("DiveSiteWarmup:RenderOnce") || b.Contains("ShipTV:LateUpdate")) && (b.Contains("RenderGraph") || b.Contains("RenderTexture") || b.Contains("Rendering.Universal"));
                 string[] hits = badBlocks.Where(b => !NoGpuRender(b)).ToArray();
                 int noGpu = badBlocks.Length - hits.Length;
-                Say($"{g.Label} player.log: {lines.Length} lines, {hits.Length} bad blocks, {noGpu} headless no-GPU warm-up render blocks" + (hits.Length > 0 ? ": " + string.Join(" / ", hits.Take(4).Select(b => b.Split('\n')[0])) : string.Empty));
-                Soft(hits.Length == 0, $"E9 {g.Label}'s log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU warm-up render)");
+                Say($"{g.Label} player.log: {lines.Length} lines, {hits.Length} bad blocks, {noGpu} headless no-GPU render blocks (DiveSiteWarmup, ShipTV)" + (hits.Length > 0 ? ": " + string.Join(" / ", hits.Take(4).Select(b => b.Split('\n')[0])) : string.Empty));
+                Soft(hits.Length == 0, $"E9 {g.Label}'s log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)");
             }
             Check(softFails.Count == 0, $"no soft failure ({softFails.Count}: {string.Join(" | ", softFails)})");
         }
