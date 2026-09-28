@@ -449,12 +449,19 @@ namespace SunkCost.World
             }
             ElevatorPhase car = dayState.Elevator;
             float e = ElapsedSince(car.StartTick);
+            float resting;
             switch (car.State)
             {
-                case ElevatorState.AtTop: return Mathf.Clamp01(e / seal);
-                case ElevatorState.Sealing: return car.Upward ? 0f : 1f - Mathf.Clamp01(e / seal);
-                default: return 0f;
+                case ElevatorState.AtTop: resting = Mathf.Clamp01(e / seal); break;
+                case ElevatorState.Sealing: resting = car.Upward ? 0f : 1f - Mathf.Clamp01(e / seal); break;
+                default: resting = 0f; break;
             }
+            // A cancelled ride down leaves the car's phase as it was (AtTop long ago): the
+            // doors and shutters open again at door speed from where the cancel found them
+            // (DoorFrom, CancelRide), not in one frame (DECK-CANCEL-SNAP).
+            if (state.Stage == CabinRideStage.Cancelled && state.Direction == RideDirection.Down)
+                return Mathf.Min(resting, state.DoorFrom + ElapsedSince(state.StageStartTick) / seal);
+            return resting;
         }
 
         private string DeckCabinText()
@@ -779,7 +786,17 @@ namespace SunkCost.World
         {
             dayState.ServerReportRefusal(why);
             lastFailure = why;
-            SetRide(CabinRideStage.Cancelled, direction, 0f);
+            // The deck doors' fraction at the cancel (0 once sealed): every peer reopens
+            // them from here at door speed (DeckCabinOpenFraction).
+            float doorsFrom = direction == RideDirection.Down ? DeckCabinOpenFraction() : 0f;
+            dayState.ServerSetCabinRide(new CabinRideState
+            {
+                Serial = serial,
+                Stage = CabinRideStage.Cancelled,
+                Direction = direction,
+                StageStartTick = networkManager.TimeManager.Tick,
+                DoorFrom = doorsFrom
+            });
             dayState.ServerClearRiders();
             ResetTrip();
             riding = false;
