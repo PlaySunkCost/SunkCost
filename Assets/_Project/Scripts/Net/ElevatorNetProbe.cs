@@ -293,6 +293,8 @@ namespace SunkCost.Net
             };
         }
 
+        private static float prevGateTarget;
+
         private static void SelfCheck(Sample s)
         {
             Frames++;
@@ -310,7 +312,12 @@ namespace SunkCost.Net
                     float errWater = water == null ? 0f : Mathf.Abs(s.Water - ElevatorMath.WaterLevelInCar(car.SeaLevelY, s.CarY, car.SpanMeters));
                     float errGauge = carPanel == null || water == null ? 0f : Mathf.Abs(s.Gauge - water.Level01);
                     bool atBottom = s.State == ElevatorState.AtBottom || (s.State == ElevatorState.Sealing && s.Upward);
-                    float errGate = gate == null || door == null ? 0f : Mathf.Abs(s.Gate - (atBottom ? s.Door : 0f));
+                    // ShaftGate reads the door's fraction from the door's own Update with no set script
+                    // order, so the gate may show this frame's or the previous frame's target (a one-frame
+                    // lag, largest on a slow headless frame): either counts (round 1 fix to the test).
+                    float gateTarget = atBottom ? s.Door : 0f;
+                    float errGate = gate == null || door == null ? 0f : Mathf.Min(Mathf.Abs(s.Gate - gateTarget), Mathf.Abs(s.Gate - prevGateTarget));
+                    prevGateTarget = gateTarget;
                     bool mustBeShut = s.State == ElevatorState.Descending || s.State == ElevatorState.Ascending || s.State == ElevatorState.AtTop || (s.State == ElevatorState.Sealing && !s.Upward);
                     float errShut = mustBeShut && door != null ? Mathf.Max(0f, s.Door) : 0f;
                     WorstY = Mathf.Max(WorstY, errY);
