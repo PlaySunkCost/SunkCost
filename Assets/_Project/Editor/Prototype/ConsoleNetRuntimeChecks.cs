@@ -885,6 +885,24 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(0.8f);
             Soft(Day.LastPay.Serial == paySerial && Day.LastLeverPull.Serial == pulls && Day.LastRefusal.Serial == refusal + 1 && Day.LastRefusal.Text == ConsoleRules.NothingToSell, $"N14 NET-1 retest: A's later PAY over the empty room refused (pay +{Day.LastPay.Serial - paySerial}, pull +{Day.LastLeverPull.Serial - pulls}, refusal +{Day.LastRefusal.Serial - refusal} '{Day.LastRefusal.Text}')");
             yield return Converge("N14 the later refusal", Time.unscaledTime);
+            // HQ-4 retest over the network (round 3; fix b5e5ea3): B2's client sends the old board's RequestPay
+            // ServerRpc over the empty room before payday: refused 'Nothing to sell' like the lever, no $0 report,
+            // no pull, and every peer's HQ top screen shows that refusal (not a fresh SHORT report).
+            yield return Wait(refusalSeconds);
+            paySerial = Day.LastPay.Serial; pulls = Day.LastLeverPull.Serial; refusal = Day.LastRefusal.Serial; balance = Day.Balance;
+            int sold0 = Count("Pay: sold");
+            yield return Send(B2, "{\"id\":{id},\"action\":\"pay\"}");
+            Check(lastReply.Contains("requested pay"), "N14 HQ-4 retest: B2's RequestPay RPC went out: " + lastReply.Split('\n')[0]);
+            yield return ExpectRefused(refusal, 1, s => s == ConsoleRules.NothingToSell, "N14 HQ-4 retest: B2's RequestPay RPC over the empty room");
+            t = Time.unscaledTime;
+            Check(Day.LastPay.Serial == paySerial && Day.LastLeverPull.Serial == pulls && Day.Balance == balance && Count("Pay: sold") == sold0 && Day.Phase == DayPhase.AtHQ && !Day.Payday, $"N14 HQ-4 retest: no new pay report (pay +{Day.LastPay.Serial - paySerial}, sales ${Day.LastPay.Sales}), no pull (+{Day.LastLeverPull.Serial - pulls}), balance unchanged (${Day.Balance}), no sale line (+{Count("Pay: sold") - sold0})");
+            static bool ShowsRefusal(string top) => top.IndexOf(ConsoleRules.NothingToSell, StringComparison.OrdinalIgnoreCase) >= 0 && top.IndexOf("Sold $0", StringComparison.OrdinalIgnoreCase) < 0;
+            yield return Expect(() => ShowsRefusal(HQTop()), 2f, () => "N14 HQ-4 retest: the host's HQ top screen shows the refusal, no $0 report: " + HQTop());
+            var hq4 = new Dictionary<Guest, string>();
+            yield return Snap(crew, hq4);
+            foreach (Guest g in crew)
+                Check(ShowsRefusal(G(hq4[g], "hqTop")), $"N14 HQ-4 retest: {g.Label}'s HQ top screen shows the refusal, no $0 report ({(Time.unscaledTime - t):0.00} s after it): {G(hq4[g], "hqTop")}");
+            yield return Converge("N14 HQ-4 the RPC's refusal", t);
 
             Heading("N15 — an UNLOCK sent in the frame a lost payday starts the plank: bought before the loss or refused, never after; on the plank a guest cannot select, pull or vote; the fresh run relocks every site on every peer");
             yield return Wait(flow.Settings.PayReportSeconds);

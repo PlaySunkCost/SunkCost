@@ -188,6 +188,13 @@ namespace SunkCost.Net
                     if (giveUp == null) return "No ShipControls";
                     giveUp.RequestGiveUp();
                     break;
+                // The old board's PAY RPC (ShipControls.RequestPay → WorldSceneFlow.ServerPay), sent
+                // by a client: no in-game caller since the console, kept for the network HQ-4 retest.
+                case "pay":
+                    var payControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (payControls == null) return "No ShipControls";
+                    payControls.RequestPay();
+                    return "requested pay";
                 // The shared console (27 September 2026). E on a destination card: the site
                 // text rides in the item field ("HQ", "Site02", "SITE 02", "3").
                 case "select":
