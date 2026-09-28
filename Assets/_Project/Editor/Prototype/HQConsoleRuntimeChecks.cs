@@ -512,6 +512,20 @@ namespace SunkCost.Editor.Prototype
             Check(Day.Balance == balance + v3 && Day.CycleSales == v3 && Day.Day == 2 && Day.Phase == DayPhase.AtHQ, $"Q3 banked (${Day.Balance}), the cycle keeps ${Day.CycleSales}, still day 2");
             yield return Expect(() => Gone(coin3), 2f, () => "Q3 the coin was sold");
             yield return Expect(() => Big() == "SHORT BY $50" && TopM().BigTone == ConsoleTone.Warn && Text().StartsWith("SHORT BY $50"), 2f, () => "Q3 the top screen: " + Top() + " | " + Text().Replace("\n", " | "));
+            {
+                // The foot's quota right after the sale, sampled: the box must not be counted on top of the handed-over sale.
+                var seen = new List<string>(); float until = Time.unscaledTime + 2f; float lastWrong = -1f, start = Time.unscaledTime;
+                while (Time.unscaledTime < until)
+                {
+                    string foot = TopM().FootLeft + "/" + TopM().FootLeftTone + " box=" + Day.BoxValue;
+                    if (seen.Count == 0 || seen[seen.Count - 1] != foot) seen.Add($"{Time.unscaledTime - start:0.00}s {foot}");
+                    if (TopM().FootLeft != $"QUOTA ${v3} / ${v3 + 50}") lastWrong = Time.unscaledTime - start;
+                    yield return null;
+                }
+                Say("Q3 the quota foot after the SHORT sale: " + string.Join(" → ", seen));
+                Check(TopM().FootLeft == $"QUOTA ${v3} / ${v3 + 50}" && TopM().FootLeftTone == ConsoleTone.Warn, "Q3 the foot settles on the handed-over sale, amber: " + TopM().FootLeft);
+                Say(lastWrong < 0f ? "Q3 the foot never counted the sold box twice" : $"OBSERVED (bug candidate) Q3 the foot counted the sold box twice until {lastWrong:0.00} s after the SHORT report");
+            }
             yield return ExpectSwing(pulls + 1, "Q3");
             Check(Day.ServerCanSail(WorldId.Sea, out string sailWhy), "Q3 sailing out is allowed again (" + sailWhy + ")");
             yield return Shot("console-hq-Q3-short");
@@ -576,7 +590,7 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(1.0f);
             yield return AimLever();
             yield return null;
-            Check(hud.PromptText == ConsoleRules.RunOver, "Q7 the lever's prompt on the plank: " + hud.PromptText);
+            Check(hud.PromptText.StartsWith("WALK THE PLANK"), "Q7 the jumper's prompt is the plank's (the non-jumper's console prompts are G11's): " + hud.PromptText);
             refusal = Day.LastRefusal.Serial;
             yield return Press(Key.E);
             yield return ExpectRefusal(refusal, ConsoleRules.RunOver, "Q7 E on the lever on the plank");
@@ -803,6 +817,22 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.LastRefusal.Serial > refusal, 3f, () => "G11 B's vote on the plank is refused");
             Say("G11 B's vote refusal on the plank: '" + Day.LastRefusal.Text + "'");
             Check(Day.GiveUpVotes == 0 && Count("[Plank] The run is over") == planks + 1, "G11 no vote, still one plank");
+            // The host steps off first; then, no longer the jumper, it reads the console's own prompts on the plank.
+            {
+                HQPlank plankG = HQPlank.InScene(WorldScenes.Scene(WorldId.HQ));
+                yield return Expect(() => Day.Plank.Jumper == host.OwnerId, 10f, () => "G11 the host is the first jumper");
+                yield return Wait(0.8f);
+                host.TeleportLocal(plankG.End.position + plankG.End.forward * 0.8f + Vector3.up * 0.1f, plankG.WalkYaw);
+                yield return Expect(() => Day.HasJumped(host.OwnerId), 5f, () => "G11 the host jumped");
+                yield return AimLever();
+                yield return null;
+                Check(hud.PromptText == ConsoleRules.RunOver, "G11 the lever's prompt for a non-jumper on the plank: " + hud.PromptText);
+                yield return AimCard();
+                yield return null;
+                Say("G11 the card's prompt for a non-jumper on the plank: " + hud.PromptText);
+                Check(!hud.PromptText.StartsWith("Press E"), "G11 the card offers no vote on the plank: " + hud.PromptText);
+                Check(!Card().Enabled && Sign() == "PAY/off", "G11 the card and the sign dark: " + CardText() + " | " + Sign());
+            }
             yield return RideOutPlank("G11");
             Check(Day.RunOver.Serial == runOvers + 1, "G11 one run over");
             yield return GuestEventually(guestA, r => GuestHeader(r).Contains("phase=AtHQ") && GuestHeader(r).Contains("day=0;") && GVote(r).StartsWith("giveup=0/0;") && GTop(r).Contains("NEW CYCLE"), 12f, "G11 A reads the fresh run, no votes");
