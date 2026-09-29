@@ -538,92 +538,184 @@ def foot_split_door_edges(data, res):
     res["door_edge_splits"] = out
 
 
-def foot_plinth_patches(mesh, img, groups, res):
-    """The plinth's trim faces (the jambs, the slots' back walls and ends, the plinth tops) wear the
-    foot's own baked metal instead of the plain kit steel: each group's metre UVs are laid, aspect kept,
-    onto the largest square of real texels in one UV island of the plinth's matching Meshy surface (its
-    outer side for the walls, its top for the tops), the way the housing's jambs took the post's texels.
-    Called after the trim faces are added (their material index is set here to the baked slot 0)."""
-    from bpy_extras.mesh_utils import mesh_linked_uv_islands
-    data = mesh.data
-    W, H = img.size
-    px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, 4)[:, :, :3]
-    lum = px.max(2)
-    fc, fn, fa, _, mi = arrays(data)
-    rho = np.hypot(fc[:, 0], fc[:, 1]); dphi = (np.degrees(np.arctan2(fc[:, 1], fc[:, 0])) + 90 + 180) % 360 - 180; z = fc[:, 2]
-    nrad = (fn[:, 0] * fc[:, 0] + fn[:, 1] * fc[:, 1]) / np.maximum(rho, 1e-9)
-    base = (mi == 0)
-    band = np.abs(dphi) >= 26.0   # the plinth all round, outside the doorway
-    sources = {"side": base & band & (nrad > 0.7) & (rho >= 3.20) & (rho <= 4.30) & (z >= 0.05) & (z <= 0.85),
-               "top": base & band & (fn[:, 2] > 0.9) & (rho >= 3.10) & (rho <= 4.30) & (z >= 0.75) & (z <= 1.00)}
-    island_of = np.full(len(fc), -1, dtype=np.int64)
-    for k, isl in enumerate(mesh_linked_uv_islands(data)):
-        island_of[list(isl)] = k
-    uvl = data.uv_layers.active.data
-    patches = {}
-    for name, pick in sources.items():
-        lab = np.full((H, W), -1, dtype=np.int64)
-        for fi in np.nonzero(pick)[0]:
-            p = data.polygons[int(fi)]
-            t = np.array([uvl[li].uv[:] for li in p.loop_indices]) * (W, H)
-            x0, y0 = np.floor(t.min(0)).astype(int); x1, y1 = np.ceil(t.max(0)).astype(int)
-            x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, W - 1), min(y1, H - 1)
-            if x1 < x0 or y1 < y0:
-                continue
-            gx, gy = np.meshgrid(np.arange(x0, x1 + 1) + 0.5, np.arange(y0, y1 + 1) + 0.5)
-            inside = np.zeros(gx.shape, dtype=bool)
-            for j in range(1, len(t) - 1):   # the fan: the faces are triangles after shade_smooth
-                a, b, c = t[0], t[j], t[j + 1]
-                den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
-                if abs(den) < 1e-12:
-                    continue
-                l1 = ((b[1] - c[1]) * (gx - c[0]) + (c[0] - b[0]) * (gy - c[1])) / den
-                l2 = ((c[1] - a[1]) * (gx - c[0]) + (a[0] - c[0]) * (gy - c[1])) / den
-                inside |= (l1 >= 0) & (l2 >= 0) & (l1 + l2 <= 1)
-            sub = lab[y0:y1 + 1, x0:x1 + 1]
-            sub[inside] = island_of[fi]
-        lab[lum < 0.03] = -1   # never a baked-black texel
-        best = None
-        for k in np.unique(lab[lab >= 0]):
-            ys, xs = np.nonzero(lab == k)
-            ya, yb, xa, xb = ys.min(), ys.max(), xs.min(), xs.max()
-            m = lab[ya:yb + 1, xa:xb + 1] == k
-            dp = np.zeros(m.shape, dtype=np.int32)
-            for y in range(m.shape[0]):   # the largest all-True square ending at each texel
-                row = m[y].astype(np.int32)
-                if y == 0:
-                    dp[y] = row
-                    continue
-                up = dp[y - 1]
-                cur = np.zeros_like(row)
-                for x in range(m.shape[1]):
-                    if row[x]:
-                        cur[x] = 1 + min(up[x], cur[x - 1] if x else 0, up[x - 1] if x else 0)
-                dp[y] = cur
-            y, x = np.unravel_index(int(dp.argmax()), dp.shape)
-            s = int(dp[y, x])
-            if best is None or s > best[0]:
-                best = (s, xa + x - s + 1, ya + y - s + 1)
-        if best is None or best[0] < 6:
-            raise SystemExit("foot: no %s patch of real texels for the plinth trim (%s)" % (name, best))
-        s, x0, y0 = best
-        inset = 1.0   # a texel of margin: bilinear filtering stays inside the island
-        patches[name] = ((x0 + inset) / W, (y0 + inset) / H, (s - 2 * inset) / W, (s - 2 * inset) / H)
-        res.setdefault("plinth_patch_texels", {})[name] = s
-    for group, faces in groups.items():
-        if not faces:
-            continue
-        rect = patches["top" if group.startswith("top") else "side"]
-        loops = [li for fi in faces for li in data.polygons[fi].loop_indices]
-        m = np.array([uvl[li].uv[:] for li in loops])
-        lo = m.min(0); ext = max(float((m.max(0) - lo).max()), 1e-6)
-        for li, q in zip(loops, m):
-            uvl[li].uv = (rect[0] + (q[0] - lo[0]) / ext * rect[2], rect[1] + (q[1] - lo[1]) / ext * rect[3])
-        for fi in faces:
-            data.polygons[fi].material_index = 0
-    col, _, _, _ = texel_colours(mesh, img)
-    allp = [fi for f in groups.values() for fi in f]
-    res["plinth_trim"] = {"faces": len(allp), "black": round(float((col[allp].max(1) < 0.03).mean()), 3) if allp else None}
+# FOOT-FLAT-SLAB (Dan, 29 September 2026): the plinth's trim faces (the jambs, the slots' back walls and
+# ends, the plinth tops, the right plinth's closed outer face) were flat cards wearing one small square of
+# the foot's texels stretched over up to a square metre (10-23 texels a metre against the foot's 40), and
+# the jambs stood 0.3 m proud of the plinth's own skin beside the doorway. They are now made before the
+# unwrap, so they get their own islands at the foot's texel density, and the bake reads them from pieces
+# of the plinth's real rust band (FOOT_BAND, raw Meshy geometry with its straps and bolts) laid just behind
+# each face: the same colour and normal detail as the rest of the foot. The jambs follow the plinth's cut
+# section instead of a rectangle to r 3.95.
+FOOT_BAND = (0.47, 0.83)   # the plinth's plain rust band (z, m): rust plate and grey straps, above the pipes and grilles
+FOOT_BAND_STARTS = (-160.0, 62.0, -140.0, 82.0, -120.0, 102.0, -100.0, 122.0, -80.0, 142.0, -62.0, 158.0, -175.0)
+FOOT_PLINTH_GROUPS = ("jambL", "jambR", "slotwallL", "slotwallR", "slotendL", "slotendR", "topL", "topR", "outerR", "capR", "skirtR")
+FOOT_JAMB_TOP_R = (3.30, 3.95)   # the jamb's outer edge stays inside the old rectangle (the guards never grow)
+
+
+def foot_jamb_profiles(data, half):
+    """The plinth's cut section at each jamb: the outermost vertex radius per height step next to the
+    cleared edge (dphi +-(half + FOOT_JAMB_CLEAR)), a running max over neighbours so the jamb covers it.
+    Returns the profiles [(z, r)] per side (-1 left, +1 right) and the raw section radii."""
+    v = verts(data)
+    r = np.hypot(v[:, 0], v[:, 1]); d = (np.degrees(np.arctan2(v[:, 1], v[:, 0])) + 90 + 180) % 360 - 180
+    levels = [-0.10] + [round(0.05 * i, 2) for i in range(0, 18)] + [FOOT_PLINTH_TOP]
+    out, sections = {}, {}
+    for s in (-1, 1):
+        near = (np.abs(d - s * (half + FOOT_JAMB_CLEAR)) < 0.6) & (r > 3.12)
+        raw = []
+        for zz in levels:
+            m = near & (np.abs(v[:, 2] - zz) <= 0.03)
+            raw.append(float(r[m].max()) if m.any() else None)
+        known = [i for i, x in enumerate(raw) if x is not None]
+        prof = []
+        for i, x in enumerate(raw):
+            if x is None and s > 0:   # the right pocket: no skin, the closed outer face (outerR) is the edge
+                x = 3.87
+            elif x is None:   # a step with no section vertex: the nearer known neighbours'
+                lo = max([k for k in known if k < i], default=None); hi = min([k for k in known if k > i], default=None)
+                x = max(raw[k] for k in (lo, hi) if k is not None) if known else FOOT_JAMB_TOP_R[1]
+            prof.append(x)
+        prof = [max(prof[max(i - 1, 0):i + 2]) + 0.01 for i in range(len(prof))]
+        sections[s] = [None if x is None else round(x, 3) for x in raw]
+        if s > 0:   # the right plinth: its closed outer face (outerR, r 3.88) stands above the grille
+            prof = [max(p, 3.88) for p in prof]
+        out[s] = [(zz, min(max(p, FOOT_JAMB_TOP_R[0]), FOOT_JAMB_TOP_R[1])) for zz, p in zip(levels, prof)]
+    return out, sections
+
+
+def foot_band_proxies(high, targets, res):
+    """Pieces of the plinth's rust band (raw Meshy faces, their UVs and material kept) laid just behind
+    each plinth trim face, for the bake to read: the band window's outermost surface 3 mm behind the face,
+    its relief behind that. A target is (name, T, u0, u1, v0, v1): T(u, v, h) the point at (u, v) on the
+    face, h metres along its normal (h < 0: behind it)."""
+    me = high.data
+    fc, _, _, _, _ = arrays(me)
+    rho = np.hypot(fc[:, 0], fc[:, 1]); dphi = (np.degrees(np.arctan2(fc[:, 1], fc[:, 0])) + 90 + 180) % 360 - 180
+    bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
+    band_h = FOOT_BAND[1] - FOOT_BAND[0]
+    k = 0; made = {}; M = 0.04
+    for name, T, u0, u1, v0, v1 in targets:
+        U0, U1, V0, V1 = u0 - M, u1 + M, v0 - M, v1 + M
+        nu = max(1, math.ceil((U1 - U0) / 1.3)); nv = max(1, math.ceil((V1 - V0) / band_h))
+        tu, tv = (U1 - U0) / nu, (V1 - V0) / nv
+        # handedness: the band's (along, up, out) frame is right-handed; mirror along if the face's is not
+        e = 1e-3; um, vm = (U0 + U1) / 2, (V0 + V1) / 2
+        J = np.array([(T(um + e, vm, 0) - T(um, vm, 0)) / e, (T(um, vm + e, 0) - T(um, vm, 0)) / e, (T(um, vm, e) - T(um, vm, 0)) / e])
+        flip = np.linalg.det(J) < 0
+        count = 0
+        for iu in range(nu):
+            for iv in range(nv):
+                p0 = FOOT_BAND_STARTS[k % len(FOOT_BAND_STARTS)]; k += 1
+                z0 = FOOT_BAND[0]
+                cand = (fc[:, 2] >= z0 - 0.02) & (fc[:, 2] <= z0 + tv + 0.02) & (rho >= 3.30) & (rho <= 4.30)
+                cand &= (dphi >= p0 - 1.0) & (dphi <= p0 + math.degrees(tu / 3.6) + 1.0)
+                if cand.sum() < 50:
+                    raise SystemExit("foot: band window at %.0f deg is empty" % p0)
+                r_top = float(np.percentile(rho[cand], 98))
+                pick = np.nonzero(cand & (rho >= r_top - 0.15))[0]
+                ret = bmesh.ops.duplicate(bm, geom=[bm.faces[int(i)] for i in pick])
+                bm.faces.ensure_lookup_table()
+                for v in ret["geom"]:
+                    if not isinstance(v, bmesh.types.BMVert):
+                        continue
+                    x, y, zz = v.co
+                    rr = math.hypot(x, y); dd = (math.degrees(math.atan2(y, x)) + 90 + 180) % 360 - 180
+                    us = math.radians(dd - p0) * r_top
+                    if flip:
+                        us = tu - us
+                    v.co = T(U0 + iu * tu + us, V0 + iv * tv + (zz - z0), min(rr - r_top, 0.02) - 0.003)
+                count += len(pick)
+        made[name] = count
+    bm.to_mesh(me); bm.free(); me.update()
+    res["band_proxy_faces"] = made
+
+
+def foot_plinth_faces(data, half, profiles):
+    """The plinth's trim faces in the baked slot 0, before the unwrap, each tagged in the face attribute
+    "plinth" (its FOOT_PLINTH_GROUPS index + 1). Returns the bake proxies' targets."""
+    bm = bmesh.new(); bm.from_mesh(data)
+    tag = bm.faces.layers.int.new("plinth")
+    targets = []
+
+    def P3(r, d, zz):
+        a = math.radians(d - 90); return Vector((r * math.cos(a), r * math.sin(a), zz))
+
+    welded = {}
+
+    def vert(q, g):   # one vertex per corner in a group: each group unwraps as one island
+        key = (g, round(q.x, 4), round(q.y, 4), round(q.z, 4))
+        if key not in welded:
+            welded[key] = bm.verts.new(q)
+        return welded[key]
+
+    def quad(p, want, g):
+        f = bm.faces.new([vert(q, g) for q in p]); f.normal_update()
+        if f.normal.dot(want) < 0:
+            f.normal_flip()
+        f.material_index = 0
+        f[tag] = FOOT_PLINTH_GROUPS.index(g) + 1
+
+    def radial_target(g, d, sign, r0, r1, z0, z1):
+        a = math.radians(d - 90); n = Vector((-math.sin(a), math.cos(a), 0)) * sign
+        targets.append((g, lambda u, v, h, d=d, n=n: P3(u, d, v) + n * h, r0, r1, z0, z1))
+
+    UP = Vector((0, 0, 1))
+    for s in (-1, 1):
+        side = "R" if s > 0 else "L"
+        d = s * half
+        a = math.radians(d - 90); t = Vector((-math.sin(a), math.cos(a), 0)) * -s
+        prof = profiles[s]
+        for (za, ra), (zb, rb) in zip(prof, prof[1:]):   # the jamb: the doorway side of the plinth's cut section
+            quad([P3(3.10, d, za), P3(ra, d, za), P3(rb, d, zb), P3(3.10, d, zb)], t, "jamb" + side)
+        radial_target("jamb" + side, d, -s, 3.10, max(p for _, p in prof), -0.10, FOOT_PLINTH_TOP)
+        # the slot's back wall (faces the tube) and its end
+        lo, hi = min(d, s * 49.5), max(d, s * 49.5)
+        for i in range(12):
+            a0 = lo + (hi - lo) * i / 12; a1 = lo + (hi - lo) * (i + 1) / 12
+            c = P3(3.10, (a0 + a1) / 2, 0); w = -Vector((c.x, c.y, 0)).normalized()
+            quad([P3(3.10, a0, 0.0), P3(3.10, a1, 0.0), P3(3.10, a1, FOOT_PLINTH_TOP), P3(3.10, a0, FOOT_PLINTH_TOP)], w, "slotwall" + side)
+        targets.append(("slotwall" + side, lambda u, v, h, lo=lo: P3(3.10 - h, lo + math.degrees(u / 3.10), v), 0.0, math.radians(hi - lo) * 3.10, 0.0, FOOT_PLINTH_TOP))
+        a = math.radians(s * 49.5 - 90); te = Vector((-math.sin(a), math.cos(a), 0)) * -s
+        quad([P3(2.65, s * 49.5, 0.0), P3(3.10, s * 49.5, 0.0), P3(3.10, s * 49.5, FOOT_PLINTH_TOP), P3(2.65, s * 49.5, FOOT_PLINTH_TOP)], te, "slotend" + side)
+        radial_target("slotend" + side, s * 49.5, -s, 2.65, 3.10, 0.0, FOOT_PLINTH_TOP)
+
+    def sector(g, r0, r1, d0, d1, zz, seg):
+        for i in range(seg):
+            a0 = d0 + (d1 - d0) * i / seg; a1 = d0 + (d1 - d0) * (i + 1) / seg
+            quad([P3(r0, a0, zz), P3(r1, a0, zz), P3(r1, a1, zz), P3(r0, a1, zz)], UP, g)
+        rm = (r0 + r1) / 2
+        targets.append((g, lambda u, v, h, d0=d0, rm=rm, zz=zz: P3(v, d0 + math.degrees(u / rm), zz + h), 0.0, math.radians(d1 - d0) * rm, r0, r1))
+
+    def wall(g, r, d0, d1, z0, z1, seg):
+        for i in range(seg):
+            a0 = d0 + (d1 - d0) * i / seg; a1 = d0 + (d1 - d0) * (i + 1) / seg
+            c = P3(r, (a0 + a1) / 2, 0)
+            quad([P3(r, a0, z0), P3(r, a1, z0), P3(r, a1, z1), P3(r, a0, z1)], Vector((c.x, c.y, 0)).normalized(), g)
+        targets.append((g, lambda u, v, h, r=r, d0=d0: P3(r + h, d0 + math.degrees(u / r), v), 0.0, math.radians(d1 - d0) * r, z0, z1))
+    # T7 the right plinth's top (to its closed outer face) and T7b beyond it (the half-post cut)
+    sector("topR", 3.10, 3.88, half, 40.0, FOOT_PLINTH_TOP, 8)
+    sector("topR", 3.10, 3.50, 40.0, 49.5, FOOT_PLINTH_TOP, 4)
+    # SEAFLOOR-SEE-THROUGH (Dan, 29 September 2026): the right pocket cut hollowed the plinth under T7
+    # (r 3.10-3.85) and left no outer skin between the jamb and dphi 40 above the grille: its outer face,
+    # flush with T7's edge, its end at dphi 40 (where Meshy's skin, r 3.5-3.7, resumes), and a skirt under
+    # T7b's edge where the half-post cut left a slit over Meshy's lower skin (z 0.55-0.87).
+    wall("outerR", 3.88, half, 40.0, -0.10, FOOT_PLINTH_TOP, 8)
+    a = math.radians(40.0 - 90); tc = Vector((-math.sin(a), math.cos(a), 0))
+    quad([P3(3.45, 40.0, -0.10), P3(3.88, 40.0, -0.10), P3(3.88, 40.0, FOOT_PLINTH_TOP), P3(3.45, 40.0, FOOT_PLINTH_TOP)], tc, "capR")
+    radial_target("capR", 40.0, 1, 3.45, 3.88, -0.10, FOOT_PLINTH_TOP)
+    wall("skirtR", 3.50, 40.0, 49.5, 0.45, FOOT_PLINTH_TOP, 4)
+    # T7L: the notch beside the left jamb, out to the plinth's own top edge (the jamb's section there)
+    sector("topL", 3.10, profiles[-1][-1][1], -26.5, -half, FOOT_PLINTH_TOP, 3)
+    bm.to_mesh(data); bm.free(); data.update()
+    return targets
+
+
+def foot_plinth_tags(data):
+    a = data.attributes.get("plinth")
+    t = np.zeros(len(data.polygons), dtype=np.int64)
+    if a is not None:
+        a.data.foreach_get("value", t)
+    return t
 
 
 def foot(mesh, target, budget, psp, res):
@@ -684,17 +776,43 @@ def foot(mesh, target, budget, psp, res):
     vc[flat, 2] = 0.0
     set_verts(data, vc)
     res["flattened"] = int(flat.sum())
+    # FOOT-FLAT-SLAB: the plinth's trim faces before the unwrap (their own islands), the bake reading
+    # them from the plinth's rust band laid behind each (foot_band_proxies)
+    profiles, sections = foot_jamb_profiles(data, HALF)
+    res["jamb_profiles"] = {("R" if s > 0 else "L"): [[z_, round(r_, 3)] for z_, r_ in p] for s, p in profiles.items()}
+    res["jamb_sections"] = {("R" if s > 0 else "L"): p for s, p in sections.items()}
+    targets = foot_plinth_faces(data, HALF, profiles)
+    foot_band_proxies(high, targets, res)
     psp["shade_smooth"](mesh)
     psp["unwrap_fresh"](mesh)
     base_slot(data, "TubeFoot")
     img = bake(high, mesh, psp, "TubeFoot", 2048)
     res["bake_black"] = black_share(mesh, img)
-    # foot_trim: the cut edges closed in the trim slot (Unity: the kit steel), UVs in metres; the plinth's
-    # faces (named groups) then move onto the foot's own baked metal (foot_plinth_patches)
+    tags = foot_plinth_tags(data)
+    pl = np.nonzero(tags > 0)[0]
+    col, uvs_, ls_, lt_ = texel_colours(mesh, img)
+    fa_ = np.empty(len(data.polygons)); data.polygons.foreach_get("area", fa_)
+    dens = []
+    for fi in pl:
+        t_ = uvs_[ls_[fi]:ls_[fi] + lt_[fi]] * 2048
+        ua = 0.5 * abs(np.dot(t_[:, 0], np.roll(t_[:, 1], 1)) - np.dot(t_[:, 1], np.roll(t_[:, 0], 1)))
+        dens.append(math.sqrt(ua / max(fa_[fi], 1e-9)))
+    res["plinth_trim"] = {"faces": int(len(pl)), "black": round(float((col[pl].max(1) < 0.03).mean()), 3) if len(pl) else None,
+                          "texels_per_m": [round(float(np.min(dens)), 1), round(float(np.median(dens)), 1), round(float(np.max(dens)), 1)] if dens else None}
+    # the jambs' baked UVs by position, for their backs below
+    uvl0 = data.uv_layers.active.data
+    jamb_xyz, jamb_uv = [], []
+    for fi in pl:
+        if FOOT_PLINTH_GROUPS[tags[fi] - 1].startswith("jamb"):
+            p = data.polygons[int(fi)]
+            for li, vi in zip(p.loop_indices, p.vertices):
+                jamb_xyz.append(data.vertices[vi].co[:]); jamb_uv.append(tuple(uvl0[li].uv))
+    jamb_xyz = np.array(jamb_xyz)
+    data.attributes.remove(data.attributes["plinth"])
+    # foot_trim: the cut edges closed in the trim slot (Unity: the kit steel), UVs in metres
     TI = new_material(data, "FootTrim", nodes=False)
     bm = bmesh.new(); bm.from_mesh(data); uvl = bm.loops.layers.uv.active
     tfaces = []
-    group = [None]; grouped = {}
 
     def P3(r, d, zz):
         a = math.radians(d - 90); return Vector((r * math.cos(a), r * math.sin(a), zz))
@@ -708,8 +826,7 @@ def foot(mesh, target, budget, psp, res):
             co_ = l.vert.co
             l[uvl].uv = (co_.x, co_.y) if abs(f.normal.z) > 0.7 else (math.atan2(co_.y, co_.x) * math.hypot(co_.x, co_.y), co_.z)
         tfaces.append(f)
-        if group[0]:
-            grouped.setdefault(group[0], []).append(f)
+        return f
     UP = Vector((0, 0, 1))
 
     def sector(r0, r1, d0, d1, zz, want, seg):
@@ -722,52 +839,29 @@ def foot(mesh, target, budget, psp, res):
             a0 = d0 + (d1 - d0) * i / seg; a1 = d0 + (d1 - d0) * (i + 1) / seg
             c = P3(r, (a0 + a1) / 2, 0); w = Vector((c.x, c.y, 0)).normalized() * (-1 if inward else 1)
             quad([P3(r, a0, z0), P3(r, a1, z0), P3(r, a1, z1), P3(r, a0, z1)], w)
-
-    def radial(d, r0, r1, z0, z1, sign):
-        a = math.radians(d - 90); t = Vector((-math.sin(a), math.cos(a), 0)) * sign
-        quad([P3(r0, d, z0), P3(r1, d, z0), P3(r1, d, z1), P3(r0, d, z1)], t)
     sector(2.70, 3.51, -HALF, HALF, 0.0, UP, 24)            # T1 the sill
     wall(3.51, -HALF, HALF, -0.10, 0.0, False, 24)          # the sill's front, down to the sand
     for s in (-1, 1):
-        side = "R" if s > 0 else "L"
-        group[0] = "jamb" + side
-        radial(s * HALF, 3.10, 3.95, -0.10, 0.87, -s)       # the jambs
-        # SEAFLOOR-SEE-THROUGH (Dan, 29 September 2026): each jamb is also the plinth's end plate
-        # seen from outside the doorway (Meshy's plinth skin stops short of it, at r 3.5-3.8), and a
-        # one-sided quad seen from behind is not drawn: its back too, in the same rust.
-        group[0] = "jambback" + side
-        radial(s * HALF, 3.10, 3.95, -0.10, 0.87, s)
-        group[0] = "slotwall" + side
-        wall(3.10, min(s * HALF, s * 49.5), max(s * HALF, s * 49.5), 0.0, 0.87, True, 12)
-        group[0] = "slotend" + side
-        radial(s * 49.5, 2.65, 3.10, 0.0, 0.87, -s)
-        group[0] = None
         sector(2.65, 3.10, min(s * HALF, s * 49.5), max(s * HALF, s * 49.5), 0.0, UP, 12)   # the slot floors
     wall(FOOT["pit_r"], -180, 180, -0.10, 0.0, True, 96)    # T6 the pit wall (the car's base ring sinks in)
-    group[0] = "topR"
-    sector(3.10, 3.88, HALF, 40.0, 0.87, UP, 8)             # T7 the plinth tops
-    sector(3.10, 3.50, 40.0, 49.5, 0.87, UP, 4)
-    # SEAFLOOR-SEE-THROUGH (Dan, 29 September 2026): the right pocket cut hollowed the plinth under T7
-    # (r 3.10-3.85) and left no outer skin between the jamb and dphi 40 above the grille, so a diver
-    # beside the doorway looked through the slot wall's back into the tube under a floating plate.
-    # Its outer face, flush with T7's edge, and its end at dphi 40 (where Meshy's skin, r 3.5-3.7,
-    # resumes), in the plinth's rust. Inside T7's footprint: the guard colliders are unchanged.
-    group[0] = "outerR"
-    wall(3.88, HALF, 40.0, -0.10, 0.87, False, 8)
-    group[0] = "capR"
-    radial(40.0, 3.45, 3.88, -0.10, 0.87, 1)
-    # Beyond it the half-post cut (dphi 38-49.5, r 3.10-3.50) left a slit between T7's narrow end and
-    # Meshy's lower skin top (z 0.55-0.87): a skirt under that edge.
-    group[0] = "skirtR"
-    wall(3.50, 40.0, 49.5, 0.45, 0.87, False, 4)
-    group[0] = "topL"
-    sector(3.10, 3.88, -26.5, -HALF, 0.87, UP, 3)           # T7L
-    group[0] = None
-    bm.faces.index_update()
-    groups = {k: [f.index for f in v] for k, v in grouped.items()}
+    # SEAFLOOR-SEE-THROUGH: each jamb is also the plinth's end plate seen from outside the doorway, and a
+    # one-sided face seen from behind is not drawn: its back too, on the jamb's own baked texels
+    backs = 0
+    for s in (-1, 1):
+        d = s * HALF
+        a = math.radians(d - 90); t = Vector((-math.sin(a), math.cos(a), 0)) * s
+        for (za, ra), (zb, rb) in zip(profiles[s], profiles[s][1:]):
+            f = quad([P3(3.10, d, za), P3(ra, d, za), P3(rb, d, zb), P3(3.10, d, zb)], t)
+            f.material_index = 0
+            for l in f.loops:
+                q = np.array(l.vert.co[:]); dist = np.linalg.norm(jamb_xyz - q, axis=1); j = int(dist.argmin())
+                if dist[j] > 1e-3:
+                    raise SystemExit("foot: no jamb UV at %s for the jamb's back" % (q,))
+                l[uvl].uv = jamb_uv[j]
+            backs += 1
     bm.to_mesh(data); bm.free(); data.update()
     res["trim_faces"] = len(tfaces)
-    foot_plinth_patches(mesh, img, groups, res)
+    res["jamb_backs"] = backs
     # acceptance: nothing in the gate leaf's envelope or inside the pit
     vc = verts(data); vr = np.hypot(vc[:, 0], vc[:, 1]); vd = (np.degrees(np.arctan2(vc[:, 1], vc[:, 0])) + 90 + 180) % 360 - 180
     res["in_leaf_envelope"] = int(((vr > 2.65) & (vr < 3.00) & (np.abs(vd) <= 48.4) & (vc[:, 2] > 0.02) & (vc[:, 2] < 3.50)).sum())
