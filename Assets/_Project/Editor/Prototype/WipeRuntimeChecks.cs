@@ -246,7 +246,7 @@ namespace SunkCost.Editor.Prototype
             int k = 0;
             foreach (var g in guests)
             {
-                yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.transform.position + doorway * 4f + side * (1.5f * (k++ - 0.5f)) + Vector3.up * 0.05f) + "}", g.dir);
+                yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(car.BottomPosition + doorway * 4f + side * (1.5f * (k++ - 0.5f)) + Vector3.up * 0.05f) + "}", g.dir);
                 yield return Wait(0.6f);
                 yield return Send("{\"id\":{id},\"action\":\"die\"}", g.dir);
                 int id = g.id;
@@ -254,7 +254,7 @@ namespace SunkCost.Editor.Prototype
             }
             if (host != null)
             {
-                host.TeleportLocal(car.transform.position + doorway * 2.5f + Vector3.up * 0.05f, host.Yaw); yield return Wait(0.6f);
+                host.TeleportLocal(car.BottomPosition + doorway * 2.5f + Vector3.up * 0.05f, host.Yaw); yield return Wait(0.6f);
                 host.RequestDebugDeath();
                 yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 3f, () => "the host died below");
             }
@@ -269,8 +269,10 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.CrewWipe.Active && Day.CrewWipe.Serial == wipeSerialBefore + 1, 90f, () => $"{row} the card went up (wipe {Day.CrewWipe.Serial}/{Day.CrewWipe.Active})");
             float up = Time.unscaledTime;
             Check(up - deathAt >= s.CrewWipeSettleSeconds - 0.05f, $"{row} not before the death settled: {up - deathAt:0.0} s after the last death (settle {s.CrewWipeSettleSeconds:0.#} s)");
-            Check(WorldSceneFlow.FindCar() == null && Day.Elevator.State == ElevatorState.AtTop, $"{row} the card waited for the site to close (car {Day.Elevator.State})");
+            Check(Day.Elevator.State == ElevatorState.AtTop, $"{row} the card waited for the car to come home (car {Day.Elevator.State})");
             Check(Host().gameObject.scene == WorldScenes.Scene(WorldId.Sea) && Host().IsDead, $"{row} the dead host was carried to the ship before the card");
+            // The site's unload was asked for as the dead reached the ship; it lands under the card.
+            yield return Expect(() => WorldSceneFlow.FindCar() == null, 5f, () => $"{row} the site unloaded under the card");
             Check(Day.Day == dayBefore && !Day.Payday && Day.DiveDone, $"{row} the day has not ended yet under the card (day {Day.Day}, diveDone {Day.DiveDone})");
             Check(Day.RefusesJoins, $"{row} joins are refused while the card is up");
             yield return Expect(() => ScreenFade.Instance != null && ScreenFade.Instance.IsBlack && ScreenFade.Instance.Text == Card, 2f, () => $"{row} the host's screen: black with '{FadeText()}'");
