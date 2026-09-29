@@ -107,29 +107,35 @@ sign. The game draws the screens and the sign's word, so they can change.
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
-tower** stands at the stern with the crew's screen on its forward face; the storage
+tower** stands at the stern with the crew's screen on its forward face, as near its
+middle as leaves the tower's door, the Bridge sign and its ladder clear: port of the
+ladder, 2.4 m wide and centred 1.75 m off the centre line, 2.05 m up (Dan, 29
+September 2026; it had hung off the face's starboard end); the storage
 room is forward of it, to starboard. The
 **glass elevator** stands amidships in its well, open to the sea, with a **low
 visible rail** round the well, open only at the grate; the rail's collider is
 1.2 m high so nobody jumps it (a jump is 0.65 m). The deck's side is a **1.2 m
-bulwark** with an unseen guard above it. The crane and the winch stand by the
-well, one container, and deck gear along the sides. The **lounge** is at the bow:
+bulwark** with an unseen guard above it. The crane stands by the
+well (the winch model is gone from the deck, with its cable coil: Dan, 29 September
+2026; the winch is still heard at the deck cabin), one container, and deck gear along
+the sides. The **lounge** is at the bow:
 the **TV** in its big cabinet at the bow's centre facing aft, two couches in front
 of it, and a table between two benches that face each other across it, clear of
 the couches (as built 23 September 2026; Dan, 29 September 2026: the TV back
 there, after a day on the starboard diagonal). The **navigation console** (the
 shared console model since 27 September 2026: the five destination cards on its
-top screen, the lever with its lit sign) stands with its back flat on the bow's
-**port diagonal**, where the side turns in across the bow, facing back into the
-ship (Dan's plan 4, 28 September 2026). The diagonal's inner face was measured off
-the built side (a line fitted through rays onto the side): it runs **54.7° off the
-centre line** over a 3.49 m straight run (the side's outline is made one straight
-line between z 21 and 23 m, a few centimetres off the generated hull), so the
-console is turned to yaw 144.7° (Dan: not 45°, the measured angle). The
-**starboard diagonal is kept free** for a storage locker to come (Dan, 29 September
-2026); nothing stands on it. The lounge's lamps stand either side of the TV, the
-bollards and the coiled line behind it at the bow's point (the port bollard forward
-of the console's end, its old spot being inside the console). The **container** lies
+top screen, the lever with its lit sign) stands with its back flat on the **port
+side where it starts to turn in toward the bow**, just forward of the lounge's sign
+and aft of the port lifebuoy and lamp, facing the middle of the ship (Dan, 29
+September 2026: on the bow's port diagonal, where plan 4 put it, the TV hid it).
+That stretch's inner face was measured off the built side (a line fitted through
+rays onto the side): it runs **25.7° off the centre line** over a 2.79 m straight
+run (the side's outline is made one straight line between z 13.5 and 16 m, at most
+3 cm off the generated hull), so the console is turned to yaw 115.7°. Both bow
+diagonals are free (their outline stays straight between z 21 and 23 m); the
+**starboard one is kept** for a storage locker to come (Dan, 29 September 2026). The
+lounge's lamps stand either side of the TV, the bollards (symmetric again) and the
+coiled line behind it at the bow's point. The **container** lies
 along the port side against the rail (turned 90°, Dan, 28 September 2026), its
 hatches facing fore and aft, the pipework across the forward one and the barrels, a
 crate and a coil between its doors and the tower. Built on `dan/elevator-look`, not
@@ -138,7 +144,7 @@ the player stays as is (1.8 m, eyes at 1.6 m) and the props come to it —
 furniture (couch, table, bench, toolbox) at 1×, the models being made at a
 person's size; deck gear (barrel, crate, lamp, bollard, lifebuoy, pipes, coil,
 signs) at 1.25×; the container a real 20-ft box (6 × 2.6 × 2.6 m); the crane
-and the winch at 2×. The TV keeps its size but stands lower, its screen's centre
+at 2×. The TV keeps its size but stands lower, its screen's centre
 at about the eye height of someone sitting on the couch (the 2× cabinet, a
 5.2 × 2.3 m screen centred 2.0 m up). **Sitting on a couch**
 zooms the view onto the TV, and the TV's channel can be switched from **6 m**, so

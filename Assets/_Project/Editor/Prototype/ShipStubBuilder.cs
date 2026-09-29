@@ -321,6 +321,13 @@ namespace SunkCost.Editor.Prototype
         // sea into it. The band right on the horizon renders near white.
         public static readonly Color SkyHorizon = new(0.80f, 0.90f, 0.97f);
 
+        // The crew screen's centre on the tower's face (x, height), measured off the
+        // tower model: its ladder runs up x -0.45..0.15, its door is at x 0.5..1.5 with
+        // the Bridge sign over it, its face ends at x about -3.6; the frame is 2.4 wide.
+        // Port of the ladder the face has a window with a lip over it from 2.9 m up:
+        // the frame's top (2.80) stays under that lip.
+        public static readonly Vector2 CrewScreenCentre = new(-1.75f, 2.05f);
+
         // The tower at the stern is the tower model (ShipDeckDressing), its own shape
         // its collider. On its forward face the game builds only what is used: the
         // crew's screen. The navigation console beside it is the dressing's
@@ -329,12 +336,17 @@ namespace SunkCost.Editor.Prototype
         private static void BuildTower(Transform root)
         {
             float front = -DeckLength / 2f + TowerDepth;     // the tower's forward face
-            // The crew's screen, starboard of the console.
-            Visual("Crew Screen Frame", root, new Vector3(2.8f, 2.6f, front + 0.04f), Quaternion.identity, new Vector3(2.4f, 1.5f, 0.08f), SunkCost.Editor.Look.ShipKitMaterials.Tiled(SunkCost.Editor.Look.ShipKitMaterials.Bezel(), new Vector2(2.4f, 1.5f)));
-            Visual("Crew Screen", root, new Vector3(2.8f, 2.6f, front + 0.09f), Quaternion.identity, new Vector3(2.2f, 1.3f, 0.02f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
+            // The crew's screen, as near the middle of the tower's face as leaves its
+            // door, the Bridge sign over it and its ladder clear (Dan, 29 September 2026:
+            // it hung off the face's starboard end): the ladder runs up the middle of the
+            // face, the door and the sign are starboard of it, so the screen is port of
+            // the ladder, low enough to stay under the window's lip.
+            float x = CrewScreenCentre.x, y = CrewScreenCentre.y;
+            Visual("Crew Screen Frame", root, new Vector3(x, y, front + 0.04f), Quaternion.identity, new Vector3(2.4f, 1.5f, 0.08f), SunkCost.Editor.Look.ShipKitMaterials.Tiled(SunkCost.Editor.Look.ShipKitMaterials.Bezel(), new Vector2(2.4f, 1.5f)));
+            Visual("Crew Screen", root, new Vector3(x, y, front + 0.09f), Quaternion.identity, new Vector3(2.2f, 1.3f, 0.02f), SunkCost.Editor.Look.LookMaterials.ScreenTeal());
             GameObject screenText = new("Crew Screen Text");
             screenText.transform.SetParent(root, false);
-            screenText.transform.localPosition = new Vector3(2.8f, 2.6f, front + 0.11f);
+            screenText.transform.localPosition = new Vector3(x, y, front + 0.11f);
             SunkCost.Editor.Look.PropBuilder.Text(screenText, "Text", Vector3.zero, 0.3f, new Color(0.05f, 0.14f, 0.22f), TextAnchor.MiddleCenter).AddComponent<SunkCost.Look.SignText>().Configure("ship.screen");
             // No stair down the tower any more (Dan, 23 September 2026: "I dont like
             // the stairs"): the way aboard from the HQ is a later card (docs/ROADMAP.md).
@@ -422,10 +434,9 @@ namespace SunkCost.Editor.Prototype
         // piece an unseen wall of RailWallHeight: 1.2 m was over a 65 cm jump from the
         // deck (Dan, 23 September 2026), but the crane's round base stands 0.88 m high a
         // metre outside the rail, and a sprint jump off it cleared 1.2 m (QA, 24
-        // September 2026). The props by the well stand higher still: the winch's top is
-        // 2.12 m and the crane's highest standable part 3.98 m, and a 0.65 m jump from
-        // there clears 4.63 m. 5 m is over all of it; the rail looks the same, and
-        // nothing thrown goes over it.
+        // September 2026). The crane by the well stands higher still: its highest
+        // standable part is 3.98 m, and a 0.65 m jump from there clears 4.63 m. 5 m is
+        // over all of it; the rail looks the same, and nothing thrown goes over it.
         private const float RailWallHeight = 5f;
         private const float RailingPostSpan = 1.70f; // between its two end posts' centres (each 0.14 m wide, 0.07 m in from its ends)
 

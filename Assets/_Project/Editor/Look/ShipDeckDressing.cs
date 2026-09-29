@@ -27,7 +27,8 @@ namespace SunkCost.Editor.Look
     // The lounge is the bow: the deck TV faces aft from the point, the couches in
     // front of it, the table between its benches behind them (Dan, 29 September
     // 2026: the TV back where it was); the navigation console with its back flat on
-    // the bow's port diagonal, the starboard one kept free. The working end is the
+    // the port side where it starts to turn in, by the lounge's sign (29 September
+    // 2026), both bow diagonals free. The working end is the
     // stern: the crane, the cargo, the storage room, beside the tower. The elevator
     // stays the game's own glass car; a look for it is a separate job (Dan: "we will
     // do a new one after").
@@ -47,7 +48,7 @@ namespace SunkCost.Editor.Look
         // so), deck gear a little over it, the container a real 20 ft box (6 x 2.6 x
         // 2.6 m at one), what a crane lifts big. The hull, the tower and the storage
         // room are the game's own sizes and stay at one.
-        public const float MachineScale = 2f;     // the crane, the winch, the deck TV
+        public const float MachineScale = 2f;     // the crane, the deck TV (the winch had it while it stood on the deck)
         public const float GearScale = 1.25f;     // barrels, crates, lamps, bollards, buoys, pipes, coils, signs
         public const float FurnitureScale = 1f;   // couch, table, bench, toolbox
         private static readonly Dictionary<string, float> Scales = new()
@@ -115,9 +116,16 @@ namespace SunkCost.Editor.Look
         // The bow's two diagonals (Dan's plan 4, 28 September 2026): where the side turns
         // in across the bow at about 55 degrees, between these two lengths of the hull's
         // outline. The outline is made one straight run between them (a few centimetres
-        // at most off the generated hull's lumps), so the console on the port one stands
-        // with its back flat against the side's inner face along its whole width.
+        // at most off the generated hull's lumps), so a piece set against one stands
+        // with its back flat on the side's inner face; both are free now.
         private const float BowDiagonalFrom = 21f, BowDiagonalTo = 23f;
+        // Where the side starts to turn in toward the bow, at about 25 degrees: the
+        // navigation console's back is on the port one (Dan, 29 September 2026), the
+        // outline made one straight run between these lengths likewise (at most 3 cm
+        // off), the lounge's sign just aft of it.
+        private const float ConsoleWallFrom = 13.5f, ConsoleWallTo = 16f;
+        private const float LoungeSignZ = 12.6f;
+        private static readonly (float From, float To)[] StraightRuns = { (BowDiagonalFrom, BowDiagonalTo), (ConsoleWallFrom, ConsoleWallTo) };
         private const float WallGap = 0.01f;        // an object's back off the side's inner face: flush, touching nothing
         // A patch of open, flat deck starboard of the well's rail that no prop may take:
         // where WorldLoopRuntimeChecks drops the ball that must ride the trip at its spot
@@ -240,54 +248,54 @@ namespace SunkCost.Editor.Look
                 GameObject lamp = Hand(look, "DeckLamp", at, yaw, rail: side);
                 AddLampLight(lamp);
             }
-            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(-W(13f) + WallThickness + 0.06f, 0.5f, 13f), 90f), ShipSign.Lounge); // on the side's inner face, below its top
-
-            // The bow tip behind the TV: a mooring station, the bollards either side
-            // and the line coiled between them (SHIP-038: it held nothing). The port
-            // bollard's old spot (-2.4, tv + 2.1) is inside the console's lower body on
-            // the port diagonal (29 September 2026), so it stands forward of the
-            // console's end, by the point, off the diagonal and clear of the coil.
-            Hand(look, "Bollard", new Vector3(-1.2f, 0f, tv + 3.6f), 0f);
-            Hand(look, "Bollard", new Vector3(2.4f, 0f, tv + 2.1f), 0f);
-            Hand(look, "CableCoil", new Vector3(0f, 0f, tv + 2.6f), 0f);
 
             // The navigation console (Dan, 27 September 2026: the shared console model
             // replaces the old console, its monitor and its three buttons): the rig
             // ConsoleBuilder builds - the model with its own mesh collider, the two
             // painted screens, the lever and the five destination cards the crew aim at -
-            // with its back flat on the bow's port diagonal, where the side turns in
-            // across the bow, its screens and its lever toward the deck (Dan's plan 4,
-            // 28 September 2026: "put it near the wall"). The diagonal is measured off
-            // the built side itself (rays onto the Bulwark's collider, a line fitted
-            // through the hits). The starboard diagonal is kept free for a storage
-            // locker to come (Dan, 29 September 2026). On the ship's root rather than
-            // in Look: the collider pass below strips every collider under Look, and
-            // the rig's are the game's own; ShipHierarchy groups it under Tower/Console
-            // by its name. The composer that fills its screens from the day state is
-            // added here; ShipScreens leaves the idle screens painted.
-            Wall portBow = BowDiagonal(root, -1f);
-            ConsoleRig navConsole = ConsoleBuilder.Place(root, Vector3.zero, portBow.Yaw, ConsoleKind.Ship);
+            // with its back flat on the port side's inner face where the side starts to
+            // turn in toward the bow, just forward of the lounge sign, its screens and
+            // its lever toward the middle of the ship (Dan, 29 September 2026: on the
+            // bow's port diagonal the TV hid it). That stretch of the side is measured
+            // off the built side itself (rays onto the Bulwark's collider, a line fitted
+            // through the hits). Both bow diagonals are left free; the starboard one is
+            // kept for a storage locker to come. On the ship's root rather than in Look:
+            // the collider pass below strips every collider under Look, and the rig's
+            // are the game's own; ShipHierarchy groups it under Tower/Console by its
+            // name. The composer that fills its screens from the day state is added
+            // here; ShipScreens leaves the idle screens painted.
+            Wall portSide = SideRun(root, -1f, ConsoleWallFrom, ConsoleWallTo);
+            ConsoleRig navConsole = ConsoleBuilder.Place(root, Vector3.zero, portSide.Yaw, ConsoleKind.Ship);
             if (navConsole != null)
             {
                 GameObject rig = navConsole.gameObject;
-                OnWall(rig, portBow);
+                OnWall(rig, portSide);
                 oriented.Add(rig);
                 Settle(rig, false);
                 Footprint f = FootprintOf(rig);
                 // Where the crew stand to read it and reach its cards and its lever.
-                KeepAlong("the console's front", portBow, portBow.Along(f.Centre), f.Half.x + 0.1f, portBow.Depth(f.Centre) + f.Half.y, 2f);
+                KeepAlong("the console's front", portSide, portSide.Along(f.Centre), f.Half.x + 0.1f, portSide.Depth(f.Centre) + f.Half.y, 2f);
                 rig.AddComponent<ShipNavigationConsole>();
             }
+            // The lounge's sign on the side's inner face below its top, just aft of the
+            // console (MountSigns sets it flat on the side).
+            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(-W(LoungeSignZ) + WallThickness + 0.06f, 0.5f, LoungeSignZ), 90f), ShipSign.Lounge);
+
+            // The bow tip behind the TV: a mooring station, the bollards either side
+            // and the line coiled between them (SHIP-038: it held nothing).
+            foreach (float side in new[] { -1f, 1f })
+                Hand(look, "Bollard", new Vector3(side * 2.4f, 0f, tv + 2.1f), 0f);
+            Hand(look, "CableCoil", new Vector3(0f, 0f, tv + 2.6f), 0f);
 
             // ---- round the well ---------------------------------------------------
 
             // The game's glass elevator stands in the well as it is, the rail round it
-            // (ShipStubBuilder). To port the winch that runs the car and its cable, its
-            // drum toward the well, with its coil and its toolbox; to starboard the
-            // crane, its round base on the deck clear of the rail and its boom out over
-            // the side (SHIP-012: it stood by its pivot, its base 3.3 m further in).
-            Hand(look, "Winch", new Vector3(0f, 0f, -1.5f), 90f, rail: -1f);
-            Hand(look, "CableCoil", new Vector3(0f, 0f, -4.5f), 0f, rail: -1f); // against the side: no gap behind it
+            // (ShipStubBuilder). To port a toolbox by the side; to starboard the crane,
+            // its round base on the deck clear of the rail and its boom out over the
+            // side (SHIP-012: it stood by its pivot, its base 3.3 m further in). No
+            // winch model on the deck any more (Dan, 29 September 2026: "remove this"),
+            // nor its cable coil: the winch is heard from the elevator itself
+            // (ElevatorSounds plays it at the deck cabin).
             Hand(look, "Toolbox", new Vector3(-7.4f, 0f, 1.0f), 20f);
             PlaceCrane(look, ring);
 
@@ -319,8 +327,8 @@ namespace SunkCost.Editor.Look
                 Transform t = root.Find(panel);
                 if (t != null && t.GetComponent<Collider>() == null) t.gameObject.AddComponent<BoxCollider>();
             }
-            // The tower's face keeps no console: it went to the bow's port diagonal (Dan's plan 4, 28 September 2026).
-            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(1.0f, 2.35f, towerFront + 0.3f), 0f), ShipSign.Bridge); // over the tower's door, on the one flat panel of its face (flat to 2 cm), clear of the crew screen
+            // The tower's face keeps no console: it went to the port side (Dan's plan 4, 28 September 2026; 29 September 2026).
+            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(1.0f, 2.35f, towerFront + 0.3f), 0f), ShipSign.Bridge); // over the tower's door, on the one flat panel of its face (flat to 2 cm), clear of the crew screen port of the ladder
 
             // Port, the cargo corner (Dan, 28 September 2026: "take a 90 degree turn and
             // it to be at the side of the ship"): one 20 ft container lying along the port
@@ -385,7 +393,7 @@ namespace SunkCost.Editor.Look
                 float inboard = side > 0f ? -90f : 90f;
                 for (float z = -halfL + 5f + stagger; z < halfL - 9f; z += 12f)
                     if (!(side < 0 && z > -8.5f && z < -3.5f)) AddLampLight(Rail(look, "DeckLamp", side, z, inboard));
-                foreach (float z in side > 0f ? new[] { 15f, 1.2f } : new[] { 16f, -8.8f })
+                foreach (float z in side > 0f ? new[] { 15f, 1.2f } : new[] { 16.5f, -8.8f }) // port's forward one just clear of the console's forward end
                     Rail(look, "Lifebuoy", side, z, inboard);
             }
 
@@ -635,12 +643,16 @@ namespace SunkCost.Editor.Look
             Transform frame = root.Find("Crew Screen Frame");
             if (frame == null) return;
             Vector3 e = frame.localScale / 2f;
+            // A grid over its whole back, not only its centre and corners: the face behind
+            // it has lips and a recessed window (29 September 2026), and no lip may reach
+            // into the frame.
             float nearest = float.NegativeInfinity;
-            foreach (Vector2 k in Samples)
-            {
-                Vector3 from = frame.localPosition + new Vector3(k.x * e.x, k.y * e.y, 0.6f);
-                if (StructureHit(root, root.TransformPoint(from), -root.forward, 2.5f, null, out RaycastHit hit)) nearest = Mathf.Max(nearest, from.z - hit.distance);
-            }
+            for (float kx = -1f; kx <= 1.001f; kx += 0.1f)
+                for (float ky = -1f; ky <= 1.001f; ky += 0.1f)
+                {
+                    Vector3 from = frame.localPosition + new Vector3(kx * e.x * 0.98f, ky * e.y * 0.98f, 0.6f);
+                    if (StructureHit(root, root.TransformPoint(from), -root.forward, 2.5f, null, out RaycastHit hit)) nearest = Mathf.Max(nearest, from.z - hit.distance);
+                }
             if (float.IsInfinity(nearest)) return;
             float move = nearest + 0.005f - (frame.localPosition.z - e.z);
             foreach (string name in new[] { "Crew Screen Frame", "Crew Screen", "Crew Screen Text" })
@@ -1038,12 +1050,12 @@ namespace SunkCost.Editor.Look
         private const float WallRayHeight = 0.5f;
         private const float OnTheLine = 0.005f; // a hit this close to the fitted line is on the straight run
 
-        // One of the bow's diagonals: fitted on the middle of its straight run, then
-        // grown along it as far as the hits stay on the line.
-        private static Wall BowDiagonal(Transform root, float side)
+        // One of the side's straight runs (StraightRuns): fitted on the middle of the
+        // run, then grown along it as far as the hits stay on the line.
+        private static Wall SideRun(Transform root, float side, float from, float to)
         {
-            Wall wall = FitWall(root, side, BowDiagonalFrom - 1.2f, BowDiagonalTo + 0.4f, BowDiagonalFrom - 0.1f, BowDiagonalTo - 0.5f);
-            Debug.Log("Ship dressing: the " + (side < 0f ? "port" : "starboard") + " bow diagonal's inner face runs " + wall.Angle.ToString("F1") + " deg off the centre line (" + wall.Hits + " hits, flat to " + (wall.Flat * 1000f).ToString("F1") + " mm), " + wall.Length.ToString("F2") + " m straight from " + wall.From.ToString("F3") + " to " + wall.To.ToString("F3") + "; turned to yaw " + wall.Yaw.ToString("F1"));
+            Wall wall = FitWall(root, side, from - 1.2f, to + 0.4f, from + 0.1f, to - 0.1f);
+            Debug.Log("Ship dressing: the " + (side < 0f ? "port" : "starboard") + " side's inner face at z " + from.ToString("F1") + ".." + to.ToString("F1") + " runs " + wall.Angle.ToString("F1") + " deg off the centre line (" + wall.Hits + " hits, flat to " + (wall.Flat * 1000f).ToString("F1") + " mm), " + wall.Length.ToString("F2") + " m straight from " + wall.From.ToString("F3") + " to " + wall.To.ToString("F3") + "; turned to yaw " + wall.Yaw.ToString("F1"));
             return wall;
         }
 
@@ -1696,11 +1708,15 @@ namespace SunkCost.Editor.Look
                 smooth[i] = sum / count;
             }
             outline = smooth;
-            // The bow's diagonals, each one straight run between its corners (Dan's plan
-            // 4, 28 September 2026): the console and the TV stand flat against them. The
-            // generated hull's lumps put the run's middle 3-5 cm either side of the line.
-            int a = Mathf.RoundToInt((BowDiagonalFrom + halfL) / Step), b = Mathf.RoundToInt((BowDiagonalTo + halfL) / Step);
-            for (int i = a + 1; i < b && b < n; i++) outline[i] = Mathf.Lerp(outline[a], outline[b], (i - a) / (float)(b - a));
+            // The bow's diagonals and the console's stretch of the side, each one straight
+            // run between its corners (Dan's plan 4, 28 September 2026; 29 September 2026):
+            // what stands against them stands flat. The generated hull's lumps put the
+            // runs' middles a few centimetres either side of the line.
+            foreach ((float from, float to) in StraightRuns)
+            {
+                int a = Mathf.RoundToInt((from + halfL) / Step), b = Mathf.RoundToInt((to + halfL) / Step);
+                for (int i = a + 1; i < b && b < n; i++) outline[i] = Mathf.Lerp(outline[a], outline[b], (i - a) / (float)(b - a));
+            }
         }
 
         // The hull's half-width at this length, from the outline.
