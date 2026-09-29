@@ -36,6 +36,7 @@ namespace SunkCost.Audio
         public float MicrophoneLevel => capture?.Level ?? 0;
         public string Status { get; private set; } = "Microphone OFF";
         public float VoiceVolume { get; private set; }
+        public bool VoiceChatEnabled { get; private set; } = true;
         public bool Connected => session != null && session.InRoom && manager != null && manager.ClientManager != null && manager.ClientManager.Started;
         public bool TextEntryActive { get; set; }
         public uint SentFrames { get; private set; }
@@ -100,6 +101,7 @@ namespace SunkCost.Audio
             Settings = Resources.Load<VoiceSettings>("VoiceSettings");
             if (Settings == null) Settings = ScriptableObject.CreateInstance<VoiceSettings>();
             VoiceVolume = Mathf.Clamp01(PlayerPrefs.GetFloat("Audio.Voice", 1));
+            VoiceChatEnabled = PlayerPrefs.GetInt("Audio.VoiceEnabled", 1) != 0;
             nextGeneration = BitConverter.ToUInt64(Guid.NewGuid().ToByteArray(), 0);
         }
         private void Start()
@@ -293,7 +295,7 @@ namespace SunkCost.Audio
         {
             StopMicrophoneTest();
             if (!enabled) { MicrophoneEnabled = false; syntheticCapture = false; StopTransmission(); Status = "Microphone OFF"; return; }
-            if (!Connected || !Devices.Available || (!string.IsNullOrEmpty(Devices.InputId) && Devices.InputIndex < 0))
+            if (!VoiceChatEnabled || !Connected || !Devices.Available || (!string.IsNullOrEmpty(Devices.InputId) && Devices.InputIndex < 0))
             { Status = "Microphone unavailable — join a session and select a connected mic."; return; }
             MicrophoneEnabled = true; retryAt = 0; Status = world < 0 ? "Microphone ON — waiting for world" : "Microphone ON — connecting";
         }
@@ -410,6 +412,7 @@ namespace SunkCost.Audio
         }
         private void ClientFrame(VoiceFrame frame, Channel channel)
         {
+            if (!VoiceChatEnabled) return;
             if (channel != Channel.Unreliable || !Connected || frame.Speaker == manager.ClientManager.Connection.ClientId || world < 0 || !Devices.Available || !receivers.TryGetValue(frame.Speaker, out var receiver) || receiver.Generation == 0 || receiver.Generation != frame.Generation || receiver.Muted) return;
             // A living listener takes its own world's direct frames and, on the ship, the
             // TV's; a dead one only spectate and dead frames.
@@ -424,7 +427,18 @@ namespace SunkCost.Audio
             receiver.Route = frame.Route;
             receiver.Playback.Enqueue(frame.Sequence, frame.Payload); receiver.LastFrame = Time.unscaledTime; ReceivedFrames++;
         }
-        public void SetVoiceVolume(float value) { VoiceVolume = Mathf.Clamp01(value); PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }
+        public void SetVoiceVolume(float value, bool persist = true) { VoiceVolume = Mathf.Clamp01(value); if (persist) PlayerPrefs.SetFloat("Audio.Voice", VoiceVolume); }
+        public void SetVoiceChat(bool enabled, bool persist = true)
+        {
+            VoiceChatEnabled = enabled;
+            if (!enabled)
+            {
+                SetMicrophone(false);
+                foreach (var receiver in receivers.Values) { receiver.Playback?.Dispose(); receiver.Playback = null; }
+                heard.Clear();
+            }
+            if (persist) PlayerPrefs.SetInt("Audio.VoiceEnabled", enabled ? 1 : 0);
+        }
         public bool PeerMuted(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Muted;
         public int PeerDecoded(int id) => receivers.TryGetValue(id, out var receiver) ? receiver.Playback?.Decoded ?? 0 : 0;
         public string PeerReadStats(int id) => receivers.TryGetValue(id, out var receiver) && receiver.Playback != null ? $"reads={receiver.Playback.Reads} block={receiver.Playback.LastReadLength} underruns={receiver.Playback.Underruns} cushion={receiver.Playback.CushionMs}ms concealed={receiver.Playback.Concealed}" : "none";

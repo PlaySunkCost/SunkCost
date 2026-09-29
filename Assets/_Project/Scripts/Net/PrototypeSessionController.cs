@@ -84,6 +84,9 @@ namespace SunkCost.Net
         public IReadOnlyList<MemberInfo> Members => members;
         public LobbySessionSettings Settings => settings;
         public NetworkManager NetworkManager => networkManager;
+        // Local presentation only: accepted invitations can wait for unsaved settings to be discarded.
+        public Func<ulong, bool> InviteInterceptor { get; set; }
+        public event Action<string> InviteError;
 
         // ---- wiring ---------------------------------------------------------------
 
@@ -270,10 +273,12 @@ namespace SunkCost.Net
             if (boundMode.HasValue && boundMode.Value != SessionMode.Steam)
             {
                 message = "Transport is locked to Local for this run; restart the game to accept Steam invites.";
+                InviteError?.Invoke(message);
                 return;
             }
+            if (InviteInterceptor?.Invoke(invitedLobbyId) == true) return;
             Debug.Log("[Steam] invite to lobby " + invitedLobbyId + " accepted; joining");
-            JoinSteamLobby(invitedLobbyId);
+            if (!JoinSteamLobby(invitedLobbyId)) InviteError?.Invoke(message);
         }
 
         // ---- flows ----------------------------------------------------------------
@@ -490,7 +495,7 @@ namespace SunkCost.Net
         public void Leave(string finalMessage)
         {
             // The host's last word at the dock is kept (WorldSceneFlow.Save).
-            if (role == SessionRole.Host && networkManager != null && networkManager.ServerManager.Started)
+            if (role == SessionRole.Host && networkManager != null && networkManager.ServerManager != null && networkManager.ServerManager.Started)
                 SunkCost.World.WorldSceneFlow.Instance?.ServerSaveRun("host leaves");
             if (state == SessionState.Menu || state == SessionState.Leaving) return;
             SessionRole leavingRole = role;
@@ -512,16 +517,18 @@ namespace SunkCost.Net
             }
             if (networkManager != null)
             {
-                var clientState = networkManager.ClientManager.Connection != null ? networkManager.ClientManager.Started : false;
-                if (clientState || ClientStarting()) networkManager.ClientManager.StopConnection();
-                if (leavingRole == SessionRole.Host && (networkManager.ServerManager.Started || ServerStarting()))
+                // Steam can fail before BindTransport activates the network root and FishNet's managers.
+                var clientState = networkManager.ClientManager != null && networkManager.ClientManager.Started;
+                if (networkManager.ClientManager != null && (clientState || ClientStarting())) networkManager.ClientManager.StopConnection();
+                if (networkManager.ServerManager != null && leavingRole == SessionRole.Host && (networkManager.ServerManager.Started || ServerStarting()))
                     networkManager.ServerManager.StopConnection(true);
             }
             if (lobby != null) lobby.Leave();
             if (auth != null) { auth.ClearServer(); auth.ClearClient(); }
 
             float deadline = Time.unscaledTime + settings.cleanupTimeout;
-            while (networkManager != null && (networkManager.ClientManager.Started || networkManager.ServerManager.Started) && Time.unscaledTime < deadline)
+            while (networkManager != null && ((networkManager.ClientManager != null && networkManager.ClientManager.Started) ||
+                (networkManager.ServerManager != null && networkManager.ServerManager.Started)) && Time.unscaledTime < deadline)
                 yield return null;
             // The spawned player's camera/listener goes away with the connection.
             yield return null;

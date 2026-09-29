@@ -7,6 +7,7 @@ using UnityEngine.Audio;
 
 namespace SunkCost.Audio
 {
+    public enum AudioCategory { Effects, Music, Voice, Diagnostic }
     public sealed class AudioDeviceService : MonoBehaviour
     {
         public readonly struct Device
@@ -22,6 +23,9 @@ namespace SunkCost.Audio
         public string InputId { get; private set; }
         public string OutputId { get; private set; }
         public float Master { get; private set; }
+        public float EffectsVolume { get; private set; }
+        public float MusicVolume { get; private set; }
+        public bool PreviewingPreferences { get; set; }
         public event Action InputChanged;
         public event Action ConfigurationChangedEvent;
         public event Action BeforeShutdown;
@@ -29,6 +33,8 @@ namespace SunkCost.Audio
         private string defaultOutput;
         private string defaultInput;
         private AudioMixerGroup outputGroup;
+        private AudioMixer mixer;
+        private AudioMixerGroup effectsGroup, musicGroup;
         private AudioSource testSource;
         private AudioClip testClip;
         private bool shuttingDown;
@@ -38,17 +44,37 @@ namespace SunkCost.Audio
             Application.runInBackground = true;
             InputId = PlayerPrefs.GetString("Audio.Input", ""); OutputId = PlayerPrefs.GetString("Audio.Output", "");
             Master = PlayerPrefs.GetFloat("Audio.Master", 1f); AudioListener.volume = Master;
+            EffectsVolume = Mathf.Clamp01(PlayerPrefs.GetFloat("Audio.Effects", .9f));
+            MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat("Audio.Music", .7f));
+            mixer = Resources.Load<AudioMixer>("SunkCostOutput");
+            outputGroup = Group("Master"); effectsGroup = Group("SFX"); musicGroup = Group("Music");
             try
             {
                 Available = NativeAudioBridge.sc_init() == 0;
                 if (!Available) { Status = "Audio devices unavailable; game audio uses system output."; return; }
-                outputGroup = Resources.Load<AudioMixer>("SunkCostOutput")?.FindMatchingGroups("Master")[0];
                 RefreshDevices(); OpenOutput();
                 AudioSettings.OnAudioConfigurationChanged += ConfigurationChanged;
 
             }
             catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException || e is BadImageFormatException)
             { Available = false; Status = "Voice plugin unavailable; game audio uses system output."; Debug.LogWarning(Status + " " + e.GetType().Name); }
+        }
+        private AudioMixerGroup Group(string name)
+        {
+            var groups = mixer != null ? mixer.FindMatchingGroups(name) : null;
+            return groups != null && groups.Length > 0 ? groups[0] : null;
+        }
+        private void Start() => SetCategoryVolumes(EffectsVolume, MusicVolume, false);
+        public void SetCategoryVolumes(float effects, float music, bool persist = true)
+        {
+            EffectsVolume = Mathf.Clamp01(effects); MusicVolume = Mathf.Clamp01(music);
+            if (mixer != null)
+            {
+                mixer.SetFloat("SfxVolume", EffectsVolume <= 0 ? -80 : 20 * Mathf.Log10(EffectsVolume));
+                mixer.SetFloat("MusicVolume", MusicVolume <= 0 ? -80 : 20 * Mathf.Log10(MusicVolume));
+            }
+            if (persist && !PreviewingPreferences)
+            { PlayerPrefs.SetFloat("Audio.Effects", EffectsVolume); PlayerPrefs.SetFloat("Audio.Music", MusicVolume); }
         }
 
         private void Update()
@@ -80,13 +106,13 @@ namespace SunkCost.Audio
             if (!string.IsNullOrEmpty(InputId) && Find(Inputs, InputId) < 0) { InputChanged?.Invoke(); Status = "Selected microphone unavailable. Select a microphone, then unmute."; }
             string currentDefault = Outputs.Find(d => d.Default).Id ?? "";
             if (!string.IsNullOrEmpty(OutputId) && Find(Outputs, OutputId) < 0)
-            { OutputId = ""; PlayerPrefs.SetString("Audio.Output", ""); OpenOutput(); Status = "Output disconnected; using Automatic."; }
+            { OutputId = ""; if (!PreviewingPreferences) PlayerPrefs.SetString("Audio.Output", ""); OpenOutput(); Status = "Output disconnected; using Automatic."; }
             else if (string.IsNullOrEmpty(OutputId) && defaultOutput != null && currentDefault != defaultOutput) OpenOutput();
             defaultOutput = currentDefault;
         }
-        public void SelectInput(string id) { InputChanged?.Invoke(); InputId = id; PlayerPrefs.SetString("Audio.Input", id); Status = "Microphone changed; press P to enable."; }
-        public void SelectOutput(string id) { OutputId = id; PlayerPrefs.SetString("Audio.Output", id); OpenOutput(); }
-        public void SetMaster(float value) { Master = Mathf.Clamp01(value); if (Available && outputGroup != null) NativeAudioBridge.sc_master(Master); else AudioListener.volume = Master; PlayerPrefs.SetFloat("Audio.Master", Master); }
+        public void SelectInput(string id) { InputChanged?.Invoke(); InputId = id; if (!PreviewingPreferences) PlayerPrefs.SetString("Audio.Input", id); Status = "Microphone changed; press P to enable."; }
+        public void SelectOutput(string id) { OutputId = id; if (!PreviewingPreferences) PlayerPrefs.SetString("Audio.Output", id); OpenOutput(); }
+        public void SetMaster(float value) { Master = Mathf.Clamp01(value); if (Available && outputGroup != null) NativeAudioBridge.sc_master(Master); else AudioListener.volume = Master; if (!PreviewingPreferences) PlayerPrefs.SetFloat("Audio.Master", Master); }
         private void ConfigurationChanged(bool changed)
         {
             if (shuttingDown || !Available) return;
@@ -119,12 +145,16 @@ namespace SunkCost.Audio
                 }
                 testClip = AudioClip.Create("Audio output test left then right", rate, 2, rate, false); testClip.SetData(samples, 0);
             }
-            Route(testSource); testSource.spatialBlend = 0; testSource.clip = testClip; testSource.Play();
+            Route(testSource, AudioCategory.Diagnostic); testSource.spatialBlend = 0; testSource.clip = testClip; testSource.Play();
         }
         public float OutputPeak => Available ? NativeAudioBridge.sc_output_peak() : 0f;
         public uint MixCallbacks => Available ? NativeAudioBridge.sc_mix_callbacks() : 0;
         public uint OutputCallbacks => Available ? NativeAudioBridge.sc_output_nonzero() : 0;
-        public void Route(AudioSource source) { if (outputGroup != null) source.outputAudioMixerGroup = outputGroup; }
+        public void Route(AudioSource source, AudioCategory category = AudioCategory.Effects)
+        {
+            source.outputAudioMixerGroup = category == AudioCategory.Effects ? effectsGroup ?? outputGroup :
+                category == AudioCategory.Music ? musicGroup ?? outputGroup : outputGroup;
+        }
         public static void RouteSource(AudioSource source)
         {
             var service = FindAnyObjectByType<AudioDeviceService>();

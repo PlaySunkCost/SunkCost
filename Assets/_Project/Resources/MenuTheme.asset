@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c4c4f00f15c4eb0b0c484b61ce1335d, type: 3}
+  m_Name: MenuTheme
+  m_EditorClassIdentifier: 
+  Background: {fileID: 0}
+  Logo: {fileID: 0}
+  ButtonPlate: {fileID: 7387767886112309281, guid: c968abba27b544a4a8bf58ecdccfc73d, type: 3}
+  Font: {fileID: 0}
+  ButtonFont: {fileID: 12800000, guid: bb1c6d997d7e9454cad6b51bf8b21f4b, type: 3}
+  Panel: {r: 0.045, g: 0.05, b: 0.052, a: 1}
+  Text: {r: 0.91, g: 0.88, b: 0.79, a: 1}
+  Accent: {r: 1, g: 0.65, b: 0.16, a: 1}

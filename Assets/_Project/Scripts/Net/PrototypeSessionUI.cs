@@ -67,6 +67,7 @@ namespace SunkCost.Net
             controller.Configure(networkRoot, networkManager, transportManager, localTransport, steamTransportPrefab, previewCamera, settings);
             if (GetComponent<SunkCost.Audio.ProximityVoice>() == null) gameObject.AddComponent<SunkCost.Audio.ProximityVoice>();
             if (GetComponent<SunkCost.Audio.VoiceSettingsUI>() == null) gameObject.AddComponent<SunkCost.Audio.VoiceSettingsUI>();
+            if (GetComponent<SunkCost.UI.MenuRoot>() == null) gameObject.AddComponent<SunkCost.UI.MenuRoot>();
         }
 
         private IEnumerator Start()
@@ -212,6 +213,8 @@ namespace SunkCost.Net
         private void OnGUI()
         {
             if (controller == null) return;
+            var menu = GetComponent<SunkCost.UI.MenuRoot>();
+            if (menu != null && (!controller.InRoom || menu.CoversGameplay)) return;
             if (FpsCounterOn) DrawFps();
             if (controller.InRoom && !SessionInputGate.MenuOpen)
             {
@@ -332,6 +335,7 @@ namespace SunkCost.Net
             if (controller.InRoom)
             {
                 if (GUILayout.Button("Resume")) SessionInputGate.Resume();
+                if (GUILayout.Button("Options")) GetComponent<SunkCost.UI.MenuRoot>()?.OpenAudio();
                 FpsCounterOn = GUILayout.Toggle(FpsCounterOn, "FPS counter");
                 // Unstuck (Dan, 18 September 2026): the server puts you back on a
                 // known spot of the world you are in, then the menu closes.

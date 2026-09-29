@@ -18,6 +18,13 @@ namespace SunkCost.Audio
         private void OnGUI()
         {
             if (voice == null || session == null) return;
+            var newMenu = GetComponent<SunkCost.UI.MenuRoot>();
+            if (newMenu != null)
+            {
+                if (session.InRoom && !newMenu.CoversGameplay)
+                    GUI.Label(new Rect(Screen.width - 300, 12, 288, 30), voice.MicrophoneEnabled ? "MIC ON • P to mute" : "MIC OFF • P to unmute");
+                return;
+            }
             bool menu = !session.InRoom || SessionInputGate.MenuOpen;
             if (!menu && open) { open = false; voice.StopMicrophoneTest(); voice.Devices.StopTest(); }
             // P must not toggle while entering a lobby address or player name.

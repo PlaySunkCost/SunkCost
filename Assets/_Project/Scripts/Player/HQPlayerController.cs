@@ -440,7 +440,7 @@ namespace SunkCost.Player
             bool hasDevices = ActiveKeyboard != null && Mouse.current != null;
 
             // Escape opens the menu and, pressed again, closes it (the same as Resume).
-            if (hasDevices && ActiveKeyboard.escapeKey.wasPressedThisFrame)
+            if (hasDevices && !SunkCost.UI.MenuRoot.ConsumesEscape && ActiveKeyboard.escapeKey.wasPressedThisFrame)
             {
                 if (SessionInputGate.ShopOpen) SessionInputGate.CloseShop();
                 else if (SessionInputGate.PickerOpen) SessionInputGate.ClosePicker();

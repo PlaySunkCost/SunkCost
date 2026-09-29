@@ -58,7 +58,7 @@ namespace SunkCost.Audio
             for (int i = 0; i < packets.Length; i++) packets[i] = new byte[400];
             source = owner.AddComponent<AudioSource>(); source.playOnAwake = false; source.loop = true;
             source.spatialBlend = 0; source.volume = 0; source.dopplerLevel = 0;
-            devices.Route(source); RecreateClip();
+            devices.Route(source, AudioCategory.Voice); RecreateClip();
             worker = new Thread(Run) { IsBackground = true, Name = "Sunk Cost voice decoder" }; worker.Start();
         }
         public void RecreateClip()
