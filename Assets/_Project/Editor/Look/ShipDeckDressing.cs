@@ -24,10 +24,10 @@ namespace SunkCost.Editor.Look
     // stands in another: each one takes its patch of deck, and the rows along the
     // rail give way to whatever is already there (ship audit SHIP-004).
     //
-    // The lounge is the bow (Dan's plan 4, 28 September 2026): the deck TV with its
-    // back flat on the bow's starboard diagonal, the couches aimed at its screen, the
-    // table between its benches behind them; the navigation console with its back
-    // flat on the port diagonal. The working end is the
+    // The lounge is the bow: the deck TV faces aft from the point, the couches in
+    // front of it, the table between its benches behind them (Dan, 29 September
+    // 2026: the TV back where it was); the navigation console with its back flat on
+    // the bow's port diagonal, the starboard one kept free. The working end is the
     // stern: the crane, the cargo, the storage room, beside the tower. The elevator
     // stays the game's own glass car; a look for it is a separate job (Dan: "we will
     // do a new one after").
@@ -111,22 +111,19 @@ namespace SunkCost.Editor.Look
         private static readonly HashSet<string> NotSolid = new() { "Hull", "NamePlate", "StorageRoom", "StorageSill" };
 
 
-        private const float TvScreenCentreY = 2.0f; // seated eyes at about 1.15 m, standing 1.6 m (SHIP-026); a smaller cabinet is never lifted off the deck to reach it
+        private const float TvScreenCentreY = 2.0f; // seated eyes at about 1.15 m, standing 1.6 m (SHIP-026)
         // The bow's two diagonals (Dan's plan 4, 28 September 2026): where the side turns
         // in across the bow at about 55 degrees, between these two lengths of the hull's
         // outline. The outline is made one straight run between them (a few centimetres
-        // at most off the generated hull's lumps), so the console and the TV stand with
-        // their backs flat against the side's inner face along their whole width.
+        // at most off the generated hull's lumps), so the console on the port one stands
+        // with its back flat against the side's inner face along its whole width.
         private const float BowDiagonalFrom = 21f, BowDiagonalTo = 23f;
         private const float WallGap = 0.01f;        // an object's back off the side's inner face: flush, touching nothing
-        private const float LoungeView = 3.5f;      // the couches' centre from the screen: the old 5.5 m to a 5.2 m screen, for the diagonal's smaller one
-        private const float LoungeTable = 2.75f;    // the table's centre behind the couches' centre, along the same axis
         // A patch of open, flat deck starboard of the well's rail that no prop may take:
         // where WorldLoopRuntimeChecks drops the ball that must ride the trip at its spot
         // (row D7; its old spot became the crane's base with SHIP-012).
         public static readonly Vector3 OpenDeck = new(5.5f, 0f, 1.0f);
-        private const float CaptionCharacterSize = 0.042f; // on a screen CaptionScreenHeight tall
-        private const float CaptionScreenHeight = 2.3f;
+        private const float CaptionCharacterSize = 0.042f;
 
         private static Transform shipRoot;
         private static float halfL, halfW;
@@ -201,26 +198,74 @@ namespace SunkCost.Editor.Look
             float door = sx - ShipStubBuilder.StorageWidth / 2f;
             Keep("the storage doorway", new Vector2(door - 2.4f, sz - 1.3f), new Vector2(door, sz + 1.3f));
 
-            // ---- the bow: the console and the lounge on its two diagonals ---------
+            // ---- the lounge: the bow ---------------------------------------------
 
-            // Dan's plan 4 (28 September 2026): where the side turns in across the bow,
-            // the navigation console on the port diagonal and the deck TV on the
-            // starboard one, each with its back flat on the side's inner face and facing
-            // back into the ship. Each diagonal is measured off the built side itself
-            // (rays onto the Bulwark's collider, a line fitted through the hits), port
-            // and starboard separately, and each object is turned to its own wall.
-            Wall portBow = BowDiagonal(root, -1f), starboardBow = BowDiagonal(root, 1f);
+            // The deck TV the game builds stands at the bow facing aft
+            // (ShipStubBuilder.BuildTv); the cabinet is its housing, sunk into the
+            // deck so the same big screen is at a sitting eye's height (Dan, 23
+            // September 2026: "same size, lower"; Dan, 29 September 2026: back at the
+            // bow's centre as it was, not on a diagonal). Two couches in front of it,
+            // lamps either side turned onto them; behind the couches the table between
+            // its two benches (Dan: the table between the benches), the living end of
+            // the ship.
+            float tv = halfL - 5f;
+            GameObject cabinet = Hand(look, "TvCabinet", new Vector3(0f, 0f, tv + 0.45f), 180f, ground: false);
+            Vector3 screenCentre = DressTv(root, cabinet, Vector3.back);
+            Keep("the view to the TV", new Vector2(-3.2f, tv - 5f), new Vector2(3.2f, tv - 0.3f));
+            int seat = 0;
+            foreach (float x in new[] { -2.1f, 2.1f })
+            {
+                GameObject couch = Hand(look, "Couch", new Vector3(x, 0f, tv - 5.5f), 0f);
+                AddSeats(couch, screenCentre, ref seat);
+            }
+            // The table between the benches, the benches facing each other across it
+            // (SHIP-022, SHIP-067), clear of the couches' backs: the aft bench looks
+            // over the table and the couches to the TV.
+            float tableZ = tv - 8.8f;
+            GameObject table = Hand(look, "Table", new Vector3(0f, 0f, tableZ), 0f);
+            float tableHalf = table != null ? ShipBounds(table).extents.z : 0.4f;
+            foreach (float side in new[] { -1f, 1f })
+            {
+                GameObject bench = Put(look, "Bench", new Vector3(0f, 0f, tableZ), side > 0f ? 180f : 0f);
+                if (bench == null) continue;
+                bench.transform.localPosition += Vector3.forward * side * (tableHalf + 0.1f + ShipBounds(bench).extents.z);
+                Settle(bench, false);
+            }
+            foreach (float side in new[] { -1f, 1f })
+            {
+                // Beside the TV, turned onto the couches (SHIP-027), inboard of the
+                // narrowing bow by their own width (SHIP-006).
+                Vector3 at = new(side * 5.6f, 0f, tv - 1.5f);
+                float yaw = Mathf.Atan2(side * 2.1f - at.x, (tv - 5.5f) - at.z) * Mathf.Rad2Deg;
+                GameObject lamp = Hand(look, "DeckLamp", at, yaw, rail: side);
+                AddLampLight(lamp);
+            }
+            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(-W(13f) + WallThickness + 0.06f, 0.5f, 13f), 90f), ShipSign.Lounge); // on the side's inner face, below its top
+
+            // The bow tip behind the TV: a mooring station, the bollards either side
+            // and the line coiled between them (SHIP-038: it held nothing). The port
+            // bollard's old spot (-2.4, tv + 2.1) is inside the console's lower body on
+            // the port diagonal (29 September 2026), so it stands forward of the
+            // console's end, by the point, off the diagonal and clear of the coil.
+            Hand(look, "Bollard", new Vector3(-1.2f, 0f, tv + 3.6f), 0f);
+            Hand(look, "Bollard", new Vector3(2.4f, 0f, tv + 2.1f), 0f);
+            Hand(look, "CableCoil", new Vector3(0f, 0f, tv + 2.6f), 0f);
 
             // The navigation console (Dan, 27 September 2026: the shared console model
             // replaces the old console, its monitor and its three buttons): the rig
             // ConsoleBuilder builds - the model with its own mesh collider, the two
             // painted screens, the lever and the five destination cards the crew aim at -
-            // its back on the port diagonal, its screens and its lever toward the lounge
-            // and the deck (Dan, 28 September 2026: "put it near the wall"). On the ship's
-            // root rather than in Look: the collider pass below strips every collider
-            // under Look, and the rig's are the game's own; ShipHierarchy groups it under
-            // Tower/Console by its name. The composer that fills its screens from the day
-            // state is added here; ShipScreens leaves the idle screens painted.
+            // with its back flat on the bow's port diagonal, where the side turns in
+            // across the bow, its screens and its lever toward the deck (Dan's plan 4,
+            // 28 September 2026: "put it near the wall"). The diagonal is measured off
+            // the built side itself (rays onto the Bulwark's collider, a line fitted
+            // through the hits). The starboard diagonal is kept free for a storage
+            // locker to come (Dan, 29 September 2026). On the ship's root rather than
+            // in Look: the collider pass below strips every collider under Look, and
+            // the rig's are the game's own; ShipHierarchy groups it under Tower/Console
+            // by its name. The composer that fills its screens from the day state is
+            // added here; ShipScreens leaves the idle screens painted.
+            Wall portBow = BowDiagonal(root, -1f);
             ConsoleRig navConsole = ConsoleBuilder.Place(root, Vector3.zero, portBow.Yaw, ConsoleKind.Ship);
             if (navConsole != null)
             {
@@ -233,81 +278,6 @@ namespace SunkCost.Editor.Look
                 KeepAlong("the console's front", portBow, portBow.Along(f.Centre), f.Half.x + 0.1f, portBow.Depth(f.Centre) + f.Half.y, 2f);
                 rig.AddComponent<ShipNavigationConsole>();
             }
-
-            // The deck TV the game builds (ShipStubBuilder.BuildTv) on its cabinet, the
-            // cabinet on the starboard diagonal. The big cabinet (Dan, 23 September 2026)
-            // is 6 m wide and the diagonal's straight run 3.5 m, so on the wall it is
-            // scaled down to what the run holds (the plan Dan approved drew it so); a
-            // cabinet that fits is never lifted to put its screen higher.
-            GameObject cabinet = Put(look, "TvCabinet", Vector3.zero, starboardBow.Yaw, ground: false);
-            if (cabinet != null)
-            {
-                OnWall(cabinet, starboardBow);
-                float fits = starboardBow.Length - 2f * 0.04f, width = OrientedExtent(cabinet, starboardBow).x;
-                if (width > fits)
-                {
-                    cabinet.transform.localScale *= fits / width;
-                    OnWall(cabinet, starboardBow);
-                    Debug.Log("Ship dressing: the TV cabinet scaled to " + cabinet.transform.localScale.x.ToString("F3") + " to fit the starboard diagonal's " + starboardBow.Length.ToString("F2") + " m");
-                }
-                Ground(cabinet);
-                oriented.Add(cabinet);
-                Settle(cabinet, false);
-            }
-            Vector3 screenCentre = DressTv(root, cabinet, starboardBow.In3);
-            Vector2 screen = new(screenCentre.x, screenCentre.z);
-            float screenHalf = cabinet != null ? ScreenHalfWidth(root) : 1.5f;
-            // Two couches side by side in front of it, each aimed at the screen's centre;
-            // lamps at the ends of the two diagonals turned onto them; behind the couches
-            // the table between its two benches (Dan: the table between the benches),
-            // square to the couches' shared axis: the living end of the ship.
-            Vector2 lounge = screen + starboardBow.In * LoungeView;
-            KeepAlong("the view to the TV", starboardBow, starboardBow.Along(screen), screenHalf, starboardBow.Depth(screen) + 0.35f, LoungeView - 1.25f);
-            int seat = 0;
-            foreach (float across in new[] { 1f, -1f }) // the port couch first: CouchSeat_1.. run from port to starboard
-            {
-                Vector2 at = lounge + starboardBow.Dir * across * 1.12f;
-                float yaw = Mathf.Atan2(screen.x - at.x, screen.y - at.y) * Mathf.Rad2Deg;
-                GameObject couch = Turned(look, "Couch", at, yaw);
-                AddSeats(couch, screenCentre, ref seat);
-            }
-            // The table between the benches, the benches facing each other across it
-            // (SHIP-022, SHIP-067), clear of the couches' backs: the aft bench looks
-            // over the table and the couches to the TV.
-            float axisYaw = Mathf.Atan2(-starboardBow.In.x, -starboardBow.In.y) * Mathf.Rad2Deg; // facing the TV
-            Vector2 tableAt = lounge + starboardBow.In * LoungeTable;
-            GameObject table = Turned(look, "Table", tableAt, axisYaw);
-            float tableHalf = table != null ? FootprintOf(table).Half.y : 0.4f;
-            foreach (float side in new[] { -1f, 1f }) // -1 toward the TV, +1 away from it
-            {
-                GameObject bench = Put(look, "Bench", new Vector3(tableAt.x, 0f, tableAt.y), side < 0f ? axisYaw + 180f : axisYaw);
-                if (bench == null) continue;
-                oriented.Add(bench);
-                Vector2 step = starboardBow.In * side * (tableHalf + 0.1f + FootprintOf(bench).Half.y);
-                bench.transform.localPosition += new Vector3(step.x, 0f, step.y);
-                Settle(bench, false);
-            }
-            foreach (Wall wall in new[] { portBow, starboardBow })
-            {
-                // Aft of each diagonal against the side, turned onto the couches (SHIP-027),
-                // pushed off the side's real inner face there (SHIP-006).
-                Vector2 at = wall.From - wall.Dir * 0.6f;
-                float yaw = Mathf.Atan2(lounge.x - at.x, lounge.y - at.y) * Mathf.Rad2Deg;
-                GameObject lamp = Put(look, "DeckLamp", new Vector3(at.x, 0f, at.y), yaw);
-                if (lamp == null) continue;
-                OffTheSide(root, lamp, wall.Side, 0.03f);
-                oriented.Add(lamp);
-                Settle(lamp, false);
-                AddLampLight(lamp);
-            }
-            ShipSignVariants.Apply(Hand(look, "Signs", new Vector3(-W(13f) + WallThickness + 0.06f, 0.5f, 13f), 90f), ShipSign.Lounge); // on the side's inner face, below its top
-
-            // The bow tip between the diagonals: a mooring station, the bollards either
-            // side at the point and the line coiled in front of them (SHIP-038: it held
-            // nothing), clear of the console and the TV.
-            foreach (float side in new[] { -1f, 1f })
-                Hand(look, "Bollard", new Vector3(side * 0.75f, 0f, halfL - 0.9f), 0f);
-            Hand(look, "CableCoil", new Vector3(0f, 0f, halfL - 2f), 0f);
 
             // ---- round the well ---------------------------------------------------
 
@@ -508,7 +478,7 @@ namespace SunkCost.Editor.Look
                 Debug.LogWarning("Ship dressing: no screen panel found on the TV cabinet");
                 return fallback;
             }
-            float sink = Mathf.Max(0f, centre.y - TvScreenCentreY); // down to it, never up off the deck
+            float sink = centre.y - TvScreenCentreY;
             cabinet.transform.localPosition += Vector3.down * sink;
             centre.y -= sink;
             Transform screen = root.Find(ShipParts.TvScreenName);
@@ -537,7 +507,7 @@ namespace SunkCost.Editor.Look
                 foreach (Transform part in caption.Cast<Transform>().ToArray())
                     if (part.name == "Plate" || part.name.StartsWith("Frame")) Object.DestroyImmediate(part.gameObject);
                 var text = caption.GetComponentInChildren<TextMesh>();
-                if (text != null) text.characterSize = CaptionCharacterSize * size.y / CaptionScreenHeight; // set, not multiplied: a second run keeps its size (SHIP-077); in step with the screen's height
+                if (text != null) text.characterSize = CaptionCharacterSize; // set, not multiplied: a second run keeps its size (SHIP-077)
             }
             Transform speaker = root.Find(ShipParts.TvSpeakerName);
             if (speaker != null) speaker.localPosition = centre + facing * 0.1f;
@@ -1193,49 +1163,6 @@ namespace SunkCost.Editor.Look
             if (gaps.Count == 0) return float.PositiveInfinity;
             gaps.Sort();
             return gaps[gaps.Count / 2];
-        }
-
-        // A model's width along the wall and depth out from it.
-        private static Vector2 OrientedExtent(GameObject prop, Wall wall)
-        {
-            Vector2 lo = new(float.PositiveInfinity, float.PositiveInfinity), hi = -lo;
-            foreach (Vector3 v in ShipVertices(prop))
-            {
-                Vector2 q = new(wall.Along(new Vector2(v.x, v.z)), wall.Depth(new Vector2(v.x, v.z)));
-                lo = Vector2.Min(lo, q); hi = Vector2.Max(hi, q);
-            }
-            return hi - lo;
-        }
-
-        // A prop by the side, turned its own way, moved square to the side's inner face
-        // (measured there, not the outline's half-width, which is the wall's outer
-        // face and square only where the side runs straight) until its nearest vertex
-        // is `gap` off it.
-        private static void OffTheSide(Transform root, GameObject prop, float side, float gap)
-        {
-            Bounds b = ShipBounds(prop);
-            Wall wall = FitWall(root, side, b.min.z - 0.3f, b.max.z + 0.3f, b.min.z - 0.3f, b.max.z + 0.3f);
-            float d0 = float.PositiveInfinity;
-            foreach (Vector3 v in ShipVertices(prop)) d0 = Mathf.Min(d0, wall.Depth(new Vector2(v.x, v.z)));
-            Vector2 move = wall.In * (gap - d0);
-            prop.transform.localPosition += new Vector3(move.x, 0f, move.y);
-        }
-
-        // The TV's screen quad's half-width, as DressTv fitted it to the panel.
-        private static float ScreenHalfWidth(Transform root)
-        {
-            Transform screen = root.Find(ShipParts.TvScreenName);
-            return screen != null ? Mathf.Abs(screen.localScale.x) / 2f : 1.5f;
-        }
-
-        // A prop placed by hand at a turn, its patch of deck turned with it.
-        private static GameObject Turned(GameObject look, string part, Vector2 at, float yaw)
-        {
-            GameObject prop = Put(look, part, new Vector3(at.x, 0f, at.y), yaw);
-            if (prop == null) return null;
-            oriented.Add(prop);
-            Settle(prop, false);
-            return prop;
         }
 
         // A prop's meshes' bounds in ship space, from the meshes and the transforms as
