@@ -92,7 +92,7 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   (P3), the host's hold on E (P4), the Lure's bolt at a lit lamp and its loss of interest in the dark
   (LU1), the Listener deaf to a crouch and shooting at a sprint (LI1), the Impostor seen by its victim
   only and its touch (I1), round the safe ground (SG, Dan, 29 September 2026: `MonsterSafeGroundChecks`,
-  the guest in the car; each of the six walkers placed 5.3 m from the shaft at the doorway, the plinth
+  the guest parked 35 m off looking away (in the car it froze the Angel through the doorway); each of the six walkers placed 5.3 m from the shaft at the doorway, the plinth
   corner (-40°), both flanks and the back, with a goal 9 m out on the opposite side; it never steps onto
   the safe ground, never stands 3 s within 1 m while walking for its goal, and reaches the far side within
   45 s; about 4 minutes; alone, the host only, as the job `monsters-round`, log

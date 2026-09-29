@@ -32,8 +32,8 @@ namespace SunkCost.Editor.Prototype
     // far side — a straight way to the goal that no longer crosses the safe ground, within
     // 60° of the goal's bearing — within 45 s. The Elevator Ghost has no body.
     //
-    // The rows run inside the monsters job (MonsterRuntimeChecks, before G0, the guest in
-    // the car) and alone as the job "monsters-round" (the host alone, day 1, log
+    // The rows run inside the monsters job (MonsterRuntimeChecks, before G0, the guest
+    // parked 35 m off, looking away) and alone as the job "monsters-round" (the host alone, day 1, log
     // Temp/monsters-round-matrix.log).
     public static class MonsterSafeGroundChecks
     {

@@ -551,9 +551,10 @@ namespace SunkCost.Editor.Prototype
             remoteVitals.ServerHealForChecks();
 
             Heading("SG — round the safe ground: each walker by the tube's foot on five sides, a goal across the tube (Dan, 29 September 2026)");
-            // The guest waits in the car (safe: no creature's goal); MonsterSafeGroundChecks has the rows.
-            yield return GuestMove(car.transform.position + Vector3.up * 0.2f + car.transform.right * 0.6f);
-            yield return Wait(0.5f);
+            // The guest stays parked 35 m off, looking at the wall: out of every row's reach and sight (in the car it
+            // looked out of the doorway and froze the Angel). MonsterSafeGroundChecks has the rows.
+            yield return GuestMove(guestPark);
+            yield return GuestLook(Quaternion.Euler(0f, 200f, 0f) * Vector3.forward);
             yield return MonsterSafeGroundChecks.Rows(Say, Check);
             yield return Despawn();
             vitals.ServerHealForChecks(); remoteVitals.ServerHealForChecks();
