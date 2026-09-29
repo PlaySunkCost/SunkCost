@@ -377,7 +377,9 @@ proposal.
 - **Day end.** The crew's End day button on the monitor (settled 16 September
   2026, Dan), which unlocks on the same server check that governs the
   automatic return above: today's dive taken and no living player below. One
-  check, not two. Once up, nobody goes down again until it is pressed.
+  check, not two. Once up, nobody goes down again until it is pressed. When
+  every player is dead nobody can press it: the day ends by itself after the
+  NOBODY CAME BACK card (Dan, 29 September 2026; §4 "Nobody came back").
 - **Carrying.** Four inventory slots hold everything — air, tools and loot
   compete for the same four. Cabin floor cargo is unlimited and rides up on
   the outside lever.
@@ -489,6 +491,27 @@ living count: the dead never block the deck button, the car's return or End day.
 When the last living diver is up the dead are carried to the ship unseen; **End
 day revives them on the deck** with the base kit — next to their body if it came
 up (the body disappears).
+
+**Nobody came back (decided 29 September 2026, Dan; built on `dan/elevator-look`,
+checked in the editor's `wipe` matrix, not yet played over Steam):** when every
+connected player is dead nobody is left to pull END DAY, so the day ends by itself.
+The server judges it: a player who has left does not count, a joiner still loading
+is not in the crew yet; HQ and the plank are not affected. It waits for the death
+to settle — at least `crewWipeSettleSeconds` (3 s: the fall and the spectator fade)
+and until the dead have been carried to the ship with the site's close (the car
+comes up first if it was below or on its way down) — then every screen (players,
+spectators, the TV's viewers) goes black with **NOBODY CAME BACK** for
+`crewWipeCardSeconds` (8 s, `WorldLoopSettings`), and the day ends exactly as END DAY
+ends it: the day counts (PAYDAY after the last, whose card follows), loot already in
+the storage room stays, whatever the dead carried stays below and is lost with the
+site, a body not brought up costs its owner the upgrades (in a wipe that is normally
+everyone; a body sent up alone in the car still keeps its owner's, as above), and
+everyone stands up on the deck with the base kit, a full tank and full health. Joins
+are refused while the card is up; a joiner who spawns before it is a living player,
+so the wipe is called off and the crew ends the day at the console as before. A
+player leaving during the card changes nothing. Deaths only happen below today (the
+tank drains only in the site), so the last death is always below; the rule does not
+depend on where it happens.
 
 **Built 17 September 2026 (Dan, the second spectating card — dead spectating):**
 you keep your own camera for about a second (you see yourself fall), a short fade,

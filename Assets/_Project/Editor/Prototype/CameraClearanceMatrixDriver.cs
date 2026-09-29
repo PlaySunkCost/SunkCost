@@ -130,6 +130,9 @@ namespace SunkCost.Editor.Prototype
                     // Walker would kill a row's diver); the monsters job forces its own.
                     SunkCost.Monsters.MonsterSettings.RosterOverrideForTests = job == "monsters" ? null : System.Array.Empty<SunkCost.Monsters.MonsterKind>();
                     SunkCost.Monsters.MonsterSettings.GhostChanceOverrideForTests = job == "monsters" ? null : 0f;
+                    // The crew wipe (29 September 2026) ends a day nobody came back from by itself;
+                    // the jobs written before it keep the dead waiting for End day. Only "wipe" plays it.
+                    SunkCost.World.WorldLoopSettings.CrewWipeDisabledForTests = job != "wipe";
                     try
                     {
                         if (job == "camera") PlayerCameraClearanceRuntimeChecks.RunAsHost();
@@ -159,6 +162,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "elevator-dive") ElevatorDiveRuntimeChecks.RunAsHost();
                         else if (job == "elevator-dive-prefix") ElevatorDiveRuntimeChecks.RunAsHost(false); // the W rows (water rework) XFAIL
                         else if (job == "elevator-net") ElevatorNetRuntimeChecks.RunAsHost();
+                        else if (job == "wipe") WipeRuntimeChecks.RunAsHost();
                         // A monster's own polish checks (24 September 2026): "polish-<Kind>" runs
                         // MonsterPolish<Kind>Checks.RunAsHost, one file per monster, found by name so
                         // no one edits this list to add one. They spawn their own creatures.

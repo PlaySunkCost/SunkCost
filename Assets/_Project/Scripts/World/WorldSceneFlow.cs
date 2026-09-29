@@ -633,9 +633,9 @@ namespace SunkCost.World
 
         private void OnDayStateInstance(CrewDayState state)
         {
-            if (dayState != null) { dayState.DepartureChanged -= OnDepartureChanged; dayState.CabinRideChanged -= OnCabinRideChanged; dayState.RunOverChanged -= OnRunOverChanged; dayState.PhaseChanged -= OnPhaseChangedForPlank; dayState.DayChanged -= OnDayChangedForCard; dayState.PaydayChanged -= OnPaydayChangedForCard; }
+            if (dayState != null) { dayState.DepartureChanged -= OnDepartureChanged; dayState.CabinRideChanged -= OnCabinRideChanged; dayState.RunOverChanged -= OnRunOverChanged; dayState.PhaseChanged -= OnPhaseChangedForPlank; dayState.DayChanged -= OnDayChangedForCard; dayState.PaydayChanged -= OnPaydayChangedForCard; dayState.CrewWipeChanged -= OnCrewWipeChangedForCard; }
             dayState = state;
-            if (dayState != null) { dayState.DepartureChanged += OnDepartureChanged; dayState.CabinRideChanged += OnCabinRideChanged; dayState.RunOverChanged += OnRunOverChanged; dayState.PhaseChanged += OnPhaseChangedForPlank; dayState.DayChanged += OnDayChangedForCard; dayState.PaydayChanged += OnPaydayChangedForCard; }
+            if (dayState != null) { dayState.DepartureChanged += OnDepartureChanged; dayState.CabinRideChanged += OnCabinRideChanged; dayState.RunOverChanged += OnRunOverChanged; dayState.PhaseChanged += OnPhaseChangedForPlank; dayState.DayChanged += OnDayChangedForCard; dayState.PaydayChanged += OnPaydayChangedForCard; dayState.CrewWipeChanged += OnCrewWipeChangedForCard; }
         }
 
         // Each stage on this peer, once (the host's client pass; a pure client's

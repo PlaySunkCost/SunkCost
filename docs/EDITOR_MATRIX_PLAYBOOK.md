@@ -128,6 +128,15 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   A and B windowed, C / B2 / C2 headless in `Temp/elevator-net-guest-*`: every peer, a spectator and the TV show the same
   car, doors, gate, shutters and water at the same tick with 2 to 4 players, a join refused during a dive, a killed
   guest and a clean leave mid-ride; the tick-skew rows are soft — about 5 minutes;
+  `wipe` = the crew wipe (Dan, 29 September 2026: every connected player dead ends the day by itself),
+  `WipeRuntimeChecks`, log `Temp/wipe-matrix.log`, guest A in `Temp/wipe-guest`, then guest B in `Temp/wipe-guest-b`:
+  one dead and one alive is no wipe (W1), both die below — NOBODY CAME BACK on both peers, the card's hold, the day
+  once, both alive on the deck with a full tank, upgrades gone, the storage room's coin kept, joins refused (W2), a
+  wipe on the last day is payday (W3), the guest leaves during the card (W4), a joiner replays no old card, rides up
+  and leaves, and the host dies while the car comes down for him (W5) — about 9 minutes; snapshot fields
+  `fadeText='…'; wipeCards=; wipe=<serial>/<active>`. **It is the only job with the crew wipe on:** the driver sets
+  `WorldLoopSettings.CrewWipeDisabledForTests` for every other job (their rows keep the dead waiting for End day);
+  every Play Mode entry clears it;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator

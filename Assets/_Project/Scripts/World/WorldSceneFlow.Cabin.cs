@@ -90,7 +90,7 @@ namespace SunkCost.World
         private void Update()
         {
             if (dayState == null || networkManager == null) return;
-            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerTickGhost(); ServerSumBox(); ServerTickSpectators(); ServerTickPlank(); }
+            if (networkManager.IsServerStarted) { ServerTickElevator(); ServerTickCarReturn(); ServerTickGhost(); ServerSumBox(); ServerTickSpectators(); ServerTickPlank(); ServerTickCrewWipe(); }
             DriveCar();
             if (networkManager.IsServerStarted && riding) ServerFollowCabinCargo();
             PresentDeckCabin();
@@ -113,7 +113,20 @@ namespace SunkCost.World
 
         // E on the monitor's End day (Dan, 16 September 2026): the crew ends the day
         // once everyone is up; the day state refuses otherwise.
-        public bool ServerEndDay(NetworkConnection sender, out string why)
+        public bool ServerEndDay(NetworkConnection sender, out string why) => ServerEndDayBy(DisplayName(sender), out why);
+
+        // The one End day: the crew's lever and the crew wipe's automatic end (WorldSceneFlow.CrewWipe).
+        private bool ServerEndDayBy(string by, out string why)
+        {
+            if (!ServerCanEndDay(out why)) return false;
+            if (!dayState.ServerEndDay(Settings.DaysPerCycle, out why)) return false;
+            Debug.Log($"[WorldSceneFlow] Day ended by {by}: day {dayState.Day}{(dayState.Payday ? " PAYDAY" : string.Empty)}");
+            ServerReviveAll(); // the dead stand up on the deck (card 1)
+            return true;
+        }
+
+        // Whether End day would be accepted now, without ending it.
+        private bool ServerCanEndDay(out string why)
         {
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
@@ -126,10 +139,7 @@ namespace SunkCost.World
             // up to a car's trip); a revive before that would stand them at deck
             // coordinates inside the site (code check, 18 September 2026).
             if (siteClosing || ServerAnyDeadStillBelow()) { why = "Bringing up the dead"; return false; }
-            if (!dayState.ServerEndDay(Settings.DaysPerCycle, out why)) return false;
-            Debug.Log($"[WorldSceneFlow] Day ended by {DisplayName(sender)}: day {dayState.Day}{(dayState.Payday ? " PAYDAY" : string.Empty)}");
-            ServerReviveAll(); // the dead stand up on the deck (card 1)
-            return true;
+            return dayState.CanEndDay(out why);
         }
 
         // E on the HQ board (Dan, 16 September 2026): sell the box, pay the quota.
