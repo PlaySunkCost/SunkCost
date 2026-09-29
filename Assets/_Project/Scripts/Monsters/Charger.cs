@@ -118,11 +118,11 @@ namespace SunkCost.Monsters
 
         private void Hunt(float dt)
         {
-            if (prey == null || !CreatureSenses.CanSee(EyePoint, prey, Settings))
+            if (prey == null || !Sees(prey))
             {
                 prey = null;
                 foreach (HQPlayerController diver in CreatureSenses.Divers())
-                    if (CreatureSenses.CanSee(EyePoint, diver, Settings)) { prey = diver; break; }
+                    if (Sees(diver)) { prey = diver; break; }
             }
             if (prey == null) { SetPose(CreaturePose.Idle); SetTarget(-1); return; }
             SetTarget(prey.OwnerId);
@@ -131,8 +131,13 @@ namespace SunkCost.Monsters
             float distance = to.magnitude;
             // Round a wall its head met: it follows the wall a while, then looks for the diver again.
             bool detouring = Now < detourUntil;
+            // A diver beyond the shaft: it prowls round the safe ground (Creature.WayRoundSafeGround,
+            // Dan, 29 September 2026) and never winds up along a line that crosses it.
+            bool acrossShaft = StraightWayCrossesSafeGround(here, prey.transform.position);
+            Vector3 way = acrossShaft ? WayRoundSafeGround(here, prey.transform.position) : Vector3.zero;
+            acrossShaft &= way != Vector3.zero && Vector3.Angle(way, to) > 0.5f; // a diver on the safe ground: straight at its edge, as before
             Quaternion before = transform.rotation;
-            FaceToward(detouring ? here + detour * 4f : prey.transform.position, prowlTurnDegPerSec);
+            FaceToward(detouring ? here + detour * 4f : acrossShaft ? here + way * 4f : prey.transform.position, prowlTurnDegPerSec);
             // Never a turn that swings its head into a wall: it keeps along the wall instead.
             if (Quaternion.Angle(before, transform.rotation) > 0.01f && FreeAhead(here, FlatFacing, 0.02f) <= 0.01f && FreeAhead(here, FlatForward(before), 0.02f) > 0.01f)
             {
@@ -140,7 +145,7 @@ namespace SunkCost.Monsters
                 if (detouring || detourSide != 0f) { detourUntil = Mathf.Max(detourUntil, Now + 0.4f); detouring = true; }
             }
             float off = distance > 0.01f ? Vector3.Angle(transform.forward, to) : 0f;
-            if (!detouring && Now >= nextWindupAt && !CreatureSenses.Safe(prey, Settings) && distance <= Settings.ChargerRushFromMeters && off <= windupFacingDegrees)
+            if (!detouring && !acrossShaft && Now >= nextWindupAt && !CreatureSenses.Safe(prey, Settings) && distance <= Settings.ChargerRushFromMeters && off <= windupFacingDegrees)
             {
                 Enter(ChargePhase.Windup);
                 phaseUntil = Now + Settings.ChargerWindupSeconds;
@@ -149,7 +154,7 @@ namespace SunkCost.Monsters
             }
             // It walks where it faces, slower while it is still turning: an arc, never a crab.
             Vector3 forward = transform.forward; forward.y = 0f; forward.Normalize();
-            float align = Mathf.Clamp01(Mathf.Cos((detouring ? Vector3.Angle(forward, detour) : off) * Mathf.Deg2Rad));
+            float align = Mathf.Clamp01(Mathf.Cos((detouring ? Vector3.Angle(forward, detour) : acrossShaft ? Vector3.Angle(forward, way) : off) * Mathf.Deg2Rad));
             float speed = ProwlSpeed * Mathf.Lerp(0.35f, 1f, align);
             bool close = distance <= prowlStopMeters;
             SetPose(CreaturePose.Hunting);
@@ -232,13 +237,13 @@ namespace SunkCost.Monsters
             float free = Mathf.Min(FreeAhead(here, rushDir, step + 0.3f), SafeAhead(here, rushDir));
             if (free <= step)
             {
-                if (free > 0.02f) MoveToward(here + rushDir * (free + 1f), free / dt, dt, 0f);
+                if (free > 0.02f) MoveToward(here + rushDir * (free + 1f), free / dt, dt, 0f, roundSafeGround: false);
                 Stop(true);
                 return;
             }
             rushStalled = travelled < step * 0.3f && dt > 0f && Now - phaseStarted > 0.1f ? rushStalled + 1 : 0;
             if (rushStalled >= 4) { Stop(true); return; } // something the probe did not see (a step it cannot climb)
-            if (MoveToward(here + rushDir * (step + 1f), rushSpeed, dt, 0f)) { Stop(true); return; }
+            if (MoveToward(here + rushDir * (step + 1f), rushSpeed, dt, 0f, roundSafeGround: false)) { Stop(true); return; }
         }
 
         private void Brake(float meters)
@@ -259,6 +264,14 @@ namespace SunkCost.Monsters
             phaseUntil = Now + recoverSeconds + dazeExtra;
             SetPose(CreaturePose.Recovering);
         }
+
+        // Its sight (CreatureSenses.CanSee); the checks may let it see through the tube so a
+        // row can give it a diver on the far side of the shaft (a test seam: nothing in play sets it).
+        public bool SeesThroughWorldForChecks { get; set; }
+        private bool Sees(HQPlayerController diver) =>
+            SeesThroughWorldForChecks
+                ? diver != null && Vector3.Distance(EyePoint, CreatureSenses.Chest(diver)) <= (CreatureSenses.LampLit(diver) ? Settings.SightMeters : Settings.SightDarkMeters)
+                : CreatureSenses.CanSee(EyePoint, diver, Settings);
 
         private Vector3 FlatFacing => FlatForward(transform.rotation);
         private static Vector3 FlatForward(Quaternion rotation)

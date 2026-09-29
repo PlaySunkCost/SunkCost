@@ -91,7 +91,12 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   the visor and the 3× drain (C1), a friend's patch and the once-a-day refusal (P1/P2), the patch kit
   (P3), the host's hold on E (P4), the Lure's bolt at a lit lamp and its loss of interest in the dark
   (LU1), the Listener deaf to a crouch and shooting at a sprint (LI1), the Impostor seen by its victim
-  only and its touch (I1), the Elevator Ghost on the empty return trip, waited out (G0), then summoned
+  only and its touch (I1), round the safe ground (SG, Dan, 29 September 2026: `MonsterSafeGroundChecks`,
+  the guest parked 35 m off looking away (in the car it froze the Angel through the doorway); each of the six walkers placed 5.3 m from the shaft at the doorway, the plinth
+  corner (-40°), both flanks and the back, with a goal 9 m out on the opposite side; it never steps onto
+  the safe ground, never stands 3 s within 1 m while walking for its goal, and reaches the far side within
+  45 s; about 4 minutes; alone, the host only, as the job `monsters-round`, log
+  `Temp/monsters-round-matrix.log`), the Elevator Ghost on the empty return trip, waited out (G0), then summoned
   and walked into (G1: the host dies, the site closes), End day, day 2 with an empty draw and the two
   killers (W2 the guest, A2 the host) — about 9 minutes. **Every other job runs with
   `MonsterSettings.RosterOverrideForTests` set to an empty draw and the Ghost's chance at 0 by the
@@ -114,6 +119,29 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   peer took `dash` (aim = the flat direction; the reply says `dash=True/False; refusal='…'`), its player
   line `dashes=`, `dashReady=`, `dashSerial=`, `dashRings=`; rows spawn items with
   `MonsterTestHooks.ServerSpawnItem(prefabName, at)`;
+  `elevator-deck` = the round deck cabin on the ship (28 September 2026), `ElevatorDeckRuntimeChecks`, log
+  `Temp/elevator-deck-matrix.log`, captures `Temp/elevator-deck/`, host and one windowed guest in `Temp/elevator-deck-guest`:
+  the car flush in the well, walking in and out with no step, the housing's entrance, the shutters against the car on
+  every frame and peer, nobody into the well or shut in the entrance, the panel naming who is missing, the button only
+  with everyone in, the swap to the dive car, the camera against the glass, the docked ship at HQ — about 4 minutes;
+  `elevator-dive` = the round car in the dive, `ElevatorDiveRuntimeChecks`, log `Temp/elevator-dive-matrix.log`, captures
+  `Logs/elevator-dive/`, the host alone then one guest in `Temp/elevator-dive-guest`: timing, doors and gate, the flood
+  and drain, the gauge, the underwater view against the visible surface, the jets, bubbles and glare (W rows), the ramp,
+  the camera against every mesh, a rider left below, the Ghost's green car, a dead rider — about 5 minutes
+  (`elevator-dive-prefix` logs the W rows as XFAIL);
+  `elevator-net` = the elevator over the network, `ElevatorNetRuntimeChecks`, log `Temp/elevator-net-matrix.log`, guests
+  A and B windowed, C / B2 / C2 headless in `Temp/elevator-net-guest-*`: every peer, a spectator and the TV show the same
+  car, doors, gate, shutters and water at the same tick with 2 to 4 players, a join refused during a dive, a killed
+  guest and a clean leave mid-ride; the tick-skew rows are soft — about 5 minutes;
+  `wipe` = the crew wipe (Dan, 29 September 2026: every connected player dead ends the day by itself),
+  `WipeRuntimeChecks`, log `Temp/wipe-matrix.log`, guest A in `Temp/wipe-guest`, then guest B in `Temp/wipe-guest-b`:
+  one dead and one alive is no wipe (W1), both die below — NOBODY CAME BACK on both peers, the card's hold, the day
+  once, both alive on the deck with a full tank, upgrades gone, the storage room's coin kept, joins refused (W2), a
+  wipe on the last day is payday (W3), the guest leaves during the card (W4), a joiner replays no old card, rides up
+  and leaves, and the host dies while the car comes down for him (W5) — about 9 minutes; snapshot fields
+  `fadeText='…'; wipeCards=; wipe=<serial>/<active>`. **It is the only job with the crew wipe on:** the driver sets
+  `WorldLoopSettings.CrewWipeDisabledForTests` for every other job (their rows keep the dead waiting for End day);
+  every Play Mode entry clears it;
   `smooth` = how smoothly a remote player's head arrives, `RemoteSmoothnessRuntimeChecks`,
   log `Temp/smooth-matrix.log`, one guest in `Temp/smooth-guest` turning under the peer's
   `turn` command, then again with its outgoing packets through FishNet's latency simulator

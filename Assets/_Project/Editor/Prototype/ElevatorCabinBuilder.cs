@@ -57,23 +57,28 @@ namespace SunkCost.Sites
             GameObject root = new("Elevator");
             try
             {
-                RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
+                // The floor and the roof keep their colliders (the rider stands on the floor;
+                // the validator reads the roof's size) but draw nothing: Dan's car model
+                // (ElevatorLook, 28 September 2026) carries the visible floor cap and roof.
+                GameObject carFloor = RoundCabinGeometry.CreateDisc(root.transform, "Car Floor", settings.CarDiameterMeters, CarFloorThickness, floor, CarFloorThickness / 2f);
                 // No frame posts: the car is clean, clear glass like the tube (Dan, 19 September 2026).
                 // The wall behind the button is open over the button's band only (as the deck cabin's).
                 float buttonBottom = PanelChestHeightMeters - 0.2f;
-                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, glass, BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
+                // The band wears the car's own glass (ElevatorLook.CarGlass), not the shared
+                // DiveSiteGlass: under the Cabin Light that one haloed white (the review's F5).
+                float doorwayHalfAngleDeg = RoundCabinGeometry.CreateShell(root.transform, carRadius, interiorRadius, interiorHeight, SunkCost.Editor.Look.ElevatorLook.CarGlass(), BakedDoorwayBearingDeg, panelAngleDeg, CarDoorwayWidthMeters, PanelWidthMeters, buttonBottom - 0.05f, buttonBottom + 0.45f, "Glass Shell", "Interior Walls");
 
                 // The button: red, its word on it, facing into the car (every button in the game, Dan, 19 September 2026).
                 Vector3 panelOffset = new Vector3(Mathf.Cos(panelAngleDeg * Mathf.Deg2Rad), 0f, Mathf.Sin(panelAngleDeg * Mathf.Deg2Rad)) * interiorRadius;
                 GameObject panel = SunkCost.Editor.Look.PropBuilder.PushButton(root, "Control Panel", panelOffset + new Vector3(0f, buttonBottom, 0f), Quaternion.LookRotation(-panelOffset.normalized, Vector3.up), "button.surface", PanelWidthMeters);
                 panel.AddComponent<ElevatorControlPanel>();
-                // On its pillar and plate, like the deck cabin's: the same car (Dan, 15 September 2026).
-                RoundCabinGeometry.CreateButtonMount(root.transform, interiorRadius, panelAngleDeg, PanelWidthMeters + 0.12f, CarFloorThickness, interiorHeight, buttonBottom + 0.56f, "SURFACE", SunkCost.Editor.Look.ShipKitMaterials.Bezel()); // the buttons' own clean bezel steel: the hull's blotched plate read as a random slab (QA, 24 September 2026)
-                // Cube's default BoxCollider is exactly what the interactor's raycast needs to
-                // hit, and it visually stands out from the frame posts via the accent material.
+                // The button sits on the car panel model's cap, its screen and gauge beside it
+                // (ElevatorLook.PlacePanel: the old pillar and "SURFACE" plate are the model's
+                // now, and the screen carries the word, 28 September 2026).
+                SunkCost.Editor.Look.ElevatorLook.PlacePanel(root.transform, panel.transform, panelAngleDeg);
 
                 CreateElevatorRiderTrigger(root.transform, interiorRadius, interiorHeight);
-                RoundCabinGeometry.CreateDisc(root.transform, "Car Roof", settings.CarDiameterMeters, CarFloorThickness, glass, interiorHeight - CarFloorThickness / 2f);
+                GameObject carRoof = RoundCabinGeometry.CreateDisc(root.transform, "Car Roof", settings.CarDiameterMeters, CarFloorThickness, glass, interiorHeight - CarFloorThickness / 2f);
 
                 // Fields left at their serialized defaults (topPosition/bottomPosition/travel/
                 // doorSeal): those vary per dive site, so DiveSiteBuilder sets them on the
@@ -87,6 +92,18 @@ namespace SunkCost.Sites
                 // would lose: the cabin light (deck cabin ride) and the standing water
                 // (shaft tube). Their setup menus keep patching an older prefab in place.
                 DeckCabinRideSetup.AddCarLight(root.transform, interiorHeight);
+
+                // Dan's round car over the working objects (28 September 2026): the model
+                // (its ring following the Cabin Light, which the Elevator Ghost turns green),
+                // the post colliders on its posts, and the drawn floor and roof handed over
+                // to it. The water after the look: its nozzles and drain are the model's.
+                Light cabinLight = root.transform.Find(DeckCabinRideSetup.CarLightName).GetComponent<Light>();
+                if (SunkCost.Editor.Look.ElevatorLook.PlaceCar(root.transform, BakedDoorwayBearingDeg, cabinLight) != null)
+                {
+                    carFloor.GetComponent<Renderer>().enabled = false;
+                    carRoof.GetComponent<Renderer>().enabled = false;
+                }
+                SunkCost.Editor.Look.ElevatorLook.AddPostColliders(root.transform, BakedDoorwayBearingDeg);
                 ShaftTubeSetup.AddCabinWater(root, settings);
 
                 return PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
@@ -105,8 +122,8 @@ namespace SunkCost.Sites
             GameObject doorRoot = new("Elevator Door");
             doorRoot.transform.SetParent(parent, false);
 
-            Transform leafRightPivot = RoundCabinGeometry.CreateDoorLeafPanels(doorRoot.transform, "Leaf Right", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: true, DoorLeafPanelCount, DoorThicknessMeters);
-            Transform leafLeftPivot = RoundCabinGeometry.CreateDoorLeafPanels(doorRoot.transform, "Leaf Left", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: false, DoorLeafPanelCount, DoorThicknessMeters);
+            Transform leafRightPivot = CreateLeaf(doorRoot.transform, "Leaf Right", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: true);
+            Transform leafLeftPivot = CreateLeaf(doorRoot.transform, "Leaf Left", wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide: false);
 
             float doorwayCenterRad = doorwayCenterAngleDeg * Mathf.Deg2Rad;
             Vector3 doorwayDirection = new Vector3(Mathf.Cos(doorwayCenterRad), 0f, Mathf.Sin(doorwayCenterRad));
@@ -127,6 +144,18 @@ namespace SunkCost.Sites
             serializedDoor.FindProperty("doorCollider").objectReferenceValue = doorBoxCollider;
             serializedDoor.FindProperty("doorwayHalfAngleDeg").floatValue = doorwayHalfAngleDeg;
             serializedDoor.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // A leaf: its pivot on the car's axis carrying the curved glass door model
+        // (ElevatorLook.PlaceDoorLeaf, 28 September 2026); the greybox panels only when
+        // the model's prefab is missing. No colliders either way (the Door Collider blocks).
+        private static Transform CreateLeaf(Transform doorRoot, string name, float wallRadius, float height, float doorwayCenterAngleDeg, float doorwayHalfAngleDeg, Material doorMaterial, bool rightSide)
+        {
+            GameObject pivot = new(name);
+            pivot.transform.SetParent(doorRoot, false);
+            if (SunkCost.Editor.Look.ElevatorLook.PlaceDoorLeaf(pivot.transform, doorwayCenterAngleDeg, rightSide) != null) return pivot.transform;
+            Object.DestroyImmediate(pivot);
+            return RoundCabinGeometry.CreateDoorLeafPanels(doorRoot, name, wallRadius, height, doorwayCenterAngleDeg, doorwayHalfAngleDeg, doorMaterial, rightSide, DoorLeafPanelCount, DoorThicknessMeters);
         }
 
         private static void CreateElevatorRiderTrigger(Transform parent, float radius, float height)

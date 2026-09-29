@@ -107,24 +107,46 @@ sign. The game draws the screens and the sign's word, so they can change.
 **The ship** (rebuilt 23 September 2026 around Dan's generated models; the
 sizes, the lounge and the fixes below decided by Dan the same day, being built
 on `dan/ship-look` and not yet play-tested). A **48 × 20 m** deck. The **bridge
-tower** stands at the stern, with the navigation console on its forward face (the
-shared console model since 27 September 2026: the five destination cards on its top
-screen, the lever with its lit sign, port of the tower's door) and
-the crew's screen beside it; the storage room is forward of it, to starboard. The
+tower** stands at the stern with the crew's screen on its forward face, as near its
+middle as leaves the tower's door, the Bridge sign and its ladder clear: port of the
+ladder, 2.4 m wide and centred 1.75 m off the centre line, 2.05 m up (Dan, 29
+September 2026; it had hung off the face's starboard end); the storage
+room is forward of it, to starboard. The
 **glass elevator** stands amidships in its well, open to the sea, with a **low
 visible rail** round the well, open only at the grate; the rail's collider is
 1.2 m high so nobody jumps it (a jump is 0.65 m). The deck's side is a **1.2 m
-bulwark** with an unseen guard above it. The crane and the winch stand by the
-well, one container, and deck gear along the sides. The **lounge**
-is at the bow: the **TV** in its big cabinet facing aft, two couches in front of
-it, and a table between two benches that face each other across it, clear of
-the couches. There is no ladder; the tower model has its own. **Sizes** (Dan):
+bulwark** with an unseen guard above it. The crane stands by the
+well (the winch model is gone from the deck, with its cable coil: Dan, 29 September
+2026; the winch is still heard at the deck cabin), one container, and deck gear along
+the sides. The **lounge** is at the bow:
+the **TV** in its big cabinet at the bow's centre facing aft, two couches in front
+of it, and a table between two benches that face each other across it, clear of
+the couches (as built 23 September 2026; Dan, 29 September 2026: the TV back
+there, after a day on the starboard diagonal). The **navigation console** (the
+shared console model since 27 September 2026: the five destination cards on its
+top screen, the lever with its lit sign) stands with its back flat on the **port
+side where it starts to turn in toward the bow**, just forward of the lounge's sign
+and aft of the port lifebuoy and lamp, facing the middle of the ship (Dan, 29
+September 2026: on the bow's port diagonal, where plan 4 put it, the TV hid it).
+That stretch's inner face was measured off the built side (a line fitted through
+rays onto the side): it runs **25.7° off the centre line** over a 2.79 m straight
+run (the side's outline is made one straight line between z 13.5 and 16 m, at most
+3 cm off the generated hull), so the console is turned to yaw 115.7°. Both bow
+diagonals are free (their outline stays straight between z 21 and 23 m); the
+**starboard one is kept** for a storage locker to come (Dan, 29 September 2026). The
+lounge's lamps stand either side of the TV, the bollards (symmetric again) and the
+coiled line behind it at the bow's point. The **container** lies
+along the port side against the rail (turned 90°, Dan, 28 September 2026), its
+hatches facing fore and aft, the pipework across the forward one and the barrels, a
+crate and a coil between its doors and the tower. Built on `dan/elevator-look`, not
+yet play-tested. There is no ladder; the tower model has its own. **Sizes** (Dan):
 the player stays as is (1.8 m, eyes at 1.6 m) and the props come to it —
 furniture (couch, table, bench, toolbox) at 1×, the models being made at a
 person's size; deck gear (barrel, crate, lamp, bollard, lifebuoy, pipes, coil,
 signs) at 1.25×; the container a real 20-ft box (6 × 2.6 × 2.6 m); the crane
-and the winch at 2×. The TV keeps its size but stands lower, its screen's centre
-at about the eye height of someone sitting on the couch. **Sitting on a couch**
+at 2×. The TV keeps its size but stands lower, its screen's centre
+at about the eye height of someone sitting on the couch (the 2× cabinet, a
+5.2 × 2.3 m screen centred 2.0 m up). **Sitting on a couch**
 zooms the view onto the TV, and the TV's channel can be switched from **6 m**, so
 from the couch (both in §4: "The couch" and the TV card). The elevator car's light is **warm white** in both worlds, on both
 cars. The winch and the bell are mostly 3D: loud near the cabin, still faintly
@@ -192,6 +214,33 @@ purpose: the all-aboard rule (the deck button takes whoever stands in the
 cabin), once-per-day, the air, the ship shell over the tube's top. If someone
 stays below, the car goes back down for them, empty; the monitor will not sail
 while anyone is below.
+
+**The round elevator (28 September 2026, `dan/elevator-look`; the water rule
+decided with Dan that day, the look proposed until he reviews it; built, and
+through the final regression on 29 September 2026: docs/test-runs/2026-09-28-elevator).** Dan's eight
+models replace the elevator's look everywhere: a round glass car inside a round
+glass shaft, the tube stacked from a foot on the seafloor to a collar under the
+platform, and on the ship a round housing round the car in the deck's well, its
+floor flush with the deck. The ride's rules and timing are unchanged. The car
+carries its own water instead of flooding "by geometry": as it sinks through the
+surface six roof nozzles pour and it is full about 3.5 s later; as it rises back
+through the surface the floor grilles drain it and it is dry about 1.5 s before
+the top. The water inside always stands where the sea outside stands while the
+car crosses the surface, so the water you see is the water your eyes and your
+air obey; the panel's gauge follows the level and its screen says FLOODING or
+DRAINING, the depth and the water %. Every player, spectator and the TV see the
+same water, derived from the car's replicated ride. **Decided with Dan (28
+September 2026): the fill keeps its few seconds, so the six roof nozzles are
+powerful jets**, not trickles: thick aerated jets from the nozzle mouths, mist
+at the mouths and where they land, white churning foam on the rising surface.
+Bubbles rise only where air enters the water (under the pouring jets, a short
+fizz after the car is full, a few at the grilles while it drains) and never in
+a still, full car. The model's nozzle mouths point down, so the jets fall
+straight from them rather than arcing out. The housing's two shutters
+close its entrance while the car is away below. Proposed with them (teammate
+review pending): nobody is closed in between the car's doors and the shutters
+(someone standing there when the empty car leaves, or after the ride down's
+doors shut, is put on the deck). Numbers and rules: docs/ELEVATOR_LOOK.md.
 
 **A day is one dive.** The day starts when **every living player is in the deck
 cabin** and it departs — the button does nothing with anyone missing, nothing
@@ -328,7 +377,9 @@ proposal.
 - **Day end.** The crew's End day button on the monitor (settled 16 September
   2026, Dan), which unlocks on the same server check that governs the
   automatic return above: today's dive taken and no living player below. One
-  check, not two. Once up, nobody goes down again until it is pressed.
+  check, not two. Once up, nobody goes down again until it is pressed. When
+  every player is dead nobody can press it: the day ends by itself after the
+  NOBODY CAME BACK card (Dan, 29 September 2026; §4 "Nobody came back").
 - **Carrying.** Four inventory slots hold everything — air, tools and loot
   compete for the same four. Cabin floor cargo is unlimited and rides up on
   the outside lever.
@@ -440,6 +491,27 @@ living count: the dead never block the deck button, the car's return or End day.
 When the last living diver is up the dead are carried to the ship unseen; **End
 day revives them on the deck** with the base kit — next to their body if it came
 up (the body disappears).
+
+**Nobody came back (decided 29 September 2026, Dan; built on `dan/elevator-look`,
+checked in the editor's `wipe` matrix, not yet played over Steam):** when every
+connected player is dead nobody is left to pull END DAY, so the day ends by itself.
+The server judges it: a player who has left does not count, a joiner still loading
+is not in the crew yet; HQ and the plank are not affected. It waits for the death
+to settle — at least `crewWipeSettleSeconds` (3 s: the fall and the spectator fade)
+and until the dead have been carried to the ship with the site's close (the car
+comes up first if it was below or on its way down) — then every screen (players,
+spectators, the TV's viewers) goes black with **NOBODY CAME BACK** for
+`crewWipeCardSeconds` (8 s, `WorldLoopSettings`), and the day ends exactly as END DAY
+ends it: the day counts (PAYDAY after the last, whose card follows), loot already in
+the storage room stays, whatever the dead carried stays below and is lost with the
+site, a body not brought up costs its owner the upgrades (in a wipe that is normally
+everyone; a body sent up alone in the car still keeps its owner's, as above), and
+everyone stands up on the deck with the base kit, a full tank and full health. Joins
+are refused while the card is up; a joiner who spawns before it is a living player,
+so the wipe is called off and the crew ends the day at the console as before. A
+player leaving during the card changes nothing. Deaths only happen below today (the
+tank drains only in the site), so the last death is always below; the rule does not
+depend on where it happens.
 
 **Built 17 September 2026 (Dan, the second spectating card — dead spectating):**
 you keep your own camera for about a second (you see yourself fall), a short fade,
@@ -606,6 +678,24 @@ The Impostor is outside this pass and unchanged.
   the Lure's sense of lamps is unaffected.
 - **Parked (Dan):** the monsters make no movement or footstep sounds, and the
   Angel is silent while it moves. "Leave it like that for now."
+
+### The monsters walk round the elevator's safe ground (decided by Dan, 29 September 2026)
+
+A creature whose goal lies beyond the shaft (a diver on the far side of the
+tube's foot, a sound, a glimpsed lamp, the way it flees) **walks round the safe
+ground** instead of stopping at its edge. It used to stand against the foot for
+good (Dan saw an Impostor there). The rules are unchanged:
+
+- Nothing enters the safe ground (4.5 m from the shaft). A creature goes round
+  on the goal's side, its body clear of the foot, then straight on once the
+  way is clear.
+- A diver in the car or on the tube's floor is still waited for at the nearest
+  edge. The car stays safe.
+- The Charger prowls round too and never winds up along a line that crosses
+  the safe ground. A rush still runs straight and stops at the edge; it never
+  bends and never passes through.
+- The Lure's drift bends round the same way. The Weeping Angel still freezes
+  under a look. The Elevator Ghost has no body and is unaffected.
 
 ## 7. Crew and spectating
 

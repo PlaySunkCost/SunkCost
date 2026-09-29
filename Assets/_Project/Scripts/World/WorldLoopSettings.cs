@@ -35,6 +35,10 @@ namespace SunkCost.World
         [SerializeField] private float runOverCardSeconds = 6f;
         [Tooltip("The day card at End day (DAY 2 OF 3, PAYDAY): seconds it holds black between a short fade out and in. 0 = no card.")]
         [SerializeField] private float dayCardSeconds = 1.5f;
+        [Tooltip("A crew wipe (every connected player dead at sea; Dan, 29 September 2026): seconds the NOBODY CAME BACK card holds on every screen before the day ends by itself.")]
+        [SerializeField] private float crewWipeCardSeconds = 8f;
+        [Tooltip("A crew wipe: the least seconds between the last death and the card (the dead see themselves fall and the spectator fade finishes); the card also waits for the site to close with the dead on the ship.")]
+        [SerializeField] private float crewWipeSettleSeconds = 3f;
 
         [Header("Ship departure (docs/SHIP_DEPARTURE_IMPLEMENTATION_PLAN.md)")]
         [Tooltip("Seconds of casting off (the ship still) before it moves.")]
@@ -74,6 +78,14 @@ namespace SunkCost.World
         public float PlankTurnSeconds => plankTurnSeconds;
         public float RunOverCardSeconds => runOverCardSeconds;
         public float DayCardSeconds => dayCardSeconds;
+        public float CrewWipeCardSeconds => Mathf.Max(0f, crewWipeCardSeconds);
+        public float CrewWipeSettleSeconds => Mathf.Max(0f, crewWipeSettleSeconds);
+        // The editor's matrices written before the crew wipe keep the old rule (the dead
+        // wait for End day); the driver turns it off for every job but "wipe". Reset at
+        // every Play Mode entry so a killed run never leaves Dan's own session without it.
+        public static bool CrewWipeDisabledForTests;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCrewWipeForPlayMode() => CrewWipeDisabledForTests = false;
         public bool LockRidersDuringRide => lockRidersDuringRide;
         public float GangwayRaiseSeconds => gangwayRaiseSeconds;
         public float DepartureSeconds => departureSeconds;

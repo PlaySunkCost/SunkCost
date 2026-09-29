@@ -266,7 +266,12 @@ namespace SunkCost.Sites
                     if (water.GetComponent<Collider>() != null) errors.Add("Water surface must carry no collider.");
                 }
                 if (FindByName(scene, "Shaft Gate") != null) errors.Add("The old shaft gate plug is still in the scene.");
+                Transform ring = tube.Find(ShaftTubeSetup.WaterSurfaceRingName);
+                if (ring == null) errors.Add("The tube's water ring (" + ShaftTubeSetup.WaterSurfaceRingName + ") is missing.");
+                else if (ring.GetComponentInChildren<Collider>(true) != null) errors.Add(ShaftTubeSetup.WaterSurfaceRingName + " must carry no collider.");
+                if (settings != null && top != null && bottom != null) CheckShaftLook(scene, tube, top.position.y, bottom.position.y, errors);
             }
+            if (elevatorRootObject != null) CheckCarLook(elevatorRootObject.transform, errors);
 
             // The platform hole is now a circle (a fan of radial wedges — see
             // CreatePlatformRing), not a square, so there is no single "half-width" to check.
@@ -476,6 +481,64 @@ namespace SunkCost.Sites
 
             if (errors.Count > 0) throw new InvalidOperationException("Dive Site 01 validation failed:\n- " + string.Join("\n- ", errors));
             Debug.Log("Dive Site 01 validation passed: saved scene, platform/shaft/seafloor, elevator anchors, car, tube and lighting are ready as a world scene (no session machinery, no placed player).");
+        }
+
+        // Dan's round shaft (28 September 2026, ShaftTubeLook): the foot flush with the car's
+        // floor at the bottom stop, the sections up to the tube's top, the collar over the
+        // top stop, the gate's glass leaves, the threshold, and no clipping over the ride.
+        private static void CheckShaftLook(Scene scene, Transform tube, float topY, float bottomY, List<string> errors)
+        {
+            Transform foot = tube.Find(ShaftTubeLook.FootName);
+            if (foot == null) errors.Add("The tube foot model (" + ShaftTubeLook.FootName + ") is missing.");
+            else if (Mathf.Abs(foot.position.y - (bottomY + ShaftTubeLook.FootFloorAboveSand)) > DepthTolerance)
+                errors.Add($"The tube foot's floor is at y={foot.position.y:0.00}; the car's floor at the bottom stop is at {bottomY + ShaftTubeLook.FootFloorAboveSand:0.00}.");
+            Transform sections = tube.Find(ShaftTubeLook.SectionsName);
+            if (sections == null || sections.childCount == 0) errors.Add("The tube has no stacked sections (" + ShaftTubeLook.SectionsName + ").");
+            Transform collar = tube.Find(ShaftTubeLook.CollarName);
+            if (collar == null) errors.Add("The top collar (" + ShaftTubeLook.CollarName + ") is missing.");
+            else if (Mathf.Abs(collar.position.y - (topY + ShaftTubeLook.CollarAboveTopStop)) > DepthTolerance)
+                errors.Add($"The top collar is at y={collar.position.y:0.00}, expected {topY + ShaftTubeLook.CollarAboveTopStop:0.00} (over the car's glass top at the top stop).");
+            Transform colliders = tube.Find(ShaftTubeLook.FootCollidersName);
+            if (colliders == null || colliders.Find(ShaftTubeLook.SillName) == null || colliders.Find(ShaftTubeLook.RampName) == null)
+                errors.Add("The foot's sill and ramp colliders are missing.");
+            // The view out through the open gate (DIVE-GATE-VIEW): the doorway's work light
+            // reaches the sand, and the sand apron draws without a collider of its own.
+            Transform threshold = tube.Find(ShaftTubeThreshold.LightName);
+            Light thresholdLight = threshold != null ? threshold.GetComponent<Light>() : null;
+            if (thresholdLight == null || thresholdLight.type != LightType.Spot || !thresholdLight.enabled || thresholdLight.shadows != LightShadows.None)
+                errors.Add("The foot's doorway needs its work light (" + ShaftTubeThreshold.LightName + ": an enabled spot light, no shadows).");
+            else if (thresholdLight.transform.position.y - bottomY > thresholdLight.range || Vector3.Dot(thresholdLight.transform.forward, Vector3.down) < 0.5f)
+                errors.Add(ShaftTubeThreshold.LightName + " must aim down at the sand within its range.");
+            Transform apron = tube.Find(ShaftTubeThreshold.ApronName);
+            if (apron == null || apron.GetComponent<Renderer>() == null) errors.Add("The sand apron in front of the foot (" + ShaftTubeThreshold.ApronName + ") is missing.");
+            else if (apron.GetComponentInChildren<Collider>(true) != null) errors.Add(ShaftTubeThreshold.ApronName + " must carry no collider (the seafloor is the ground).");
+            else if (apron.position.y < bottomY || apron.position.y > bottomY + 0.02f) errors.Add($"{ShaftTubeThreshold.ApronName} is at y={apron.position.y:0.000}; it must lie just over the sand at {bottomY:0.00}.");
+            foreach (string drawnOnly in new[] { ShaftTubeThreshold.LampName, ShaftTubeThreshold.RampPlateName })
+            {
+                Transform part = tube.Find(drawnOnly);
+                if (part == null) errors.Add(drawnOnly + " is missing.");
+                else if (part.GetComponentInChildren<Collider>(true) != null) errors.Add(drawnOnly + " must carry no collider (the foot's own colliders stay the only ones).");
+            }
+            foreach (string leafName in new[] { "Gate Leaf Right", "Gate Leaf Left" })
+            {
+                Transform leaf = FindByName(tube, leafName);
+                if (leaf == null || leaf.Find(SunkCost.Editor.Look.ElevatorLook.GateLeafLookName) == null) errors.Add(leafName + " has no glass leaf model.");
+                else if (leaf.GetComponentInChildren<Collider>(true) != null) errors.Add(leafName + " must carry no collider (the Gate Collider blocks).");
+            }
+            if (tube.Find(ShaftTubeLook.SectionsName) != null)
+            {
+                DiveElevatorClearance.Report clearance = DiveElevatorClearance.Sweep();
+                if (!(clearance.Worst > 0.005f)) errors.Add("The car clips the shaft's models: " + clearance.Text);
+            }
+        }
+
+        private static void CheckCarLook(Transform car, List<string> errors)
+        {
+            if (car.Find(SunkCost.Editor.Look.ElevatorLook.CarLookName) == null) errors.Add("The car has no model (" + SunkCost.Editor.Look.ElevatorLook.CarLookName + ").");
+            if (car.Find(SunkCost.Editor.Look.ElevatorLook.PanelLookName) == null) errors.Add("The car has no panel model (" + SunkCost.Editor.Look.ElevatorLook.PanelLookName + ").");
+            for (int i = 1; i <= 8; i++)
+                if (car.Find(SunkCost.Editor.Look.ElevatorLook.PostColliderPrefix + i)?.GetComponent<Collider>() == null) errors.Add("The car's post collider " + i + " is missing.");
+            if (car.Find(DeckCabinRideSetup.CarLightName) == null) errors.Add("The car's Cabin Light must stay a direct child (the Elevator Ghost finds it).");
         }
 
         private static void CheckCount<T>(Scene scene, int expected, List<string> errors) where T : Component

@@ -10,6 +10,10 @@ namespace SunkCost.Player
     // presentation and a hook: nothing replicated, nothing counted yet — the air
     // card and the sounds subscribe to SubmersionChanged. Read by the F3 overlay
     // ("underwater=True depth=12.3") so a tester can see it without diving in.
+    // The car's own water (CabinWater, 28 September 2026) needs no second rule: its
+    // surface is ElevatorMath.CarWaterSurfaceY, and for any eye inside the car
+    // "below the car's water" and "below sea level" are the same test, so reading sea
+    // level here agrees with the water the player sees, inside the car or out of it.
     public sealed class PlayerSubmersion : MonoBehaviour, INetworkDebugInfo
     {
         private HQPlayerController controller;

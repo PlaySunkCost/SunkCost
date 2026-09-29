@@ -51,7 +51,7 @@ namespace SunkCost.Monsters
                 case Phase.Approach:
                     if (prey == null) { Choose(); return; }
                     if (CreatureSenses.Safe(prey, Settings)) { SetPose(CreaturePose.Idle); return; } // it waits for you to come out
-                    FaceToward(prey.transform.position);
+                    FaceWalk(prey.transform.position);
                     if (CreatureSenses.Flat(transform.position, prey.transform.position) <= Settings.ImpostorChaseMeters)
                     {
                         phase = Phase.Chase; chaseStartedAt = Now;
@@ -63,7 +63,7 @@ namespace SunkCost.Monsters
                     return;
                 case Phase.Chase:
                     if (prey == null) { Choose(); return; }
-                    FaceToward(prey.transform.position);
+                    FaceWalk(prey.transform.position);
                     if (WithinReach(prey) && StrikeReady)
                     {
                         if (Strike(prey, Settings.ImpostorDamage)) { ServerTouches++; Flee(prey); }
@@ -77,7 +77,7 @@ namespace SunkCost.Monsters
                     if (Now >= fleeUntil) { phase = Phase.Choosing; nextChoiceAt = Now + 2f; SetTarget(-1); return; }
                     SetPose(CreaturePose.Fleeing);
                     MoveToward(transform.position + fleeDir * 6f, WalkSpeed * Settings.ImpostorSpeedFactor, dt);
-                    FaceToward(transform.position + fleeDir);
+                    FaceWalk(transform.position + fleeDir);
                     return;
             }
         }

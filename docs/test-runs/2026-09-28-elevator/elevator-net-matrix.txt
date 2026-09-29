@@ -1,0 +1,618 @@
+Elevator-net matrix started 29/09/2026 00:21:11
+PASS editor is the host with a spawned player
+
+== E0 — setup: the host sails to sea; guests A and B (windowed) join between days; the deck cabin at rest reads the same on every peer
+PASS E0 sailing to sea: sailing to Sea
+PASS E0 arrived at sea (Complete)
+PASS E0 controls back
+PASS E0 at sea between days, the car up (phase AtSea, car AtTop)
+  · host 'Skipper' (client 0); tick rate 60; car return grace 10 s
+  · launched guest A (windowed) in Temp/elevator-net-guest-a
+PASS E0 A: the guest's player spawned on the host
+PASS E0 A: the guest's peer answers at sea with its elevator probe
+  · E0 A: guest 'Mate bof the' is client 1 (Temp/elevator-net-guest-a); 2 players
+  · launched guest B (windowed) in Temp/elevator-net-guest-b
+PASS E0 B: the guest's player spawned on the host
+PASS E0 B: the guest's peer answers at sea with its elevator probe
+  · E0 B: guest 'Mate bof the' is client 2 (Temp/elevator-net-guest-b); 3 players
+PASS E0 at rest: the stage completed within 20 s
+  · E0 at rest A: 8 replies, 0 car + 8 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 1.16, worst 1.20 ticks; moments shutters-open
+  · E0 at rest A last recorder: elevnetrec: frames=505; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E0 at rest: A's every reply carries the elevnet line (0 without)
+PASS E0 at rest: A shows what the host shows at the same tick (0 differences: )
+PASS E0 at rest: A was sampled at 'shutters-open' (saw shutters-open)
+PASS E0 at rest: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E0 at rest: A's tick within 3 ticks of the host's at the same moment (worst 1.20, median 1.16; worst 1.20 ticks at AtTop↓ serial 0 carTick 0.0 tick 1330.5 (raw 1.20, dropped-tick allowance 0.00; reply 4, guest frame lag 2 ms, host frame gap 6 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 0 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 0.0, raw worst there 0.00); 8 measured)
+PASS E0 at rest: A's car replies found the host's frames at their tick (0 of 8 did not)
+PASS E0 at rest: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E0 at rest: A per-frame: 505 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E0 at rest: A: the per-frame self-check ran (505 frames)
+PASS E0 at rest: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E0 at rest: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E0 at rest: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E0 at rest: A: every frame the car stands where the phase puts it (0 m)
+  · E0 at rest B: 8 replies, 0 car + 8 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.00, worst 1.11 ticks; moments shutters-open
+  · E0 at rest B last recorder: elevnetrec: frames=453; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E0 at rest: B's every reply carries the elevnet line (0 without)
+PASS E0 at rest: B shows what the host shows at the same tick (0 differences: )
+PASS E0 at rest: B was sampled at 'shutters-open' (saw shutters-open)
+PASS E0 at rest: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E0 at rest: B's tick within 3 ticks of the host's at the same moment (worst 1.11, median 0.00; worst 1.11 ticks at AtTop↓ serial 0 carTick 0.0 tick 1431.5 (raw 1.11, dropped-tick allowance 0.00; reply 8, guest frame lag 2 ms, host frame gap 5 ms); 0 replies skipped across a host stall over 0.1 s, 1 within 1.5 s after a guest stall (worst there 1.65); 5 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.2, raw worst there 1.14); 7 measured)
+PASS E0 at rest: B's car replies found the host's frames at their tick (0 of 8 did not)
+PASS E0 at rest: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E0 at rest: B per-frame: 453 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E0 at rest: B: the per-frame self-check ran (453 frames)
+PASS E0 at rest: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E0 at rest: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E0 at rest: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E0 at rest: B: every frame the car stands where the phase puts it (0 m)
+  · E0 at rest: host per-frame: elevnetrec: frames=732; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 0, submersion vs visible surface 0, grade vs submersion 0
+PASS E0 at rest: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E0 at rest: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E0 A: the car on the deck, doors and shutters open
+PASS E0 B: the car on the deck, doors and shutters open
+
+== E1 — 3 players ride down together (NT1, NT6 3p): car, doors, gate, deck doors and shutters, the flood and the gauge the same at the tick on every peer
+PASS E1: the ship at sea and its deck cabin
+PASS E1: the host and A, B stand in the deck cabin (A (1.0, 0.1, 0.0), B (-1.0, 0.1, 0.0))
+  · E1 requested cabin
+PASS E1 the deck cabin took the press (refusal: )
+PASS E1 down: the stage completed within 100 s
+PASS E1 the ride down completed: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS E1: the host logged Descending then AtBottom (0:AtTop,1:Descending,2:AtBottom)
+PASS E1: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E1 down A: 67 replies, 56 car + 10 deck comparisons at the tick (1 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.003, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.96, worst 2.20 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E1 down A last recorder: elevnetrec: frames=3523; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopDown; firstShips=0; firstShipErr=0.00
+PASS E1 down: A's every reply carries the elevnet line (0 without)
+PASS E1 down: A shows what the host shows at the same tick (0 differences: )
+PASS E1 down: A was compared at 56 car ticks (at least 8)
+PASS E1 down: A was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'top-shut' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A was sampled at 'bottom-opening' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E1 down: A's tick within 3 ticks of the host's at the same moment (worst 2.20, median 0.96; worst 2.20 ticks at Descending↓ serial 1 carTick 2806.6 tick 2806.6 (raw 2.20, dropped-tick allowance 0.00; reply 48, guest frame lag 4 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 25 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 2.2, raw worst there 1.85); 67 measured)
+PASS E1 down: A's car replies found the host's frames at their tick (0 of 67 did not)
+PASS E1 down: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E1 down: A per-frame: 3523 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopDown) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E1 down: A: the per-frame self-check ran (3523 frames)
+PASS E1 down: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E1 down: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E1 down: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E1 down: A: every frame the car stands where the phase puts it (0 m)
+  · E1 down B: 67 replies, 56 car + 10 deck comparisons at the tick (1 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.001, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.68, worst 2.52 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E1 down B last recorder: elevnetrec: frames=3472; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopDown; firstShips=0; firstShipErr=0.00
+PASS E1 down: B's every reply carries the elevnet line (0 without)
+PASS E1 down: B shows what the host shows at the same tick (0 differences: )
+PASS E1 down: B was compared at 56 car ticks (at least 8)
+PASS E1 down: B was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'top-shut' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B was sampled at 'bottom-opening' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E1 down: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E1 down: B's tick within 3 ticks of the host's at the same moment (worst 2.52, median 0.68; worst 2.52 ticks at Descending↓ serial 1 carTick 3063.1 tick 3063.1 (raw 2.52, dropped-tick allowance 0.00; reply 58, guest frame lag 2 ms, host frame gap 8 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 17 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 3.2, raw worst there 1.81); 67 measured)
+PASS E1 down: B's car replies found the host's frames at their tick (0 of 67 did not)
+PASS E1 down: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E1 down: B per-frame: 3472 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopDown) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E1 down: B: the per-frame self-check ran (3472 frames)
+PASS E1 down: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E1 down: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E1 down: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E1 down: B: every frame the car stands where the phase puts it (0 m)
+  · E1 down: host per-frame: elevnetrec: frames=4202; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopDown; firstShips=0; firstShipErr=0.00; eye-in-car frames 3272, submersion vs visible surface 0, grade vs submersion 0
+PASS E1 down: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E1 down: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E1: every player stands inside the car on the host
+PASS E1: all 3 listed below (0,1,2)
+PASS E1: no two riders overlap (closest 0.99 m)
+
+== E2 — B rides up alone; the host and A stay below and watch the car drain away (NT1 on the way up)
+PASS E2 the host and A outside the car, B inside
+PASS E2 B's car press was taken (refusal: )
+PASS E2 B up: the stage completed within 110 s
+PASS E2 the host and A below, B up: 0,1
+PASS E2: the host logged Ascending then AtTop (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop)
+PASS E2: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E2 B up A: 52 replies, 52 car + 0 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.006, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.97, worst 1.73 ticks; moments bottom-closing,draining,moving-dry,moving-full,top-shut
+  · E2 B up A last recorder: elevnetrec: frames=2819; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E2 B up: A's every reply carries the elevnet line (0 without)
+PASS E2 B up: A shows what the host shows at the same tick (0 differences: )
+PASS E2 B up: A was compared at 52 car ticks (at least 8)
+PASS E2 B up: A was sampled at 'moving-full' (saw bottom-closing,draining,moving-dry,moving-full,top-shut)
+PASS E2 B up: A was sampled at 'draining' (saw bottom-closing,draining,moving-dry,moving-full,top-shut)
+PASS E2 B up: A was sampled at 'moving-dry' (saw bottom-closing,draining,moving-dry,moving-full,top-shut)
+PASS E2 B up: A was sampled at 'bottom-closing' (saw bottom-closing,draining,moving-dry,moving-full,top-shut)
+PASS E2 B up: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E2 B up: A's tick within 3 ticks of the host's at the same moment (worst 1.73, median 0.97; worst 1.73 ticks at Ascending↑ serial 4 carTick 4177.9 tick 4177.9 (raw 1.73, dropped-tick allowance 0.00; reply 27, guest frame lag 3 ms, host frame gap 6 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 5 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.1, raw worst there 0.42); 52 measured)
+PASS E2 B up: A's car replies found the host's frames at their tick (0 of 52 did not)
+PASS E2 B up: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E2 B up: A per-frame: 2819 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E2 B up: A: the per-frame self-check ran (2819 frames)
+PASS E2 B up: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E2 B up: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E2 B up: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E2 B up: A: every frame the car stands where the phase puts it (0 m)
+  · E2 B up: host per-frame: elevnetrec: frames=3399; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 3272, submersion vs visible surface 0, grade vs submersion 0
+PASS E2 B up: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E2 B up: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+  · E2 B up B: 52 replies, 48 car + 9 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.56, worst 1.92 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut
+  · E2 B up B last recorder: elevnetrec: frames=2764; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=1; firstShipErr=0.00
+PASS E2 B up: B's every reply carries the elevnet line (0 without)
+PASS E2 B up: B shows what the host shows at the same tick (0 differences: )
+PASS E2 B up: B was compared at 48 car ticks (at least 4)
+PASS E2 B up: B was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E2 B up: B was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E2 B up: B was sampled at 'bottom-closing' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E2 B up: B was sampled at 'deck-opening' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E2 B up: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E2 B up: B's tick within 3 ticks of the host's at the same moment (worst 1.92, median 0.56; worst 1.92 ticks at Ascending↑ serial 4 carTick 4075.6 tick 4075.6 (raw 1.92, dropped-tick allowance 0.00; reply 23, guest frame lag 2 ms, host frame gap 27 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 10 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 2.0, raw worst there 1.51); 52 measured)
+PASS E2 B up: B's car replies found the host's frames at their tick (0 of 52 did not)
+PASS E2 B up: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E2 B up: B per-frame: 2764 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 1 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E2 B up: B: the per-frame self-check ran (2764 frames)
+PASS E2 B up: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E2 B up: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E2 B up: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E2 B up: B: every frame the car stands where the phase puts it (0 m)
+  · E2 B up: host per-frame: elevnetrec: frames=3399; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 3272, submersion vs visible surface 0, grade vs submersion 0
+PASS E2 B up: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E2 B up: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+
+== E3 — the empty car goes back down for the host and A; B on the ship sees the shutters shut and the TV go live on the host
+PASS E3 the cabin is clear: the car seals to go back down (Descending)
+PASS E3 empty car down: the stage completed within 60 s
+PASS E3: the host logged Descending then AtBottom (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom)
+PASS E3: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E3 empty car down A: 48 replies, 48 car + 0 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.002, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.99, worst 2.36 ticks; moments bottom-open,bottom-opening,flooding,moving-dry,moving-full
+  · E3 empty car down A last recorder: elevnetrec: frames=2590; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E3 empty car down: A's every reply carries the elevnet line (0 without)
+PASS E3 empty car down: A shows what the host shows at the same tick (0 differences: )
+PASS E3 empty car down: A was compared at 48 car ticks (at least 8)
+PASS E3 empty car down: A was sampled at 'moving-dry' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full)
+PASS E3 empty car down: A was sampled at 'flooding' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full)
+PASS E3 empty car down: A was sampled at 'moving-full' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full)
+PASS E3 empty car down: A was sampled at 'bottom-open' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full)
+PASS E3 empty car down: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E3 empty car down: A's tick within 3 ticks of the host's at the same moment (worst 2.36, median 0.99; worst 2.36 ticks at Descending↓ serial 7 carTick 5742.8 tick 5742.8 (raw 2.36, dropped-tick allowance 0.00; reply 31, guest frame lag 4 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 8 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.2, raw worst there 1.41); 48 measured)
+PASS E3 empty car down: A's car replies found the host's frames at their tick (0 of 48 did not)
+PASS E3 empty car down: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E3 empty car down: A per-frame: 2590 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E3 empty car down: A: the per-frame self-check ran (2590 frames)
+PASS E3 empty car down: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E3 empty car down: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E3 empty car down: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E3 empty car down: A: every frame the car stands where the phase puts it (0 m)
+  · E3 empty car down: host per-frame: elevnetrec: frames=2905; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 3272, submersion vs visible surface 0, grade vs submersion 0
+PASS E3 empty car down: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E3 empty car down: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+  · E3 empty car down B: 48 replies, 48 car + 48 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.77, worst 1.97 ticks; moments bottom-open,bottom-opening,flooding,moving-dry,moving-full,shutters-shut
+  · E3 empty car down B last recorder: elevnetrec: frames=2539; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E3 empty car down: B's every reply carries the elevnet line (0 without)
+PASS E3 empty car down: B shows what the host shows at the same tick (0 differences: )
+PASS E3 empty car down: B was sampled at 'shutters-shut' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full,shutters-shut)
+PASS E3 empty car down: B was sampled at 'flooding' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full,shutters-shut)
+PASS E3 empty car down: B was sampled at 'moving-full' (saw bottom-open,bottom-opening,flooding,moving-dry,moving-full,shutters-shut)
+PASS E3 empty car down: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E3 empty car down: B's tick within 3 ticks of the host's at the same moment (worst 1.97, median 0.77; worst 1.97 ticks at Descending↓ serial 7 carTick 5144.4 tick 5144.4 (raw 1.97, dropped-tick allowance 0.00; reply 8, guest frame lag 5 ms, host frame gap 8 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 10 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.9, raw worst there 0.60); 48 measured)
+PASS E3 empty car down: B's car replies found the host's frames at their tick (0 of 48 did not)
+PASS E3 empty car down: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E3 empty car down: B per-frame: 2539 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E3 empty car down: B: the per-frame self-check ran (2539 frames)
+PASS E3 empty car down: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E3 empty car down: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E3 empty car down: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E3 empty car down: B: every frame the car stands where the phase puts it (0 m)
+  · E3 empty car down: host per-frame: elevnetrec: frames=2905; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 3272, submersion vs visible surface 0, grade vs submersion 0
+PASS E3 empty car down: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E3 empty car down: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+  · E3 B's car frames: 48 compared (B holds the dive world for the TV); B's first car frames: 0 (none)
+PASS E3 the TV's channel is the host, the first diver below (0)
+PASS E3 B's TV is live on the host (Skipper)
+  · E3 B's TV: tv=0; tvLive=True; tvCaption=LIVE · Skipper
+
+== E4 — A dies below and spectates the host; B watches the TV; the full car at the bottom (X3: no TV during a ride down); the host rides up alone: the drain on A's view and on the TV (NT2, NT3)
+PASS E4 A died below
+PASS E4 dead A watches the host (0)
+PASS E4 A's spectator view is on the host
+PASS E4 the host stands in the full car at the bottom, under water
+  · E4 C:\Dev\SunkCost\Temp\elevator-net\E4-host-full-car.png
+PASS E4 the TV picture and A's screen at the bottom saved (id=7060; tv picture C:/Dev/SunkCost/Temp/elevator-net/E4-tv-full-car.png; spread=0.119; mean=0.240; grade=1.00; live=True; channel=0)
+PASS E4 B's TV is live on the host in the full car: id=7060; tv picture C:/Dev/SunkCost/Temp/elevator-net/E4-tv-full-car.png; spread=0.119; mean=0.240; grade=1.00; live=True; channel=0
+PASS E4 at the bottom: the stage completed within 20 s
+  · E4 at the bottom A: 8 replies, 8 car + 0 deck comparisons at the tick (0 deck in flight), 8 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 1.06, worst 2.65 ticks; moments bottom-open
+  · E4 at the bottom A last recorder: elevnetrec: frames=504; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E4 at the bottom: A's every reply carries the elevnet line (0 without)
+PASS E4 at the bottom: A shows what the host shows at the same tick (0 differences: )
+PASS E4 at the bottom: A was compared at 8 car ticks (at least 3)
+PASS E4 at the bottom: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E4 at the bottom: A's tick within 3 ticks of the host's at the same moment (worst 2.65, median 1.06; worst 2.65 ticks at AtBottom↓ serial 8 carTick 6693.7 tick 6693.7 (raw 2.65, dropped-tick allowance 0.00; reply 8, guest frame lag 11 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 5 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.1, raw worst there 2.21); 8 measured)
+PASS E4 at the bottom: A's car replies found the host's frames at their tick (0 of 8 did not)
+PASS E4 at the bottom: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E4 at the bottom: A per-frame: 504 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E4 at the bottom: A: the per-frame self-check ran (504 frames)
+PASS E4 at the bottom: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E4 at the bottom: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E4 at the bottom: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E4 at the bottom: A: every frame the car stands where the phase puts it (0 m)
+  · E4 at the bottom B: 8 replies, 8 car + 8 deck comparisons at the tick (0 deck in flight), 0 spectator, 8 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.00, worst 0.70 ticks; moments bottom-open,shutters-shut
+  · E4 at the bottom B last recorder: elevnetrec: frames=454; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E4 at the bottom: B's every reply carries the elevnet line (0 without)
+PASS E4 at the bottom: B shows what the host shows at the same tick (0 differences: )
+PASS E4 at the bottom: B was compared at 8 car ticks (at least 3)
+PASS E4 at the bottom: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E4 at the bottom: B's tick within 3 ticks of the host's at the same moment (worst 0.70, median 0.00; worst 0.70 ticks at AtBottom↓ serial 8 carTick 6641.2 tick 6641.2 (raw 0.70, dropped-tick allowance 0.00; reply 6, guest frame lag 2 ms, host frame gap 6 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 5 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.1, raw worst there 0.71); 8 measured)
+PASS E4 at the bottom: B's car replies found the host's frames at their tick (0 of 8 did not)
+PASS E4 at the bottom: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E4 at the bottom: B per-frame: 454 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E4 at the bottom: B: the per-frame self-check ran (454 frames)
+PASS E4 at the bottom: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E4 at the bottom: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E4 at the bottom: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E4 at the bottom: B: every frame the car stands where the phase puts it (0 m)
+  · E4 at the bottom: host per-frame: elevnetrec: frames=625; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 4207, submersion vs visible surface 0, grade vs submersion 0
+PASS E4 at the bottom: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E4 at the bottom: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E4 A's view (8) and B's TV (8) were compared with the host's eye in the full car
+  · E4 requested car
+PASS E4 the car took the host's press (refusal: )
+  · E4 mid-drain captures at level 2.71: C:\Dev\SunkCost\Temp\elevator-net\E4-host-draining.png
+  · E4 B: id=7150; tv picture C:/Dev/SunkCost/Temp/elevator-net/E4-tv-draining.png; spread=0.124; mean=0.250; grade=1.00; live=True; channel=0
+PASS E4 host up: the stage completed within 110 s
+PASS E4: the host logged Ascending then AtTop (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom,9:Sealing,10:Ascending,11:AtTop)
+PASS E4: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E4 host up A: 51 replies, 42 car + 8 deck comparisons at the tick (0 deck in flight), 43 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.001, deck doors 0.000, yaw 0.01°, spectator eye 0.32 m, TV eye 0.00 m; stale 1 (worst 0.05 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 1.33, worst 2.33 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open
+  · E4 host up A last recorder: elevnetrec: frames=2784; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+PASS E4 host up: A's every reply carries the elevnet line (0 without)
+PASS E4 host up: A shows what the host shows at the same tick (0 differences: )
+PASS E4 host up: A was compared at 42 car ticks (at least 8)
+PASS E4 host up: A was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open)
+PASS E4 host up: A was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open)
+PASS E4 host up: A was sampled at 'moving-dry' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open)
+PASS E4 host up: A was sampled at 'bottom-closing' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open)
+PASS E4 host up: A showed a phase the host had left for at most 0.5 s (worst 0.05 s over 1 replies)
+PASS E4 host up: A's tick within 3 ticks of the host's at the same moment (worst 2.33, median 1.33; worst 2.33 ticks at AtTop↑ serial 11 carTick 0.0 tick 7978.1 (raw 2.33, dropped-tick allowance 0.00; reply 46, guest frame lag 2 ms, host frame gap 6 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 16 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.7, raw worst there 1.38); 51 measured)
+PASS E4 host up: A's car replies found the host's frames at their tick (0 of 51 did not)
+PASS E4 host up: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E4 host up: A per-frame: 2784 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 1 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E4 host up: A: the per-frame self-check ran (2784 frames)
+PASS E4 host up: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E4 host up: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E4 host up: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E4 host up: A: every frame the car stands where the phase puts it (0 m)
+  · E4 host up: host per-frame: elevnetrec: frames=3162; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 6752, submersion vs visible surface 0, grade vs submersion 0
+PASS E4 host up: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E4 host up: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+  · E4 host up B: 51 replies, 43 car + 51 deck comparisons at the tick (0 deck in flight), 0 spectator, 43 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.005, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.35 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 1.25, worst 2.22 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E4 host up B last recorder: elevnetrec: frames=2738; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E4 host up: B's every reply carries the elevnet line (0 without)
+PASS E4 host up: B shows what the host shows at the same tick (0 differences: )
+PASS E4 host up: B was compared at 43 car ticks (at least 4)
+PASS E4 host up: B was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E4 host up: B was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E4 host up: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E4 host up: B's tick within 3 ticks of the host's at the same moment (worst 2.22, median 1.25; worst 2.22 ticks at Ascending↑ serial 10 carTick 7437.9 tick 7437.9 (raw 2.22, dropped-tick allowance 0.00; reply 26, guest frame lag 2 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 14 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.8, raw worst there 0.70); 51 measured)
+PASS E4 host up: B's car replies found the host's frames at their tick (0 of 51 did not)
+PASS E4 host up: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E4 host up: B per-frame: 2738 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E4 host up: B: the per-frame self-check ran (2738 frames)
+PASS E4 host up: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E4 host up: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E4 host up: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E4 host up: B: every frame the car stands where the phase puts it (0 m)
+  · E4 host up: host per-frame: elevnetrec: frames=3162; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 6752, submersion vs visible surface 0, grade vs submersion 0
+PASS E4 host up: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E4 host up: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E4 A's spectator view compared with the host's eye through the ride (43 replies)
+PASS E4 B's TV compared with the host's eye through the ride (43 replies)
+PASS E4 the mid-drain captures were taken
+PASS E4 the mid-drain pictures saved: Temp/elevator-net/
+  · E4 captures to Read: C:\Dev\SunkCost\Temp\elevator-net\E4-host-full-car.png, C:\Dev\SunkCost\Temp\elevator-net\E4-spectator-full-car.png, C:\Dev\SunkCost\Temp\elevator-net\E4-tv-full-car.png, C:\Dev\SunkCost\Temp\elevator-net\E4-host-draining.png, C:\Dev\SunkCost\Temp\elevator-net\E4-spectator-draining.png, C:\Dev\SunkCost\Temp\elevator-net\E4-tv-draining.png
+PASS E4 the last living diver is up: the dive is done
+PASS E4 the site unloaded
+PASS E4 dead A was carried to the ship
+PASS E4 End day accepted: 
+PASS E4 A revived
+PASS E4 A's client reads itself alive with the capsule on
+
+== E5 — day 2: 3 players ride down; guest C is launched at the press and refused (X1: joins are refused during a ride and a dive); the ride is unaffected (NT4a)
+PASS E5: the ship at sea and its deck cabin
+PASS E5: the host and A, B stand in the deck cabin (A (1.0, 0.1, 0.0), B (-1.0, 0.1, 0.0))
+  · E5 requested cabin
+PASS E5 the deck cabin took the press (refusal: )
+  · launched guest C (headless) in Temp/elevator-net-guest-c
+PASS E5 down: the stage completed within 100 s
+PASS E5: the host logged Descending then AtBottom (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom,9:Sealing,10:Ascending,11:AtTop,12:Descending,13:AtBottom)
+PASS E5: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E5 down A: 66 replies, 55 car + 11 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.002, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.95, worst 2.17 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E5 down A last recorder: elevnetrec: frames=3528; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00
+PASS E5 down: A's every reply carries the elevnet line (0 without)
+PASS E5 down: A shows what the host shows at the same tick (0 differences: )
+PASS E5 down: A was compared at 55 car ticks (at least 8)
+PASS E5 down: A was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: A was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: A was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: A was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: A was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E5 down: A's tick within 3 ticks of the host's at the same moment (worst 2.17, median 0.95; worst 2.17 ticks at Descending↓ serial 12 carTick 8800.9 tick 8800.9 (raw 2.17, dropped-tick allowance 0.00; reply 20, guest frame lag 2 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 5 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.8, raw worst there 0.37); 66 measured)
+PASS E5 down: A's car replies found the host's frames at their tick (0 of 66 did not)
+PASS E5 down: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E5 down: A per-frame: 3528 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E5 down: A: the per-frame self-check ran (3528 frames)
+PASS E5 down: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E5 down: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E5 down: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E5 down: A: every frame the car stands where the phase puts it (0 m)
+  · E5 down B: 66 replies, 55 car + 11 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.001, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.86, worst 1.58 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E5 down B last recorder: elevnetrec: frames=3476; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00
+PASS E5 down: B's every reply carries the elevnet line (0 without)
+PASS E5 down: B shows what the host shows at the same tick (0 differences: )
+PASS E5 down: B was compared at 55 car ticks (at least 8)
+PASS E5 down: B was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: B was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: B was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: B was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: B was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E5 down: B showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E5 down: B's tick within 3 ticks of the host's at the same moment (worst 1.58, median 0.86; worst 1.58 ticks at AtBottom↓ serial 13 carTick 9994.5 tick 9994.5 (raw 1.58, dropped-tick allowance 0.00; reply 66, guest frame lag 2 ms, host frame gap 7 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 10 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.2, raw worst there 1.34); 66 measured)
+PASS E5 down: B's car replies found the host's frames at their tick (0 of 66 did not)
+PASS E5 down: B's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E5 down: B per-frame: 3476 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E5 down: B: the per-frame self-check ran (3476 frames)
+PASS E5 down: B: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E5 down: B: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E5 down: B: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E5 down: B: every frame the car stands where the phase puts it (0 m)
+  · E5 down: host per-frame: elevnetrec: frames=4062; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00; eye-in-car frames 9935, submersion vs visible surface 0, grade vs submersion 0
+PASS E5 down: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E5 down: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+  · E5 C: message 'Dive in progress — join between days'; host refusals (DiveInProgress) +1, one landed while the ride ran; most players on the host 3
+PASS E5 C refused: 'Dive in progress — join between days'
+PASS E5 C never spawned (most 3)
+PASS E5 C's refusal landed while the ride itself ran (else only while the dive was in progress)
+PASS E5: every player stands inside the car on the host
+PASS E5: all 3 listed below (0,1,2)
+PASS E5: no two riders overlap (closest 0.99 m)
+
+== E6 — 3 players ride up; B's process is killed mid-drain: the ride completes, A stays consistent with the host, no exception (NT5)
+PASS E6: the car waits at the bottom
+PASS E6: the host and A, B stand in the car
+  · E6 requested car
+PASS E6 the car took the press (refusal: )
+  · E6 B's process killed at level 2.63 (Ascending, ride Riding)
+PASS E6 up, B killed: the stage completed within 160 s
+PASS E6 B was killed mid-drain
+  · E6 the ride ended 17.6 s after the kill; stage Complete
+PASS E6 the ride up completed for the others: ride=Complete/Up/6 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.05, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
+PASS E6: the host logged Ascending then AtTop (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom,9:Sealing,10:Ascending,11:AtTop,12:Descending,13:AtBottom,14:Sealing,15:Ascending,16:AtTop,17:AtTop)
+PASS E6: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E6 up, B killed A: 75 replies, 67 car + 30 deck comparisons at the tick (1 deck in flight), 0 spectator, 0 TV; worst carY 1.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.005, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.96, worst 2.88 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut
+  · E6 up, B killed A last recorder: elevnetrec: frames=3947; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+PASS E6 up, B killed: A's every reply carries the elevnet line (0 without)
+PASS E6 up, B killed: A shows what the host shows at the same tick (0 differences: )
+PASS E6 up, B killed: A was compared at 67 car ticks (at least 8)
+PASS E6 up, B killed: A was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E6 up, B killed: A was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E6 up, B killed: A was sampled at 'moving-dry' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E6 up, B killed: A was sampled at 'deck-opening' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E6 up, B killed: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E6 up, B killed: A's tick within 3 ticks of the host's at the same moment (worst 2.88, median 0.96; worst 2.88 ticks at AtTop↑ serial 16 carTick 0.0 tick 12003.6 (raw 2.88, dropped-tick allowance 0.00; reply 71, guest frame lag 1 ms, host frame gap 5 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 31 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 2.0, raw worst there 1.61); 75 measured)
+PASS E6 up, B killed: A's car replies found the host's frames at their tick (0 of 75 did not)
+PASS E6 up, B killed: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E6 up, B killed: A per-frame: 3947 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 1 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E6 up, B killed: A: the per-frame self-check ran (3947 frames)
+PASS E6 up, B killed: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E6 up, B killed: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E6 up, B killed: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E6 up, B killed: A: every frame the car stands where the phase puts it (0 m)
+  · E6 up, B killed: host per-frame: elevnetrec: frames=4712; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 12829, submersion vs visible surface 0, grade vs submersion 0
+PASS E6 up, B killed: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E6 up, B killed: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E6 B's player is gone
+  · E6 B dropped 17.6 s after the kill
+PASS E6 B left Below and the riders
+PASS E6 no exception on the host through the kill: 
+PASS E6 arrived: the stage completed within 20 s
+  · E6 arrived A: 8 replies, 0 car + 8 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.000, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.85, worst 0.86 ticks; moments shutters-open
+  · E6 arrived A last recorder: elevnetrec: frames=450; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00
+PASS E6 arrived: A's every reply carries the elevnet line (0 without)
+PASS E6 arrived: A shows what the host shows at the same tick (0 differences: )
+PASS E6 arrived: A was sampled at 'shutters-open' (saw shutters-open)
+PASS E6 arrived: A showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E6 arrived: A's tick within 3 ticks of the host's at the same moment (worst 0.86, median 0.85; worst 0.86 ticks at AtTop↑ serial 17 carTick 0.0 tick 12269.2 (raw 0.86, dropped-tick allowance 0.00; reply 5, guest frame lag 1 ms, host frame gap 5 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 0 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 0.0, raw worst there 0.00); 8 measured)
+PASS E6 arrived: A's car replies found the host's frames at their tick (0 of 8 did not)
+PASS E6 arrived: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E6 arrived: A per-frame: 450 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E6 arrived: A: the per-frame self-check ran (450 frames)
+PASS E6 arrived: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E6 arrived: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E6 arrived: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E6 arrived: A: every frame the car stands where the phase puts it (0 m)
+  · E6 arrived: host per-frame: elevnetrec: frames=788; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 12829, submersion vs visible surface 0, grade vs submersion 0
+PASS E6 arrived: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E6 arrived: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E6 nobody below: the dive is done
+PASS E6 the site unloaded
+PASS E6 End day accepted: 
+
+== E7 — day 3: B2 and C2 (headless) join between days: their first reply is the host's deck state at once (NT4b); 4 players ride down (NT6 4p)
+  · launched guest B2 (headless) in Temp/elevator-net-guest-b2
+PASS E7 B2: the guest's player spawned on the host
+PASS E7 B2: the guest's peer answers at sea with its elevator probe
+  · E7 B2: guest 'Mate bof the' is client 4 (Temp/elevator-net-guest-b2); 3 players
+PASS E7 B2: the first reply carries the elevnet line
+  · E7 B2: first reply: deck doors 1.00, shutter yaw -23.6°, car shown True, shutter box False; 1 deck comparison(s), 0 in flight
+PASS E7 B2: its first reply shows the car up and the doors and shutters open, as on the host
+PASS E7 B2: its first reply equals the host at its tick ()
+PASS E7 B2: its first ship frame had the shutters where the state puts them, no swing replayed (0.00°)
+  · launched guest C2 (headless) in Temp/elevator-net-guest-c2
+PASS E7 C2: the guest's player spawned on the host
+PASS E7 C2: the guest's peer answers at sea with its elevator probe
+  · E7 C2: guest 'Mate bof the' is client 5 (Temp/elevator-net-guest-c2); 4 players
+PASS E7 C2: the first reply carries the elevnet line
+  · E7 C2: first reply: deck doors 1.00, shutter yaw -23.6°, car shown True, shutter box False; 1 deck comparison(s), 0 in flight
+PASS E7 C2: its first reply shows the car up and the doors and shutters open, as on the host
+PASS E7 C2: its first reply equals the host at its tick ()
+PASS E7 C2: its first ship frame had the shutters where the state puts them, no swing replayed (0.00°)
+PASS E7 four players: 4
+PASS E7: the ship at sea and its deck cabin
+PASS E7: the host and A, B2, C2 stand in the deck cabin (A (1.0, 0.1, 0.0), B2 (-1.0, 0.1, 0.0), C2 (0.0, 0.1, -1.0))
+  · E7 requested cabin
+PASS E7 the deck cabin took the press (refusal: )
+PASS E7 down 4p: the stage completed within 100 s
+PASS E7: the host logged Descending then AtBottom (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom,9:Sealing,10:Ascending,11:AtTop,12:Descending,13:AtBottom,14:Sealing,15:Ascending,16:AtTop,17:AtTop,18:Descending,19:AtBottom)
+PASS E7: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E7 down 4p A: 65 replies, 54 car + 11 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.010, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 1 (worst 0.02 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.34, worst 2.29 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E7 down 4p A last recorder: elevnetrec: frames=3640; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00
+PASS E7 down 4p: A's every reply carries the elevnet line (0 without)
+PASS E7 down 4p: A shows what the host shows at the same tick (0 differences: )
+PASS E7 down 4p: A was compared at 54 car ticks (at least 8)
+PASS E7 down 4p: A was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: A was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: A was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: A was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: A was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: A showed a phase the host had left for at most 0.5 s (worst 0.02 s over 1 replies)
+PASS E7 down 4p: A's tick within 3 ticks of the host's at the same moment (worst 2.29, median 0.34; worst 2.29 ticks at Descending↓ serial 18 carTick 13851.9 tick 13851.9 (raw 2.29, dropped-tick allowance 0.00; reply 34, guest frame lag 2 ms, host frame gap 10 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 30 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.9, raw worst there 2.14); 65 measured)
+PASS E7 down 4p: A's car replies found the host's frames at their tick (0 of 65 did not)
+PASS E7 down 4p: A's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E7 down 4p: A per-frame: 3640 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E7 down 4p: A: the per-frame self-check ran (3640 frames)
+PASS E7 down 4p: A: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E7 down 4p: A: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E7 down 4p: A: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E7 down 4p: A: every frame the car stands where the phase puts it (0 m)
+  · E7 down 4p B2: 65 replies, 54 car + 11 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.015, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 1 (worst 0.04 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.08, worst 1.72 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E7 down 4p B2 last recorder: elevnetrec: frames=13822; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00
+PASS E7 down 4p: B2's every reply carries the elevnet line (0 without)
+PASS E7 down 4p: B2 shows what the host shows at the same tick (0 differences: )
+PASS E7 down 4p: B2 was compared at 54 car ticks (at least 8)
+PASS E7 down 4p: B2 was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: B2 was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: B2 was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: B2 was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: B2 was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: B2 showed a phase the host had left for at most 0.5 s (worst 0.04 s over 1 replies)
+PASS E7 down 4p: B2's tick within 3 ticks of the host's at the same moment (worst 1.72, median 0.08; worst 1.72 ticks at Descending↓ serial 18 carTick 13798.8 tick 13798.8 (raw 1.72, dropped-tick allowance 0.00; reply 32, guest frame lag 2 ms, host frame gap 10 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 36 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 2.3, raw worst there -1.75); 65 measured)
+PASS E7 down 4p: B2's car replies found the host's frames at their tick (0 of 65 did not)
+PASS E7 down 4p: B2's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E7 down 4p: B2 per-frame: 13822 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E7 down 4p: B2: the per-frame self-check ran (13822 frames)
+PASS E7 down 4p: B2: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E7 down 4p: B2: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E7 down 4p: B2: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E7 down 4p: B2: every frame the car stands where the phase puts it (0 m)
+  · E7 down 4p C2: 65 replies, 53 car + 11 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.0 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.016, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 1 (worst 0.02 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.14, worst 1.98 ticks; moments bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut
+  · E7 down 4p C2 last recorder: elevnetrec: frames=13587; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00
+PASS E7 down 4p: C2's every reply carries the elevnet line (0 without)
+PASS E7 down 4p: C2 shows what the host shows at the same tick (0 differences: )
+PASS E7 down 4p: C2 was compared at 53 car ticks (at least 8)
+PASS E7 down 4p: C2 was sampled at 'moving-dry' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: C2 was sampled at 'flooding' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: C2 was sampled at 'moving-full' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: C2 was sampled at 'bottom-open' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: C2 was sampled at 'deck-sealing' (saw bottom-open,bottom-opening,deck-sealing,flooding,moving-dry,moving-full,shutters-open,shutters-shut,top-shut)
+PASS E7 down 4p: C2 showed a phase the host had left for at most 0.5 s (worst 0.02 s over 1 replies)
+PASS E7 down 4p: C2's tick within 3 ticks of the host's at the same moment (worst 1.98, median 0.14; worst 1.98 ticks at Descending↓ serial 18 carTick 13852.1 tick 13852.1 (raw 1.98, dropped-tick allowance 0.00; reply 34, guest frame lag 2 ms, host frame gap 41 ms); 0 replies skipped across a host stall over 0.1 s, 0 within 1.5 s after a guest stall (worst there 0.00); 29 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 1.9, raw worst there 1.72); 65 measured)
+PASS E7 down 4p: C2's car replies found the host's frames at their tick (0 of 65 did not)
+PASS E7 down 4p: C2's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E7 down 4p: C2 per-frame: 13587 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 1 (AtTopUp) worst 0, first ship frames 0 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E7 down 4p: C2: the per-frame self-check ran (13587 frames)
+PASS E7 down 4p: C2: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E7 down 4p: C2: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E7 down 4p: C2: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E7 down 4p: C2: every frame the car stands where the phase puts it (0 m)
+  · E7 down 4p: host per-frame: elevnetrec: frames=3451; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=0; firstShipErr=0.00; eye-in-car frames 12070, submersion vs visible surface 0, grade vs submersion 0
+PASS E7 down 4p: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E7 down 4p: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E7: every player stands inside the car on the host
+PASS E7: all 4 listed below (0,1,4,5)
+PASS E7: no two riders overlap (closest 0.99 m)
+  · E7 A's frames (windowed, 4 bodies and the water): id=7650; fps=120 median=8.3ms 1%low=8.3ms worst=17ms hitches=0/3534 frames in 29.5s; no hitches
+PASS E7 A rendered at 50 fps or better with at most two hitches over the ride (fps 120, hitches 0; the snapshot polling itself costs frames)
+
+== E8 — 4 players ride up; A leaves mid-ascent (a clean disconnect): the others stay consistent, no exception (NT5)
+  · E8 requested car
+PASS E8 the car took the press (refusal: )
+  · E8 A leaves at car y -28.7 (Riding)
+PASS E8 up 4p, A leaves: the stage completed within 160 s
+PASS E8 A left mid-ascent
+PASS E8 the ride up completed: ride=Complete/Up/8 car=AtTop up=True carPos=none carDriven=False riders=[] below=[] placements=0 local=(ShipAtSea (0.00, 0.05, 3000.00)) locked=False placed=True deckDoors=1.00 fade=0.00 refusal='' failure=''
+PASS E8: the host logged Ascending then AtTop (0:AtTop,1:Descending,2:AtBottom,3:Sealing,4:Ascending,5:AtTop,6:Sealing,7:Descending,8:AtBottom,9:Sealing,10:Ascending,11:AtTop,12:Descending,13:AtBottom,14:Sealing,15:Ascending,16:AtTop,17:AtTop,18:Descending,19:AtBottom,20:Sealing,21:Ascending,22:AtTop)
+PASS E8: the car travelled 17.33 s by the server's ticks (the profile's 17.33 s ± 0.5)
+  · E8 up 4p, A leaves B2: 52 replies, 44 car + 9 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.2 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.006, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.35, worst 1.74 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut
+  · E8 up 4p, A leaves B2 last recorder: elevnetrec: frames=11138; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+PASS E8 up 4p, A leaves: B2's every reply carries the elevnet line (0 without)
+PASS E8 up 4p, A leaves: B2 shows what the host shows at the same tick (0 differences: )
+PASS E8 up 4p, A leaves: B2 was compared at 44 car ticks (at least 8)
+PASS E8 up 4p, A leaves: B2 was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: B2 was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: B2 was sampled at 'moving-dry' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: B2 was sampled at 'deck-opening' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: B2 showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E8 up 4p, A leaves: B2's tick within 3 ticks of the host's at the same moment (worst 1.74, median 0.35; worst 1.74 ticks at Ascending↑ serial 21 carTick 15883.1 tick 15883.1 (raw 1.74, dropped-tick allowance 0.00; reply 42, guest frame lag 1 ms, host frame gap 9 ms); 0 replies skipped across a host stall over 0.1 s, 3 within 1.5 s after a guest stall (worst there 0.52); 17 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 3.6, raw worst there 1.28); 49 measured)
+PASS E8 up 4p, A leaves: B2's car replies found the host's frames at their tick (0 of 52 did not)
+PASS E8 up 4p, A leaves: B2's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E8 up 4p, A leaves: B2 per-frame: 11138 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 1 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E8 up 4p, A leaves: B2: the per-frame self-check ran (11138 frames)
+PASS E8 up 4p, A leaves: B2: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E8 up 4p, A leaves: B2: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E8 up 4p, A leaves: B2: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E8 up 4p, A leaves: B2: every frame the car stands where the phase puts it (0 m)
+  · E8 up 4p, A leaves C2: 52 replies, 44 car + 9 deck comparisons at the tick (0 deck in flight), 0 spectator, 0 TV; worst carY 0.6 cm, water 0.0 cm, gauge 0.000, door 0.000, gate 0.005, deck doors 0.000, yaw 0.00°, spectator eye 0.00 m, TV eye 0.00 m; stale 0 (worst 0.00 s), unmatched 0, torn 0, no line 0, gate box one frame behind at the edge 0; tick skew median 0.50, worst 1.81 ticks; moments bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut
+  · E8 up 4p, A leaves C2 last recorder: elevnetrec: frames=10893; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+PASS E8 up 4p, A leaves: C2's every reply carries the elevnet line (0 without)
+PASS E8 up 4p, A leaves: C2 shows what the host shows at the same tick (0 differences: )
+PASS E8 up 4p, A leaves: C2 was compared at 44 car ticks (at least 8)
+PASS E8 up 4p, A leaves: C2 was sampled at 'moving-full' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: C2 was sampled at 'draining' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: C2 was sampled at 'moving-dry' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: C2 was sampled at 'deck-opening' (saw bottom-closing,deck-opening,draining,moving-dry,moving-full,shutters-open,top-shut)
+PASS E8 up 4p, A leaves: C2 showed a phase the host had left for at most 0.5 s (worst 0.00 s over 0 replies)
+PASS E8 up 4p, A leaves: C2's tick within 3 ticks of the host's at the same moment (worst 1.81, median 0.50; worst 1.81 ticks at AtTop↑ serial 22 carTick 0.0 tick 16083.9 (raw 1.81, dropped-tick allowance 0.00; reply 49, guest frame lag 1 ms, host frame gap 5 ms); 0 replies skipped across a host stall over 0.1 s, 3 within 1.5 s after a guest stall (worst there 1.33); 13 measured within 2 s after dropped ticks, less the ticks dropped (allowance up to 3.2, raw worst there 1.02); 49 measured)
+PASS E8 up 4p, A leaves: C2's car replies found the host's frames at their tick (0 of 52 did not)
+PASS E8 up 4p, A leaves: C2's deck screen read the host's words (0 replies differed; a refusal shows by each peer's own clock)
+  · E8 up 4p, A leaves: C2 per-frame: 10893 frames, water 0, gauge 0, gate 0, door while moving/at the top 0, shutters 0°, shutter box mismatches 0, first car frames 0 (none) worst 0, first ship frames 1 worst 0°; carY vs phase 0, undriven 0, torn 0
+PASS E8 up 4p, A leaves: C2: the per-frame self-check ran (10893 frames)
+PASS E8 up 4p, A leaves: C2: every frame, the water is the level formula (0), the gauge the level (0), the gate the door (0), the doors shut while moving (0)
+PASS E8 up 4p, A leaves: C2: every frame, the shutters follow the deck doors or stay shut (0°), their box with them (0 mismatches)
+PASS E8 up 4p, A leaves: C2: the first frame after a load shows the state at once, nothing replayed (car 0, ship 0°)
+PASS E8 up 4p, A leaves: C2: every frame the car stands where the phase puts it (0 m)
+  · E8 up 4p, A leaves: host per-frame: elevnetrec: frames=2946; torn=1; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=0; firstShipErr=0.00; eye-in-car frames 14451, submersion vs visible surface 0, grade vs submersion 0
+PASS E8 up 4p, A leaves: the host's own frames: water, gauge, gate, doors and shutters follow the phase
+PASS E8 up 4p, A leaves: on the host, the eye's submersion is the visible surface (0) and the grade agrees (0) in every frame with the eye in the car
+PASS E8 A's player is gone
+PASS E8 A left Below and the riders
+PASS E8 no exception on the host through the leave: 
+
+== E9 — the sweep: every guest leaves; no exception on the host; each guest's log is clean
+PASS E9: B2 left
+PASS E9: C2 left
+  · host log: 0 errors, 0 exceptions, 2 warnings during the run
+PASS E9 no exception on the host: 
+  · A player.log: 921 lines, 0 bad blocks, 0 headless no-GPU render blocks (DiveSiteWarmup, ShipTV)
+PASS E9 A's log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)
+  · B player.log: 647 lines, 0 bad blocks, 0 headless no-GPU render blocks (DiveSiteWarmup, ShipTV)
+PASS E9 B's log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)
+  · C player.log: 219 lines, 0 bad blocks, 0 headless no-GPU render blocks (DiveSiteWarmup, ShipTV)
+PASS E9 C's log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)
+  · C NET-HEADLESS-WARMUP retest: 0 DiveSiteWarmup no-GPU blocks (0 lines naming DiveSiteWarmup:RenderOnce), 0 ShipTV no-GPU blocks (not guarded)
+PASS E9 NET-HEADLESS-WARMUP C: no DiveSiteWarmup render error on a headless guest (0 lines)
+  · B2 player.log: 5729 lines, 0 bad blocks, 30 headless no-GPU render blocks (DiveSiteWarmup, ShipTV)
+PASS E9 B2's log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)
+  · B2 NET-HEADLESS-WARMUP retest: 0 DiveSiteWarmup no-GPU blocks (0 lines naming DiveSiteWarmup:RenderOnce), 30 ShipTV no-GPU blocks (not guarded)
+PASS E9 NET-HEADLESS-WARMUP B2: no DiveSiteWarmup render error on a headless guest (0 lines)
+  · C2 player.log: 5713 lines, 0 bad blocks, 36 headless no-GPU render blocks (DiveSiteWarmup, ShipTV)
+PASS E9 C2's log has no exception, MissingReference or 'expected to exist' (besides the headless no-GPU renders)
+  · C2 NET-HEADLESS-WARMUP retest: 0 DiveSiteWarmup no-GPU blocks (0 lines naming DiveSiteWarmup:RenderOnce), 36 ShipTV no-GPU blocks (not guarded)
+PASS E9 NET-HEADLESS-WARMUP C2: no DiveSiteWarmup render error on a headless guest (0 lines)
+PASS no soft failure (0: )
+  log [Warning] [Admission] client 3 refused: DiveInProgress (Dive in progress — join between days)
+  log [Warning] WorldSceneFlow: disconnecting Player 2 (Cabin ride: never arrived in the deck cabin)
+MATRIX_PASS

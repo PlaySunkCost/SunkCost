@@ -1,0 +1,455 @@
+Elevator dive matrix started 29/09/2026 00:04:28
+PASS editor is the host with a spawned player
+
+== S0 — to sea, standing in the deck cabin
+PASS S0 sailing to sea
+PASS S0 arrived at sea
+PASS S0 unlocked at sea
+PASS DV7 the deck cabin's panel gauge reads 0 (the deck never floods): 0.000
+
+== DV1/DV3/DV5/DV7/DV8/DV9b + W — the host rides down alone, every frame recorded
+  · D1: requested cabin
+PASS D1 the ride down started (refusal: )
+  · capture Logs/elevator-dive/dv2-collar-top-stop.png from (-4.95, 1.70, -4.95) (saved Logs/elevator-dive/dv2-collar-top-stop.png)
+  · capture Logs/elevator-dive/va-descent-above-surface.png from the eye (saved Logs/elevator-dive/va-descent-above-surface.png)
+  · capture Logs/elevator-dive/w-glare-above-car.png from (-0.28, 0.19, -0.28) (saved Logs/elevator-dive/w-glare-above-car.png)
+  · W-G1 blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0
+PASS W-G1 from above the car no blown-out white ball (blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0); Read w-glare-above-car.png
+PASS W-J0 D1 six outlets on the car (6)
+PASS W-J1 D1 jet 1 starts at its outlet (nearest point 4.5 cm, top +3.0 cm above it, mouth radius 7.6 cm)
+PASS W-J2 D1 jet 1 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 1 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 2 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 1 is thick (widest section radius 34.4 cm, at least 8; at the mouth 7.6 cm, at least 4)
+PASS W-J5 D1 jet 1 reaches the water (+0 cm from the surface)
+PASS W-J1 D1 jet 2 starts at its outlet (nearest point 4.3 cm, top +3.0 cm above it, mouth radius 8.6 cm)
+PASS W-J2 D1 jet 2 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 2 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 3 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 2 is thick (widest section radius 32.5 cm, at least 8; at the mouth 8.6 cm, at least 4)
+PASS W-J5 D1 jet 2 reaches the water (+0 cm from the surface)
+PASS W-J1 D1 jet 3 starts at its outlet (nearest point 4.5 cm, top +3.0 cm above it, mouth radius 7.7 cm)
+PASS W-J2 D1 jet 3 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 3 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 4 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 3 is thick (widest section radius 36.5 cm, at least 8; at the mouth 7.7 cm, at least 4)
+PASS W-J5 D1 jet 3 reaches the water (+0 cm from the surface)
+PASS W-J1 D1 jet 4 starts at its outlet (nearest point 4.4 cm, top +3.0 cm above it, mouth radius 7.6 cm)
+PASS W-J2 D1 jet 4 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 4 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 4 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 4 is thick (widest section radius 33.8 cm, at least 8; at the mouth 7.6 cm, at least 4)
+PASS W-J5 D1 jet 4 reaches the water (+0 cm from the surface)
+PASS W-J1 D1 jet 5 starts at its outlet (nearest point 4.3 cm, top +3.0 cm above it, mouth radius 8.4 cm)
+PASS W-J2 D1 jet 5 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 5 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 6 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 5 is thick (widest section radius 32.5 cm, at least 8; at the mouth 8.4 cm, at least 4)
+PASS W-J5 D1 jet 5 reaches the water (+0 cm from the surface)
+PASS W-J1 D1 jet 6 starts at its outlet (nearest point 4.6 cm, top +3.0 cm above it, mouth radius 7.9 cm)
+PASS W-J2 D1 jet 6 is a 3D jet readable from any side (12 of 12 azimuth bins, 0 particles)
+PASS W-J3 D1 jet 6 leaves along its nozzle's outflow (1 degrees off (0.00, -1.00, 0.00)) and lands 3 cm from the nozzle, horizontally
+PASS W-J4 D1 jet 6 is thick (widest section radius 36.5 cm, at least 8; at the mouth 7.9 cm, at least 4)
+PASS W-J5 D1 jet 6 reaches the water (+0 cm from the surface)
+PASS W-J6 D1 spray/mist at the outlets or where the jets hit (1 live spray systems)
+PASS W-J7 D1 white churning foam on the rising surface (Foam01 1.00)
+  · capture Logs/elevator-dive/dv8-eye-above-surface.png from the eye (saved Logs/elevator-dive/dv8-eye-above-surface.png)
+PASS DV8 D1 capture with the eye 15 cm above the car's water (dv8-eye-above-surface.png)
+  · capture Logs/elevator-dive/dv8-eye-below-surface.png from the eye (saved Logs/elevator-dive/dv8-eye-below-surface.png)
+PASS DV8 D1 capture with the eye 8 cm below the car's water (dv8-eye-below-surface.png)
+PASS W-B1 D1 the bubbles are particles, not textured quads (1 particle systems, 0 mesh renderers under bubble objects)
+PASS W-B2 D1 the pouring jets drive bubbles into the water (267 live bubbles at level 2.20)
+PASS W-B2 D1 bubbles only where the air goes in: 267 of 267 within 0.8 m of a jet's landing
+PASS W-B3 D1 no bubble above the water (0 above)
+PASS W-B4 D1 random sizes (size CoV 0.49; velocities not set: speed and wobble by w-bubbles-filling-under.png)
+  · capture Logs/elevator-dive/w-bubbles-filling-under.png from the eye (saved Logs/elevator-dive/w-bubbles-filling-under.png)
+  · capture Logs/elevator-dive/va-descent-deep.png from the eye (saved Logs/elevator-dive/va-descent-deep.png)
+PASS D1 the ride down completed
+PASS D1 the car is at the bottom
+PASS D1 every one-off capture and probe ran (collar True, above True, glare True, jets True, bubbles True, deep True)
+PASS DV8 D1 both eye-at-the-surface captures were taken (above True, below True)
+PASS D1 the car and its door are loaded at the bottom
+PASS D1 the car's doors opened at the bottom
+PASS D1 the host stands in the car at the bottom
+PASS D1 the recorder saw the move (3182 frames)
+PASS DV1 D1 the profile's one-way time is unchanged (17.333 s, expected 17.333)
+PASS DV1 D1 the car moved for 17.44 s of real time (expected 17.33 ± 0.5)
+  · D1 bands (phase clock): above 3.000 m/s over 1.34 s, crossing 1.000 over 2.89 s, below 3.000 over 12.23 s
+PASS DV1 D1 3 m/s above the surface (3.00)
+PASS DV1 D1 1 m/s while the span crosses the surface (1.00)
+PASS DV1 D1 3 m/s below the band (3.00)
+PASS DV1 D1 the car stood where its profile puts it on every frame (worst 0.0000 m)
+PASS DV1 D1 the car's clock is the tick-anchored phase's, within a frame, on every frame (worst excess 0.000 s)
+PASS DV1 D1 the car was driven by the replicated phase (state Descending) on every frame
+PASS DV5 D1 the car went under, got wet and filled (under 270, wet 274, full 792)
+  · D1 flood: under at +1.504 s, wet at +1.524, full at +4.980 (phase clock)
+PASS DV5 D1 the flood starts as the car goes under (+0.020 s)
+PASS DV5 D1 full 3.48 s after going under (about 4 s; today's 3.5)
+PASS DV5 D1 six nozzles pour (flow Filling) on every frame from going under to full (486 frames, 0 not)
+PASS DV5 D1 the nozzles stop within 0.2 s of full (0 frames still pouring)
+  · D1 visible jets while pouring: up to 6; foam up to 1.00
+PASS W-B5 D1 a short fizz right after full (bubbles in the first second after full)
+PASS W-B5 D1 the fizz is over 4 s after full: no bubbles on 1625 of 1625 frames
+PASS W-B3 D1 no bubble above the water on any frame (0 frames with one)
+PASS D1 recorder frames: 4127
+PASS DV5 D1 the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 D1 the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 D1 the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 D1 the car has its panel display (Car mode)
+PASS DV7 D1 the gauge follows the level on every frame (worst 0.000)
+PASS DV7 D1 the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 D1 the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 D1 the car door and the shaft gate were found
+PASS DV3 D1 the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 D1 the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 D1 the gate moves with the car's doors at the bottom on 291 frames (worst gap 0.013)
+PASS DV8 D1 the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 4125)
+PASS DV8 D1 PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 D1 inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS W-B6 D1 nothing bubbles in a still, full car (0 of 1912 still frames bubbled)
+PASS DV9b D1 the winch played at the car on 3182 of 3182 moving frames
+PASS DV9b D1 the moving car was heard by the ocean (18 Elevator events at 60 m)
+PASS DV9b D1 the bell rang at the car on arrival
+PASS DV9a D1 the suit is on from the top: the tank counts (93%), health full
+
+== DV0 — the car's runtime parts
+PASS DV0 the car carries its water (True), its FX with six outlets (6), its panel display (True), its sorting (True) and its ring light (True)
+PASS DV0 "Cabin Light" is a direct child of the car (the Elevator Ghost finds it)
+PASS DV0 the car wears Car Look and Panel Look
+PASS DV0 the shaft tube has its gate, its water disc and its ring
+PASS DV0 the foot has its sill and ramp colliders
+
+== DV3 — the doors and the gate open together at the bottom
+PASS DV3 the shaft gate has its collider
+PASS DV3 the gate is open with the car's doors (gate 0.99, door 1.00)
+PASS DV3 the car's leaves are open by ±23.578° about the axis (right -23.58°, left 23.58°)
+PASS DV3 the gate's leaves are open, mirrored (right -23.40°, left 23.40°)
+PASS DV3 both car leaves and both gate leaves wear the new glass leaves
+
+== DV2 — no clipping with the collar, the tube, the foot
+  · clearance over whole ride 0.00 to -45.00: Top Collar: +0.085 m at (-1.01, 3.55, 2.41) car root 0.00 (669720 points); TubeSections: +0.264 m at (-0.04, -36.90, 2.79) car root -40.40 (5108860 points); Tube Foot: +0.027 m at (0.70, -44.91, -2.45) car root -44.96 (450902 points); TubeGate: +0.167 m at (0.04, -41.58, -2.69) car root -41.63 (685972 points) (8023 ms)
+PASS DV2 the car clears the collar, the sections, the foot and the gate over the whole ride (worst +0.027 m)
+PASS DV2 per part: collar +0.085 m (≥ 0), foot +0.027 m (≥ 0.02), tube sections +0.264 m (≥ 0.2)
+PASS DV2 at the bottom stop, on the live car: clearance over car root -45.00: Top Collar: never level with the car (669720 points); TubeSections: never level with the car (5108860 points); Tube Foot: +0.027 m at (0.70, -44.91, -2.45) car root -45.00 (450902 points); TubeGate: +0.167 m at (0.04, -41.58, -2.69) car root -45.00 (685972 points)
+  · capture Logs/elevator-dive/dv2-foot-bottom-stop.png from (-5.66, -43.40, -5.66) (saved Logs/elevator-dive/dv2-foot-bottom-stop.png)
+PASS DV11 the outside capture drew with the outside order
+
+== DV11 — the transparency order
+PASS DV11 far to near from inside: tube glass → tube water → car glass → car water → its FX; from outside: car water → FX → car glass → tube water → tube glass
+PASS DV11 every group has renderers: TubeGlass 4, TubeWater 2, CarGlass 4, CarWaterSurface 1, CarWaterFX 16
+PASS DV11 the car's water, its FX, its glass and the tube's water are transparent (queue ≥ 3000, no depth write): all
+
+== VA-V3 — at the bottom, looking out through the open doors and gate
+  · capture Logs/elevator-dive/va-bottom-out-through-gate.png from the eye (saved Logs/elevator-dive/va-bottom-out-through-gate.png)
+PASS DV11 the inside capture drew with the inside order
+  · capture Logs/elevator-dive/w-bubbles-full-bottom.png from the eye (saved Logs/elevator-dive/w-bubbles-full-bottom.png)
+
+== DV4 — the ramp: out of the car onto the sand and back
+PASS DV4 out reached its end (345 frames, at 7.01 m from the axis, y -44.97)
+  · DV4 out frames not grounded (radius from the axis / height over the car's root / step): r3.70/y+0.15/dy+0.0cm r3.72/y+0.15/dy+0.0cm r3.74/y+0.15/dy-0.1cm r3.76/y+0.15/dy-0.1cm r3.78/y+0.15/dy-0.1cm r3.80/y+0.15/dy-0.1cm r3.82/y+0.14/dy-0.2cm r3.84/y+0.14/dy-0.2cm r3.86/y+0.14/dy-0.2cm r3.88/y+0.14/dy-0.2cm r3.90/y+0.13/dy-0.2cm r3.91/y+0.13/dy-0.3cm r3.93/y+0.13/dy-0.3cm r3.95/y+0.13/dy-0.3cm r3.97/y+0.12/dy-0.3cm r3.99/y+0.12/dy-0.4cm r4.01/y+0.11/dy-0.4cm r4.03/y+0.11/dy-0.4cm r4.05/y+0.11/dy-0.5cm r4.07/y+0.10/dy-0.5cm r4.09/y+0.10/dy-0.5cm r4.11/y+0.09/dy-0.6cm r4.13/y+0.09/dy-0.5cm r4.16/y+0.08/dy-1.0cm
+PASS DV4 out grounded on 321 of 345 frames, longest airborne run 24 frames (≤ 40: the underwater glide off the sill)
+PASS DV4 out never stepped up more than the step offset in a frame (0.000 m)
+PASS DV4 out never dropped more than 5 cm in a frame, bar one sill edge ≤ 20 cm (0 drops, worst 0.011 m)
+PASS DV4 out never stalled (least progress in half a second 2.00 m)
+PASS DV4 back reached its end (302 frames, at 0.79 m from the axis, y -44.87)
+PASS DV4 back grounded on 302 of 302 frames, longest airborne run 0 frames (≤ 40: the underwater glide off the sill)
+PASS DV4 back never stepped up more than the step offset in a frame (0.005 m)
+PASS DV4 back never dropped more than 5 cm in a frame, bar one sill edge ≤ 20 cm (0 drops, worst 0.000 m)
+PASS DV4 back never stalled (least progress in half a second 2.00 m)
+PASS DV9a the tank drains below (93.0% → 91.5%)
+
+== DV10 — the camera does not clip the car's glass, posts, leaves or panel, nor the gate
+  · DV10 near-plane envelope 10.5 cm; clearance envelope 11.5 cm
+PASS DV10 facing +35° from the doorway, pitch 0: the near plane is 44.5 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +35° from the doorway, pitch 30: the near plane is 44.5 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +35° from the doorway, pitch -30: the near plane is 44.5 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+  · capture Logs/elevator-dive/dv10-glass-press-1.png from the eye (saved Logs/elevator-dive/dv10-glass-press-1.png)
+PASS DV10 facing +60° from the doorway, pitch 0: the near plane is 32.1 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +60° from the doorway, pitch 30: the near plane is 32.1 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +60° from the doorway, pitch -30: the near plane is 32.1 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +90° from the doorway, pitch 0: the near plane is 30.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +90° from the doorway, pitch 30: the near plane is 30.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +90° from the doorway, pitch -30: the near plane is 30.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+  · capture Logs/elevator-dive/dv10-glass-press-2.png from the eye (saved Logs/elevator-dive/dv10-glass-press-2.png)
+PASS DV10 facing +120° from the doorway, pitch 0: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +120° from the doorway, pitch 30: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +120° from the doorway, pitch -30: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +150° from the doorway, pitch 0: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +150° from the doorway, pitch 30: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +150° from the doorway, pitch -30: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +180° from the doorway, pitch 0: the near plane is 53.0 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +180° from the doorway, pitch 30: the near plane is 53.0 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing +180° from the doorway, pitch -30: the near plane is 53.0 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -150° from the doorway, pitch 0: the near plane is 32.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -150° from the doorway, pitch 30: the near plane is 32.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -150° from the doorway, pitch -30: the near plane is 32.6 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -120° from the doorway, pitch 0: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -120° from the doorway, pitch 30: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -120° from the doorway, pitch -30: the near plane is 52.9 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -90° from the doorway, pitch 0: the near plane is 35.4 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -90° from the doorway, pitch 30: the near plane is 35.4 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -90° from the doorway, pitch -30: the near plane is 35.4 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -60° from the doorway, pitch 0: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -60° from the doorway, pitch 30: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -60° from the doorway, pitch -30: the near plane is 32.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -35° from the doorway, pitch 0: the near plane is 42.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -35° from the doorway, pitch 30: the near plane is 42.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 facing -35° from the doorway, pitch -30: the near plane is 42.9 cm from the nearest drawn mesh (Mesh), envelope 10.5 cm; clearance clear=True
+PASS DV10 the push from the tube's doorway reached the open Gate Leaf Right (gate 1.00; camera 33.6 cm from the leaf, ≤ 60 cm; r 2.69 m from the axis; the leaf in view True)
+PASS DV10 pressed against the open Gate Leaf Right: the near plane is 32.2 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+  · capture Logs/elevator-dive/dv10-gate-leaf-right.png from the eye (saved Logs/elevator-dive/dv10-gate-leaf-right.png)
+PASS DV10 the push from the tube's doorway reached the open Gate Leaf Left (gate 1.00; camera 33.6 cm from the leaf, ≤ 60 cm; r 2.69 m from the axis; the leaf in view True)
+PASS DV10 pressed against the open Gate Leaf Left: the near plane is 32.2 cm from the nearest drawn mesh (Glass), envelope 10.5 cm; clearance clear=True
+  · capture Logs/elevator-dive/dv10-gate-leaf-left.png from the eye (saved Logs/elevator-dive/dv10-gate-leaf-left.png)
+PASS W-J1 outlet 1 sits on the car model (0.4 cm from Mesh); Read w-nozzle-1.png for the exact tip
+PASS W-J1 outlet 2 sits on the car model (2.1 cm from Mesh); Read w-nozzle-2.png for the exact tip
+PASS W-J1 outlet 3 sits on the car model (1.9 cm from Mesh); Read w-nozzle-3.png for the exact tip
+PASS W-J1 outlet 4 sits on the car model (1.0 cm from Mesh); Read w-nozzle-4.png for the exact tip
+PASS W-J1 outlet 5 sits on the car model (0.4 cm from Mesh); Read w-nozzle-5.png for the exact tip
+PASS W-J1 outlet 6 sits on the car model (1.1 cm from Mesh); Read w-nozzle-6.png for the exact tip
+PASS bottom rest recorder frames: 5248
+PASS DV5 bottom rest the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 bottom rest the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 bottom rest the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 bottom rest the car has its panel display (Car mode)
+PASS DV7 bottom rest the gauge follows the level on every frame (worst 0.000)
+PASS DV7 bottom rest the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 bottom rest the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 bottom rest the car door and the shaft gate were found
+PASS DV3 bottom rest the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 bottom rest the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 bottom rest the gate moves with the car's doors at the bottom on 5248 frames (worst gap 0.007)
+PASS DV8 bottom rest the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 5248)
+PASS DV8 bottom rest PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 bottom rest inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS W-B6 bottom rest nothing bubbles in a still, full car (0 of 5248 still frames bubbled)
+
+== DV9e — a rider left below: the car climbs empty, drains, comes back and floods
+PASS DV9e the car's seal started
+PASS DV9e the car climbs without the leaver
+PASS DV9e the leaver is below, not a rider
+PASS DV9e the empty car reached the top
+  · capture Logs/elevator-dive/w-nozzle-1.png from (-0.72, -2.52, -0.23) (saved Logs/elevator-dive/w-nozzle-1.png)
+  · capture Logs/elevator-dive/w-nozzle-2.png from (-0.25, -2.54, -0.72) (saved Logs/elevator-dive/w-nozzle-2.png)
+  · capture Logs/elevator-dive/w-nozzle-3.png from (-0.67, -2.48, 0.67) (saved Logs/elevator-dive/w-nozzle-3.png)
+  · capture Logs/elevator-dive/w-nozzle-4.png from (0.65, -2.48, -0.70) (saved Logs/elevator-dive/w-nozzle-4.png)
+  · capture Logs/elevator-dive/w-nozzle-5.png from (0.19, -2.40, 0.82) (saved Logs/elevator-dive/w-nozzle-5.png)
+  · capture Logs/elevator-dive/w-nozzle-6.png from (0.81, -2.40, 0.17) (saved Logs/elevator-dive/w-nozzle-6.png)
+  · capture Logs/elevator-dive/w-jets-overview.png from (1.06, -3.90, 1.06) (saved Logs/elevator-dive/w-jets-overview.png)
+  · capture Logs/elevator-dive/w-jets-from-outside.png from (-2.55, -3.10, -2.55) (saved Logs/elevator-dive/w-jets-from-outside.png)
+PASS DV9e the car came back down for the leaver
+PASS W DV9e the nozzle close-ups were taken on the empty car's flood (w-nozzle-1..6.png, w-jets-overview.png, w-jets-from-outside.png)
+PASS DV9e doors and gate open again for the leaver
+PASS DV6 DV9e (empty, up) the roof surfaced, the drain started and the car went dry (roof 2562, start 2566, dry 3282)
+  · DV9e (empty, up) drain: roof up at +12.334 s, draining at +12.356, dry at +15.833, top at +17.333 (phase clock)
+PASS DV6 DV9e (empty, up) the drain starts as the car comes up past the surface (+0.021 s)
+PASS DV6 DV9e (empty, up) flow Draining, the drain and the foam gathering on every draining frame, no nozzle pouring (713 frames, 0 not)
+PASS DV6 DV9e (empty, up) dry 1.50 s before the top (at least 1.0; today's 1.5)
+PASS DV6 DV9e (empty, up) dry as the floor passes sea level (root -4.50, sea -4.50)
+PASS W-B3 DV9e (empty, up) no bubble above the water while draining (0 frames with one)
+PASS DV5 DV9e (empty, down) the car went under, got wet and filled (under 313, wet 316, full 911)
+  · DV9e (empty, down) flood: under at +1.504 s, wet at +1.520, full at +4.985 (phase clock)
+PASS DV5 DV9e (empty, down) the flood starts as the car goes under (+0.016 s)
+PASS DV5 DV9e (empty, down) full 3.48 s after going under (about 4 s; today's 3.5)
+PASS DV5 DV9e (empty, down) six nozzles pour (flow Filling) on every frame from going under to full (559 frames, 0 not)
+PASS DV5 DV9e (empty, down) the nozzles stop within 0.2 s of full (0 frames still pouring)
+  · DV9e (empty, down) visible jets while pouring: up to 6; foam up to 1.00
+PASS W-B5 DV9e (empty, down) a short fizz right after full (bubbles in the first second after full)
+PASS W-B5 DV9e (empty, down) the fizz is over 4 s after full: no bubbles on 1645 of 1645 frames
+PASS W-B3 DV9e (empty, down) no bubble above the water on any frame (0 frames with one)
+PASS DV9e recorder frames: 8556
+PASS DV5 DV9e the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 DV9e the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 DV9e the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 DV9e the car has its panel display (Car mode)
+PASS DV7 DV9e the gauge follows the level on every frame (worst 0.000)
+PASS DV7 DV9e the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 DV9e the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 DV9e the car door and the shaft gate were found
+PASS DV3 DV9e the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 DV9e the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 DV9e the gate moves with the car's doors at the bottom on 943 frames (worst gap 0.011)
+PASS DV8 DV9e the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 8556)
+PASS DV8 DV9e PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 DV9e inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS W-B6 DV9e nothing bubbles in a still, full car (0 of 2585 still frames bubbled)
+PASS DV9e the returned car stands full (3.50 m)
+
+== DV12 + DV6 — the real E on the car's panel; the ride up drains before the top
+PASS DV12 the car has its control panel
+PASS DV12 the dot is on the car's panel button (target Car)
+PASS DV12 the prompt offers the ride up: Press E to surface
+PASS DV12 a virtual E on the panel started the ride up (refusal: )
+PASS DV12 the panel's screen says SURFACE: SURFACE | ON THE SEABED | DEPTH 40 m | WATER 100%
+  · capture Logs/elevator-dive/va-ascent-draining-inside.png from the eye (saved Logs/elevator-dive/va-ascent-draining-inside.png)
+  · capture Logs/elevator-dive/va-drain-swirl.png from (0.55, -3.84, -0.95) (saved Logs/elevator-dive/va-drain-swirl.png)
+  · capture Logs/elevator-dive/w-glare-slab-1.png from (0.00, -1.70, 0.00) (saved Logs/elevator-dive/w-glare-slab-1.png)
+  · W-G2 slab 1: blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0
+PASS W-G2 no white streak on the car's glass slab at 54.7° (blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0); Read w-glare-slab-1.png
+  · capture Logs/elevator-dive/w-glare-slab-2.png from (0.00, -1.70, 0.00) (saved Logs/elevator-dive/w-glare-slab-2.png)
+  · W-G2 slab 2: blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0
+PASS W-G2 no white streak on the car's glass slab at -57.1° (blown 0.000% of the frame, largest compact blob 0 px, thin streaks 0); Read w-glare-slab-2.png
+PASS U1 the ride up completed
+PASS U1 the draining capture and the slab glare probe ran (drain True, slabs True)
+PASS U1 the host is back on the ship
+PASS U1 the screen is clear on the deck
+PASS U1 the recorder saw the move (3222 frames)
+PASS DV1 U1 the profile's one-way time is unchanged (17.333 s, expected 17.333)
+PASS DV1 U1 the car moved for 17.45 s of real time (expected 17.33 ± 0.5)
+  · U1 bands (phase clock): above 3.000 m/s over 1.40 s, crossing 1.000 over 2.90 s, below 3.000 over 12.23 s
+PASS DV1 U1 3 m/s above the surface (3.00)
+PASS DV1 U1 1 m/s while the span crosses the surface (1.00)
+PASS DV1 U1 3 m/s below the band (3.00)
+PASS DV1 U1 the car stood where its profile puts it on every frame (worst 0.0000 m)
+PASS DV1 U1 the car's clock is the tick-anchored phase's, within a frame, on every frame (worst excess 0.000 s)
+PASS DV1 U1 the car was driven by the replicated phase (state Ascending) on every frame
+PASS DV6 U1 the roof surfaced, the drain started and the car went dry (roof 2320, start 2323, dry 2954)
+  · U1 drain: roof up at +12.337 s, draining at +12.354, dry at +15.835, top at +17.333 (phase clock)
+PASS DV6 U1 the drain starts as the car comes up past the surface (+0.016 s)
+PASS DV6 U1 flow Draining, the drain and the foam gathering on every draining frame, no nozzle pouring (628 frames, 0 not)
+PASS DV6 U1 dry 1.50 s before the top (at least 1.0; today's 1.5)
+PASS DV6 U1 dry as the floor passes sea level (root -4.50, sea -4.50)
+PASS W-B3 U1 no bubble above the water while draining (0 frames with one)
+PASS U1 recorder frames: 3535
+PASS DV5 U1 the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 U1 the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 U1 the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 U1 the car has its panel display (Car mode)
+PASS DV7 U1 the gauge follows the level on every frame (worst 0.000)
+PASS DV7 U1 the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 U1 the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 U1 the car door and the shaft gate were found
+PASS DV3 U1 the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 U1 the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 U1 the gate moves with the car's doors at the bottom on 301 frames (worst gap 0.005)
+PASS DV8 U1 the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 3523)
+PASS DV8 U1 PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 U1 inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS W-B6 U1 nothing bubbles in a still, full car (0 of 301 still frames bubbled)
+PASS U1 the host stands in the deck cabin; nobody below
+PASS U1 the dive is done
+PASS U1 End day: day 2 (day 2)
+PASS U1 the day card faded
+PASS U1 the site unloaded
+
+== G0 — a guest joins at sea between days
+PASS G0 guest player spawned
+PASS G0 the guest joined at sea
+PASS G0 the guest build reports its elevator line (patches/01 applied, guest rebuilt)
+
+== G1 — down together; the guest's own per-frame record
+  · G1: requested cabin
+PASS G1 the ride down started (refusal: )
+  · capture Logs/elevator-dive/dv8-eye-above-surface.png from the eye (saved Logs/elevator-dive/dv8-eye-above-surface.png)
+PASS DV8 G1 capture with the eye 15 cm above the car's water (dv8-eye-above-surface.png)
+  · capture Logs/elevator-dive/dv8-eye-below-surface.png from the eye (saved Logs/elevator-dive/dv8-eye-below-surface.png)
+PASS DV8 G1 capture with the eye 9 cm below the car's water (dv8-eye-below-surface.png)
+PASS G1 the ride down completed
+PASS G1 the car is at the bottom
+PASS G1 the car and its door are loaded at the bottom
+PASS G1 the car's doors opened at the bottom
+PASS G1 both below
+PASS G1 the recorder saw the move (2783 frames)
+PASS DV1 G1 the profile's one-way time is unchanged (17.333 s, expected 17.333)
+PASS DV1 G1 the car moved for 17.34 s of real time (expected 17.33 ± 0.5)
+  · G1 bands (phase clock): above 3.000 m/s over 1.39 s, crossing 1.000 over 2.89 s, below 3.000 over 12.23 s
+PASS DV1 G1 3 m/s above the surface (3.00)
+PASS DV1 G1 1 m/s while the span crosses the surface (1.00)
+PASS DV1 G1 3 m/s below the band (3.00)
+PASS DV1 G1 the car stood where its profile puts it on every frame (worst 0.0000 m)
+PASS DV1 G1 the car's clock is the tick-anchored phase's, within a frame, on every frame (worst excess 0.000 s)
+PASS DV1 G1 the car was driven by the replicated phase (state Descending) on every frame
+PASS DV5 G1 the car went under, got wet and filled (under 252, wet 255, full 724)
+  · G1 flood: under at +1.504 s, wet at +1.522, full at +4.983 (phase clock)
+PASS DV5 G1 the flood starts as the car goes under (+0.018 s)
+PASS DV5 G1 full 3.48 s after going under (about 4 s; today's 3.5)
+PASS DV5 G1 six nozzles pour (flow Filling) on every frame from going under to full (440 frames, 0 not)
+PASS DV5 G1 the nozzles stop within 0.2 s of full (0 frames still pouring)
+  · G1 visible jets while pouring: up to 6; foam up to 1.00
+PASS W-B5 G1 a short fizz right after full (bubbles in the first second after full)
+PASS W-B5 G1 the fizz is over 4 s after full: no bubbles on 1391 of 1391 frames
+PASS W-B3 G1 no bubble above the water on any frame (0 frames with one)
+PASS G1 recorder frames: 3607
+PASS DV5 G1 the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 G1 the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 G1 the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 G1 the car has its panel display (Car mode)
+PASS DV7 G1 the gauge follows the level on every frame (worst 0.000)
+PASS DV7 G1 the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 G1 the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 G1 the car door and the shaft gate were found
+PASS DV3 G1 the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 G1 the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 G1 the gate moves with the car's doors at the bottom on 256 frames (worst gap 0.014)
+PASS DV8 G1 the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 3605)
+PASS DV8 G1 PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 G1 inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS W-B6 G1 nothing bubbles in a still, full car (0 of 1644 still frames bubbled)
+PASS G1 the guest is below with the car at the bottom, its gate open
+  · G1 guest: elevator: tick=162.477; carState=AtBottom; carUp=False; carY=-45.000; carElapsed=1.927; door=1.000; gate=1.000; gateBlocks=False; carWater=3.500; waterShown=False; waterY=-41.500; flow=Still; pour=0; visStreams=0; foam=0.00; bubbles=False; drain=0.00; bubbleParticles=0; gauge=1.000; ringEmission=0.90/0.86/0.77; cabinLight=1.00/0.95/0.85; eyeY=-43.225; eyeUnder=True; viewWeight=1.00; elevFrames=2676; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.035; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+PASS G1 the guest recorded the ride frame by frame (2676 frames)
+PASS DV1 G1 the guest's car stood where its profile puts it (worst 0.0000 m) on the tick-anchored clock (worst excess lag 0.000 s)
+PASS DV5 G1 the guest's water is the one truth (worst 0.0000 m)
+PASS DV7 G1 the guest's gauge follows (worst 0.000)
+PASS DV3 G1 the guest's doors and gate: never open at the wrong time (0/0 frames), together at the bottom (worst gap 0.035)
+PASS DV8 G1 the guest's view and submersion agree with its eye (worst streaks 0/0)
+PASS G1 the guest's water and gauge equal the host's (3.500 / 3.500; 1.000 / 1.000)
+PASS W-B6 G1 the guest sees nothing bubbling in the still, full car and never a bubble above the water (particles 0, still frames 0, above frames 0, bubbles=False)
+
+== DV4 (guest) — the guest walks down the ramp and back
+PASS DV4 G the guest's walk out finished
+PASS DV4 G the guest walked out 7.98 m, grounded 382/383 frames, worst rise 0.000, worst drop 0.017 (the peer's CharacterController walk probe)
+PASS DV4 G the guest's walk back finished
+PASS DV4 G the guest walked back 7.35 m, grounded 383/383 frames, worst rise 0.005, worst drop 0.000 (the peer's CharacterController walk probe)
+PASS DV4 G the guest's copy is back inside the car on the host
+
+== DV9c — the Elevator Ghost: the green car and its ring on both peers
+PASS DV9c the Ghost summoned for the checks: 
+PASS DV9c the car's light is green on the host
+PASS DV9c the Cabin Light is green: RGBA(0.250, 1.000, 0.350, 1.000)
+PASS DV9c the car's ring light is green too (emission RGBA(0.225, 0.900, 0.315, 0.900))
+  · capture Logs/elevator-dive/dv9c-ghost-green.png from (-3.18, -43.30, -3.18) (saved Logs/elevator-dive/dv9c-ghost-green.png)
+PASS DV9c the guest sees the green light and the green ring
+PASS DV9c the green ended by itself
+PASS DV9c the light and the ring are warm again (emission RGBA(0.900, 0.855, 0.765, 0.900))
+PASS DV9c the guest's ring is warm again
+
+== DV9d — a dead rider: the guest dies in the car; the host rides up with the body
+PASS DV9d the guest died in the car
+PASS DV9d the guest's body lies in the car
+PASS DV9d the host's ride up with the body started (refusal: )
+PASS DV9d the ride up completed
+PASS DV9d the host is back on the ship
+PASS DV9d the screen is clear on the deck
+PASS DV9d the recorder saw the move (2809 frames)
+PASS DV1 DV9d the profile's one-way time is unchanged (17.333 s, expected 17.333)
+PASS DV1 DV9d the car moved for 17.33 s of real time (expected 17.33 ± 0.5)
+  · DV9d bands (phase clock): above 3.000 m/s over 1.39 s, crossing 1.000 over 2.90 s, below 3.000 over 12.23 s
+PASS DV1 DV9d 3 m/s above the surface (3.00)
+PASS DV1 DV9d 1 m/s while the span crosses the surface (1.00)
+PASS DV1 DV9d 3 m/s below the band (3.00)
+PASS DV1 DV9d the car stood where its profile puts it on every frame (worst 0.0000 m)
+PASS DV1 DV9d the car's clock is the tick-anchored phase's, within a frame, on every frame (worst excess 0.000 s)
+PASS DV1 DV9d the car was driven by the replicated phase (state Ascending) on every frame
+PASS DV6 DV9d the roof surfaced, the drain started and the car went dry (roof 2003, start 2006, dry 2562)
+  · DV9d drain: roof up at +12.336 s, draining at +12.355, dry at +15.836, top at +17.333 (phase clock)
+PASS DV6 DV9d the drain starts as the car comes up past the surface (+0.018 s)
+PASS DV6 DV9d flow Draining, the drain and the foam gathering on every draining frame, no nozzle pouring (553 frames, 0 not)
+PASS DV6 DV9d dry 1.50 s before the top (at least 1.0; today's 1.5)
+PASS DV6 DV9d dry as the floor passes sea level (root -4.49, sea -4.50)
+PASS DV9d recorder frames: 3096
+PASS DV5 DV9d the car's water is the one truth, WaterLevelInCar(sea, root, span), on every frame (worst 0.0000 m)
+PASS DV5 DV9d the surface disc is shown exactly between dry and full, at root + level (0 frames wrong)
+PASS DV8 DV9d the tube shows exactly one water surface (disc or ring) on every frame (0 frames wrong)
+PASS DV7 DV9d the car has its panel display (Car mode)
+PASS DV7 DV9d the gauge follows the level on every frame (worst 0.000)
+PASS DV7 DV9d the gauge has its marker between Gauge Bottom and Gauge Top
+PASS DV7 DV9d the gauge's marker stands at the level on every frame (worst 0.0 mm)
+PASS DV3 DV9d the car door and the shaft gate were found
+PASS DV3 DV9d the car's doors never open while it moves or at the top (0 frames)
+PASS DV3 DV9d the gate is shut and blocking whenever the car is not at the bottom (0 frames)
+PASS DV3 DV9d the gate moves with the car's doors at the bottom on 273 frames (worst gap 0.007)
+PASS DV8 DV9d the underwater view agrees with the eye against the visible surface (worst disagreeing streak 0 frames of 3082)
+PASS DV8 DV9d PlayerSubmersion agrees with the eye (worst streak 0)
+PASS DV8 DV9d inside the car, below the car's visible water ⇔ below sea level (0 frames not)
+PASS DV9d no NaN in the recorder with a body aboard
+  · DV9d the body after the ride: on the ship at ship-local (1.19, 0.15, 0.00) (in the deck cabin: rode up as cargo)
+PASS DV9d the dead guest's object was carried to the ship, as today
+PASS DV9d the dead guest's elevator line holds no NaN: elevator: tick=226.426; carState=none; elevFrames=2447; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.037; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=True; walked=7.35; walkFrames=383; walkGrounded=383; walkMaxDrop=0.000; walkMaxRise=0.005
+PASS the guest left
+MATRIX_PASS

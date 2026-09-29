@@ -30,23 +30,25 @@ namespace SunkCost.Editor.Look
             "Couch", "Bench", "Table",
             "NamePlate", "Signs",
             "ElevatorCar", "CarPanel", "TubeSection", "TubeFoot",
+            "TopCollar", "GateLeaf", // the elevator's new parts (Dan's round glass car and shaft, 28 September 2026)
         };
 
         // What casts no shadow: flat plates on a wall or the deck, where a shadow adds
         // nothing (ship audit SHIP-016). Everything else does: the sun is the ship's
         // light, and props without shadows looked pasted onto the deck.
-        private static readonly HashSet<string> NoShadow = new() { "NamePlate", "Signs", "StorageSill", "CarPanel" };
+        private static readonly HashSet<string> NoShadow = new() { "NamePlate", "Signs", "StorageSill" }; // the car panel is a 0.95 m body now (elevator, 28 September 2026)
 
         // The parts the deck repeats, whose materials draw instanced (SHIP-062).
         private static readonly HashSet<string> Repeated = new()
         {
             "DeckLamp", "Bollard", "Barrel", "Crate", "CableCoil", "Lifebuoy", "Toolbox", "Pipes", "Couch", "Bench", "NamePlate",
+            "TubeSection", // ten of them up the shaft
         };
 
         // The big parts whose one 2048 map is spread over tens of metres: a tiling
         // detail layer, in metres like the deck and the bulwark, so they are not
         // smeared up close (SHIP-062). Metres per detail tile.
-        private static readonly Dictionary<string, float> DetailTile = new() { ["Hull"] = 2f, ["Tower"] = 2f };
+        private static readonly Dictionary<string, float> DetailTile = new() { ["Hull"] = 2f, ["Tower"] = 2f, ["ElevatorCar"] = 2f, ["CabinHousing"] = 2f, ["TubeFoot"] = 2f, ["TopCollar"] = 2f, ["TubeSection"] = 2f }; // the elevator's big parts bake at 29-42 texels a metre (elevator, 28 September 2026)
 
         [MenuItem("Sunk Cost/Look/Apply ship models (every part with an FBX)")]
         public static void ApplyAllFromMenu() => Debug.Log(ApplyAll());
@@ -118,6 +120,7 @@ namespace SunkCost.Editor.Look
                     // puts them there with UVs in metres): the tiling deck plate, cut
                     // exactly to the hull and the well.
                     if (part == "Hull" && materials.Length > 1) materials[1] = DeckMaterial();
+                    ElevatorSlots(part, r, materials);
                     r.sharedMaterials = materials;
                     r.shadowCastingMode = NoShadow.Contains(part) ? UnityEngine.Rendering.ShadowCastingMode.Off : UnityEngine.Rendering.ShadowCastingMode.On;
                     r.receiveShadows = true;
@@ -128,6 +131,37 @@ namespace SunkCost.Editor.Look
 
             long tris = CountTriangles(model);
             return $"{part}: {tris} tris, material {(material != null ? material.name : "none")}";
+        }
+
+        // The elevator's extra slots (prepare_ship_part.py keeps them through the bake,
+        // tools/blender/elevator_parts.py): real transparent glass where the model has
+        // glass, the car's glowing ring, the foot's cut edges in ink, and the panel's
+        // screen and gauge as their own objects the game draws on.
+        private const string TubeGlassPath = "Assets/_Project/Art/Prototype/Materials/DiveSiteGlass.mat";
+
+        private static void ElevatorSlots(string part, Renderer r, Material[] materials)
+        {
+            switch (part)
+            {
+                case "ElevatorCar":
+                    if (materials.Length > 1) materials[1] = ElevatorLook.CarGlass();
+                    if (materials.Length > 2) materials[2] = ElevatorLook.CarLight();
+                    break;
+                case "CabinDoor":
+                    if (materials.Length > 1) materials[1] = ElevatorLook.CarGlass();
+                    break;
+                case "TubeFoot":
+                    if (materials.Length > 1) materials[1] = ShipKitMaterials.Steel(); // the cut edges (sill, jambs, slot floors, pit wall) in the kit steel, UVs in metres: ink read as holes
+                    break;
+                case "GateLeaf":
+                    // the tube's own glass: the leaf's panes are two sheets, one facing each way
+                    if (materials.Length > 1) materials[1] = AssetDatabase.LoadAssetAtPath<Material>(TubeGlassPath) ?? ElevatorLook.CarGlass();
+                    break;
+                case "CarPanel":
+                    if (r.name == "CarPanel_Screen") for (int i = 0; i < materials.Length; i++) materials[i] = ElevatorLook.PanelScreen();
+                    if (r.name == "CarPanel_Gauge") for (int i = 0; i < materials.Length; i++) materials[i] = ElevatorLook.PanelGauge();
+                    break;
+            }
         }
 
         private static long CountTriangles(GameObject model)

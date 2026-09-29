@@ -54,6 +54,14 @@ namespace SunkCost.Monsters
         public float ServerAimStartYawError { get; private set; }
         public string ServerDriftNote { get; private set; } = string.Empty; // the last drift step, for the checks
 
+        // A test seam (the checks): a lamp glimpsed at a point a moment ago, so a row can draw it
+        // toward a spot beyond the shaft. Server only; nothing in play calls it.
+        public void ServerGlimpseForChecks(Vector3 at)
+        {
+            if (!IsServerStarted) return;
+            seenAt = at; seenTime = Now;
+        }
+
         protected override void Awake()
         {
             base.Awake();
@@ -164,12 +172,13 @@ namespace SunkCost.Monsters
             float cruise = WalkSpeed * Settings.LureApproachSpeedFactor;
             float want = Mathf.Min(cruise, Mathf.Sqrt(2f * driftAcceleration * remaining));
             driftSpeed = Mathf.MoveTowards(driftSpeed, want, driftAcceleration * dt);
-            Vector3 goal = point;
+            Vector3 goal = distance > 0.01f && StraightWayCrossesSafeGround(here, point) ? here + WayRoundSafeGround(here, point) * Mathf.Min(distance, 3f) : point;
             if (weaveMetres > 0f && weaveSeconds > 0f && distance > 0.01f)
             {
                 // It steers for a point a few metres ahead on its line, swung a little to either
                 // side, so the weave shows at any distance (a moth's wander, not a zigzag).
-                Vector3 along = to / distance;
+                // A lamp beyond the shaft: its line bends round the safe ground (Creature.WayRoundSafeGround).
+                Vector3 along = StraightWayCrossesSafeGround(here, point) ? WayRoundSafeGround(here, point) : to / distance;
                 Vector3 side = Vector3.Cross(Vector3.up, along);
                 float fade = Mathf.Clamp01(remaining / 4f);
                 goal = here + along * Mathf.Min(distance, 3f) + side * (weaveMetres * fade * Mathf.Sin((Now / weaveSeconds + weavePhase) * Mathf.PI * 2f));

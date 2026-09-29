@@ -49,6 +49,17 @@ namespace SunkCost.World
         public int Minutes; // wall time from the run's start
     }
 
+    // A crew wipe (Dan, 29 September 2026): every connected player dead at sea. The
+    // server writes Active with a new serial when the NOBODY CAME BACK card goes up
+    // (the death settled: the site closed with the dead on the ship) and clears it
+    // once the day has ended as End day ends it; every peer shows the card between.
+    public struct CrewWipeState
+    {
+        public int Serial;
+        public bool Active;
+        public uint StartTick; // server tick the card went up
+    }
+
     public struct SpectateEntry
     {
         public int Dead;
@@ -139,6 +150,8 @@ namespace SunkCost.World
         private readonly SyncVar<SiteId> siteDestination = new(SiteId.HQ);
         private readonly SyncVar<int> unlockedSites = new(0);
         private readonly SyncVar<LeverPull> lastLeverPull = new(new LeverPull { Serial = 0 });
+        // The crew wipe's card (Dan, 29 September 2026); WorldSceneFlow is the only writer.
+        private readonly SyncVar<CrewWipeState> crewWipe = new(new CrewWipeState { Serial = 0 });
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -198,6 +211,9 @@ namespace SunkCost.World
         public int UnlockedSites => unlockedSites.Value;
         public bool IsOpen(SiteId id) => Destinations.IsOpen(id, unlockedSites.Value);
         public LeverPull LastLeverPull => lastLeverPull.Value;
+        public CrewWipeState CrewWipe => crewWipe.Value;
+        // Once per peer when the wipe's card goes up or comes down; never for a joiner's initial value.
+        public event Action<CrewWipeState, CrewWipeState> CrewWipeChanged;
         // Once per peer for a NEW serial; never for a joiner's initial value (the rigs animate from it).
         public event Action<LeverPull> LeverPulled;
         // The court's count (Dan, 18 September 2026: "a ball through the hoop
@@ -235,7 +251,7 @@ namespace SunkCost.World
         // WorldLoopSettings.refusalDisplaySeconds from then.
         public float LastRefusalAt => lastRefusalAt;
         public bool? WriterOverride => null;
-        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value} plank={(plank.Value.Active ? plank.Value.Jumper.ToString() : "off")} jumped=[{string.Join(",", jumped)}] runDays={runDays.Value} site={currentSite.Value} toSite={siteDestination.Value} selected={selectedSite.Value} unlocked={Destinations.MaskText(unlockedSites.Value)} lever={lastLeverPull.Value.Serial}";
+        public string DebugStatus => $"phase={phase.Value} day={day.Value}{(diveDone.Value ? " diveDone" : string.Empty)}{(payday.Value ? " PAYDAY" : string.Empty)} balance={balance.Value} handed={cycleSales.Value} world={world.Value} to={destination.Value} ride={cabinRide.Value.Stage}/{cabinRide.Value.Direction} car={elevator.Value.State} riders=[{string.Join(",", riders)}] below=[{string.Join(",", below)}] dead=[{string.Join(",", dead)}] spectate=[{SpectateText()}] tv={tvChannel.Value} plank={(plank.Value.Active ? plank.Value.Jumper.ToString() : "off")} jumped=[{string.Join(",", jumped)}] runDays={runDays.Value} site={currentSite.Value} toSite={siteDestination.Value} selected={selectedSite.Value} unlocked={Destinations.MaskText(unlockedSites.Value)} lever={lastLeverPull.Value.Serial} wipe={crewWipe.Value.Serial}{(crewWipe.Value.Active ? " CARD" : string.Empty)}";
         private string SpectateText()
         {
             var parts = new List<string>();
@@ -262,6 +278,15 @@ namespace SunkCost.World
             departure.OnChange += OnDepartureChanged;
             cabinRide.OnChange += OnCabinRideChanged;
             lastLeverPull.OnChange += OnLeverPullChanged;
+            crewWipe.OnChange += OnCrewWipeChanged;
+        }
+
+        // The card now (a new serial up, or the same serial down), once per peer; a
+        // joiner's initial value is old news: a late joiner never sees the card.
+        private void OnCrewWipeChanged(CrewWipeState previous, CrewWipeState next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (!InitialSync(asServer)) CrewWipeChanged?.Invoke(previous, next);
         }
 
         // A pull accepted now (a new serial), once per peer; a joiner's initial value is
@@ -649,14 +674,33 @@ namespace SunkCost.World
         [Server]
         public bool ServerEndDay(int daysPerCycle, out string why)
         {
-            why = string.Empty;
-            if (phase.Value != DayPhase.AtSea) { why = phase.Value == DayPhase.DiveInProgress ? "Divers below" : "Not at sea"; return false; }
-            if (payday.Value) { why = "Payday — sail home"; return false; }
-            if (!diveDone.Value) { why = "Nobody has dived today"; return false; }
+            if (!CanEndDay(out why)) return false;
             diveDone.Value = false;
             if (day.Value >= daysPerCycle) payday.Value = true;
             else day.Value = day.Value + 1;
             return true;
+        }
+
+        // The day state's half of End day's check (the flow adds the ride, the trip and
+        // the dead still below): at sea, not payday, today's dive done.
+        public bool CanEndDay(out string why)
+        {
+            why = string.Empty;
+            if (phase.Value != DayPhase.AtSea) { why = phase.Value == DayPhase.DiveInProgress ? "Divers below" : "Not at sea"; return false; }
+            if (payday.Value) { why = "Payday — sail home"; return false; }
+            if (!diveDone.Value) { why = "Nobody has dived today"; return false; }
+            return true;
+        }
+
+        // The crew wipe's card: up with a new serial, down with the same one.
+        [Server]
+        public void ServerBeginCrewWipe(uint tick) => crewWipe.Value = new CrewWipeState { Serial = crewWipe.Value.Serial + 1, Active = true, StartTick = tick };
+
+        [Server]
+        public void ServerEndCrewWipe()
+        {
+            CrewWipeState now = crewWipe.Value;
+            if (now.Active) crewWipe.Value = new CrewWipeState { Serial = now.Serial, Active = false, StartTick = now.StartTick };
         }
 
         // Editor checks only: put the cycle where a row needs it (a payday at the
@@ -787,7 +831,8 @@ namespace SunkCost.World
             ServerClearSpectate(clientId);
         }
 
-        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || phase.Value == DayPhase.Plank || cabinRide.Value.Active;
+        // The crew wipe's card too (29 September 2026): the day is still ending, the dead are about to stand up.
+        public bool RefusesJoins => phase.Value == DayPhase.DiveInProgress || phase.Value == DayPhase.Plank || cabinRide.Value.Active || crewWipe.Value.Active;
         public bool RefusesJoinsForTravel => Travelling;
     }
 }

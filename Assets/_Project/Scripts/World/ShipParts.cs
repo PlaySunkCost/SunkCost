@@ -37,6 +37,10 @@ namespace SunkCost.World
         public const string DeckCabinPanelName = "DeckCabinPanel";
         public const string DeckCabinCarGlassName = "DeckCabinCarGlass"; // the car's own glass, shown while the car is up (optional part)
         public const string DeckCabinDoorColliderName = "DeckCabinDoorCollider"; // blocks the doorway while the doors are not fully open (optional part)
+        // The round housing's two shutters stand 0.7 m out from the car's doorway (Dan's
+        // elevator, 28 September 2026): a box across the housing's entrance on the
+        // shutters' line, solid exactly while they are shut (optional part).
+        public const string DeckCabinShutterColliderName = "DeckCabinShutterCollider";
         public const string StorageAreaName = "StorageArea";
         public const string StorageVolumeName = "StorageVolume";   // the room's inside: what the pay button sells
         public const string StorageReadoutName = "StorageReadout"; // TextMesh the StorageReadout writes ("$100 / $200")
@@ -91,6 +95,7 @@ namespace SunkCost.World
         public TextMesh DeckCabinPanel => Find(DeckCabinPanelName)?.GetComponent<TextMesh>();
         public Transform DeckCabinCarGlass => Find(DeckCabinCarGlassName);
         public Collider DeckCabinDoorCollider { get { Transform t = Find(DeckCabinDoorColliderName); return t != null ? t.GetComponent<Collider>() : null; } }
+        public Collider DeckCabinShutterCollider { get { Transform t = Find(DeckCabinShutterColliderName); return t != null ? t.GetComponent<Collider>() : null; } }
         public Collider StorageVolume => Find(StorageVolumeName)?.GetComponent<Collider>();
         public TextMesh StorageReadout => Find(StorageReadoutName)?.GetComponent<TextMesh>();
         public Transform BoardingPoint => Find(BoardingPointName);
@@ -102,11 +107,28 @@ namespace SunkCost.World
 
         public Transform SpawnPoint(int index) => Find(SpawnPointPrefix + (index + 1));
 
+        // Found parts are remembered: WorldSceneFlow reads a dozen of them every frame
+        // for both ships, and a search walks ~500 transforms reading each name (both
+        // allocate). A remembered part is checked still under this ship (and, in the
+        // editor where builders rename parts, still named so); a miss is never
+        // remembered, so an optional part added later is still found.
+        private readonly Dictionary<string, Transform> found = new();
+        private static readonly List<Transform> searchBuffer = new();
+
         public Transform Find(string childName)
         {
-            foreach (Transform child in GetComponentsInChildren<Transform>(true))
-                if (child.name == childName) return child;
-            return null;
+            if (found.TryGetValue(childName, out Transform known))
+            {
+                if (known != null && known.IsChildOf(transform) && (Application.isPlaying || known.name == childName)) return known;
+                found.Remove(childName);
+            }
+            GetComponentsInChildren(true, searchBuffer);
+            Transform hit = null;
+            foreach (Transform child in searchBuffer)
+                if (child.name == childName) { hit = child; break; }
+            searchBuffer.Clear();
+            if (hit != null) found[childName] = hit;
+            return hit;
         }
 
         // How many parts carry the name: a name Find is asked for must be unique.
@@ -124,6 +146,29 @@ namespace SunkCost.World
         public bool IsAboard(Vector3 worldPosition) => !Contains(fixedDockBridge, worldPosition) && Contains(AboardVolume, worldPosition);
 
         public bool IsInDeckCabin(Vector3 worldPosition) => Contains(DeckCabinVolume, worldPosition);
+
+        // The deck cabin's entrance (Dan's round housing, 28 September 2026): the grate
+        // between the car's doorway and the housing's shutters, 0.7 m deep, which the shut
+        // shutters would close in. True when an upright capsule standing at feet with that
+        // radius reaches the band from the doorway box (DeckCabinDoorCollider) out to the
+        // shutters' box (DeckCabinShutterCollider), in the shutters' box space (+Z out of
+        // the doorway), like WorldSceneFlow.ServerInDoorway. The server's cabin-return rule
+        // counts it as occupied. A ship without the shutter box has no entrance to trap.
+        public bool InDeckCabinEntrance(Vector3 feet, float capsuleRadius)
+        {
+            if (!(DeckCabinShutterCollider is BoxCollider shutters)) return false;
+            Transform frame = shutters.transform;
+            Vector3 half = shutters.size * 0.5f;
+            float inner = -half.z;
+            if (DeckCabinDoorCollider is BoxCollider doorway)
+                inner = Mathf.Min(inner, frame.InverseTransformPoint(doorway.transform.TransformPoint(doorway.center)).z - shutters.center.z);
+            Vector3 chest = feet + Vector3.up * 0.9f;
+            float reach = capsuleRadius + 0.05f;
+            Vector3 local = frame.InverseTransformPoint(chest) - shutters.center;
+            float outZ = local.z < inner ? inner - local.z : Mathf.Max(0f, local.z - half.z);
+            Vector3 outside = new(Mathf.Max(0f, Mathf.Abs(local.x) - half.x), Mathf.Max(0f, Mathf.Abs(local.y) - half.y), outZ);
+            return frame.TransformVector(outside).sqrMagnitude < reach * reach;
+        }
 
         public bool IsInStorageRoom(Vector3 worldPosition) => Contains(StorageVolume, worldPosition);
 

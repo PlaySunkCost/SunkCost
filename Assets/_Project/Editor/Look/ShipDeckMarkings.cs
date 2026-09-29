@@ -55,8 +55,9 @@ namespace SunkCost.Editor.Look
 
             // No painted ring round the well: its rim's kit band and the rail's own
             // orange panels already mark it, and a third stripe beside them broke the
-            // one stripe style (QA round 2, SHIP-059). The walkways start at the rail.
-            float ring = ShipStubBuilder.RingRadius + 0.35f;
+            // one stripe style (QA round 2, SHIP-059). The walkways start at the edge of the
+            // elevator housing's own walkway (Dan's round housing, 28 September 2026).
+            float ring = ShipStubBuilder.HousingOuterRadius + 0.1f;
 
             // The crane's foot, a round base: a circle round what of the crane stands
             // within half a metre of the deck, kept a clear hand's width off the rail.
