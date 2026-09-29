@@ -58,7 +58,7 @@ namespace SunkCost.Monsters
             huntedSinceFreeze = true;
             SetTarget(prey.OwnerId);
             SetPose(CreaturePose.Hunting);
-            FaceToward(prey.transform.position);
+            FaceWalk(prey.transform.position);
             if (WithinReach(prey) && StrikeReady && Strike(prey, 0f)) return;
             MoveToward(prey.transform.position, SprintSpeed * Settings.AngelSpeedFactor, dt, Settings.TouchStandoffMeters);
         }

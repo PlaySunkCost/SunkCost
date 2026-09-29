@@ -153,6 +153,7 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "noise") NoiseRuntimeChecks.RunAsHost();
                         else if (job == "figure") FigureRuntimeChecks.RunAsHost();
                         else if (job == "monsters") MonsterRuntimeChecks.RunAsHost();
+                        else if (job == "monsters-round") MonsterSafeGroundChecks.RunAsHost(); // the SG rows alone, the host alone
                         else if (job == "dash") DashRuntimeChecks.RunAsHost();
                         else if (job == "voice-host") VoiceRuntimeChecks.RunAsHost(true);
                         else if (job == "console-ship") ShipConsoleRuntimeChecks.RunAsHost();

@@ -251,21 +251,28 @@ namespace SunkCost.Monsters
         // Walk toward a point at a speed this frame, stopping `stopWithin` metres
         // short of it (a hunter stops inside its reach; a shooter keeps its distance —
         // a creature standing in a diver's capsule blocks their camera and their
-        // keys); never into the safe ground round the shaft. True when there (or at
-        // the safe ground's edge before it).
-        protected bool MoveToward(Vector3 point, float speed, float dt, float stopWithin = 0.3f)
+        // keys); never into the safe ground round the shaft. A point beyond the shaft
+        // is walked round to (Dan, 29 September 2026: the creatures stood against the
+        // tube's foot for good); `roundSafeGround` false keeps a straight line that
+        // stops at the safe ground's edge (the Charger's rush). True when there (or at
+        // the safe ground's edge before a point on it).
+        protected bool MoveToward(Vector3 point, float speed, float dt, float stopWithin = 0.3f, bool roundSafeGround = true)
         {
             Vector3 here = transform.position;
             Vector3 goal = point;
-            if (CreatureSenses.ShaftCentre(out Vector3 centre))
+            float safe = Settings.SafeZoneMeters;
+            bool haveShaft = CreatureSenses.ShaftCentre(out Vector3 centre);
+            if (haveShaft)
             {
-                float safe = Settings.SafeZoneMeters;
                 Vector3 fromCentre = goal - centre; fromCentre.y = 0f;
                 if (fromCentre.magnitude < safe)
                 {
-                    // The goal lies on the safe ground: stop at its edge, on the side nearest us.
+                    // The goal lies on the safe ground: stop at its edge. For a diver in the car or
+                    // on the tube's floor, the side nearest us (it waits at the doorway, as always);
+                    // for one standing outside the tube but inside the ring, the edge by them.
                     Vector3 toUs = here - centre; toUs.y = 0f;
-                    Vector3 edge = (toUs.sqrMagnitude > 0.01f ? toUs.normalized : Vector3.forward) * safe;
+                    Vector3 side = fromCentre.magnitude >= Settings.TubeSafeMeters ? fromCentre : toUs;
+                    Vector3 edge = (side.sqrMagnitude > 0.01f ? side.normalized : toUs.sqrMagnitude > 0.01f ? toUs.normalized : Vector3.forward) * safe;
                     goal = centre + edge;
                 }
             }
@@ -273,20 +280,109 @@ namespace SunkCost.Monsters
             float distance = delta.magnitude;
             if (distance <= Mathf.Max(0.3f, stopWithin)) return true;
             Vector3 dir = delta / distance;
+            // Beyond the shaft: round the safe ground, not into its edge.
+            if (roundSafeGround && haveShaft && StraightWayCrossesSafeGround(here, goal))
+            {
+                dir = WayRoundSafeGround(here, goal);
+                roundHeading = dir; roundHeadingFrame = Time.frameCount;
+            }
             goalDirection = dir; goalDistance = distance - stopWithin;
             CheckWallCleared();
             if (Now < sidestepUntil) dir = FollowsWalls ? (dir * 0.35f + sidestep).normalized : (dir + sidestep).normalized;
             float step = Mathf.Min(distance - stopWithin, speed * dt);
             Vector3 move = dir * step;
-            // Never a step onto the safe ground.
-            if (CreatureSenses.ShaftCentre(out centre))
+            // Never a step onto the safe ground (a step out of it, for one pushed in, is fine).
+            if (haveShaft)
             {
-                Vector3 next = here + move - centre; next.y = 0f;
-                if (next.magnitude < Settings.SafeZoneMeters) return true;
+                Vector3 now = here - centre; now.y = 0f;
+                Vector3 next = now + move; next.y = 0f;
+                if (next.magnitude < safe && next.magnitude < now.magnitude)
+                {
+                    if (!roundSafeGround) return true;
+                    // Along the edge instead (a sidestep that leans in): drop the inward part.
+                    Vector3 radial = now.sqrMagnitude > 1e-6f ? now.normalized : -dir;
+                    float inward = Vector3.Dot(move, radial);
+                    if (inward < 0f) move -= radial * inward;
+                    move.y = 0f;
+                    next = now + move;
+                    if (move.sqrMagnitude < 1e-6f || (next.magnitude < safe && next.magnitude < now.magnitude)) return true;
+                }
             }
             wantedMove += move;
             wantedToMove = true;
             return false;
+        }
+
+        // ---- round the safe ground (Dan, 29 September 2026) ------------------------------
+        // A goal beyond the shaft (a diver on the far side of the tube's foot, a sound, a
+        // point it flees to) lies on a straight line through the safe ground. A creature
+        // may never step onto it, and MoveToward used to call the edge "there": the
+        // creature stood against the foot for good (the Impostor Dan found). It now walks
+        // round: along the tangent to a ring just outside the safe ground — its body's
+        // radius and a margin further out, clear of the foot's metal (4.36 m) — on the
+        // side the goal lies, until the straight way is clear. A goal on the safe ground
+        // itself (a diver in the car) is still waited for at the nearest edge.
+        private float roundSide;
+        private float roundSideUntil = float.NegativeInfinity;
+        private Vector3 roundHeading;
+        private int roundHeadingFrame = -10;
+        private const float RoundMarginMeters = 0.35f;
+
+        // The flat way it walks round the safe ground this frame (zero when it is not going round).
+        public Vector3 ServerRoundHeading => Time.frameCount - roundHeadingFrame <= 1 ? roundHeading : Vector3.zero;
+
+        // True when the straight flat line from here to the goal passes over the safe ground or
+        // so close to it that its body would brush the tube's foot (its middle within its own
+        // radius of the edge). A goal nearer than that (a diver it waits for at the edge) only
+        // counts a line over the safe ground itself.
+        protected bool StraightWayCrossesSafeGround(Vector3 here, Vector3 goal)
+        {
+            if (!CreatureSenses.ShaftCentre(out Vector3 centre)) return false;
+            Vector3 h = here - centre; h.y = 0f;
+            Vector3 seg = goal - here; seg.y = 0f;
+            Vector3 g = goal - centre; g.y = 0f;
+            float clear = Settings.SafeZoneMeters + (mover != null ? mover.radius : 0.5f);
+            float limit = Mathf.Min(clear, Mathf.Max(Settings.SafeZoneMeters, g.magnitude)) - 0.05f;
+            float len2 = seg.sqrMagnitude;
+            float t = len2 > 1e-6f ? Mathf.Clamp01(-Vector3.Dot(h, seg) / len2) : 0f;
+            return (h + seg * t).magnitude < limit;
+        }
+
+        // The flat direction to walk toward a goal: straight, or round the safe ground.
+        protected Vector3 WayRoundSafeGround(Vector3 here, Vector3 goal)
+        {
+            Vector3 straight = goal - here; straight.y = 0f;
+            Vector3 dir = straight.sqrMagnitude > 1e-6f ? straight.normalized : transform.forward;
+            if (!CreatureSenses.ShaftCentre(out Vector3 centre) || !StraightWayCrossesSafeGround(here, goal)) return dir;
+            float safe = Settings.SafeZoneMeters;
+            Vector3 g = goal - centre; g.y = 0f;
+            if (g.magnitude < safe - 0.05f) return dir; // a goal on the safe ground: MoveToward waits at its edge
+            Vector3 h = here - centre; h.y = 0f;
+            float d = h.magnitude;
+            Vector3 radial = d > 1e-3f ? h / d : -dir;
+            Vector3 tangent = Vector3.Cross(Vector3.up, radial);
+            // The side the goal lies on, kept while it goes round (a diver straight across does not make it dither).
+            float along = Vector3.Dot(tangent, g) / Mathf.Max(0.01f, g.magnitude);
+            float side = along >= 0f ? 1f : -1f;
+            if (Now < roundSideUntil && roundSide != 0f && side != roundSide && Mathf.Abs(along) < 0.5f) side = roundSide;
+            roundSide = side; roundSideUntil = Now + 1.5f;
+            tangent *= side;
+            float ring = safe + (mover != null ? mover.radius : 0.5f) + RoundMarginMeters;
+            if (d > ring)
+            {
+                // Along the tangent line from here to the ring.
+                float sin = ring / d, cos = Mathf.Sqrt(Mathf.Max(0f, 1f - sin * sin));
+                return (-radial * cos + tangent * sin).normalized;
+            }
+            // On or inside the ring: along it, easing out to it.
+            return (tangent + radial * Mathf.Clamp01((ring - d) * 2f)).normalized;
+        }
+
+        // Turn to face a point, or along its way round the safe ground while it goes round.
+        protected void FaceWalk(Vector3 point, float degreesPerSecond = 540f)
+        {
+            Vector3 heading = ServerRoundHeading;
+            FaceToward(heading != Vector3.zero ? transform.position + heading : point, degreesPerSecond);
         }
 
         // Turn to face a point, flat.

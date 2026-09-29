@@ -105,11 +105,11 @@ namespace SunkCost.Monsters
             {
                 // Silence: it drifts back to where it appeared, so the car's call never leaves it at the door.
                 bool home = AtHome || MoveToward(Home, WalkSpeed * homeSpeedFactor, dt, 1.5f);
-                if (!home) FaceToward(Home);
+                if (!home) FaceWalk(Home);
                 SetPose(home ? CreaturePose.Idle : CreaturePose.Drawn);
                 return;
             }
-            FaceToward(heardAt);
+            FaceWalk(heardAt); // along its way round the safe ground while it goes round
             // The car's scream turns it and draws a beam, but does not walk it up to the shaft's doorway.
             bool walk = heardKind != NoiseKind.Elevator || !CreatureSenses.ShaftCentre(out Vector3 shaft) || CreatureSenses.Flat(transform.position, shaft) > Settings.SafeZoneMeters * 3f;
             if (unshot && Now >= nextShotAt && CreatureSenses.Flat(heardAt, transform.position) > 1.5f)

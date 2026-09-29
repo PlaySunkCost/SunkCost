@@ -679,6 +679,24 @@ The Impostor is outside this pass and unchanged.
 - **Parked (Dan):** the monsters make no movement or footstep sounds, and the
   Angel is silent while it moves. "Leave it like that for now."
 
+### The monsters walk round the elevator's safe ground (decided by Dan, 29 September 2026)
+
+A creature whose goal lies beyond the shaft (a diver on the far side of the
+tube's foot, a sound, a glimpsed lamp, the way it flees) **walks round the safe
+ground** instead of stopping at its edge. It used to stand against the foot for
+good (Dan saw an Impostor there). The rules are unchanged:
+
+- Nothing enters the safe ground (4.5 m from the shaft). A creature goes round
+  on the goal's side, its body clear of the foot, then straight on once the
+  way is clear.
+- A diver in the car or on the tube's floor is still waited for at the nearest
+  edge. The car stays safe.
+- The Charger prowls round too and never winds up along a line that crosses
+  the safe ground. A rush still runs straight and stops at the edge; it never
+  bends and never passes through.
+- The Lure's drift bends round the same way. The Weeping Angel still freezes
+  under a look. The Elevator Ghost has no body and is unaffected.
+
 ## 7. Crew and spectating
 
 | System | Decision |

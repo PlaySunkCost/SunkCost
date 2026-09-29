@@ -30,6 +30,7 @@ namespace SunkCost.Monsters
             MoveToward(prey.transform.position, WalkSpeed * Settings.WalkerSpeedFactor, dt, Settings.TouchStandoffMeters);
             // It faces where it walks: its prey, or along the wall it is working round.
             Vector3 heading = ServerSidestepHeading;
+            if (heading == Vector3.zero) heading = ServerRoundHeading; // round the safe ground
             FaceToward(heading != Vector3.zero ? transform.position + heading : prey.transform.position, heading != Vector3.zero ? 240f : 540f);
         }
 
