@@ -732,6 +732,11 @@ def foot(mesh, target, budget, psp, res):
         side = "R" if s > 0 else "L"
         group[0] = "jamb" + side
         radial(s * HALF, 3.10, 3.95, -0.10, 0.87, -s)       # the jambs
+        # SEAFLOOR-SEE-THROUGH (Dan, 29 September 2026): each jamb is also the plinth's end plate
+        # seen from outside the doorway (Meshy's plinth skin stops short of it, at r 3.5-3.8), and a
+        # one-sided quad seen from behind is not drawn: its back too, in the same rust.
+        group[0] = "jambback" + side
+        radial(s * HALF, 3.10, 3.95, -0.10, 0.87, s)
         group[0] = "slotwall" + side
         wall(3.10, min(s * HALF, s * 49.5), max(s * HALF, s * 49.5), 0.0, 0.87, True, 12)
         group[0] = "slotend" + side
@@ -742,6 +747,19 @@ def foot(mesh, target, budget, psp, res):
     group[0] = "topR"
     sector(3.10, 3.88, HALF, 40.0, 0.87, UP, 8)             # T7 the plinth tops
     sector(3.10, 3.50, 40.0, 49.5, 0.87, UP, 4)
+    # SEAFLOOR-SEE-THROUGH (Dan, 29 September 2026): the right pocket cut hollowed the plinth under T7
+    # (r 3.10-3.85) and left no outer skin between the jamb and dphi 40 above the grille, so a diver
+    # beside the doorway looked through the slot wall's back into the tube under a floating plate.
+    # Its outer face, flush with T7's edge, and its end at dphi 40 (where Meshy's skin, r 3.5-3.7,
+    # resumes), in the plinth's rust. Inside T7's footprint: the guard colliders are unchanged.
+    group[0] = "outerR"
+    wall(3.88, HALF, 40.0, -0.10, 0.87, False, 8)
+    group[0] = "capR"
+    radial(40.0, 3.45, 3.88, -0.10, 0.87, 1)
+    # Beyond it the half-post cut (dphi 38-49.5, r 3.10-3.50) left a slit between T7's narrow end and
+    # Meshy's lower skin top (z 0.55-0.87): a skirt under that edge.
+    group[0] = "skirtR"
+    wall(3.50, 40.0, 49.5, 0.45, 0.87, False, 4)
     group[0] = "topL"
     sector(3.10, 3.88, -26.5, -HALF, 0.87, UP, 3)           # T7L
     group[0] = None
