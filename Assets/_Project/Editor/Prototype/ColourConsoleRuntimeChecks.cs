@@ -638,7 +638,9 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(HQColourConsole.TakenSeconds + 0.5f);
 
             Heading("G7 — the dead guest: A dies; its press and pull are refused; revived after");
-            yield return Send(guestA, "{\"id\":{id},\"action\":\"die\"}");
+            // The server's own death state (console-net N6): the debug death is refused at HQ
+            // ("You can only die below"), so the guest's die command cannot reach it.
+            Day.ServerPlayerDied(guestA.Id); CopyOf(guestA)?.ServerSetDead(true);
             yield return Expect(() => Day.IsDead(guestA.Id), 5f, () => "G7 A is dead on the server");
             int aColour = ColourOf(guestA); int shown7 = Day.ShownSwatch;
             refusal = Day.LastRefusal.Serial;
@@ -648,7 +650,7 @@ namespace SunkCost.Editor.Prototype
             yield return GuestLever(guestA);
             yield return ExpectRefusal(refusal, "The dead press nothing", "G7 A's dead pull");
             Check(Day.ShownSwatch == shown7 && ColourOf(guestA) == aColour, $"G7 nothing changed: shown {Day.ShownSwatch}, A {ColourOf(guestA)}");
-            Day.ServerRevive(guestA.Id);
+            Day.ServerRevive(guestA.Id); CopyOf(guestA)?.ServerSetDead(false);
             yield return Expect(() => !Day.IsDead(guestA.Id), 5f, () => "G7 A revived");
             yield return GuestEventually(guestA, r => GuestPlayerLine(r, guestA.Id).Contains("dead=False"), 8f, "G7 A reads itself alive");
 
