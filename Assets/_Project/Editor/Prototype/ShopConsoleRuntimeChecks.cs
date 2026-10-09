@@ -353,6 +353,11 @@ namespace SunkCost.Editor.Prototype
             Check(Day.LastRefusal.Text == text, label + ": the refusal reads '" + Day.LastRefusal.Text + "' (expected '" + text + "')");
         }
         // A buy refusal (PlayerUpgrades.Refusal, the buyer only): RequestBuy clears the old answer first, so a fresh one is what arrives.
+        // A buy refusal stays on the buyer (and in the HUD prompt, which prefers it) for
+        // 2.5 s (PlayerUpgrades.RefusalSeconds): a prompt check after a refused buy waits it out.
+        private static IEnumerator RefusalLapsed(PlayerUpgrades upgrades, string label)
+            => Expect(() => string.IsNullOrEmpty(upgrades.Refusal), 3f, () => label + " the last buy refusal lapsed: '" + upgrades.Refusal + "'");
+
         private static IEnumerator ExpectBuyRefusal(PlayerUpgrades upgrades, string contains, string label)
         {
             yield return Expect(() => upgrades.Refusal.Contains(contains), 3f, () => label + ": the buyer's refusal reads '" + upgrades.Refusal + "' (expected to contain '" + contains + "')");
@@ -521,6 +526,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Top().Contains(string.Format(signs.Get("shop.pot"), 500)), 2f, () => "P2 the pot on the screen: " + Top());
             yield return AtConsole();
             yield return AimRow(0);
+            yield return RefusalLapsed(upgrades, "P2");
             yield return null;
             Check(hud.PromptText.Contains("Press E to buy") && hud.PromptText.Contains("pot $500"), "P2 the prompt with money: " + hud.PromptText);
             yield return Shot("console-shop-P2-page1-buy-aimed");
@@ -561,6 +567,7 @@ namespace SunkCost.Editor.Prototype
             Heading("P4 — paging: NEXT turns the shared page, NEXT at the end is refused 'No such page', PREV turns it back, the lever is NEXT PAGE and wraps");
             yield return AtConsole();
             yield return AimNext();
+            yield return RefusalLapsed(upgrades, "P4");
             yield return null;
             Check(hud.PromptText == "Press E — next page", "P4 the NEXT zone's prompt: " + hud.PromptText);
             Check(console.AimedPage == 1, $"P4 the composer sees NEXT aimed ({console.AimedPage})");
@@ -625,7 +632,8 @@ namespace SunkCost.Editor.Prototype
             yield return ExpectRefusal(refusal, ConsoleRules.SelectionChanged, "P5 a pull expecting PAY");
             upgrades.RequestBuy("no-such-item");
             yield return ExpectBuyRefusal(upgrades, "No such item", "P5 an item outside the catalogue");
-            host.RequestDebugDeath();
+            // The server's own death state (a debug death is refused at HQ: "You can only die below").
+            Day.ServerPlayerDied(host.OwnerId); host.ServerSetDead(true);
             yield return Expect(() => host.IsDead && Day.IsDead(host.OwnerId), 5f, () => "P5 the host is dead");
             upgrades.RequestBuy(ShopCatalog.PatchKitId);
             yield return ExpectBuyRefusal(upgrades, "The dead buy nothing", "P5 a dead buy");
@@ -636,7 +644,7 @@ namespace SunkCost.Editor.Prototype
             ship.RequestLever(ConsoleKind.Shop, LeverAction.NextPage, SiteId.None);
             yield return ExpectRefusal(refusal, "The dead press nothing", "P5 a dead pull");
             Check(Day.Balance == balance5 && Day.ShopPage == 0 && Day.LastLeverPull.Serial == pulls && BoughtCount(airTank.Name, hq) == 1 && Bought(patchKit.Name, hq) == null, $"P5 nothing changed: pot ${Day.Balance}, page {Day.ShopPage}, pull {Day.LastLeverPull.Serial}, one tank on the floor, no kit");
-            Day.ServerRevive(host.OwnerId);
+            Day.ServerRevive(host.OwnerId); host.ServerSetDead(false);
             yield return Expect(() => !host.IsDead && !Day.IsDead(host.OwnerId), 5f, () => "P5 the host revived");
             yield return Wait(0.5f);
 
@@ -679,6 +687,7 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => Day.ShopPage == proofPage && console.Page == proofPage && Row(proofRow) == ShopConsoleRules.RowLine(extraRow, ShopConsoleRules.StateBuy), 2f, () => $"P8 page {proofPage + 1} row {proofRow + 1} reads the new item: '{console.RowsText}'");
             yield return AtConsole();
             yield return AimRow(proofRow);
+            yield return RefusalLapsed(upgrades, "P8");
             yield return null;
             Check(hud.PromptText.Contains($"{ProofName} · ${ProofPrice}") && hud.PromptText.Contains("Press E to buy"), "P8 the prompt names the new item: " + hud.PromptText);
             int before8 = Day.Balance;
@@ -766,7 +775,7 @@ namespace SunkCost.Editor.Prototype
             Heading("G4 — the dead guest buys and presses nothing; revived after");
             yield return GuestMove(guest, StandSpot(1.0f));
             yield return Wait(0.3f);
-            yield return Send(guest, "{\"id\":{id},\"action\":\"die\"}");
+            Day.ServerPlayerDied(guest.Id); CopyOf(guest)?.ServerSetDead(true);
             yield return Expect(() => Day.IsDead(guest.Id), 5f, () => "G4 the guest is dead on the server");
             yield return GuestBuy(guest, ShopCatalog.PatchKitId);
             yield return GuestEventually(guest, r => GRefusal(r, guest.Id) == "The dead buy nothing", 5f, "G4 the dead guest's buy is refused");
@@ -774,7 +783,7 @@ namespace SunkCost.Editor.Prototype
             yield return GuestPage(guest, 1);
             yield return ExpectRefusal(refusal, "The dead press nothing", "G4 the dead guest's turn");
             Check(Day.ShopPage == 0 && Day.Balance == balance3, $"G4 nothing changed: page {Day.ShopPage}, pot ${Day.Balance}");
-            Day.ServerRevive(guest.Id);
+            Day.ServerRevive(guest.Id); CopyOf(guest)?.ServerSetDead(false);
             yield return Expect(() => !Day.IsDead(guest.Id), 5f, () => "G4 the guest revived");
             yield return GuestEventually(guest, r => GuestPlayerLine(r, guest.Id).Contains("dead=False"), 8f, "G4 the guest reads itself alive");
 
