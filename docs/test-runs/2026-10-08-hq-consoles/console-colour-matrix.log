@@ -1,4 +1,4 @@
-Console-colour matrix started 09/10/2026 09:26:44
+Console-colour matrix started 09/10/2026 11:12:21
 PASS editor is the host with a spawned player
 PASS the host carries PlayerIdentity and ShipControls
   · host 'Skipper' (colour 2), 16 swatches: RED ORANGE AMBER YELLOW LIME GREEN MINT CYAN SKY BLUE INDIGO VIOLET MAGENTA PINK CORAL WHITE; pull line 'PULL THE LEVER TO TAKE IT', taken '{0} IS NOW {1}'
@@ -39,8 +39,8 @@ PASS K1 the server logged the press: [Log] [Console] Skipper showed BLUE
 PASS the dot is on Colour Lever (aim Colour/Lever/0)
 PASS K2 the lever's prompt: prompt='Press E to take BLUE'; target=none
 PASS K2 the sign lights as aimed: TAKE/on
-PASS K2 one pull counted: serial=1 kind=Colour action=TakeColour tick=74 played=0/0 angles=0/0
-PASS K2 the pull is Colour/TakeColour: serial=1 kind=Colour action=TakeColour tick=74 played=0/0 angles=0/0
+PASS K2 one pull counted: serial=1 kind=Colour action=TakeColour tick=61 played=0/0 angles=0/0
+PASS K2 the pull is Colour/TakeColour: serial=1 kind=Colour action=TakeColour tick=61 played=0/0 angles=0/0
 PASS K2 the server wrote the host's colour (9)
 PASS K2 the take announced: 1/0/9
 PASS K2 the take names the host and BLUE: 1/0/9 (host 0)
@@ -102,10 +102,10 @@ PASS G1 A: the guest's player spawned on the host
 PASS G1 A: the guest's peer answers at HQ
   · G1 A: guest 'Mate bof the' is client 1 (Temp/console-colour-guest-a)
 PASS G1 A's first screens show VIOLET and its lever has not swung
-  · G1 A's console line: hqconsoles=1; shownSwatch=11; shownName=VIOLET; colourTake=2/0/9; colourTop=CHOOSE YOUR CREW COLOUR ·  ·  · VIOLET · SWATCH 11 ·  · BLACK TIDE; colourBottom=VIOLET ·  ·  ·  · PULL THE LEVER TO TAKE IT; colourSign=TAKE/on; colourLeverPlayed=0; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+  · G1 A's console line: hqconsoles=1; shownSwatch=11; shownName=VIOLET; colourTake=2/0/9; colourTop=CHOOSE YOUR CREW COLOUR ·  ·  · VIOLET · SWATCH 11 ·  · BLACK TIDE; colourBottom=VIOLET ·  ·  ·  · PULL THE LEVER TO TAKE IT; colourSign=TAKE/on; colourLeverPlayed=0; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 1/2 · Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT >; shopBottom=BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT | BOUGHT GEAR LANDS AT THE PICKUP CHUTE · ; shopSign=NEXT PAGE/on; shopLeverPlayed=0; shopLeverAngle=0; shopOpen=False;
 
 == G2 — a guest's press moves the host's helmet: A shows PINK, the host's screen and A's agree
-  · G2 A looks: id=6404; looking at Swatch 13: distance=1.95
+  · G2 A looks: id=6404; looking at Swatch 13: distance=1.93
 PASS G2 A's press went: id=6405; requested swatch 13
 PASS G2 the server shows PINK (13)
 PASS G2 the host's screen: CHOOSE YOUR CREW COLOUR ·  ·  · PINK · SWATCH 13 ·  · BLACK TIDE
@@ -125,35 +125,35 @@ PASS G3 A's take line 3/0/13
 PASS G4 the server shows GREEN (5)
 PASS G4 A's pull went expecting TAKE: id=6412; requested lever Colour/TakeColour/None
 PASS G4 A's colour on the host: 5
-PASS G4 one pull, one take: serial=4 kind=Colour action=TakeColour tick=1617 played=0/0 angles=0/0 / 4/1/5
+PASS G4 one pull, one take: serial=4 kind=Colour action=TakeColour tick=2043 played=0/0 angles=0/0 / 4/1/5
 PASS G4 the take names A and GREEN: 4/1/5 (A 1)
 PASS G4 the host keeps PINK (13)
 PASS G4 the host's copy of A wears GREEN (RGBA(0.250, 0.900, 0.300, 1.000))
 PASS G4 the host's lower screen: GREEN ·  ·  ·  · MATE BOF THE IS NOW GREEN
-PASS G4: the Colour rig swung its lever for pull 4 (played 4, peak 24.7°)
+PASS G4: the Colour rig swung its lever for pull 4 (played 4, peak 26.3°)
 PASS G4 the host's rig swung for A's pull (3 → 4)
 PASS G4 A's own line colour=5, the host's colour=13
 PASS G4 A's rig played its own pull
 
 == G5 — same-frame presses from two peers: A asks AMBER, the host asks INDIGO in the frame A's command is in flight; one wins, every screen agrees, no refusal
 PASS G5 A's press went: id=6415; requested swatch 2
-PASS G5 one of the two is shown: 2
-  · G5 the winner: swatch 2 (AMBER)
-PASS G5 the host's screen shows 2
-PASS G5 A's screen shows the same 2
+PASS G5 one of the two is shown: 10
+  · G5 the winner: swatch 10 (INDIGO)
+PASS G5 the host's screen shows 10
+PASS G5 A's screen shows the same 10
 PASS G5 no refusal: 'The dead press nothing'
 
 == G6 — same-frame pulls from two peers: A pulls and the host pulls in the frame A's command is in flight; one swing a frame, every accepted puller wears the shown colour
 PASS the dot is on Colour Lever (aim Colour/Lever/0)
 PASS G6 A's pull went: id=6417; requested lever Colour/TakeColour/None
-PASS G6 at least one pull accepted: serial=6 kind=Colour action=TakeColour tick=2064 played=0/0 angles=0/0
-  · G6 serial delta=2, refusal delta=0 '' → two frames, both accepted
-PASS G6 the pull serial grew by 2
-PASS G6 at most one refusal and it reads 'Lever in use': 0 'The dead press nothing'
-PASS G6 every pull was either accepted or refused (2 + 0)
-PASS G6 one take per accepted pull (2)
-  · G6 host 13 → 2 (took), A 5 → 2 (took)
-PASS G6 the accepted pullers wear AMBER
+PASS G6 at least one pull accepted: serial=5 kind=Colour action=TakeColour tick=2485 played=0/0 angles=0/0
+  · G6 serial delta=1, refusal delta=1 'Lever in use' → same frame (Lever in use)
+PASS G6 the pull serial grew by 1
+PASS G6 at most one refusal and it reads 'Lever in use': 1 'Lever in use'
+PASS G6 every pull was either accepted or refused (1 + 1)
+PASS G6 one take per accepted pull (1)
+  · G6 host 13 → 13 (kept), A 5 → 10 (took)
+PASS G6 the accepted pullers wear INDIGO
 PASS G6 the shown swatch did not move
 PASS G6 A's screen agrees and its rig played the last pull
 
@@ -163,7 +163,7 @@ PASS G7 A's dead press: refused 'The dead press nothing'
 PASS G7 A's dead press: the refusal reads 'The dead press nothing' (expected 'The dead press nothing')
 PASS G7 A's dead pull: refused 'The dead press nothing'
 PASS G7 A's dead pull: the refusal reads 'The dead press nothing' (expected 'The dead press nothing')
-PASS G7 nothing changed: shown 2, A 2
+PASS G7 nothing changed: shown 10, A 10
 PASS G7 A revived
 PASS G7 A reads itself alive
 
@@ -172,14 +172,14 @@ PASS G8 A's far press: refused 'Step up to the console'
 PASS G8 A's far press: the refusal reads 'Step up to the console' (expected 'Step up to the console')
 PASS G8 A's far pull: refused 'Step up to the console'
 PASS G8 A's far pull: the refusal reads 'Step up to the console' (expected 'Step up to the console')
-PASS G8 nothing changed: shown 2, A 2, pull 6
+PASS G8 nothing changed: shown 10, A 10, pull 5
 
 == G9 — a second late joiner (headless B) sees the shown swatch and no replayed swing; both guests leave
 PASS G9 B: the guest's player spawned on the host
 PASS G9 B: the guest's peer answers at HQ
   · G9 B: guest 'Mate bof the' is client 2 (Temp/console-colour-guest-b)
-PASS G9 B's first screens show AMBER (2) and its lever has not swung
-  · G9 B's console line: hqconsoles=1; shownSwatch=2; shownName=AMBER; colourTake=6/1/2; colourTop=CHOOSE YOUR CREW COLOUR ·  ·  · AMBER · SWATCH 2 ·  · BLACK TIDE; colourBottom=AMBER ·  ·  ·  · PULL THE LEVER TO TAKE IT; colourSign=TAKE/on; colourLeverPlayed=0; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+PASS G9 B's first screens show INDIGO (10) and its lever has not swung
+  · G9 B's console line: hqconsoles=1; shownSwatch=10; shownName=INDIGO; colourTake=5/1/10; colourTop=CHOOSE YOUR CREW COLOUR ·  ·  · INDIGO · SWATCH 10 ·  · BLACK TIDE; colourBottom=INDIGO ·  ·  ·  · PULL THE LEVER TO TAKE IT; colourSign=TAKE/on; colourLeverPlayed=0; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 1/2 · Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT >; shopBottom=BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT | BOUGHT GEAR LANDS AT THE PICKUP CHUTE · ; shopSign=NEXT PAGE/on; shopLeverPlayed=0; shopLeverAngle=0; shopOpen=False;
 PASS G9 both guests left
 
 == G10 — the side view for the sharpness judgement (the tester Reads the capture)
@@ -187,5 +187,5 @@ PASS G9 both guests left
 PASS G10 the side capture exists: saved Temp/look/console-colour-G10-side.png
   · host log: 0 errors, 0 exceptions during the run
 PASS no exception in the host's log during the run: 
-  · end: flow=world=HQ transitioning=False pending=; day=phase=AtHQ day=0 balance=0 handed=0 world=HQ to=HQ ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0 site=HQ toSite=HQ selected=None unlocked=none lever=6 wipe=0; trip=serial=0 stage=Idle from=HQ to=HQ; rider=locked=False placed=False local=(0.00, 0.00, 0.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0 | ShownSwatch=2 take=6/1/2 pull=serial=6 kind=Colour action=TakeColour tick=2064 played=0/0 angles=0/0 refusal=11:'Step up to the console' | shown=2 aimed=-1 taken=False played=6 angle=0 | top=CHOOSE YOUR CREW COLOUR ·  ·  · AMBER · SWATCH 2 ·  · BLACK TIDE | bottom=AMBER ·  ·  ·  · PULL THE LEVER TO TAKE IT | sign=TAKE/on
+  · end: flow=world=HQ transitioning=False pending=; day=phase=AtHQ day=0 balance=0 handed=0 world=HQ to=HQ ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0 site=HQ toSite=HQ selected=None unlocked=none lever=5 wipe=0; trip=serial=0 stage=Idle from=HQ to=HQ; rider=locked=False placed=False local=(0.00, 0.00, 0.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0 | ShownSwatch=10 take=5/1/10 pull=serial=5 kind=Colour action=TakeColour tick=2485 played=0/0 angles=0/0 refusal=12:'Step up to the console' | shown=10 aimed=-1 taken=False played=5 angle=0 | top=CHOOSE YOUR CREW COLOUR ·  ·  · INDIGO · SWATCH 10 ·  · BLACK TIDE | bottom=INDIGO ·  ·  ·  · PULL THE LEVER TO TAKE IT | sign=TAKE/on
 MATRIX_PASS
