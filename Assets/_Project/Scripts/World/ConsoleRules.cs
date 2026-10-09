@@ -79,6 +79,10 @@ namespace SunkCost.World
         public const string NoSuchDestination = "No such destination";
         public const string NobodyDived = "Nobody has dived today";           // CrewDayState.ServerEndDay's own words
         public const string LeverInUse = "Lever in use";                      // a second pull of the same console in the same frame
+        // The HQ consoles of 8 October 2026 (Dan): the colour console and the shop console.
+        public const string NoSuchColour = "No such colour";                  // a swatch index outside the palette (a hand-made RequestPressSwatch)
+        public const string NoSuchPage = "No such page";                      // a page outside the catalogue's pages (PREV on the first, NEXT on the last, a hand-made request)
+        public const string OnePage = "One page only";                        // the shop lever when the catalogue fits one page (the sign dim)
         public static string ShortBy(int dollars) => $"${dollars} short";
         public static string NotAboard(string names) => "Not aboard: " + names;      // the existing text (WorldSceneFlow.ServerEveryoneAboard)
 
@@ -157,6 +161,8 @@ namespace SunkCost.World
                 case LeverAction.Unlock: sign.Word = string.Format(signs.Get("lever.unlock"), price); sign.Tone = ConsoleTone.Warn; break;
                 case LeverAction.EndDay: sign.Word = signs.Get("lever.endday"); sign.Tone = ConsoleTone.Danger; break;
                 case LeverAction.Pay: sign.Word = signs.Get("lever.pay"); sign.Tone = ConsoleTone.Good; break;
+                case LeverAction.TakeColour: sign.Word = signs.Get("lever.take"); sign.Tone = ConsoleTone.Good; break;
+                case LeverAction.NextPage: sign.Word = signs.Get("lever.page"); sign.Tone = ConsoleTone.Accent; break;
                 default: sign.Word = lastWord ?? string.Empty; sign.Tone = ConsoleTone.Dim; break;
             }
             if (!sign.Enabled) sign.Tone = ConsoleTone.Dim;
@@ -198,22 +204,23 @@ namespace SunkCost.World
         // replicated facts): used by HQPlayerController's E branch, the hooks and the
         // peer. Returns the action even when the sign is dim — the server answers WHY.
         public static LeverAction Expected(ConsoleKind kind, SiteCatalog sites, out SiteId target)
-        {
-            target = SiteId.None;
-            CrewDayState day = CrewDayState.Instance;
-            if (day == null) return LeverAction.None;
-            WorldLoopSettings settings = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings : WorldLoopSettings.Resolve(null);
-            ConsoleFacts f = ConsoleFacts.From(day, settings, kind == ConsoleKind.Ship ? ConsoleFacts.EstimateNotAboard(day) : string.Empty);
-            if (kind == ConsoleKind.Ship) return ShipLever(f, sites ?? SiteCatalog.Resolve(), out target, out _, out _);
-            return HQLever(f, out _, out _);
-        }
+            => Expected(kind, sites, out target, out _, out _);
 
         // The same, with the reason: what the prompt and the dot show for the aimed lever.
+        // The colour console's lever is always TAKE (Dan, 8 October 2026: taking the shown
+        // colour, your own included, is never refused on its facts); the shop console's is
+        // NEXT PAGE, dim when the catalogue fits one page (ShopConsoleRules.ShopLever).
         public static LeverAction Expected(ConsoleKind kind, SiteCatalog sites, out SiteId target, out bool enabled, out string reason)
         {
             target = SiteId.None; enabled = false; reason = string.Empty;
             CrewDayState day = CrewDayState.Instance;
             if (day == null) return LeverAction.None;
+            if (kind == ConsoleKind.Colour) { enabled = true; return LeverAction.TakeColour; }
+            if (kind == ConsoleKind.Shop)
+            {
+                Shop.ShopCatalog catalog = Shop.ShopCatalog.Resolve();
+                return ShopConsoleRules.ShopLever(ShopConsoleRules.PageCount(catalog != null ? catalog.Items.Count : 0), out enabled, out reason);
+            }
             WorldLoopSettings settings = WorldSceneFlow.Instance != null ? WorldSceneFlow.Instance.Settings : WorldLoopSettings.Resolve(null);
             ConsoleFacts f = ConsoleFacts.From(day, settings, kind == ConsoleKind.Ship ? ConsoleFacts.EstimateNotAboard(day) : string.Empty);
             if (kind == ConsoleKind.Ship) return ShipLever(f, sites ?? SiteCatalog.Resolve(), out target, out enabled, out reason);

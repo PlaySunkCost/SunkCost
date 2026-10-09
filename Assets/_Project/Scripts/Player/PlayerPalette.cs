@@ -30,7 +30,16 @@ namespace SunkCost.Player
             new(0.95f, 0.95f, 0.95f), // white
         };
 
+        // The swatches' names, in the colours' order (the comments above, as the crew
+        // colour console's lower screen reads them; Dan, 8 October 2026).
+        public static readonly string[] Names =
+        {
+            "RED", "ORANGE", "AMBER", "YELLOW", "LIME", "GREEN", "MINT", "CYAN",
+            "SKY", "BLUE", "INDIGO", "VIOLET", "MAGENTA", "PINK", "CORAL", "WHITE",
+        };
+
         public static int Count => Colors.Length;
+        public static string Name(int index) => IsValid(index) ? Names[index] : Names[0];
         public static bool IsValid(int index) => index >= 0 && index < Colors.Length;
         public static Color Get(int index) => IsValid(index) ? Colors[index] : Colors[0];
         public static string Hex(int index) => "#" + ColorUtility.ToHtmlStringRGB(Get(index));

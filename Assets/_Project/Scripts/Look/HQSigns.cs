@@ -55,12 +55,8 @@ namespace SunkCost.Look
             { "company", "BLACK TIDE" },
             { "company.sub", "SALVAGE CO." },
             { "motto", "SCAVENGE\nSALVAGE\nSURVIVE" },
-            { "office", "OFFICE" },
-            { "office.sub", "THE COMPANY IS IN" },
-            { "upgrades", "UPGRADES" },
-            { "upgrades.sub", "FITTED WHILE YOU WAIT" },
-            { "gear", "GEAR & SUPPLIES" },
-            { "gear.sub", "COLLECT UPSTAIRS" },
+            // office / upgrades / gear and their .sub lines were removed on 8 October 2026
+            // (Dan): with the displays gone the signs over the old display areas pointed at nothing.
             { "intake", "INTAKE / SELL" },
             { "intake.sub", "PAY THE QUOTA HERE" },
             { "checkin", "SAVE / CHECK IN" },
@@ -112,10 +108,23 @@ namespace SunkCost.Look
             { "depot.title", "BLACK TIDE SALVAGE CO.  /  EQUIPMENT DEPOT" }, // the fascia over the depot's front
             { "depot.end", "EQUIPMENT DEPOT" },                                // the east end wall, the first thing the arrivals walk toward
             { "depot.end.sub", "SHOP  ·  UPGRADES  ·  SUPPLIES" },
-            { "counter", "EQUIPMENT CATALOGUE" },                              // over the counter that opens the browser
-            { "counter.sub", "BROWSE & BUY  ·  PRESS E" },
+            { "counter", "EQUIPMENT CATALOGUE" },                              // the catalogue console's top title (8 October 2026)
+            { "counter.sub", "BROWSE & BUY  ·  AIM + E" },                      // its lower screen's heading
             { "arrival", "CREW ARRIVAL  /  01–04" },
-            { "arrival.colour", "CHOOSE YOUR CREW COLOUR" },
+            { "arrival.colour", "CHOOSE YOUR CREW COLOUR" },                    // the crew colour console's top title
+            // The HQ consoles of 8 October 2026 (Dan): the colour console's lower screen
+            // ({0} the taker, {1} the colour), its lever's sign; the catalogue console's
+            // lower screen, its corner ({0} the pot), its PREV / NEXT zones, its lever's sign.
+            { "colour.pull", "PULL THE LEVER TO TAKE IT" },
+            { "colour.taken", "{0} IS NOW {1}" },
+            { "lever.take", "TAKE" },
+            { "shop.aim", "AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT" },
+            { "shop.pickup", "BOUGHT GEAR LANDS AT THE PICKUP CHUTE" },
+            { "shop.pot", "CREW POT ${0}" },
+            { "shop.page", "PAGE {0}/{1}" },
+            { "shop.prev", "< PREV" },
+            { "shop.next", "NEXT >" },
+            { "lever.page", "NEXT PAGE" },
             { "cargo", "CARGO / KEEP ACCESS CLEAR" },
             { "way.depot", "EQUIPMENT DEPOT  >" },                             // the board at the arrival exit
             { "way.ship", "SHIP  >" },

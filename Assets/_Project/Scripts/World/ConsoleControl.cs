@@ -12,16 +12,19 @@ namespace SunkCost.World
         [SerializeField] private ConsoleKind console;
         [SerializeField] private ConsoleControlKind kind;
         [SerializeField] private SiteId payload;        // the card's site; None for Lever/GiveUpCard
+        [SerializeField] private int index;             // Swatch: the palette index 0..15; ShopRow: the row 0..2; ShopPage: +1 next / -1 prev; else 0
 
         public ConsoleKind Console => console;
         public ConsoleControlKind Kind => kind;
         public SiteId Payload => payload;
+        public int Index => index;
 
-        public void Configure(ConsoleKind console, ConsoleControlKind kind, SiteId payload)
+        public void Configure(ConsoleKind console, ConsoleControlKind kind, SiteId payload, int index = 0)
         {
             this.console = console;
             this.kind = kind;
             this.payload = payload;
+            this.index = index;
         }
     }
 }

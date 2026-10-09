@@ -1,6 +1,7 @@
 using FishNet.Connection;
 using SunkCost.Player;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SunkCost.World
 {
@@ -15,6 +16,10 @@ namespace SunkCost.World
     // guards already refuse a second press. An accepted pull is announced once
     // (CrewDayState.ServerPullLever) for every rig's lever swing; a refusal is the
     // LastRefusal every screen shows and swings nothing.
+    // The HQ consoles of 8 October 2026 (Dan) go the same way: the colour console's
+    // lever takes the shown swatch (ServerTakeColour), the shop console's turns the
+    // page (ServerShopNextPage); both stand in the HQ scene and are reached through
+    // ServerPresserAtRig, the quota console's reach rule generalised to a rig kind.
     public sealed partial class WorldSceneFlow
     {
         public const float ConsoleReachMargin = 1.5f;   // the shop's margin: the server sees a copy a tick behind
@@ -27,8 +32,14 @@ namespace SunkCost.World
         // netcode review's m3). Across ticks the transactions refuse a repeat by
         // themselves (ServerSail's transitioning, the unlock bit, DiveDone) and the
         // rule table dims PAY over an empty room (ConsoleRules.NothingToSell), which
-        // ServerPay itself refuses too (bugs/HQ-4).
-        private readonly int[] lastPullFrame = { -1, -1 };
+        // ServerPay itself refuses too (bugs/HQ-4). Indexed by (int)ConsoleKind.
+        private readonly int[] lastPullFrame = { -1, -1, -1, -1 };
+
+        // The HQ rigs' lever colliders by kind, found once per HQ scene load (the
+        // netcode review's m5: no scene walk per press); a destroyed one is looked up again.
+        private readonly Collider[] rigLeverColliders = new Collider[4];
+
+        private static bool KnownKind(ConsoleKind kind) => kind == ConsoleKind.Ship || kind == ConsoleKind.HQ || kind == ConsoleKind.Colour || kind == ConsoleKind.Shop;
 
         // E on a destination card. Ship only (the HQ console has no cards).
         public bool ServerSelect(NetworkConnection sender, SiteId site, out string why)
@@ -45,15 +56,30 @@ namespace SunkCost.World
             why = string.Empty;
             if (networkManager == null || !networkManager.ServerManager.Started) { why = "Server not running."; return false; }
             if (dayState == null) { why = "No day state."; return false; }
-            if (kind != ConsoleKind.Ship && kind != ConsoleKind.HQ) { why = "No such console"; return false; } // a hand-made request: no rig would swing for it
-            bool located = kind == ConsoleKind.Ship ? ServerPresserAboard(sender, out why) : ServerPresserAtHQConsole(sender, out why);
+            // The kind check stays FIRST: a hand-made request with a kind outside the
+            // enum must be refused, never index lastPullFrame (audit A10).
+            if (!KnownKind(kind)) { why = "No such console"; return false; } // a hand-made request: no rig would swing for it
+            bool located;
+            switch (kind)
+            {
+                case ConsoleKind.Ship: located = ServerPresserAboard(sender, out why); break;
+                case ConsoleKind.HQ: located = ServerPresserAtHQConsole(sender, out why); break;
+                default: located = ServerPresserAtRig(sender, kind, out why); break;
+            }
             if (!located) return false;
             int k = (int)kind;
             if (lastPullFrame[k] == Time.frameCount) { why = ConsoleRules.LeverInUse; return false; }
             SiteId target = SiteId.None;
             bool enabled;
             string reason;
-            LeverAction current = kind == ConsoleKind.Ship ? ServerResolveShipLever(out target, out enabled, out reason) : ServerResolveHQLever(out enabled, out reason);
+            LeverAction current;
+            switch (kind)
+            {
+                case ConsoleKind.Ship: current = ServerResolveShipLever(out target, out enabled, out reason); break;
+                case ConsoleKind.Colour: current = ServerResolveColourLever(out enabled, out reason); break;
+                case ConsoleKind.Shop: current = ServerResolveShopLever(out enabled, out reason); break;
+                default: current = ServerResolveHQLever(out enabled, out reason); break;
+            }
             if (current != expected || target != expectedTarget)
             {
                 // The sign the presser saw is not what the lever does now. Name the honest
@@ -76,6 +102,8 @@ namespace SunkCost.World
                 case LeverAction.Unlock: ok = ServerUnlockSite(sender, target, out why); break;
                 case LeverAction.EndDay: ok = ServerEndDay(sender, out why); break;
                 case LeverAction.Pay: ok = ServerPay(sender, out why); break;
+                case LeverAction.TakeColour: ok = ServerTakeColour(sender, out why); break;
+                case LeverAction.NextPage: ok = ServerShopNextPage(sender, out why); break;
                 default: why = string.IsNullOrEmpty(reason) ? ConsoleRules.SelectFirst : reason; ok = false; break;
             }
             if (!ok) return false;
@@ -113,6 +141,40 @@ namespace SunkCost.World
             if (ship == null) { why = "No ship in " + WorldScenes.Name(currentWorld) + "."; return false; }
             if (presser.gameObject.scene != WorldScenes.Scene(currentWorld) || !ship.IsAboard(presser.transform.position)) { why = ConsoleRules.NotAboard(DisplayName(sender)); return false; }
             return true;
+        }
+
+        // An HQ rig of `kind` (the colour or the shop console): the presser's object in
+        // the HQ scene, its eyes within InteractReach + the margin of the rig's lever
+        // collider (the quota console's rule, ServerPresserAtHQConsole, by kind).
+        internal bool ServerPresserAtRig(NetworkConnection sender, ConsoleKind kind, out string why)
+        {
+            why = string.Empty;
+            HQPlayerController presser = PlayerOf(sender);
+            Scene hq = WorldScenes.Scene(WorldId.HQ);
+            if (presser == null || !hq.IsValid() || !hq.isLoaded || presser.gameObject.scene != hq) { why = "Not at HQ"; return false; }
+            Collider lever = ServerRigLeverCollider(hq, kind);
+            if (lever == null) { why = "No console at HQ"; return false; }
+            Vector3 eyes = presser.EyePosition;
+            if (Vector3.Distance(eyes, lever.ClosestPoint(eyes)) > presser.InteractReach + ConsoleReachMargin) { why = ConsoleRules.NotAtConsole; return false; }
+            return true;
+        }
+
+        // The rig of that kind in the HQ scene (ConsoleRig.InScene: one per kind per scene).
+        internal ConsoleRig ServerRigInHQ(ConsoleKind kind)
+        {
+            Scene hq = WorldScenes.Scene(WorldId.HQ);
+            return hq.IsValid() && hq.isLoaded ? ConsoleRig.InScene(hq, kind) : null;
+        }
+
+        private Collider ServerRigLeverCollider(Scene hq, ConsoleKind kind)
+        {
+            int k = (int)kind;
+            if (k < 0 || k >= rigLeverColliders.Length) return null;
+            Collider cached = rigLeverColliders[k];
+            if (cached != null && cached.gameObject.scene == hq) return cached;
+            ConsoleRig rig = ConsoleRig.InScene(hq, kind);
+            rigLeverColliders[k] = rig != null ? rig.LeverCollider : null;
+            return rigLeverColliders[k];
         }
     }
 }

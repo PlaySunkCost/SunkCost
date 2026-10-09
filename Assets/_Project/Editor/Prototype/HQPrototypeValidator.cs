@@ -43,6 +43,9 @@ namespace SunkCost.Editor.Prototype
             else if (planks[0].Gate == null || planks[0].Gate.GetComponent<Collider>() == null) errors.Add("The plank needs its gate (a collider across the base; 18 September 2026).");
             var stands = new System.Collections.Generic.List<SunkCost.Shop.ShopDisplay>();
             foreach (GameObject root in scene.GetRootGameObjects()) stands.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDisplay>(true));
+            // The catalogue console (8 October 2026) sells every item; until it stands in the
+            // scene the old counter or displays must (the tolerant form of the build phase).
+            SunkCost.World.ConsoleRig shopRig = SunkCost.World.ConsoleRig.InScene(scene, SunkCost.World.ConsoleKind.Shop);
             var catalog = AssetDatabase.LoadAssetAtPath<SunkCost.Shop.ShopCatalog>(ShopSetup.CatalogPath);
             if (catalog == null) errors.Add("ShopCatalog asset missing (run Sunk Cost/Prototype/Apply shop setup).");
             else
@@ -53,7 +56,7 @@ namespace SunkCost.Editor.Prototype
                     if(item==null){errors.Add("Catalogue contains an empty row.");continue;}
                     if(string.IsNullOrWhiteSpace(item.Id) || !itemIds.Add(item.Id))errors.Add("Catalogue ids must be nonempty and unique: "+item.Id);
                     if(string.IsNullOrWhiteSpace(item.Name) || item.Price<0)errors.Add("Catalogue item needs a name and nonnegative price: "+item.Id);
-                    if (!stands.Exists(s => s.Offers(item.Id))) errors.Add("The shop has no catalogue counter or display offering " + item.Id + ".");
+                    if (shopRig == null && !stands.Exists(s => s.Offers(item.Id))) errors.Add("The shop has no catalogue console, counter or display offering " + item.Id + ".");
                     if (item.Kind == SunkCost.Shop.ShopItemKind.Consumable && (item.Prefab == null || item.Prefab.GetComponent<NetworkObject>() == null)) errors.Add("Catalogue item " + item.Id + " needs a networked prefab.");
                     if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && item.Upgrade == SunkCost.Shop.PlayerUpgrade.None) errors.Add("Catalogue item " + item.Id + " names no upgrade.");
                 }
@@ -66,10 +69,17 @@ namespace SunkCost.Editor.Prototype
             var deliveries = new System.Collections.Generic.List<SunkCost.Shop.ShopDeliveryPoint>();
             foreach (GameObject root in scene.GetRootGameObjects()) deliveries.AddRange(root.GetComponentsInChildren<SunkCost.Shop.ShopDeliveryPoint>(true));
             if (deliveries.Count == 0) errors.Add("The shop needs a ShopDeliveryPoint.");
+            // The crew colour console (8 October 2026) replaces the colour panel: one or the
+            // other, exactly once (the tolerant form of the build phase; the final form is one
+            // console and no panel).
             var panels = new System.Collections.Generic.List<SunkCost.World.ColourPanel>();
             foreach (GameObject root in scene.GetRootGameObjects()) panels.AddRange(root.GetComponentsInChildren<SunkCost.World.ColourPanel>(true));
-            if (panels.Count != 1) errors.Add("HQ needs exactly one Colour Panel (found " + panels.Count + ").");
+            SunkCost.World.ConsoleRig colourRig = SunkCost.World.ConsoleRig.InScene(scene, SunkCost.World.ConsoleKind.Colour);
+            int colourPicks = panels.Count + (colourRig != null ? 1 : 0);
+            if (colourPicks != 1) errors.Add("HQ needs exactly one colour pick: a Colour Console or the old Colour Panel (found " + panels.Count + " panel(s)" + (colourRig != null ? " and a console" : "") + ").");
             if (panels.Count == 1 && (panels[0].GetComponent<Collider>() == null || panels[0].transform.Find(SunkCost.World.ColourPanel.SwatchName) == null)) errors.Add("The Colour Panel needs its collider and swatch.");
+            if (colourRig != null) CheckHQRig(scene, colourRig, SunkCost.World.ConsoleKind.Colour, "colour console", SunkCost.World.ConsoleRig.ColourRootName, SunkCost.World.ConsoleRig.ColourLeverName, ColourControls(), errors);
+            if (shopRig != null) CheckHQRig(scene, shopRig, SunkCost.World.ConsoleKind.Shop, "shop console", SunkCost.World.ConsoleRig.CatalogueRootName, SunkCost.World.ConsoleRig.CatalogueLeverName, ShopControls(), errors);
             CheckQuotaConsole(scene, errors);
             if (HasRoot(scene, "Prototype Network Root")) errors.Add("Prototype Network Root belongs in Session.unity, not the HQ world scene.");
             if (CrewSpawner.SpawnPointsIn(scene).Count != new LobbySessionSettings().LocalSocketCap)
@@ -125,6 +135,65 @@ namespace SunkCost.Editor.Prototype
             int oldBoards = 0;
             foreach (GameObject root in scene.GetRootGameObjects()) oldBoards += root.GetComponentsInChildren<SunkCost.World.QuotaBoard>(true).Length;
             if (oldBoards != 0) errors.Add("The old desk Quota Board is superseded by the quota console (27 September 2026); found " + oldBoards + ".");
+        }
+
+        // The two HQ consoles of 8 October 2026 (the crew colour console, the catalogue
+        // console), when they stand in the scene: the rig's root and lever names, the
+        // painted surfaces, the lever parts, one composer of the kind on the root, and
+        // every screen control by name once in the scene with its ConsoleControl
+        // (kind / role / Index) as a child of the top surface.
+        private struct ControlSpec { public string Name; public SunkCost.World.ConsoleControlKind Kind; public int Index; }
+
+        private static ControlSpec[] ColourControls()
+        {
+            var specs = new ControlSpec[SunkCost.Player.PlayerPalette.Count];
+            for (int i = 0; i < specs.Length; i++) specs[i] = new ControlSpec { Name = SunkCost.World.ConsoleRig.SwatchNamePrefix + i, Kind = SunkCost.World.ConsoleControlKind.Swatch, Index = i };
+            return specs;
+        }
+
+        private static ControlSpec[] ShopControls()
+        {
+            var specs = new List<ControlSpec>();
+            for (int r = 0; r < SunkCost.World.ShopConsoleRules.RowsPerPage; r++) specs.Add(new ControlSpec { Name = SunkCost.World.ConsoleRig.RowNamePrefix + r, Kind = SunkCost.World.ConsoleControlKind.ShopRow, Index = r });
+            specs.Add(new ControlSpec { Name = SunkCost.World.ConsoleRig.PrevName, Kind = SunkCost.World.ConsoleControlKind.ShopPage, Index = -1 });
+            specs.Add(new ControlSpec { Name = SunkCost.World.ConsoleRig.NextName, Kind = SunkCost.World.ConsoleControlKind.ShopPage, Index = 1 });
+            return specs.ToArray();
+        }
+
+        private static void CheckHQRig(Scene scene, SunkCost.World.ConsoleRig rig, SunkCost.World.ConsoleKind kind, string what, string rootName, string leverName, ControlSpec[] controls, List<string> errors)
+        {
+            if (rig.name != rootName) errors.Add("The " + what + "'s root is named \"" + rig.name + "\", expected \"" + rootName + "\".");
+            if (rig.LeverCollider == null) errors.Add("The " + what + "'s lever has no collider.");
+            else
+            {
+                if (rig.LeverCollider.name != leverName) errors.Add("The " + what + "'s lever is named \"" + rig.LeverCollider.name + "\", expected \"" + leverName + "\".");
+                if (rig.LeverCollider.isTrigger) errors.Add("The " + what + "'s lever collider must not be a trigger.");
+                SunkCost.World.ConsoleControl lever = rig.LeverCollider.GetComponent<SunkCost.World.ConsoleControl>();
+                if (lever == null || lever.Console != kind || lever.Kind != SunkCost.World.ConsoleControlKind.Lever) errors.Add("The " + what + "'s lever needs a ConsoleControl " + kind + "/Lever.");
+            }
+            if (rig.TopSurface == null || rig.BottomSurface == null || rig.SignSurface == null) errors.Add("The " + what + " needs its three painted surfaces (top, bottom, sign).");
+            if (rig.LeverHinge == null || rig.LeverHandle == null) errors.Add("The " + what + " needs its lever hinge and handle.");
+            if (rig.GetComponent<SunkCost.World.ConsoleLever>() == null) errors.Add("The " + what + " needs its ConsoleLever.");
+            if (rig.GetComponentInChildren<MeshCollider>(true) == null) errors.Add("The " + what + "'s body needs its mesh collider.");
+            int composers = 0;
+            foreach (SunkCost.World.IConsoleComposer c in rig.GetComponents<SunkCost.World.IConsoleComposer>()) if (c.Kind == kind) composers++;
+            if (composers != 1) errors.Add("The " + what + " needs exactly one composer of kind " + kind + " on its root (found " + composers + ").");
+            var byName = new Dictionary<string, int>();
+            foreach (GameObject root in scene.GetRootGameObjects())
+                foreach (Transform t in root.GetComponentsInChildren<Transform>(true)) { byName.TryGetValue(t.name, out int n); byName[t.name] = n + 1; }
+            byName.TryGetValue(leverName, out int levers);
+            if (levers != 1) errors.Add("HQ needs exactly one object named \"" + leverName + "\" (found " + levers + "; the hooks find it by name).");
+            foreach (ControlSpec spec in controls)
+            {
+                byName.TryGetValue(spec.Name, out int found);
+                if (found != 1) { errors.Add("HQ needs exactly one object named \"" + spec.Name + "\" (found " + found + ").");continue; }
+                Transform t = rig.TopSurface != null ? rig.TopSurface.transform.Find(spec.Name) : null;
+                if (t == null) { errors.Add("The " + what + "'s \"" + spec.Name + "\" must be a child of its top surface."); continue; }
+                Collider c = t.GetComponent<Collider>();
+                SunkCost.World.ConsoleControl control = t.GetComponent<SunkCost.World.ConsoleControl>();
+                if (c == null || c.isTrigger) errors.Add("The " + what + "'s \"" + spec.Name + "\" needs a non-trigger collider.");
+                if (control == null || control.Console != kind || control.Kind != spec.Kind || control.Index != spec.Index) errors.Add("The " + what + "'s \"" + spec.Name + "\" ConsoleControl must read " + kind + "/" + spec.Kind + "/" + spec.Index + ".");
+            }
         }
 
         private static void CheckControl(Collider collider, string name, SunkCost.World.ConsoleControlKind kind, string what, List<string> errors)
