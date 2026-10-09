@@ -177,16 +177,18 @@ namespace SunkCost.Editor.Prototype
             yield return Wait(1.5f); // the name lands, the restore runs, the box respawns
         }
 
-        private static IEnumerator BuyAtStand(string itemId, string label)
+        // A buy made standing at the shop console (Dan, 8 October 2026: the console is the
+        // shop; the stands are gone), through the server's own path: the reach test is the
+        // Shop rig, so the host stands 1.6 m in front of it.
+        private static IEnumerator BuyAtConsole(string itemId, string label)
         {
             HQPlayerController host = Host();
-            ShopDisplay stand = null;
-            foreach (ShopDisplay d in UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
-                if (d.ItemId == itemId && d.gameObject.scene == WorldScenes.Scene(WorldId.HQ)) stand = d;
-            Check(stand != null, label + ": a stand sells " + itemId);
-            Vector3 at = stand.transform.position + stand.transform.forward * 1.6f; at.y = 0.05f;
+            ConsoleRig rig = ConsoleRig.InScene(WorldScenes.Scene(WorldId.HQ), ConsoleKind.Shop);
+            Check(rig != null, label + ": the shop console stands at HQ");
+            Vector3 front = rig.transform.rotation * Vector3.forward; front.y = 0f; front.Normalize();
+            Vector3 at = rig.transform.position + front * 1.6f; at.y = 0.05f;
             host.TeleportLocal(at, host.Yaw); yield return null; yield return null;
-            Check(Flow.ServerBuy(host.Owner, itemId, out string why), label + ": bought " + itemId + " (" + why + ")");
+            Check(Flow.ServerBuy(host.Owner, itemId, out string why), label + ": bought " + itemId + " at the console (" + why + ")");
         }
 
         private static CarryableItem TankNamed(string startsWith, UnityEngine.SceneManagement.Scene scene) =>
@@ -206,7 +208,7 @@ namespace SunkCost.Editor.Prototype
             Heading("S0 — hosted by the driver without a slot: nothing is kept");
             Check(Flow != null && !Flow.HostsASave, "S0 this run hosts no save");
             Day.ServerSetBalanceForChecks(500); yield return Wait(0.2f);
-            yield return BuyAtStand(ShopCatalog.LargeTankId, "S0");
+            yield return BuyAtConsole(ShopCatalog.LargeTankId, "S0");
             yield return Wait(0.3f);
             Check(!SaveSlots.Exists(0) && !SaveSlots.Exists(1) && !SaveSlots.Exists(2), "S0 a buy wrote no slot");
             Check(SaveSlots.Summary(0) == "Save 1 — empty" && SaveSlots.DefaultName(2) == "Save 3", "S0 the empty slots read 'Save 1 — empty': " + SaveSlots.Summary(0));
@@ -221,7 +223,7 @@ namespace SunkCost.Editor.Prototype
 
             Heading("S2 — a buy at HQ writes the slot: the balance, the host's upgrade under its name");
             Day.ServerSetBalanceForChecks(500); yield return Wait(0.2f);
-            yield return BuyAtStand(ShopCatalog.LargeTankId, "S2");
+            yield return BuyAtConsole(ShopCatalog.LargeTankId, "S2");
             yield return Wait(0.3f);
             RunSaveData saved = SaveSlots.Load(0);
             Check(saved != null && saved.balance == 500 - largePrice, "S2 the slot's balance is $" + (saved == null ? -1 : saved.balance));
@@ -230,7 +232,7 @@ namespace SunkCost.Editor.Prototype
             Check(SaveSlots.Summary(0).StartsWith("Matrix run · at HQ, no cycle · $" + (500 - largePrice)), "S2 the summary reads: " + SaveSlots.Summary(0));
 
             Heading("S3 — a tank in the storage room and one in the hands cross the cast-off into the slot");
-            yield return BuyAtStand(ShopCatalog.AirTankId, "S3 first tank");
+            yield return BuyAtConsole(ShopCatalog.AirTankId, "S3 first tank");
             yield return Expect(() => TankNamed("Air tank (bought)", WorldScenes.Scene(WorldId.HQ)) != null, 3f, () => "S3 the first tank landed");
             CarryableItem boxTank = TankNamed("Air tank (bought)", WorldScenes.Scene(WorldId.HQ));
             ShipParts hqShip = ShipParts.InWorld(WorldId.HQ);
@@ -238,7 +240,7 @@ namespace SunkCost.Editor.Prototype
             boxTank.name = "Box tank";
             yield return Wait(1.5f);
             Check(hqShip.IsInStorageRoom(boxTank.transform.position), "S3 the first tank lies in the docked ship's storage room");
-            yield return BuyAtStand(ShopCatalog.AirTankId, "S3 second tank");
+            yield return BuyAtConsole(ShopCatalog.AirTankId, "S3 second tank");
             yield return Expect(() => TankNamed("Air tank (bought)", WorldScenes.Scene(WorldId.HQ)) != null, 3f, () => "S3 the second tank landed");
             CarryableItem handTank = TankNamed("Air tank (bought)", WorldScenes.Scene(WorldId.HQ));
             handTank.name = "Hand tank";
@@ -292,7 +294,7 @@ namespace SunkCost.Editor.Prototype
             string guestName = guestPlayer.GetComponent<PlayerIdentity>().DisplayName;
             guestPlayer.Upgrades.ServerGrant(PlayerUpgrade.BrightHeadlamp);
             yield return Wait(0.3f);
-            yield return BuyAtStand(ShopCatalog.AirTankId, "G1 a buy to write the slot"); // any HQ event writes everyone present
+            yield return BuyAtConsole(ShopCatalog.AirTankId, "G1 a buy to write the slot"); // any HQ event writes everyone present
             yield return Wait(0.3f);
             saved = SaveSlots.Load(0);
             SavedPlayer them = saved.players.FirstOrDefault(p => p.identity == "name:" + guestName);
