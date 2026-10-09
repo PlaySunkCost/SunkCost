@@ -1,0 +1,25 @@
+rig Shop Console at (-6.00, 0.05, 14.00) front (0.00, 0.00, -1.00); spot (-6.00, 0.05, 12.40)
+prompt: prompt='Large tank · $300 — Press E to buy · crew pot $0'; target=none
+top: EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 1/2 · Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT >
+bottom: BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT | BOUGHT GEAR LANDS AT THE PICKUP CHUTE · 
+sign: NEXT PAGE/on text: CATALOGUE PAGE 1/2 | Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY | CREW POT $0
+capture hq-consoles-shop-page1-nomoney.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+capture hq-consoles-shop-top-nomoney.png from (-6.00, 1.65, 13.00) at (-6.05, 1.60, 14.23)
+aimed row 0; prompt: prompt='Air tank · $40 — Press E to buy · crew pot $500'; target=none
+top: EQUIPMENT CATALOGUE · CREW POT $500 ·  · PAGE 1/2 · Air tank $40 BUY|Large tank $300 BUY|Bright headlamp $150 BUY · < PREV · NEXT >
+capture hq-consoles-shop-page1-buy-aimed.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+E on row 0: balance 460 (460 = the air tank sold); refusal ''; ShopOpen=False; ShopBrowserUI objects=0
+top: EQUIPMENT CATALOGUE · CREW POT $460 ·  · PAGE 1/2 · Air tank $40 BUY|Large tank $300 BUY|Bright headlamp $150 BUY · < PREV · NEXT >
+capture hq-consoles-shop-after-buy.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+rows: Air tank $40 BUY|Large tank $300 OWNED|Bright headlamp $150 BUY
+capture hq-consoles-shop-row-owned.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+page 1/2 top: EQUIPMENT CATALOGUE · CREW POT $460 ·  · PAGE 2/2 · Patch kit $60 BUY|-|- · < PREV · NEXT >
+capture hq-consoles-shop-page2.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+refusal: 'Not enough money: $150 needed, $0 in the pot' bottom: BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT · Not enough money: $150 needed, $0 in the pot · NOTICE
+capture hq-consoles-shop-refusal.png from (-6.00, 1.65, 12.40) at (-6.00, 1.20, 14.00)
+capture hq-consoles-shop-bottom-refusal.png from (-6.00, 1.65, 12.10) at (-6.21, 0.75, 13.73)
+capture hq-consoles-shop-side.png from (-7.60, 1.55, 11.80) at (-6.00, 1.45, 14.00)
+capture hq-consoles-shop-counter-back.png from (-6.00, 1.70, 8.90) at (-6.00, 1.25, 14.00)
+capture hq-consoles-shop-counter-aisle.png from (-4.00, 1.70, 7.90) at (-6.00, 1.15, 14.00)
+end: balance 0 page 0
+DONE
