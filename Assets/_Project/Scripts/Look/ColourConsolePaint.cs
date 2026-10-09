@@ -33,10 +33,16 @@ namespace SunkCost.Look
 
         // ---- the ring's layout (shared with the builder) -------------------------------
 
-        public static Vector2 RingCentre(int w, int h) => new(w * 0.5f, h * 0.58f);
-        public static float RingRadius(int h) => 0.33f * h;      // the disc centres' circle
-        public static float SwatchRadius(int h) => 0.052f * h;   // the glowing disc
-        public static float HelmetRadius(int h) => 0.15f * h;
+        // The ring is the picture's: an ellipse wider than it is tall (the screen is
+        // wide), the discs small enough to stand apart with the dotted links between
+        // them showing (the first pass, 9 October 2026, packed them shoulder to shoulder
+        // on a circle and their glows ran together into one band).
+        public static Vector2 RingCentre(int w, int h) => new(w * 0.5f, h * 0.575f);
+        public static float RingRadius(int h) => 0.33f * h;      // the disc centres' ellipse: its vertical half-axis
+        public static float RingRadiusX(int h) => 0.40f * h;     // its horizontal half-axis
+        public static float SwatchRadius(int h) => 0.046f * h;   // the glowing disc
+        public static float HelmetRadius(int h) => 0.16f * h;
+        public const float HitBoxSides = 2.25f;                  // the hit box's side in disc radii: covers the disc and its halo, short of the next box (swatches 2-3 sit 110 px apart at 1024 px tall)
 
         // Index 0 at the top, clockwise (PlayerPalette.WheelPosition, its y flipped for
         // the painter's y-down pixels).
@@ -44,14 +50,13 @@ namespace SunkCost.Look
         {
             Vector2 u = PlayerPalette.WheelPosition(i);
             Vector2 c = RingCentre(w, h);
-            float r = RingRadius(h);
-            return new Vector2(c.x + u.x * r, c.y - u.y * r);
+            return new Vector2(c.x + u.x * RingRadiusX(h), c.y - u.y * RingRadius(h));
         }
 
-        // Sixteen squares of side 2.2 r centred on the discs: the hit boxes AND the discs' boxes.
+        // Sixteen squares of side HitBoxSides r centred on the discs: the hit boxes AND the discs' boxes.
         public static Rect[] SwatchRects(int w, int h)
         {
-            float side = 2.2f * SwatchRadius(h);
+            float side = HitBoxSides * SwatchRadius(h);
             var rects = new Rect[PlayerPalette.Count];
             for (int i = 0; i < rects.Length; i++)
             {
@@ -100,24 +105,29 @@ namespace SunkCost.Look
             p.Frame(frame, 1.5f, Alpha(ScreenStyle.Accent, 0.55f));
             p.Brackets(frame, 0.05f * h, Mathf.Max(2f, 0.004f * h), ScreenStyle.Accent);
 
-            // The title, framed by two thin lines at its mid-height with end ticks, and a rule under the band.
+            // The title in the middle three fifths of the width, the picture's long thin
+            // lines at its mid-height running out to the frame's edge, each ending in a
+            // corner that drops to the rule under the band; the rule has end ticks.
             int titlePx = (int)Px(s.TopTitle, h);
-            Rect band = new(margin, margin, w - 2f * margin, 0.12f * h);
+            Rect band = new(0.2f * w, margin, 0.6f * w, 0.12f * h);
             int drawnPx = p.TextIn(v.Title, titlePx, Style, band, TextAnchor.MiddleCenter, ScreenStyle.Accent, s.TitleTracking);
             float titleW = p.Estimate(v.Title, drawnPx, Style, s.TitleTracking);
             float lineY = margin + 0.06f * h, lineT = Mathf.Max(2f, 0.003f * h);
-            float gap = 0.03f * w, edge = margin + 0.02f * w;
+            float gap = 0.025f * w, edge = margin + 0.015f * w;
+            float ruleY = 0.165f * h;
             float titleLeft = w * 0.5f - titleW * 0.5f, titleRight = w * 0.5f + titleW * 0.5f;
             Color lines = Alpha(ScreenStyle.Accent, 0.8f);
             if (titleLeft - gap > edge)
             {
                 p.Rect(new Rect(edge, lineY - lineT / 2f, titleLeft - gap - edge, lineT), lines);
                 p.Rect(new Rect(titleRight + gap, lineY - lineT / 2f, w - edge - titleRight - gap, lineT), lines);
-                float tick = 0.025f * h;
-                p.Rect(new Rect(edge, lineY - tick / 2f, lineT, tick), lines);
-                p.Rect(new Rect(w - edge - lineT, lineY - tick / 2f, lineT, tick), lines);
+                p.Rect(new Rect(edge, lineY - lineT / 2f, lineT, ruleY - lineY + lineT), lines);
+                p.Rect(new Rect(w - edge - lineT, lineY - lineT / 2f, lineT, ruleY - lineY + lineT), lines);
             }
-            p.Rect(new Rect(margin, 0.165f * h, w - 2f * margin, lineT), Alpha(ScreenStyle.Accent, 0.5f));
+            float tick = 0.018f * h;
+            p.Rect(new Rect(margin, ruleY, w - 2f * margin, lineT), Alpha(ScreenStyle.Accent, 0.6f));
+            p.Rect(new Rect(margin, ruleY - tick, lineT, tick + lineT), Alpha(ScreenStyle.Accent, 0.6f));
+            p.Rect(new Rect(w - margin - lineT, ruleY - tick, lineT, tick + lineT), Alpha(ScreenStyle.Accent, 0.6f));
 
             // The ring of swatches: the dim links between neighbours first, then every
             // disc with its glow, then the shown one's bright outline and the aimed one's brackets.
@@ -125,28 +135,31 @@ namespace SunkCost.Look
             float r = SwatchRadius(h);
             Vector2[] centres = new Vector2[n];
             for (int i = 0; i < n; i++) centres[i] = SwatchCentre(w, h, i);
+            float dash = Mathf.Max(2f, 0.006f * h);
             for (int i = 0; i < n; i++)
             {
                 int j = (i + 1) % n;
-                Color link = Alpha(OnGlass(Color.Lerp(PlayerPalette.Get(i), PlayerPalette.Get(j), 0.5f)), 0.55f);
-                Links(p, centres[i], centres[j], r * 1.25f, 6, Mathf.Max(2f, 0.004f * h), link);
+                Color link = Alpha(OnGlass(Color.Lerp(PlayerPalette.Get(i), PlayerPalette.Get(j), 0.5f)), 0.6f);
+                Links(p, centres[i], centres[j], r + 0.018f * h, 3, dash, link);
             }
             for (int i = 0; i < n; i++)
             {
+                // A tight halo (the picture's glow stays round each disc, the gaps dark),
+                // the disc, then a dark rim so a pale swatch (white, yellow) reads as a disc
+                // and the halo reads as light round it, not as a bigger disc.
                 Color colour = OnGlass(PlayerPalette.Get(i));
-                Disc(p, centres[i], r * 1.9f, Alpha(colour, 0.06f), 2f);
-                Disc(p, centres[i], r * 1.5f, Alpha(colour, 0.12f), 2f);
-                Disc(p, centres[i], r * 1.2f, Alpha(colour, 0.25f), 1f);
+                Disc(p, centres[i], r * 1.55f, Alpha(colour, 0.10f), 2f);
+                Disc(p, centres[i], r * 1.32f, Alpha(colour, 0.20f), 1f);
+                Disc(p, centres[i], r * 1.14f, Alpha(colour, 0.36f), 1f);
                 Disc(p, centres[i], r, colour, 1f);
-                // A thin darker rim so a pale swatch (white, yellow) still reads as a disc.
-                Circle(p, centres[i], r, Mathf.Max(1.5f, 0.002f * h), Alpha(ScreenStyle.Back, 0.35f));
+                Circle(p, centres[i], r - 0.001f * h, Mathf.Max(2f, 0.004f * h), Alpha(ScreenStyle.Back, 0.55f), 56);
             }
             if (PlayerPalette.IsValid(v.Shown))
             {
                 Vector2 c = centres[v.Shown];
                 Color shown = OnGlass(PlayerPalette.Get(v.Shown));
-                Circle(p, c, r + 0.03f * h, 0.004f * h, Alpha(shown, 0.35f));
-                Circle(p, c, r + 0.012f * h, 0.006f * h, Color.Lerp(shown, Color.white, 0.75f));
+                Circle(p, c, r + 0.026f * h, 0.005f * h, Alpha(shown, 0.35f), 56);
+                Circle(p, c, r + 0.011f * h, 0.006f * h, Color.Lerp(shown, Color.white, 0.8f), 56);
             }
             if (PlayerPalette.IsValid(v.Aimed))
             {
@@ -157,8 +170,8 @@ namespace SunkCost.Look
             // The helmet in the middle, in the shown colour: a soft glow pass, then the lines.
             Color helmet = OnGlass(PlayerPalette.Get(v.Shown));
             Vector2 centre = RingCentre(w, h);
-            float hr = HelmetRadius(h), stroke = Mathf.Max(2f, 0.006f * h);
-            Helmet(p, centre, hr, Alpha(helmet, 0.18f), stroke * 3f, true);
+            float hr = HelmetRadius(h), stroke = Mathf.Max(2f, 0.0085f * h);
+            Helmet(p, centre, hr, Alpha(helmet, 0.16f), stroke * 2.6f, true);
             Helmet(p, centre, hr, helmet, stroke, false);
         }
 

@@ -141,23 +141,25 @@ namespace SunkCost.Editor.Tests
                 for (int j = i + 1; j < rects.Length; j++)
                     Assert.IsFalse(rects[i].Overlaps(rects[j]), $"rects {i} and {j} overlap: {rects[i]} / {rects[j]}");
             }
-            // Index 0 at the top (centre (960, 256)), 4 at the right (1298, 594): clockwise, PlayerPalette.WheelPosition's order with y flipped for the painter.
+            // Index 0 at the top (centre (960, 251)), 4 at the right (1370, 589): clockwise, PlayerPalette.WheelPosition's order
+            // with y flipped for the painter, on an ellipse wider than it is tall (0.40 h by 0.33 h, the picture's ring).
             Assert.AreEqual(960f, rects[0].center.x, 1f);
-            Assert.AreEqual(256f, rects[0].center.y, 1f);
-            Assert.AreEqual(1298f, rects[4].center.x, 1f);
-            Assert.AreEqual(594f, rects[4].center.y, 1f);
+            Assert.AreEqual(251f, rects[0].center.y, 1f);
+            Assert.AreEqual(1370f, rects[4].center.x, 1f);
+            Assert.AreEqual(589f, rects[4].center.y, 1f);
             Assert.Greater(rects[1].center.x, rects[0].center.x, "index 1 is to the right of index 0");
             Assert.Greater(rects[1].center.y, rects[0].center.y, "index 1 is below index 0 (y down)");
             Vector2 ring = ColourConsolePaint.RingCentre(w, h);
-            float radius = ColourConsolePaint.RingRadius(h);
+            float radiusY = ColourConsolePaint.RingRadius(h), radiusX = ColourConsolePaint.RingRadiusX(h);
+            Assert.Greater(radiusX, radiusY, "the ring is wider than it is tall");
             for (int i = 0; i < rects.Length; i++)
             {
                 Vector2 wheel = PlayerPalette.WheelPosition(i);
-                Vector2 expected = ring + new Vector2(wheel.x, -wheel.y) * radius;
+                Vector2 expected = ring + new Vector2(wheel.x * radiusX, -wheel.y * radiusY);
                 Assert.AreEqual(expected.x, rects[i].center.x, 1f, $"rect {i} x");
                 Assert.AreEqual(expected.y, rects[i].center.y, 1f, $"rect {i} y");
                 Assert.AreEqual(rects[i].width, rects[i].height, 0.01f, $"rect {i} is square");
-                Assert.AreEqual(2.2f * ColourConsolePaint.SwatchRadius(h), rects[i].width, 0.5f, $"rect {i} side");
+                Assert.AreEqual(ColourConsolePaint.HitBoxSides * ColourConsolePaint.SwatchRadius(h), rects[i].width, 0.5f, $"rect {i} side");
             }
         }
 
