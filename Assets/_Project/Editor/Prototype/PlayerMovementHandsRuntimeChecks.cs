@@ -447,24 +447,37 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => !remote.IsCrouched, 5f, "host sees the guest standing");
             File.AppendAllText(Log, "PASS M7 host sees the guest stand again\n");
             // Hands on the remote view: the guest grabs a ball; the host's copy of its arms binds to it.
-            // P: the colour panel on the HQ wall. Look at it, press E, pick a swatch:
-            // the body wears it, the pick is saved, the guest sees it; the guest picks too.
+            // P: the crew colour console at the arrival pad (Dan, 8 October 2026). Aim at a
+            // swatch and press E: the shared helmet shows it; aim at the lever and press E: the
+            // body wears it, the pick is saved, the guest sees it; the guest picks too.
             PlayerIdentity hostIdentity = host.GetComponent<PlayerIdentity>();
             Check(hostIdentity != null && hostIdentity.ColourIndex == 2, "P0 the host's saved colour (amber, 2) reached its player: " + (hostIdentity == null ? "no identity" : hostIdentity.ColourIndex.ToString()));
-            GameObject panel = GameObject.Find(SunkCost.World.ColourPanel.PanelName);
-            Check(panel != null, "P1 the colour panel is on the HQ wall");
-            H.ClientMoveLocalPlayerTo(new Vector3(panel.transform.position.x, 0f, panel.transform.position.z + 1.3f)); yield return null;
-            H.ClientLookAtNamed(SunkCost.World.ColourPanel.PanelName); yield return null; yield return null;
-            Check(host.CurrentColourPanel != null && H.PromptText().Contains("Press E to pick your colour"), "P1 looking at the panel offers the pick: " + H.PromptText());
+            SunkCost.World.ConsoleRig colourRig = SunkCost.World.ConsoleRig.InScene(SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.HQ), SunkCost.World.ConsoleKind.Colour);
+            Check(colourRig != null, "P1 the colour console stands at the arrival pad");
+            Vector3 rigFront = colourRig.transform.rotation * Vector3.forward; rigFront.y = 0f; rigFront.Normalize();
+            Vector3 standAtRig = colourRig.transform.position + rigFront * 1.6f; standAtRig.y = 0.05f;
+            float faceRig = Mathf.Atan2(-rigFront.x, -rigFront.z) * Mathf.Rad2Deg;
+            host.TeleportLocal(standAtRig, faceRig); yield return null;
+            {
+                double aimUntil = EditorApplication.timeSinceStartup + 4.0; int aimTries = 0;
+                while (EditorApplication.timeSinceStartup < aimUntil && !(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == SunkCost.World.ConsoleControlKind.Swatch && host.CurrentConsoleControl.Index == 9))
+                { if (aimTries++ % 45 == 0) host.TeleportLocal(standAtRig, faceRig); H.ClientLookAtNamed(SunkCost.World.ConsoleRig.SwatchNamePrefix + "9"); yield return null; }
+            }
+            Check(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == SunkCost.World.ConsoleControlKind.Swatch && host.CurrentConsoleControl.Index == 9 && H.PromptText().Contains("Press E to show BLUE"), "P1 looking at swatch 9 offers the press: " + H.PromptText());
             Keys(Key.E); yield return null; yield return null; Keys(); yield return null;
-            Check(SunkCost.Net.SessionInputGate.PickerOpen, "P2 E opens the colour picker");
-            host.GetComponent<PlayerHudUI>().PickColourForChecks(9); // blue
+            yield return WaitUntil(() => SunkCost.World.CrewDayState.Instance != null && SunkCost.World.CrewDayState.Instance.ShownSwatch == 9, 3f, "P2 E shows BLUE on the console");
+            Check(!SunkCost.Net.SessionInputGate.PickerOpen, "P2 no picker opens (the console is the picker)");
+            {
+                double aimUntil = EditorApplication.timeSinceStartup + 4.0; int aimTries = 0;
+                while (EditorApplication.timeSinceStartup < aimUntil && !(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == SunkCost.World.ConsoleControlKind.Lever && host.CurrentConsoleControl.Console == SunkCost.World.ConsoleKind.Colour))
+                { if (aimTries++ % 45 == 0) host.TeleportLocal(standAtRig, faceRig); H.ClientLookAtNamed(SunkCost.World.ConsoleRig.ColourLeverName); yield return null; }
+            }
+            Check(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == SunkCost.World.ConsoleControlKind.Lever && H.PromptText().Contains("Press E to take BLUE"), "P3 the lever offers the take: " + H.PromptText());
+            Keys(Key.E); yield return null; yield return null; Keys(); yield return null;
             yield return WaitUntil(() => hostIdentity.ColourIndex == 9, 3f, "P3 the pick was written by the server");
             yield return null;
             Check(ColoursClose(host.BodyColour, PlayerPalette.Get(9)), $"P3 the body wears the pick ({host.BodyColour} vs {PlayerPalette.Get(9)})");
             Check(PlayerColourPrefs.Load() == 9, "P3 the pick is saved for next time");
-            SunkCost.Net.SessionInputGate.ClosePicker(); yield return null;
-            Check(!SunkCost.Net.SessionInputGate.PickerOpen, "P2 the picker closes");
             yield return GuestEventually(r => GuestPlayerLine(r, host.OwnerId).Contains("colour=9"), 5f, "P4 the guest sees the host's colour");
             yield return Send("{\"id\":{id},\"action\":\"colour\",\"slot\":13}"); // pink
             PlayerIdentity remoteIdentity = remote.GetComponent<PlayerIdentity>();

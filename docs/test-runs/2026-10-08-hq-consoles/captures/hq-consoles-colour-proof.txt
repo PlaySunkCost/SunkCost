@@ -1,0 +1,5 @@
+idle: shown=0 taken=False top=CHOOSE YOUR CREW COLOUR ·  ·  · RED · SWATCH 0 ·  · BLACK TIDE bottom=RED ·  ·  ·  · PULL THE LEVER TO TAKE IT sign=TAKE/on played=0
+shown 9: shown=9 taken=False top=CHOOSE YOUR CREW COLOUR ·  ·  · BLUE · SWATCH 9 ·  · BLACK TIDE bottom=BLUE ·  ·  ·  · PULL THE LEVER TO TAKE IT sign=TAKE/on played=0
+taken: shown=9 taken=True top=CHOOSE YOUR CREW COLOUR ·  ·  · BLUE · SWATCH 9 ·  · BLACK TIDE bottom=BLUE ·  ·  ·  · SKIPPER IS NOW BLUE sign=TAKE/on played=1 lever=17.8
+refused: shown=9 taken=False top=CHOOSE YOUR CREW COLOUR ·  ·  · BLUE · SWATCH 9 ·  · BLACK TIDE bottom=BLUE ·  ·  ·  · No such colour · NOTICE sign=TAKE/on played=1
+done: shown=0 taken=False top=CHOOSE YOUR CREW COLOUR ·  ·  · RED · SWATCH 0 ·  · BLACK TIDE bottom=RED ·  ·  ·  · PULL THE LEVER TO TAKE IT sign=TAKE/on played=1
