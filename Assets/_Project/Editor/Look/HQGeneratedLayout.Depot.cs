@@ -56,24 +56,29 @@ namespace SunkCost.Editor.Look
             Label(depot,"depot.title",new Vector3(-6,3.75f,9.58f),17,.55f);
 
             // Rear displays, two clear lanes between the fronts and the merchandise.
+            // The rack wall touches what it hangs on (Dan, 8 October 2026, HQ-DEPOT-WALL-GAPS):
+            // the panel's back (12 cm deep) sits on the WallPanel face z 17.7, the shelves (44 cm
+            // deep) and the hooks (30 cm) butt the panel's front z 17.58; the HQ5 row measures it.
             for(float x=-14;x<=6;x+=2)
             {
-                Model(depot,"DisplayPanel",new Vector3(x,1,17.5f));
-                Model(depot,"Shelf",new Vector3(x,.9f,17.2f));
-                Model(depot,"Shelf",new Vector3(x,2f,17.2f));
-                Model(depot,"DisplayHook",new Vector3(x-.25f,2.7f,17.25f));
+                Model(depot,"DisplayPanel",new Vector3(x,1,17.64f));
+                Model(depot,"Shelf",new Vector3(x,.9f,17.36f));
+                Model(depot,"Shelf",new Vector3(x,2f,17.36f));
+                Model(depot,"DisplayHook",new Vector3(x-.25f,2.7f,17.43f));
             }
             // Stock on the shelves: a depot that has something in it, not bare panels (HQ polish, 27 September 2026).
             // Every piece stands on a shelf top (lower .98, upper 2.08) at a shelf's x (even x: the
             // shelves are 1 m wide every 2 m), not in the gaps (Dan, 8 October 2026: the two orange
-            // toolboxes hung in mid-air between shelves and the cradles straddled the shelf ends).
-            foreach(float x in new[]{-12f,-4f,4f}) Model(depot,"Toolbox",new Vector3(x,2.08f,17.2f),0,new Vector3(.8f,.8f,.8f),true);
-            foreach(float x in new[]{-10f,0f,6f}) Model(depot,"Crate",new Vector3(x,2.08f,17.2f),0,new Vector3(.45f,.45f,.45f),true);
-            foreach(float x in new[]{-14f,-8f,2f,6f}) Model(depot,"TankCradle",new Vector3(x,.98f,17.2f)); // 1 m tall: top 1.98, under the upper shelf (2.0)
-            foreach(float x in new[]{-6f,4f}) Model(depot,"Toolbox",new Vector3(x,.98f,17.2f),0,new Vector3(.8f,.8f,.8f),true);
+            // toolboxes hung in mid-air between shelves and the cradles straddled the shelf ends),
+            // centred on the shelf's depth so nothing overhangs its front edge.
+            foreach(float x in new[]{-12f,-4f,4f}) Model(depot,"Toolbox",new Vector3(x,2.08f,17.36f),0,new Vector3(.8f,.8f,.8f),true);
+            foreach(float x in new[]{-10f,0f,6f}) Model(depot,"Crate",new Vector3(x,2.08f,17.36f),0,new Vector3(.45f,.45f,.45f),true);
+            foreach(float x in new[]{-14f,-8f,2f,6f}) Model(depot,"TankCradle",new Vector3(x,.98f,17.36f)); // 1 m tall: top 1.98, under the upper shelf (2.0)
+            foreach(float x in new[]{-6f,4f}) Model(depot,"Toolbox",new Vector3(x,.98f,17.36f),0,new Vector3(.8f,.8f,.8f),true);
             foreach(float x in new[]{-21f,-19f})
             {
-                var cabinet=Model(depot,"UtilityCabinet",new Vector3(x,0,17));
+                // The office lockers (60 cm deep) stand against the back wall, their back on its face z 17.7.
+                var cabinet=Model(depot,"UtilityCabinet",new Vector3(x,0,17.4f));
                 Box(cabinet,new Vector3(0,1,0),new Vector3(1,2,.6f));
             }
             Model(depot,"Table",new Vector3(-21,0,13),0,default,true);

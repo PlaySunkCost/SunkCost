@@ -407,14 +407,14 @@ namespace SunkCost.Editor.Prototype
         }
         private static IEnumerable<Prop> PropList()
         {
-            foreach(float x in new[]{-12f,-4f,4f})yield return new Prop("Toolbox",x,2.08f,17.1f);
-            foreach(float x in new[]{-6f,4f})yield return new Prop("Toolbox",x,.98f,17.2f);
-            foreach(float x in new[]{-10f,0f,6f})yield return new Prop("Crate",x,2.08f,17.15f);
-            foreach(float x in new[]{-14f,-8f,2f,6f})yield return new Prop("TankCradle",x,.98f,17.2f){MaxTopY=2.0f};
-            for(float x=-14;x<=6;x+=2){yield return new Prop("Shelf",x,.9f,17.2f){Ground=false,Touch="DisplayPanel"};yield return new Prop("Shelf",x,2f,17.2f){Ground=false,Touch="DisplayPanel"};}
-            for(float x=-14;x<=6;x+=2)yield return new Prop("DisplayPanel",x,1,17.5f){Ground=false,WallZ=17.7f};
-            for(float x=-14;x<=6;x+=2)yield return new Prop("DisplayHook",x-.25f,2.7f,17.25f){Ground=false,Touch="DisplayPanel"};
-            foreach(float x in new[]{-21f,-19f})yield return new Prop("UtilityCabinet",x,0,17){WallZ=17.7f,TouchTol=.05f};
+            foreach(float x in new[]{-12f,-4f,4f})yield return new Prop("Toolbox",x,2.08f,17.36f);
+            foreach(float x in new[]{-6f,4f})yield return new Prop("Toolbox",x,.98f,17.36f);
+            foreach(float x in new[]{-10f,0f,6f})yield return new Prop("Crate",x,2.08f,17.36f);
+            foreach(float x in new[]{-14f,-8f,2f,6f})yield return new Prop("TankCradle",x,.98f,17.36f){MaxTopY=2.0f};
+            for(float x=-14;x<=6;x+=2){yield return new Prop("Shelf",x,.9f,17.36f){Ground=false,Touch="DisplayPanel"};yield return new Prop("Shelf",x,2f,17.36f){Ground=false,Touch="DisplayPanel"};}
+            for(float x=-14;x<=6;x+=2)yield return new Prop("DisplayPanel",x,1,17.64f){Ground=false,WallZ=17.7f};
+            for(float x=-14;x<=6;x+=2)yield return new Prop("DisplayHook",x-.25f,2.7f,17.43f){Ground=false,Touch="DisplayPanel"};
+            foreach(float x in new[]{-21f,-19f})yield return new Prop("UtilityCabinet",x,0,17.4f){WallZ=17.7f,TouchTol=.05f};
             yield return new Prop("Table",-21,0,13);
             yield return new Prop("Couch",-22,0,16);
             yield return new Prop("Couch",7,0,-11);
