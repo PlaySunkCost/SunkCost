@@ -19,11 +19,10 @@ namespace SunkCost.Editor.Look
             foreach (float x in new[] { -.75f,.75f }) foreach (float z in new[] { -.5f,1f })
                 Frame(pad, new Vector3(x,0,z), .7f,.7f);
             Label(pad, "arrival", new Vector3(0,2.7f,-1.95f), 3.3f, .35f);
-            Model(pad, "Console", new Vector3(0,0,3), 180, default, true);
-            Box(pad, new Vector3(0,.55f,3), new Vector3(1.8f,1.1f,.7f));
-            Slab(pad,"Colour panel mast",new Vector3(0,0,3.2f),new Vector3(.16f,2.3f,.16f),ShipKitMaterials.Steel(),true);
-            HQPlatformBuilder.ColourPanel(pad, new Vector3(0,1.4f,2.65f));
-            Label(pad, "arrival.colour", new Vector3(0,2.3f,3), 3);
+            // The crew colour console (Dan, 8 October 2026) where the colour panel stood:
+            // the shared console's rig on its footing, facing the pad (local yaw 180 = the
+            // panel's old facing), its own screens carrying CHOOSE YOUR CREW COLOUR.
+            ColourConsoleBuilder.Place(pad, new Vector3(0,0,3.2f), 180);
             Lamp(pad, new Vector3(0,2.6f,0), 6, 3);
             pad.transform.SetPositionAndRotation(Arrival,ArrivalFacing);
         }
