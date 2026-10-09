@@ -182,7 +182,7 @@ namespace SunkCost.Editor.Look
             }
             Model(cargo,"CableCoil",new Vector3(26,0,-6),0,default,true);
             Model(cargo,"Bollard",new Vector3(28,0,9),0,default,true);
-            Model(cargo,"Toolbox",new Vector3(22,.16f,11),15,default,true);
+            Model(cargo,"Toolbox",new Vector3(22,0,11),15,default,true); // on the deck: no pallet here (it floated 16 cm, 8 October 2026)
             foreach (float x in new[] {-26f,4f,27f}) Model(root,"Lifebuoy",new Vector3(x,1,-17.5f),0,default,true);
             Model(root,"Pipes",new Vector3(-26,-2,-17.9f),0,new Vector3(2,1,1),true);
             var rest = Group(root,"Crew rest");
@@ -209,6 +209,10 @@ namespace SunkCost.Editor.Look
             Label(wayfinding,"way.quota",new Vector3(0,1.26f,0),2.7f,.36f,0);
             Lamp(wayfinding,new Vector3(0,2.5f,.6f),5,1.8f);
             Lamp(rest,new Vector3(7,2.3f,-12),5,1.8f);
+            // The platform's own ambience bed (Dan, 8 October 2026, the silent spots at HQ):
+            // the wind over the whole platform and the sea washing round its edge, so no
+            // walkable point is out of hearing of the docked ship's 70 m.
+            HQAmbienceSetup.Build(root);
         }
     }
 }

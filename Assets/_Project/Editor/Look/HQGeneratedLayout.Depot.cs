@@ -34,7 +34,7 @@ namespace SunkCost.Editor.Look
                     var window=Model(depot,"Window",new Vector3(x,0,10));
                     // Window keeps its opening; transparent glass supplies the barrier.
                     Box(window,new Vector3(0,2,0),new Vector3(4,4,.12f));
-                    Slab(depot,"Office glass",new Vector3(x,1.1f,10.02f),new Vector3(3.2f,1.8f,.02f),SunkCost.Sites.DiveSiteBuilder.GetOrCreateGlassMaterial());
+                    Slab(depot,"Office glass",new Vector3(x,1.0f,10.02f),new Vector3(3.2f,1.8f,.02f),SunkCost.Sites.DiveSiteBuilder.GetOrCreateGlassMaterial());
                 }
                 else
                 {
@@ -63,12 +63,14 @@ namespace SunkCost.Editor.Look
                 Model(depot,"Shelf",new Vector3(x,2f,17.2f));
                 Model(depot,"DisplayHook",new Vector3(x-.25f,2.7f,17.25f));
             }
-            // Stock on the upper shelves: a depot that has something in it, not bare panels (HQ polish, 27 September 2026).
-            foreach(float x in new[]{-12f,-4f,4f}) Model(depot,"Toolbox",new Vector3(x,2.05f,17.1f),0,new Vector3(.8f,.8f,.8f),true);
-            foreach(float x in new[]{-10f,0f,6f}) Model(depot,"Crate",new Vector3(x,2.05f,17.15f),0,new Vector3(.45f,.45f,.45f),true);
-            foreach(float x in new[]{-13.5f,-11.5f,1.5f,3.5f}) Model(depot,"TankCradle",new Vector3(x,1.1f,17.1f));
-            Model(depot,"Toolbox",new Vector3(-7,1,17.05f),0,default,true);
-            Model(depot,"Toolbox",new Vector3(5,1,17.05f),0,default,true);
+            // Stock on the shelves: a depot that has something in it, not bare panels (HQ polish, 27 September 2026).
+            // Every piece stands on a shelf top (lower .98, upper 2.08) at a shelf's x (even x: the
+            // shelves are 1 m wide every 2 m), not in the gaps (Dan, 8 October 2026: the two orange
+            // toolboxes hung in mid-air between shelves and the cradles straddled the shelf ends).
+            foreach(float x in new[]{-12f,-4f,4f}) Model(depot,"Toolbox",new Vector3(x,2.08f,17.2f),0,new Vector3(.8f,.8f,.8f),true);
+            foreach(float x in new[]{-10f,0f,6f}) Model(depot,"Crate",new Vector3(x,2.08f,17.2f),0,new Vector3(.45f,.45f,.45f),true);
+            foreach(float x in new[]{-14f,-8f,2f,6f}) Model(depot,"TankCradle",new Vector3(x,.98f,17.2f)); // 1 m tall: top 1.98, under the upper shelf (2.0)
+            foreach(float x in new[]{-6f,4f}) Model(depot,"Toolbox",new Vector3(x,.98f,17.2f),0,new Vector3(.8f,.8f,.8f),true);
             foreach(float x in new[]{-21f,-19f})
             {
                 var cabinet=Model(depot,"UtilityCabinet",new Vector3(x,0,17));
@@ -76,9 +78,11 @@ namespace SunkCost.Editor.Look
             }
             Model(depot,"Table",new Vector3(-21,0,13),0,default,true);
             Box(depot,new Vector3(-21,.4f,13),new Vector3(1.8f,.8f,1));
-            Model(depot,"Couch",new Vector3(-22,0,16),0,default,true);
+            // The office couch faces south into the room and its window (Dan, 8 October 2026:
+            // at yaw 0 it faced the back wall beside the lockers). The TV cabinet that stood in
+            // the window at (-22, 1, 10.6) is gone: from the room it was a blank brown board on legs.
+            Model(depot,"Couch",new Vector3(-22,0,16),180,default,true);
             Box(depot,new Vector3(-22,.5f,16),new Vector3(2.8f,1,1));
-            Model(depot,"TvCabinet",new Vector3(-22,1,10.6f),180,new Vector3(.5f,.5f,.5f),true);
             // Wire cages decorate the end of the depot without closing the aisle.
             for(float z=14;z<=17;z++) Model(depot,"CagePanel",new Vector3(7.5f,0,z),90);
             // The east end wall is the first face of the depot the arrivals walk toward:
