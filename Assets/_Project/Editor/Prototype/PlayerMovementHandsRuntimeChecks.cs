@@ -480,7 +480,8 @@ namespace SunkCost.Editor.Prototype
             yield return WaitUntil(() => hostIdentity.ColourIndex == 9, 3f, "P3 the pick was written by the server");
             yield return null;
             Check(ColoursClose(host.BodyColour, PlayerPalette.Get(9)), $"P3 the body wears the pick ({host.BodyColour} vs {PlayerPalette.Get(9)})");
-            Check(PlayerColourPrefs.Load() == 9, "P3 the pick is saved for next time");
+            // The save comes by a TargetRpc on the clientHost's next tick, after the SyncVar the host reads at once (PlayerIdentity.ServerSetColour): wait for it, as console-colour's K2 does.
+            yield return WaitUntil(() => PlayerColourPrefs.Load() == 9, 3f, "P3 the pick is saved for next time");
             yield return GuestEventually(r => GuestPlayerLine(r, host.OwnerId).Contains("colour=9"), 5f, "P4 the guest sees the host's colour");
             yield return Send("{\"id\":{id},\"action\":\"colour\",\"slot\":13}"); // pink
             PlayerIdentity remoteIdentity = remote.GetComponent<PlayerIdentity>();
