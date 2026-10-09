@@ -370,11 +370,14 @@ namespace SunkCost.Editor.Prototype
             Check(ball.GetComponent<Rigidbody>().linearVelocity.y > 2f, $"M8b the upward throw goes up (v={ball.GetComponent<Rigidbody>().linearVelocity})");
             host.SetPitchForChecks(0f);
             yield return Wait(1.5f);
-            // Refusal against a wall: face the south wall from 0.35 m and try to drop.
+            // Refusal against a wall: face the depot's east wall (the WallPanel at x 8, z 12,
+            // its inner face at x 7.9; the cage panels start at z 14) from 0.35 m and try to
+            // drop. Re-placed from the old hall's south wall (0, -5.55), which the platform
+            // does not have (Dan, 9 October 2026).
             H.ClientMoveLocalPlayerToItem("Basketball"); H.ClientLookAtItem("Basketball"); yield return null;
             H.ClientRequestGrab("Basketball"); yield return Wait(0.4f);
-            H.ClientMoveLocalPlayerTo(new Vector3(0f, 0f, -5.55f)); yield return null;
-            host.transform.rotation = Quaternion.Euler(0f, 180f, 0f); yield return null;
+            H.ClientMoveLocalPlayerTo(new Vector3(7.55f, 0f, 12f)); yield return null;
+            host.transform.rotation = Quaternion.Euler(0f, 90f, 0f); yield return null;
             H.ClientRequestDrop(); yield return Wait(0.5f);
             Check(ball.State == ItemState.Held && H.PromptText().Contains("Not enough room"), "M8 no room against the wall: refused, still held (" + H.PromptText() + ")");
             host.transform.rotation = Quaternion.identity; H.ClientMoveLocalPlayerTo(home); yield return null;
