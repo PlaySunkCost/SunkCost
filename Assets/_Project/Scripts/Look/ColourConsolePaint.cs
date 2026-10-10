@@ -130,7 +130,7 @@ namespace SunkCost.Look
             p.Rect(new Rect(w - margin - lineT, ruleY - tick, lineT, tick + lineT), Alpha(ScreenStyle.Accent, 0.6f));
 
             // The ring of swatches: the dim links between neighbours first, then every
-            // disc with its glow, then the shown one's bright outline and the aimed one's brackets.
+            // disc with its glow, then the shown one's bright outline and the aimed one's ring.
             int n = PlayerPalette.Count;
             float r = SwatchRadius(h);
             Vector2[] centres = new Vector2[n];
@@ -163,8 +163,9 @@ namespace SunkCost.Look
             }
             if (PlayerPalette.IsValid(v.Aimed))
             {
-                Rect[] rects = SwatchRects(w, h);
-                p.Brackets(Grow(rects[v.Aimed], 0.01f * h), 0.03f * h, Mathf.Max(2f, 0.003f * h), Alpha(ScreenStyle.Text, 0.75f));
+                // The aimed swatch: a light ring on the disc's own edge, the disc's size
+                // (Dan, 11 October 2026: a circle, not a rectangle round it).
+                Circle(p, centres[v.Aimed], r, Mathf.Max(2f, 0.006f * h), Alpha(Color.white, 0.9f), 56);
             }
 
             // The helmet in the middle, in the shown colour: a soft glow pass, then the lines.

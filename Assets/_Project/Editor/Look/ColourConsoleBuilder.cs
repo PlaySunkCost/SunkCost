@@ -24,7 +24,13 @@ namespace SunkCost.Editor.Look
             ConsoleScreen top = rig.TopSurface;
             Rect[] rects = ColourConsolePaint.SwatchRects(top.Width, top.Height);
             for (int i = 0; i < rects.Length; i++)
-                ConsoleBuilder.Control(top, ConsoleRig.SwatchNamePrefix + i, rects[i], ConsoleKind.Colour, ConsoleControlKind.Swatch, SiteId.None, touch, i);
+            {
+                Collider swatch = ConsoleBuilder.Control(top, ConsoleRig.SwatchNamePrefix + i, rects[i], ConsoleKind.Colour, ConsoleControlKind.Swatch, SiteId.None, touch, i);
+                // No touch quad on a swatch: InteractHighlight would frame it as a square.
+                // The painter rings the aimed disc instead (Dan, 11 October 2026).
+                Transform quad = swatch.transform.Find(ConsoleRig.TouchName);
+                if (quad != null) Object.DestroyImmediate(quad.gameObject);
+            }
             rig.gameObject.AddComponent<HQColourConsole>().ShowIdle();
             return rig;
         }
