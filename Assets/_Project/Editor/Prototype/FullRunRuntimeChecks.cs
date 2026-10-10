@@ -317,7 +317,8 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => identity.ColourIndex == 8, 3f, "sky (8) written by the server");
             yield return null; yield return null;
             Check(Mathf.Abs(host.BodyColour.r - PlayerPalette.Get(8).r) < 0.02f && Mathf.Abs(host.BodyColour.b - PlayerPalette.Get(8).b) < 0.02f, "the body wears sky: " + host.BodyColour);
-            Check(PlayerColourPrefs.Load() == 8, "the pick is saved");
+            // The save comes by a TargetRpc on the clientHost's next tick, after the SyncVar the host reads at once: wait for it, as hands P3 does.
+            yield return Expect(() => PlayerColourPrefs.Load() == 8, 3f, "the pick is saved");
             yield return Shot("colour-picked");
 
             Heading("Cycle 1 — sail out");
