@@ -1,0 +1,30 @@
+Camera clearance matrix started 11/10/2026 01:58:00
+PASS editor is the host with a spawned player
+PASS player has PlayerCameraClearance
+PASS near clip is 0.05 at runtime
+PASS grounded and standing at the start
+PASS envelope radius 0.111 m fits the capsule (aspect 2.07)
+PASS C1 corner: eye clear without correction
+PASS C1 corner looking up: still clear
+PASS C1 corner looking down: still clear
+PASS C1 flat wall head-on: clear without correction
+PASS C1 flat wall sideways: clear without correction
+PASS C2 overhang: eye corrected down by 0.061 m
+PASS C2 overhang: rendered envelope clear of the slab
+PASS C2 overhang: the root did not move
+PASS C3 return: started back toward the desired eye
+PASS C3 return: back on the desired eye without overshoot
+PASS C4 the eye is still blending down (eye 1.62)
+PASS C4 crouched under the slab
+PASS C4 crouch blend under the slab: 82 frames, envelope always clear, no cover
+PASS C4 the blend was corrected on the way down and is free once crouched
+PASS C4 stand refused under the slab, view unchanged
+PASS C4 stood up once the slab was gone
+PASS C5 enclosure: obstructed, no target
+PASS C5 enclosure: the root did not move
+PASS C5 enclosure gone: cover down at once
+PASS C5 enclosure gone: view restored
+PASS C6 corrected before the teleport
+PASS C6 teleport: offset reset immediately
+PASS C6 after the teleport: clear at the new spot
+MATRIX_PASS

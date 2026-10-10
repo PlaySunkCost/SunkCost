@@ -1,0 +1,24 @@
+Remote smoothness matrix started 11/10/2026 01:56:35
+
+== Guest joins
+PASS the guest's copy is here
+  · player NetworkTransform interpolation=2 ticks at 60 Hz; editor 135 fps
+
+== Clean local link
+  · clean: frames=1337; transform: stalls=4 (0.3%) jumps=0 (0.0%) worstStep=2.1x; eyes: stalls=0 (0.0%) jumps=0 (0.0%) worstStep=1.1x; pitchStill=10 (0.7%)
+
+== Simulated internet link (guest outgoing: 60 ±40 ms, 3% lost, 5% reordered)
+  · id=903; netsim enabled=True latency=60±40 loss=0.0299999993294477 outOfOrder=0.0500000007450581
+PASS the guest's latency simulator is on
+  · simulated: frames=1337; transform: stalls=126 (9.4%) jumps=10 (0.7%) worstStep=14.9x; eyes: stalls=0 (0.0%) jumps=0 (0.0%) worstStep=1.9x; pitchStill=5 (0.4%)
+
+== Verdict
+PASS clean link: enough frames sampled (1337)
+PASS clean link: stalls 0.0% ≤ 1%
+PASS clean link: jumps 0.0% ≤ 1%
+PASS clean link: worst catch-up 1.1 frames' worth in one frame ≤ 6
+PASS simulated link: enough frames sampled (1337)
+PASS simulated link: stalls 0.0% ≤ 1%
+PASS simulated link: jumps 0.0% ≤ 1%
+PASS simulated link: worst catch-up 1.9 frames' worth in one frame ≤ 6
+MATRIX_PASS

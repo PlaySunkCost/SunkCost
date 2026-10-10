@@ -5,15 +5,34 @@ What the cabin, world-loop, hands and full-run matrices taught on 16 September
 Read this before writing a new `*RuntimeChecks.cs` row or job.
 
 ## Running
-- `matrix hq` checks the generated HQ: both boarding gates open while docked,
-  keyboard movement across the level bridge in both directions, aboard detection,
-  a clear depot aisle, and a real ball scoring through each generated hoop.
-  Results: `Temp/hq-art-matrix.log`; screenshot: `Temp/look/hq-runtime-arrival.png`.
-  Its catalogue row ("E opens the catalogue…") needs the Unity editor to be the focused
-  window: `ShopBrowserUI` closes itself when the application loses focus
-  (`SessionInputGate.ApplicationFocused`), so with another program in front the row fails
-  (seen twice on 28 September 2026, `Application.isFocused` false both times). The matrix driver cannot take focus
-  itself; bring the editor to the front and run the job again.
+- `matrix hq` checks the generated HQ (`HQArtRuntimeChecks`, log `Temp/hq-art-matrix.log`): both
+  boarding gates open while docked, keyboard movement across the level bridge in both directions,
+  aboard detection, a clear depot aisle, a real ball scoring through each generated hoop, then the
+  shop console as the catalogue (HQ0: aim at `Shop Row 0`, the prompt names the first item, a fifth
+  row added in memory shows on the console's second page and buys for its price through the chute,
+  no HUD window opens, screenshot `Temp/look/hq-shop-catalogue.png` from the player's eye), and the
+  HQ cleanup of 8 October 2026: HQ1 the `office` / `upgrades` / `gear` / `counter` signs and the
+  catalogue mast gone by name; HQ2 no `ShopDisplay`, no `Shop Stand *`, no counter, exactly one Shop
+  rig, the colour panel gone; HQ3 no `TvCabinet` under the depot and nothing but the shell in the
+  office window volume; HQ4 the office couch faces south into the room with nothing within 1.5 m in
+  front (capture `Temp/look/hq-consoles-hq-sofa.png`); HQ5 every listed prop (the rack wall's
+  toolboxes, crates, cradles, shelves, panels and hooks, the lockers, tables, couches, benches,
+  counters, the cargo toolbox, crates, barrels, coil and bollard, the lifebuoys, the depot lamps)
+  found by name nearest its spot, its renderer bounds' bottom within 3 cm of the surface under it
+  (a ray down plus the top of any renderer beneath it, since the HQ kit shelves and pallets carry no
+  colliders), upright within 10°, not into a WallPanel / Window / Portal box by more than 2 cm, the
+  shelves and hooks touching their panels, the panels on the wall, the cradles' tops under the upper
+  shelf, the lamps under the roof (one PASS line per test with the measured gap; captures
+  `hq-consoles-hq-racks*.png`, `-cargo.png`); HQ6 `HQAmbienceProbe.Grid()` with `dead=0` and at
+  least 150 walkable points, the bed `Playing`, and the level at the pad, the plank's base, the
+  chute, the crane, the intake, the aisle and the court at or above `HQAmbience.AudibleLevel`;
+  HQ7 captures of the old board's spot, the office, the depot front and the counter
+  (`hq-consoles-hq-*.png`); the arrival capture `Temp/look/hq-runtime-arrival.png` aimed at the
+  colour console's top screen; and last HQ8: the host sails to Sea and the HQ bed is silent there
+  (`HQAmbience.InHQ().Playing == false`, `ShipAmbience.WindSuppressed == false`) — the job ends at
+  sea. Host only, about 3 minutes. The editor no longer needs to be the focused window for this
+  job (nothing opens an IMGUI window since the HUD browser went on 8 October 2026), but the
+  captures are game-view captures: keep it in front.
   Any tracked change in the tree (a doc edit too) makes the editor's build identity
   `local-dev:` and every guest row fails as "Wrong build": do not edit tracked files while
   a guest job runs.
@@ -43,7 +62,7 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   platform since 18 September 2026 — **Create or Update HQ** regenerates the textures, the materials, the prop prefabs
   that do not exist yet and the scene (`Sunk Cost/Look/Rebuild look props` rewrites every prop from code and loses
   hand edits to them; `Regenerate textures and materials` alone for a palette change); rows that stood in the old hall
-  by coordinates (camera clearance, hands, inventory) are matrix debt until they are re-placed;
+  by coordinates (camera clearance, inventory) are matrix debt until they are re-placed (`hands` was re-placed on the platform and its P rows stand at the colour console since 8 October 2026);
   `console-ship` = the ship's navigation console, `ShipConsoleRuntimeChecks`, log `Temp/console-ship-matrix.log`:
   the host alone at the docked ship's console (choose HQ / an open site / a locked site with the real aim and E, the
   not-aboard refusal, every site bought short / exact / already open in the order 03-04-02 with a same-frame double
@@ -71,13 +90,54 @@ Read this before writing a new `*RuntimeChecks.cs` row or job.
   at HQ, three same-frame selections, CONFIRMs and PAYs, a guest killed while the ship pulls away, an UNLOCK in the frame
   the plank starts, presses on the plank), 4 players (a fifth guest refused, a vote with a take-back and a leave, four
   same-frame GIVE UPs) — about 8 minutes; findings that should not stop the run are `SOFT-FAIL` lines, failed at the end;
+  `console-colour` = the crew colour console at the arrival pad (Dan, 8 October 2026), `ColourConsoleRuntimeChecks`,
+  log `Temp/console-colour-matrix.log`, captures `Temp/look/console-colour-*.png`: the host alone (K rows: the rig
+  "Colour Console" where the colour panel stood, facing every spawn, the panel gone, sixteen "Swatch n" zones and
+  "Colour Lever"; a swatch press with the real aim and E moves the shared helmet (`CrewDayState.ShownSwatch`) and
+  colours nobody; the lever takes the shown colour for the puller (`PlayerIdentity.ColourIndex`, the body, the saved
+  prefs), swings, and the lower screen reads `SKIPPER IS NOW BLUE` for 3 s; the same colour again accepted; refused
+  far / swatch 99 / a wrong expectation / console kind 7 through `LastRefusal`; two presses in one frame: the last
+  wins; the dead press nothing; the pure composers), then guest A windowed in `Temp/console-colour-guest-a` and B
+  headless in `-b` (G rows: a late joiner sees the shown swatch with no replayed swing, a guest's press moves the
+  host's helmet, a host pull seen on the guest (the suit's `colour=`, the IS NOW line, the swing, the take), a guest
+  pull colours the guest only, same-frame presses and pulls from two peers (the log says which case ran), the dead
+  and the far guest refused, a second late joiner, a side-view capture) — about 5 minutes; peer commands `swatch`
+  (slot = index), `lever` with item `Colour`, `look_control` with `Swatch n` / `Colour Lever`; snapshot line
+  `hqconsoles=1; shownSwatch=; shownName=; colourTake=<serial>/<taker>/<swatch>; colourTop=; colourBottom=;
+  colourSign=; colourLeverPlayed=; colourLeverAngle=; …`. The edit-mode tests are `HQColourConsoleTests`
+  (`run SunkCost.Editor.Tests.HQColourConsoleTests.RunAll`). The `hands` job's P1–P3 stand at this console too (the
+  dot on "Swatch 9" offers `Press E to show BLUE`, E shows it and no picker opens, the dot on "Colour Lever" offers
+  `Press E to take BLUE`, E takes it: the body, the prefs), and `fullrun`'s "Colour — sky" picks sky (8) through the
+  swatch and the lever;
+  `console-shop` = the shop console at the depot's counter (Dan, 8 October 2026: the console IS the shop),
+  `ShopConsoleRuntimeChecks`, log `Temp/console-shop-matrix.log`, captures `Temp/look/console-shop-*.png`: the
+  host alone (P rows: the rig "Shop Console" at the counter facing the aisle with "Shop Row 0..2", "Shop Prev",
+  "Shop Next" and "Shop Lever", the hanging sign, the OFFICE / UPGRADES / GEAR & SUPPLIES signs, the counter and
+  the four stands gone, no ShopDisplay, page 1 of 2 with an empty pot reading NO MONEY on every row; a row with no
+  money refused through the buyer's own refusal, shown in the prompt and as a notice on the lower screen; a buy
+  from a row with the real aim and E delivering the air tank through the chute onto the pickup pad and charging
+  the pot; an upgrade row turning OWNED with a second buy refused; NEXT / PREV turning the shared page, NEXT at the
+  end refused "No such page", the lever as NEXT PAGE wrapping round with its swing; refusals far, hand-made (pages
+  outside the catalogue, a pull expecting PAY, an item outside the catalogue) and dead; E on the console's body
+  and on a row never opening the HUD browser (none exists); a same-frame double buy charged once; a fifth
+  catalogue row added in memory sold from page 2 without a rebuild), then one guest in `Temp/console-shop-guest`
+  (G rows: the page shared both ways through `shop_page` and the host's PREV; a guest's buy refused on money then
+  its large tank its own, each screen reading its own player's OWNED / NO MONEY on the same page, its air tank
+  down the chute; the guest's refusals far and hand-made; the dead guest; the host's lever seen on the guest), a
+  side-view capture — about 5 minutes; peer commands `shop_page` (slot = the absolute page), `buy` (item = the id),
+  `look_control` with `Shop Row n` / `Shop Next` / `Shop Prev` / `Shop Lever`; snapshot line `hqconsoles=1; …
+  shopPage=; shopPages=; shopRows=; shopTop=; shopBottom=; shopSign=; shopLeverPlayed=; shopLeverAngle=; shopOpen=`
+  and the player line's `shopRefusal='…'`. The edit-mode tests are `ShopConsoleRulesTests`
+  (`run SunkCost.Editor.Tests.ShopConsoleRulesTests.RunAll`);
   `plank` = the plank at HQ, `PlankRuntimeChecks`, log `Temp/plank-matrix.log`: a lost payday, the board and
   the prompt, sailing and the shop refused, the host placed and pushed, the card, the fresh run; then a guest in
   `Temp/plank-guest` (the host jumps, the guest is next and pushed, both start over) — about 3 minutes;
-  `shop` = the shop at HQ, `ShopRuntimeChecks`, log `Temp/shop-matrix.log`: the room and stands, the
-  prompt, refusals (no money, owned, too far), an air tank at the delivery spot, both upgrades, the
-  large tank counting below, the visor marks, the upgrades lost with an unrescued body; then a guest in
-  `Temp/shop-guest` (buys from the pot, replication, a body brought up keeps them) — about 6 minutes;
+  `shop` = the shop at HQ, `ShopRuntimeChecks`, log `Temp/shop-matrix.log`: the room and the shop console (no
+  stands), the row's prompt, refusals (no money, owned, too far, at sea), an air tank at the delivery spot bought
+  from the console's row, both upgrades, the large tank counting below, the visor marks, the upgrades lost with
+  an unrescued body; then a guest in `Temp/shop-guest` (buys from the pot at the console through the peer's `buy`,
+  replication, a body brought up keeps them) — about 6 minutes (`plank` P0's bought tank and `save`'s upgrade are
+  bought standing at the shop console too, `BuyAtConsole` through `ServerBuy`);
   `figure` = the first-person body, `FigureRuntimeChecks`, log `Temp/figure-matrix.log`: the head cut, what the
   owner sees, the crouch, screenshots `Temp/figure-own-body.png` / `figure-own-crouch.png`, then a guest in
   `Temp/figure-guest` (`figure-friend.png`) — about 2 minutes;

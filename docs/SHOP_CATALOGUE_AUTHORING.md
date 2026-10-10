@@ -1,9 +1,11 @@
 # Expandable equipment shop
 
-The equipment counter in the HQ depot sells **all** entries in
-`Assets/_Project/Resources/ShopCatalog.asset`. Aim at the counter and press E.
-Search, filters and the scrolling list are generated from that asset. The four
-physical displays are optional featured samples, not capacity limits.
+The shop console at the HQ depot's counter sells **all** entries in
+`Assets/_Project/Resources/ShopCatalog.asset` (Dan, 8 October 2026: the console IS
+the shop). The catalogue is painted on the console's top screen as rows of name,
+price and state, three to a page with PREV / NEXT zones and the lever as NEXT PAGE;
+aim at a row and press E to buy. There is no HUD browser and there are no item
+stands any more.
 
 ## Add merchandise
 
@@ -17,30 +19,36 @@ physical displays are optional featured samples, not capacity limits.
    player/gameplay code and networking review; adding a name alone cannot create
    an effect. The current byte flags are not an unlimited upgrade system.
 4. Validate HQ and build matching client/server revisions. A new catalogue row
-   appears at the counter without rebuilding the HQ or adding a stand. Clients
+   appears on the console (on its next page) without rebuilding the HQ. Clients
    must ship with the same catalogue and registered prefabs as their host.
 5. Test purchase with a non-host client, insufficient shared funds, repeat upgrade
    purchase, and delivery/pickup. Prices, balance and eligibility are server-owned.
 
 ## Components and authority
 
-- `ShopDisplay.BrowsesCatalog`: a physical counter offering the complete catalogue.
-  `ConfigureCatalog(delivery)` wires it to the existing chute. Ordinary displays
-  may still feature a single item through `Configure(id, label, delivery)`.
-- `ShopBrowserUI`: local owner interface; search, category filter and scrolling.
-  It submits the existing `PlayerUpgrades.RequestBuy(id)` and shows server refusals.
-- `SessionInputGate.ShopOpen`: releases the mouse and blocks gameplay commands;
-  Escape closes the browser and suppresses the closing click.
-- `WorldSceneFlow.ServerBuy`: validates the catalogue ID and the nearest eligible
-  counter/display in HQ, range, alive/travel/run state, funds and existing upgrade.
-  It spends the crew pot and grants/spawns the purchase. No client supplies a price,
-  delivery position, upgrade grant or balance. There is no new RPC or SyncVar.
-- `HQPrototypeValidator`: accepts a catalogue counter instead of demanding one
-  stand per item, and checks IDs, prices and prefab/upgrade configuration.
+- `HQShopConsole` (on the `Shop Console` root the `ShopConsoleBuilder` places): composes
+  the screens from replicated state — `CrewDayState.ShopPage` (the shared page, a server
+  SyncVar), the balance, the catalogue and the viewer's own owned bits — and `ShopConsolePaint`
+  paints them. `ShopConsoleRules` (pure) pages the catalogue and words the lever.
+- E on `Shop Row n` submits the existing `PlayerUpgrades.RequestBuy(id)` for the row's item;
+  the server's refusal comes back to the buyer and the console shows it as a notice. E on
+  `Shop Prev` / `Shop Next` asks `ShipControls.RequestShopPage(page)` (an absolute page);
+  the lever's pull turns the page through the console lever path. See the contract's
+  "The shop console" row (PROPOSED).
+- `WorldSceneFlow.ServerBuy`: validates the catalogue ID, the buyer at the shop console
+  (`ServerPresserAtRig(ConsoleKind.Shop)`), alive/travel/run state, funds and existing
+  upgrade. It spends the crew pot and grants/spawns the purchase at the `ShopDeliveryPoint`
+  nearest the console (the chute). No client supplies a price, delivery position, upgrade
+  grant or balance.
+- `ShopDisplay` and `ShopBrowserUI` stay compiled (old tests and the validator reference
+  the types) but nothing in the scene places a display and nothing opens the browser.
+- `HQPrototypeValidator`: refuses a `ShopDisplay` in the scene, requires the one Shop rig,
+  and checks IDs, prices and prefab/upgrade configuration.
 
 The HQ runtime check temporarily adds a fifth catalogue row using an already
-registered consumable prefab, verifies it appears and can be purchased without
-a dedicated display, then removes the test row. The real catalogue is preserved.
-The shop matrix checks a separate executable client's browser and purchases.
+registered consumable prefab, verifies it appears on the console's second page and
+can be purchased for its price, then removes the test row. The real catalogue is
+preserved. The `console-shop` and `shop` matrices check a separate executable
+client's page and purchases at the console.
 
 No stock limits, dynamic prices, unlocks or new upgrade effects are introduced.

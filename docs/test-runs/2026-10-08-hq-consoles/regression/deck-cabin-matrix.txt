@@ -1,0 +1,665 @@
+Deck cabin ride matrix started 09/10/2026 11:40:52
+PASS editor is the host with a spawned player
+PASS R0 no ride started at HQ
+PASS R0 sailing to sea
+PASS R0 deck cabin doors open at sea
+PASS R0 deck cabin panel invites: Day 1 of 3 — all in, press E to descend
+PASS Y1 arriving at sea is day 1 (day=1 payday=False phase=AtSea)
+PASS Y1 the cabin panel says 'Day 1 of 3': Day 1 of 3 — all in, press E to descend
+PASS Y1 the day did not move
+PASS V1 the visor is off on the ship
+PASS U3 unstuck on the ship is taken: 
+PASS R1b free to move while the doors close
+PASS R1b the leaver was not put back inside
+PASS R1b the refusal: Nobody aboard
+PASS R1c the doors hold open while the body stays (Sealing, opening=True, open=1.00)
+PASS R1c the doorway is passable with the doors open
+PASS R1c the body was not moved: (0.00, 0.05, 3002.35)
+PASS R1c the refusal: Nobody aboard
+  R2 profiler markers recorded: 14
+  R2: requested cabin
+PASS R2 ride direction Down
+  R2 t+1: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R2 t+202: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R2 t+418: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 t+629: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 t+843: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R2 HITCH 44ms at t+4.6s stage=Loading car=AtTop carY=- submerged=False scene=ShipAtSea blame: Semaphore.WaitForSignal 91ms, PlayerLoop 4ms
+  R2 t+1033: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 t+1233: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 t+1438: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R2 t+1632: stage=Riding car=Descending carPos=(0.00, -0.94, 0.00) local=(-0.43, -0.79, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+1804: stage=Riding car=Descending carPos=(0.00, -3.94, 0.00) local=(-0.43, -3.79, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 HITCH 68ms at t+9.3s stage=Riding car=Descending carY=-4.6 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 19ms, PlayerLoop 5ms
+  R2 t+1947: stage=Riding car=Descending carPos=(0.00, -5.30, 0.00) local=(-0.43, -5.15, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2083: stage=Riding car=Descending carPos=(0.00, -6.30, 0.00) local=(-0.43, -6.15, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 HITCH 68ms at t+11.1s stage=Riding car=Descending carY=-6.3 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 12ms, PlayerLoop 5ms
+  R2 t+2229: stage=Riding car=Descending carPos=(0.00, -7.31, 0.00) local=(-0.43, -7.16, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2395: stage=Riding car=Descending carPos=(0.00, -8.93, 0.00) local=(-0.43, -8.78, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2564: stage=Riding car=Descending carPos=(0.00, -11.93, 0.00) local=(-0.43, -11.78, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2739: stage=Riding car=Descending carPos=(0.00, -14.94, 0.00) local=(-0.43, -14.79, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+2912: stage=Riding car=Descending carPos=(0.00, -17.95, 0.00) local=(-0.43, -17.80, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3093: stage=Riding car=Descending carPos=(0.00, -20.96, 0.00) local=(-0.43, -20.81, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3270: stage=Riding car=Descending carPos=(0.00, -23.96, 0.00) local=(-0.43, -23.81, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3444: stage=Riding car=Descending carPos=(0.00, -26.97, 0.00) local=(-0.43, -26.82, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3620: stage=Riding car=Descending carPos=(0.00, -29.98, 0.00) local=(-0.43, -29.83, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3792: stage=Riding car=Descending carPos=(0.00, -32.98, 0.00) local=(-0.43, -32.83, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+3970: stage=Riding car=Descending carPos=(0.00, -35.99, 0.00) local=(-0.43, -35.84, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+4145: stage=Riding car=Descending carPos=(0.00, -39.00, 0.00) local=(-0.43, -38.85, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R2 t+4318: stage=Riding car=Descending carPos=(0.00, -42.02, 0.00) local=(-0.43, -41.87, -0.43) carLocal=(0.60, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+PASS R2 ride completed in 4491 frames
+PASS R2 the suit fade went black
+PASS R2 the car moved with the rider inside
+PASS R2 the rider never left the car while it moved
+PASS R2 the rider never sank into the car floor (max 0.000 m)
+PASS R2 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS D R2 the car's doors read shut from the swap to the bottom on 3530 frames (worst open 0.00)
+PASS R2 the rider was locked exactly when it should be
+PASS R2 the rider was free inside the moving car
+PASS R2 the rider walked 0.60 m inside the moving car and stayed inside
+  R2 bands: above 3.01 m/s over 1.39 s, crossing 0.99 m/s over 2.92 s, below 3.00 m/s over 12.23 s; moving 17.36 s (expected 17.33); waterError 0.000; deepest 3.50; end 3.50; dry at floor y NaN; submersion streak 0
+PASS R2 about 3 m/s above the surface band (3.01 m/s over 1.39 s)
+PASS R2 about 1 m/s through the surface band (0.99 m/s)
+PASS R2 about 3 m/s below the band (3.00 m/s)
+PASS R2 the car moved for 17.4 s (profile says 17.3)
+PASS R2 the car moved on 2132 of 2132 frames at full speed (largest step 0.047 m)
+  R2 host (editor) hitches while the car moved: 2 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R2 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R2 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R2 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R2 the car arrived full (3.50 m of 3.50)
+PASS R2 captured floor-at-surface and eyes-under
+  R2 host frames: fps=175 median=5.6ms 1%low=7.0ms worst=68ms hitches=3/4495 frames in 25.1s; t=4.6s 44ms (median 4.5ms; Semaphore.WaitForSignal 91ms, PlayerLoop 4ms), t=9.3s 68ms (median 5.2ms; Semaphore.WaitForSignal 19ms, PlayerLoop 5ms), t=11.1s 68ms (median 6.0ms; Semaphore.WaitForSignal 12ms, PlayerLoop 5ms)
+PASS R2 the host's player is in DiveSite01
+PASS V1 the visor is on in the dive
+PASS V2 the visor's depth is the submersion's (38.8 m)
+PASS V2 the visor's heading is the camera's (225°)
+PASS V2 the tank counts in the car (94%), health full
+PASS V3 HOME is hidden inside the car
+PASS M1 the visor money line reads nothing toward the quota and nothing on me: QUOTA $0/$500  ·  ON ME $0
+PASS R2 car at the bottom
+PASS R2 the driven car sits on its bottom position
+PASS R2 the host stands inside the car
+PASS R2 shaft gate open at the bottom
+PASS R2 host listed below
+PASS R2 deck cabin doors closed while the car is below
+PASS Y2 the day began when the riders arrived below (phase=DiveInProgress day=1)
+PASS Y2 the visor's corner says DAY 1/3: DAY 1/3
+PASS Y2 the monitor is locked for the dive: Day 1 of 3 — dive in progress — console locked
+PASS R2 deck cabin panel says 'Cabin below'
+PASS T2 the cabin water stands at the car's full height with the doors open
+PASS T2 submerged at the bottom, F3 says so: slots=[-1,-1,-1,-1] 0kg x1.00; underwater=True depth=38.8
+PASS T2 host outside the car and the tube after walking out
+PASS T2 still submerged on the seafloor
+PASS T3 tube walls present
+PASS T3 sweep into the tube from behind is blocked by Foot Guard 1
+PASS T3 sweep into the tube from the side is blocked by Foot Guard 30
+PASS T3 sweep out of the car away from the doorway is blocked
+PASS T3 sweep out of the car through the doorway passes
+PASS V3 facing the tube from 10 m out HOME reads ahead at 10 m (angle 0.0°, 10.0 m)
+PASS V3 facing away HOME reads behind (angle 180.0°)
+PASS V4 7 coins spawned on the seafloor (coin placements: 7)
+PASS V4 every coin's value lies in its range
+PASS V4 Coin 3 exists
+PASS V4 the tag under the dot reads the coin's value: Coin · $80
+PASS V5 the coin in view is bracketed (1)
+PASS V5 looking away from every coin nothing is bracketed (0)
+PASS V5 looking back at the trail the near coins are bracketed (2)
+PASS C1 Coin 3 lies on the car's floor: (0.42, -44.89, 0.42)
+  C1 Coin 3 rests 0.115 above the car's origin (value $80, id #11)
+PASS R3 host outside the car
+PASS R3b the car's doors hold open while the body stays (AtBottom)
+PASS R3b the car's doorway is passable with the doors open
+PASS R3b the body was not moved: (-1.66, -44.85, -1.66)
+PASS R3b the leaver is still listed below
+PASS R3b the ride completed without a cancel
+PASS R3b the leaver stayed in DiveSite01, unlocked
+PASS R3b the leaver was not moved: (-2.83, -45.00, -2.83)
+PASS R3b the site stays loaded while the leaver is below
+PASS R3b deck cabin doors stay closed with the car below
+PASS U4 unstuck below is taken: 
+  R4 profiler markers recorded: 14
+  R4: requested car
+PASS R4 ride direction Up
+  R4 t+1: stage=Preparing car=AtBottom carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R4 t+195: stage=Sealing car=Sealing carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+372: stage=Riding car=Ascending carPos=(0.00, -43.64, 0.00) local=(0.44, -43.49, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  R4 t+542: stage=Riding car=Ascending carPos=(0.00, -40.63, 0.00) local=(0.44, -40.48, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  R4 t+713: stage=Riding car=Ascending carPos=(0.00, -37.62, 0.00) local=(0.44, -37.47, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  R4 t+880: stage=Riding car=Ascending carPos=(0.00, -34.61, 0.00) local=(0.44, -34.46, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+PASS E1 the coin rides as frozen cargo in the moving car
+  E1 look try 1: target=Coin 3 (day 1) find=Coin 3 (day 1) obstructed=False travelLocked=False eye=(-0.21, -31.17, -0.21) coin=(0.42, -32.81, 0.42) dist=1.77 colliderOn=True los=True state=Free transit=True camPitch=61 hostLocal=(0.30, 0.15, 0.00)
+  E1 host at car-local (0.30, 0.15, 0.00), coin at (-0.60, 0.11, 0.00)
+PASS E1 mid-ride the dot finds the cargo on the car's floor (target Coin 3 (day 1))
+PASS E2 mid-ride the visor brackets and tags it (1, 'Coin · $80')
+PASS E1 grabbed cargo is cargo no more
+PASS M2 the held coin counts on me (QUOTA $0/$500  ·  ON ME $80)
+PASS E3 it rests on the moving car's floor, not below it (car-local (-0.71, 0.11, 0.00))
+PASS E3 at rest it is pinned to the car
+  R4 t+974: stage=Riding car=Ascending carPos=(0.00, -27.30, 0.00) local=(-0.21, -27.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1145: stage=Riding car=Ascending carPos=(0.00, -24.29, 0.00) local=(-0.21, -24.14, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1316: stage=Riding car=Ascending carPos=(0.00, -21.28, 0.00) local=(-0.21, -21.13, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1481: stage=Riding car=Ascending carPos=(0.00, -18.28, 0.00) local=(-0.21, -18.13, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1653: stage=Riding car=Ascending carPos=(0.00, -15.26, 0.00) local=(-0.21, -15.11, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1817: stage=Riding car=Ascending carPos=(0.00, -12.25, 0.00) local=(-0.21, -12.10, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+1985: stage=Riding car=Ascending carPos=(0.00, -9.25, 0.00) local=(-0.21, -9.10, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2151: stage=Riding car=Ascending carPos=(0.00, -7.42, 0.00) local=(-0.21, -7.27, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2311: stage=Riding car=Ascending carPos=(0.00, -6.41, 0.00) local=(-0.21, -6.26, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2476: stage=Riding car=Ascending carPos=(0.00, -5.41, 0.00) local=(-0.21, -5.26, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2644: stage=Riding car=Ascending carPos=(0.00, -4.21, 0.00) local=(-0.21, -4.06, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2808: stage=Riding car=Ascending carPos=(0.00, -1.20, 0.00) local=(-0.21, -1.05, -0.21) carLocal=(0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R4 t+2995: stage=Arriving car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R4 t+3212: stage=Arriving car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+PASS R4 ride completed in 3213 frames
+PASS R4 the car moved with the rider inside
+PASS R4 the rider never left the car while it moved
+PASS R4 the rider never sank into the car floor (max 0.000 m)
+PASS R4 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS R4 the tube gate mirrored the car door at the bottom on 298 frames (worst gap 0.00)
+PASS C R4 loose items on the car's floor rode with it on 2574 frames (worst step 0.0 cm)
+PASS R4 the rider was locked exactly when it should be
+PASS R4 the rider was free inside the moving car
+PASS R4 the rider walked 0.63 m inside the moving car and stayed inside
+  R4 bands: above 3.00 m/s over 1.39 s, crossing 1.00 m/s over 2.89 s, below 3.00 m/s over 12.23 s; moving 17.33 s (expected 17.33); waterError 0.000; deepest 3.50; end 0.00; dry at floor y -4.50; submersion streak 0
+PASS R4 about 3 m/s above the surface band (3.00 m/s over 1.39 s)
+PASS R4 about 1 m/s through the surface band (1.00 m/s)
+PASS R4 about 3 m/s below the band (3.00 m/s)
+PASS R4 the car moved for 17.3 s (profile says 17.3)
+PASS R4 the car moved on 1734 of 1734 frames at full speed (largest step 0.048 m)
+  R4 host (editor) hitches while the car moved: 0 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R4 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R4 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R4 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R4 the car arrived dry (0.00 m)
+PASS R4 the water drained to nothing as the floor passed sea level (floor y -4.50, sea level -4.50)
+PASS R4 not submerged at the swap
+  R4 host frames: fps=187 median=5.4ms 1%low=9.0ms worst=18ms hitches=0/3573 frames in 20.5s; no hitches
+PASS R4 the host's player is back in ShipAtSea
+PASS V1 the visor is off again on the deck
+PASS R4 the host stands in the deck cabin
+PASS R4 the car is up
+PASS R4 nobody below
+PASS Y3 the last one up: dive done, still day 1 (phase=AtSea day=1 diveDone=True)
+PASS Y3 no ride started
+PASS C2 Coin 3 rode up into the deck cabin: ShipAtSea (0.00, 0.01, 2999.30)
+PASS C2 Coin 3 is loose again on the deck cabin's floor
+PASS C2 the coin thrown mid-ride crossed to the same spot in the deck cabin ((0.00, 0.11, -0.71) vs (0.00, 0.11, -0.71) in the car)
+  R5a profiler markers recorded: 14
+  R5a: requested cabin
+PASS R5a ride direction Down
+  R5a t+1: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R5a HITCH 5ms at t+0.1s stage=Sealing car=AtTop carY=- submerged=False scene=ShipAtSea blame: Semaphore.WaitForSignal 11ms, PlayerLoop 3ms
+  R5a t+225: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  R5a t+450: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a t+669: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a t+898: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.30) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5a t+1098: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a t+1290: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a t+1489: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.21, 0.15, -0.21) carLocal=(0.30, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5a t+1676: stage=Riding car=Descending carPos=(0.00, -0.91, 0.00) local=(0.21, -0.76, 0.21) carLocal=(-0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+1843: stage=Riding car=Descending carPos=(0.00, -3.92, 0.00) local=(0.21, -3.77, 0.21) carLocal=(-0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a HITCH 67ms at t+9.4s stage=Riding car=Descending carY=-4.6 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 10ms, PlayerLoop 4ms
+  R5a t+1987: stage=Riding car=Descending carPos=(0.00, -5.29, 0.00) local=(0.21, -5.14, 0.21) carLocal=(-0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+2121: stage=Riding car=Descending carPos=(0.00, -6.30, 0.00) local=(0.21, -6.15, 0.21) carLocal=(-0.30, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a HITCH 65ms at t+11.1s stage=Riding car=Descending carY=-6.3 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 12ms, PlayerLoop 5ms
+PASS E1 the coin rides as frozen cargo in the moving car
+  E1 host at car-local (0.19, 0.15, 0.00), coin at (-0.71, 0.11, 0.00)
+PASS E1 mid-ride the dot finds the cargo on the car's floor (target Coin 3 (day 1))
+PASS E2 mid-ride the visor brackets and tags it (1, 'Coin · $80')
+PASS E1 grabbed cargo is cargo no more
+PASS M2 the held coin counts on me (QUOTA $0/$500  ·  ON ME $80)
+PASS E3 it rests on the moving car's floor, not below it (car-local (-2.23, 0.23, -0.14))
+PASS E3 at rest it is pinned to the car
+  R5a t+2216: stage=Riding car=Descending carPos=(0.00, -11.15, 0.00) local=(-0.14, -11.00, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+2386: stage=Riding car=Descending carPos=(0.00, -14.17, 0.00) local=(-0.14, -14.02, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+2559: stage=Riding car=Descending carPos=(0.00, -17.18, 0.00) local=(-0.14, -17.03, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+2726: stage=Riding car=Descending carPos=(0.00, -20.18, 0.00) local=(-0.14, -20.03, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+2896: stage=Riding car=Descending carPos=(0.00, -23.19, 0.00) local=(-0.14, -23.04, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3066: stage=Riding car=Descending carPos=(0.00, -26.21, 0.00) local=(-0.14, -26.06, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3238: stage=Riding car=Descending carPos=(0.00, -29.22, 0.00) local=(-0.14, -29.07, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3405: stage=Riding car=Descending carPos=(0.00, -32.24, 0.00) local=(-0.14, -32.09, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3573: stage=Riding car=Descending carPos=(0.00, -35.24, 0.00) local=(-0.14, -35.09, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3741: stage=Riding car=Descending carPos=(0.00, -38.25, 0.00) local=(-0.14, -38.10, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+3906: stage=Riding car=Descending carPos=(0.00, -41.25, 0.00) local=(-0.14, -41.10, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5a t+4078: stage=Riding car=Descending carPos=(0.00, -44.26, 0.00) local=(-0.14, -44.11, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+PASS R5a ride completed in 4119 frames
+PASS R5a the suit fade went black
+PASS R5a the car moved with the rider inside
+PASS R5a the rider never left the car while it moved
+PASS R5a the rider never sank into the car floor (max 0.000 m)
+PASS R5a the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS C R5a loose items on the car's floor rode with it on 2488 frames (worst step 0.0 cm)
+PASS D R5a the car's doors read shut from the swap to the bottom on 3086 frames (worst open 0.00)
+PASS R5a the rider was locked exactly when it should be
+PASS R5a the rider was free inside the moving car
+PASS R5a the rider walked 0.60 m inside the moving car and stayed inside
+  R5a bands: above 3.00 m/s over 1.39 s, crossing 0.99 m/s over 2.17 s, below 3.00 m/s over 11.28 s; moving 17.37 s (expected 17.33); waterError 0.000; deepest 3.50; end 3.50; dry at floor y NaN; submersion streak 0
+PASS R5a about 3 m/s above the surface band (3.00 m/s over 1.39 s)
+PASS R5a about 1 m/s through the surface band (0.99 m/s)
+PASS R5a about 3 m/s below the band (3.00 m/s)
+PASS R5a the car moved for 17.4 s (profile says 17.3)
+PASS R5a the car moved on 1903 of 1903 frames at full speed (largest step 0.047 m)
+  R5a host (editor) hitches while the car moved: 2 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R5a the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R5a submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R5a the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R5a the car arrived full (3.50 m of 3.50)
+PASS R5a captured floor-at-surface and eyes-under
+  R5a host frames: fps=168 median=5.9ms 1%low=8.1ms worst=73ms hitches=3/4482 frames in 25.2s; t=0.1s 73ms (median 4.4ms; Semaphore.WaitForSignal 11ms, PlayerLoop 3ms), t=9.4s 67ms (median 5.3ms; Semaphore.WaitForSignal 10ms, PlayerLoop 4ms), t=11.1s 65ms (median 6.1ms; Semaphore.WaitForSignal 12ms, PlayerLoop 5ms)
+PASS R5a down again on a fresh site
+PASS C3 Coin 3 rode down again in the car and is loose on its floor: DiveSite01 (1.47, -44.77, 1.68)
+PASS C3 the coin thrown mid-ride lies where it landed in the car ((0.14, 0.23, -2.23) vs (0.14, 0.23, -2.23))
+  R5b profiler markers recorded: 14
+  R5b: requested car
+PASS R5b ride direction Up
+  R5b t+1: stage=Preparing car=AtBottom carPos=(0.00, -45.00, 0.00) local=(-0.14, -44.85, -0.14) carLocal=(0.19, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  R5b t+196: stage=Sealing car=Sealing carPos=(0.00, -45.00, 0.00) local=(-0.14, -44.85, -0.14) carLocal=(0.19, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+377: stage=Riding car=Ascending carPos=(0.00, -43.62, 0.00) local=(0.30, -43.47, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+540: stage=Riding car=Ascending carPos=(0.00, -40.62, 0.00) local=(0.30, -40.47, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+709: stage=Riding car=Ascending carPos=(0.00, -37.62, 0.00) local=(0.30, -37.47, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+872: stage=Riding car=Ascending carPos=(0.00, -34.60, 0.00) local=(0.30, -34.45, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1043: stage=Riding car=Ascending carPos=(0.00, -31.59, 0.00) local=(0.30, -31.44, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1211: stage=Riding car=Ascending carPos=(0.00, -28.59, 0.00) local=(0.30, -28.44, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1376: stage=Riding car=Ascending carPos=(0.00, -25.58, 0.00) local=(0.30, -25.43, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1547: stage=Riding car=Ascending carPos=(0.00, -22.57, 0.00) local=(0.30, -22.42, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1711: stage=Riding car=Ascending carPos=(0.00, -19.56, 0.00) local=(0.30, -19.41, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+1881: stage=Riding car=Ascending carPos=(0.00, -16.55, 0.00) local=(0.30, -16.40, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2048: stage=Riding car=Ascending carPos=(0.00, -13.54, 0.00) local=(0.30, -13.39, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2213: stage=Riding car=Ascending carPos=(0.00, -10.53, 0.00) local=(0.30, -10.38, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2379: stage=Riding car=Ascending carPos=(0.00, -7.84, 0.00) local=(0.30, -7.69, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2543: stage=Riding car=Ascending carPos=(0.00, -6.84, 0.00) local=(0.30, -6.69, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2709: stage=Riding car=Ascending carPos=(0.00, -5.84, 0.00) local=(0.30, -5.69, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+2872: stage=Riding car=Ascending carPos=(0.00, -4.84, 0.00) local=(0.30, -4.69, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+3036: stage=Riding car=Ascending carPos=(0.00, -2.50, 0.00) local=(0.30, -2.35, 0.30) carLocal=(-0.42, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  R5b t+3205: stage=Arriving car=AtTop carPos=- local=(0.00, 0.05, 2999.58) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  R5b t+3421: stage=Arriving car=AtTop carPos=- local=(0.00, 0.05, 2999.58) carLocal=- locked=True travelLocked=True grounded=True inside=False
+PASS R5b ride completed in 3517 frames
+PASS R5b the car moved with the rider inside
+PASS R5b the rider never left the car while it moved
+PASS R5b the rider never sank into the car floor (max 0.000 m)
+PASS R5b the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS R5b the tube gate mirrored the car door at the bottom on 298 frames (worst gap 0.01)
+PASS C R5b loose items on the car's floor rode with it on 2874 frames (worst step 0.0 cm)
+PASS R5b the rider was locked exactly when it should be
+PASS R5b the rider was free inside the moving car
+PASS R5b the rider walked 0.62 m inside the moving car and stayed inside
+  R5b bands: above 3.00 m/s over 1.40 s, crossing 1.00 m/s over 2.90 s, below 3.00 m/s over 12.22 s; moving 17.33 s (expected 17.33); waterError 0.000; deepest 3.50; end 0.00; dry at floor y -4.50; submersion streak 0
+PASS R5b about 3 m/s above the surface band (3.00 m/s over 1.40 s)
+PASS R5b about 1 m/s through the surface band (1.00 m/s)
+PASS R5b about 3 m/s below the band (3.00 m/s)
+PASS R5b the car moved for 17.3 s (profile says 17.3)
+PASS R5b the car moved on 2035 of 2035 frames at full speed (largest step 0.048 m)
+  R5b host (editor) hitches while the car moved: 0 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS R5b the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS R5b submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS R5b the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS R5b the car arrived dry (0.00 m)
+PASS R5b the water drained to nothing as the floor passed sea level (floor y -4.50, sea level -4.50)
+PASS R5b not submerged at the swap
+  R5b host frames: fps=191 median=5.1ms 1%low=7.5ms worst=16ms hitches=0/3522 frames in 20.5s; no hitches
+PASS R5b up again
+PASS Y4 the second dive is done on day 2 (day=2 diveDone=True)
+PASS G0 guest joined at sea
+id=901; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText=''; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Day 3 of 3 — Site 01 — select HQ and pull CONFIRM; trip=Complete/1; ride=Complete/Up/8; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=False; tvRendered=0; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=0; output=0; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=CONFIRM/off; hqSign=none; topScreen=NAVIGATION · DAY 3/3 · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION ·  ·  · DAY 3 OF 3 | QUOTA $0 / $500 · ; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 3 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=11; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=169.867; carState=none; elevFrames=0; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.000; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=-1.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322214379445; frameLag=0.438; sinceStall=0.03; tick=10189.002; rate=60; serial=18; car=0; driven=0; torn=0; state=AtTop; up=1; start=9787; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=8; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.600; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen=''; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'
+elevnetrec: frames=78; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=ShipAtSea; position=(0.00, 0.05, 2999.58); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 2999.58); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=14; camFwd=(0.00, -0.24, -0.97); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the; colour=5; local=True; scene=ShipAtSea; position=(3.50, 0.00, 3007.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.50, 1.60, 3007.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=ShipAtSea; state=Free; holder=-1; owner=-1; version=11; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(0.14, 0.13, 2997.77); velocity=(0.00, 0.00, 0.00)
+
+PASS N1 the host's saved name reached its player: Skipper
+  N2 guest name on the host: 'Mate bof the/b d'
+PASS N3 the guest reads both names
+id=903; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText=''; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Day 3 of 3 — Site 01 — select HQ and pull CONFIRM; trip=Complete/1; ride=Complete/Up/8; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=False; tvRendered=0; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=28; output=54; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=CONFIRM/off; hqSign=none; topScreen=NAVIGATION · DAY 3/3 · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION ·  ·  · DAY 3 OF 3 | QUOTA $0 / $500 · ; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 3 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=199; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=171.396; carState=none; elevFrames=0; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.000; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=-1.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322227101602; frameLag=0.002; sinceStall=0.84; tick=10283.528; rate=60; serial=18; car=0; driven=0; torn=0; state=AtTop; up=1; start=9787; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=8; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.600; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen=''; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'
+elevnetrec: frames=266; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=ShipAtSea; position=(0.00, 0.05, 2999.58); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 2999.58); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=61; camFwd=(0.00, -0.87, -0.48); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(3.50, 0.00, 3007.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.50, 1.60, 3007.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=ShipAtSea; state=Free; holder=-1; owner=-1; version=11; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(0.14, 0.13, 2997.77); velocity=(0.00, 0.00, 0.00)
+
+PASS G0 no ride running
+PASS Y5 the guest joined between days and reads day 3
+id=904; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText=''; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Day 3 of 3 — Site 01 — select HQ and pull CONFIRM; trip=Complete/1; ride=Complete/Up/8; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=False; tvRendered=0; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=0; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=48; output=96; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=CONFIRM/off; hqSign=none; topScreen=NAVIGATION · DAY 3/3 · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION ·  ·  · DAY 3 OF 3 | QUOTA $0 / $500 · ; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Day 3 of 3 — all in, press E to descend'; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'; deckGauge=0.000; deckFrames=299; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=0; deckFirstBad=''; deckWorstAt=''; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=171.813; carState=none; elevFrames=0; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.000; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=-1.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322231270829; frameLag=0.002; sinceStall=1.26; tick=10308.556; rate=60; serial=18; car=0; driven=0; torn=0; state=AtTop; up=1; start=9787; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=8; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.600; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen=''; deckScreen='DESCEND | Day 3 of 3 — all in, press E to descend'
+elevnetrec: frames=366; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=0; firstErr=0.0000; firstStates=none; firstShips=1; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=ShipAtSea; position=(0.00, 0.05, 2999.58); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 2999.58); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=61; camFwd=(0.00, -0.87, -0.48); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(3.50, 0.00, 3007.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(3.50, 1.60, 3007.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, -1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=ShipAtSea; state=Free; holder=-1; owner=-1; version=11; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(0.14, 0.13, 2997.77); velocity=(0.00, 0.00, 0.00)
+
+PASS Y6 no ride started without everyone aboard
+  G1 profiler markers recorded: 14
+  G1: requested cabin
+PASS G1 ride direction Down
+  G1 t+1: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  G1 t+165: stage=Sealing car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=False travelLocked=False grounded=True inside=False
+  G1 t+338: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  G1 t+509: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  G1 t+666: stage=FadingOut car=AtTop carPos=- local=(0.00, 0.05, 3000.00) carLocal=- locked=True travelLocked=True grounded=True inside=False
+  G1 HITCH 32ms at t+4.8s stage=Loading car=AtTop carY=0.0 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 48ms, PlayerLoop 22ms
+  G1 t+804: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  G1 t+957: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  G1 t+1109: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(0.00, 0.15, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  G1 HITCH 51ms at t+8.0s stage=Riding car=Descending carY=-0.2 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 150ms, PlayerLoop 16ms, GC.Collect 8ms
+  G1 t+1247: stage=Riding car=Descending carPos=(0.00, -0.45, 0.00) local=(-0.42, -0.30, -0.42) carLocal=(0.59, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+1376: stage=Riding car=Descending carPos=(0.00, -3.46, 0.00) local=(-0.44, -3.31, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 HITCH 78ms at t+9.5s stage=Riding car=Descending carY=-4.6 submerged=False scene=DiveSite01 blame: Semaphore.WaitForSignal 13ms, PlayerLoop 5ms
+  G1 t+1483: stage=Riding car=Descending carPos=(0.00, -5.12, 0.00) local=(-0.44, -4.97, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+1591: stage=Riding car=Descending carPos=(0.00, -6.13, 0.00) local=(-0.44, -5.98, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 HITCH 76ms at t+11.3s stage=Riding car=Descending carY=-6.3 submerged=True scene=DiveSite01 blame: Semaphore.WaitForSignal 15ms, PlayerLoop 6ms
+PASS E1 (guest) the coin rides as frozen cargo and the guest is aboard
+  E1 (guest) car line mid-ride: carDoor=0.00; carDriven=True; carState=Descending; cargoFrames=930; cargoWorstStep=0.000; doorWorstOpenAtTop=0.00; itemsInCar=1; pinned=1; restKnown=1
+PASS E1 (guest) grabbed cargo is cargo no more
+PASS E3 (guest) it rests on the moving car's floor on the server (car-local (-2.22, 0.37, -0.14))
+  G1 t+1675: stage=Riding car=Descending carPos=(0.00, -15.11, 0.00) local=(-0.44, -14.96, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+1797: stage=Riding car=Descending carPos=(0.00, -18.12, 0.00) local=(-0.44, -17.97, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+1922: stage=Riding car=Descending carPos=(0.00, -21.13, 0.00) local=(-0.44, -20.98, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2047: stage=Riding car=Descending carPos=(0.00, -24.13, 0.00) local=(-0.44, -23.98, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2171: stage=Riding car=Descending carPos=(0.00, -27.15, 0.00) local=(-0.44, -27.00, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2298: stage=Riding car=Descending carPos=(0.00, -30.15, 0.00) local=(-0.44, -30.00, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2427: stage=Riding car=Descending carPos=(0.00, -33.16, 0.00) local=(-0.44, -33.01, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2548: stage=Riding car=Descending carPos=(0.00, -36.18, 0.00) local=(-0.44, -36.03, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2676: stage=Riding car=Descending carPos=(0.00, -39.20, 0.00) local=(-0.44, -39.05, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G1 t+2800: stage=Riding car=Descending carPos=(0.00, -42.19, 0.00) local=(-0.44, -42.04, -0.44) carLocal=(0.63, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+PASS G1 ride completed in 2917 frames
+PASS G1 the suit fade went black
+PASS G1 the car moved with the rider inside
+PASS G1 the rider never left the car while it moved
+PASS G1 the rider never sank into the car floor (max 0.000 m)
+PASS G1 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS C G1 loose items on the car's floor rode with it on 1681 frames (worst step 0.0 cm)
+PASS D G1 the car's doors read shut from the swap to the bottom on 2149 frames (worst open 0.00)
+  G1 remote rider copy: 1683 moving frames, height above the car 0.150..0.150, worst frame-to-frame change 0.0 cm
+PASS G1 the remote rider's copy never stepped against the moving floor (worst 0.0 cm between frames)
+PASS G1 the remote rider's copy held its height on the moving floor (range 0.0 cm)
+PASS G1 the rider was locked exactly when it should be
+PASS G1 the rider was free inside the moving car
+PASS G1 the rider walked 0.63 m inside the moving car and stayed inside
+  G1 bands: above 3.00 m/s over 1.40 s, crossing 0.99 m/s over 2.16 s, below 3.00 m/s over 9.96 s; moving 17.39 s (expected 17.33); waterError 0.000; deepest 3.50; end 3.50; dry at floor y NaN; submersion streak 0
+PASS G1 about 3 m/s above the surface band (3.00 m/s over 1.40 s)
+PASS G1 about 1 m/s through the surface band (0.99 m/s)
+PASS G1 about 3 m/s below the band (3.00 m/s)
+PASS G1 the car moved for 17.4 s (profile says 17.3)
+PASS G1 the car moved on 1242 of 1242 frames at full speed (largest step 0.080 m)
+  G1 host (editor) hitches while the car moved: 3 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS G1 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS G1 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS G1 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS G1 the car arrived full (3.50 m of 3.50)
+PASS G1 captured floor-at-surface and eyes-under
+  G1 host frames: fps=125 median=7.8ms 1%low=10.8ms worst=78ms hitches=4/3364 frames in 25.3s; t=4.8s 32ms (median 6.0ms; Semaphore.WaitForSignal 48ms, PlayerLoop 22ms), t=8.0s 51ms (median 6.5ms; Semaphore.WaitForSignal 150ms, PlayerLoop 16ms, GC.Collect 8ms), t=9.5s 78ms (median 6.9ms; Semaphore.WaitForSignal 13ms, PlayerLoop 5ms), t=11.3s 76ms (median 7.7ms; Semaphore.WaitForSignal 15ms, PlayerLoop 6ms)
+PASS G1 both listed below
+PASS G1 guest rode down with the host
+id=913; requested snapshot
+server=False; client=True; clientId=1; loaded=DiveSite01+Session; active=DiveSite01; phase=DiveInProgress; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText='Putting on the suit…'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=; trip=Complete/1; ride=Complete/Down/9; car=AtBottom; carPos=(0.00, -45.00, 0.00); below=0+1; travelLocked=False; underwater=True/38.73; cabinWater=3.50; tv=none; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer+28:CoinSmall+29:CoinSmall+30:CoinMedium+31:CoinSmall+32:CoinMedium+33:CoinMedium+34:CoinLarge+35:AirTank+36:AirTank; winchAtCar=False; winchOnShip=False; dingsAtCar=1; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=0.29; carDriven=True; carState=AtBottom; cargoFrames=1205; cargoWorstStep=0.000; doorWorstOpenAtTop=0.00; itemsInCar=1; pinned=0; restKnown=1; visor=on; home=hidden/4.8; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80,#28:13,#29:14,#30:47,#31:14,#32:42,#33:77,#34:235
+mic=False; test=False; tone=False; world=2; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=1256; output=2575; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=-1; leverAngle=0; leverSign=none; hqSign=none; topScreen=none; bottomScreen=none; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: none
+elevator: tick=199.554; carState=AtBottom; carUp=False; carY=-45.000; carElapsed=0.437; door=0.291; gate=0.289; gateBlocks=False; carWater=3.500; waterShown=False; waterY=-41.500; flow=Still; pour=0; visStreams=0; foam=0.00; bubbles=False; drain=0.00; bubbleParticles=0; gauge=1.000; ringEmission=0.90/0.86/0.77; cabinLight=1.00/0.95/0.85; eyeY=-43.230; eyeUnder=True; viewWeight=1.00; elevFrames=4856; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322509425202; frameLag=0.002; sinceStall=29.08; tick=11972.971; rate=60; serial=20; car=1; driven=1; torn=0; state=AtBottom; up=0; start=11947; carTick=11972.971; carY=-45.0000; sea=-4.500; span=3.500; water=3.5000; surfY=-41.5000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=1.0000; door=0.2886; gate=0.2858; gateBlocks=0; ring=0; ship=0; rideSerial=9; rideStage=Complete; deckDoors=0.0000; doorYaw=0.00; shutterYaw=0.00; carShown=0; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=-43.230; eyeUnder=1; view=1.00; inCar=1; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen='SURFACE | ON THE SEABED | DEPTH 40 m   WATER 100%'; deckScreen=''
+elevnetrec: frames=6877; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=1; firstShipErr=0.00
+player=0; name=Skipper; colour=2; local=False; scene=DiveSite01; position=(-0.44, -44.85, -0.44); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.935; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-0.44, -43.25, -0.44); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=61; camFwd=(-0.34, -0.87, -0.34); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=DiveSite01; position=(0.88, -44.83, 1.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.935; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.88, -43.23, 1.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=64.9; camFwd=(0.28, -0.91, 0.32); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=35; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-3.54, -44.78, -9.19); velocity=(0.00, 0.00, 0.00)
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=36; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-19.80, -44.78, -14.14); velocity=(0.00, 0.00, 0.00)
+item=CoinLarge(Clone); display=Large coin; use=Throw; id=34; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=5; grip=OneHand; launch=0; position=(-18.38, -44.97, -19.80); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=30; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-8.84, -44.98, -8.13); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=32; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-10.61, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=33; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-16.26, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=DiveSite01; state=Free; holder=-1; owner=-1; version=14; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.47, -44.71, 1.67); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=28; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-6.72, -44.98, -4.60); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=31; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-12.73, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=29; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-5.66, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+
+PASS G1 the guest's copy stands inside the car on the host
+PASS G4 guest submerged at the bottom with the same cabin water as the host
+id=914; requested snapshot
+server=False; client=True; clientId=1; loaded=DiveSite01+Session; active=DiveSite01; phase=DiveInProgress; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText='Putting on the suit…'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=; trip=Complete/1; ride=Complete/Down/9; car=AtBottom; carPos=(0.00, -45.00, 0.00); below=0+1; travelLocked=False; underwater=True/38.73; cabinWater=3.50; tv=none; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer+28:CoinSmall+29:CoinSmall+30:CoinMedium+31:CoinSmall+32:CoinMedium+33:CoinMedium+34:CoinLarge+35:AirTank+36:AirTank; winchAtCar=False; winchOnShip=False; dingsAtCar=1; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=0.57; carDriven=True; carState=AtBottom; cargoFrames=1205; cargoWorstStep=0.000; doorWorstOpenAtTop=0.00; itemsInCar=1; pinned=0; restKnown=1; visor=on; home=hidden/4.8; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80,#28:13,#29:14,#30:47,#31:14,#32:42,#33:77,#34:235
+mic=False; test=False; tone=False; world=2; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=1276; output=2616; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=-1; leverAngle=0; leverSign=none; hqSign=none; topScreen=none; bottomScreen=none; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: none
+elevator: tick=199.966; carState=AtBottom; carUp=False; carY=-45.000; carElapsed=0.850; door=0.566; gate=0.564; gateBlocks=False; carWater=3.500; waterShown=False; waterY=-41.500; flow=Still; pour=0; visStreams=0; foam=0.00; bubbles=False; drain=0.00; bubbleParticles=0; gauge=1.000; ringEmission=0.90/0.86/0.77; cabinLight=1.00/0.95/0.85; eyeY=-43.230; eyeUnder=True; viewWeight=1.00; elevFrames=4954; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322513556865; frameLag=0.002; sinceStall=29.49; tick=11997.734; rate=60; serial=20; car=1; driven=1; torn=0; state=AtBottom; up=0; start=11947; carTick=11997.734; carY=-45.0000; sea=-4.500; span=3.500; water=3.5000; surfY=-41.5000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=1.0000; door=0.5637; gate=0.5609; gateBlocks=0; ring=0; ship=0; rideSerial=9; rideStage=Complete; deckDoors=0.0000; doorYaw=0.00; shutterYaw=0.00; carShown=0; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=-43.230; eyeUnder=1; view=1.00; inCar=1; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen='SURFACE | ON THE SEABED | DEPTH 40 m   WATER 100%'; deckScreen=''
+elevnetrec: frames=6975; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=1; firstShipErr=0.00
+player=0; name=Skipper; colour=2; local=False; scene=DiveSite01; position=(-0.44, -44.85, -0.44); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.93; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-0.44, -43.25, -0.44); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=61; camFwd=(-0.34, -0.87, -0.34); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=DiveSite01; position=(0.88, -44.83, 1.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.93; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.88, -43.23, 1.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=64.9; camFwd=(0.28, -0.91, 0.32); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=35; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-3.54, -44.78, -9.19); velocity=(0.00, 0.00, 0.00)
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=36; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-19.80, -44.78, -14.14); velocity=(0.00, 0.00, 0.00)
+item=CoinLarge(Clone); display=Large coin; use=Throw; id=34; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=5; grip=OneHand; launch=0; position=(-18.38, -44.97, -19.80); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=30; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-8.84, -44.98, -8.13); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=32; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-10.61, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=33; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-16.26, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=DiveSite01; state=Free; holder=-1; owner=-1; version=14; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.43, -44.76, 1.61); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=28; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-6.72, -44.98, -4.60); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=31; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-12.73, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=29; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-5.66, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+
+PASS V4 the guest sees the same coin values as the host: #11:80,#28:13,#29:14,#30:47,#31:14,#32:42,#33:77,#34:235
+PASS V1 the guest's visor is on at the bottom
+PASS C4 the guest's copy of the coin rode with the car's floor (1205 frames, worst step 0.0 cm)
+PASS C4 the guest sees Coin 3 where the host has it ((1.32, -44.87, 1.54) vs (1.32, -44.88, 1.54))
+PASS E3 the coin the guest threw mid-ride rests on the car's floor, not below it: (-2.02, 0.12, -0.15)
+PASS D the guest's car doors read shut from the swap to the bottom (worst open 0.00)
+PASS V6 the host's visor tags the guest (1 tag, 2.0 m vs 2.0)
+PASS V4 Coin 4 still on the seafloor for the guest's look
+PASS V4 the guest's visor tags Coin 4 with the host's value: Small coin · $14
+id=918; requested snapshot
+server=False; client=True; clientId=1; loaded=DiveSite01+Session; active=DiveSite01; phase=DiveInProgress; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText='Putting on the suit…'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=; trip=Complete/1; ride=Complete/Down/9; car=AtBottom; carPos=(0.00, -45.00, 0.00); below=0+1; travelLocked=False; underwater=True/38.87; cabinWater=3.50; tv=none; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer+28:CoinSmall+29:CoinSmall+30:CoinMedium+31:CoinSmall+32:CoinMedium+33:CoinMedium+34:CoinLarge+35:AirTank+36:AirTank; winchAtCar=False; winchOnShip=False; dingsAtCar=1; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=1.00; carDriven=True; carState=AtBottom; cargoFrames=1205; cargoWorstStep=0.000; doorWorstOpenAtTop=0.00; itemsInCar=1; pinned=0; restKnown=1; visor=on; home=shown/11.3; brackets=1; tag=Small coin · $14; tagValue=14; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80,#28:13,#29:14,#30:47,#31:14,#32:42,#33:77,#34:235
+mic=False; test=False; tone=False; world=2; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=1359; output=2702; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=-1; leverAngle=0; leverSign=none; hqSign=none; topScreen=none; bottomScreen=none; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: none
+elevator: tick=202.173; carState=AtBottom; carUp=False; carY=-45.000; carElapsed=3.056; door=1.000; gate=1.000; gateBlocks=False; carWater=3.500; waterShown=False; waterY=-41.500; flow=Still; pour=0; visStreams=0; foam=0.00; bubbles=False; drain=0.00; bubbleParticles=0; gauge=1.000; ringEmission=0.90/0.86/0.77; cabinLight=1.00/0.95/0.85; eyeY=-43.370; eyeUnder=True; viewWeight=1.00; elevFrames=5480; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271322535609111; frameLag=0.001; sinceStall=31.69; tick=12130.118; rate=60; serial=20; car=1; driven=1; torn=0; state=AtBottom; up=0; start=11947; carTick=12130.118; carY=-45.0000; sea=-4.500; span=3.500; water=3.5000; surfY=-41.5000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=1.0000; door=1.0000; gate=1.0000; gateBlocks=0; ring=0; ship=0; rideSerial=9; rideStage=Complete; deckDoors=0.0000; doorYaw=0.00; shutterYaw=0.00; carShown=0; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=-43.370; eyeUnder=1; view=1.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=0.000; tvFrames=0; carScreen='SURFACE | ON THE SEABED | DEPTH 40 m   WATER 100%'; deckScreen=''
+elevnetrec: frames=7501; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=1; firstShipErr=0.00
+player=0; name=Skipper; colour=2; local=False; scene=DiveSite01; position=(-0.44, -44.85, -0.44); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.925; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-0.44, -43.25, -0.44); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.68, 0.00, 0.74); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=DiveSite01; position=(-12.30, -44.97, -8.06); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=0.925; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-12.30, -43.37, -8.06); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=CoinSmall(Clone); obstructed=False; camPitch=71; camFwd=(-0.23, -0.95, -0.23); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=35; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-3.54, -44.78, -9.19); velocity=(0.00, 0.00, 0.00)
+item=AirTank(Clone); display=Full air tank; use=Breathe; id=36; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=4; grip=OneHand; launch=0; position=(-19.80, -44.78, -14.14); velocity=(0.00, 0.00, 0.00)
+item=CoinLarge(Clone); display=Large coin; use=Throw; id=34; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=5; grip=OneHand; launch=0; position=(-18.38, -44.97, -19.80); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=30; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-8.84, -44.98, -8.13); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=32; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-10.61, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=33; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=0; position=(-16.26, -44.98, -14.85); velocity=(0.00, 0.00, 0.00)
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=DiveSite01; state=Free; holder=-1; owner=-1; version=14; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.32, -44.88, 1.53); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=28; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-6.72, -44.98, -4.60); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=31; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-12.73, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+item=CoinSmall(Clone); display=Small coin; use=Throw; id=29; scene=Session; state=Free; holder=-1; owner=-1; version=1; writer=False; kinematic=True; collider=True; visible=True; massKg=0.4; grip=OneHand; launch=0; position=(-5.66, -44.98, -8.49); velocity=(0.00, 0.00, 0.00)
+
+PASS V5 the guest's visor brackets the coin in view (1)
+  G1 guest frames (build, rendering): id=919; fps=239 median=4.2ms 1%low=4.6ms worst=29ms hitches=0/6834 frames in 29.2s; no hitches
+PASS G1 the guest build had at most two hitches of 30 ms or more while the car moved (0)
+PASS G1 the guest build rendered at 50 fps or better (239)
+  G2 profiler markers recorded: 14
+  G2: requested car
+PASS G2 ride direction Up
+  G2 t+1: stage=Preparing car=AtBottom carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=True travelLocked=True grounded=True inside=True
+  G2 t+146: stage=Sealing car=Sealing carPos=(0.00, -45.00, 0.00) local=(0.00, -44.85, 0.00) carLocal=(0.00, 0.15, 0.00) locked=False travelLocked=False grounded=True inside=True
+  G2 t+284: stage=Riding car=Ascending carPos=(0.00, -43.60, 0.00) local=(0.44, -43.45, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+411: stage=Riding car=Ascending carPos=(0.00, -40.59, 0.00) local=(0.44, -40.44, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+537: stage=Riding car=Ascending carPos=(0.00, -37.58, 0.00) local=(0.44, -37.43, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+669: stage=Riding car=Ascending carPos=(0.00, -34.56, 0.00) local=(0.44, -34.41, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+802: stage=Riding car=Ascending carPos=(0.00, -31.54, 0.00) local=(0.44, -31.39, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+930: stage=Riding car=Ascending carPos=(0.00, -28.52, 0.00) local=(0.44, -28.37, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1062: stage=Riding car=Ascending carPos=(0.00, -25.49, 0.00) local=(0.44, -25.34, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1192: stage=Riding car=Ascending carPos=(0.00, -22.50, 0.00) local=(0.44, -22.35, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1317: stage=Riding car=Ascending carPos=(0.00, -19.47, 0.00) local=(0.44, -19.32, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1445: stage=Riding car=Ascending carPos=(0.00, -16.49, 0.00) local=(0.44, -16.34, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1573: stage=Riding car=Ascending carPos=(0.00, -13.44, 0.00) local=(0.44, -13.29, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1700: stage=Riding car=Ascending carPos=(0.00, -10.43, 0.00) local=(0.44, -10.28, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1829: stage=Riding car=Ascending carPos=(0.00, -7.81, 0.00) local=(0.44, -7.66, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+1951: stage=Riding car=Ascending carPos=(0.00, -6.81, 0.00) local=(0.44, -6.66, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+2080: stage=Riding car=Ascending carPos=(0.00, -5.80, 0.00) local=(0.44, -5.65, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+2207: stage=Riding car=Ascending carPos=(0.00, -4.79, 0.00) local=(0.44, -4.64, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+2329: stage=Riding car=Ascending carPos=(0.00, -2.38, 0.00) local=(0.44, -2.23, -0.44) carLocal=(0.00, 0.15, 0.63) locked=False travelLocked=False grounded=True inside=True
+  G2 t+2454: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.63, 0.05, 3000.00) carLocal=(-2120.88, 0.05, -2121.76) locked=True travelLocked=True grounded=True inside=False
+  G2 t+2582: stage=Arriving car=AtTop carPos=(0.00, 0.00, 0.00) local=(-0.63, 0.05, 3000.00) carLocal=(-2120.88, 0.05, -2121.76) locked=True travelLocked=True grounded=True inside=False
+PASS G2 ride completed in 2632 frames
+PASS G2 the car moved with the rider inside
+PASS G2 the rider never left the car while it moved
+PASS G2 the rider never sank into the car floor (max 0.000 m)
+PASS G2 the rider's height above the floor never jumped between frames (worst 0.0 cm)
+PASS G2 the tube gate mirrored the car door at the bottom on 223 frames (worst gap 0.01)
+PASS C G2 loose items on the car's floor rode with it on 2200 frames (worst step 0.0 cm)
+PASS G2 the rider was locked exactly when it should be
+PASS G2 the rider was free inside the moving car
+PASS G2 the rider walked 0.63 m inside the moving car and stayed inside
+  G2 bands: above 3.00 m/s over 1.39 s, crossing 1.00 m/s over 2.89 s, below 3.00 m/s over 12.22 s; moving 17.33 s (expected 17.33); waterError 0.000; deepest 3.50; end 0.00; dry at floor y -4.49; submersion streak 0
+PASS G2 about 3 m/s above the surface band (3.00 m/s over 1.39 s)
+PASS G2 about 1 m/s through the surface band (1.00 m/s)
+PASS G2 about 3 m/s below the band (3.00 m/s)
+PASS G2 the car moved for 17.3 s (profile says 17.3)
+PASS G2 the car moved on 1566 of 1566 frames at full speed (largest step 0.065 m)
+  G2 host (editor) hitches while the car moved: 0 (the editor's own windows share the GPU; the guest build below is the gate)
+PASS G2 the cabin water matched sea level minus the floor every frame (worst 0.000 m)
+PASS G2 submersion flipped within a frame or two of the eye crossing sea level (worst streak 0)
+PASS G2 the rider went under and the F3 line read underwater=True depth= below and underwater=False above
+PASS G2 the car arrived dry (0.00 m)
+PASS G2 the water drained to nothing as the floor passed sea level (floor y -4.49, sea level -4.50)
+PASS G2 not submerged at the swap
+  G2 host frames: fps=126 median=7.9ms 1%low=11.6ms worst=22ms hitches=0/2635 frames in 20.5s; no hitches
+PASS G2 only the guest is below
+PASS G2 the site stays loaded on the server while the guest is below
+PASS G2 deck cabin doors closed on the ship
+PASS G2 the deck cabin doorway is blocked while the car is below (DeckCabinShutterCollider)
+PASS Y7 the day is still in progress while the guest is below
+PASS G2 host out of the housing before the guest rides up
+PASS G3 guest surfaced, nobody below
+PASS G3 guest is back on the ship, unlocked
+id=923; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText='Putting on the suit…'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Day 3 of 3 — dive done — pull END DAY; trip=Complete/1; ride=Complete/Up/11; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=True; tvRendered=8; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=3; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=3080; output=5963; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=END DAY/on; hqSign=none; topScreen=NAVIGATION · DAY 3/3 · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION · SITE 01 ·  · DAY 3 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Dive done — end the day at the monitor'; deckScreen='DESCEND | Dive done — end the day at the monitor'; deckGauge=0.000; deckFrames=2429; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=828; deckFirstBad=''; deckWorstAt='frame 2227: shown=0.725 want=0.725 present=True ride=Arriving/Up/True opening=False car=AtTop/True t=109.73'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=276.239; carState=none; elevFrames=22662; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271323276279074; frameLag=0.005; sinceStall=105.76; tick=16574.061; rate=60; serial=29; car=0; driven=0; torn=0; state=AtTop; up=1; start=16450; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=11; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.650; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=1.650; tvFrames=8; carScreen=''; deckScreen='DESCEND | Dive done — end the day at the monitor'
+elevnetrec: frames=25124; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=2; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=Session; position=(-1.50, 0.00, 2992.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-1.50, 1.60, 2992.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, 1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=71; camFwd=(0.00, -0.95, 0.33); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=Session; state=Free; holder=-1; owner=-1; version=15; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.32, 0.12, 1.53); velocity=(0.00, 0.00, 0.00)
+
+PASS G3 the deck cabin doorway is open again with the car up
+PASS G3 the guest's copy stands in the deck cabin on the host
+PASS G4 guest dry again on the ship
+id=924; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=False; box=0; balance=0; world=Sea; fade=0; fadeText='Putting on the suit…'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Day 3 of 3 — dive done — pull END DAY; trip=Complete/1; ride=Complete/Up/11; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=True; tvRendered=8; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=3; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=3100; output=6005; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=END DAY/on; hqSign=none; topScreen=NAVIGATION · DAY 3/3 · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION · SITE 01 ·  · DAY 3 OF 3 | QUOTA $0 / $500 · DIVE DONE — END THE DAY FIRST; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Dive done — end the day at the monitor'; deckScreen='DESCEND | Dive done — end the day at the monitor'; deckGauge=0.000; deckFrames=2529; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=828; deckFirstBad=''; deckWorstAt='frame 2227: shown=0.725 want=0.725 present=True ride=Arriving/Up/True opening=False car=AtTop/True t=109.73'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=276.664; carState=none; elevFrames=22662; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271323280536169; frameLag=0.002; sinceStall=106.19; tick=16599.564; rate=60; serial=29; car=0; driven=0; torn=0; state=AtTop; up=1; start=16450; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=11; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.650; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=1.650; tvFrames=8; carScreen=''; deckScreen='DESCEND | Dive done — end the day at the monitor'
+elevnetrec: frames=25224; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=2; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=Session; position=(-1.50, 0.00, 2992.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(-1.50, 1.60, 2992.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, 1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=71; camFwd=(0.00, -0.95, 0.33); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=Session; state=Free; holder=-1; owner=-1; version=15; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.32, 0.12, 1.53); velocity=(0.00, 0.00, 0.00)
+
+PASS Y8 the third dive is done (day=3 diveDone=True)
+PASS Y8 sailing home with the dive done is refused until End day: refused: Dive done — End day first
+PASS Y8 payday at sea (phase=AtSea)
+PASS Y8 the monitor refuses Site 01 on payday: refused: Payday — only HQ
+PASS Y8 no ride on payday
+PASS Y8 the guest reads payday
+id=925; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=True; box=0; balance=0; world=Sea; fade=0; fadeText='PAYDAY'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Payday — sail home; trip=Complete/1; ride=Complete/Up/11; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=True; tvRendered=8; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=3; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=3253; output=6333; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=CONFIRM/off; hqSign=none; topScreen=NAVIGATION · PAYDAY · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION ·  ·  ·  · PAYDAY — SAIL HOME · NOTICE; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Payday — sail home'; deckScreen='DESCEND | Payday — sail home'; deckGauge=0.000; deckFrames=3312; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=828; deckFirstBad=''; deckWorstAt='frame 2227: shown=0.725 want=0.725 present=True ride=Arriving/Up/True opening=False car=AtTop/True t=109.73'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=279.972; carState=none; elevFrames=22662; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271323313354781; frameLag=0.002; sinceStall=109.47; tick=16798.070; rate=60; serial=29; car=0; driven=0; torn=0; state=AtTop; up=1; start=16450; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=11; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.650; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=1.650; tvFrames=8; carScreen=''; deckScreen='DESCEND | Payday — sail home'
+elevnetrec: frames=26007; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=2; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=Session; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, 1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=71; camFwd=(0.00, -0.95, 0.33); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=Session; state=Free; holder=-1; owner=-1; version=15; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(1.32, 0.12, 1.53); velocity=(0.00, 0.00, 0.00)
+
+PASS Z1 Coin 3 is on the ship
+PASS Z1 the coin lies inside the storage volume
+PASS Z1 the guest reads the box's worth
+id=926; requested snapshot
+server=False; client=True; clientId=1; loaded=Session+ShipAtSea; active=ShipAtSea; phase=AtSea; day=3; payday=True; box=80; balance=0; world=Sea; fade=0; fadeText='PAYDAY'; wipeCards=0; wipe=0/False; message=Connected to 127.0.0.1.; monitor=Payday — sail home; trip=Complete/1; ride=Complete/Up/11; car=AtTop; carPos=none; below=; travelLocked=False; underwater=False/0.00; cabinWater=none; tv=-1; tvLive=False; tvCaption=NO SIGNAL; tvViewerNear=True; tvRendered=8; spawned=0:CrewDayState+8:PrototypePlayer+11:CoinMedium+27:PrototypePlayer; winchAtCar=False; winchOnShip=False; dingsAtCar=3; dingsOnShip=0; ghostGreen=False; ghostActive=False; ghostSerial=0; slamsHeard=0; carDoor=none; carDriven=False; cargoFrames=0; cargoWorstStep=0; visor=off; home=hidden/0.0; brackets=0; tag=; tagValue=-1; crew=0; spectatingName=; noSignal=False; onAir=0; coins=#11:80
+mic=False; test=False; tone=False; world=1; epoch=0; sent=0; received=0; relayed=0; rejected=0; mix=3286; output=6401; status=Microphone OFF
+heard=
+baskets=0;
+giveup=0/0; quotaBoard=none;
+selected=None; unlocked=none; site=Site01; toSite=Site01; leverPulls=0/Ship/None; leverPlayed=0; leverAngle=0; leverSign=CONFIRM/off; hqSign=none; topScreen=NAVIGATION · PAYDAY · [HQ][SITE 01@][SITE 02#][SITE 03#][SITE 04#] ·  ·  · QUOTA $80 / $500 · BLACK TIDE; bottomScreen=SELECT A DESTINATION ·  ·  ·  · PAYDAY — SAIL HOME · NOTICE; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=none; colourBottom=none; colourSign=none; colourLeverPlayed=-1; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=none; shopBottom=none; shopSign=none; shopLeverPlayed=-1; shopLeverAngle=0; shopOpen=False;
+elevatorDeck: deckPresent=True; deckCarShown=True; deckDoors=1.000; doorsShown=1.000; shutters=1.000; shutterBox=False; doorBox=False; deckPanel='Payday — sail home'; deckScreen='DESCEND | Payday — sail home'; deckGauge=0.000; deckFrames=3475; deckWorstShutter=0.000; deckBadBox=0; deckBadDoorway=0; deckBadShown=0; deckShutFrames=828; deckFirstBad=''; deckWorstAt='frame 2227: shown=0.725 want=0.725 present=True ride=Arriving/Up/True opening=False car=AtTop/True t=109.73'; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000; walkEnd=(0.000, 0.000, 0.000)
+elevator: tick=280.640; carState=none; elevFrames=22662; elevWorstY=0.0000; elevWorstLag=0.000; elevWorstWater=0.0000; elevWorstGauge=0.000; elevWorstGate=0.036; elevDoorWrong=0; elevGateWrong=0; elevViewWorst=0; elevSubWorst=0; elevBubbleStill=0; elevBubbleAbove=0; elevFirstFrameErr=0.000; walkDone=False; walked=0.00; walkFrames=0; walkGrounded=0; walkMaxDrop=0.000; walkMaxRise=0.000
+elevnet: wall=639271323320207691; frameLag=0.002; sinceStall=110.15; tick=16838.167; rate=60; serial=29; car=0; driven=0; torn=0; state=AtTop; up=1; start=16450; carTick=0.000; carY=0.0000; sea=0.000; span=0.000; water=0.0000; surfY=0.0000; shown=0; flow=Still; pour=0; vis=0; bubbles=0; foam=0.000; drain=0.000; gauge=0.0000; door=0.0000; gate=0.0000; gateBlocks=0; ring=0; ship=1; rideSerial=11; rideStage=Complete; deckDoors=1.0000; doorYaw=-23.58; shutterYaw=-23.58; carShown=1; shutterBlocks=0; doorwayBlocks=0; local=1; id=1; eyeY=1.650; eyeUnder=0; view=0.00; inCar=0; dead=0; spectating=-1; tv=-1; tvLive=0; tvGrade=0.00; tvEyeY=1.650; tvFrames=8; carScreen=''; deckScreen='DESCEND | Payday — sail home'
+elevnetrec: frames=26170; torn=0; undriven=0; worstY=0.0000; worstWater=0.0000; worstGauge=0.0000; worstGate=0.0000; worstDoorShut=0.0000; worstShutter=0.00; shutterBlockMismatch=0; firstLoads=1; firstErr=0.0000; firstStates=AtTopUp; firstShips=2; firstShipErr=0.00
+boardingGate=Ship Boarding Gate; scene=ShipAtSea; closed=True
+player=0; name=Skipper; colour=2; local=False; scene=Session; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=False; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=0; camFwd=(0.00, 0.00, 1.00); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+player=1; name=Mate bof the/b d; colour=5; local=True; scene=ShipAtSea; position=(0.00, 0.05, 3000.00); slots=[-1,-1,-1,-1]; held=none; massKg=0; speedFactor=1; meterFill=0; crouched=False; dead=False; air=1; health=100; upgrades=None; shopRefusal=''; ownerValid=True; isController=True; controllerOn=True; spectating=-1; watchers=0; spectatorActive=False; spectatorTarget=-1; camPos=(0.00, 1.65, 3000.00); height=1.8; eye=1.6; hands=rest; lamp=True; dashes=0; dashReady=1; dashSerial=0; dashRings=0; leak=False; patchNotice=''; target=none; obstructed=False; camPitch=71; camFwd=(0.00, -0.95, 0.33); knockback=0; grabbed=False; grabHolder=-1; grabT=0.00; grabsFelt=0
+item=CoinMedium(Clone); display=Coin; use=Throw; id=11; scene=Session; state=Free; holder=-1; owner=-1; version=16; writer=False; kinematic=True; collider=True; visible=True; massKg=1.5; grip=OneHand; launch=6.532; position=(3.20, 0.05, 2987.50); velocity=(0.00, 0.00, 0.00)
+
+PASS Y9 sailing home on payday: sailing to HQ
+PASS Y9 docking keeps the payday until it is paid (day=3 payday=True phase=AtHQ)
+PASS Z2 the monitor refuses Site 01 until the quota is paid: refused: Pay the quota first
+PASS Z2 Coin 3 crossed to HQ inside the storage room
+PASS Z3 looking at the board offers the pay: prompt='Press E to pay the quota ($500) — sells the box ($80)'; target=none
+PASS Z3 sold $80, quota $80, paid=True, balance $80 (nothing charged)
+PASS Z3 a new cycle after paying (day=0 payday=False balance=80 handed=0)
+PASS Z3 the board says PAID: PAID $80 | handed over $80 — every dollar yours · balance $80 | next dive is day 1
+PASS Z3 the monitor may sail again: 
+PASS Z4 no second pay happened
+PASS Z5 short before payday banks the box and keeps the day (balance $120, handed $40, day 2)
+PASS Z5 the board says SHORT BY: SHORT BY $99959 | sold $40, handed over $40 · balance $120 | sail out and dive again
+PASS Z5 the ship may sail out again to try for the rest: 
+PASS Z5 short at payday: the run is over, the plank phase (had $40, balance $120 until the reset)
+PASS Z5 the board says THE RUN IS OVER: THE RUN IS OVER | quota $99999 missed (handed over $40) | walk the plank
+PASS Z5 no sailing once the run is over: The run is over
+PASS Z5 the reset: day 0, $0, phase AtHQ
+MATRIX_PASS

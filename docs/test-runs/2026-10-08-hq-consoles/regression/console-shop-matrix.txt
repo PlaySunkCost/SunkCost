@@ -1,0 +1,224 @@
+Console-shop matrix started 09/10/2026 11:34:34
+PASS editor is the host with a spawned player
+PASS the player prefab carries PlayerUpgrades (run the shop setup)
+PASS the catalogue has the four baseline items (4 rows)
+  · prices: Air tank $40, Large tank $300, Bright headlamp $150, Patch kit $60; 3 rows a page, 2 pages
+PASS two pages for four items (paging is live on the real catalogue)
+PASS the host carries PlayerHudUI and ShipControls
+  · title 'EQUIPMENT CATALOGUE', lower heading 'BROWSE & BUY  ·  AIM + E', prev '< PREV', next 'NEXT >', lever 'NEXT PAGE'
+
+== P0 — the console is the shop: the rig at the counter with its rows, zones and lever; the sign, the three fascia signs and the stands gone; page 1 of 2 with an empty pot
+PASS P0 the shop console composer is in the HQ scene
+PASS P0 the rig 'Shop Console' of kind Shop in the HQ scene
+PASS P0 the rig has its lever, its collider and the three surfaces
+PASS P0 the root at (-6.00, 0.05, 14.00) (expected (-6.00, 0.05, 14.00) ± 0.6 m)
+PASS P0 the console faces south into the depot aisle (front (0.00, 0.00, -1.00))
+PASS P0 3/3 row zones 'Shop Row 0..2' under the top screen (Shop/ShopRow, Index r, solid colliders)
+PASS P0 the PREV zone 'Shop Prev' (Shop/ShopPage, Index -1)
+PASS P0 the NEXT zone 'Shop Next' (Shop/ShopPage, Index +1)
+PASS P0 the lever control 'Shop Lever'
+PASS P0 the control names resolve by GameObject.Find (what the aim hook uses)
+PASS P0 the hanging sign, the three fascia signs, the counter and the four stands are gone from the HQ scene
+PASS P0 no ShopDisplay component anywhere (0)
+PASS P0 the depot group 'Shop Room' still stands
+PASS P0 the chute is in the HQ scene for the console's deliveries
+PASS P0 the server's page 0 and pot $0
+PASS P0 the top screen: EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 1/2 · Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT >
+PASS P0 the first page's rows read NO MONEY with an empty pot: 'Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY'
+PASS P0 the lower screen carries Dan's second phrase: BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT | BOUGHT GEAR LANDS AT THE PICKUP CHUTE · 
+PASS P0 the sign (two pages: lit): NEXT PAGE/on
+PASS P0 the compat text: CATALOGUE PAGE 1/2 | Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY | CREW POT $0
+PASS P0 no HUD browser component on anyone (0) and no shop window open
+  · capture saved Temp/look/console-shop-P0-page1-nomoney.png
+
+== P1 — a row with no money: the prompt offers the buy, E is refused 'Not enough money', the refusal shows in the prompt and on the lower screen, nothing sold
+PASS the dot is on Shop Row 0 (aim Shop/ShopRow/0)
+PASS P1 the prompt: Air tank · $40 — Press E to buy · crew pot $0
+PASS P1 the composer sees the aim on row 0
+PASS P1 E with an empty pot: the buyer's refusal reads 'Not enough money: $40 needed, $0 in the pot' (expected to contain 'Not enough money')
+PASS P1 the refusal names the price and the pot: Not enough money: $40 needed, $0 in the pot
+PASS P1 the refusal shows in the prompt: Not enough money: $40 needed, $0 in the pot
+PASS P1 the lower screen shows the buyer's refusal as a notice: BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT · Not enough money: $40 needed, $0 in the pot · NOTICE
+PASS P1 nothing was sold
+PASS P1 a buy refusal is the buyer's alone (the console's shared refusal serial did not move)
+PASS P1 no shop window opened on E
+  · capture saved Temp/look/console-shop-P1-refused.png
+
+== P2 — a buy from a row: $500 in the pot, every row reads BUY, E on the air tank's row delivers it through the chute onto the pickup pad and charges $40
+PASS P2 the rows read BUY with $500: 'Air tank $40 BUY|Large tank $300 BUY|Bright headlamp $150 BUY'
+PASS P2 the pot on the screen: EQUIPMENT CATALOGUE · CREW POT $500 ·  · PAGE 1/2 · Air tank $40 BUY|Large tank $300 BUY|Bright headlamp $150 BUY · < PREV · NEXT >
+PASS the dot is on Shop Row 0 (aim Shop/ShopRow/0)
+PASS P2 the last buy refusal lapsed: ''
+PASS P2 the prompt with money: Air tank · $40 — Press E to buy · crew pot $500
+  · capture saved Temp/look/console-shop-P2-page1-buy-aimed.png
+PASS P2 an air tank was spawned
+PASS P2 the server logged the sale: [Log] [Shop] Skipper bought Air tank for $40; pot $460
+PASS P2 the purchase reaches the pickup floor
+PASS P2 the purchase landed inside the marked pickup pad: (10.09, 0.21, 13.55)
+PASS P2 it came down the chute at (10.00, 1.15, 13.55) (0.09 m off)
+PASS P2 loose in the HQ scene, grabbable (Free)
+PASS P2 the pot paid $40: $460 left
+PASS P2 the screen's pot after the buy: EQUIPMENT CATALOGUE · CREW POT $460 ·  · PAGE 1/2 · Air tank $40 BUY|Large tank $300 BUY|Bright headlamp $150 BUY · < PREV · NEXT >
+PASS P2 no window, no refusal
+  · capture saved Temp/look/console-shop-P2-bought.png
+
+== P3 — an upgrade row: E buys the large tank, the row turns OWNED, the prompt says owned, a second E is refused 'already have'
+PASS the dot is on Shop Row 1 (aim Shop/ShopRow/1)
+PASS P3 the prompt: Large tank · $300 — Press E to buy · crew pot $460
+PASS P3 the large tank is owned
+PASS P3 the pot paid $300: $160 left
+PASS P3 the row reads OWNED: 'Large tank $300 OWNED' (rows 'Air tank $40 BUY|Large tank $300 OWNED|Bright headlamp $150 BUY')
+PASS P3 the prompt on the owned row: Large tank · owned
+PASS P3 the prompt's words: Large tank · owned
+  · capture saved Temp/look/console-shop-P3-owned.png
+PASS P3 buying it again: the buyer's refusal reads 'You already have a large tank' (expected to contain 'already have')
+PASS P3 nothing charged for the refused buy
+PASS P3 the lower screen shows it: BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT · You already have a large tank · NOTICE
+
+== P4 — paging: NEXT turns the shared page, NEXT at the end is refused 'No such page', PREV turns it back, the lever is NEXT PAGE and wraps
+PASS the dot is on Shop Next (aim Shop/ShopPage/1)
+PASS P4 the last buy refusal lapsed: ''
+PASS P4 the NEXT zone's prompt: Press E — next page
+PASS P4 the composer sees NEXT aimed (1)
+PASS P4 the server turned to page 1
+PASS P4 the top screen on page 2: EQUIPMENT CATALOGUE · CREW POT $160 ·  · PAGE 2/2 · Patch kit $60 BUY|-|- · < PREV · NEXT >
+PASS P4 page 2's rows: 'Patch kit $60 BUY|-|-' (expected 'Patch kit $60 BUY|-|-')
+PASS P4 no refusal for the turn
+  · capture saved Temp/look/console-shop-P4-page2.png
+PASS the dot is on Shop Next (aim Shop/ShopPage/1)
+PASS P4 NEXT on the last page: Last page
+PASS P4 E on NEXT at the end: refused 'No such page'
+PASS P4 E on NEXT at the end: the refusal reads 'No such page' (expected 'No such page')
+PASS P4 the page stays 2 after the refused turn
+PASS the dot is on Shop Prev (aim Shop/ShopPage/-1)
+PASS P4 the PREV zone's prompt: Press E — previous page
+PASS P4 PREV turned back to page 1
+PASS the dot is on Shop Prev (aim Shop/ShopPage/-1)
+PASS P4 PREV on the first page: First page
+PASS the dot is on Shop Lever (aim Shop/Lever/0)
+PASS P4 the lever's prompt: Press E — next page
+PASS P4 the sign lights as aimed: NEXT PAGE/on
+PASS P4 one pull counted: serial=1 kind=Shop action=NextPage tick=504 played=0/0 angles=0/0
+PASS P4 the pull is Shop/NextPage: serial=1 kind=Shop action=NextPage tick=504 played=0/0 angles=0/0
+PASS P4 the lever turned to page 2
+PASS P4: the Shop rig swung its lever for pull 1 (played 1, peak 30°)
+PASS the dot is on Shop Lever (aim Shop/Lever/0)
+PASS P4 the lever wraps round to page 1 (serial=2 kind=Shop action=NextPage tick=580 played=0/0 angles=0/0)
+PASS P4 no refusal for the lever's two turns
+PASS P4 the server logged the pulls: [Log] [Console] Skipper turned the catalogue to page 1/2 / [Log] [Console] Skipper pulled Shop/NextPage/None
+
+== P5 — refusals: a buy and a turn from across the platform, pages outside the catalogue, a wrong expectation on the lever, the dead buy and press nothing
+PASS P5 a buy from (0,0): the buyer's refusal reads 'Step up to the console' (expected to contain 'Step up to the console')
+PASS P5 a page turn from (0,0): refused 'Step up to the console'
+PASS P5 a page turn from (0,0): the refusal reads 'Step up to the console' (expected 'Step up to the console')
+PASS P5 page 6 of 2: refused 'No such page'
+PASS P5 page 6 of 2: the refusal reads 'No such page' (expected 'No such page')
+PASS P5 page 0 of 2: refused 'No such page'
+PASS P5 page 0 of 2: the refusal reads 'No such page' (expected 'No such page')
+PASS P5 a pull expecting PAY: refused 'Selection changed'
+PASS P5 a pull expecting PAY: the refusal reads 'Selection changed' (expected 'Selection changed')
+PASS P5 an item outside the catalogue: the buyer's refusal reads 'No such item' (expected to contain 'No such item')
+PASS P5 the host is dead
+PASS P5 a dead buy: the buyer's refusal reads 'The dead buy nothing' (expected to contain 'The dead buy nothing')
+PASS P5 a dead page turn: refused 'The dead press nothing'
+PASS P5 a dead page turn: the refusal reads 'The dead press nothing' (expected 'The dead press nothing')
+PASS P5 a dead pull: refused 'The dead press nothing'
+PASS P5 a dead pull: the refusal reads 'The dead press nothing' (expected 'The dead press nothing')
+PASS P5 nothing changed: pot $160, page 0, pull 2, one tank on the floor, no kit
+PASS P5 the host revived
+
+== P6 — the HUD browser never opens: E on the console's body and E on a row leave the shop window shut; no ShopBrowserUI exists
+PASS P6 the dot is off every control (looking at the footing)
+PASS P6 E on the body opens nothing
+PASS the dot is on Shop Row 2 (aim Shop/ShopRow/2)
+PASS P6 E on the lamp's row buys the lamp (the row is the only thing E does here)
+PASS P6 the shop window stays shut through a buy
+PASS P6 no ShopBrowserUI on the host or anywhere
+PASS P6 gameplay input is not blocked by a shop window (CanPlay False)
+  · P6 pot after the lamp: $10
+
+== P7 — a same-frame double buy of an upgrade is charged once
+PASS P7 the host's upgrades cleared for the row (None)
+PASS P7 the lamp is owned
+PASS P7 the second buy of the pair: the buyer's refusal reads 'You already have a bright headlamp' (expected to contain 'already have')
+PASS P7 charged once: $250 (expected $250)
+PASS P7 the lamp's row reads OWNED: 'Bright headlamp $150 OWNED'
+
+== P8 — the catalogue grows without a rebuild: a fifth row in memory lands on page 2, row 2; the console sells it from there; removed again, the page clamps
+PASS P8 five items make 2 pages
+PASS P8 page 2 row 2 reads the new item: 'Patch kit $60 BUY|Catalogue expansion proof $11 BUY|-'
+PASS the dot is on Shop Row 1 (aim Shop/ShopRow/1)
+PASS P8 the last buy refusal lapsed: ''
+PASS P8 the prompt names the new item: Catalogue expansion proof · $11 — Press E to buy · crew pot $250
+PASS P8 sold for $11: $239 (refusal '')
+PASS P8 the new item was delivered
+PASS P8 it reached the pickup floor
+PASS P8 through the chute: (10.07, 0.60, 13.57)
+PASS P8 four items again: 2 pages
+  · P8 the server's page after the removal: 1, the console shows page 2
+PASS P8 the shown page is inside the catalogue
+PASS P8 back on page 1
+
+== G1 — the page is shared: the guest joins on page 1 of 2, its NEXT turns the host's page, the host's PREV turns the guest's
+PASS G1: the guest's player spawned on the host
+PASS G1: the guest's peer answers at HQ
+  · G1: guest 'Mate bof the' is client 1 (Temp/console-shop-guest)
+PASS G1 the guest's console: page 1 of 2, no shop window
+  · G1 the guest's console line: hqconsoles=1; shownSwatch=0; shownName=RED; colourTake=0/0/0; colourTop=CHOOSE YOUR CREW COLOUR ·  ·  · RED · SWATCH 0 ·  · BLACK TIDE; colourBottom=RED ·  ·  ·  · PULL THE LEVER TO TAKE IT; colourSign=TAKE/on; colourLeverPlayed=0; colourLeverAngle=0; shopPage=0; shopPages=2; shopRows=Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY; shopTop=EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 1/2 · Air tank $40 NO MONEY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT >; shopBottom=BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT | BOUGHT GEAR LANDS AT THE PICKUP CHUTE · ; shopSign=NEXT PAGE/on; shopLeverPlayed=0; shopLeverAngle=0; shopOpen=False;
+  · G1 the guest looks: id=6931; looking at Shop Next: distance=2.44
+PASS G1 the guest's turn went: id=6932; requested page 1
+PASS G1 the server turned to page 2 on the guest's press
+PASS G1 the host's screen on page 2: EQUIPMENT CATALOGUE · CREW POT $0 ·  · PAGE 2/2 · Patch kit $60 NO MONEY|-|- · < PREV · NEXT >
+PASS G1 the guest's screen on page 2
+PASS G1 no refusal
+PASS the dot is on Shop Prev (aim Shop/ShopPage/-1)
+PASS G1 the host's PREV turned back
+PASS G1 the guest's screen followed to page 1
+
+== G2 — a guest buys from the console: refused on money, then the large tank is its own; each screen shows its own player's state; an air tank comes down the chute
+PASS G2 $50 in the pot: the guest's large tank is refused, and the guest sees why
+  · G2 the guest's refusal: 'Not enough money: $300 needed, $50 in the pot'
+PASS G2 the guest bought the large tank; the host's copy shows it
+PASS G2 the host has none of it (upgrades are per player)
+PASS G2 the pot paid $300: $100 left
+PASS G2 the guest reads its own upgrade
+PASS G2 the guest's screen reads OWNED on the large tank's row
+PASS G2 the host's screen reads NO MONEY on the same row ($100 < $300): 'Large tank $300 NO MONEY'
+  · G2 host rows 'Air tank $40 BUY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY' | guest rows 'Air tank $40 BUY|Large tank $300 OWNED|Bright headlamp $150 NO MONEY'
+PASS G2 the guest's air tank was spawned (2 on the floor)
+PASS G2 it reached the pickup floor
+PASS G2 delivered through the chute where the host's was: (9.98, 0.37, 13.50)
+PASS G2 the pot paid $40: $60 left
+PASS G2 the guest sees the pot and one more tank on the floor (2 → 3)
+
+== G3 — the guest's refusals: a page outside the catalogue, then a turn and a buy from across the platform
+PASS G3 the guest's page 8 of 2: refused 'No such page'
+PASS G3 the guest's page 8 of 2: the refusal reads 'No such page' (expected 'No such page')
+PASS G3 the guest's far turn: refused 'Step up to the console'
+PASS G3 the guest's far turn: the refusal reads 'Step up to the console' (expected 'Step up to the console')
+PASS G3 the guest's far buy is refused 'Step up to the console'
+PASS G3 nothing changed: page 0, pot $60, no kit
+
+== G4 — the dead guest buys and presses nothing; revived after
+PASS G4 the guest is dead on the server
+PASS G4 the dead guest's buy is refused
+PASS G4 the dead guest's turn: refused 'The dead press nothing'
+PASS G4 the dead guest's turn: the refusal reads 'The dead press nothing' (expected 'The dead press nothing')
+PASS G4 nothing changed: page 0, pot $60
+PASS G4 the guest revived
+PASS G4 the guest reads itself alive
+
+== G5 — the guest sees the host's lever: the pull's serial and the page follow on the guest's screen; the guest leaves
+PASS the dot is on Shop Lever (aim Shop/Lever/0)
+PASS G5 the host's pull turned to page 2 (serial=3 kind=Shop action=NextPage tick=2037 played=0/0 angles=0/0)
+PASS G5 the guest's rig played pull 3 and its screen is on page 2
+  · G5 the guest's lever angle in its last reply: 14.3
+PASS G5 the guest left
+
+== end — the side view for the sharpness judgement; no exception in the host's log
+  · capture saved Temp/look/console-shop-side.png
+PASS the side capture exists: saved Temp/look/console-shop-side.png
+  · host log: 0 errors, 0 exceptions during the run
+PASS no exception in the host's log during the run: 
+  · end: flow=world=HQ transitioning=False pending=; day=phase=AtHQ day=0 balance=60 handed=0 world=HQ to=HQ ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0 site=HQ toSite=HQ selected=None unlocked=none lever=3 wipe=0; trip=serial=0 stage=Idle from=HQ to=HQ; rider=locked=False placed=False local=(0.00, 0.00, 0.00); loaded=HQPrototype+Session; active=HQPrototype; fade=0 | ShopPage=0 balance=60 pull=serial=3 kind=Shop action=NextPage tick=2037 played=0/0 angles=0/0 refusal=10:'The dead press nothing' shopOpen=False | owned=None refusal='' | page=0/2 rows='Air tank $40 BUY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY' aimedRow=-1 aimedPage=0 played=3 angle=0 | top=EQUIPMENT CATALOGUE · CREW POT $60 ·  · PAGE 1/2 · Air tank $40 BUY|Large tank $300 NO MONEY|Bright headlamp $150 NO MONEY · < PREV · NEXT > | bottom=BROWSE & BUY  ·  AIM + E ·  ·  · AIM AT A ROW  ·  E BUYS IT FROM THE CREW POT · The dead press nothing · NOTICE | sign=NEXT PAGE/on
+MATRIX_PASS

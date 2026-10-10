@@ -1,0 +1,140 @@
+Monsters round the safe ground started 09/10/2026 12:01:27
+PASS editor is the host with a spawned player
+
+== SG0 — to sea and down on day 1, the host alone
+PASS SG0 sailing to sea
+PASS SG0 arrived at sea
+PASS SG0 the deck cabin took the press (refusal: )
+PASS SG0 down in the dive site, the car at the bottom: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS SG the host and the car are here
+PASS SG the shaft's centre is known
+PASS SG the tube's foot is in the dive scene (Shaft Tube/Tube Foot)
+  · SG shaft at (0.00, -45.00, 0.00), doorway bearing 0 along (-0.71, 0.00, -0.71); safe ground 4.5 m; start 5.3 m, goal 9 m opposite; 45 s per trial
+PASS SG the Elevator Ghost is not a walker: it has no body (the car's green light), nothing to walk round or get stuck
+PASS SG Impostor from the doorway (0°): spawned
+PASS SG Impostor from the doorway (0°): it reached the far side in 2.7 s (limit 45) — never nearer the shaft than 4.75 m (safe 4.5), longest still 0.0 s, travelled 10.5 m, now at bearing -120 r 4.75 (Impostor pose=Hunting target=0 at=(4.6, -45.0, -1.2) phase=Chase wears=Skipper/2 touches=0)
+PASS SG Impostor from the doorway: despawned
+PASS SG Impostor from the doorway: the host lives
+PASS SG Impostor from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG Impostor from the plinth corner (Dan's spot) (-40°): it reached the far side in 2.7 s (limit 45) — never nearer the shaft than 4.76 m (safe 4.5), longest still 0.0 s, travelled 10.6 m, now at bearing 80 r 4.76 (Impostor pose=Hunting target=0 at=(-3.9, -45.0, 2.7) phase=Chase wears=Skipper/2 touches=0)
+PASS SG Impostor from the plinth corner (Dan's spot): despawned
+PASS SG Impostor from the plinth corner (Dan's spot): the host lives
+PASS SG Impostor from the right flank (90°): spawned
+PASS SG Impostor from the right flank (90°): it reached the far side in 2.7 s (limit 45) — never nearer the shaft than 4.76 m (safe 4.5), longest still 0.0 s, travelled 10.5 m, now at bearing -30 r 4.76 (Impostor pose=Hunting target=0 at=(-1.2, -45.0, -4.6) phase=Chase wears=Skipper/2 touches=0)
+PASS SG Impostor from the right flank: despawned
+PASS SG Impostor from the right flank: the host lives
+PASS SG Impostor from the left flank (-90°): spawned
+PASS SG Impostor from the left flank (-90°): it reached the far side in 2.7 s (limit 45) — never nearer the shaft than 4.76 m (safe 4.5), longest still 0.0 s, travelled 10.5 m, now at bearing 30 r 4.76 (Impostor pose=Hunting target=0 at=(-4.6, -45.0, -1.2) phase=Chase wears=Skipper/2 touches=0)
+PASS SG Impostor from the left flank: despawned
+PASS SG Impostor from the left flank: the host lives
+PASS SG Impostor from the back (180°): spawned
+PASS SG Impostor from the back (180°): it reached the far side in 2.7 s (limit 45) — never nearer the shaft than 4.75 m (safe 4.5), longest still 0.0 s, travelled 10.5 m, now at bearing 60 r 4.75 (Impostor pose=Hunting target=0 at=(-4.6, -45.0, 1.2) phase=Chase wears=Skipper/2 touches=0)
+PASS SG Impostor from the back: despawned
+PASS SG Impostor from the back: the host lives
+PASS SG WeepingAngel from the doorway (0°): spawned
+PASS SG WeepingAngel from the doorway (0°): it reached the far side in 0.7 s (limit 45) — never nearer the shaft than 4.92 m (safe 4.5), longest still 0.0 s, travelled 8.9 m, now at bearing -120 r 4.92 (WeepingAngel pose=Hunting target=0 at=(4.7, -45.0, -1.3) unwatched statue=Weep freezes=0)
+PASS SG WeepingAngel from the doorway: despawned
+PASS SG WeepingAngel from the doorway: the host lives
+PASS SG WeepingAngel from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG WeepingAngel from the plinth corner (Dan's spot) (-40°): it reached the far side in 0.7 s (limit 45) — never nearer the shaft than 4.92 m (safe 4.5), longest still 0.0 s, travelled 8.9 m, now at bearing 80 r 4.92 (WeepingAngel pose=Hunting target=0 at=(-4.0, -45.0, 2.8) unwatched statue=Weep freezes=0)
+PASS SG WeepingAngel from the plinth corner (Dan's spot): despawned
+PASS SG WeepingAngel from the plinth corner (Dan's spot): the host lives
+PASS SG WeepingAngel from the right flank (90°): spawned
+PASS SG WeepingAngel from the right flank (90°): it reached the far side in 0.7 s (limit 45) — never nearer the shaft than 4.91 m (safe 4.5), longest still 0.0 s, travelled 8.9 m, now at bearing -31 r 4.91 (WeepingAngel pose=Hunting target=0 at=(-1.2, -45.0, -4.8) unwatched statue=Weep freezes=0)
+PASS SG WeepingAngel from the right flank: despawned
+PASS SG WeepingAngel from the right flank: the host lives
+PASS SG WeepingAngel from the left flank (-90°): spawned
+PASS SG WeepingAngel from the left flank (-90°): it reached the far side in 0.7 s (limit 45) — never nearer the shaft than 4.92 m (safe 4.5), longest still 0.0 s, travelled 8.9 m, now at bearing 30 r 4.92 (WeepingAngel pose=Hunting target=0 at=(-4.8, -45.0, -1.3) unwatched statue=Weep freezes=0)
+PASS SG WeepingAngel from the left flank: despawned
+PASS SG WeepingAngel from the left flank: the host lives
+PASS SG WeepingAngel from the back (180°): spawned
+PASS SG WeepingAngel from the back (180°): it reached the far side in 0.7 s (limit 45) — never nearer the shaft than 4.91 m (safe 4.5), longest still 0.0 s, travelled 8.9 m, now at bearing 59 r 4.91 (WeepingAngel pose=Hunting target=0 at=(-4.8, -45.0, 1.2) unwatched statue=Weep freezes=0)
+PASS SG WeepingAngel from the back: despawned
+PASS SG WeepingAngel from the back: the host lives
+PASS SG LongWalker from the doorway (0°): spawned
+PASS SG LongWalker from the doorway (0°): it saw the host and walks after them (LongWalker pose=Hunting target=0 at=(-3.8, -44.9, -3.8) prey=0)
+PASS SG LongWalker from the doorway (0°): it reached the far side in 4.5 s (limit 45) — never nearer the shaft than 4.80 m (safe 4.5), longest still 0.0 s, travelled 10.7 m, now at bearing -120 r 4.80 (LongWalker pose=Hunting target=0 at=(4.6, -45.0, -1.2) prey=0)
+PASS SG LongWalker from the doorway: despawned
+PASS SG LongWalker from the doorway: the host lives
+PASS SG LongWalker from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG LongWalker from the plinth corner (Dan's spot) (-40°): it saw the host and walks after them (LongWalker pose=Hunting target=0 at=(-0.5, -44.9, -5.3) prey=0)
+PASS SG LongWalker from the plinth corner (Dan's spot) (-40°): it reached the far side in 4.5 s (limit 45) — never nearer the shaft than 4.80 m (safe 4.5), longest still 0.0 s, travelled 10.7 m, now at bearing 80 r 4.80 (LongWalker pose=Hunting target=0 at=(-3.9, -45.0, 2.8) prey=0)
+PASS SG LongWalker from the plinth corner (Dan's spot): despawned
+PASS SG LongWalker from the plinth corner (Dan's spot): the host lives
+PASS SG LongWalker from the right flank (90°): spawned
+PASS SG LongWalker from the right flank (90°): it saw the host and walks after them (LongWalker pose=Hunting target=0 at=(-3.8, -44.9, 3.8) prey=0)
+PASS SG LongWalker from the right flank (90°): it reached the far side in 4.5 s (limit 45) — never nearer the shaft than 4.81 m (safe 4.5), longest still 0.0 s, travelled 10.7 m, now at bearing -30 r 4.81 (LongWalker pose=Hunting target=0 at=(-1.2, -45.0, -4.6) prey=0)
+PASS SG LongWalker from the right flank: despawned
+PASS SG LongWalker from the right flank: the host lives
+PASS SG LongWalker from the left flank (-90°): spawned
+PASS SG LongWalker from the left flank (-90°): it saw the host and walks after them (LongWalker pose=Hunting target=0 at=(3.8, -44.9, -3.8) prey=0)
+PASS SG LongWalker from the left flank (-90°): it reached the far side in 4.5 s (limit 45) — never nearer the shaft than 4.81 m (safe 4.5), longest still 0.0 s, travelled 10.7 m, now at bearing 30 r 4.81 (LongWalker pose=Hunting target=0 at=(-4.6, -45.0, -1.2) prey=0)
+PASS SG LongWalker from the left flank: despawned
+PASS SG LongWalker from the left flank: the host lives
+PASS SG LongWalker from the back (180°): spawned
+PASS SG LongWalker from the back (180°): it saw the host and walks after them (LongWalker pose=Hunting target=0 at=(3.8, -44.9, 3.8) prey=0)
+PASS SG LongWalker from the back (180°): it reached the far side in 4.5 s (limit 45) — never nearer the shaft than 4.80 m (safe 4.5), longest still 0.0 s, travelled 10.7 m, now at bearing 60 r 4.80 (LongWalker pose=Hunting target=0 at=(-4.6, -45.0, 1.2) prey=0)
+PASS SG LongWalker from the back: despawned
+PASS SG LongWalker from the back: the host lives
+PASS SG Charger from the doorway (0°): spawned
+PASS SG Charger from the doorway (0°): it reached the far side in 5.1 s (limit 45) — never nearer the shaft than 4.96 m (safe 4.5), longest still 0.0 s, travelled 11.5 m, now at bearing -120 r 5.17 (Charger pose=Rushing target=0 at=(5.0, -44.9, -1.3) phase=Rushing rushes=1 hits=0 speed=15.5)
+PASS SG Charger from the doorway: despawned
+PASS SG Charger from the doorway: the host lives
+PASS SG Charger from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG Charger from the plinth corner (Dan's spot) (-40°): it reached the far side in 5.1 s (limit 45) — never nearer the shaft than 5.10 m (safe 4.5), longest still 0.0 s, travelled 11.6 m, now at bearing 81 r 5.17 (Charger pose=Rushing target=0 at=(-4.2, -44.9, 3.0) phase=Rushing rushes=1 hits=0 speed=15.7)
+PASS SG Charger from the plinth corner (Dan's spot): despawned
+PASS SG Charger from the plinth corner (Dan's spot): the host lives
+PASS SG Charger from the right flank (90°): spawned
+PASS SG Charger from the right flank (90°): it reached the far side in 5.1 s (limit 45) — never nearer the shaft than 5.06 m (safe 4.5), longest still 0.0 s, travelled 11.5 m, now at bearing -30 r 5.17 (Charger pose=Rushing target=0 at=(-1.3, -44.9, -5.0) phase=Rushing rushes=1 hits=0 speed=15.5)
+PASS SG Charger from the right flank: despawned
+PASS SG Charger from the right flank: the host lives
+PASS SG Charger from the left flank (-90°): spawned
+PASS SG Charger from the left flank (-90°): it reached the far side in 5.1 s (limit 45) — never nearer the shaft than 5.11 m (safe 4.5), longest still 0.0 s, travelled 11.5 m, now at bearing 30 r 5.17 (Charger pose=Rushing target=0 at=(-5.0, -45.0, -1.3) phase=Rushing rushes=1 hits=0 speed=15.5)
+PASS SG Charger from the left flank: despawned
+PASS SG Charger from the left flank: the host lives
+PASS SG Charger from the back (180°): spawned
+PASS SG Charger from the back (180°): it reached the far side in 5.1 s (limit 45) — never nearer the shaft than 5.00 m (safe 4.5), longest still 0.0 s, travelled 11.5 m, now at bearing 59 r 5.16 (Charger pose=Rushing target=0 at=(-5.0, -45.0, 1.3) phase=Rushing rushes=1 hits=0 speed=15.7)
+PASS SG Charger from the back: despawned
+PASS SG Charger from the back: the host lives
+PASS SG Lure from the doorway (0°): spawned
+PASS SG Lure from the doorway (0°): it reached the far side in 6.2 s (limit 45) — never nearer the shaft than 5.03 m (safe 4.5), longest still 1.0 s, travelled 11.1 m, now at bearing -120 r 5.03 (Lure pose=Drawn target=-1 at=(4.9, -45.0, -1.3) seen=-1 ago=0.2s drift=2.00 recovering=False fired=0 hits=0)
+PASS SG Lure from the doorway: despawned
+PASS SG Lure from the doorway: the host lives
+PASS SG Lure from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG Lure from the plinth corner (Dan's spot) (-40°): it reached the far side in 6.2 s (limit 45) — never nearer the shaft than 5.03 m (safe 4.5), longest still 1.0 s, travelled 11.1 m, now at bearing 80 r 5.03 (Lure pose=Drawn target=-1 at=(-4.1, -45.0, 2.9) seen=-1 ago=0.2s drift=2.00 recovering=False fired=0 hits=0)
+PASS SG Lure from the plinth corner (Dan's spot): despawned
+PASS SG Lure from the plinth corner (Dan's spot): the host lives
+PASS SG Lure from the right flank (90°): spawned
+PASS SG Lure from the right flank (90°): it reached the far side in 6.2 s (limit 45) — never nearer the shaft than 5.02 m (safe 4.5), longest still 1.0 s, travelled 11.1 m, now at bearing -30 r 5.02 (Lure pose=Drawn target=-1 at=(-1.3, -45.0, -4.8) seen=-1 ago=0.2s drift=2.00 recovering=False fired=0 hits=0)
+PASS SG Lure from the right flank: despawned
+PASS SG Lure from the right flank: the host lives
+PASS SG Lure from the left flank (-90°): spawned
+PASS SG Lure from the left flank (-90°): it reached the far side in 6.2 s (limit 45) — never nearer the shaft than 5.08 m (safe 4.5), longest still 1.0 s, travelled 11.1 m, now at bearing 30 r 5.08 (Lure pose=Drawn target=-1 at=(-4.9, -45.0, -1.3) seen=-1 ago=0.2s drift=2.00 recovering=False fired=0 hits=0)
+PASS SG Lure from the left flank: despawned
+PASS SG Lure from the left flank: the host lives
+PASS SG Lure from the back (180°): spawned
+PASS SG Lure from the back (180°): it reached the far side in 6.2 s (limit 45) — never nearer the shaft than 5.00 m (safe 4.5), longest still 1.0 s, travelled 11.1 m, now at bearing 60 r 5.00 (Lure pose=Drawn target=-1 at=(-4.8, -45.0, 1.3) seen=-1 ago=0.2s drift=2.00 recovering=False fired=0 hits=0)
+PASS SG Lure from the back: despawned
+PASS SG Lure from the back: the host lives
+PASS SG Listener from the doorway (0°): spawned
+PASS SG Listener from the doorway (0°): it reached the far side in 14.6 s (limit 45) — never nearer the shaft than 5.06 m (safe 4.5), longest still 1.0 s, travelled 11.3 m, now at bearing -120 r 5.06 (Listener pose=Drawn target=-1 at=(4.9, -45.0, -1.3) heard=2 last=Sprint ago=6.6s fired=2 hits=0 phase=Done held=False broken=False)
+PASS SG Listener from the doorway: despawned
+PASS SG Listener from the doorway: the host lives
+PASS SG Listener from the plinth corner (Dan's spot) (-40°): spawned
+PASS SG Listener from the plinth corner (Dan's spot) (-40°): it reached the far side in 14.6 s (limit 45) — never nearer the shaft than 5.07 m (safe 4.5), longest still 1.0 s, travelled 11.3 m, now at bearing 80 r 5.07 (Listener pose=Drawn target=-1 at=(-4.1, -45.0, 2.9) heard=2 last=Sprint ago=6.6s fired=2 hits=0 phase=Done held=False broken=False)
+PASS SG Listener from the plinth corner (Dan's spot): despawned
+PASS SG Listener from the plinth corner (Dan's spot): the host lives
+PASS SG Listener from the right flank (90°): spawned
+PASS SG Listener from the right flank (90°): it reached the far side in 14.6 s (limit 45) — never nearer the shaft than 5.06 m (safe 4.5), longest still 1.0 s, travelled 11.3 m, now at bearing -30 r 5.06 (Listener pose=Drawn target=-1 at=(-1.3, -45.0, -4.9) heard=2 last=Sprint ago=6.6s fired=2 hits=0 phase=Done held=False broken=False)
+PASS SG Listener from the right flank: despawned
+PASS SG Listener from the right flank: the host lives
+PASS SG Listener from the left flank (-90°): spawned
+PASS SG Listener from the left flank (-90°): it reached the far side in 14.6 s (limit 45) — never nearer the shaft than 5.06 m (safe 4.5), longest still 1.0 s, travelled 11.3 m, now at bearing 30 r 5.06 (Listener pose=Drawn target=-1 at=(-4.9, -45.0, -1.3) heard=2 last=Sprint ago=6.6s fired=2 hits=0 phase=Done held=False broken=False)
+PASS SG Listener from the left flank: despawned
+PASS SG Listener from the left flank: the host lives
+PASS SG Listener from the back (180°): spawned
+PASS SG Listener from the back (180°): it reached the far side in 14.6 s (limit 45) — never nearer the shaft than 5.06 m (safe 4.5), longest still 1.0 s, travelled 11.3 m, now at bearing 60 r 5.06 (Listener pose=Drawn target=-1 at=(-4.9, -45.0, 1.3) heard=2 last=Sprint ago=6.6s fired=2 hits=0 phase=Done held=False broken=False)
+PASS SG Listener from the back: despawned
+PASS SG Listener from the back: the host lives
+  · done
+MATRIX_PASS
