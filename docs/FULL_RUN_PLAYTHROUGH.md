@@ -16,7 +16,7 @@ the held one is one of them); every dive is one trip down and one up.
 | Do | Must happen |
 |---|---|
 | Host a Local room from `Session.unity`. | HQ, the ship docked at the pier. Board on the south wall: `NEW CYCLE · box $0 / quota $500 · balance $0 · dive first`. Monitor: `Docked at HQ — E on Site 01 to sail`. |
-| Walk to the colour panel, E, click **sky** (index 8). | The picker opens and closes; the body wears sky blue; F3 shows a sky square before the name. Saved for next time. |
+| Walk to the crew colour console at the arrival pad, aim at the **sky** swatch (index 8), E; aim at the lever, E. | The helmet in the middle turns sky for everyone; the pull: the body wears sky blue, the lower screen says `SKIPPER IS NOW SKY`, F3 shows a sky square before the name. Saved for next time. |
 
 ## Cycle 1
 

@@ -72,6 +72,44 @@ namespace SunkCost.World
             if (!flow.ServerPullLever(sender, kind, expected, expectedTarget, out string why)) day.ServerReportRefusal(why);
         }
 
+        // ---- the HQ consoles of 8 October 2026 (Dan) ---------------------------------
+
+        // E on a swatch of the crew colour console: show that colour in the middle for
+        // everyone (no operator lock: last press wins). The lever's take is RequestLever.
+        public void RequestPressSwatch(int index)
+        {
+            if (!IsOwner) return;
+            ServerRequestPressSwatch(index);
+        }
+
+        [ServerRpc]
+        private void ServerRequestPressSwatch(int index, NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            if (!ServerPresserAlive(sender, day)) return;
+            if (!flow.ServerPressSwatch(sender, index, out string why)) day.ServerReportRefusal(why);
+        }
+
+        // E on the shop console's PREV / NEXT zone: the ABSOLUTE page wanted (the
+        // current page ± 1 as this client saw it), so two same-frame NEXTs agree.
+        public void RequestShopPage(int page)
+        {
+            if (!IsOwner) return;
+            ServerRequestShopPage(page);
+        }
+
+        [ServerRpc]
+        private void ServerRequestShopPage(int page, NetworkConnection sender = null)
+        {
+            WorldSceneFlow flow = WorldSceneFlow.Instance;
+            CrewDayState day = CrewDayState.Instance;
+            if (flow == null || day == null) return;
+            if (!ServerPresserAlive(sender, day)) return;
+            if (!flow.ServerShopSetPage(sender, page, out string why)) day.ServerReportRefusal(why);
+        }
+
         // E on the deck cabin's button: take everyone in the cabin down.
         public void RequestCabin()
         {

@@ -1,0 +1,212 @@
+Console-net matrix started 11/10/2026 01:35:17
+PASS editor is the host with a spawned player
+  · host 'Skipper' (client 0), 3 days, quota $500, prices $100/$200/$300, refusals 3 s; sync limit 1 s
+PASS fresh run: selected=None unlocked=none site=HQ toSite=HQ lever=0/Ship/None shipSign=CONFIRM/off hqSign=PAY/off shipAction=None/None/off:Select a destination hqAction=None/off:Nothing to pay yet — dive first aim=none votes=0/0 refusal=''
+PASS both consoles stand at HQ (the docked ship's and the quota console)
+
+== N0 — 2 players: guest A (windowed) joins at HQ; its consoles read what the host's read
+  · launched guest A (windowed) in Temp/console-net-guest-a
+PASS N0 A: the guest's player spawned on the host
+PASS N0 A: the guest's peer answers in HQ
+  · N0 A: guest 'Mate bof the' is client 1 (Temp/console-net-guest-a); 2 players; working set 0 MB
+PASS the host at the ship console: moved local player to (-47.61, 0.00, -31.69)
+PASS N0: A on the deck
+PASS N0 A joined: every peer converged ()
+PASS N0 A joined: host + 1 guests identical within 1.0 s (A first look, equal at 0.43s)
+
+== N1 — the host selects SITE 02 (locked): the selection, the lock, the dim UNLOCK sign and both screens on A within a second
+  · requested Site02
+PASS N1 selected Site02
+PASS N1 the host's sign and card: UNLOCK $100/off | NAVIGATION · NEW CYCLE · [HQ@][SITE 01][SITE 02*#][SITE 03#][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS N1 SITE 02 selected: every peer converged ()
+PASS N1 SITE 02 selected: host + 1 guests identical within 1.0 s (A first look, equal at 0.55s)
+
+== N2 — A changes the selection (SITE 01), the host follows; the host picks HQ, A follows; no flip-flop
+PASS N2 the server took A's selection: Site01
+PASS N2 A's press went out: id=5105; requested select Site01
+PASS N2 A's selection: every peer converged ()
+PASS N2 A's selection: host + 1 guests identical within 1.0 s (A first look, equal at 0.79s)
+PASS N2 the server processed A's press once
+  · requested HQ
+PASS N2 the host's HQ
+PASS N2 the host's selection: every peer converged ()
+PASS N2 the host's selection: host + 1 guests identical within 1.0 s (A first look, equal at 0.42s)
+PASS N2 A's selection holds on HQ: HQ,HQ,HQ,HQ
+
+== N3 — A unlocks SITE 02 with its own pull: the charge, the mask, the balance and the swing on both peers
+PASS N3 the balance $150: every peer converged ()
+PASS N3 the balance $150: host + 1 guests identical within 1.0 s (A first look, equal at 0.42s)
+PASS N3 UNLOCK lit on the host: UNLOCK $100/on
+PASS N3 UNLOCK lit on A
+PASS N3 A's pull unlocked SITE 02
+PASS N3 charged $100 once (balance $50), one Ship/Unlock pull (serial=1 kind=Ship action=Unlock tick=805 played=1/0 angles=4.3/0)
+PASS N3 A's pull expected UNLOCK SITE 02: id=5115; requested lever Ship/Unlock/Site02
+PASS N3 the unlock: every peer converged ()
+PASS N3 the unlock: host + 1 guests identical within 1.0 s (A first look, equal at 0.80s)
+PASS N3 the server processed A's pull once
+PASS N3: the host's Ship rig played pull 1 (played 1)
+PASS N3: A's Ship rig played pull 1
+  · N3 A's lever angle in its reply 0.4 s after its pull: 25.6°
+
+== N4 — two card presses in one frame (A: SITE 03, host: SITE 04): one selection, the same on both peers
+  · N4 same editor frame: requested Site04
+PASS N4 the selection is one of the two: Site03
+PASS N4 each press processed at most once (2 selections logged)
+PASS N4 one selection everywhere (Site03): every peer converged ()
+PASS N4 one selection everywhere (Site03): host + 1 guests identical within 1.0 s (A first look, equal at 0.42s)
+
+== N5 — two UNLOCK pulls in one frame (A and host, SITE 03, exactly $200): one charge, one pull, one refusal
+  · requested Site03
+PASS N5 UNLOCK lit on the host: UNLOCK $200/on
+PASS N5 UNLOCK lit on A
+  · N5 same editor frame: requested Ship/Unlock/Site03
+PASS N5 SITE 03 unlocked
+PASS N5 the loser: 1 refusal(s) (serial 1, last 'Lever in use')
+PASS N5 the loser: exactly 1 refusal(s), the last 'Lever in use'
+PASS N5 one charge (balance $0), one pull (1), one unlock logged
+PASS N5 the unlock: every peer converged ()
+PASS N5 the unlock: host + 1 guests identical within 1.0 s (A first look, equal at 0.43s)
+PASS N5: the host's Ship rig played pull 2 (played 2)
+PASS N5: A's Ship rig played pull 2
+
+== N6 — A dead (the server's death state) spectates the host at the console: A's screens are the host's; the dead press nothing
+PASS the host at the ship console: moved local player to (-47.61, 0.00, -31.69)
+  · looking at Nav Card Site01: distance=1.86
+PASS N6 the server gives dead A the host to watch (0)
+PASS N6 A's spectator view is on the host
+PASS N6 the spectator's consoles: every peer converged ()
+PASS N6 the spectator's consoles: host + 1 guests identical within 1.0 s (A first look, equal at 0.43s)
+PASS N6 A's own screen captured while spectating: C:\Dev\SunkCost\Temp\look\console-net-N6-spectator.png
+  · capture saved Temp/look/console-net-N6-host.png
+PASS N6 dead A's card press: 1 refusal(s) (serial 1, last 'The dead press nothing')
+PASS N6 dead A's card press: exactly 1 refusal(s), the last 'The dead press nothing'
+PASS N6 dead A's pull: 1 refusal(s) (serial 1, last 'The dead press nothing')
+PASS N6 dead A's pull: exactly 1 refusal(s), the last 'The dead press nothing'
+PASS N6 dead A's hand-made CONFIRM: 1 refusal(s) (serial 1, last 'The dead press nothing')
+PASS N6 dead A's hand-made CONFIRM: exactly 1 refusal(s), the last 'The dead press nothing'
+PASS N6 dead A's vote: 1 refusal(s) (serial 1, last 'The dead press nothing')
+PASS N6 dead A's vote: exactly 1 refusal(s), the last 'The dead press nothing'
+PASS N6 nothing changed: selected=Site03 unlocked=Site02+Site03 site=HQ toSite=HQ lever=2/Ship/Unlock shipSign=CONFIRM/on hqSign=PAY/off shipAction=Confirm/Site03/on hqAction=None/off:Nothing to pay yet — dive first aim=card:Site01 votes=0/0 refusal='The dead press nothing'
+PASS N6 A alive again, its own view back
+
+== N7 — A off the ship: its presses are refused 'Not aboard: A' and the host's screen waits for A; hand-made requests change nothing
+PASS N7 HQ has pier spawn points
+PASS N7 A stands on the pier
+  · requested Site01
+PASS N7 Site01 selected
+PASS N7 the host's console waits for A: SELECTED DESTINATION · SITE 03 ·  · NEW CYCLE | QUOTA $0 / $500 · WAITING FOR MATE BOF THE TO BOARD | CONFIRM/off
+PASS N7 the crew waits for A: every peer converged ()
+PASS N7 the crew waits for A: host + 1 guests identical within 1.0 s (A first look, equal at 0.42s)
+PASS N7 A's card press from the pier: 1 refusal(s) (serial 1, last 'Not aboard: Mate bof the')
+PASS N7 A's card press from the pier: exactly 1 refusal(s), the last 'Not aboard: Mate bof the'
+PASS N7 the selection unchanged
+PASS N7 A's pull from the pier: 1 refusal(s) (serial 1, last 'Not aboard: Mate bof the')
+PASS N7 A's pull from the pier: exactly 1 refusal(s), the last 'Not aboard: Mate bof the'
+  · N7 the host pulls: requested Ship/Confirm/Site01
+PASS N7 the host's pull names A: 1 refusal(s) (serial 1, last 'Not aboard: Mate bof the')
+PASS N7 the host's pull names A: exactly 1 refusal(s), the last 'Not aboard: Mate bof the'
+PASS N7 A's screen shows the refusal too
+PASS N7 A's PAY from the pier (40.7 m from the lever): 1 refusal(s) (serial 1, last 'Step up to the console')
+PASS N7 A's PAY from the pier (40.7 m from the lever): exactly 1 refusal(s), the last 'Step up to the console'
+PASS N7: A on the deck
+PASS N7 a pull of an unknown console (kind 7): 1 refusal(s) (serial 1, last 'No such console')
+PASS N7 a pull of an unknown console (kind 7): exactly 1 refusal(s), the last 'No such console'
+PASS N7 a CONFIRM for a card that is not selected: 1 refusal(s) (serial 1, last 'Selection changed')
+PASS N7 a CONFIRM for a card that is not selected: exactly 1 refusal(s), the last 'Selection changed'
+  · requested Site04
+PASS N7 Site04 selected
+PASS N7 an UNLOCK the crew cannot afford: 1 refusal(s) (serial 1, last '$300 short')
+PASS N7 an UNLOCK the crew cannot afford: exactly 1 refusal(s), the last '$300 short'
+PASS N7 the server's sail called on A's peer does nothing: id=5144; refused: Server not running.
+PASS N7 nothing sailed, nothing charged, no pull: selected=Site04 unlocked=Site02+Site03 site=HQ toSite=HQ lever=2/Ship/Unlock shipSign=UNLOCK $300/off hqSign=PAY/off shipAction=Unlock/Site04/off:$300 short hqAction=None/off:Nothing to pay yet — dive first aim=card:Site01 votes=0/0 refusal='$300 short'
+
+== N8 — transition races: A's vote sent in the frame the ship casts off; a stale CONFIRM and a card press sent while the trip reads Preparing; one trip, one pull, no vote left
+  · requested Site01
+PASS N8 CONFIRM lit on the host: CONFIRM/on | SELECTED DESTINATION · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · READY
+PASS N8 CONFIRM lit on A
+  · N8 same editor frame: requested Ship/Confirm/Site01
+PASS N8 the ship casts off
+  · N8 while the trip reads Preparing: A's stale CONFIRM written; host: requested Ship/Confirm/Site01; host: requested HQ
+  · launched guest T (headless) in Temp/console-net-guest-t
+PASS N8 the race presses went out while the trip read Preparing (Preparing)
+PASS N8 one trip (1), one pull (1)
+PASS N8 the selection cleared by the sail and no press during the trip changed it: None
+PASS N8 no vote left, no plank: votes=0 crew=0 phase=Sailing
+PASS N8 A's vote was refused (the trip had begun)
+PASS N8 the presses during the trip refused (5), the last 'Ship travelling'
+PASS N8 the host's screens during the trip: SAILING · SITE 01 ·  · NEW CYCLE | QUOTA $0 / $500 · SAILING TO SITE 01 | NAVIGATION · NEW CYCLE · [HQ][SITE 01][SITE 02][SITE 03][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE
+PASS N8 A's screens during the trip: SAILING TO SITE 01, the sign dim, HERE on no card
+  · N8 trip stage PullingAway 4.3 s after casting off
+PASS N8b nobody spawned during the trip (most 2 players; T launched 0.0 s after casting off, the trip ended 6.7 s after it)
+PASS N8: arrived at Sea (phase AtSea)
+PASS N8 A arrived at sea
+PASS N8 the host's console at sea is fresh: NAVIGATION · DAY 1/3 · [HQ][SITE 01@~][SITE 02][SITE 03][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | SELECT A DESTINATION ·  ·  · DAY 1 OF 3 | QUOTA $0 / $500 · 
+PASS N8 arrived at sea: every peer converged ()
+PASS N8 arrived at sea: host + 1 guests identical within 1.0 s (A first look, equal at 0.43s)
+
+== N8b — guest T, launched as the ship cast off: refused while the ship travels ('Ship travelling; try again on arrival'), or admitted after arrival reading the fresh console; never spawned mid-trip; the refusal holds no seat
+  · N8b T: joined=False; message 'Ship travelling; try again on arrival'; host admission refusals (ShipTravelling) +1, departure drops +0; header: server=False; client=False; clientId=-1; loaded=Session; active=Session; phase=none; day=-1; payday=False; box=-1; balance=-1; world=none; fade=0; fadeText=''; wipeCards=0; wipe=none; message=Ship tra
+PASS N8b T refused during the trip: 'Ship travelling; try again on arrival' (admission +1, departure drop +0)
+PASS N8b the crew is the host and A, at sea after one trip: 2 players
+
+== N9 — END DAY pulled by A and the host in one frame: the day ends once, one pull, one refusal
+PASS the host at the ship console: moved local player to (-5.38, 0.00, 3013.69)
+PASS N9: A on the deck
+PASS N9: the day began ()
+PASS N9: the dive is done
+PASS N9 END DAY lit on the host: END DAY/on
+PASS N9 END DAY lit on A
+  · N9 same editor frame: requested Ship/EndDay/None
+PASS N9 the day ended
+PASS N9 the loser: 1 refusal(s) (serial 1, last 'Nobody has dived today')
+PASS N9 the loser: exactly 1 refusal(s), the last 'Nobody has dived today'
+PASS N9 one day ended (day 2), one pull
+PASS N9 the new day: every peer converged ()
+PASS N9 the new day: host + 1 guests identical within 1.0 s (A first look, equal at 0.43s)
+PASS N9: the host's Ship rig played pull 4 (played 4)
+PASS N9: A's Ship rig played pull 4
+
+== N10 — 3 players: B (headless) joins at sea after selections, unlocks and pulls: it reads the state at once, its lever never swings for a pull it did not see
+  · requested Site04
+PASS N10 Site04 selected
+  · launched guest B (headless) in Temp/console-net-guest-b
+PASS N10 B: the guest's player spawned on the host
+PASS N10 B: the guest's peer answers in Sea
+  · N10 B: guest 'Mate bof the' is client 3 (Temp/console-net-guest-b); 3 players; working set 0 MB
+PASS N10 B's first console line has the state: selected=Site04; unlocked=Site02+Site03; site=Site01; toSite=Site01; leverPulls=4/Ship/EndDay; leverPlayed=0; leverAngle=0; leverSign=UNLOCK $300/off; hqSign=none; topScreen=NAVIGATION · DAY 2/3 · [HQ][SITE 01@][SITE 02][SITE 03][SITE 04*#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE; bottomScreen=SELECTED DESTINATION · SITE 04 ·  · SITE 04 · uncharted | BALANCE $0 | COST $300 · $300 SHORT; hqTop=none; hqBottom=none; hqLeverPlayed=-1; hqLeverAngle=0; hqCard=none;
+PASS N10 B's lever never swung for pull 4 (played 0, angle 0)
+PASS N10 B's first screens: HERE on SITE 01, a dim UNLOCK $300: UNLOCK $300/off
+PASS N10 B's lever still at rest (1/3)
+PASS N10 B's lever still at rest (2/3)
+PASS N10 B's lever still at rest (3/3)
+PASS N10 B joined at sea: every peer converged ()
+PASS N10 B joined at sea: host + 2 guests identical within 1.0 s (A first look, equal at 0.42s, B first look, equal at 0.42s)
+
+== N11 — three card presses in one frame (host SITE 02, A HQ, B SITE 01): one selection, the same on every peer
+PASS N11: B on the deck
+  · N11 same editor frame: requested Site02
+PASS N11 one of the three: HQ
+PASS N11 each press processed at most once (3 logged)
+PASS N11 one selection everywhere (HQ): every peer converged ()
+PASS N11 one selection everywhere (HQ): host + 2 guests identical within 1.0 s (A first look, equal at 0.42s, B first look, equal at 0.42s)
+
+== N11b — the selection changes under a guest's pull (round 4): A pulls the CONFIRM it sees for HQ in the frame the host picks SITE 04 (locked, not affordable): the server resolves the lever from its own selection; A's pull is refused, no trip, no charge, no pull; SITE 04 and the refusal on every peer
+  · requested HQ
+PASS N11b CONFIRM lit on the host: CONFIRM/on | SELECTED DESTINATION · HQ · SAIL HOME · DAY 2 OF 3 | QUOTA $0 / $500 · READY
+PASS N11b CONFIRM lit on A
+PASS N11b CONFIRM lit on B
+PASS N11b SITE 04 is locked and not affordable (balance $0 < $300)
+  · N11b same editor frame: requested Site04
+PASS N11b A's pull landed before the host's selection: one trip to HQ, nothing charged
+  log [Warning] [Admission] client 2 refused: ShipTravelling (Ship travelling; try again on arrival)
+  sync N0 A joined: ≤0.43s / N1 SITE 02 selected: ≤0.55s / N2 A's selection: ≤0.79s / N2 the host's selection: ≤0.42s / N3 the balance $150: ≤0.42s / N3 the unlock: ≤0.80s / N4 one selection everywhere (Site03): ≤0.42s / N5 the unlock: ≤0.43s / N6 the spectator's consoles: ≤0.43s / N7 the crew waits for A: ≤0.42s / N8 arrived at sea: ≤0.43s / N9 the new day: ≤0.43s / N10 B joined at sea: ≤0.42s / N11 one selection everywhere (HQ): ≤0.42s
+FAIL: N11b: A's pull landed before the host's selection (a legal order, but the rows below need the ship at sea): rerun
+flow=world=Sea transitioning=True pending=; day=phase=SailingHome day=2 balance=0 handed=0 world=Sea to=HQ ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=1 site=Site01 toSite=HQ selected=None unlocked=Site02+Site03 lever=5 wipe=0; trip=serial=2 stage=PullingAway from=Sea to=HQ; rider=locked=True placed=False local=(-5.38, 0.00, 13.69); loaded=Session+ShipAtSea; active=ShipAtSea; fade=0
+selected=None unlocked=Site02+Site03 site=Site01 toSite=HQ lever=5/Ship/Confirm shipSign=CONFIRM/off hqSign=/off shipAction=None/None/off:Ship travelling hqAction=None/off:Ship travelling aim=none votes=0/0 refusal='Ship travelling'
+ship: top=NAVIGATION · DAY 2/3 · [HQ][SITE 01][SITE 02][SITE 03][SITE 04#] ·  ·  · QUOTA $0 / $500 · BLACK TIDE | bottom=SAILING · HQ · SAIL HOME ·  · SHIP TRAVELLING · NOTICE | sign=CONFIRM/off
+hq: (no console)
+lever: serial=5 kind=Ship action=Confirm tick=3272 played=5/-1 angles=0/0
+votes=0 crew=0 phase=SailingHome
+crew: A#1, B#3
+  at SunkCost.Editor.Prototype.ConsoleNetRuntimeChecks+<Run>d__92.MoveNext () [0x03a5b] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ConsoleNetRuntimeChecks.cs:875 
+  at SunkCost.Editor.Prototype.ConsoleNetRuntimeChecks.Tick () [0x0001d] in C:\Dev\SunkCost\Assets\_Project\Editor\Prototype\ConsoleNetRuntimeChecks.cs:124 

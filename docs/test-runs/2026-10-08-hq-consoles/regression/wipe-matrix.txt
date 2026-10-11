@@ -1,0 +1,174 @@
+Crew wipe matrix started 11/10/2026 01:49:55
+PASS editor is the host with a spawned player
+PASS the crew wipe is on for this job
+  · settings: card 8 s, settle 3 s, day card 1.5 s, 3 days per cycle
+
+== W0 — to sea; guest A joins
+PASS W0 sailing to sea
+PASS W0 arrived at sea
+PASS W0 controls back
+PASS W0 guest A spawned
+PASS W0 guest A joined at sea
+PASS W0 guest A has shown no card
+
+== W1 — one dead, one alive: no wipe; END DAY is still needed
+PASS day 1: the server sees guest 1 in the deck cabin ((1.2, 0.1, 0.0))
+PASS day 1: the deck cabin took the press (refusal: )
+PASS day 1: the ride down completed
+PASS day 1: down in the dive site: ride=Complete/Down/2 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS day 1: the car is at the bottom
+PASS day 1: dive in progress with 2 below
+PASS day 1: guest 1 is in the site
+PASS guest 1 died below
+PASS W1 the host lives on below
+PASS W1 the car took the host's press
+PASS W1 the host rode up alive
+PASS W1 the site closed with dead A carried to the ship
+PASS W1 no card with a living player aboard after 15 s (wipe 0)
+PASS W1 the day waits: day 1, dive done, A still dead
+PASS W1 the host never saw the card ('Putting on the suit…')
+PASS W1 END DAY by the living host: 
+PASS W1 A revived, day 2
+PASS W1 A reads itself alive on the ship and has shown no card
+
+== W2 — both die below: NOBODY CAME BACK on both peers, the day once, both alive on the deck
+PASS W2 A owns the large tank
+PASS the CoinMedium prefab is registered
+PASS a $45 coin lies in the storage room
+PASS the box reads $45
+PASS day 2: the server sees guest 1 in the deck cabin ((1.2, 0.1, 0.0))
+PASS day 2: the deck cabin took the press (refusal: )
+PASS day 2: the ride down completed
+PASS day 2: down in the dive site: ride=Complete/Down/4 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS day 2: the car is at the bottom
+PASS day 2: dive in progress with 2 below
+PASS day 2: guest 1 is in the site
+  · W2 the host's tank below: 0.955
+PASS guest 1 died below
+PASS the host died below
+PASS W2 both dead, nobody below
+PASS W2 the server judged a crew wipe
+PASS W2 no card yet while the site closes (the death settles first)
+PASS W2 the card went up (wipe 1/True)
+PASS W2 not before the death settled: 18.8 s after the last death (settle 3 s)
+PASS W2 the card waited for the car to come home (car AtTop)
+PASS W2 the dead host was carried to the ship before the card
+PASS W2 the site unloaded under the card
+PASS W2 the day has not ended yet under the card (day 2, diveDone True)
+PASS W2 joins are refused while the card is up
+PASS W2 the host's screen: black with 'NOBODY CAME BACK'
+PASS W2 the guest (Temp/wipe-guest) shows the card
+PASS W2 the day ended by itself (day 3, payday False)
+PASS W2 the host's card after the wipe's: 'DAY 3 OF 3' (want 'DAY 3 OF 3')
+PASS W2 the card held 8.0 s (setting 8 s)
+PASS W2 the card came down on the server
+PASS W2 the day advanced exactly once (day 3, payday False; day changes 1, payday changes 0)
+PASS W2 nobody is dead and today's dive is cleared
+PASS W2 the host stands alive on the deck ((3.5, 0.0, 7.0), dead False)
+PASS W2 the host has a full tank and full health (air 1, health 100)
+PASS W2 the host's upgrades are gone: the body was not brought up (None)
+PASS W2 the host carries nothing (what the dead carried stayed below)
+PASS W2 the host's screen is clear again ('DAY 3 OF 3', alpha 0.00)
+PASS W2 A stands alive on the deck ((-3.5, 0.0, 7.0))
+PASS W2 A: a full tank and no upgrades (air 1, None)
+PASS W2 A's own view: alive on the ship, air 1, no upgrades, day 3, one card shown
+PASS W2 A's screen is clear again
+PASS W2 the storage room kept its coin (box $45, was $45)
+PASS W2 no body came up
+  · W2 card held 8.00 s
+
+== W3 — a wipe on the last day: payday
+PASS W3 day 3 is the last of 3
+PASS day 3: the server sees guest 1 in the deck cabin ((1.2, 0.1, 0.0))
+PASS day 3: the deck cabin took the press (refusal: )
+PASS day 3: the ride down completed
+PASS day 3: down in the dive site: ride=Complete/Down/5 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS day 3: the car is at the bottom
+PASS day 3: dive in progress with 2 below
+PASS day 3: guest 1 is in the site
+PASS guest 1 died below
+PASS the host died below
+PASS W3 the card went up (wipe 2/True)
+PASS W3 not before the death settled: 18.8 s after the last death (settle 3 s)
+PASS W3 the card waited for the car to come home (car AtTop)
+PASS W3 the dead host was carried to the ship before the card
+PASS W3 the site unloaded under the card
+PASS W3 the day has not ended yet under the card (day 3, diveDone True)
+PASS W3 joins are refused while the card is up
+PASS W3 the host's screen: black with 'NOBODY CAME BACK'
+PASS W3 the guest (Temp/wipe-guest) shows the card
+PASS W3 the day ended by itself (day 3, payday True)
+PASS W3 the host's card after the wipe's: 'PAYDAY' (want 'PAYDAY')
+PASS W3 the card held 8.0 s (setting 8 s)
+PASS W3 the card came down on the server
+PASS W3 the day advanced exactly once (day 3, payday True; day changes 0, payday changes 1)
+PASS W3 nobody is dead and today's dive is cleared
+PASS W3 the host stands alive on the deck ((3.5, 0.0, 7.0), dead False)
+PASS W3 the host has a full tank and full health (air 1, health 100)
+PASS W3 the host's upgrades are gone: the body was not brought up (None)
+PASS W3 the host carries nothing (what the dead carried stayed below)
+PASS W3 the host's screen is clear again ('PAYDAY', alpha 0.00)
+PASS W3 A reads payday, alive, two cards shown
+
+== W4 — the guest leaves during the card: the day still ends once, the host stands up
+PASS day 1: the server sees guest 1 in the deck cabin ((1.2, 0.1, 0.0))
+PASS day 1: the deck cabin took the press (refusal: )
+PASS day 1: the ride down completed
+PASS day 1: down in the dive site: ride=Complete/Down/6 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,1] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS day 1: the car is at the bottom
+PASS day 1: dive in progress with 2 below
+PASS day 1: guest 1 is in the site
+PASS guest 1 died below
+PASS the host died below
+PASS W4 the card went up
+PASS W4 A left during the card
+PASS W4 the card is still up after the leave
+PASS W4 the day ended by itself (day 2)
+PASS W4 the card came down
+PASS W4 the day advanced exactly once (day 2, changes 1)
+PASS W4 the host stands alive on the deck ((-3.5, 0.0, 7.0), dead False)
+PASS W4 the host has a full tank and full health (air 1, health 100)
+PASS W4 the host's upgrades are gone: the body was not brought up (None)
+PASS W4 the host carries nothing (what the dead carried stayed below)
+PASS W4 the host's screen is clear again ('DAY 2 OF 3', alpha 0.00)
+
+== W5 — a new guest joins (no old card replayed), rides up and leaves; the host dies while the car comes down for him
+PASS W5 guest B spawned
+PASS W5 guest B joined at sea
+PASS W5 B holds wipe 3 and has not replayed it
+PASS day 2: the server sees guest 2 in the deck cabin ((1.2, 0.1, 0.0))
+PASS day 2: the deck cabin took the press (refusal: )
+PASS day 2: the ride down completed
+PASS day 2: down in the dive site: ride=Complete/Down/7 car=AtBottom up=False carPos=(0.00, -45.00, 0.00) carDriven=True riders=[] below=[0,2] placements=0 local=(DiveSite01 (0.00, -44.85, 0.00)) locked=False placed=True deckDoors=0.00 fade=0.00 refusal='' failure=''
+PASS day 2: the car is at the bottom
+PASS day 2: dive in progress with 2 below
+PASS day 2: guest 2 is in the site
+PASS W5 the car took B's press
+PASS W5 B rode up alone
+PASS W5 the host alone below
+PASS W5 B left
+PASS W5 the car is on its way down for the host (Descending)
+PASS W5 still descending at the death
+PASS the host died below
+PASS W5 the last death came with the car moving (Descending)
+PASS W5 the card went up (wipe 4/True)
+PASS W5 not before the death settled: 33.5 s after the last death (settle 3 s)
+PASS W5 the card waited for the car to come home (car AtTop)
+PASS W5 the dead host was carried to the ship before the card
+PASS W5 the site unloaded under the card
+PASS W5 the day has not ended yet under the card (day 2, diveDone True)
+PASS W5 joins are refused while the card is up
+PASS W5 the host's screen: black with 'NOBODY CAME BACK'
+PASS W5 the day ended by itself (day 3, payday False)
+PASS W5 the host's card after the wipe's: 'DAY 3 OF 3' (want 'DAY 3 OF 3')
+PASS W5 the card held 8.0 s (setting 8 s)
+PASS W5 the card came down on the server
+PASS W5 the day advanced exactly once (day 3, payday False; day changes 1, payday changes 0)
+PASS W5 nobody is dead and today's dive is cleared
+PASS W5 the host stands alive on the deck ((-3.5, 0.0, 7.0), dead False)
+PASS W5 the host has a full tank and full health (air 1, health 100)
+PASS W5 the host's upgrades are gone: the body was not brought up (None)
+PASS W5 the host carries nothing (what the dead carried stayed below)
+PASS W5 the host's screen is clear again ('DAY 3 OF 3', alpha 0.00)
+  · done
+MATRIX_PASS

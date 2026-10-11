@@ -299,16 +299,26 @@ namespace SunkCost.Editor.Prototype
 
             Heading("Colour — sky");
             PlayerIdentity identity = host.GetComponent<PlayerIdentity>();
-            GameObject panel = GameObject.Find(ColourPanel.PanelName);
-            H.ClientMoveLocalPlayerTo(new Vector3(panel.transform.position.x, 0f, panel.transform.position.z + 1.3f)); yield return null;
-            H.ClientLookAtNamed(ColourPanel.PanelName); yield return null; yield return null;
-            Check(host.CurrentColourPanel != null && H.PromptText().Contains("Press E to pick your colour"), "the panel offers the pick: " + H.PromptText());
-            SunkCost.Net.SessionInputGate.OpenPicker(); yield return null;
-            hud.PickColourForChecks(8);
+            ConsoleRig colourRig = ConsoleRig.InScene(WorldScenes.Scene(WorldId.HQ), ConsoleKind.Colour);
+            Check(colourRig != null, "the colour console stands at the arrival pad");
+            Vector3 rigFront = colourRig.transform.rotation * Vector3.forward; rigFront.y = 0f; rigFront.Normalize();
+            Vector3 standAtRig = colourRig.transform.position + rigFront * 1.6f; standAtRig.y = 0.05f;
+            float faceRig = Mathf.Atan2(-rigFront.x, -rigFront.z) * Mathf.Rad2Deg;
+            host.TeleportLocal(standAtRig, faceRig); yield return null;
+            for (int i = 0; i < 240 && !(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Swatch && host.CurrentConsoleControl.Index == 8); i++)
+            { if (i % 45 == 0) host.TeleportLocal(standAtRig, faceRig); H.ClientLookAtNamed(ConsoleRig.SwatchNamePrefix + "8"); yield return null; }
+            Check(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Swatch && host.CurrentConsoleControl.Index == 8 && H.PromptText().Contains("Press E to show SKY"), "the console offers the swatch: " + H.PromptText());
+            host.GetComponent<ShipControls>().RequestPressSwatch(8);
+            yield return Expect(() => Day.ShownSwatch == 8, 3f, "sky (8) shown on the console");
+            for (int i = 0; i < 240 && !(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Lever && host.CurrentConsoleControl.Console == ConsoleKind.Colour); i++)
+            { if (i % 45 == 0) host.TeleportLocal(standAtRig, faceRig); H.ClientLookAtNamed(ConsoleRig.ColourLeverName); yield return null; }
+            Check(host.CurrentConsoleControl != null && host.CurrentConsoleControl.Kind == ConsoleControlKind.Lever && H.PromptText().Contains("Press E to take SKY"), "the lever offers the take: " + H.PromptText());
+            Say("pull: " + H.ClientPullLever("Colour"));
             yield return Expect(() => identity.ColourIndex == 8, 3f, "sky (8) written by the server");
-            SunkCost.Net.SessionInputGate.ClosePicker(); yield return null; yield return null;
+            yield return null; yield return null;
             Check(Mathf.Abs(host.BodyColour.r - PlayerPalette.Get(8).r) < 0.02f && Mathf.Abs(host.BodyColour.b - PlayerPalette.Get(8).b) < 0.02f, "the body wears sky: " + host.BodyColour);
-            Check(PlayerColourPrefs.Load() == 8, "the pick is saved");
+            // The save comes by a TargetRpc on the clientHost's next tick, after the SyncVar the host reads at once: wait for it, as hands P3 does.
+            yield return Expect(() => PlayerColourPrefs.Load() == 8, 3f, "the pick is saved");
             yield return Shot("colour-picked");
 
             Heading("Cycle 1 — sail out");

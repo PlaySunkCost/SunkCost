@@ -18,12 +18,16 @@ using H = SunkCost.Editor.Prototype.HQPrototypeTestHooks;
 
 namespace SunkCost.Editor.Prototype
 {
-    // The shop at HQ (docs/DESIGN.md §8; 18 September 2026). The host alone: the
-    // room and its stands, the prompt, a refusal with no money, an air tank that
-    // falls at the delivery spot, the two upgrades (one each, refused twice),
-    // a press from too far, the large tank counting below, the marks on the
-    // visor, and the upgrades lost with an unrescued body. Then a guest: buys
-    // from the pot, its upgrade replicates, and a body brought up keeps them.
+    // The shop at HQ (docs/DESIGN.md §8; 18 September 2026; the shop console, Dan,
+    // 8 October 2026: the catalogue is painted on the console at the depot's counter,
+    // aim at a row and press E to buy; the display stands and the HUD browser are gone).
+    // The host alone: the room and its console, the prompt, a refusal with no money, an
+    // air tank that falls at the delivery spot, the two upgrades (one each, refused
+    // twice), a press from too far, the shop shut at sea, the large tank counting below,
+    // the marks on the visor, and the upgrades lost with an unrescued body. Then a guest:
+    // buys from the pot at the console, its upgrade replicates, and a body brought up
+    // keeps them. The console's own rows (paging, the zones, the lever, the refusals,
+    // the guest's screen) are the console-shop job's.
     // Log: Temp/shop-matrix.log. Started by CameraClearanceMatrixDriver.Start("shop").
     public static class ShopRuntimeChecks
     {
@@ -170,29 +174,44 @@ namespace SunkCost.Editor.Prototype
         private static string GuestPlayerLine(string reply, int ownerId) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("player=" + ownerId + ";")) ?? string.Empty;
         private static HQPlayerController GuestCopy() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
 
-        private static ShopDisplay Stand(string itemId)
+        // ---- the shop console (Dan, 8 October 2026) -----------------------------------------
+        // The Shop rig at the depot's counter, found by kind and scene (HQ is a fresh scene
+        // after every sail home: never keep the reference across a sail).
+        private static ConsoleRig ShopRig() => ConsoleRig.InScene(WorldScenes.Scene(WorldId.HQ), ConsoleKind.Shop);
+        private static Vector3 Front(ConsoleRig rig) { Vector3 f = rig.transform.rotation * Vector3.forward; f.y = 0f; return f.normalized; }
+        // Where a reader stands: 1.6 m in front of the rig, `side` metres to its right.
+        private static Vector3 StandSpot(ConsoleRig rig, float side = 0f)
         {
-            foreach (ShopDisplay d in UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
-                if (d.ItemId == itemId && d.gameObject.scene == WorldScenes.Scene(WorldId.HQ)) return d;
-            return null;
+            Vector3 at = rig.transform.position + Front(rig) * 1.6f + Vector3.Cross(Vector3.up, Front(rig)) * side;
+            at.y = 0.05f;
+            return at;
         }
-        // Stand in front of a shelf and look at the thing on it until the dot is on it.
-        private static IEnumerator LookAtStand(ShopDisplay stand)
+        private static float FacingYaw(ConsoleRig rig) { Vector3 back = -Front(rig); return Mathf.Atan2(back.x, back.z) * Mathf.Rad2Deg; }
+        // Stand at the console and look at the row until the dot is on it (re-placed every 45 frames).
+        private static IEnumerator AimRow(int row)
         {
             HQPlayerController host = Host();
-            Transform thing = stand.transform.Find("Display") ?? stand.transform;
-            Vector3 at = stand.transform.position + stand.transform.forward * 1.6f; at.y = 0.05f;
-            host.TeleportLocal(at, host.Yaw); yield return null; yield return null;
-            float deadline = Time.unscaledTime + 3f;
-            while (Time.unscaledTime < deadline && host.CurrentShopDisplay != stand)
+            ConsoleRig rig = ShopRig();
+            Check(rig != null, "the shop console stands at HQ");
+            float deadline = Time.unscaledTime + 4f; int tries = 0;
+            while (Time.unscaledTime < deadline)
             {
-                Vector3 to = thing.position - host.EyePosition;
-                Vector3 flat = new(to.x, 0f, to.z);
-                host.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
-                host.SetPitchForChecks(-Mathf.Atan2(to.y, flat.magnitude) * Mathf.Rad2Deg);
+                ConsoleControl c = host.CurrentConsoleControl;
+                if (c != null && c.Console == ConsoleKind.Shop && c.Kind == ConsoleControlKind.ShopRow && c.Index == row) break;
+                if (tries++ % 45 == 0) host.TeleportLocal(StandSpot(rig), FacingYaw(rig));
+                H.ClientLookAtNamed(ConsoleRig.RowNamePrefix + row);
                 yield return null;
             }
-            Check(host.CurrentShopDisplay == stand, "the dot is on the " + stand.ItemId + " stand");
+            ConsoleControl aimed = host.CurrentConsoleControl;
+            Check(aimed != null && aimed.Console == ConsoleKind.Shop && aimed.Kind == ConsoleControlKind.ShopRow && aimed.Index == row, "the dot is on row " + row + " of the shop console (aim " + (aimed == null ? "none" : aimed.Console + "/" + aimed.Kind + "/" + aimed.Index) + ")");
+        }
+        // The class name as a string so this file compiles once ShopDisplay is deleted.
+        private static int CountOfType(string typeName)
+        {
+            int n = 0;
+            foreach (MonoBehaviour mb in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (mb != null && mb.GetType().Name == typeName) n++;
+            return n;
         }
         private static CarryableItem BoughtTank()
         {
@@ -262,6 +281,9 @@ namespace SunkCost.Editor.Prototype
             ShopCatalog catalog = ShopCatalog.Resolve();
             Check(catalog.Items.Count >= 4 && catalog.Find(ShopCatalog.AirTankId) != null && catalog.Find(ShopCatalog.LargeTankId) != null && catalog.Find(ShopCatalog.BrightHeadlampId) != null && catalog.Find(ShopCatalog.PatchKitId) != null, "the catalogue includes the four baseline items and permits expansion");
             ShopItem airTank = catalog.Find(ShopCatalog.AirTankId), largeTank = catalog.Find(ShopCatalog.LargeTankId), lamp = catalog.Find(ShopCatalog.BrightHeadlampId);
+            // The console's first page in the catalogue's order: the rows the job aims at.
+            int tankRow = catalog.Items.ToList().IndexOf(airTank), largeRow = catalog.Items.ToList().IndexOf(largeTank), lampRow = catalog.Items.ToList().IndexOf(lamp);
+            Check(tankRow >= 0 && tankRow < ShopConsoleRules.RowsPerPage && largeRow >= 0 && largeRow < ShopConsoleRules.RowsPerPage && lampRow >= 0 && lampRow < ShopConsoleRules.RowsPerPage, $"the air tank, the large tank and the lamp are on the console's first page (rows {tankRow}, {largeRow}, {lampRow})");
             Say($"prices: {airTank.Name} ${airTank.Price}, {largeTank.Name} ${largeTank.Price}, {lamp.Name} ${lamp.Price}; large tank ×{catalog.LargeTankMultiplier}; lamp range ×{catalog.BrightHeadlampRange}");
             WorldSceneFlow flow = WorldSceneFlow.Instance;
             savedInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
@@ -277,17 +299,18 @@ namespace SunkCost.Editor.Prototype
             PlayerHudUI hud = host.GetComponent<PlayerHudUI>();
             PlayerUpgrades upgrades = host.Upgrades;
             float plainRange = host.HeadlampRange;
+            Day.ServerSetShopPageForChecks(0);
 
-            Heading("S0 — four shop stands, aim-based names/prices and a delivery spot");
+            Heading("S0 — the shop console at the depot's counter, no display stands, a delivery spot");
             Check(GameObject.Find(HQPrototypeBuilder.ShopRoomName) != null, "S0 the shop room stands at HQ");
-            ShopDisplay tankStand = Stand(ShopCatalog.AirTankId), largeStand = Stand(ShopCatalog.LargeTankId), lampStand = Stand(ShopCatalog.BrightHeadlampId);
-            Check(tankStand != null && largeStand != null && lampStand != null && Stand(ShopCatalog.PatchKitId) != null, "S0 a stand for each item");
-            TextMesh tankLabel = tankStand.GetComponentInChildren<TextMesh>();
-            Check(tankLabel == null, "S0 merchandise has no permanent floating label; S1 checks the aim prompt");
-            Check(tankStand.DeliveryPoint != null, "S0 the stand knows its delivery spot");
+            ConsoleRig rig = ShopRig();
+            Check(rig != null && rig.name == ConsoleRig.CatalogueRootName && rig.GetComponent<ConsoleLever>() != null && rig.TopSurface != null, "S0 the shop console '" + (rig == null ? "none" : rig.name) + "' stands at HQ with its lever and screens");
+            Check(CountOfType("ShopDisplay") == 0, "S0 no display stands: the console is the only place to buy");
+            Check(rig.GetComponentsInChildren<ConsoleControl>(true).Count(c => c.Kind == ConsoleControlKind.ShopRow) == ShopConsoleRules.RowsPerPage, $"S0 {ShopConsoleRules.RowsPerPage} row zones on the console");
+            Check(ShopDeliveryPoint.Nearest(rig.transform.position, WorldScenes.Scene(WorldId.HQ)) != null, "S0 the console's deliveries have a chute");
 
-            Heading("S1 — look at a stand: the prompt; E with an empty pot is refused");
-            yield return LookAtStand(tankStand);
+            Heading("S1 — look at a row: the prompt; E with an empty pot is refused");
+            yield return AimRow(tankRow);
             yield return null;
             Check(hud.PromptText.Contains($"{airTank.Name} · ${airTank.Price}") && hud.PromptText.Contains("Press E to buy") && hud.PromptText.Contains("pot $0"), "S1 the prompt: " + hud.PromptText);
             Check(Day.Balance == 0, "S1 the pot is empty");
@@ -295,11 +318,12 @@ namespace SunkCost.Editor.Prototype
             yield return Expect(() => upgrades.Refusal.Contains("Not enough money"), 3f, () => "S1 E with no money is refused: " + upgrades.Refusal);
             Check(hud.PromptText == upgrades.Refusal, "S1 the refusal shows in the prompt: " + hud.PromptText);
             Check(BoughtTank() == null && Day.Balance == 0, "S1 nothing was sold");
+            Check(!SunkCost.Net.SessionInputGate.ShopOpen, "S1 no HUD window opened on E");
 
             Heading("S2 — with money: the air tank falls at the delivery spot, anyone's to take");
             Day.ServerSetBalanceForChecks(500);
             yield return Wait(0.2f);
-            yield return LookAtStand(tankStand);
+            yield return AimRow(tankRow);
             yield return Press(Key.E);
             yield return Expect(() => BoughtTank() != null, 3f, () => "S2 an air tank was spawned");
             CarryableItem bought = BoughtTank();
@@ -328,25 +352,24 @@ namespace SunkCost.Editor.Prototype
             Check(Day.Balance == 500 - airTank.Price, $"S2 the pot paid ${airTank.Price}: ${Day.Balance} left");
 
             Heading("S3 — the large tank: an upgrade on the buyer, one only");
-            yield return LookAtStand(largeStand);
+            yield return AimRow(largeRow);
             yield return Press(Key.E);
             yield return Expect(() => upgrades.Has(PlayerUpgrade.LargeTank), 3f, () => "S3 the large tank is owned");
             Check(Day.Balance == 500 - airTank.Price - largeTank.Price, $"S3 the pot paid ${largeTank.Price}: ${Day.Balance} left");
-            yield return null;
-            Check(hud.PromptText.Contains("owned"), "S3 the stand now says owned: " + hud.PromptText);
+            yield return Expect(() => hud.PromptText.Contains("owned"), 1.5f, () => "S3 the row now says owned: " + hud.PromptText);
             yield return Press(Key.E);
             yield return Expect(() => upgrades.Refusal.Contains("already have"), 3f, () => "S3 buying it again is refused: " + upgrades.Refusal);
             Check(Day.Balance == 500 - airTank.Price - largeTank.Price, "S3 nothing charged for the refused buy");
 
             Heading("S4 — the bright headlamp: a longer beam; then the pot runs dry");
-            yield return LookAtStand(lampStand);
+            yield return AimRow(lampRow);
             yield return Press(Key.E);
             yield return Expect(() => upgrades.Has(PlayerUpgrade.BrightHeadlamp), 3f, () => "S4 the bright headlamp is owned");
             yield return null;
             Check(Mathf.Abs(host.HeadlampRange - plainRange * catalog.BrightHeadlampRange) < 0.05f, $"S4 the beam reaches ×{catalog.BrightHeadlampRange}: {plainRange:0.0} → {host.HeadlampRange:0.0} m");
             int left = 500 - airTank.Price - largeTank.Price - lamp.Price;
             Check(Day.Balance == left, $"S4 ${left} left in the pot");
-            yield return LookAtStand(tankStand);
+            yield return AimRow(tankRow);
             yield return Press(Key.E);
             yield return Expect(() => upgrades.Refusal.Contains("Not enough money") && upgrades.Refusal.Contains($"${left} in the pot"), 3f, () => "S4 a second air tank is refused on money: " + upgrades.Refusal);
 
@@ -354,11 +377,14 @@ namespace SunkCost.Editor.Prototype
             Day.ServerSetBalanceForChecks(100);
             host.TeleportLocal(new Vector3(0f, 0.05f, 0f), 0f); yield return Wait(0.3f);
             upgrades.RequestBuy(ShopCatalog.AirTankId);
-            yield return Expect(() => upgrades.Refusal.Contains("Step up to the shop"), 3f, () => "S5 refused from 12 m: " + upgrades.Refusal);
+            yield return Expect(() => upgrades.Refusal.Contains(ConsoleRules.NotAtConsole), 3f, () => "S5 refused from 12 m: " + upgrades.Refusal);
             Check(Day.Balance == 100 && BoughtTank() != null && CarryableItem.Spawned.Count(c => c != null && c.name.StartsWith("Air tank (bought)")) == 1, "S5 nothing sold");
 
-            Heading("S6 — below, the large tank counts and the visor marks what was bought");
+            Heading("S6 — at sea the shop is shut; below, the large tank counts and the visor marks what was bought");
             yield return SailTo("Sea", WorldId.Sea);
+            upgrades.RequestBuy(ShopCatalog.AirTankId);
+            yield return Expect(() => upgrades.Refusal.Contains("The shop is at HQ"), 3f, () => "S6 a buy at sea is refused: " + upgrades.Refusal);
+            Check(Day.Balance == 100, "S6 nothing sold at sea");
             yield return Descend(1);
             PlayerVitals vitals = host.Vitals;
             float expected = vitals.Settings.EffectiveTankSeconds * catalog.LargeTankMultiplier;
@@ -378,26 +404,23 @@ namespace SunkCost.Editor.Prototype
             Check(Mathf.Abs(host.HeadlampRange - plainRange) < 0.05f, $"S7 the plain beam again ({host.HeadlampRange:0.0} m)");
             Check(Day.Balance == 100, "S7 the pot is untouched by the death");
 
-            Heading("G1 — a guest buys from the pot at HQ; its upgrade replicates");
+            Heading("G1 — a guest buys from the pot at the console; its upgrade replicates");
             yield return SailTo("HQ", WorldId.HQ);
-            largeStand = Stand(ShopCatalog.LargeTankId); // HQ is a fresh scene after the sail home
-            Check(largeStand != null, "G1 the shop is there again at HQ");
+            rig = ShopRig(); // HQ is a fresh scene after the sail home
+            Check(rig != null, "G1 the shop console is there again at HQ");
             guest = LaunchGuest();
             yield return Expect(() => GuestCopy() != null, 40f, () => "guest player spawned");
             HQPlayerController remote = GuestCopy();
             int guestId = remote.OwnerId;
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("local=True") && r.Contains("world=HQ"), 20f, "G1 guest joined at HQ");
-            var catalogCounter=UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsSortMode.None).First(d=>d.BrowsesCatalog);
-            Vector3 guestSpot = catalogCounter.transform.position + catalogCounter.transform.forward * 1.6f; guestSpot.y = 0.05f;
-            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(guestSpot) + "}");
+            yield return Send("{\"id\":{id},\"action\":\"move\",\"position\":" + Vec(StandSpot(rig, 1.0f)) + "}");
             yield return Wait(0.5f);
-            yield return Send("{\"id\":{id},\"action\":\"shop_open\"}");
-            yield return GuestEventually(r=>r.Contains("shopBrowser=True; entries="+catalog.Items.Count),5f,"G1 guest browses the full catalogue at the counter");
-            yield return Send("{\"id\":{id},\"action\":\"shop_buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
+            yield return GuestEventually(r => r.Contains("shopPage=") && !r.Contains("shopOpen=True"), 5f, "G1 the guest's peer reads the console and no HUD window is open");
+            yield return Send("{\"id\":{id},\"action\":\"buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("shopRefusal='Not enough money"), 5f, "G1 $100 in the pot: the guest's large tank is refused, and the guest sees why");
             Day.ServerSetBalanceForChecks(400);
             yield return Wait(0.2f);
-            yield return Send("{\"id\":{id},\"action\":\"shop_buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
+            yield return Send("{\"id\":{id},\"action\":\"buy\",\"item\":\"" + ShopCatalog.LargeTankId + "\"}");
             yield return Expect(() => remote.Upgrades != null && remote.Upgrades.Has(PlayerUpgrade.LargeTank), 5f, () => "G1 the guest bought the large tank; the host's copy shows it");
             Check(Day.Balance == 400 - largeTank.Price, $"G1 the pot paid ${largeTank.Price}: ${Day.Balance} left");
             yield return GuestEventually(r => GuestPlayerLine(r, guestId).Contains("upgrades=LargeTank"), 5f, "G1 the guest reads its own upgrade");

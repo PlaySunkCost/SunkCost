@@ -15,10 +15,20 @@ namespace SunkCost.Audio
     // sounds play while this machine's listener is near the ship (a spectator's
     // eyes on the deck hear it too), the wake from the replicated departure stage,
     // so every screen that shows the ship shows it sailing the same way.
+    //
+    // At HQ the platform has its own bed (HQAmbience, 8 October 2026): while that
+    // bed's wind plays on this peer it sets WindSuppressed and this ship's wind
+    // stays quiet (one wind, not two); the washes keep coming from the hull. The
+    // 70 m hearing edge fades over half a second instead of cutting.
     [DefaultExecutionOrder(-200)] // the engine's clip is in before ShipDepartureVisual looks for it
     public sealed class ShipAmbience : MonoBehaviour
     {
         public const float HearingMetres = 70f; // the listener this near the ship's root hears it (the ship is 48 m long)
+        public const float FadeSeconds = 0.5f;  // in and out at the hearing edge
+
+        // Set by HQAmbience while its 2D wind plays on this peer; it clears it every
+        // frame it does not play and when it is disabled. Nothing else writes it.
+        public static bool WindSuppressed;
 
         [SerializeField] private AudioSource washPort, washStarboard, wind, tvHiss, engine;
         [SerializeField] private ParticleSystem[] wake = new ParticleSystem[0];
@@ -30,6 +40,9 @@ namespace SunkCost.Audio
         private AudioListener listener;
         private float nextListenerLookAt;
         private bool sailing;
+        private float fade;       // 0 silent .. 1 full, moved toward Heard at the hearing edge
+        private float windFade;   // the wind's own, so the HQ bed's hand-over fades too
+        private bool portStarted, starboardStarted, windStarted, hissStarted;   // one per source: a pause keeps its place, an UnPause resumes it
 
         public bool Sailing => sailing;              // for the checks
         public bool Heard { get; private set; }
@@ -68,16 +81,20 @@ namespace SunkCost.Audio
             AudioLibrary library = AudioLibrary.Get();
             Transform ear = Listener();
             Heard = ear != null && Vector3.Distance(ear.position, transform.position) <= HearingMetres;
-            Toggle(washPort, Heard);
-            Toggle(washStarboard, Heard);
-            Toggle(wind, Heard);
-            if (Heard && wind != null)
+            float step = Time.unscaledDeltaTime / FadeSeconds;
+            fade = Mathf.MoveTowards(fade, Heard ? 1f : 0f, step);
+            windFade = Mathf.MoveTowards(windFade, Heard && !WindSuppressed ? 1f : 0f, step);
+            Level(washPort, library.SeaWashVolume * fade, ref portStarted);
+            Level(washStarboard, library.SeaWashVolume * fade, ref starboardStarted);
+            float windVolume = library.WindVolume;
+            if (ear != null)
             {
                 float height = ear.position.y - transform.position.y - 1.6f; // over a standing player's eyes on the deck
-                wind.volume = Mathf.Lerp(library.WindVolume, library.WindVolumeHigh, Mathf.Clamp01(height / library.WindHighMetres));
+                windVolume = Mathf.Lerp(library.WindVolume, library.WindVolumeHigh, Mathf.Clamp01(height / library.WindHighMetres));
             }
+            Level(wind, windVolume * windFade, ref windStarted);
             if (tvHiss != null && parts != null && parts.TvSpeaker != null) tvHiss.transform.position = parts.TvSpeaker.position;
-            Toggle(tvHiss, Heard && tv != null && !tv.Live);
+            Level(tvHiss, tv != null && !tv.Live ? library.TvHissVolume * fade : 0f, ref hissStarted);
 
             // Sailing: the stages in which ShipDepartureVisual moves this ship.
             CrewDayState day = CrewDayState.Instance;
@@ -96,6 +113,20 @@ namespace SunkCost.Audio
             }
         }
 
+        // What this ship's sources give at `ear` from their settings (the probe's share
+        // of the docked ship): the washes by their rolloff, the wind in full, within
+        // HearingMetres; nothing beyond it.
+        public float LevelAt(Vector3 ear, bool includeWind = true)
+        {
+            if (Vector3.Distance(ear, transform.position) > HearingMetres) return 0f;
+            AudioLibrary library = AudioLibrary.Get();
+            float level = 0f;
+            foreach (AudioSource wash in new[] { washPort, washStarboard })
+                if (wash != null) level += library.SeaWashVolume * HQAmbience.Rolloff(Vector3.Distance(ear, wash.transform.position), wash.minDistance, wash.maxDistance, wash.rolloffMode);
+            if (includeWind && wind != null) level += library.WindVolume;
+            return level;
+        }
+
         private Transform Listener()
         {
             if ((listener == null || !listener.isActiveAndEnabled) && Time.unscaledTime >= nextListenerLookAt)
@@ -108,11 +139,17 @@ namespace SunkCost.Audio
             return listener != null && listener.isActiveAndEnabled ? listener.transform : null;
         }
 
-        private static void Toggle(AudioSource source, bool on)
+        // A source at `volume`: playing while it is above zero, paused at zero (a pause
+        // keeps the starboard wash's half-loop offset; the first start is a Play).
+        private static void Level(AudioSource source, float volume, ref bool started)
         {
             if (source == null || source.clip == null) return;
-            if (on && !source.isPlaying) source.Play();
-            else if (!on && source.isPlaying) source.Stop();
+            if (volume > 0.0005f)
+            {
+                source.volume = volume;
+                if (!source.isPlaying) { if (started) source.UnPause(); else source.Play(); started = true; }
+            }
+            else if (source.isPlaying) source.Pause();
         }
     }
 }

@@ -122,6 +122,15 @@ namespace SunkCost.Editor.Prototype
                 if (Mathf.Max(c.r, c.g, c.b) < 0.85f) errors.Add("swatch " + i + " is too dark to read in the dark.");
                 if (PlayerPalette.SwatchAt(PlayerPalette.WheelPosition(i) * 0.8f) != i) errors.Add("swatch " + i + " is not found at its own wheel position.");
             }
+            // The swatch names (the colour console's screens, 8 October 2026): one per swatch, upper case, distinct.
+            if (PlayerPalette.Names.Length != PlayerPalette.Count) errors.Add("the palette's names table must have one name per swatch.");
+            for (int i = 0; i < PlayerPalette.Names.Length; i++)
+            {
+                string n = PlayerPalette.Names[i];
+                if (string.IsNullOrWhiteSpace(n) || n != n.ToUpperInvariant()) errors.Add("swatch name " + i + " must be upper case: '" + n + "'.");
+                for (int j = i + 1; j < PlayerPalette.Names.Length; j++) if (PlayerPalette.Names[j] == n) errors.Add("swatch names " + i + " and " + j + " repeat '" + n + "'.");
+            }
+            if (PlayerPalette.Name(-1) != "RED" || PlayerPalette.Name(16) != "RED") errors.Add("a name outside the palette falls back to RED.");
             if (PlayerPalette.SwatchAt(Vector2.zero) != -1 || PlayerPalette.SwatchAt(new Vector2(1.3f, 0f)) != -1) errors.Add("the wheel's centre and outside are no swatch.");
             if (PlayerIdentity.SanitizeColour(99, 3) != 3 || PlayerIdentity.SanitizeColour(-1, 0) != 0 || PlayerIdentity.SanitizeColour(7, 0) != 7) errors.Add("a colour outside the palette must fall back to the owner's seat.");
             Texture2D wheel = PlayerPalette.BakeWheel(128, readable: true);

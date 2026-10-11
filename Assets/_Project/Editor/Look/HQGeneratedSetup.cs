@@ -71,11 +71,11 @@ namespace SunkCost.Editor.Look
             }
             if(UnityEngine.Object.FindObjectsByType<DockBoardingGate>(FindObjectsInactive.Include,FindObjectsSortMode.None).Length!=2) errors.Add("Need the HQ and ship boarding gates.");
             if(UnityEngine.Object.FindObjectsByType<DockGangway>(FindObjectsSortMode.None).Length!=1) errors.Add("Need one lifting HQ gangway.");
+            // The crew colour console (or, until it lands, the colour panel) stands in front
+            // of every spawn: found by name, so this file names no colour-panel type.
+            GameObject colour=GameObject.Find("Colour Console") ?? GameObject.Find("Colour Panel");
             foreach(Transform point in spawn.transform)
-            {
-                var colour=UnityEngine.Object.FindFirstObjectByType<ColourPanel>();
-                if(colour==null || Vector3.Dot(point.forward,colour.transform.position-point.position)<=0)errors.Add("Colour panel behind "+point.name);
-            }
+                if(colour==null || Vector3.Dot(point.forward,colour.transform.position-point.position)<=0)errors.Add("Colour console behind "+point.name);
             foreach(Transform candidate in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include,FindObjectsSortMode.None))
                 if(candidate.name.StartsWith("Catwalk") || candidate.name=="Tower Ladder Removed" || candidate.name=="Price plate")errors.Add("Obsolete prop: "+candidate.name);
             if(errors.Count>0)throw new InvalidOperationException(string.Join("\n",errors));

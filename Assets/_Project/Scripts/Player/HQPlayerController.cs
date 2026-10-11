@@ -133,6 +133,8 @@ namespace SunkCost.Player
         // The carryable under the crosshair within reach this frame, owner only.
         public CarryableItem CurrentTarget { get; private set; }
         public SunkCost.World.MonitorButton CurrentButton { get; private set; }
+        // Always null since the crew colour console (8 October 2026): a compile stub until
+        // the hands/fullrun/shop/plank/save/hq rewrites land; the final agent deletes it.
         public SunkCost.World.ColourPanel CurrentColourPanel { get; private set; }
         public SunkCost.World.QuotaBoard CurrentQuotaBoard { get; private set; }
         public SunkCost.World.GiveUpButton CurrentGiveUpButton { get; private set; }
@@ -140,7 +142,9 @@ namespace SunkCost.Player
         // card, the lever, the HQ's GIVE UP card; 27 September 2026). The three above are
         // the old monitor's and board's, kept until their classes go in the test phase.
         public SunkCost.World.ConsoleControl CurrentConsoleControl { get; private set; }
-        // The shop stand under the crosshair within reach (E buys; the shop, 18 September 2026).
+        // Always null since the catalogue console (8 October 2026: buying is a row of the
+        // Shop rig, a ConsoleControl): a compile stub until the shop/plank/save/hq rewrites
+        // land; the final agent deletes it.
         public SunkCost.Shop.ShopDisplay CurrentShopDisplay { get; private set; }
         // What this player bought (PlayerUpgrades on the same prefab); null before the shop setup ran.
         public PlayerUpgrades Upgrades => upgrades != null ? upgrades : upgrades = GetComponent<PlayerUpgrades>();
@@ -409,7 +413,7 @@ namespace SunkCost.Player
             if (dead.Value) ApplyDead(true);
             if (IsOwner && Spectator == null) Spectator = gameObject.AddComponent<SpectatorView>();
             if (IsOwner && GetComponent<InteractHighlight>() == null) gameObject.AddComponent<InteractHighlight>(); // what the dot rests on shows it can be used (SHIP-054)
-            if (IsOwner && GetComponent<SunkCost.Shop.ShopBrowserUI>() == null) gameObject.AddComponent<SunkCost.Shop.ShopBrowserUI>();
+            // No ShopBrowserUI since the catalogue console (8 October 2026): the catalogue is on the console's screens.
             dashClientStartFrame = Time.frameCount;
             if (GetComponent<PlayerDashEffects>() == null) gameObject.AddComponent<PlayerDashEffects>(); // the rings and the whoosh, on every peer
             // The body wears the player's colour (PlayerIdentity): now, and whenever it changes.
@@ -592,11 +596,6 @@ namespace SunkCost.Player
                 else if (CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay) ship.RequestEndDay();
                 else ship.RequestSail(CurrentButton.Destination);
             }
-            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentColourPanel != null)
-            {
-                grabConsumed = true;
-                SessionInputGate.OpenPicker();
-            }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentQuotaBoard != null)
             {
                 grabConsumed = true;
@@ -608,12 +607,6 @@ namespace SunkCost.Player
                 grabConsumed = true;
                 SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
                 if (ship != null) ship.RequestGiveUp();
-            }
-            else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentShopDisplay != null)
-            {
-                grabConsumed = true;
-                if (CurrentShopDisplay.BrowsesCatalog) GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Open(CurrentShopDisplay);
-                else Upgrades?.RequestBuy(CurrentShopDisplay.ItemId);
             }
             else if (keys.eKey.wasPressedThisFrame && CurrentTarget == null && CurrentTv != null)
             {
@@ -649,14 +642,26 @@ namespace SunkCost.Player
         // over the replicated facts) so the server can refuse a pull whose selection
         // changed under it; a dim lever still sends and the server answers why. The
         // GIVE UP card is the existing vote. All server-validated on the player's ShipControls.
+        // The HQ consoles of 8 October 2026: a swatch shows its colour for everyone, a
+        // catalogue row buys its item (the shop's own RequestBuy), PREV / NEXT asks for
+        // the page this client sees ± 1 (an absolute page: two same-frame NEXTs agree).
         private void PressConsole(SunkCost.World.ConsoleControl c)
         {
             SunkCost.World.ShipControls ship = GetComponent<SunkCost.World.ShipControls>();
             if (ship == null || c == null) return;
+            SunkCost.World.CrewDayState day = SunkCost.World.CrewDayState.Instance;
             switch (c.Kind)
             {
                 case SunkCost.World.ConsoleControlKind.Card: ship.RequestSelect(c.Payload); break;
                 case SunkCost.World.ConsoleControlKind.GiveUpCard: ship.RequestGiveUp(); break;
+                case SunkCost.World.ConsoleControlKind.Swatch: ship.RequestPressSwatch(c.Index); break;
+                case SunkCost.World.ConsoleControlKind.ShopRow:
+                {
+                    string id = SunkCost.World.ShopConsoleRules.ItemIdAt(day != null ? day.ShopPage : 0, c.Index);
+                    if (id != null) Upgrades?.RequestBuy(id);
+                    break;
+                }
+                case SunkCost.World.ConsoleControlKind.ShopPage: ship.RequestShopPage((day != null ? day.ShopPage : 0) + c.Index); break;
                 case SunkCost.World.ConsoleControlKind.Lever:
                     SunkCost.World.LeverAction action = SunkCost.World.ConsoleRules.Expected(c.Console, null, out SunkCost.World.SiteId target);
                     ship.RequestLever(c.Console, action, target);
@@ -1082,14 +1087,12 @@ namespace SunkCost.Player
             if (CurrentConsoleControl != null) { CurrentUsable = CurrentConsoleControl.transform; return; }
             CurrentButton = pressed.GetComponentInParent<SunkCost.World.MonitorButton>();
             if (CurrentButton != null) { CurrentUsable = CurrentButton.transform; return; }
-            CurrentColourPanel = pressed.GetComponentInParent<SunkCost.World.ColourPanel>();
-            if (CurrentColourPanel != null) { CurrentUsable = CurrentColourPanel.transform; return; }
+            // The colour panel and the shop displays are gone (8 October 2026): the crew
+            // colour console and the catalogue console are ConsoleControls above.
             CurrentGiveUpButton = pressed.GetComponentInParent<SunkCost.World.GiveUpButton>();
             if (CurrentGiveUpButton != null) { CurrentUsable = CurrentGiveUpButton.transform; return; }
             CurrentQuotaBoard = pressed.GetComponentInParent<SunkCost.World.QuotaBoard>();
             if (CurrentQuotaBoard != null) { CurrentUsable = CurrentQuotaBoard.transform; return; }
-            CurrentShopDisplay = pressed.GetComponentInParent<SunkCost.Shop.ShopDisplay>();
-            if (CurrentShopDisplay != null) { CurrentUsable = CurrentShopDisplay.transform; return; }
             if (pressed.name == SunkCost.World.ShipParts.TvScreenName) { CurrentTv = pressed.GetComponentInParent<SunkCost.World.ShipTV>(); if (CurrentTv != null) { CurrentUsable = pressed; return; } }
             SunkCost.Diving.ElevatorControlPanel carPanel = pressed.GetComponentInParent<SunkCost.Diving.ElevatorControlPanel>();
             if (carPanel != null) { CurrentCabinControl = CabinControl.Car; CurrentUsable = carPanel.transform; return; }

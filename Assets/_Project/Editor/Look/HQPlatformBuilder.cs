@@ -154,8 +154,20 @@ namespace SunkCost.Editor.Look
 
         internal static ConsoleRig QuotaConsole(GameObject intake, Vector3 at, float yaw)
         {
+            ConsoleFooting(intake, "Quota console footing", at, yaw);
+            ConsoleRig rig = ConsoleBuilder.Place(intake.transform, at + Vector3.up * FootingHeight, yaw, ConsoleKind.HQ);
+            rig.gameObject.AddComponent<HQQuotaConsole>();
+            return rig;
+        }
+
+        // The steel footing every HQ console stands on (the quota console's plate, shared by
+        // the colour and the shop console of 8 October 2026 so the three read as one
+        // installation): the plate, the hazard lip along its front, four bolt heads.
+        // `at` is the plate's centre on the deck in `parent`'s frame, `yaw` the console's facing.
+        internal static GameObject ConsoleFooting(GameObject parent, string name, Vector3 at, float yaw)
+        {
             Quaternion facing = Quaternion.Euler(0f, yaw, 0f);
-            GameObject footing = HQGeneratedLayout.Slab(intake, "Quota console footing", at, FootingSize, ShipKitMaterials.Steel(), solid: true);
+            GameObject footing = HQGeneratedLayout.Slab(parent, name, at, FootingSize, ShipKitMaterials.Steel(), solid: true);
             footing.transform.localRotation = facing;
             // The lip along the front edge, on the plate (above it, never coplanar with the deck).
             HQGeneratedLayout.Slab(footing, "Footing lip", new Vector3(0f, FootingHeight, FootingSize.z / 2f - 0.07f), new Vector3(FootingSize.x, 0.012f, 0.14f), ShipKitMaterials.Hazard());
@@ -163,10 +175,10 @@ namespace SunkCost.Editor.Look
             foreach (float sx in new[] { -1f, 1f })
                 foreach (float sz in new[] { -1f, 1f })
                     HQGeneratedLayout.Slab(footing, "Footing bolt", new Vector3(sx * (FootingSize.x / 2f - 0.12f), FootingHeight, sz * (FootingSize.z / 2f - 0.12f)), new Vector3(0.07f, 0.03f, 0.07f), LookMaterials.Ink());
-            ConsoleRig rig = ConsoleBuilder.Place(intake.transform, at + Vector3.up * FootingHeight, yaw, ConsoleKind.HQ);
-            rig.gameObject.AddComponent<HQQuotaConsole>();
-            return rig;
+            return footing;
         }
+
+        internal static GameObject ConsoleFooting(GameObject parent, Vector3 at, float yaw) => ConsoleFooting(parent, "Console footing", at, yaw);
 
         internal static void ColourPanel(GameObject root, Vector3 at)
         {

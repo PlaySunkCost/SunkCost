@@ -152,6 +152,15 @@ namespace SunkCost.World
         private readonly SyncVar<LeverPull> lastLeverPull = new(new LeverPull { Serial = 0 });
         // The crew wipe's card (Dan, 29 September 2026); WorldSceneFlow is the only writer.
         private readonly SyncVar<CrewWipeState> crewWipe = new(new CrewWipeState { Serial = 0 });
+        // The HQ consoles of 8 October 2026 (Dan): the crew colour console's shown swatch
+        // (the helmet in the middle; anyone's press moves it, last press wins; default 0 =
+        // red), the last take (who pulled the lever and wears what, for the IS NOW line),
+        // and the shop console's page. Displays only: a fresh run, a sail or a save never
+        // resets them. WorldSceneFlow is the only writer.
+        private readonly SyncVar<byte> shownSwatch = new(0);
+        private readonly SyncVar<ColourTake> lastColourTake = new(new ColourTake { Serial = 0 });
+        private readonly SyncVar<byte> shopPage = new(0);
+        private float lastColourTakeAt = float.NegativeInfinity;   // this peer's arrival time; never set by a joiner's initial value
 
         public static CrewDayState Instance { get; private set; }
         public static event Action<CrewDayState> InstanceChanged;
@@ -212,6 +221,11 @@ namespace SunkCost.World
         public bool IsOpen(SiteId id) => Destinations.IsOpen(id, unlockedSites.Value);
         public LeverPull LastLeverPull => lastLeverPull.Value;
         public CrewWipeState CrewWipe => crewWipe.Value;
+        // The HQ consoles' state (8 October 2026): every peer's screens read these.
+        public int ShownSwatch => shownSwatch.Value;
+        public ColourTake LastColourTake => lastColourTake.Value;
+        public float LastColourTakeAt => lastColourTakeAt;   // local arrival time (the LastRefusalAt idiom)
+        public int ShopPage => shopPage.Value;
         // Once per peer when the wipe's card goes up or comes down; never for a joiner's initial value.
         public event Action<CrewWipeState, CrewWipeState> CrewWipeChanged;
         // Once per peer for a NEW serial; never for a joiner's initial value (the rigs animate from it).
@@ -279,6 +293,15 @@ namespace SunkCost.World
             cabinRide.OnChange += OnCabinRideChanged;
             lastLeverPull.OnChange += OnLeverPullChanged;
             crewWipe.OnChange += OnCrewWipeChanged;
+            lastColourTake.OnChange += OnColourTakeChanged;
+        }
+
+        // A take accepted now (a new serial) starts the IS NOW line's window on this
+        // peer; a joiner's initial value is old news (the same guard as refusals).
+        private void OnColourTakeChanged(ColourTake previous, ColourTake next, bool asServer)
+        {
+            if (IsServerStarted && !asServer) return;
+            if (next.Serial != 0 && next.Serial != previous.Serial && !InitialSync(asServer)) lastColourTakeAt = Time.unscaledTime;
         }
 
         // The card now (a new serial up, or the same serial down), once per peer; a
@@ -479,6 +502,35 @@ namespace SunkCost.World
 
         [Server]
         public void ServerAnnounceLeverPull(ConsoleKind kind, LeverAction action, uint tick) => ServerPullLever(kind, action, tick);
+
+        // ---- the HQ consoles of 8 October 2026 (server) ------------------------------
+
+        // The colour console's middle: an invalid index is ignored, the same index is a no-op.
+        [Server]
+        public void ServerSetShownSwatch(int index)
+        {
+            if (!Player.PlayerPalette.IsValid(index) || shownSwatch.Value == index) return;
+            shownSwatch.Value = (byte)index;
+        }
+
+        // An accepted take: Serial+1, the puller and the swatch, the tick it was accepted on.
+        [Server]
+        public void ServerAnnounceColourTake(int takerClientId, int swatch, uint tick)
+        {
+            lastColourTake.Value = new ColourTake { Serial = lastColourTake.Value.Serial + 1, Taker = takerClientId, Swatch = (byte)Mathf.Clamp(swatch, 0, 255), Tick = tick };
+        }
+
+        // The shop console's page; the flow clamps to the catalogue's page count first.
+        [Server]
+        public void ServerSetShopPage(int page)
+        {
+            byte next = (byte)Mathf.Clamp(page, 0, 255);
+            if (shopPage.Value != next) shopPage.Value = next;
+        }
+
+        // The checks' seams (a late joiner's first snapshot, a page set without a press).
+        public void ServerSetShownSwatchForChecks(int index) => ServerSetShownSwatch(index);
+        public void ServerSetShopPageForChecks(int page) => ServerSetShopPage(page);
 
         [Server]
         public void ServerSetDeparture(ShipDepartureState next) => departure.Value = next;

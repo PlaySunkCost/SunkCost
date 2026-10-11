@@ -109,7 +109,7 @@ namespace SunkCost.Net
             // Keep uncontrolled physical keyboard/mouse input out of hook tests.
             // Ordinary verification pauses input. Catalogue checks need their
             // own modal to stay open while snapshots and buys are delivered.
-            if (!SessionInputGate.ShopOpen && command.action != "shop_open") SessionInputGate.OpenMenu();
+            if (!SessionInputGate.ShopOpen) SessionInputGate.OpenMenu();
             switch (command.action)
             {
                 case "move":
@@ -153,16 +153,24 @@ namespace SunkCost.Net
                     player.Vitals.RequestPatchTeammate(nearest);
                     return $"patch requested on {nearest.OwnerId} at {best:0.0} m";
                 }
-                case "buy": if (player.Upgrades != null) player.Upgrades.RequestBuy(command.item); break; // E on a shop stand; the item id rides in the item field
-                case "shop_open":
-                    SessionInputGate.SetApplicationFocus(true); // opt-in test peer simulates foreground input
-                    SessionInputGate.Resume();
-                    foreach(var display in FindObjectsByType<SunkCost.Shop.ShopDisplay>(FindObjectsSortMode.None))
-                        if(display.BrowsesCatalog) { player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Open(display); break; }
-                    break;
-                case "shop_buy":
-                    return player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Buy(command.item)==true?"Catalogue purchase requested":"Catalogue purchase not available";
-                case "shop_close": player.GetComponent<SunkCost.Shop.ShopBrowserUI>()?.Close(); break;
+                case "buy": if (player.Upgrades != null) player.Upgrades.RequestBuy(command.item); break; // E on a catalogue row; the item id rides in the item field
+                // The HQ consoles of 8 October 2026. E on a swatch of the crew colour console
+                // (slot = the palette index), and E on the shop console's PREV / NEXT (slot = the
+                // absolute page wanted). The browser's shop_open / shop_buy / shop_close are gone.
+                case "swatch":
+                {
+                    var swatchControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (swatchControls == null) return "No ShipControls";
+                    swatchControls.RequestPressSwatch(command.slot);
+                    return $"requested swatch {command.slot}";
+                }
+                case "shop_page":
+                {
+                    var pageControls = player.GetComponent<SunkCost.World.ShipControls>();
+                    if (pageControls == null) return "No ShipControls";
+                    pageControls.RequestShopPage(command.slot);
+                    return $"requested page {command.slot}";
+                }
                 case "spectate_next": player.RequestNextSpectate(); break; // left click while dead (card 2)
                 case "tv_next": // E on the deck TV (card 3)
                     var tvControls = player.GetComponent<SunkCost.World.ShipControls>();
@@ -766,11 +774,36 @@ namespace SunkCost.Net
             return FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>().FirstOrDefault(c => c.Kind == SunkCost.World.ConsoleKind.Ship);
         }
 
-        private static SunkCost.World.IConsoleComposer HQComposer()
+        private static SunkCost.World.IConsoleComposer HQComposer() => HQComposerOf(SunkCost.World.ConsoleKind.HQ);
+
+        // A composer of that kind in the HQ scene (the quota, colour or shop console).
+        private static SunkCost.World.IConsoleComposer HQComposerOf(SunkCost.World.ConsoleKind kind)
         {
             var hq = SunkCost.World.WorldScenes.Scene(SunkCost.World.WorldId.HQ);
-            var all = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>().Where(c => c.Kind == SunkCost.World.ConsoleKind.HQ).ToArray();
+            var all = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<SunkCost.World.IConsoleComposer>().Where(c => c.Kind == kind).ToArray();
             return all.FirstOrDefault(c => c is MonoBehaviour mb && hq.IsValid() && mb.gameObject.scene == hq) ?? all.FirstOrDefault();
+        }
+
+        // The HQ consoles of 8 October 2026 on this peer: the colour console's shown swatch
+        // and take, the shop console's page, and what each one's screens say.
+        private static string HQConsolesLine()
+        {
+            var day = SunkCost.World.CrewDayState.Instance;
+            SunkCost.World.IConsoleComposer colour = HQComposerOf(SunkCost.World.ConsoleKind.Colour), shop = HQComposerOf(SunkCost.World.ConsoleKind.Shop);
+            SunkCost.World.ColourTake take = day == null ? default : day.LastColourTake;
+            int shownSwatch = day == null ? -1 : day.ShownSwatch;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var catalog = SunkCost.Shop.ShopCatalog.Resolve();
+            int items = catalog != null ? catalog.Items.Count : 0;
+            int shopPage = day == null ? -1 : day.ShopPage;
+            var local = SunkCost.World.WorldSceneFlow.LocalPlayer();
+            string shopRows = catalog == null || day == null ? "none" : SunkCost.World.ShopConsoleRules.RowsText(catalog, SunkCost.World.ShopConsoleRules.ClampPage(day.ShopPage, items), local != null ? local.Upgrades : null, day.Balance);
+            return $"hqconsoles=1; shownSwatch={shownSwatch}; shownName={(day == null ? "none" : PlayerPalette.Name(shownSwatch))}; colourTake={take.Serial}/{take.Taker}/{take.Swatch}; " +
+                   $"colourTop={(colour == null ? "none" : SunkCost.World.ConsoleModels.Flatten(colour.Top))}; colourBottom={(colour == null ? "none" : SunkCost.World.ConsoleModels.Flatten(colour.Bottom))}; colourSign={(colour == null ? "none" : SunkCost.World.ConsoleModels.Flatten(colour.Sign))}; " +
+                   $"colourLeverPlayed={(colour == null ? -1 : colour.LeverPlayedSerial)}; colourLeverAngle={(colour == null ? 0f : colour.LeverAngle).ToString("0.#", inv)}; " +
+                   $"shopPage={shopPage}; shopPages={SunkCost.World.ShopConsoleRules.PageCount(items)}; shopRows={shopRows}; " +
+                   $"shopTop={(shop == null ? "none" : SunkCost.World.ConsoleModels.Flatten(shop.Top))}; shopBottom={(shop == null ? "none" : SunkCost.World.ConsoleModels.Flatten(shop.Bottom))}; shopSign={(shop == null ? "none" : SunkCost.World.ConsoleModels.Flatten(shop.Sign))}; " +
+                   $"shopLeverPlayed={(shop == null ? -1 : shop.LeverPlayedSerial)}; shopLeverAngle={(shop == null ? 0f : shop.LeverAngle).ToString("0.#", inv)}; shopOpen={SessionInputGate.ShopOpen};\n";
         }
 
         // A console control object by name: in the ship of this player's world, else in the HQ scene.
@@ -835,6 +868,7 @@ namespace SunkCost.Net
             string quotaText = hqConsole != null && !string.IsNullOrEmpty(hqConsole.Text) ? hqConsole.Text : quotaBoard == null ? "none" : quotaBoard.Text; // the console's status first (27 September 2026), the old board until it goes
             text += $"giveup={(day == null ? -1 : day.GiveUpVotes)}/{(day == null ? -1 : day.GiveUpCrew)}; quotaBoard={quotaText.Replace("\n", " | ")};\n";
             text += ConsoleLine();
+            text += HQConsolesLine();
             text += ElevatorDeckLine();
             text += ElevatorLine(); // the elevator-dive tester's "elevator:" line
             // The elevator as this peer presents it, tick-stamped, and its per-frame self-check (ElevatorNetProbe; elevator-net tester).
@@ -844,8 +878,6 @@ namespace SunkCost.Net
                 var effect = hoop.GetComponent<SunkCost.Look.BasketCelebration>();
                 text += $"hoop={hoop.transform.parent.name}; confetti={effect?.BurstsShown ?? 0}; chimes={effect?.SoundsPlayed ?? 0}; board={hoop.transform.parent.Find("Score")?.GetComponent<TextMesh>()?.text}\n";
             }
-            var localShop=SunkCost.World.WorldSceneFlow.LocalPlayer()?.GetComponent<SunkCost.Shop.ShopBrowserUI>();
-            if(localShop!=null)text += $"shopBrowser={localShop.IsOpen}; entries={localShop.VisibleItemCount}\n";
             foreach (var gate in FindObjectsByType<SunkCost.World.DockBoardingGate>(FindObjectsSortMode.None))
                 text += $"boardingGate={gate.name}; scene={gate.gameObject.scene.name}; closed={gate.Closed}\n";
             foreach (var gangway in FindObjectsByType<SunkCost.World.DockGangway>(FindObjectsSortMode.None))

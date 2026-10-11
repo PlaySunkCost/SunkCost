@@ -22,6 +22,39 @@ namespace SunkCost.World
         public const string TopScreenName = "Console Top Screen", BottomScreenName = "Console Bottom Screen", SignName = "Console Sign";
         public const string LeverHandleName = "Console Lever Handle", LeverHingeName = "Console Lever Hinge", BodyName = "Console Body";
         public const string TouchName = "Touch";                   // each control's invisible quad (InteractHighlight rims MeshRenderers only)
+        // The two HQ consoles of 8 October 2026 (Dan): the crew colour console at the
+        // arrival pad and the catalogue console at the depot. The hooks, the peer's
+        // look_control, the validator and the rows find their controls by these names.
+        public const string ColourRootName = "Colour Console";     // the Colour rig root (under "Crew Arrival")
+        public const string CatalogueRootName = "Shop Console";    // the Shop rig root (under "Shop Room")
+        public const string ColourLeverName = "Colour Lever";      // the Colour lever's control object (ConsoleControl Colour/Lever)
+        public const string CatalogueLeverName = "Shop Lever";     // the Shop lever's control object (ConsoleControl Shop/Lever)
+        public const string SwatchNamePrefix = "Swatch ";          // "Swatch 0" .. "Swatch 15" (Colour/Swatch, Index = i), children of the top surface
+        public const string RowNamePrefix = "Shop Row ";           // "Shop Row 0" .. "Shop Row 2" (Shop/ShopRow, Index = row), children of the top surface
+        public const string PrevName = "Shop Prev";                // Shop/ShopPage, Index = -1, child of the top surface
+        public const string NextName = "Shop Next";                // Shop/ShopPage, Index = +1
+
+        public static string RootName(ConsoleKind kind)
+        {
+            switch (kind)
+            {
+                case ConsoleKind.Ship: return ShipRootName;
+                case ConsoleKind.Colour: return ColourRootName;
+                case ConsoleKind.Shop: return CatalogueRootName;
+                default: return HQRootName;
+            }
+        }
+
+        public static string LeverName(ConsoleKind kind)
+        {
+            switch (kind)
+            {
+                case ConsoleKind.Ship: return ShipLeverName;
+                case ConsoleKind.Colour: return ColourLeverName;
+                case ConsoleKind.Shop: return CatalogueLeverName;
+                default: return HQLeverName;
+            }
+        }
 
         [SerializeField] private ConsoleKind kind;
         [SerializeField] private Transform topScreen, bottomScreen, sign, leverHandle, leverHinge;
@@ -163,6 +196,15 @@ namespace SunkCost.World
                 top = new TopModel { Title = signs.Get("nav.title"), Corner = string.Empty, Cards = cards, BigState = string.Empty, Hint = string.Empty, FootLeft = string.Empty, FootLeftTone = ConsoleTone.Dim, FootRight = signs.Get("company") };
                 bottom = new BottomModel { Heading = signs.Get("nav.select"), Name = string.Empty, SubName = string.Empty, Lines = new[] { new ConsoleLine("STANDBY", ConsoleTextSize.Medium, ConsoleTone.Dim) }, Status = ConsoleLine.Empty };
                 signModel = new SignModel { Word = signs.Get("lever.confirm"), Tone = ConsoleTone.Dim, Enabled = false };
+                return;
+            }
+            if (kind == ConsoleKind.Colour || kind == ConsoleKind.Shop)
+            {
+                // Blank models: these consoles paint their own screens (HQColourConsole /
+                // HQShopConsole), whose ShowIdle paints the real idle picture a frame later.
+                top = new TopModel { Title = string.Empty, Corner = string.Empty, Cards = null, BigState = string.Empty, BigTone = ConsoleTone.Dim, Hint = string.Empty, HintTone = ConsoleTone.Dim, FootLeft = string.Empty, FootLeftTone = ConsoleTone.Dim, FootRight = string.Empty };
+                bottom = new BottomModel { Heading = string.Empty, Name = string.Empty, SubName = string.Empty, Lines = null, Status = ConsoleLine.Empty };
+                signModel = new SignModel { Word = string.Empty, Tone = ConsoleTone.Dim, Enabled = false };
                 return;
             }
             WorldLoopSettings settings = WorldLoopSettings.Resolve(null);

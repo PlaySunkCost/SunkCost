@@ -78,7 +78,7 @@ namespace SunkCost.Editor.Look
             ConsoleStyle style = ConsoleStyle.Resolve();
             Material glass = GlassMaterial(), touch = TouchMaterial();
 
-            var root = new GameObject(kind == ConsoleKind.Ship ? ConsoleRig.ShipRootName : ConsoleRig.HQRootName);
+            var root = new GameObject(ConsoleRig.RootName(kind));
             root.transform.SetParent(parent, false);
             root.transform.localPosition = localPosition;
             root.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
@@ -120,6 +120,9 @@ namespace SunkCost.Editor.Look
             ConsoleScreen bottom = Surface(root.transform, ConsoleRig.BottomScreenName, ConsolePaint.BottomSurface, BottomCentre, BottomNormal, BottomSize, glass);
             ConsoleScreen sign = Surface(root.transform, ConsoleRig.SignName, ConsolePaint.SignSurface, SignCentre, SignNormal, SignSize, glass);
 
+            // The controls per kind: the ship's five cards, HQ's GIVE UP card; the colour
+            // and the shop console (8 October 2026) add their own in their builders
+            // (ColourConsoleBuilder / ShopConsoleBuilder) over their own painters' layouts.
             Collider[] cards = null;
             Collider giveUp = null;
             if (kind == ConsoleKind.Ship)
@@ -129,11 +132,11 @@ namespace SunkCost.Editor.Look
                 for (int i = 0; i < rects.Length && i < Destinations.Cards.Length; i++)
                     cards[i] = Control(top, ConsoleRig.CardNamePrefix + Destinations.Cards[i], rects[i], kind, ConsoleControlKind.Card, Destinations.Cards[i], touch);
             }
-            else giveUp = Control(bottom, ConsoleRig.GiveUpCardName, ConsolePaint.GiveUpRect(bottom.Width, bottom.Height, style), kind, ConsoleControlKind.GiveUpCard, SiteId.None, touch);
+            else if (kind == ConsoleKind.HQ) giveUp = Control(bottom, ConsoleRig.GiveUpCardName, ConsolePaint.GiveUpRect(bottom.Width, bottom.Height, style), kind, ConsoleControlKind.GiveUpCard, SiteId.None, touch);
 
             // The lever's control: a static box around the grip's travel on the rig, not
             // on the moving handle, so a half-pulled lever is still the target.
-            var leverGo = new GameObject(kind == ConsoleKind.Ship ? ConsoleRig.ShipLeverName : ConsoleRig.HQLeverName);
+            var leverGo = new GameObject(ConsoleRig.LeverName(kind));
             leverGo.transform.SetParent(root.transform, false);
             leverGo.transform.localPosition = hinge.localPosition + LeverBoxCentre;
             leverGo.transform.localRotation = Quaternion.identity;
@@ -166,7 +169,9 @@ namespace SunkCost.Editor.Look
 
         // A control on a surface: its collider where its picture is (the same layout the
         // painter uses), its transform at the collider's centre (the hooks aim there).
-        private static Collider Control(ConsoleScreen screen, string name, Rect px, ConsoleKind kind, ConsoleControlKind role, SiteId payload, Material touch)
+        // `index` is the control's integer payload (a swatch's palette index, a row, ±1
+        // for a page zone; the other builders' controls, 8 October 2026).
+        internal static Collider Control(ConsoleScreen screen, string name, Rect px, ConsoleKind kind, ConsoleControlKind role, SiteId payload, Material touch, int index = 0)
         {
             Vector2 centre = screen.LocalCentre(px), size = screen.LocalSize(px);
             var go = new GameObject(name);
@@ -177,14 +182,14 @@ namespace SunkCost.Editor.Look
             box.center = Vector3.zero;
             box.size = new Vector3(size.x, size.y, ControlDepth);
             box.isTrigger = false;
-            go.AddComponent<ConsoleControl>().Configure(kind, role, payload);
+            go.AddComponent<ConsoleControl>().Configure(kind, role, payload, index);
             Touch(go.transform, Quaternion.Euler(0f, 180f, 0f), size, touch);
             return box;
         }
 
         // An invisible quad the size of the control: InteractHighlight outlines only
         // MeshRenderers, and gives a Quad the panel-edge frame.
-        private static void Touch(Transform control, Quaternion localRotation, Vector2 size, Material touch)
+        internal static void Touch(Transform control, Quaternion localRotation, Vector2 size, Material touch)
         {
             var go = new GameObject(ConsoleRig.TouchName);
             go.transform.SetParent(control, false);

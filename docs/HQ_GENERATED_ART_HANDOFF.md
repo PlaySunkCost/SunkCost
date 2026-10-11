@@ -32,13 +32,12 @@ is 60 × 36 m and the ship remains the same 48 × 20 m gameplay prefab.
 |---|---|
 | Depot | X -24 to 8, Z 10 to 18; one 32 × 8 m building, 4 m interior height |
 | Office | West end of the connected depot; no separate save station |
-| Shop stands | Large tank (-13,14), bright lamp (-9,14), air tank (-3,14), patch kit (1,14), X/Z |
-| Catalogue counter | (-6,14): E opens all catalogue items; search/filter/scroll, shared-pot purchases, no stand required for new merchandise |
+| Shop console | (-6,14), yaw 180, facing the aisle: the catalogue IS the console since 8 October 2026 (`ShopConsoleBuilder.Place`, `HQShopConsole`): rows of name / price / state on its top screen, PREV / NEXT and PAGE n/m, the lever NEXT PAGE, aim at a row and E to buy; shared-pot purchases, no stand required for new merchandise. The four item stands, the hanging sign and the OFFICE / UPGRADES / GEAR & SUPPLIES boards are gone |
 | Pickup | Chute at (10,15), discharge just ahead of its lip; clear 4 × 4 m pad centred at (10,12) |
 | Intake / quota | Former arrival area: console (-9,-14), hopper (-13,-14), facing inward; sells ship storage as before |
 | Court | X -18 to 2, Z -8 to 4, 20 × 12 m; west/east hoop and backstop |
 | Arrival | Centre (18,14), 6 × 4 m pad; four clear spawn positions facing south into the HQ |
-| Colour panel | Directly ahead of arrivals at (18,11.35); existing colour-selection behaviour |
+| Colour console | Where the colour panel stood, directly ahead of arrivals (root (18, 0.05, 10.80), facing the pad; `ColourConsoleBuilder.Place`, `HQColourConsole`): the ring of swatches and the helmet on the top screen, the lever takes the shown colour (DESIGN §5 "The crew colour console", 8 October 2026) |
 | Cargo apron | East side; crane around (24,4), container around (20,-10) |
 | Crew rest | South side, clear of the arrival pad and plank |
 | Bridge | Fixed X -30 to -41; hinged leaf to -44.2, centred Z -12, 3 m wide; leaf top 4 cm above the deck avoids coplanar overlap |
@@ -54,9 +53,9 @@ are removed. Merchandise detailing, arrival wayfinding and seating light reuse
 the existing kit. The crane and winch use mesh surfaces instead of oversized,
 misplaced collision boxes on empty floor.
 
-The catalogue counter makes the shop expandable independently of these four
-featured displays. [Shop authoring](SHOP_CATALOGUE_AUTHORING.md) explains how to
-add merchandise and distinguishes data additions from new gameplay effects.
+The shop console makes the shop expandable without a stand per item (a catalogue
+row shows on the console's next page). [Shop authoring](SHOP_CATALOGUE_AUTHORING.md)
+explains how to add merchandise and distinguishes data additions from new gameplay effects.
 
 The bridge remains HQ-owned. Both gates close during departure; the ship gate
 stays closed at sea. The shared ship prefab keeps the same boarding opening at
@@ -151,5 +150,34 @@ Presentation only, on `dan/hq-polish`; see the
   anisotropic filtering 16. The console's rows are the `console-hq` matrix (see the playbook);
   the final regression is [the console test report](test-runs/2026-09-27-console/RESULT.md).
 - The dawn glow (`HQPlatformBuilder.DawnDirection`) sits south-east, in the spawn view.
-- The shop's displays and counter show their aim prompt (`PlayerHudUI.ShopAimPrompt`);
-  the browser is the same IMGUI in the ship's `ScreenStyle` palette.
+- The shop's displays and counter showed their aim prompt (`PlayerHudUI.ShopAimPrompt`) and
+  the browser was an IMGUI in the ship's `ScreenStyle` palette — both gone on 8 October 2026
+  (the consoles section below).
+
+## The HQ consoles and the cleanup, 8 October 2026
+
+On `dan/hq-consoles`; see [the test report](test-runs/2026-10-08-hq-consoles/RESULT.md).
+
+- **The crew colour console** (`HQGeneratedLayout.Arrival` → `ColourConsoleBuilder.Place`) stands on the
+  pad's hazard square where the colour panel stood, the NavConsole model on a `ConsoleFooting`, the
+  `HQColourConsole` composer on its root (`Colour Console`), sixteen `Swatch n` zones and the `Colour Lever`.
+  The top screen is painted by `ColourConsolePaint` (the framed title, the ring of discs on an ellipse with
+  dotted links, the shown disc ringed, the helmet line art in the shown colour) through the shared
+  `ConsolePaint`; the lower screen the colour's name and `PULL THE LEVER TO TAKE IT` / `<NAME> IS NOW <COLOUR>`.
+  Words: `arrival.colour` and the `colour.*` / `lever.take` keys in `HQSigns`. `ColourConsoleBuilder.Prove`
+  takes the look captures. The old `ColourPanel` class stays compiled (the validator refuses one in the scene).
+- **The shop console** (`HQGeneratedLayout.Shop` → `ShopConsoleBuilder.Place` at (-6, 0, 14), yaw 180, with
+  the hazard frame and the lamp): `HQShopConsole` on its root (`Shop Console`), `Shop Row 0..2`, `Shop Prev`,
+  `Shop Next`, `Shop Lever`; `ShopConsolePaint` paints the catalogue page. Delivery is the `ShopDeliveryPoint`
+  nearest the rig (the chute). `ShopDisplay` and `ShopBrowserUI` stay compiled but nothing places or opens them.
+- **Gone from the layout:** the catalogue counter and its sign mast, the four `Shop Stand`s, the `office` /
+  `upgrades` / `gear` signs, the ship `TvCabinet` in the office window; the office `Couch` is turned (yaw 180)
+  to face the room; the rack wall's toolboxes, crates and tank cradles sit on the shelves, the shelves and
+  hooks on their panels and the panels on the wall (`HQGeneratedLayout.Depot`); the cargo toolbox on the deck;
+  the office glass in its opening. `HQPropAudit` (`Shoot`, the before/after reports) is the editor-side audit.
+- **The ambience bed:** `HQAmbienceSetup` adds `HQ Ambience` (a `Wind` loop and `Sea Wash 0..7` round the
+  deck, `HQAmbience`); the ship's wind is suppressed while it plays and `ShipAmbience` pauses at its hearing
+  edge. `HQAmbienceProbe.Grid()` / `Spots()` / `Status()` sample the platform (540 points, 0 dead).
+- Validation: `HQGeneratedSetup.Rebuild` → "HQ validation passed: four clear spawns, level continuous bridge,
+  two gates, shop, court and plank. renderers 1266". The rows are the `console-colour`, `console-shop`, `shop`
+  and `hq` matrices (the playbook).

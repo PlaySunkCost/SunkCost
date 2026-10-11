@@ -23,16 +23,6 @@ MonoBehaviour:
       SALVAGE
 
       SURVIVE'
-  - Key: office
-    Text: OFFICE
-  - Key: upgrades
-    Text: UPGRADES
-  - Key: upgrades.sub
-    Text: FITTED WHILE YOU WAIT
-  - Key: gear
-    Text: GEAR & SUPPLIES
-  - Key: gear.sub
-    Text: COLLECT UPSTAIRS
   - Key: intake
     Text: INTAKE / SELL
   - Key: intake.sub
@@ -73,8 +63,6 @@ MonoBehaviour:
       GREAT FINDS'
   - Key: court
     Text: CREW COURT
-  - Key: office.sub
-    Text: THE COMPANY IS IN
   - Key: ship.name.sub
     Text: '- SALVAGE -'
   - Key: ship.year
@@ -110,7 +98,7 @@ MonoBehaviour:
   - Key: counter
     Text: EQUIPMENT CATALOGUE
   - Key: counter.sub
-    Text: "BROWSE & BUY  \xB7  PRESS E"
+    Text: "BROWSE & BUY  \xB7  AIM + E"
   - Key: arrival
     Text: "CREW ARRIVAL  /  01\u201304"
   - Key: arrival.colour
@@ -155,3 +143,23 @@ MonoBehaviour:
     Text: EVERYONE MUST AGREE
   - Key: giveup.voted
     Text: "YOU VOTED \xB7 E TO TAKE BACK"
+  - Key: colour.pull
+    Text: PULL THE LEVER TO TAKE IT
+  - Key: colour.taken
+    Text: "{0} IS NOW {1}"
+  - Key: lever.take
+    Text: TAKE
+  - Key: shop.aim
+    Text: "AIM AT A ROW  \xB7  E BUYS IT FROM THE CREW POT"
+  - Key: shop.pickup
+    Text: BOUGHT GEAR LANDS AT THE PICKUP CHUTE
+  - Key: shop.pot
+    Text: CREW POT ${0}
+  - Key: shop.page
+    Text: PAGE {0}/{1}
+  - Key: shop.prev
+    Text: < PREV
+  - Key: shop.next
+    Text: NEXT >
+  - Key: lever.page
+    Text: NEXT PAGE

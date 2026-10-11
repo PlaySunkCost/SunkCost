@@ -159,6 +159,8 @@ namespace SunkCost.Editor.Prototype
                         else if (job == "console-ship") ShipConsoleRuntimeChecks.RunAsHost();
                         else if (job == "console-hq") HQConsoleRuntimeChecks.RunAsHost();
                         else if (job == "console-net") ConsoleNetRuntimeChecks.RunAsHost();
+                        else if (job == "console-colour") ColourConsoleRuntimeChecks.RunAsHost();
+                        else if (job == "console-shop") ShopConsoleRuntimeChecks.RunAsHost();
                         else if (job == "elevator-deck") ElevatorDeckRuntimeChecks.RunAsHost();
                         else if (job == "elevator-dive") ElevatorDiveRuntimeChecks.RunAsHost();
                         else if (job == "elevator-dive-prefix") ElevatorDiveRuntimeChecks.RunAsHost(false); // the W rows (water rework) XFAIL

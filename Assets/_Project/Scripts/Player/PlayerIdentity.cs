@@ -1,4 +1,5 @@
 using System.Text;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
@@ -64,6 +65,24 @@ namespace SunkCost.Player
         private void ServerRequestColour(int wantedColour)
         {
             colourIndex.Value = (byte)SanitizeColour(wantedColour, OwnerId);
+        }
+
+        // The crew colour console's lever (Dan, 8 October 2026): the server gives the
+        // puller the shown swatch — the same field the panel's request wrote — and tells
+        // the owner to save it so it is remembered next session. A TargetRpc rather than
+        // a save on the SyncVar's change: that change fires for the initial sync too,
+        // before the owner's saved pick has even been sent, and would overwrite it.
+        [Server]
+        public void ServerSetColour(int index)
+        {
+            colourIndex.Value = (byte)SanitizeColour(index, OwnerId);
+            TargetSaveColour(Owner, colourIndex.Value);
+        }
+
+        [TargetRpc]
+        private void TargetSaveColour(NetworkConnection conn, int index)
+        {
+            if (PlayerPalette.IsValid(index)) PlayerColourPrefs.Save(index);
         }
 
         // Hooks and the lobby's field may re-send (the UI only exposes the field

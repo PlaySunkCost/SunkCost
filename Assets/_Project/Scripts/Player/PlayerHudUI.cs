@@ -139,10 +139,8 @@ namespace SunkCost.Player
                 if (target == null && controller.CurrentConsoleControl != null) return ConsolePrompt(controller.CurrentConsoleControl);
                 if (target == null && controller.CurrentButton != null)
                     return controller.CurrentButton.Action == SunkCost.World.MonitorButton.Kind.EndDay ? "Press E to end the day" : $"Press E to sail to {controller.CurrentButton.Label}";
-                if (target == null && controller.CurrentColourPanel != null) return "Press E to pick your colour";
                 if (target == null && controller.CurrentQuotaBoard != null) return PayPrompt();
                 if (target == null && controller.CurrentGiveUpButton != null) return GiveUpPrompt();
-                if (target == null && controller.CurrentShopDisplay != null) return ShopPrompt(controller.CurrentShopDisplay);
                 if (target == null && controller.CurrentTv != null) return TvPrompt();
                 if (target == null && controller.CurrentSeat != null) return controller.SeatPrompt;
                 if (target == null && controller.CurrentCabinControl != CabinControl.None) return CabinPrompt();
@@ -284,6 +282,30 @@ namespace SunkCost.Player
                     return locked ? $"Press E to select {name} (locked · ${sites.UnlockPrice(c.Payload)})" : $"Press E to select {name}";
                 }
                 case ConsoleControlKind.GiveUpCard: return GiveUpPrompt();
+                // The crew colour console (8 October 2026): a swatch offers to show it, or says it is shown.
+                case ConsoleControlKind.Swatch:
+                {
+                    string name = PlayerPalette.Name(c.Index);
+                    return day != null && day.ShownSwatch == c.Index ? $"{name} is shown" : $"Press E to show {name}";
+                }
+                // The catalogue console (8 October 2026): a row is the stand prompt's words.
+                case ConsoleControlKind.ShopRow:
+                {
+                    SunkCost.Shop.ShopItem item = ShopConsoleRules.ItemAt(SunkCost.Shop.ShopCatalog.Resolve(), day != null ? day.ShopPage : 0, c.Index);
+                    if (item == null) return string.Empty;
+                    if (controller.Upgrades != null && !string.IsNullOrEmpty(controller.Upgrades.Refusal)) return controller.Upgrades.Refusal;
+                    if (item.Kind == SunkCost.Shop.ShopItemKind.Upgrade && controller.Upgrades != null && controller.Upgrades.Has(item.Upgrade)) return $"{item.Name} · owned";
+                    string pot = day != null ? $" · crew pot ${day.Balance}" : string.Empty;
+                    return $"{item.Name} · ${item.Price} — Press E to buy{pot}";
+                }
+                case ConsoleControlKind.ShopPage:
+                {
+                    SunkCost.Shop.ShopCatalog catalog = SunkCost.Shop.ShopCatalog.Resolve();
+                    int pages = ShopConsoleRules.PageCount(catalog != null ? catalog.Items.Count : 0);
+                    int page = day != null ? ShopConsoleRules.ClampPage(day.ShopPage, catalog != null ? catalog.Items.Count : 0) : 0;
+                    if (c.Index > 0) return page + 1 < pages ? "Press E — next page" : "Last page";
+                    return page > 0 ? "Press E — previous page" : "First page";
+                }
                 default:
                 {
                     LeverAction action = ConsoleRules.Expected(c.Console, sites, out SiteId target, out bool enabled, out string reason);
@@ -295,6 +317,8 @@ namespace SunkCost.Player
                         case LeverAction.Unlock: return enabled ? $"Press E to unlock {sites.NameOf(target)} (${sites.UnlockPrice(target)})" : reason;
                         case LeverAction.EndDay: return "Press E to end the day";
                         case LeverAction.Pay: return PayPrompt();
+                        case LeverAction.TakeColour: return $"Press E to take {PlayerPalette.Name(day != null ? day.ShownSwatch : 0)}";
+                        case LeverAction.NextPage: return enabled ? "Press E — next page" : reason;
                         default: return reason == ConsoleRules.SelectFirst || string.IsNullOrEmpty(reason) ? "Nothing to confirm " + "—" + " select a destination" : reason;
                     }
                 }
@@ -587,7 +611,7 @@ namespace SunkCost.Player
                 return;
             EnsureStyles();
             if (controller != null && controller.ViewObstructed && !controller.IsDead) { DrawObstructionCover(); return; }
-            if (SessionInputGate.PickerOpen) { DrawColourPicker(); return; }
+            // No colour picker since the crew colour console (8 October 2026): the pick is on the console's screens.
             bool faded = ScreenFade.Instance != null && !ScreenFade.Instance.IsClear;
             bool maskOn = Visor.On && !faded;                    // the mask is on with the suit, car ride included
             bool readoutsOn = maskOn && !Who.TravelLocked;
@@ -887,7 +911,11 @@ namespace SunkCost.Player
         private string ShopAimPrompt()
         {
             if (controller == null || controller.IsDead || controller.TravelLocked || controller.IsSeated) return null;
-            if (controller.CurrentTarget != null || controller.CurrentShopDisplay == null || !SessionInputGate.CanPlay) return null;
+            if (controller.CurrentTarget != null || !SessionInputGate.CanPlay) return null;
+            // The catalogue console's rows (8 October 2026) keep the shop's aim-only name and price.
+            ConsoleControl c = controller.CurrentConsoleControl;
+            if (c != null && c.Kind == ConsoleControlKind.ShopRow) return ConsolePrompt(c);
+            if (controller.CurrentShopDisplay == null) return null;
             return ShopPrompt(controller.CurrentShopDisplay);
         }
 
@@ -1109,7 +1137,8 @@ namespace SunkCost.Player
             GUI.color = previous;
         }
 
-        // For the checks: the pick the mouse would make.
+        // For the checks: the pick the old picker's mouse would make (a compile stub until
+        // the hands/fullrun rewrites land on the console; the final agent deletes it).
         public void PickColourForChecks(int index)
         {
             GetComponent<PlayerIdentity>()?.RequestColour(index);
@@ -1144,8 +1173,7 @@ namespace SunkCost.Player
             else if (controller.CurrentCabinControl != CabinControl.None) usable = CabinUsable();
             else if (controller.CurrentPatient != null) usable = controller.CurrentPatient.Vitals != null && controller.CurrentPatient.Vitals.Leaking && !controller.CurrentPatient.Vitals.FriendPatchedToday;
             // The HQ's own pressables were left out (HQ polish, 27 September 2026): the dot never went gold on them.
-            else if (controller.CurrentShopDisplay != null) usable = ShopUsable(controller.CurrentShopDisplay);
-            else if (controller.CurrentColourPanel != null) usable = true;
+            // The shop displays and the colour panel are gone (8 October 2026): their consoles are ConsoleControls above.
             else if (controller.CurrentQuotaBoard != null) usable = PayPrompt().StartsWith("Press E");
             else if (controller.CurrentGiveUpButton != null) usable = GiveUpPrompt().StartsWith("Press E");
             Color previous = GUI.color;

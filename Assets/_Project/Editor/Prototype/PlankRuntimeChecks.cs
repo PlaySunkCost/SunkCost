@@ -171,30 +171,6 @@ namespace SunkCost.Editor.Prototype
         private static string GuestPlayerLine(string reply, int ownerId) => reply.Split('\n').FirstOrDefault(l => l.StartsWith("player=" + ownerId + ";")) ?? string.Empty;
         private static HQPlayerController GuestCopy() => UnityEngine.Object.FindObjectsByType<HQPlayerController>(FindObjectsInactive.Exclude).FirstOrDefault(p => p.IsSpawned && !p.IsOwner);
 
-        private static ShopDisplay Stand(string itemId)
-        {
-            foreach (ShopDisplay d in UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
-                if (d.ItemId == itemId && d.gameObject.scene == WorldScenes.Scene(WorldId.HQ)) return d;
-            return null;
-        }
-        // Stand in front of a shelf and look at the thing on it until the dot is on it.
-        private static IEnumerator LookAtStand(ShopDisplay stand)
-        {
-            HQPlayerController host = Host();
-            Transform thing = stand.transform.Find("Display") ?? stand.transform;
-            Vector3 at = stand.transform.position + stand.transform.forward * 1.6f; at.y = 0.05f;
-            host.TeleportLocal(at, host.Yaw); yield return null; yield return null;
-            float deadline = Time.unscaledTime + 3f;
-            while (Time.unscaledTime < deadline && host.CurrentShopDisplay != stand)
-            {
-                Vector3 to = thing.position - host.EyePosition;
-                Vector3 flat = new(to.x, 0f, to.z);
-                host.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);
-                host.SetPitchForChecks(-Mathf.Atan2(to.y, flat.magnitude) * Mathf.Rad2Deg);
-                yield return null;
-            }
-            Check(host.CurrentShopDisplay == stand, "the dot is on the " + stand.ItemId + " stand");
-        }
         private static CarryableItem BoughtTank()
         {
             foreach (CarryableItem c in CarryableItem.Spawned)
@@ -300,14 +276,15 @@ namespace SunkCost.Editor.Prototype
             Check(Day.Baskets == basketsBefore + 1, "C1 a ball rattling in the ring counts once");
 
             // Something to lose: an upgrade, a ball in hand, and a bought tank on the shop's floor.
+            // The buy is made standing at the shop console (Dan, 8 October 2026: the console is
+            // the shop; the stands are gone), through the server's own path.
             host.Upgrades.ServerGrant(PlayerUpgrade.LargeTank);
-            ShopDisplay tankStand = null;
-            foreach (ShopDisplay d in UnityEngine.Object.FindObjectsByType<ShopDisplay>(FindObjectsInactive.Exclude))
-                if (d.ItemId == ShopCatalog.AirTankId && d.gameObject.scene == WorldScenes.Scene(WorldId.HQ)) tankStand = d;
-            Check(tankStand != null, "P0 the shop has the air tank's stand");
+            ConsoleRig shopRig = ConsoleRig.InScene(WorldScenes.Scene(WorldId.HQ), ConsoleKind.Shop);
+            Check(shopRig != null, "P0 the shop console stands at HQ");
             Day.ServerSetBalanceForChecks(40);
-            Vector3 atStand = tankStand.transform.position + tankStand.transform.forward * 1.6f; atStand.y = 0.05f;
-            host.TeleportLocal(atStand, host.Yaw); yield return Wait(0.3f);
+            Vector3 shopFront = shopRig.transform.rotation * Vector3.forward; shopFront.y = 0f; shopFront.Normalize();
+            Vector3 atConsole = shopRig.transform.position + shopFront * 1.6f; atConsole.y = 0.05f;
+            host.TeleportLocal(atConsole, host.Yaw); yield return Wait(0.3f);
             Check(flow.ServerBuy(host.Owner, ShopCatalog.AirTankId, out string tankWhy), "P0 an air tank is bought for $40: " + tankWhy);
             yield return Expect(() => UnityEngine.Object.FindObjectsByType<AirTankItem>(FindObjectsInactive.Exclude).Length == 1, 3f, () => "P0 the tank fell into the shop");
             yield return Wait(1f);

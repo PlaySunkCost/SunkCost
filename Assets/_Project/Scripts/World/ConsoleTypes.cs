@@ -10,13 +10,31 @@ namespace SunkCost.World
     // Which physical console a press comes from. Intent only, like `WorldId to` in
     // RequestSail: the server checks the presser's location per kind (the docked ship
     // and the HQ console share the HQ scene, so the kind cannot be inferred).
-    public enum ConsoleKind : byte { Ship = 0, HQ = 1 }
+    // Colour and Shop (Dan, 8 October 2026): the crew colour console at the arrival
+    // pad and the catalogue console at the depot, both HQ rigs of the same model.
+    public enum ConsoleKind : byte { Ship = 0, HQ = 1, Colour = 2, Shop = 3 }
 
     // What the lever does right now. None = the sign is dim and a pull is refused.
-    public enum LeverAction : byte { None = 0, Confirm = 1, Unlock = 2, EndDay = 3, Pay = 4 }
+    // TakeColour: the puller wears the colour console's shown swatch; NextPage: the
+    // shop console turns its page.
+    public enum LeverAction : byte { None = 0, Confirm = 1, Unlock = 2, EndDay = 3, Pay = 4, TakeColour = 5, NextPage = 6 }
 
-    // What an aimed collider on a console is (ConsoleControl).
-    public enum ConsoleControlKind : byte { Card = 0, Lever = 1, GiveUpCard = 2 }
+    // What an aimed collider on a console is (ConsoleControl). Swatch: one of the
+    // colour console's sixteen discs (Index = the palette index); ShopRow: a row of
+    // the catalogue page (Index = the row); ShopPage: the PREV (-1) / NEXT (+1) zone.
+    public enum ConsoleControlKind : byte { Card = 0, Lever = 1, GiveUpCard = 2, Swatch = 3, ShopRow = 4, ShopPage = 5 }
+
+    // One accepted take at the colour console (Dan, 8 October 2026), server-written
+    // on CrewDayState: who pulled the lever and which swatch they now wear. Every
+    // peer's lower screen reads "<NAME> IS NOW <COLOUR>" from it for a few seconds;
+    // a joiner's initial value is old news and shows nothing.
+    public struct ColourTake
+    {
+        public int Serial;          // 0 = never
+        public int Taker;           // the puller's ClientId
+        public byte Swatch;         // the palette index taken
+        public uint Tick;           // the server tick the take was accepted on
+    }
 
     // One accepted pull, server-written on CrewDayState; every rig swings its lever
     // from it (the serial idiom, tick-anchored like the departure stages). A joiner's

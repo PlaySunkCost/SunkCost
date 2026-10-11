@@ -1,0 +1,569 @@
+HQ art runtime checks 09/10/2026 10:35:02
+PASS gate opens at HQ: Ship Boarding Gate
+PASS gate opens at HQ: HQ Boarding Gate
+PASS walk (-28.00, 0.05, -12.00) -> (-47.00, 0.05, -12.00), ended (-46.72, 0.07, -12.00)
+PASS walking over the lip reaches the ship's safe deck
+PASS walk (-47.00, 0.05, -12.00) -> (-28.00, 0.05, -12.00), ended (-28.29, 0.07, -12.00)
+PASS back on HQ is not aboard
+PASS walk (-16.00, 0.05, 11.70) -> (6.00, 0.05, 11.70), ended (5.89, 0.05, 11.70)
+PASS walk (22.00, 0.05, 4.00) -> (24.00, 0.05, 4.00), ended (23.66, 0.05, 4.00)
+PASS walk (18.75, 0.05, 14.50) -> (20.00, 0.05, 9.00), ended (19.94, 0.05, 9.29)
+
+== HQ0 — the catalogue on the shop console
+PASS the shop console stands in the HQ scene: Shop Console at (-6.00, 0.05, 14.00)
+PASS the console shows page 1 (ShopPage 0)
+PASS the dot is on Shop Row 0 (aim Shop/ShopRow/0)
+PASS aim at row 0 names the first item: 'Air tank · $40 — Press E to buy · crew pot $0'
+PASS no HUD browser exists or is open
+PASS the page set for the proof row: ShopPage 1 (wanted 1)
+PASS the dot is on Shop Row 1 (aim Shop/ShopRow/1)
+PASS fifth item appears on the console without a scene rebuild: 'Catalogue expansion proof · $11 — Press E to buy · crew pot $0'
+  · capture saved Temp/look/hq-shop-catalogue.png
+PASS server charges the catalogue price for the new row: balance 89 refusal=''
+PASS the catalogue purchase lands through the shared delivery chute
+  · delivered at (10.06, 0.85, 13.69) (chute drop (10.12, 0.85, 13.48))
+PASS the delivery is at the chute, not at the console
+PASS E on a row opened no HUD window
+PASS page back to 1 (ShopPage 0)
+PASS Hoop W scores through the actual generated rim
+PASS Hoop E scores through the actual generated rim
+
+== HQ1 — the signs OFFICE / UPGRADES / GEAR & SUPPLIES and the hanging catalogue sign are gone
+PASS no object named 'office Sign' in the HQ scene
+PASS no object named 'upgrades Sign' in the HQ scene
+PASS no object named 'gear Sign' in the HQ scene
+PASS no object named 'counter Sign' in the HQ scene
+PASS no object named 'counter.sub Sign' in the HQ scene
+PASS no object named 'Catalogue sign mast' in the HQ scene
+PASS 'depot.title Sign' still stands
+PASS 'depot.end Sign' still stands
+PASS 'pickup Sign' still stands
+PASS 'intake Sign' still stands
+PASS 'arrival Sign' still stands
+PASS 'cargo Sign' still stands
+
+== HQ2 — the item displays are gone; the shop console is the only shop
+PASS no ShopDisplay component anywhere
+PASS no 'Shop Stand *' objects ()
+PASS no 'Equipment catalogue counter'
+PASS exactly one Shop console rig (1)
+
+== HQ3 — the blank brown board (the office TvCabinet) is gone
+PASS the depot group 'Shop Room' exists
+PASS no TvCabinet under the depot ()
+PASS nothing but the shell in the office window volume ()
+
+== HQ4 — the office sofa faces the room
+PASS the office couch stands near (-22, 0, 16) at (-22.00, 0.00, 16.00)
+  · couch forward (0.00, 0.00, -1.00) yaw 180
+PASS the couch faces south into the room (dot with -Z 1.00)
+PASS nothing stands within 1.5 m in front of the couch
+PASS the couch looks toward the table and the window (angle 18°)
+  · capture saved Temp/look/hq-consoles-hq-sofa.png
+
+== HQ5 — every prop settled on a real surface, right side up, out of the walls
+PASS Toolbox near (-12, 17.1): has renderers
+PASS Toolbox near (-12, 17.1): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Toolbox near (-12, 17.1): upright (tilt 0.0°)
+PASS Toolbox near (-12, 17.1): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (-12, 17.1): at (-12.00, 2.08, 17.20) bounds y 2.080..2.439 z 17.031..17.369; bottom +0.0 cm from top of Shelf (2.080)
+PASS Toolbox near (-4, 17.1): has renderers
+PASS Toolbox near (-4, 17.1): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Toolbox near (-4, 17.1): upright (tilt 0.0°)
+PASS Toolbox near (-4, 17.1): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (-4, 17.1): at (-4.00, 2.08, 17.20) bounds y 2.080..2.439 z 17.031..17.369; bottom +0.0 cm from top of Shelf (2.080)
+PASS Toolbox near (4, 17.1): has renderers
+PASS Toolbox near (4, 17.1): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Toolbox near (4, 17.1): upright (tilt 0.0°)
+PASS Toolbox near (4, 17.1): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (4, 17.1): at (4.00, 2.08, 17.20) bounds y 2.080..2.439 z 17.031..17.369; bottom +0.0 cm from top of Shelf (2.080)
+PASS Toolbox near (-6, 17.2): has renderers
+PASS Toolbox near (-6, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS Toolbox near (-6, 17.2): upright (tilt 0.0°)
+PASS Toolbox near (-6, 17.2): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (-6, 17.2): at (-6.00, 0.98, 17.20) bounds y 0.980..1.339 z 17.031..17.369; bottom +0.0 cm from top of Shelf (0.980)
+PASS Toolbox near (4, 17.2): has renderers
+PASS Toolbox near (4, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS Toolbox near (4, 17.2): upright (tilt 0.0°)
+PASS Toolbox near (4, 17.2): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (4, 17.2): at (4.00, 0.98, 17.20) bounds y 0.980..1.339 z 17.031..17.369; bottom +0.0 cm from top of Shelf (0.980)
+PASS Crate near (-10, 17.15): has renderers
+PASS Crate near (-10, 17.15): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Crate near (-10, 17.15): upright (tilt 0.0°)
+PASS Crate near (-10, 17.15): not into a wall (penetration 0.0 cm, none)
+  · Crate near (-10, 17.15): at (-10.00, 2.08, 17.20) bounds y 2.080..2.283 z 17.065..17.335; bottom +0.0 cm from top of Shelf (2.080)
+PASS Crate near (0, 17.15): has renderers
+PASS Crate near (0, 17.15): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Crate near (0, 17.15): upright (tilt 0.0°)
+PASS Crate near (0, 17.15): not into a wall (penetration 0.0 cm, none)
+  · Crate near (0, 17.15): at (0.00, 2.08, 17.20) bounds y 2.080..2.283 z 17.065..17.335; bottom +0.0 cm from top of Shelf (2.080)
+PASS Crate near (6, 17.15): has renderers
+PASS Crate near (6, 17.15): grounded (bottom +0.0 cm from top of Shelf (2.080))
+PASS Crate near (6, 17.15): upright (tilt 0.0°)
+PASS Crate near (6, 17.15): not into a wall (penetration 0.0 cm, none)
+  · Crate near (6, 17.15): at (6.00, 2.08, 17.20) bounds y 2.080..2.283 z 17.065..17.335; bottom +0.0 cm from top of Shelf (2.080)
+PASS TankCradle near (-14, 17.2): has renderers
+PASS TankCradle near (-14, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS TankCradle near (-14, 17.2): upright (tilt 0.0°)
+PASS TankCradle near (-14, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS TankCradle near (-14, 17.2): top 1.980 below 2
+  · TankCradle near (-14, 17.2): at (-14.00, 0.98, 17.20) bounds y 0.980..1.980 z 17.025..17.372; bottom +0.0 cm from top of Shelf (0.980)
+PASS TankCradle near (-8, 17.2): has renderers
+PASS TankCradle near (-8, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS TankCradle near (-8, 17.2): upright (tilt 0.0°)
+PASS TankCradle near (-8, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS TankCradle near (-8, 17.2): top 1.980 below 2
+  · TankCradle near (-8, 17.2): at (-8.00, 0.98, 17.20) bounds y 0.980..1.980 z 17.025..17.372; bottom +0.0 cm from top of Shelf (0.980)
+PASS TankCradle near (2, 17.2): has renderers
+PASS TankCradle near (2, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS TankCradle near (2, 17.2): upright (tilt 0.0°)
+PASS TankCradle near (2, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS TankCradle near (2, 17.2): top 1.980 below 2
+  · TankCradle near (2, 17.2): at (2.00, 0.98, 17.20) bounds y 0.980..1.980 z 17.025..17.372; bottom +0.0 cm from top of Shelf (0.980)
+PASS TankCradle near (6, 17.2): has renderers
+PASS TankCradle near (6, 17.2): grounded (bottom +0.0 cm from top of Shelf (0.980))
+PASS TankCradle near (6, 17.2): upright (tilt 0.0°)
+PASS TankCradle near (6, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS TankCradle near (6, 17.2): top 1.980 below 2
+  · TankCradle near (6, 17.2): at (6.00, 0.98, 17.20) bounds y 0.980..1.980 z 17.025..17.372; bottom +0.0 cm from top of Shelf (0.980)
+PASS Shelf near (-14, 17.2): has renderers
+PASS Shelf near (-14, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-14, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-14, 17.2): its DisplayPanel is there
+PASS Shelf near (-14, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-14, 17.2): at (-14.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-14, 17.2): has renderers
+PASS Shelf near (-14, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-14, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-14, 17.2): its DisplayPanel is there
+PASS Shelf near (-14, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-14, 17.2): at (-14.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-12, 17.2): has renderers
+PASS Shelf near (-12, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-12, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-12, 17.2): its DisplayPanel is there
+PASS Shelf near (-12, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-12, 17.2): at (-12.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-12, 17.2): has renderers
+PASS Shelf near (-12, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-12, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-12, 17.2): its DisplayPanel is there
+PASS Shelf near (-12, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-12, 17.2): at (-12.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-10, 17.2): has renderers
+PASS Shelf near (-10, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-10, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-10, 17.2): its DisplayPanel is there
+PASS Shelf near (-10, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-10, 17.2): at (-10.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-10, 17.2): has renderers
+PASS Shelf near (-10, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-10, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-10, 17.2): its DisplayPanel is there
+PASS Shelf near (-10, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-10, 17.2): at (-10.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-8, 17.2): has renderers
+PASS Shelf near (-8, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-8, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-8, 17.2): its DisplayPanel is there
+PASS Shelf near (-8, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-8, 17.2): at (-8.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-8, 17.2): has renderers
+PASS Shelf near (-8, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-8, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-8, 17.2): its DisplayPanel is there
+PASS Shelf near (-8, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-8, 17.2): at (-8.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-6, 17.2): has renderers
+PASS Shelf near (-6, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-6, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-6, 17.2): its DisplayPanel is there
+PASS Shelf near (-6, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-6, 17.2): at (-6.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-6, 17.2): has renderers
+PASS Shelf near (-6, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-6, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-6, 17.2): its DisplayPanel is there
+PASS Shelf near (-6, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-6, 17.2): at (-6.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-4, 17.2): has renderers
+PASS Shelf near (-4, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-4, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-4, 17.2): its DisplayPanel is there
+PASS Shelf near (-4, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-4, 17.2): at (-4.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-4, 17.2): has renderers
+PASS Shelf near (-4, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-4, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-4, 17.2): its DisplayPanel is there
+PASS Shelf near (-4, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-4, 17.2): at (-4.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-2, 17.2): has renderers
+PASS Shelf near (-2, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-2, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-2, 17.2): its DisplayPanel is there
+PASS Shelf near (-2, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-2, 17.2): at (-2.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (-2, 17.2): has renderers
+PASS Shelf near (-2, 17.2): upright (tilt 0.0°)
+PASS Shelf near (-2, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (-2, 17.2): its DisplayPanel is there
+PASS Shelf near (-2, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (-2, 17.2): at (-2.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (0, 17.2): has renderers
+PASS Shelf near (0, 17.2): upright (tilt 0.0°)
+PASS Shelf near (0, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (0, 17.2): its DisplayPanel is there
+PASS Shelf near (0, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (0, 17.2): at (0.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (0, 17.2): has renderers
+PASS Shelf near (0, 17.2): upright (tilt 0.0°)
+PASS Shelf near (0, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (0, 17.2): its DisplayPanel is there
+PASS Shelf near (0, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (0, 17.2): at (0.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (2, 17.2): has renderers
+PASS Shelf near (2, 17.2): upright (tilt 0.0°)
+PASS Shelf near (2, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (2, 17.2): its DisplayPanel is there
+PASS Shelf near (2, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (2, 17.2): at (2.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (2, 17.2): has renderers
+PASS Shelf near (2, 17.2): upright (tilt 0.0°)
+PASS Shelf near (2, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (2, 17.2): its DisplayPanel is there
+PASS Shelf near (2, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (2, 17.2): at (2.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (4, 17.2): has renderers
+PASS Shelf near (4, 17.2): upright (tilt 0.0°)
+PASS Shelf near (4, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (4, 17.2): its DisplayPanel is there
+PASS Shelf near (4, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (4, 17.2): at (4.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (4, 17.2): has renderers
+PASS Shelf near (4, 17.2): upright (tilt 0.0°)
+PASS Shelf near (4, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (4, 17.2): its DisplayPanel is there
+PASS Shelf near (4, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (4, 17.2): at (4.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (6, 17.2): has renderers
+PASS Shelf near (6, 17.2): upright (tilt 0.0°)
+PASS Shelf near (6, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (6, 17.2): its DisplayPanel is there
+PASS Shelf near (6, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (6, 17.2): at (6.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS Shelf near (6, 17.2): has renderers
+PASS Shelf near (6, 17.2): upright (tilt 0.0°)
+PASS Shelf near (6, 17.2): not into a wall (penetration 0.0 cm, none)
+PASS Shelf near (6, 17.2): its DisplayPanel is there
+PASS Shelf near (6, 17.2): touches the DisplayPanel (gap 1.6 cm)
+  · Shelf near (6, 17.2): at (6.00, 0.90, 17.20) bounds y 0.900..0.980 z 16.975..17.425
+PASS DisplayPanel near (-14, 17.5): has renderers
+PASS DisplayPanel near (-14, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-14, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-14, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-14, 17.5): at (-14.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-12, 17.5): has renderers
+PASS DisplayPanel near (-12, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-12, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-12, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-12, 17.5): at (-12.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-10, 17.5): has renderers
+PASS DisplayPanel near (-10, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-10, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-10, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-10, 17.5): at (-10.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-8, 17.5): has renderers
+PASS DisplayPanel near (-8, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-8, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-8, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-8, 17.5): at (-8.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-6, 17.5): has renderers
+PASS DisplayPanel near (-6, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-6, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-6, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-6, 17.5): at (-6.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-4, 17.5): has renderers
+PASS DisplayPanel near (-4, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-4, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-4, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-4, 17.5): at (-4.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (-2, 17.5): has renderers
+PASS DisplayPanel near (-2, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (-2, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (-2, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (-2, 17.5): at (-2.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (0, 17.5): has renderers
+PASS DisplayPanel near (0, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (0, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (0, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (0, 17.5): at (0.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (2, 17.5): has renderers
+PASS DisplayPanel near (2, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (2, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (2, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (2, 17.5): at (2.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (4, 17.5): has renderers
+PASS DisplayPanel near (4, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (4, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (4, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (4, 17.5): at (4.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayPanel near (6, 17.5): has renderers
+PASS DisplayPanel near (6, 17.5): upright (tilt 0.0°)
+PASS DisplayPanel near (6, 17.5): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL DisplayPanel near (6, 17.5): back 14.1 cm from the wall face z 17.7
+  · DisplayPanel near (6, 17.5): at (6.00, 1.00, 17.50) bounds y 1.001..2.999 z 17.441..17.559
+PASS DisplayHook near (-14.25, 17.25): has renderers
+PASS DisplayHook near (-14.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-14.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-14.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-14.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-14.25, 17.25): at (-14.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-12.25, 17.25): has renderers
+PASS DisplayHook near (-12.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-12.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-12.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-12.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-12.25, 17.25): at (-12.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-10.25, 17.25): has renderers
+PASS DisplayHook near (-10.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-10.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-10.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-10.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-10.25, 17.25): at (-10.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-8.25, 17.25): has renderers
+PASS DisplayHook near (-8.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-8.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-8.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-8.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-8.25, 17.25): at (-8.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-6.25, 17.25): has renderers
+PASS DisplayHook near (-6.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-6.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-6.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-6.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-6.25, 17.25): at (-6.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-4.25, 17.25): has renderers
+PASS DisplayHook near (-4.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-4.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-4.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-4.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-4.25, 17.25): at (-4.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-2.25, 17.25): has renderers
+PASS DisplayHook near (-2.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-2.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-2.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-2.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-2.25, 17.25): at (-2.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (-0.25, 17.25): has renderers
+PASS DisplayHook near (-0.25, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (-0.25, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (-0.25, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (-0.25, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (-0.25, 17.25): at (-0.25, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (1.75, 17.25): has renderers
+PASS DisplayHook near (1.75, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (1.75, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (1.75, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (1.75, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (1.75, 17.25): at (1.75, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (3.75, 17.25): has renderers
+PASS DisplayHook near (3.75, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (3.75, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (3.75, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (3.75, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (3.75, 17.25): at (3.75, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS DisplayHook near (5.75, 17.25): has renderers
+PASS DisplayHook near (5.75, 17.25): upright (tilt 0.0°)
+PASS DisplayHook near (5.75, 17.25): not into a wall (penetration 0.0 cm, none)
+PASS DisplayHook near (5.75, 17.25): its DisplayPanel is there
+SOFT-FAIL DisplayHook near (5.75, 17.25): touches the DisplayPanel (gap 4.0 cm)
+  · DisplayHook near (5.75, 17.25): at (5.75, 2.70, 17.25) bounds y 2.700..2.880 z 17.100..17.400
+PASS UtilityCabinet near (-21, 17): has renderers
+PASS UtilityCabinet near (-21, 17): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS UtilityCabinet near (-21, 17): upright (tilt 0.0°)
+PASS UtilityCabinet near (-21, 17): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL UtilityCabinet near (-21, 17): back 40.1 cm from the wall face z 17.7
+  · UtilityCabinet near (-21, 17): at (-21.00, 0.00, 17.00) bounds y 0.000..1.999 z 16.701..17.299; bottom +0.0 cm from collider Deck (0.000)
+PASS UtilityCabinet near (-19, 17): has renderers
+PASS UtilityCabinet near (-19, 17): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS UtilityCabinet near (-19, 17): upright (tilt 0.0°)
+PASS UtilityCabinet near (-19, 17): not into a wall (penetration 0.0 cm, none)
+SOFT-FAIL UtilityCabinet near (-19, 17): back 40.1 cm from the wall face z 17.7
+  · UtilityCabinet near (-19, 17): at (-19.00, 0.00, 17.00) bounds y 0.000..1.999 z 16.701..17.299; bottom +0.0 cm from collider Deck (0.000)
+PASS Table near (-21, 13): has renderers
+PASS Table near (-21, 13): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Table near (-21, 13): upright (tilt 0.0°)
+PASS Table near (-21, 13): not into a wall (penetration 0.0 cm, none)
+  · Table near (-21, 13): at (-21.00, 0.00, 13.00) bounds y 0.001..0.733 z 12.600..13.400; bottom +0.1 cm from collider Deck (0.000)
+PASS Couch near (-22, 16): has renderers
+PASS Couch near (-22, 16): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS Couch near (-22, 16): upright (tilt 0.0°)
+PASS Couch near (-22, 16): not into a wall (penetration 0.0 cm, none)
+  · Couch near (-22, 16): at (-22.00, 0.00, 16.00) bounds y 0.000..0.733 z 15.575..16.425; bottom +0.0 cm from collider Deck (0.000)
+PASS Couch near (7, -11): has renderers
+PASS Couch near (7, -11): grounded (bottom -2.0 cm from top of Inner Floor (0.020))
+PASS Couch near (7, -11): upright (tilt 0.0°)
+PASS Couch near (7, -11): not into a wall (penetration 0.0 cm, none)
+  · Couch near (7, -11): at (7.00, 0.00, -11.00) bounds y 0.000..0.733 z -11.425..-10.575; bottom -2.0 cm from top of Inner Floor (0.020)
+PASS Table near (7, -13): has renderers
+PASS Table near (7, -13): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Table near (7, -13): upright (tilt 0.0°)
+PASS Table near (7, -13): not into a wall (penetration 0.0 cm, none)
+  · Table near (7, -13): at (7.00, 0.00, -13.00) bounds y 0.001..0.733 z -13.400..-12.600; bottom +0.1 cm from collider Deck (0.000)
+PASS Bench near (-16, 6): has renderers
+PASS Bench near (-16, 6): grounded (bottom -2.1 cm from top of Inner Floor (0.020))
+PASS Bench near (-16, 6): upright (tilt 0.0°)
+PASS Bench near (-16, 6): not into a wall (penetration 0.0 cm, none)
+  · Bench near (-16, 6): at (-16.00, 0.00, 6.00) bounds y -0.001..0.425 z 5.752..6.248; bottom -2.1 cm from top of Inner Floor (0.020)
+PASS Bench near (-8, 6): has renderers
+PASS Bench near (-8, 6): grounded (bottom -2.1 cm from top of Inner Floor (0.020))
+PASS Bench near (-8, 6): upright (tilt 0.0°)
+PASS Bench near (-8, 6): not into a wall (penetration 0.0 cm, none)
+  · Bench near (-8, 6): at (-8.00, 0.00, 6.00) bounds y -0.001..0.425 z 5.752..6.248; bottom -2.1 cm from top of Inner Floor (0.020)
+PASS Bench near (0, 6): has renderers
+PASS Bench near (0, 6): grounded (bottom -2.1 cm from top of Inner Floor (0.020))
+PASS Bench near (0, 6): upright (tilt 0.0°)
+PASS Bench near (0, 6): not into a wall (penetration 0.0 cm, none)
+  · Bench near (0, 6): at (0.00, 0.00, 6.00) bounds y -0.001..0.425 z 5.752..6.248; bottom -2.1 cm from top of Inner Floor (0.020)
+PASS Counter near (-13, 16): has renderers
+PASS Counter near (-13, 16): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Counter near (-13, 16): upright (tilt 0.0°)
+PASS Counter near (-13, 16): not into a wall (penetration 0.0 cm, none)
+  · Counter near (-13, 16): at (-13.00, 0.00, 16.00) bounds y 0.001..1.001 z 15.600..16.400; bottom +0.1 cm from collider Deck (0.000)
+PASS Counter near (-9, 16): has renderers
+PASS Counter near (-9, 16): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Counter near (-9, 16): upright (tilt 0.0°)
+PASS Counter near (-9, 16): not into a wall (penetration 0.0 cm, none)
+  · Counter near (-9, 16): at (-9.00, 0.00, 16.00) bounds y 0.001..1.001 z 15.600..16.400; bottom +0.1 cm from collider Deck (0.000)
+PASS Counter near (-3, 16): has renderers
+PASS Counter near (-3, 16): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Counter near (-3, 16): upright (tilt 0.0°)
+PASS Counter near (-3, 16): not into a wall (penetration 0.0 cm, none)
+  · Counter near (-3, 16): at (-3.00, 0.00, 16.00) bounds y 0.001..1.001 z 15.600..16.400; bottom +0.1 cm from collider Deck (0.000)
+PASS Counter near (1, 16): has renderers
+PASS Counter near (1, 16): grounded (bottom +0.1 cm from collider Deck (0.000))
+PASS Counter near (1, 16): upright (tilt 0.0°)
+PASS Counter near (1, 16): not into a wall (penetration 0.0 cm, none)
+  · Counter near (1, 16): at (1.00, 0.00, 16.00) bounds y 0.001..1.001 z 15.600..16.400; bottom +0.1 cm from collider Deck (0.000)
+PASS Toolbox near (22, 11): has renderers
+PASS Toolbox near (22, 11): grounded (bottom -2.0 cm from top of Inner Floor (0.020))
+PASS Toolbox near (22, 11): upright (tilt 0.0°)
+PASS Toolbox near (22, 11): not into a wall (penetration 0.0 cm, none)
+  · Toolbox near (22, 11): at (22.00, 0.00, 11.00) bounds y 0.000..0.448 z 10.738..11.257; bottom -2.0 cm from top of Inner Floor (0.020)
+PASS Crate near (16, 5): has renderers
+PASS Crate near (16, 5): grounded (bottom +0.3 cm from top of Pallet (0.158))
+PASS Crate near (16, 5): upright (tilt 0.0°)
+PASS Crate near (16, 5): not into a wall (penetration 0.0 cm, none)
+  · Crate near (16, 5): at (16.00, 0.16, 5.00) bounds y 0.160..0.610 z 4.700..5.300; bottom +0.3 cm from top of Pallet (0.158)
+PASS Crate near (26, 9): has renderers
+PASS Crate near (26, 9): grounded (bottom +0.3 cm from top of Pallet (0.158))
+PASS Crate near (26, 9): upright (tilt 0.0°)
+PASS Crate near (26, 9): not into a wall (penetration 0.0 cm, none)
+  · Crate near (26, 9): at (26.00, 0.16, 9.00) bounds y 0.160..0.610 z 8.700..9.300; bottom +0.3 cm from top of Pallet (0.158)
+PASS Crate near (26, 12): has renderers
+PASS Crate near (26, 12): grounded (bottom +0.3 cm from top of Pallet (0.158))
+PASS Crate near (26, 12): upright (tilt 0.0°)
+PASS Crate near (26, 12): not into a wall (penetration 0.0 cm, none)
+  · Crate near (26, 12): at (26.00, 0.16, 12.00) bounds y 0.160..0.610 z 11.700..12.300; bottom +0.3 cm from top of Pallet (0.158)
+PASS Barrel near (26, 15): has renderers
+PASS Barrel near (26, 15): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS Barrel near (26, 15): upright (tilt 0.0°)
+PASS Barrel near (26, 15): not into a wall (penetration 0.0 cm, none)
+  · Barrel near (26, 15): at (26.00, 0.00, 15.00) bounds y 0.000..0.900 z 14.760..15.239; bottom +0.0 cm from collider Deck (0.000)
+PASS Barrel near (27, 16): has renderers
+PASS Barrel near (27, 16): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS Barrel near (27, 16): upright (tilt 0.0°)
+PASS Barrel near (27, 16): not into a wall (penetration 0.0 cm, none)
+  · Barrel near (27, 16): at (27.00, 0.00, 16.00) bounds y 0.000..0.900 z 15.760..16.239; bottom +0.0 cm from collider Deck (0.000)
+PASS Barrel near (28, 15): has renderers
+PASS Barrel near (28, 15): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS Barrel near (28, 15): upright (tilt 0.0°)
+PASS Barrel near (28, 15): not into a wall (penetration 0.0 cm, none)
+  · Barrel near (28, 15): at (28.00, 0.00, 15.00) bounds y 0.000..0.900 z 14.760..15.239; bottom +0.0 cm from collider Deck (0.000)
+PASS CableCoil near (26, -6): has renderers
+PASS CableCoil near (26, -6): grounded (bottom +0.1 cm from top of Deck (0.000))
+PASS CableCoil near (26, -6): upright (tilt 0.0°)
+PASS CableCoil near (26, -6): not into a wall (penetration 0.0 cm, none)
+  · CableCoil near (26, -6): at (26.00, 0.00, -6.00) bounds y 0.001..0.350 z -6.509..-5.490; bottom +0.1 cm from top of Deck (0.000)
+PASS Bollard near (28, 9): has renderers
+PASS Bollard near (28, 9): grounded (bottom +0.0 cm from collider Deck (0.000))
+PASS Bollard near (28, 9): upright (tilt 0.0°)
+PASS Bollard near (28, 9): not into a wall (penetration 0.0 cm, none)
+  · Bollard near (28, 9): at (28.00, 0.00, 9.00) bounds y 0.000..0.699 z 8.630..9.369; bottom +0.0 cm from collider Deck (0.000)
+PASS Lifebuoy near (-26, -17.5): has renderers
+PASS Lifebuoy near (-26, -17.5): upright (tilt 0.0°)
+PASS Lifebuoy near (-26, -17.5): not into a wall (penetration 0.0 cm, none)
+  · Lifebuoy near (-26, -17.5): at (-26.00, 1.00, -17.50) bounds y 1.000..2.459 z -17.673..-17.326
+PASS Lifebuoy near (4, -17.5): has renderers
+PASS Lifebuoy near (4, -17.5): upright (tilt 0.0°)
+PASS Lifebuoy near (4, -17.5): not into a wall (penetration 0.0 cm, none)
+  · Lifebuoy near (4, -17.5): at (4.00, 1.00, -17.50) bounds y 1.000..2.459 z -17.673..-17.326
+PASS Lifebuoy near (27, -17.5): has renderers
+PASS Lifebuoy near (27, -17.5): upright (tilt 0.0°)
+PASS Lifebuoy near (27, -17.5): not into a wall (penetration 0.0 cm, none)
+  · Lifebuoy near (27, -17.5): at (27.00, 1.00, -17.50) bounds y 1.000..2.459 z -17.673..-17.326
+PASS DeckLamp near (-22, 10): has renderers
+PASS DeckLamp near (-22, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-22, 10): at (-22.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (-18, 10): has renderers
+PASS DeckLamp near (-18, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-18, 10): at (-18.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (-14, 10): has renderers
+PASS DeckLamp near (-14, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-14, 10): at (-14.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (-10, 10): has renderers
+PASS DeckLamp near (-10, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-10, 10): at (-10.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (-6, 10): has renderers
+PASS DeckLamp near (-6, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-6, 10): at (-6.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (-2, 10): has renderers
+PASS DeckLamp near (-2, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (-2, 10): at (-2.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (2, 10): has renderers
+PASS DeckLamp near (2, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (2, 10): at (2.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+PASS DeckLamp near (6, 10): has renderers
+PASS DeckLamp near (6, 10): mounted in the fascia (base 3.600 within 3.35..4.35, head 4.719 above it)
+  · DeckLamp near (6, 10): at (6.00, 3.60, 10.00) bounds y 3.600..4.719 z 9.761..10.239
+  · capture saved Temp/look/hq-consoles-hq-racks.png
+  · capture saved Temp/look/hq-consoles-hq-racks-west.png
+  · capture saved Temp/look/hq-consoles-hq-cargo.png
+
+== HQ6 — the ambience reaches every walkable point of the platform
+PASS the HQ ambience bed 'HQ Ambience' is in the HQ scene
+PASS the bed plays at HQ (Playing True)
+  · grid: points=540 walkable=510 dead=0 min=0.205 at (13,17); dead:
+PASS the probe reports walkable= and dead=
+PASS no dead point on the grid (dead 0 of 510 walkable)
+PASS the grid covered the platform (walkable 510)
+PASS ambience at the arrival pad (18.00, 1.60, 14.00): level 0.215 ≥ 0.02
+PASS ambience at the plank's base (30.00, 1.60, -16.00): level 0.231 ≥ 0.02
+PASS ambience at the pickup chute (10.00, 1.60, 15.00): level 0.211 ≥ 0.02
+PASS ambience at the crane (24.00, 1.60, 4.00): level 0.247 ≥ 0.02
+PASS ambience at the intake (-11.00, 1.60, -14.00): level 0.209 ≥ 0.02
+PASS ambience at the depot aisle (-6.00, 1.60, 11.70): level 0.220 ≥ 0.02
+PASS ambience at the court (-8.00, 1.60, -2.00): level 0.202 ≥ 0.02
+
+== HQ7 — the old board's spot and the depot after the cleanup
+  · capture saved Temp/look/hq-consoles-hq-board-spot.png
+PASS capture written: Temp/look/hq-consoles-hq-board-spot.png
+  · capture saved Temp/look/hq-consoles-hq-office.png
+PASS capture written: Temp/look/hq-consoles-hq-office.png
+  · capture saved Temp/look/hq-consoles-hq-depot-front.png
+PASS capture written: Temp/look/hq-consoles-hq-depot-front.png
+  · capture saved Temp/look/hq-consoles-hq-counter.png
+PASS capture written: Temp/look/hq-consoles-hq-counter.png
+  · capture saved Temp/look/hq-runtime-arrival.png
+
+== HQ8 — the HQ bed is silent at sea
+PASS the docked ship
+  · sail: sailing to Sea
+PASS the ship sails from the hq job's state: sailing to Sea
+PASS the ship arrived at sea: flow=world=Sea transitioning=False pending=; day=phase=AtSea day=1 balance=0 handed=0 world=Sea to=Sea ride=Idle/Down car=AtTop riders=[] below=[] dead=[] spectate=[] tv=-1 plank=off jumped=[] runDays=0 site=Site01 toSite=Site01 selected=None unlocked=none lever=0 wipe=0; trip=serial=1 stage=Complete from=HQ to=Sea; rider=locked=False placed=True local=(-3.50, 0.00, 7.00); loaded=Session+ShipAtSea; active=ShipAtSea; fade=0
+PASS the HQ bed is silent at sea (found False, HQ scene loaded False)
+  · at sea: HQ scene loaded=False, bed found=False
+PASS the ship's wind is not suppressed at sea
+  · the ship's ambience at sea: heard=True
+FAIL: 24 known gap(s): DisplayPanel near (-14, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-12, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-10, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-8, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-6, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-4, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (-2, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (0, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (2, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (4, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayPanel near (6, 17.5): back 14.1 cm from the wall face z 17.7 | DisplayHook near (-14.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-12.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-10.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-8.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-6.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-4.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-2.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (-0.25, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (1.75, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (3.75, 17.25): touches the DisplayPanel (gap 4.0 cm) | DisplayHook near (5.75, 17.25): touches the DisplayPanel (gap 4.0 cm) | UtilityCabinet near (-21, 17): back 40.1 cm from the wall face z 17.7 | UtilityCabinet near (-19, 17): back 40.1 cm from the wall face z 17.7
